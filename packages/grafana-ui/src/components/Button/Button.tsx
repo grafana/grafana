@@ -3,7 +3,7 @@ import { css, CSSObject, cx } from '@emotion/css';
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
-import { colorManipulator, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
+import { colorManipulator, GrafanaThemeV2, ThemeRichColor } from '@grafana/data';
 import { ComponentSize } from '../../types/size';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
@@ -101,14 +101,14 @@ export const getButtonStyles = (props: StyleProps) => {
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
     boxShadow: 'none',
-    background: theme.palette.action.disabledBackground,
+    background: theme.colors.action.disabledBackground,
     border: `1px solid transparent`,
-    color: theme.palette.text.disabled,
+    color: theme.colors.text.disabled,
     pointerEvents: 'none',
 
     '&:hover': {
-      background: theme.palette.action.disabledBackground,
-      color: theme.palette.text.disabled,
+      background: theme.colors.action.disabledBackground,
+      color: theme.colors.text.disabled,
       boxShadow: 'none',
     },
   };
@@ -160,7 +160,7 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor): CSSObject {
+function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor): CSSObject {
   return {
     background: color.main,
     color: color.contrastText,
@@ -180,15 +180,15 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor)
 export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant) {
   switch (variant) {
     case 'secondary':
-      return getButtonVariantStyles(theme, theme.palette.secondary);
+      return getButtonVariantStyles(theme, theme.colors.secondary);
 
     case 'destructive':
-      return getButtonVariantStyles(theme, theme.palette.error);
+      return getButtonVariantStyles(theme, theme.colors.error);
 
     case 'link':
       return {
         background: 'transparent',
-        color: theme.palette.text.link,
+        color: theme.colors.text.link,
         border: '1px solid transparent',
         '&:focus': {
           outline: 'none',
@@ -196,13 +196,13 @@ export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVa
         },
 
         '&:hover': {
-          background: colorManipulator.alpha(theme.palette.text.link, theme.palette.action.hoverOpacity),
+          background: colorManipulator.alpha(theme.colors.text.link, theme.colors.action.hoverOpacity),
           textDecoration: 'underline',
         },
       };
 
     case 'primary':
     default:
-      return getButtonVariantStyles(theme, theme.palette.primary);
+      return getButtonVariantStyles(theme, theme.colors.primary);
   }
 }

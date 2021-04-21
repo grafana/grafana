@@ -22,7 +22,7 @@ const writeVariablesFile = async (path: string, data: string) => {
 
 const generateSassVariableFiles = async () => {
   const darkTheme = createTheme();
-  const lightTheme = createTheme({ palette: { mode: 'light' } });
+  const lightTheme = createTheme({ colors: { mode: 'light' } });
 
   try {
     await Promise.all([

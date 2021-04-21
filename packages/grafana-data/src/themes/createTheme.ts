@@ -1,6 +1,6 @@
 import { createBreakpoints } from './breakpoints';
 import { createComponents } from './createComponents';
-import { createPalette, ThemePaletteInput } from './createPalette';
+import { createColors, ThemeColorsInput } from './createColors';
 import { createShadows } from './createShadows';
 import { createShape, ThemeShapeInput } from './createShape';
 import { createSpacing, ThemeSpacingOptions } from './createSpacing';
@@ -13,7 +13,7 @@ import { zIndex } from './zIndex';
 /** @internal */
 export interface NewThemeOptions {
   name?: string;
-  palette?: ThemePaletteInput;
+  colors?: ThemeColorsInput;
   spacing?: ThemeSpacingOptions;
   shape?: ThemeShapeInput;
   typography?: ThemeTypographyInput;
@@ -23,26 +23,26 @@ export interface NewThemeOptions {
 export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
   const {
     name = 'Dark',
-    palette: paletteInput = {},
+    colors: colorsInput = {},
     spacing: spacingInput = {},
     shape: shapeInput = {},
     typography: typographyInput = {},
   } = options;
 
-  const palette = createPalette(paletteInput);
+  const colors = createColors(colorsInput);
   const breakpoints = createBreakpoints();
   const spacing = createSpacing(spacingInput);
   const shape = createShape(shapeInput);
-  const typography = createTypography(palette, typographyInput);
-  const shadows = createShadows(palette);
+  const typography = createTypography(colors, typographyInput);
+  const shadows = createShadows(colors);
   const transitions = createTransitions();
-  const components = createComponents(palette, shadows);
+  const components = createComponents(colors, shadows);
 
   const theme = {
     name,
-    isDark: palette.mode === 'dark',
-    isLight: palette.mode === 'light',
-    palette,
+    isDark: colors.mode === 'dark',
+    isLight: colors.mode === 'light',
+    colors,
     breakpoints,
     spacing,
     shape,

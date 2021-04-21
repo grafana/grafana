@@ -101,7 +101,7 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   `,
   modalText: css({
     fontSize: theme.typography.h4.fontSize,
-    color: theme.palette.text.primary,
+    color: theme.colors.text.primary,
     marginBottom: `calc(${theme.spacing(2)}*2)`,
     paddingTop: theme.spacing(2),
   }),

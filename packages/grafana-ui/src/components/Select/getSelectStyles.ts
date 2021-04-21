@@ -6,7 +6,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     menu: css`
       label: grafana-select-menu;
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       box-shadow: ${theme.shadows.z3};
       position: relative;
       min-width: 100%;
@@ -24,7 +24,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
       border-left: 2px solid transparent;
 
       &:hover {
-        background: ${theme.palette.action.hover};
+        background: ${theme.colors.action.hover};
       }
     `,
     optionImage: css`
@@ -36,7 +36,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
       label: grafana-select-option-description;
       font-weight: normal;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       white-space: normal;
       line-height: ${theme.typography.body.lineHeight};
     `,
@@ -49,10 +49,10 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
     `,
     optionFocused: css`
       label: grafana-select-option-focused;
-      background: ${theme.palette.action.focus};
+      background: ${theme.colors.action.focus};
     `,
     optionSelected: css`
-      background: ${theme.palette.action.selected};
+      background: ${theme.colors.action.selected};
     `,
     singleValue: css`
       label: grafana-select-single-value;
@@ -88,11 +88,11 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
       display: flex;
       align-items: center;
       line-height: 1;
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius()};
       margin: ${theme.spacing(0, 1, 0, 0)};
       padding: ${theme.spacing(0.25, 0, 0.25, 1)};
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
       font-size: ${theme.typography.size.sm};
     `,
     multiValueRemove: css`

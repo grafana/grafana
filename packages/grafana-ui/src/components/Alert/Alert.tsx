@@ -69,7 +69,7 @@ export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
 Alert.displayName = 'Alert';
 
 const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boolean) => {
-  const color = theme.palette[severity];
+  const color = theme.colors[severity];
 
   return {
     alert: css`
@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       box-shadow: ${elevated ? theme.shadows.z4 : theme.shadows.z1};
 
       &:before {
@@ -89,7 +89,7 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
         left: 0;
         bottom: 0;
         right: 0;
-        background: ${theme.palette.background.primary};
+        background: ${theme.colors.background.primary};
         z-index: -1;
       }
     `,
@@ -103,10 +103,10 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
     `,
     title: css`
       font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
     `,
     body: css`
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(2)};
       flex-grow: 1;
       display: flex;

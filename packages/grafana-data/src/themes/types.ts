@@ -1,7 +1,7 @@
 import { GrafanaTheme } from '../types/theme';
 import { ThemeBreakpoints } from './breakpoints';
 import { ThemeComponents } from './createComponents';
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 import { ThemeShadows } from './createShadows';
 import { ThemeShape } from './createShape';
 import { ThemeSpacing } from './createSpacing';
@@ -14,7 +14,7 @@ export interface GrafanaThemeV2 {
   name: string;
   isDark: boolean;
   isLight: boolean;
-  palette: ThemePalette;
+  colors: ThemeColors;
   breakpoints: ThemeBreakpoints;
   spacing: ThemeSpacing;
   shape: ThemeShape;
@@ -27,7 +27,7 @@ export interface GrafanaThemeV2 {
 }
 
 /** @alpha */
-export interface ThemePaletteColor {
+export interface ThemeRichColor {
   /** color intent (primary, secondary, info, error, etc) */
   name: string;
   /** Main color */

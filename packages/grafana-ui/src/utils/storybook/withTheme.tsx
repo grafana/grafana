@@ -10,7 +10,7 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
   children,
   handleSassThemeChange,
 }) => {
-  const theme = createTheme({ palette: { mode: useDarkMode() ? 'dark' : 'light' } });
+  const theme = createTheme({ colors: { mode: useDarkMode() ? 'dark' : 'light' } });
 
   handleSassThemeChange(theme);
 
@@ -22,7 +22,7 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
           padding: '20px',
           display: 'flex',
           minHeight: '80vh',
-          background: `${theme.palette.background.primary}`,
+          background: `${theme.colors.background.primary}`,
         }}
       >
         <GlobalStyles />

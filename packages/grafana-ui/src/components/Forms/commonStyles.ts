@@ -10,8 +10,8 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 `;
 
 export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
-  const borderColor = invalid ? theme.palette.error.border : theme.components.input.border;
-  const borderColorHover = invalid ? theme.palette.error.shade : theme.components.input.borderHover;
+  const borderColor = invalid ? theme.colors.error.border : theme.components.input.border;
+  const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;
 
@@ -32,7 +32,7 @@ export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
 
     &:-webkit-autofill:focus {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-      box-shadow: 0 0 0 2px ${theme.palette.background.primary}, 0 0 0px 4px ${theme.palette.primary.main},
+      box-shadow: 0 0 0 2px ${theme.colors.background.primary}, 0 0 0px 4px ${theme.colors.primary.main},
         inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important;
       -webkit-text-fill-color: ${textColor} !important;
     }
@@ -46,9 +46,9 @@ export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
     }
 
     &:disabled {
-      background-color: ${theme.palette.action.disabledBackground};
-      color: ${theme.palette.action.disabledText};
-      border: 1px solid ${theme.palette.action.disabledBackground};
+      background-color: ${theme.colors.action.disabledBackground};
+      color: ${theme.colors.action.disabledText};
+      border: 1px solid ${theme.colors.action.disabledBackground};
 
       &:hover {
         border-color: ${borderColor};
@@ -56,7 +56,7 @@ export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
     }
 
     &::placeholder {
-      color: ${theme.palette.text.disabled};
+      color: ${theme.colors.text.disabled};
       opacity: 1;
     }
   `;
