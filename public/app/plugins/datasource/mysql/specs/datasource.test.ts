@@ -60,7 +60,7 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    it('should return annotation list', async () => {
+    it('should return an annotation list', async () => {
       const { ds } = setupTextContext(response);
       const results = await ds.annotationQuery(options);
 
