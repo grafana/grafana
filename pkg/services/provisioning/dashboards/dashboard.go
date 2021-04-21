@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -24,7 +23,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(string, dashboards.Store, plugins.DataRequestHandler) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(string, dashboards.Store) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -34,7 +33,7 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(configDirectory string, store dashboards.Store, reqHandler plugins.DataRequestHandler) (DashboardProvisioner, error) {
+func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
 	configs, err := cfgReader.readConfig()
