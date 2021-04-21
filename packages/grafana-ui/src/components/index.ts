@@ -232,6 +232,7 @@ export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
+export { preparePlotFrame } from './GraphNG/utils';
 export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';

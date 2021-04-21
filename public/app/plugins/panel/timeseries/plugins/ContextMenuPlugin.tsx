@@ -9,7 +9,6 @@ import {
   MenuGroup,
   MenuItem,
   Portal,
-  useGraphNGContext,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -23,7 +22,7 @@ import { useClickAway } from 'react-use';
 import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/linkSuppliers';
 
 interface ContextMenuPluginProps {
-  data: DataFrame[];
+  data: DataFrame;
   defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onOpen?: () => void;
@@ -70,7 +69,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 };
 
 interface ContextMenuProps {
-  data: DataFrame[];
+  data: DataFrame;
   defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onClose?: () => void;
@@ -90,7 +89,6 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
   ...otherProps
 }) => {
   const ref = useRef(null);
-  const graphContext = useGraphNGContext();
 
   const onClose = () => {
     if (otherProps.onClose) {
@@ -102,7 +100,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     onClose();
   });
 
-  const xField = graphContext.getXAxisField();
+  const xField = data.fields[0];
 
   if (!xField) {
     return null;
@@ -114,10 +112,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone });
 
   if (seriesIdx && dataIdx) {
-    // origin field/frame indexes for inspecting the data
-    const originFieldIndex = graphContext.mapSeriesIndexToDataFrameFieldIndex(seriesIdx);
-    const frame = data[originFieldIndex.frameIndex];
-    const field = frame.fields[originFieldIndex.fieldIndex];
+    const field = data.fields[seriesIdx];
 
     const displayValue = field.display!(field.values.get(dataIdx));
 
@@ -127,9 +122,9 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
       const linksSupplier = getFieldLinksSupplier({
         display: displayValue,
         name: field.name,
-        view: new DataFrameView(frame),
+        view: new DataFrameView(data),
         rowIndex: dataIdx,
-        colIndex: originFieldIndex.fieldIndex,
+        colIndex: seriesIdx,
         field: field.config,
         hasLinks,
       });
@@ -156,7 +151,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
         timestamp={xFieldFmt(xField.values.get(dataIdx)).text}
         displayValue={displayValue}
         seriesColor={displayValue.color!}
-        displayName={getFieldDisplayName(field, frame)}
+        displayName={getFieldDisplayName(field, data)}
       />
     );
   }

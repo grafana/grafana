@@ -1,7 +1,7 @@
-import { Field, PanelProps } from '@grafana/data';
-import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { Field, FieldMatcherID, fieldMatchers, PanelProps } from '@grafana/data';
+import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin, preparePlotFrame } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
@@ -23,6 +23,18 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onFieldConfigChange,
   replaceVariables,
 }) => {
+  // Invalidate data alignment on data change only. Primarily, to reduce plot frame calc on changes that are not triggered by
+  // query results (width, height, options)
+  const frame = useMemo(() => {
+    return (
+      data?.series &&
+      preparePlotFrame(data.series, {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+      })
+    );
+  }, [data]);
+
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
       onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
@@ -41,7 +53,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     [fieldConfig, onFieldConfigChange]
   );
 
-  if (!data || !data.series?.length) {
+  if (!data || !data.series?.length || !frame) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
@@ -52,6 +64,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   return (
     <GraphNG
       data={data.series}
+      alignedData={frame}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -62,8 +75,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       onSeriesColorChange={onSeriesColorChange}
     >
       <ZoomPlugin onZoom={onChangeTimeRange} />
-      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode} timeZone={timeZone} />
-      <ContextMenuPlugin data={data.series} timeZone={timeZone} replaceVariables={replaceVariables} />
+      <TooltipPlugin data={frame} mode={options.tooltipOptions.mode} timeZone={timeZone} />
+      <ContextMenuPlugin data={frame} timeZone={timeZone} replaceVariables={replaceVariables} />
       {data.annotations && (
         <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
       )}

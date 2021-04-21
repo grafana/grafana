@@ -2,7 +2,6 @@ import React from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import { CursorPlugin } from './CursorPlugin';
-import { VizTooltipContainer, SeriesTable, SeriesTableRowProps, TooltipDisplayMode } from '../../VizTooltip';
 import {
   DataFrame,
   FieldType,
@@ -11,23 +10,27 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { useGraphNGContext } from '../../GraphNG/hooks';
+import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContainer } from '../../VizTooltip';
 
 interface TooltipPluginProps {
   mode?: TooltipDisplayMode;
   timeZone: TimeZone;
-  data: DataFrame[];
+  data: DataFrame;
 }
 
 /**
  * @alpha
  */
-export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', timeZone, ...otherProps }) => {
+export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
+  mode = TooltipDisplayMode.Single,
+  timeZone,
+  ...otherProps
+}) => {
   const pluginId = 'PlotTooltip';
   const plotContext = usePlotContext();
-  const graphContext = useGraphNGContext();
+  // GraphNG expects aligned data, let's take field 0 as x field. FTW
+  let xField = otherProps.data.fields[0];
 
-  let xField = graphContext.getXAxisField();
   if (!xField) {
     return null;
   }
@@ -49,18 +52,12 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
 
         const xVal = xFieldFmt(xField!.values.get(focusedPointIdx)).text;
 
-        // origin field/frame indexes for inspecting the data
-        const originFieldIndex = focusedSeriesIdx
-          ? graphContext.mapSeriesIndexToDataFrameFieldIndex(focusedSeriesIdx)
-          : null;
-
         // when interacting with a point in single mode
-        if (mode === 'single' && originFieldIndex !== null) {
-          const field = graphContext.alignedData.fields[focusedSeriesIdx!];
+        if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
+          const field = otherProps.data.fields[focusedSeriesIdx];
           const plotSeries = plotContext.getSeries();
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
-
-          const value = fieldFmt(field.values.get(focusedPointIdx));
+          const value = fieldFmt(plotContext.data[focusedSeriesIdx!][focusedPointIdx]);
 
           tooltip = (
             <SeriesTable
@@ -68,7 +65,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                 {
                   // TODO: align with uPlot typings
                   color: (plotSeries[focusedSeriesIdx!].stroke as any)(),
-                  label: getFieldDisplayName(field, otherProps.data[originFieldIndex.frameIndex]),
+                  label: getFieldDisplayName(field, otherProps.data),
                   value: value ? formattedValueToString(value) : null,
                 },
               ]}
@@ -77,14 +74,13 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
           );
         }
 
-        if (mode === 'multi') {
+        if (mode === TooltipDisplayMode.Multi) {
           let series: SeriesTableRowProps[] = [];
           const plotSeries = plotContext.getSeries();
 
           for (let i = 0; i < plotSeries.length; i++) {
-            const dataFrameFieldIndex = graphContext.mapSeriesIndexToDataFrameFieldIndex(i);
-            const frame = otherProps.data[dataFrameFieldIndex.frameIndex];
-            const field = otherProps.data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex];
+            const frame = otherProps.data;
+            const field = frame.fields[i];
             if (
               field === xField ||
               field.type === FieldType.time ||
@@ -94,19 +90,14 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               continue;
             }
 
-            // using aligned data value field here as it's indexes are in line with Plot data
-            const valueField = graphContext.alignedData.fields[i];
-            const value = valueField.display!(valueField.values.get(focusedPointIdx));
+            const value = field.display!(plotContext.data[i][focusedPointIdx]);
 
             series.push({
               // TODO: align with uPlot typings
               color: (plotSeries[i].stroke as any)!(),
               label: getFieldDisplayName(field, frame),
               value: value ? formattedValueToString(value) : null,
-              isActive: originFieldIndex
-                ? dataFrameFieldIndex.frameIndex === originFieldIndex.frameIndex &&
-                  dataFrameFieldIndex.fieldIndex === originFieldIndex.fieldIndex
-                : false,
+              isActive: focusedSeriesIdx === i,
             });
           }
 
