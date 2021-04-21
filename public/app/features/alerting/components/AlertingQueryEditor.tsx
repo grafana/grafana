@@ -16,7 +16,7 @@ import { ExpressionQueryType } from '../../expressions/types';
 import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
 
 interface Props {
-  queries: GrafanaQuery[];
+  value?: GrafanaQuery[];
   onChange: (queries: GrafanaQuery[]) => void;
 }
 
@@ -37,12 +37,12 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   onRunQueries = () => {};
 
   onDuplicateQuery = (query: GrafanaQuery) => {
-    const { onChange, queries } = this.props;
-    onChange([...queries, query]);
+    const { onChange, value = [] } = this.props;
+    onChange([...value, query]);
   };
 
   onNewAlertingQuery = () => {
-    const { onChange, queries } = this.props;
+    const { onChange, value = [] } = this.props;
     const { defaultDataSource } = this.state;
 
     if (!defaultDataSource) {
@@ -55,11 +55,11 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
       datasource: defaultDataSource.name,
     };
 
-    onChange(addQuery(queries, alertingQuery));
+    onChange(addQuery(value, alertingQuery));
   };
 
   onNewExpressionQuery = () => {
-    const { onChange, queries } = this.props;
+    const { onChange, value = [] } = this.props;
     const expressionQuery: GrafanaQueryModel = {
       ...expressionDatasource.newQuery({
         type: ExpressionQueryType.classic,
@@ -69,7 +69,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
       datasource: ExpressionDatasourceID,
     };
 
-    onChange(addQuery(queries, expressionQuery));
+    onChange(addQuery(value, expressionQuery));
   };
 
   renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
@@ -103,12 +103,12 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { queries } = this.props;
+    const { value = [] } = this.props;
     const styles = getStyles(config.theme);
     return (
       <div className={styles.container}>
         <AlertingQueryRows
-          queries={queries}
+          queries={value}
           onQueriesChange={this.props.onChange}
           onDuplicateQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}

@@ -4,7 +4,7 @@ import { Field, InputControl } from '@grafana/ui';
 import { ExpressionEditor } from './ExpressionEditor';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { GrafanaQueryEditor } from './GrafanaQueryEditor';
+import { AlertingQueryEditor } from '../../../components/AlertingQueryEditor';
 
 export const QueryStep: FC = () => {
   const { control, watch, errors } = useFormContext<RuleFormValues>();
@@ -32,7 +32,7 @@ export const QueryStep: FC = () => {
         >
           <InputControl
             name="queries"
-            as={GrafanaQueryEditor}
+            as={AlertingQueryEditor}
             control={control}
             rules={{
               validate: (queries) => Array.isArray(queries) && !!queries.length,

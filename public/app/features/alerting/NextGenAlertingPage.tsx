@@ -22,6 +22,7 @@ import {
 } from './state/actions';
 import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaQuery } from '../../types/unified-alerting-dto';
 
 function mapStateToProps(state: StoreState, props: RouteProps) {
   return {
@@ -134,7 +135,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
           <SplitPaneWrapper
             leftPaneComponents={[
               <AlertingQueryPreview key="queryPreview" getInstances={getInstances} queries={[]} onTest={this.onTest} />,
-              <AlertingQueryEditor key="queryEditor" queries={[]} onChange={() => {}} />,
+              <AlertingQueryEditor key="queryEditor" value={[] as GrafanaQuery[]} onChange={() => {}} />,
             ]}
             uiState={uiState}
             updateUiState={updateAlertDefinitionUiState}
