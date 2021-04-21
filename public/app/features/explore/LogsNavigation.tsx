@@ -19,7 +19,6 @@ type Props = {
   timeZone: TimeZone;
   loading: boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  clearLogsNavigation: (shouldClear: boolean) => void;
   queries?: DataQuery[];
 };
 
@@ -28,14 +27,7 @@ type LogsPage = {
   queryRange: AbsoluteTimeRange;
 };
 
-function LogsNavigation({
-  absoluteRange,
-  visibleRange = absoluteRange,
-  timeZone,
-  onChangeTime,
-  loading,
-  clearLogsNavigation,
-}: Props) {
+function LogsNavigation({ absoluteRange, visibleRange = absoluteRange, timeZone, onChangeTime, loading }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expectedRange, setExpectedRange] = useState<AbsoluteTimeRange>();
@@ -43,10 +35,8 @@ function LogsNavigation({
   useEffect(() => {
     const newPage = { logsRange: visibleRange || absoluteRange, queryRange: absoluteRange };
     if (!expectedRange || !isEqual(expectedRange, absoluteRange)) {
-      console.log('here 1');
       setPages([newPage]);
     } else {
-      console.log('here 2');
       setPages((pages) => {
         const filteredChunksArray = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
 

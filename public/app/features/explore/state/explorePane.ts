@@ -42,12 +42,6 @@ import { richHistoryUpdatedAction } from './main';
 // Actions and Payloads
 //
 
-export interface ClearLogsNavigation {
-  exploreId: ExploreId;
-  shouldClear: boolean;
-}
-export const clearLogsNavigationAction = createAction<ClearLogsNavigation>('explore/changeSize');
-
 /**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
@@ -105,13 +99,6 @@ export interface SetUrlReplacedPayload {
   exploreId: ExploreId;
 }
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
-
-/**
- * To clear navigation when new query run
- */
-export function clearLogsNavigation(exploreId: ExploreId, shouldClear: boolean): PayloadAction<ClearLogsNavigation> {
-  return clearLogsNavigationAction({ exploreId, shouldClear });
-}
 
 /**
  * Keep track of the Explore container size, in particular the width.
@@ -252,9 +239,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = timeReducer(state, action);
   state = historyReducer(state, action);
 
-  if (clearLogsNavigationAction.match(action)) {
-    return { ...state, logsNavigationCleared: action.payload.shouldClear };
-  }
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
@@ -296,7 +280,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       logsHighlighterExpressions: undefined,
-      logsNavigationCleared: true,
     };
   }
 

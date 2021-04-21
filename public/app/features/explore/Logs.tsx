@@ -77,7 +77,6 @@ interface Props {
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
   queries?: DataQuery[];
-  logsNavigationCleared?: boolean;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -88,7 +87,6 @@ interface Props {
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  clearLogsNavigation: (shouldClear: boolean) => void;
 }
 
 interface State {
@@ -256,8 +254,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       getFieldLinks,
       dedupStrategy,
       theme,
-      logsNavigationCleared,
-      clearLogsNavigation,
       queries,
     } = this.props;
 
@@ -427,8 +423,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             timeZone={timeZone}
             onChangeTime={onChangeTime}
             loading={loading}
-            logsNavigationCleared={logsNavigationCleared}
-            clearLogsNavigation={clearLogsNavigation}
             queries={queries}
           />
         </div>
