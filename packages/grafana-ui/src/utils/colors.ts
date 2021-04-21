@@ -1,8 +1,4 @@
-import map from 'lodash/map';
-import sortBy from 'lodash/sortBy';
-import flattenDeep from 'lodash/flattenDeep';
-import chunk from 'lodash/chunk';
-import zip from 'lodash/zip';
+import { map, sortBy, flattenDeep, chunk, zip } from 'lodash';
 import tinycolor from 'tinycolor2';
 import lightTheme from '../themes/light';
 import darkTheme from '../themes/dark';
