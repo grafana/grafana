@@ -1,6 +1,6 @@
 import React, { HTMLProps } from 'react';
 import { cx } from '@emotion/css';
-import _ from 'lodash';
+import { isObject } from 'lodash';
 import { SegmentSelect } from './SegmentSelect';
 import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
@@ -34,7 +34,7 @@ export function SegmentAsync<T>({
   const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
-    const label = _.isObject(value) ? value.label : value;
+    const label = isObject(value) ? value.label : value;
 
     return (
       <Label
@@ -63,7 +63,7 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !_.isObject(value) ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
       options={state.value ?? []}
       width={width}
       noOptionsMessage={noOptionMessageHandler(state)}

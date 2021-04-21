@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { isEqual, omit } from 'lodash';
 
 // Services & Utils
 import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } from '@grafana/data';
@@ -58,14 +58,14 @@ export function addToRichHistory(
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
      * which can be different) don't save it in rich history.
      */
-    const newQueriesToCompare = newQueriesToSave.map((q) => _.omit(q, ['key', 'refId']));
+    const newQueriesToCompare = newQueriesToSave.map((q) => omit(q, ['key', 'refId']));
     const lastQueriesToCompare =
       queriesToKeep.length > 0 &&
       queriesToKeep[0].queries.map((q) => {
-        return _.omit(q, ['key', 'refId']);
+        return omit(q, ['key', 'refId']);
       });
 
-    if (_.isEqual(newQueriesToCompare, lastQueriesToCompare)) {
+    if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
       return richHistory;
     }
 
@@ -233,7 +233,7 @@ export function getQueryDisplayText(query: DataQuery): string {
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
    */
-  const strippedQuery = _.omit(query, ['key', 'refId', 'datasource']);
+  const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
   return JSON.stringify(strippedQuery);
 }
 
@@ -304,7 +304,7 @@ export function notEmptyQuery(query: DataQuery) {
   /* Check if query has any other properties besides key, refId and datasource.
    * If not, then we consider it empty query.
    */
-  const strippedQuery = _.omit(query, ['key', 'refId', 'datasource']);
+  const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
   const queryKeys = Object.keys(strippedQuery);
 
   if (queryKeys.length > 0) {
@@ -322,7 +322,7 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
 
     const listOfMatchingQueries = query.queries.filter((query) =>
       // Remove fields in which we don't want to be searching
-      Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
+      Object.values(omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
         value?.toString().includes(searchFilter)
       )
     );

@@ -1,5 +1,5 @@
 // Libraries
-import isNumber from 'lodash/isNumber';
+import { isNumber } from 'lodash';
 
 import { NullValueMode, Field, FieldState, FieldCalcs, FieldType } from '../types/index';
 import { Registry, RegistryItem } from '../utils/Registry';

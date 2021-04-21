@@ -7,7 +7,7 @@ import {
   updateVariableTags,
 } from './reducer';
 import { QueryVariableModel, VariableSort } from '../types';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload, VariablesState } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';

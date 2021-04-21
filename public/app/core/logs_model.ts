@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { size } from 'lodash';
 import { colors, ansicolor } from '@grafana/ui';
 
 import {
@@ -399,7 +399,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
-  if (_.size(commonLabels) > 0) {
+  if (size(commonLabels) > 0) {
     meta.push({
       label: 'Common labels',
       value: commonLabels,

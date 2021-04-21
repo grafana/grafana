@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { extend } from 'lodash';
 import coreModule from 'app/core/core_module';
 // @ts-ignore
 import Drop from 'tether-drop';
@@ -20,7 +20,7 @@ function popoverSrv(this: any, $compile: any, $rootScope: GrafanaRootScope, $tim
       openDrop = null;
     }
 
-    const scope = _.extend($rootScope.$new(true), options.model);
+    const scope = extend($rootScope.$new(true), options.model);
     let drop: any;
 
     const cleanUp = () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import take from 'lodash/take';
+import { take } from 'lodash';
 
 import { InterpolateFunction, PanelProps } from '@grafana/data';
 import { CustomScrollbar, Icon, useStyles } from '@grafana/ui';

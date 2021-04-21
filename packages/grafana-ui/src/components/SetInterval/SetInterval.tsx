@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
-import _ from 'lodash';
+import { isEqual } from 'lodash';
 
 import { stringToMs, SelectableValue } from '@grafana/data';
 import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
@@ -63,7 +63,7 @@ export class SetInterval extends PureComponent<Props> {
   componentDidUpdate(prevProps: Props) {
     if (
       (RefreshPicker.isLive(prevProps.interval) && RefreshPicker.isLive(this.props.interval)) ||
-      _.isEqual(prevProps, this.props)
+      isEqual(prevProps, this.props)
     ) {
       return;
     }

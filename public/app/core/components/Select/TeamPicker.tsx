@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import _, { debounce } from 'lodash';
+import { debounce, isNil } from 'lodash';
 import { AsyncSelect } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
 
@@ -36,7 +36,7 @@ export class TeamPicker extends Component<Props, State> {
   search(query?: string) {
     this.setState({ isLoading: true });
 
-    if (_.isNil(query)) {
+    if (isNil(query)) {
       query = '';
     }
 

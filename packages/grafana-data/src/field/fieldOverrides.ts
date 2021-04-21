@@ -19,10 +19,7 @@ import {
 } from '../types';
 import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
-import isNumber from 'lodash/isNumber';
-import set from 'lodash/set';
-import unset from 'lodash/unset';
-import get from 'lodash/get';
+import { isNumber, set, unset, get } from 'lodash';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';

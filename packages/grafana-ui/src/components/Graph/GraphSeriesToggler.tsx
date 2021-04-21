@@ -1,7 +1,6 @@
 import React from 'react';
 import { GraphSeriesXY } from '@grafana/data';
-import difference from 'lodash/difference';
-import isEqual from 'lodash/isEqual';
+import { difference, isEqual } from 'lodash';
 
 export interface GraphSeriesTogglerAPI {
   onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;

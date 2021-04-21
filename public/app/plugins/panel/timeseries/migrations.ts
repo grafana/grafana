@@ -23,9 +23,7 @@ import {
   TooltipDisplayMode,
 } from '@grafana/ui';
 import { Options } from './types';
-import omitBy from 'lodash/omitBy';
-import isNil from 'lodash/isNil';
-import { isNumber, isString } from 'lodash';
+import { omitBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';
 
 /**

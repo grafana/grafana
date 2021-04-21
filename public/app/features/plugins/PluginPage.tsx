@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import find from 'lodash/find';
+import { find } from 'lodash';
 // Types
 import {
   AppPlugin,

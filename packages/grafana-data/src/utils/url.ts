@@ -2,7 +2,7 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import _ from 'lodash';
+import { toNumber } from 'lodash';
 import { ExploreUrlState } from '../types/explore';
 
 /**
@@ -156,7 +156,7 @@ export function parseKeyValue(keyValue: string) {
 
         let parsedVal: any;
         if (typeof val === 'string' && val !== '') {
-          parsedVal = val === 'true' || val === 'false' ? val === 'true' : _.toNumber(val);
+          parsedVal = val === 'true' || val === 'false' ? val === 'true' : toNumber(val);
         } else {
           parsedVal = val;
         }

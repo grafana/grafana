@@ -1,11 +1,11 @@
 import { rangeUtil, dateTime } from '@grafana/data';
-import _ from 'lodash';
+import { keys } from 'lodash';
 
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {
     it('when custom settings should return default range list', () => {
       const groups: any = rangeUtil.getRelativeTimesList({ time_options: [] }, 'Last 5 minutes');
-      expect(_.keys(groups).length).toBe(4);
+      expect(keys(groups).length).toBe(4);
       expect(groups[3][0].active).toBe(true);
     });
   });

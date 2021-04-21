@@ -1,5 +1,18 @@
 // Libraries
-import _, { defaults } from 'lodash';
+import {
+  defaults,
+  each,
+  find,
+  findIndex,
+  flattenDeep,
+  isArray,
+  isBoolean,
+  isNumber,
+  isString,
+  map,
+  max,
+  some,
+} from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
@@ -55,7 +68,7 @@ export class DashboardMigrator {
           return;
         }
 
-        if (_.isBoolean(panel.legend)) {
+        if (isBoolean(panel.legend)) {
           panel.legend = { show: panel.legend };
         }
 
@@ -108,7 +121,7 @@ export class DashboardMigrator {
         if (panel.type !== 'graph') {
           return;
         }
-        _.each(panel.aliasYAxis, (value, key) => {
+        each(panel.aliasYAxis, (value, key) => {
           panel.seriesOverrides = [{ alias: key, yaxis: value }];
         });
         delete panel.aliasYAxis;
@@ -117,7 +130,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move drop-downs to new schema
-      const annotations: any = _.find(old.pulldowns, { type: 'annotations' });
+      const annotations: any = find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -150,7 +163,7 @@ export class DashboardMigrator {
 
       // ensure query refIds
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, (target) => {
+        each(panel.targets, (target) => {
           if (!target.refId) {
             target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
           }
@@ -160,14 +173,14 @@ export class DashboardMigrator {
 
     if (oldVersion < 8) {
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, (target) => {
+        each(panel.targets, (target) => {
           // update old influxdb query schema
           if (target.fields && target.tags && target.groupBy) {
             if (target.rawQuery) {
               delete target.fields;
               delete target.fill;
             } else {
-              target.select = _.map(target.fields, (field) => {
+              target.select = map(target.fields, (field) => {
                 const parts = [];
                 parts.push({ type: 'field', params: [field.name] });
                 parts.push({ type: field.func, params: [] });
@@ -180,7 +193,7 @@ export class DashboardMigrator {
                 return parts;
               });
               delete target.fields;
-              _.each(target.groupBy, (part) => {
+              each(target.groupBy, (part) => {
                 if (part.type === 'time' && part.interval) {
                   part.params = [part.interval];
                   delete part.interval;
@@ -228,7 +241,7 @@ export class DashboardMigrator {
           return;
         }
 
-        _.each(panel.styles, (style) => {
+        each(panel.styles, (style) => {
           if (style.thresholds && style.thresholds.length >= 3) {
             const k = style.thresholds;
             k.shift();
@@ -240,7 +253,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.getVariables(), (templateVariable: any) => {
+      each(this.dashboard.getVariables(), (templateVariable: any) => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }
@@ -346,8 +359,8 @@ export class DashboardMigrator {
           }
         }
 
-        if (_.isNumber(t1.value)) {
-          if (_.isNumber(t2.value)) {
+        if (isNumber(t1.value)) {
+          if (isNumber(t2.value)) {
             if (t1.value > t2.value) {
               t1.op = t2.op = 'lt';
               panel.thresholds.push(t1);
@@ -388,7 +401,7 @@ export class DashboardMigrator {
           // (ie. [1,2,3,4,6,12,24] for 24 columns)
           panel.maxPerRow =
             factors[
-              _.findIndex(factors, (o) => {
+              findIndex(factors, (o) => {
                 return o > max;
               }) - 1
             ];
@@ -430,7 +443,7 @@ export class DashboardMigrator {
     if (oldVersion < 19) {
       // migrate change to gauge options
       panelUpgrades.push((panel: any) => {
-        if (panel.links && _.isArray(panel.links)) {
+        if (panel.links && isArray(panel.links)) {
           panel.links = panel.links.map(upgradePanelLink);
         }
       });
@@ -445,13 +458,13 @@ export class DashboardMigrator {
       };
       panelUpgrades.push((panel: any) => {
         // For graph panel
-        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+        if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
         }
 
         // For panel with fieldOptions
         if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
-          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+          if (panel.options.fieldOptions.defaults.links && isArray(panel.options.fieldOptions.defaults.links)) {
             panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
           if (panel.options.fieldOptions.defaults.title) {
@@ -472,13 +485,13 @@ export class DashboardMigrator {
       };
       panelUpgrades.push((panel: any) => {
         // For graph panel
-        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+        if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
         }
 
         // For panel with fieldOptions
         if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
-          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+          if (panel.options.fieldOptions.defaults.links && isArray(panel.options.fieldOptions.defaults.links)) {
             panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
         }
@@ -491,7 +504,7 @@ export class DashboardMigrator {
           return;
         }
 
-        _.each(panel.styles, (style) => {
+        each(panel.styles, (style) => {
           style.align = 'auto';
         });
       });
@@ -610,10 +623,10 @@ export class DashboardMigrator {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId = _.max(
-      _.flattenDeep(
-        _.map(old.rows, (row) => {
-          return _.map(row.panels, 'id');
+    const maxPanelId = max(
+      flattenDeep(
+        map(old.rows, (row) => {
+          return map(row.panels, 'id');
         })
       )
     );
@@ -624,7 +637,7 @@ export class DashboardMigrator {
     }
 
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
+    const showRows = some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
 
     for (const row of old.rows) {
       if (row.repeatIteration) {
@@ -697,7 +710,7 @@ export class DashboardMigrator {
 }
 
 function getGridHeight(height: number | string) {
-  if (_.isString(height)) {
+  if (isString(height)) {
     height = parseInt(height.replace('px', ''), 10);
   }
 
@@ -769,7 +782,7 @@ class RowArea {
     }
 
     if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
-      const yPos = _.max(this.area.slice(startPlace));
+      const yPos = max(this.area.slice(startPlace));
       place = {
         x: startPlace,
         y: yPos,

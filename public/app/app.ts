@@ -8,6 +8,7 @@ import 'file-saver';
 import 'jquery';
 import '@grafana/ui/src/components/Icon/iconBundle';
 
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import ReactDOM from 'react-dom';
 import React from 'react';

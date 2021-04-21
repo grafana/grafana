@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useRef } from 'react';
-import isNil from 'lodash/isNil';
+import { isNil } from 'lodash';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
 import Scrollbars from 'react-custom-scrollbars';

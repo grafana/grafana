@@ -1,5 +1,5 @@
 import { GraphiteDatasource } from './datasource';
-import _ from 'lodash';
+import { isArray } from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
@@ -215,7 +215,7 @@ describe('graphiteDatasource', () => {
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(isArray(results[0].tags)).toEqual(true);
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -244,7 +244,7 @@ describe('graphiteDatasource', () => {
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(isArray(results[0].tags)).toEqual(true);
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');

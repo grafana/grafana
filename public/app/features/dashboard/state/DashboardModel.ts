@@ -1,5 +1,18 @@
 // Libaries
-import _ from 'lodash';
+import {
+  cloneDeep,
+  each,
+  filter,
+  find,
+  findIndex,
+  indexOf,
+  isEqual,
+  map,
+  maxBy,
+  pull,
+  some,
+  defaults as _defaults,
+} from 'lodash';
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
@@ -129,7 +142,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
-    this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.panels = map(data.panels || [], (panelData: any) => new PanelModel(panelData));
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -188,7 +201,7 @@ export class DashboardModel {
 
   // cleans meta data and other non persistent state
   getSaveModelClone(options?: CloneOptions): DashboardModel {
-    const defaults = _.defaults(options || {}, {
+    const defaults = _defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
     });
@@ -200,7 +213,7 @@ export class DashboardModel {
         continue;
       }
 
-      copy[property] = _.cloneDeep(this[property]);
+      copy[property] = cloneDeep(this[property]);
     }
 
     this.updateTemplatingSaveModelClone(copy, defaults);
@@ -284,7 +297,7 @@ export class DashboardModel {
     if (!defaults.saveVariables) {
       for (let i = 0; i < copy.templating.list.length; i++) {
         const current = copy.templating.list[i];
-        const original: any = _.find(originalVariables, { name: current.name, type: current.type });
+        const original: any = find(originalVariables, { name: current.name, type: current.type });
 
         if (!original) {
           continue;
@@ -457,7 +470,7 @@ export class DashboardModel {
     }
 
     // remove panels
-    _.pull(this.panels, ...panelsToRemove);
+    pull(this.panels, ...panelsToRemove);
     panelsToRemove.map((p) => p.destroy());
     this.sortPanelsByGridPos();
     this.events.publish(new DashboardPanelsChangedEvent());
@@ -491,8 +504,8 @@ export class DashboardModel {
         panelsToRemove.push(panel);
       }
     }
-    _.pull(rowPanels, ...panelsToRemove);
-    _.pull(this.panels, ...panelsToRemove);
+    pull(rowPanels, ...panelsToRemove);
+    pull(this.panels, ...panelsToRemove);
   }
 
   processRowRepeats(row: PanelModel) {
@@ -502,7 +515,7 @@ export class DashboardModel {
 
     let rowPanels = row.panels;
     if (!row.collapsed) {
-      const rowPanelIndex = _.findIndex(this.panels, (p: PanelModel) => p.id === row.id);
+      const rowPanelIndex = findIndex(this.panels, (p: PanelModel) => p.id === row.id);
       rowPanels = this.getRowPanels(rowPanelIndex);
     }
 
@@ -511,7 +524,7 @@ export class DashboardModel {
     for (let i = 0; i < rowPanels.length; i++) {
       const panel = rowPanels[i];
       if (panel.repeat) {
-        const panelIndex = _.findIndex(this.panels, (p: PanelModel) => p.id === panel.id);
+        const panelIndex = findIndex(this.panels, (p: PanelModel) => p.id === panel.id);
         this.repeatPanel(panel, panelIndex);
       }
     }
@@ -556,13 +569,13 @@ export class DashboardModel {
     // for row clones we need to figure out panels under row to clone and where to insert clone
     let rowPanels: PanelModel[], insertPos: number;
     if (sourceRowPanel.collapsed) {
-      rowPanels = _.cloneDeep(sourceRowPanel.panels);
+      rowPanels = cloneDeep(sourceRowPanel.panels);
       clone.panels = rowPanels;
       // insert copied row after preceding row
       insertPos = sourcePanelIndex + valueIndex;
     } else {
       rowPanels = this.getRowPanels(sourcePanelIndex);
-      clone.panels = _.map(rowPanels, (panel: PanelModel) => panel.getSaveModel());
+      clone.panels = map(rowPanels, (panel: PanelModel) => panel.getSaveModel());
       // insert copied row after preceding row's panels
       insertPos = sourcePanelIndex + (rowPanels.length + 1) * valueIndex;
     }
@@ -649,7 +662,7 @@ export class DashboardModel {
 
       if (panel.collapsed) {
         // For collapsed row just copy its panels and set scoped vars and proper IDs
-        _.each(rowPanels, (rowPanel: PanelModel, i: number) => {
+        each(rowPanels, (rowPanel: PanelModel, i: number) => {
           setScopedVars(rowPanel, option);
           if (optionIndex > 0) {
             this.updateRepeatedPanelIds(rowPanel, true);
@@ -661,7 +674,7 @@ export class DashboardModel {
       } else {
         // insert after 'row' panel
         const insertPos = panelIndex + (rowPanels.length + 1) * optionIndex + 1;
-        _.each(rowPanels, (rowPanel: PanelModel, i: number) => {
+        each(rowPanels, (rowPanel: PanelModel, i: number) => {
           setScopedVars(rowPanel, option);
           if (optionIndex > 0) {
             const cloneRowPanel = new PanelModel(rowPanel);
@@ -701,7 +714,7 @@ export class DashboardModel {
     if (isAllVariable(variable)) {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
-      selectedOptions = _.filter(variable.options, { selected: true });
+      selectedOptions = filter(variable.options, { selected: true });
     }
     return selectedOptions;
   }
@@ -711,8 +724,8 @@ export class DashboardModel {
       return 0;
     }
     const rowYPos = rowPanel.gridPos.y;
-    const positions = _.map(rowPanel.panels, 'gridPos');
-    const maxPos = _.maxBy(positions, (pos: GridPos) => {
+    const positions = map(rowPanel.panels, 'gridPos');
+    const maxPos = maxBy(positions, (pos: GridPos) => {
       return pos.y + pos.h;
     });
     return maxPos.y + maxPos.h - rowYPos;
@@ -830,11 +843,11 @@ export class DashboardModel {
   }
 
   toggleRow(row: PanelModel) {
-    const rowIndex = _.indexOf(this.panels, row);
+    const rowIndex = indexOf(this.panels, row);
 
     if (row.collapsed) {
       row.collapsed = false;
-      const hasRepeat = _.some(row.panels as PanelModel[], (p: PanelModel) => p.repeat);
+      const hasRepeat = some(row.panels as PanelModel[], (p: PanelModel) => p.repeat);
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
@@ -883,9 +896,9 @@ export class DashboardModel {
     const rowPanels = this.getRowPanels(rowIndex);
 
     // remove panels
-    _.pull(this.panels, ...rowPanels);
+    pull(this.panels, ...rowPanels);
     // save panel models inside row panel
-    row.panels = _.map(rowPanels, (panel: PanelModel) => panel.getSaveModel());
+    row.panels = map(rowPanels, (panel: PanelModel) => panel.getSaveModel());
     row.collapsed = true;
 
     // emit change event
@@ -957,11 +970,11 @@ export class DashboardModel {
   }
 
   resetOriginalTime() {
-    this.originalTime = _.cloneDeep(this.time);
+    this.originalTime = cloneDeep(this.time);
   }
 
   hasTimeChanged() {
-    return !_.isEqual(this.time, this.originalTime);
+    return !isEqual(this.time, this.originalTime);
   }
 
   resetOriginalVariables(initial = false) {
@@ -1068,16 +1081,16 @@ export class DashboardModel {
       return false;
     }
 
-    const updated = _.map(currentVariables, (variable: any) => {
+    const updated = map(currentVariables, (variable: any) => {
       return {
         name: variable.name,
         type: variable.type,
-        current: _.cloneDeep(variable.current),
-        filters: _.cloneDeep(variable.filters),
+        current: cloneDeep(variable.current),
+        filters: cloneDeep(variable.filters),
       };
     });
 
-    return !_.isEqual(updated, originalVariables);
+    return !isEqual(updated, originalVariables);
   }
 
   private cloneVariablesFrom(variables: any[]): any[] {
@@ -1085,8 +1098,8 @@ export class DashboardModel {
       return {
         name: variable.name,
         type: variable.type,
-        current: _.cloneDeep(variable.current),
-        filters: _.cloneDeep(variable.filters),
+        current: cloneDeep(variable.current),
+        filters: cloneDeep(variable.filters),
       };
     });
   }

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { once, chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 
@@ -204,7 +204,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length) {
-      const historyItems = _.chain(history)
+      const historyItems = chain(history)
         .map((h) => h.query.expr)
         .filter()
         .uniq()
@@ -389,7 +389,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const labelKeys = labelValues ? Object.keys(labelValues) : containsMetric ? null : DEFAULT_KEYS;
 
       if (labelKeys) {
-        const possibleKeys = _.difference(labelKeys, existingKeys);
+        const possibleKeys = difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
           context = 'context-labels';
           const newItems = possibleKeys.map((key) => ({ label: key }));
@@ -472,7 +472,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * because we can cache more aggressively here and also we do not want to invalidate this cache the same way as in
    * fetchSeriesLabels.
    */
-  fetchDefaultLabels = _.once(async () => {
+  fetchDefaultLabels = once(async () => {
     const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
     return values.reduce((acc, value) => ({ ...acc, ...value }), {});
   });

@@ -1,12 +1,12 @@
-import _ from 'lodash';
+import { every, find } from 'lodash';
 import { DataQuery } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   return (
-    _.find(letters, (refId) => {
-      return _.every(queries, (other) => {
+    find(letters, (refId) => {
+      return every(queries, (other) => {
         return other.refId !== refId;
       });
     }) ?? 'NA'

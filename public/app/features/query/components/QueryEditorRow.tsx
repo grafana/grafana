@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import _ from 'lodash';
+import { has, cloneDeep } from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader, getTemplateSrv } from '@grafana/runtime';
@@ -127,7 +127,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.setState({
       datasource,
       loadedDataSourceIdentifier: dataSourceIdentifier,
-      hasTextEditMode: _.has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
+      hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
@@ -232,7 +232,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   onCopyQuery = () => {
-    const copy = _.cloneDeep(this.props.query);
+    const copy = cloneDeep(this.props.query);
     this.props.onAddQuery(copy);
   };
 

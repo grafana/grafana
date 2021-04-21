@@ -14,7 +14,7 @@ import {
   standardTransformers,
 } from '@grafana/data';
 
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**

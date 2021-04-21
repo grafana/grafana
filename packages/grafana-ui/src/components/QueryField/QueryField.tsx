@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { debounce } from 'lodash';
 import React, { Context } from 'react';
 
 import { Value, Editor as CoreEditor } from 'slate';
@@ -64,7 +64,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
 
-    this.runOnChangeDebounced = _.debounce(this.runOnChange, 500);
+    this.runOnChangeDebounced = debounce(this.runOnChange, 500);
 
     const { onTypeahead, cleanText, portalOrigin, onWillApplySuggestion } = props;
 

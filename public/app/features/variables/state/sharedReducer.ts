@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import cloneDeep from 'lodash/cloneDeep';
-import { default as lodashDefaults } from 'lodash/defaults';
+import { defaults as lodashDefaults, cloneDeep } from 'lodash';
 import { LoadingState, VariableType } from '@grafana/data';
 import { VariableModel, VariableOption, VariableWithOptions } from '../types';
 import { AddVariable, getInstanceState, VariablePayload, initialVariablesState, VariablesState } from './types';

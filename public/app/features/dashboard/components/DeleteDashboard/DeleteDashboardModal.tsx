@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import sumBy from 'lodash/sumBy';
+import { sumBy } from 'lodash';
 import { Modal, ConfirmModal, HorizontalGroup, Button } from '@grafana/ui';
 import { DashboardModel, PanelModel } from '../../state';
 import { useDashboardDelete } from './useDashboardDelete';

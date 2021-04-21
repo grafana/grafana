@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import moment from 'moment-timezone';
-import _round from 'lodash/round';
+import { round as _round } from 'lodash';
 
 import { toFloatPrecision } from './number';
 

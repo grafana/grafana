@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find } from 'lodash';
 import { colors } from '@grafana/ui';
 import {
   DataFrame,
@@ -147,7 +147,7 @@ export class DataProcessor {
         }
 
         const validOptions = this.getXAxisValueOptions({});
-        const found: any = _.find(validOptions, { value: this.panel.xaxis.values[0] });
+        const found: any = find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }

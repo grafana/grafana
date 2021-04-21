@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map, each, isUndefined } from 'lodash';
 import coreModule from 'app/core/core_module';
 import { textUtil } from '@grafana/data';
 
@@ -15,7 +15,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
       propertyName: propertyName,
       index: $scope.overrideMenu.length,
       values,
-      submenu: _.map(values, (value) => {
+      submenu: map(values, (value) => {
         return { text: String(value), value: value };
       }),
     };
@@ -79,16 +79,16 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   };
 
   $scope.getSeriesNames = () => {
-    return _.map($scope.ctrl.seriesList, (series) => {
+    return map($scope.ctrl.seriesList, (series) => {
       return textUtil.escapeHtml(series.alias);
     });
   };
 
   $scope.updateCurrentOverrides = () => {
     $scope.currentOverrides = [];
-    _.each($scope.overrideMenu, (option) => {
+    each($scope.overrideMenu, (option) => {
       const value = $scope.override[option.propertyName];
-      if (_.isUndefined(value)) {
+      if (isUndefined(value)) {
         return;
       }
       $scope.currentOverrides.push({

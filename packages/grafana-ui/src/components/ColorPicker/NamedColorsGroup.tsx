@@ -2,8 +2,7 @@ import React, { FunctionComponent } from 'react';
 import { Themeable } from '../../types';
 import { ColorDefinition } from '@grafana/data';
 import { Color } from 'csstype';
-import upperFirst from 'lodash/upperFirst';
-import find from 'lodash/find';
+import { upperFirst, find } from 'lodash';
 
 type ColorChangeHandler = (color: ColorDefinition) => void;
 

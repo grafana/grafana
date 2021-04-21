@@ -1,5 +1,5 @@
 import angular, { auto } from 'angular';
-import _ from 'lodash';
+import { reduce, map, each } from 'lodash';
 import { InfluxQueryBuilder } from './query_builder';
 import InfluxQueryModel from './influx_query_model';
 import queryPart from './query_part';
@@ -100,7 +100,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   buildSelectMenu() {
     const categories = queryPart.getCategories();
-    this.selectMenu = _.reduce(
+    this.selectMenu = reduce(
       categories,
       (memo, cat, key) => {
         const menu = {
@@ -290,7 +290,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   transformToSegments(addTemplateVars: any) {
     return (results: any) => {
-      const segments = _.map(results, (segment) => {
+      const segments = map(results, (segment) => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,
@@ -394,7 +394,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     let tagIndex = 0;
     let tagOperator: string | null = '';
 
-    _.each(this.tagSegments, (segment2, index) => {
+    each(this.tagSegments, (segment2, index) => {
       if (segment2.type === 'key') {
         if (tags.length === 0) {
           tags.push({});

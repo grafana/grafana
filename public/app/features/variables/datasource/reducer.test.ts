@@ -4,7 +4,7 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { createDataSourceOptions, dataSourceVariableReducer } from './reducer';
 import { DataSourceVariableModel } from '../types';
 import { getVariableTestContext } from '../state/helpers';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { createDataSourceVariableAdapter } from './adapter';
 import { toVariablePayload, VariablesState } from '../state/types';
 import { getMockPlugins } from '../../plugins/__mocks__/pluginMocks';

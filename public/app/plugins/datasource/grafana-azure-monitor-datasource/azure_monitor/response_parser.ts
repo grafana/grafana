@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find, get } from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
 import {
   AzureMonitorLocalizedValue,
@@ -19,9 +19,9 @@ export default class ResponseParser {
     }
 
     for (let i = 0; i < result.data.value.length; i++) {
-      if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
-        const value = _.get(result.data.value[i], valueFieldName);
-        const text = _.get(result.data.value[i], textFieldName, value);
+      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
+        const value = get(result.data.value[i], valueFieldName);
+        const text = get(result.data.value[i], textFieldName, value);
 
         list.push({
           text: text,
@@ -114,10 +114,10 @@ export default class ResponseParser {
     const valueFieldName = 'subscriptionId';
     const textFieldName = 'displayName';
     for (let i = 0; i < result.data.value.length; i++) {
-      if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
+      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
         list.push({
-          text: `${_.get(result.data.value[i], textFieldName)}`,
-          value: _.get(result.data.value[i], valueFieldName),
+          text: `${get(result.data.value[i], textFieldName)}`,
+          value: get(result.data.value[i], valueFieldName),
         });
       }
     }
@@ -135,10 +135,10 @@ export default class ResponseParser {
     const valueFieldName = 'subscriptionId';
     const textFieldName = 'displayName';
     for (let i = 0; i < result.data.value.length; i++) {
-      if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
+      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
         list.push({
-          label: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
-          value: _.get(result.data.value[i], valueFieldName),
+          label: `${get(result.data.value[i], textFieldName)} - ${get(result.data.value[i], valueFieldName)}`,
+          value: get(result.data.value[i], valueFieldName),
         });
       }
     }
@@ -156,10 +156,10 @@ export default class ResponseParser {
     const valueFieldName = 'customerId';
     const textFieldName = 'name';
     for (let i = 0; i < result.data.value.length; i++) {
-      if (!_.find(list, ['value', _.get(result.data.value[i].properties, valueFieldName)])) {
+      if (!find(list, ['value', get(result.data.value[i].properties, valueFieldName)])) {
         list.push({
-          label: _.get(result.data.value[i], textFieldName),
-          value: _.get(result.data.value[i].properties, valueFieldName),
+          label: get(result.data.value[i], textFieldName),
+          value: get(result.data.value[i].properties, valueFieldName),
         });
       }
     }

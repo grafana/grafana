@@ -1,6 +1,5 @@
 // Libaries
-import flattenDeep from 'lodash/flattenDeep';
-import cloneDeep from 'lodash/cloneDeep';
+import { flattenDeep, cloneDeep } from 'lodash';
 // Components
 import coreModule from 'app/core/core_module';
 // Utils & Services

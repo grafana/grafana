@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _values from 'lodash/values';
+import { values as _values } from 'lodash';
 
 import { followsFromRef } from './trace.fixture';
 import {

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { each, map } from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
@@ -908,7 +908,7 @@ function createRow(options: any, panelDescriptions: any[]) {
   let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
   const panels: any[] = [];
-  _.each(panelDescriptions, (panelDesc) => {
+  each(panelDescriptions, (panelDesc) => {
     const panel = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
       //@ts-ignore
@@ -929,7 +929,7 @@ function createRow(options: any, panelDescriptions: any[]) {
 }
 
 function getGridPositions(dashboard: DashboardModel) {
-  return _.map(dashboard.panels, (panel: PanelModel) => {
+  return map(dashboard.panels, (panel: PanelModel) => {
     return panel.gridPos;
   });
 }

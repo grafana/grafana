@@ -1,5 +1,4 @@
-import debounce from 'lodash/debounce';
-import trim from 'lodash/trim';
+import { debounce, trim } from 'lodash';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import {
   QueryVariableModel,

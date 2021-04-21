@@ -1,6 +1,6 @@
 import { Task, TaskRunner } from './task';
 import fs from 'fs';
-import _ from 'lodash';
+import { template as _template } from 'lodash';
 import { prompt } from 'inquirer';
 import { pascalCase } from '../utils/pascalCase';
 import { promptConfirm, promptInput, promptList } from '../utils/prompt';
@@ -53,7 +53,7 @@ export const promptDetails = () => {
 export const generateComponents: ComponentGenerator = async ({ details, path }) => {
   const name = pascalCase(details.name);
   const getCompiled = (template: string) => {
-    return _.template(template)({ ...details, name });
+    return _template(template)({ ...details, name });
   };
   const filePath = `${path}/${name}`;
   let paths = [];

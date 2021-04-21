@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chunk, flatten, isString } from 'lodash';
 
 import {
   DataQueryRequest,
@@ -187,7 +187,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       }
     } catch (error) {
       status = 'error';
-      if (_.isString(error)) {
+      if (isString(error)) {
         message = error;
       } else {
         message = 'Google Cloud Monitoring: ';
@@ -317,7 +317,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return Object.entries(object).reduce((acc, [key, value]) => {
       return {
         ...acc,
-        [key]: value && _.isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
+        [key]: value && isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
       };
     }, {} as T);
   }
@@ -346,7 +346,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
-    const completeFilter = _.chunk(filters, 4)
+    const completeFilter = chunk(filters, 4)
       .map(([key, operator, value, condition]) => ({
         key,
         operator,
@@ -355,7 +355,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       }))
       .reduce((res, filter) => (filter.value ? [...res, filter] : res), []);
 
-    const filterArray = _.flatten(
+    const filterArray = flatten(
       completeFilter.map(({ key, operator, value, condition }: Filter) => [
         this.templateSrv.replace(key, scopedVars || {}),
         operator,

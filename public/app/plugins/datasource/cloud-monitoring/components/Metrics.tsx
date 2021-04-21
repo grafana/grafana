@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import _ from 'lodash';
+import { startCase, uniqBy } from 'lodash';
 
 import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
@@ -110,10 +110,10 @@ export function Metrics(props: Props) {
   const getServicesList = (metricDescriptors: MetricDescriptor[]) => {
     const services = metricDescriptors.map((m) => ({
       value: m.service,
-      label: _.startCase(m.serviceShortName),
+      label: startCase(m.serviceShortName),
     }));
 
-    return services.length > 0 ? _.uniqBy(services, (s) => s.value) : [];
+    return services.length > 0 ? uniqBy(services, (s) => s.value) : [];
   };
 
   return (

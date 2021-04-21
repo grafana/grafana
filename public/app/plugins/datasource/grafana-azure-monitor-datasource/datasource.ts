@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, upperFirst } from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
@@ -69,7 +69,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
       // Initialize the list of queries
       if (!byType.has(target.queryType)) {
-        const queryForType = _.cloneDeep(options);
+        const queryForType = cloneDeep(options);
         queryForType.requestId = `${queryForType.requestId}-${target.refId}`;
         queryForType.targets = [];
         byType.set(target.queryType, queryForType);
@@ -170,7 +170,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return {
         status: status,
         message: message,
-        title: _.upperFirst(status),
+        title: upperFirst(status),
       };
     });
   }

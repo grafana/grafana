@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, each, map } from 'lodash';
 import { describe, beforeEach, it, expect } from '../../../../../test/lib/common';
 import TimeSeries from 'app/core/time_series2';
 import {
@@ -36,17 +36,17 @@ describe('isHeatmapDataEqual', () => {
   });
 
   it('should proper compare objects', () => {
-    const heatmapC = _.cloneDeep(ctx.heatmapA);
+    const heatmapC = cloneDeep(ctx.heatmapA);
     heatmapC['1422774000000'].buckets['1'].values = [1, 1.5];
 
-    const heatmapD = _.cloneDeep(ctx.heatmapA);
+    const heatmapD = cloneDeep(ctx.heatmapA);
     heatmapD['1422774000000'].buckets['1'].values = [1.5, 1, 1.6];
 
-    const heatmapE = _.cloneDeep(ctx.heatmapA);
+    const heatmapE = cloneDeep(ctx.heatmapA);
     heatmapE['1422774000000'].buckets['1'].values = [1, 1.6];
 
     const empty = {};
-    const emptyValues = _.cloneDeep(ctx.heatmapA);
+    const emptyValues = cloneDeep(ctx.heatmapA);
     emptyValues['1422774000000'].buckets['1'].values = [];
 
     expect(isHeatmapDataEqual(ctx.heatmapA, ctx.heatmapB)).toBe(true);
@@ -88,7 +88,7 @@ describe('calculateBucketSize', () => {
     });
 
     it('should properly calculate bucket size', () => {
-      _.each(ctx.bounds_set, (b) => {
+      each(ctx.bounds_set, (b) => {
         const bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
         expect(bucketSize).toBe(b.size);
       });
@@ -108,7 +108,7 @@ describe('calculateBucketSize', () => {
     });
 
     it('should properly calculate bucket size', () => {
-      _.each(ctx.bounds_set, (b) => {
+      each(ctx.bounds_set, (b) => {
         const bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
         expect(isEqual(bucketSize, b.size)).toBe(true);
       });
@@ -331,12 +331,12 @@ describe('Histogram converter', () => {
 
     it('should use bucket index as a bound', () => {
       const heatmap = histogramToHeatmap(ctx.series);
-      const bucketLabels = _.map(heatmap['1422774000000'].buckets, (b, label) => label);
-      const bucketYs = _.map(heatmap['1422774000000'].buckets, 'y');
-      const bucketBottoms = _.map(heatmap['1422774000000'].buckets, (b) => b.bounds.bottom);
+      const bucketLabels = map(heatmap['1422774000000'].buckets, (b, label) => label);
+      const bucketYs = map(heatmap['1422774000000'].buckets, 'y');
+      const bucketBottoms = map(heatmap['1422774000000'].buckets, (b) => b.bounds.bottom);
       const expectedBounds = [0, 1, 2];
 
-      expect(bucketLabels).toEqual(_.map(expectedBounds, (b) => b.toString()));
+      expect(bucketLabels).toEqual(map(expectedBounds, (b) => b.toString()));
       expect(bucketYs).toEqual(expectedBounds);
       expect(bucketBottoms).toEqual(expectedBounds);
     });

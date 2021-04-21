@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map, cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
 import {
   CoreApp,
@@ -106,7 +106,7 @@ describe('PrometheusDatasource', () => {
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
     });
     it('should still perform a GET request with the DS HTTP method set to POST and not POST-friendly endpoint', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
+      const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('/foo');
@@ -114,7 +114,7 @@ describe('PrometheusDatasource', () => {
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
     });
     it('should try to perform a POST request with the DS HTTP method set to POST and POST-friendly endpoint', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
+      const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('api/v1/series');
@@ -280,7 +280,7 @@ describe('PrometheusDatasource', () => {
 
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
-        const seriesLabels = _.map(result[0].data, 'name');
+        const seriesLabels = map(result[0].data, 'name');
         expect(seriesLabels).toEqual(expected);
       });
     });

@@ -3,8 +3,7 @@ import { css, cx } from '@emotion/css';
 import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
 import { useStyles } from '../../themes/ThemeContext';
-import union from 'lodash/union';
-import sortBy from 'lodash/sortBy';
+import { union, sortBy } from 'lodash';
 import { LegendTableItem } from './VizLegendTableItem';
 import { GrafanaTheme } from '@grafana/data';
 
