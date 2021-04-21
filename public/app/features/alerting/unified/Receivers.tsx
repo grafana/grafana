@@ -18,15 +18,21 @@ const Receivers: FC = () => {
   const dispatch = useDispatch();
 
   const location = useLocation();
+  const isRoot = location.pathname.endsWith('/alerting/notifications');
 
-  const config = useUnifiedAlertingSelector((state) => state.amConfigs);
+  const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
+
+  const { result: config, loading, error } =
+    (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
+  const shouldLoadConfig = isRoot || !config;
+
   useEffect(() => {
-    if (alertManagerSourceName) {
+    if (alertManagerSourceName && shouldLoadConfig) {
       dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
     }
-  }, [alertManagerSourceName, dispatch]);
+  }, [alertManagerSourceName, dispatch, shouldLoadConfig]);
 
   useEffect(() => {
     if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && !(receiverTypes.result || receiverTypes.loading)) {
@@ -34,10 +40,7 @@ const Receivers: FC = () => {
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 
-  const { result, loading, error } =
-    (alertManagerSourceName && config[alertManagerSourceName]) || initialAsyncRequestState;
-
-  const disableAmSelect = !location.pathname.endsWith('/alerting/notifications');
+  const disableAmSelect = !isRoot;
 
   if (!alertManagerSourceName) {
     return <Redirect to="/alerting/notifications" />;
@@ -53,18 +56,24 @@ const Receivers: FC = () => {
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {loading && <LoadingPlaceholder text="loading receivers..." />}
-      {result && !loading && !error && (
+      {loading && !config && <LoadingPlaceholder text="loading configuration..." />}
+      {config && !error && (
         <Switch>
           <Route exact={true} path="/alerting/notifications">
-            <ReceiversAndTemplatesView config={result} alertManagerName={alertManagerSourceName} />
+            <ReceiversAndTemplatesView config={config} alertManagerName={alertManagerSourceName} />
           </Route>
           <Route exact={true} path="/alerting/notifications/templates/new">
-            <NewTemplateView />
+            <NewTemplateView config={config} alertManagerSourceName={alertManagerSourceName} />
           </Route>
           <Route exact={true} path="/alerting/notifications/templates/:name/edit">
             {({ match }: RouteChildrenProps<{ name: string }>) =>
-              match?.params.name && <EditTemplateView templateName={decodeURIComponent(match?.params.name)} />
+              match?.params.name && (
+                <EditTemplateView
+                  alertManagerSourceName={alertManagerSourceName}
+                  config={config}
+                  templateName={decodeURIComponent(match?.params.name)}
+                />
+              )
             }
           </Route>
         </Switch>
