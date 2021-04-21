@@ -18,6 +18,7 @@ import (
 )
 
 type ProvisioningService interface {
+	registry.BackgroundService
 	RunInitProvisioners() error
 	ProvisionDatasources() error
 	ProvisionPlugins() error
@@ -25,7 +26,6 @@ type ProvisioningService interface {
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
-	registry.BackgroundService
 }
 
 func init() {
