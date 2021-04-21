@@ -1,6 +1,6 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind, CodeEditorSuggestionProvider } from './types';
+import { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind, CodeEditorSuggestionProvider, Monaco } from './types';
 
 /**
  * @internal -- only exported for tests
@@ -30,11 +30,12 @@ export function findInsertIndex(line: string): { index: number; prefix: string }
 }
 
 function getCompletionItems(
+  monaco: Monaco,
   prefix: string,
   suggestions: CodeEditorSuggestionItem[],
-  range: monaco.IRange
-): monaco.languages.CompletionItem[] {
-  const items: monaco.languages.CompletionItem[] = [];
+  range: monacoType.IRange
+): monacoType.languages.CompletionItem[] {
+  const items: monacoType.languages.CompletionItem[] = [];
   for (const suggestion of suggestions) {
     if (prefix && !suggestion.label.startsWith(prefix)) {
       continue; // skip non-matching suggestions
@@ -42,7 +43,7 @@ function getCompletionItems(
 
     items.push({
       ...suggestion,
-      kind: mapKinds(suggestion.kind),
+      kind: mapKinds(monaco, suggestion.kind),
       range,
       insertText: suggestion.insertText ?? suggestion.label,
     });
@@ -50,7 +51,7 @@ function getCompletionItems(
   return items;
 }
 
-function mapKinds(sug?: CodeEditorSuggestionItemKind): monaco.languages.CompletionItemKind {
+function mapKinds(monaco: Monaco, sug?: CodeEditorSuggestionItemKind): monacoType.languages.CompletionItemKind {
   switch (sug) {
     case CodeEditorSuggestionItemKind.Method:
       return monaco.languages.CompletionItemKind.Method;
@@ -70,9 +71,10 @@ function mapKinds(sug?: CodeEditorSuggestionItemKind): monaco.languages.Completi
  * @alpha
  */
 export function registerSuggestions(
+  monaco: Monaco,
   language: string,
   getSuggestions: CodeEditorSuggestionProvider
-): monaco.IDisposable | undefined {
+): monacoType.IDisposable | undefined {
   if (!language || !getSuggestions) {
     return undefined;
   }
@@ -91,7 +93,7 @@ export function registerSuggestions(
       if (context.triggerCharacter === '$') {
         range.startColumn = position.column - 1;
         return {
-          suggestions: getCompletionItems('$', getSuggestions(), range),
+          suggestions: getCompletionItems(monaco, '$', getSuggestions(), range),
         };
       }
 
@@ -106,7 +108,7 @@ export function registerSuggestions(
       const { index, prefix } = findInsertIndex(currentLine);
       range.startColumn = index + 1;
 
-      const suggestions = getCompletionItems(prefix, getSuggestions(), range);
+      const suggestions = getCompletionItems(monaco, prefix, getSuggestions(), range);
       if (suggestions.length) {
         // NOTE, this will replace any language provided suggestions
         return { suggestions };

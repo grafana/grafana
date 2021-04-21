@@ -1,15 +1,28 @@
 import React from 'react';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
-import { CodeEditorProps } from './types';
+import { Monaco, MonacoEditor as MonacoEditorType, CodeEditorProps, MonacoOptions } from './types';
 import { registerSuggestions } from './suggestions';
-import ReactMonaco from 'react-monaco-editor';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
+
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
 type Props = CodeEditorProps & Themeable;
 
+monacoEditorLoader.config({
+  paths: {
+    // TODO: use public path, or something? for when grafana is hosted under a subpath or CDN
+    vs: '/public/build/monaco/min/vs',
+  },
+});
+
 class UnthemedCodeEditor extends React.PureComponent<Props> {
-  completionCancel?: monaco.IDisposable;
+  completionCancel?: monacoType.IDisposable;
+  monaco?: Monaco;
+
+  constructor(props: Props) {
+    super(props);
+  }
 
   componentWillUnmount() {
     if (this.completionCancel) {
@@ -19,14 +32,17 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   componentDidUpdate(oldProps: Props) {
     const { getSuggestions, language } = this.props;
-    if (getSuggestions) {
-      // Language changed
-      if (language !== oldProps.language) {
-        if (this.completionCancel) {
-          this.completionCancel.dispose();
-        }
-        this.completionCancel = registerSuggestions(language, getSuggestions);
+
+    if (language !== oldProps.language && getSuggestions) {
+      if (this.completionCancel) {
+        this.completionCancel.dispose();
       }
+
+      if (!this.monaco) {
+        throw new Error('Monaco instance not loaded yet');
+      }
+
+      this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
     }
   }
 
@@ -40,14 +56,16 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
   };
 
-  editorWillMount = (m: typeof monaco) => {
+  handleBeforeMount = (monaco: Monaco) => {
+    this.monaco = monaco;
     const { language, getSuggestions } = this.props;
+
     if (getSuggestions) {
-      this.completionCancel = registerSuggestions(language, getSuggestions);
+      this.completionCancel = registerSuggestions(monaco, language, getSuggestions);
     }
   };
 
-  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
     const { onSave, onEditorDidMount } = this.props;
 
     this.getEditorValue = () => editor.getValue();
@@ -68,9 +86,12 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const options: monaco.editor.IEditorConstructionOptions = {
+    const options: MonacoOptions = {
       wordWrap: 'off',
+
+      // TODO: this true anymore?
       codeLens: false, // not included in the bundle
+
       minimap: {
         enabled: longText && showMiniMap,
         renderCharacters: false,
@@ -81,6 +102,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       overviewRulerBorder: false,
       automaticLayout: true,
     };
+
     if (!showLineNumbers) {
       options.glyphMargin = false;
       options.folding = false;
@@ -91,18 +113,18 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
     return (
       <div onBlur={this.onBlur}>
-        <ReactMonaco
+        <MonacoEditor
           width={width}
           height={height}
-          language={language}
+          defaultLanguage={language}
           theme={theme.isDark ? 'vs-dark' : 'vs-light'}
-          value={value}
+          defaultValue={value}
           options={{
             ...options,
             ...(monacoOptions ?? {}),
           }}
-          editorWillMount={this.editorWillMount}
-          editorDidMount={this.editorDidMount}
+          beforeMount={this.handleBeforeMount}
+          onMount={this.handleOnMount}
         />
       </div>
     );

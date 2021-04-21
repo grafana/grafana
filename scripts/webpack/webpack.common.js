@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const getBabelConfig = require('./babel.config');
 
 class CopyUniconsPlugin {
@@ -75,51 +75,13 @@ module.exports = {
   },
   plugins: [
     new CopyUniconsPlugin(),
-    new MonacoWebpackPlugin({
-      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
-      features: [
-        '!accessibilityHelp',
-        'bracketMatching',
-        'caretOperations',
-        '!clipboard',
-        '!codeAction',
-        '!codelens',
-        '!colorDetector',
-        '!comment',
-        '!contextmenu',
-        '!coreCommands',
-        '!cursorUndo',
-        '!dnd',
-        '!find',
-        'folding',
-        '!fontZoom',
-        '!format',
-        '!gotoError',
-        '!gotoLine',
-        '!gotoSymbol',
-        '!hover',
-        '!iPadShowKeyboard',
-        '!inPlaceReplace',
-        '!inspectTokens',
-        '!linesOperations',
-        '!links',
-        '!multicursor',
-        'parameterHints',
-        '!quickCommand',
-        '!quickOutline',
-        '!referenceSearch',
-        '!rename',
-        '!smartSelect',
-        '!snippets',
-        'suggest',
-        '!toggleHighContrast',
-        '!toggleTabFocusMode',
-        '!transpose',
-        '!wordHighlighter',
-        '!wordOperations',
-        '!wordPartOperations',
+    new CopyPlugin({
+      patterns: [
+        { from: './node_modules/monaco-editor/dev/vs/', to: 'monaco/min/vs/' },
+        // {
+        //   from: './node_modules/@kusto/monaco-kusto/release/min/',
+        //   to: 'monaco/min/vs/language/kusto/',
+        // },
       ],
     }),
   ],
