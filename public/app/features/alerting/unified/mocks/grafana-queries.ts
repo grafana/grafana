@@ -41,7 +41,7 @@ export const SAMPLE_QUERIES = [
             type: 'and',
           },
           query: {
-            Params: ['A'],
+            params: ['A'],
           },
           reducer: {
             type: 'last',
