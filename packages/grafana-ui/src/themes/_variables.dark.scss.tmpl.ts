@@ -259,7 +259,7 @@ $side-menu-header-color: ${theme.v1.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.colors.background.secondary};
+$menu-dropdown-bg: ${theme.colors.background.primary};
 $menu-dropdown-hover-bg: ${theme.colors.action.hover};
 $menu-dropdown-shadow: ${theme.shadows.z3};
 

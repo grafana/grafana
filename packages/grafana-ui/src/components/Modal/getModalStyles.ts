@@ -3,7 +3,6 @@ import { GrafanaThemeV2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
-  // rgba(1,4,9,0.8)
   const backdropBackground = 'rgba(0, 0, 0, 0.5)';
   const borderRadius = theme.shape.borderRadius(2);
 
@@ -36,7 +35,6 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
     modalHeader: css`
       label: modalHeader;
       background: ${theme.colors.background.secondary};
-      border-bottom: 1px solid ${theme.colors.border.weak};
       border-radius: ${borderRadius} ${borderRadius} 0 0;
       display: flex;
       height: 42px;
@@ -64,10 +62,10 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       padding-right: ${theme.spacing(1)};
     `,
     modalContent: css`
-      padding: calc(${theme.spacing.gridSize} * 2);
+      padding: ${theme.spacing(2)};
       overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing.gridSize} * 2);
+      max-height: calc(90vh - ${theme.spacing(2)});
     `,
   };
 });
