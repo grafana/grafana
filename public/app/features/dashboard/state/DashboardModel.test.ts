@@ -756,4 +756,98 @@ describe('DashboardModel', () => {
       }
     );
   });
+
+  describe('when refreshing the dashboard', () => {
+    function getTestContext() {
+      const firstPanel: any = { refresh: jest.fn() };
+      const secondPanel: any = { refresh: jest.fn() };
+      const panels = [firstPanel, secondPanel];
+      const dash = new DashboardModel({ panels });
+      const publishMock = jest.fn();
+      dash.events.publish = publishMock;
+
+      return { firstPanel, secondPanel, dash, publishMock };
+    }
+
+    it('then a refresh event should be published', () => {
+      const { dash, publishMock } = getTestContext();
+
+      dash.startRefresh();
+
+      expect(publishMock).toHaveBeenCalledTimes(1);
+    });
+
+    describe('and no panel is in full screen', () => {
+      it('then all panels should be refreshed', () => {
+        const { dash, firstPanel, secondPanel } = getTestContext();
+
+        dash.startRefresh();
+
+        expect(firstPanel.refresh).toHaveBeenCalledTimes(1);
+        expect(secondPanel.refresh).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('and one panel is editing', () => {
+      it('then only the panel that is editing should be refreshed', () => {
+        const { dash, firstPanel, secondPanel } = getTestContext();
+        dash.panelInEdit = secondPanel;
+
+        dash.startRefresh();
+
+        expect(firstPanel.refresh).not.toHaveBeenCalled();
+        expect(secondPanel.refresh).toHaveBeenCalledTimes(1);
+      });
+
+      describe('but panelsNeedRefresh is set', () => {
+        it('then all panels should be refreshed', () => {
+          const { dash, firstPanel, secondPanel } = getTestContext();
+          dash.panelInEdit = secondPanel;
+
+          dash.setPanelsNeedRefresh();
+          dash.startRefresh();
+
+          expect(firstPanel.refresh).toHaveBeenCalledTimes(1);
+          expect(secondPanel.refresh).toHaveBeenCalledTimes(1);
+
+          // making sure that this.panelsNeedRefresh is reset after startRefresh
+          dash.startRefresh();
+          expect(firstPanel.refresh).toHaveBeenCalledTimes(1);
+          expect(secondPanel.refresh).toHaveBeenCalledTimes(2);
+        });
+      });
+    });
+
+    describe('and one panel is viewing', () => {
+      it('then only the panel that is viewing should be refreshed', () => {
+        const { dash, firstPanel, secondPanel } = getTestContext();
+        dash.panelInView = secondPanel;
+        dash.panels[1].isViewing = true;
+
+        dash.startRefresh();
+
+        expect(firstPanel.refresh).not.toHaveBeenCalled();
+        expect(secondPanel.refresh).toHaveBeenCalledTimes(1);
+      });
+
+      describe('but panelsNeedRefresh is set', () => {
+        it('then all panels should be refreshed', () => {
+          const { dash, firstPanel, secondPanel } = getTestContext();
+          dash.panelInView = secondPanel;
+          dash.panels[1].isViewing = true;
+
+          dash.setPanelsNeedRefresh();
+          dash.startRefresh();
+
+          expect(firstPanel.refresh).toHaveBeenCalledTimes(1);
+          expect(secondPanel.refresh).toHaveBeenCalledTimes(1);
+
+          // making sure that this.panelsNeedRefresh is reset after startRefresh
+          dash.startRefresh();
+          expect(firstPanel.refresh).toHaveBeenCalledTimes(1);
+          expect(secondPanel.refresh).toHaveBeenCalledTimes(2);
+        });
+      });
+    });
+  });
 });

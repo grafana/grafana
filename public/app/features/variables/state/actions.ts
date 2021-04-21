@@ -494,6 +494,7 @@ export const variableUpdated = (
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         const dashboard = getState().dashboard.getModel();
+        dashboard?.setPanelsNeedRefresh();
         dashboard?.processRepeats();
         locationService.partial(getQueryWithVariables(getState));
         dashboard?.startRefresh();
@@ -527,6 +528,7 @@ export const onTimeRangeUpdated = (
   try {
     await Promise.all(promises);
     const dashboard = getState().dashboard.getModel();
+    dashboard?.setPanelsNeedRefresh();
     dashboard?.startRefresh();
   } catch (error) {
     console.error(error);
@@ -564,6 +566,7 @@ export const templateVarsChangedInUrl = (vars: UrlQueryMap): ThunkResult<void> =
   if (update.length) {
     await Promise.all(update);
     const dashboard = getState().dashboard.getModel();
+    dashboard?.setPanelsNeedRefresh();
     dashboard?.templateVariableValueUpdated();
     dashboard?.startRefresh();
   }

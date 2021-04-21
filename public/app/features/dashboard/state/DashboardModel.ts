@@ -78,6 +78,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  private panelsNeedRefresh: boolean;
 
   // ------------------
   // not persisted
@@ -100,6 +101,8 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
+    panelsNeedRefresh: true,
+    setPanelsNeedRefresh: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -140,6 +143,7 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
+    this.panelsNeedRefresh = false;
   }
 
   addBuiltInAnnotationQuery() {
@@ -304,19 +308,28 @@ export class DashboardModel {
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
+  setPanelsNeedRefresh() {
+    if (!this.panelInEdit && !this.panelInView) {
+      return;
+    }
+
+    this.panelsNeedRefresh = true;
+  }
+
   startRefresh() {
     this.events.publish(new RefreshEvent());
 
-    if (this.panelInEdit) {
+    if (this.panelInEdit && !this.panelsNeedRefresh) {
       this.panelInEdit.refresh();
       return;
     }
 
     for (const panel of this.panels) {
-      if (!this.otherPanelInFullscreen(panel)) {
+      if (!this.otherPanelInFullscreen(panel) || this.panelsNeedRefresh) {
         panel.refresh();
       }
     }
+    this.panelsNeedRefresh = false;
   }
 
   render() {
