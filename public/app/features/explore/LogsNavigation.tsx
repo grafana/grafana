@@ -2,7 +2,14 @@ import React, { memo, useState, useEffect } from 'react';
 import classNames from 'classNames';
 import { isEqual } from 'lodash';
 import { css } from 'emotion';
-import { LogsSortOrder, AbsoluteTimeRange, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import {
+  LogsSortOrder,
+  AbsoluteTimeRange,
+  dateTimeFormat,
+  systemDateFormats,
+  TimeZone,
+  DataQuery,
+} from '@grafana/data';
 import { Button, Icon, Spinner } from '@grafana/ui';
 
 type Props = {
@@ -11,9 +18,9 @@ type Props = {
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   loading: boolean;
-  logsNavigationCleared?: boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   clearLogsNavigation: (shouldClear: boolean) => void;
+  queries?: DataQuery[];
 };
 
 type LogsPage = {
@@ -22,22 +29,24 @@ type LogsPage = {
 };
 
 function LogsNavigation({
-  visibleRange,
   absoluteRange,
+  visibleRange = absoluteRange,
   timeZone,
   onChangeTime,
   loading,
-  logsNavigationCleared,
   clearLogsNavigation,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [expectedRange, setExpectedRange] = useState<AbsoluteTimeRange>();
 
   useEffect(() => {
     const newPage = { logsRange: visibleRange || absoluteRange, queryRange: absoluteRange };
-    if (logsNavigationCleared) {
+    if (!expectedRange || !isEqual(expectedRange, absoluteRange)) {
+      console.log('here 1');
       setPages([newPage]);
     } else {
+      console.log('here 2');
       setPages((pages) => {
         const filteredChunksArray = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
 
@@ -47,7 +56,9 @@ function LogsNavigation({
         return newChunksArray;
       });
     }
-  }, [visibleRange, absoluteRange, logsNavigationCleared]);
+    // We don't want to add expectedRange as we want to run this only is absolute and visible range changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleRange, absoluteRange]);
 
   useEffect(() => {
     const index = pages.findIndex((page) => page.queryRange.to === absoluteRange.to);
@@ -55,7 +66,7 @@ function LogsNavigation({
   }, [pages, absoluteRange]);
 
   function changeTime({ from, to }: AbsoluteTimeRange) {
-    clearLogsNavigation(false);
+    setExpectedRange({ from, to });
     onChangeTime({ from, to });
   }
 
@@ -88,7 +99,8 @@ function LogsNavigation({
         className={styles.navigationButton}
         variant="secondary"
         onClick={() => {
-          changeTime({ from: absoluteRange.from, to: absoluteRange.to });
+          const requestedRange = { from: absoluteRange.from - 3600000, to: visibleRange.from };
+          changeTime(requestedRange);
         }}
         disabled={loading}
       >

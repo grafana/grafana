@@ -19,6 +19,7 @@ import {
   LinkModel,
   Field,
   GrafanaTheme,
+  DataQuery,
 } from '@grafana/data';
 import {
   LogLabels,
@@ -75,6 +76,7 @@ interface Props {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
+  queries?: DataQuery[];
   logsNavigationCleared?: boolean;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
@@ -256,6 +258,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       theme,
       logsNavigationCleared,
       clearLogsNavigation,
+      queries,
     } = this.props;
 
     const {
@@ -426,6 +429,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             loading={loading}
             logsNavigationCleared={logsNavigationCleared}
             clearLogsNavigation={clearLogsNavigation}
+            queries={queries}
           />
         </div>
 

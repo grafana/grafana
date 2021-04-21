@@ -95,6 +95,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       exploreId,
       logsNavigationCleared,
       clearLogsNavigation,
+      queries,
     } = this.props;
 
     if (!logRows) {
@@ -147,6 +148,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               getFieldLinks={this.getFieldLinks}
               logsNavigationCleared={logsNavigationCleared}
               clearLogsNavigation={(shouldClear: boolean) => clearLogsNavigation(exploreId, shouldClear)}
+              queries={queries}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -171,10 +173,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     dedupStrategy,
     logsNavigationCleared,
+    queries,
   } = item;
   const dedupedRows = deduplicatedRowsSelector(item) || undefined;
   const timeZone = getTimeZone(state.user);
-
   return {
     loading,
     logsHighlighterExpressions,
@@ -192,6 +194,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     logsNavigationCleared,
+    queries,
   };
 }
 
