@@ -818,6 +818,7 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 }
 
 // rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.
+// it returns a map of the modified rule UIDs with the namespace,rule_group as a key
 func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[string][]string) {
 	t.Helper()
 
