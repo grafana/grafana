@@ -9,6 +9,36 @@ aliases = ["/docs/grafana/latest/http_api/licensing/"]
 
 Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
+## Check license availability
+
+> **Note:** Available in Grafana Enterprise v7.4+.
+
+`GET /api/licensing/check`
+
+Checks if a valid license is available.
+
+**Example request:**
+
+```http
+GET /api/licensing/check
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 4
+
+true
+```
+
+Status codes:
+
+- **200** - OK
+
 ## Manually force license refresh
 
 > **Note:** Available in Grafana Enterprise v7.4+.
