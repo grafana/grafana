@@ -56,6 +56,10 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 	return tracker
 }
 
+func (st *StateTracker) Close() {
+	st.quit <- struct{}{}
+}
+
 func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result, evaluationDuration time.Duration) AlertState {
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
