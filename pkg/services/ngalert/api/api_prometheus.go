@@ -119,13 +119,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 					newGroup.LastEvaluation = alertState.LastEvaluationTime
 				}
 
-				alertingRule.Duration = alertState.ProcessingTime.Seconds()
+				alertingRule.Duration = alertState.EvaluationDuration.Seconds()
+				newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
 				switch alertState.State {
 				case eval.Normal:
 				case eval.Pending:
 					if alertingRule.State == "inactive" {
-						alertingRule.State = "firing"
+						alertingRule.State = "pending"
 					}
 				case eval.Alerting:
 					alertingRule.State = "firing"

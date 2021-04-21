@@ -19,7 +19,7 @@ func TestProcessEvalResults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
-	processingTime := 10 * time.Millisecond
+	evaluationDuration := 10 * time.Millisecond
 
 	testCases := []struct {
 		desc           string
@@ -67,7 +67,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					LastEvaluationTime: evaluationTime,
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
@@ -117,7 +117,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					LastEvaluationTime: evaluationTime,
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
 				},
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_2:test label:test]": {
@@ -141,7 +141,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime,
 					EndsAt:             evaluationTime.Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime,
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
@@ -197,7 +197,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
@@ -255,7 +255,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
 					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:00 +0000 UTC"},
 				},
 			},
@@ -325,7 +325,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(80 * time.Second),
 					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:20 +0000 UTC"},
 				},
 			},
@@ -384,7 +384,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
@@ -443,7 +443,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
@@ -502,7 +502,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
@@ -561,7 +561,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
@@ -621,7 +621,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
@@ -681,7 +681,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
@@ -741,7 +741,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					ProcessingTime:     processingTime,
+					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
@@ -752,7 +752,7 @@ func TestProcessEvalResults(t *testing.T) {
 		st := state.NewStateTracker(log.New("test_state_tracker"))
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(tc.alertRule, res, processingTime)
+				_ = st.ProcessEvalResults(tc.alertRule, res, evaluationDuration)
 			}
 			for id, s := range tc.expectedStates {
 				assert.Equal(t, s, st.Get(id))
