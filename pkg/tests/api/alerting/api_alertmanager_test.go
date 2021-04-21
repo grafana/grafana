@@ -21,224 +21,20 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestAlertAndGroupsQuery(t *testing.T) {
+func TestUnifiedAlerting(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
+		AnonymousUserRole:    models.ROLE_EDITOR,
 	})
 	store := testinfra.SetUpDatabase(t, dir)
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
-	// When there are no alerts available, it returns an empty list.
-	{
-		alertsURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/api/v2/alerts", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(alertsURL)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-		require.JSONEq(t, "[]", string(b))
-	}
-
-	// When are there no alerts available, it returns an empty list of groups.
-	{
-		alertsURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/api/v2/alerts/groups", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(alertsURL)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-		require.JSONEq(t, "[]", string(b))
-	}
-}
-
-func TestEval(t *testing.T) {
-	// Setup Grafana and its Database
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-	})
-	store := testinfra.SetUpDatabase(t, dir)
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
-
-	// test eval conditions
-	testCases := []struct {
-		desc               string
-		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-	}{
+	t.Run("test alert and groups query", func(t *testing.T) {
+		// When there are no alerts available, it returns an empty list.
 		{
-			desc: "alerting condition",
-			payload: `
-			{
-				"grafana_condition": {
-				"condition": "A",
-				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
-						},
-						"model": {
-							"datasourceUid": "-100",
-							"type":"math",
-							"expression":"1 < 2"
-						}
-					}
-				],
-				"now": "2021-04-11T14:38:14Z"
-				}
-			}
-			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
-			"instances": [
-			  {
-				"schema": {
-				  "name": "evaluation results",
-				  "fields": [
-					{
-					  "name": "State",
-					  "type": "string",
-					  "typeInfo": {
-						"frame": "string"
-					  }
-					}
-				  ]
-				},
-				"data": {
-				  "values": [
-					[
-					  "Alerting"
-					]
-				  ]
-				}
-			  }
-			]
-		  }`,
-		},
-		{
-			desc: "normal condition",
-			payload: `
-			{
-				"grafana_condition": {
-				"condition": "A",
-				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
-						},
-						"model": {
-							"datasourceUid": "-100",
-							"type":"math",
-							"expression":"1 > 2"
-						}
-					}
-				],
-				"now": "2021-04-11T14:38:14Z"
-				}
-			}
-			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
-			"instances": [
-			  {
-				"schema": {
-				  "name": "evaluation results",
-				  "fields": [
-					{
-					  "name": "State",
-					  "type": "string",
-					  "typeInfo": {
-						"frame": "string"
-					  }
-					}
-				  ]
-				},
-				"data": {
-				  "values": [
-					[
-					  "Normal"
-					]
-				  ]
-				}
-			  }
-			]
-		  }`,
-		},
-		{
-			desc: "condition not found in any query or expression",
-			payload: `
-			{
-				"grafana_condition": {
-				"condition": "B",
-				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
-						},
-						"model": {
-							"datasourceUid": "-100",
-							"type":"math",
-							"expression":"1 > 2"
-						}
-					}
-				],
-				"now": "2021-04-11T14:38:14Z"
-				}
-			}
-			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
-		},
-		{
-			desc: "unknown query datasource",
-			payload: `
-			{
-				"grafana_condition": {
-				"condition": "A",
-				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
-						},
-						"model": {
-							"datasourceUid": "unknown"
-						}
-					}
-				],
-				"now": "2021-04-11T14:38:14Z"
-				}
-			}
-			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			u := fmt.Sprintf("http://%s/api/v1/rule/test/grafana", grafanaListedAddr)
-			r := strings.NewReader(tc.payload)
+			alertsURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/api/v2/alerts", grafanaListedAddr)
 			// nolint:gosec
-			resp, err := http.Post(u, "application/json", r)
+			resp, err := http.Get(alertsURL)
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				err := resp.Body.Close()
@@ -246,24 +42,43 @@ func TestEval(t *testing.T) {
 			})
 			b, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
+			require.Equal(t, 200, resp.StatusCode)
+			require.JSONEq(t, "[]", string(b))
+		}
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			require.JSONEq(t, tc.expectedResponse, string(b))
-		})
-	}
-
-	// test eval queries and expressions
-	testCases = []struct {
-		desc               string
-		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-	}{
+		// When are there no alerts available, it returns an empty list of groups.
 		{
-			desc: "alerting condition",
-			payload: `
+			alertsURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/api/v2/alerts/groups", grafanaListedAddr)
+			// nolint:gosec
+			resp, err := http.Get(alertsURL)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.StatusCode)
+			require.JSONEq(t, "[]", string(b))
+		}
+	})
+
+	t.Run("test eval condition", func(t *testing.T) {
+
+		testCases := []struct {
+			desc               string
+			payload            string
+			expectedStatusCode int
+			expectedResponse   string
+		}{
 			{
-				"data": [
+				desc: "alerting condition",
+				payload: `
+				{
+					"grafana_condition": {
+					"condition": "A",
+					"data": [
 						{
 							"refId": "A",
 							"relativeTimeRange": {
@@ -277,46 +92,44 @@ func TestEval(t *testing.T) {
 							}
 						}
 					],
-				"now": "2021-04-11T14:38:14Z"
-			}
-			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
-				"results": {
-				  "A": {
-					"frames": [
-					  {
-						"schema": {
-						  "refId": "A",
-						  "fields": [
-							{
-							  "name": "A",
-							  "type": "number",
-							  "typeInfo": {
-								"frame": "float64",
-								"nullable": true
-							  }
-							}
-						  ]
-						},
-						"data": {
-						  "values": [
-							[
-							  1
-							]
-						  ]
-						}
-					  }
-					]
-				  }
+					"now": "2021-04-11T14:38:14Z"
+					}
 				}
-			}`,
-		},
-		{
-			desc: "normal condition",
-			payload: `
+				`,
+				expectedStatusCode: http.StatusOK,
+				expectedResponse: `{
+				"instances": [
+				  {
+					"schema": {
+					  "name": "evaluation results",
+					  "fields": [
+						{
+						  "name": "State",
+						  "type": "string",
+						  "typeInfo": {
+							"frame": "string"
+						  }
+						}
+					  ]
+					},
+					"data": {
+					  "values": [
+						[
+						  "Alerting"
+						]
+					  ]
+					}
+				  }
+				]
+			  }`,
+			},
 			{
-				"data": [
+				desc: "normal condition",
+				payload: `
+				{
+					"grafana_condition": {
+					"condition": "A",
+					"data": [
 						{
 							"refId": "A",
 							"relativeTimeRange": {
@@ -330,46 +143,71 @@ func TestEval(t *testing.T) {
 							}
 						}
 					],
-				"now": "2021-04-11T14:38:14Z"
-			}
-			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
-				"results": {
-				  "A": {
-					"frames": [
-					  {
-						"schema": {
-						  "refId": "A",
-						  "fields": [
-							{
-							  "name": "A",
-							  "type": "number",
-							  "typeInfo": {
-								"frame": "float64",
-								"nullable": true
-							  }
-							}
-						  ]
-						},
-						"data": {
-						  "values": [
-							[
-							  0
-							]
-						  ]
-						}
-					  }
-					]
-				  }
+					"now": "2021-04-11T14:38:14Z"
+					}
 				}
-			}`,
-		},
-		{
-			desc: "unknown query datasource",
-			payload: `
+				`,
+				expectedStatusCode: http.StatusOK,
+				expectedResponse: `{
+				"instances": [
+				  {
+					"schema": {
+					  "name": "evaluation results",
+					  "fields": [
+						{
+						  "name": "State",
+						  "type": "string",
+						  "typeInfo": {
+							"frame": "string"
+						  }
+						}
+					  ]
+					},
+					"data": {
+					  "values": [
+						[
+						  "Normal"
+						]
+					  ]
+					}
+				  }
+				]
+			  }`,
+			},
 			{
-				"data": [
+				desc: "condition not found in any query or expression",
+				payload: `
+				{
+					"grafana_condition": {
+					"condition": "B",
+					"data": [
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"model": {
+								"datasourceUid": "-100",
+								"type":"math",
+								"expression":"1 > 2"
+							}
+						}
+					],
+					"now": "2021-04-11T14:38:14Z"
+					}
+				}
+				`,
+				expectedStatusCode: http.StatusBadRequest,
+				expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
+			},
+			{
+				desc: "unknown query datasource",
+				payload: `
+				{
+					"grafana_condition": {
+					"condition": "A",
+					"data": [
 						{
 							"refId": "A",
 							"relativeTimeRange": {
@@ -381,20 +219,253 @@ func TestEval(t *testing.T) {
 							}
 						}
 					],
-				"now": "2021-04-11T14:38:14Z"
-			}
-			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid queries or expressions"}`,
-		},
-	}
+					"now": "2021-04-11T14:38:14Z"
+					}
+				}
+				`,
+				expectedStatusCode: http.StatusBadRequest,
+				expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
+			},
+		}
 
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			u := fmt.Sprintf("http://%s/api/v1/eval", grafanaListedAddr)
-			r := strings.NewReader(tc.payload)
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				u := fmt.Sprintf("http://%s/api/v1/rule/test/grafana", grafanaListedAddr)
+				r := strings.NewReader(tc.payload)
+				// nolint:gosec
+				resp, err := http.Post(u, "application/json", r)
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					err := resp.Body.Close()
+					require.NoError(t, err)
+				})
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+
+				assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+				require.JSONEq(t, tc.expectedResponse, string(b))
+			})
+		}
+	})
+
+	t.Run("test eval queries and expressions", func(t *testing.T) {
+		testCases := []struct {
+			desc               string
+			payload            string
+			expectedStatusCode int
+			expectedResponse   string
+		}{
+			{
+				desc: "alerting condition",
+				payload: `
+				{
+					"data": [
+							{
+								"refId": "A",
+								"relativeTimeRange": {
+									"from": 18000,
+									"to": 10800
+								},
+								"model": {
+									"datasourceUid": "-100",
+									"type":"math",
+									"expression":"1 < 2"
+								}
+							}
+						],
+					"now": "2021-04-11T14:38:14Z"
+				}
+				`,
+				expectedStatusCode: http.StatusOK,
+				expectedResponse: `{
+					"results": {
+					"A": {
+						"frames": [
+						{
+							"schema": {
+							"refId": "A",
+							"fields": [
+								{
+								"name": "A",
+								"type": "number",
+								"typeInfo": {
+									"frame": "float64",
+									"nullable": true
+								}
+								}
+							]
+							},
+							"data": {
+							"values": [
+								[
+								1
+								]
+							]
+							}
+						}
+						]
+					}
+					}
+				}`,
+			},
+			{
+				desc: "normal condition",
+				payload: `
+				{
+					"data": [
+							{
+								"refId": "A",
+								"relativeTimeRange": {
+									"from": 18000,
+									"to": 10800
+								},
+								"model": {
+									"datasourceUid": "-100",
+									"type":"math",
+									"expression":"1 > 2"
+								}
+							}
+						],
+					"now": "2021-04-11T14:38:14Z"
+				}
+				`,
+				expectedStatusCode: http.StatusOK,
+				expectedResponse: `{
+					"results": {
+					"A": {
+						"frames": [
+						{
+							"schema": {
+							"refId": "A",
+							"fields": [
+								{
+								"name": "A",
+								"type": "number",
+								"typeInfo": {
+									"frame": "float64",
+									"nullable": true
+								}
+								}
+							]
+							},
+							"data": {
+							"values": [
+								[
+								0
+								]
+							]
+							}
+						}
+						]
+					}
+					}
+				}`,
+			},
+			{
+				desc: "unknown query datasource",
+				payload: `
+				{
+					"data": [
+							{
+								"refId": "A",
+								"relativeTimeRange": {
+									"from": 18000,
+									"to": 10800
+								},
+								"model": {
+									"datasourceUid": "unknown"
+								}
+							}
+						],
+					"now": "2021-04-11T14:38:14Z"
+				}
+				`,
+				expectedStatusCode: http.StatusBadRequest,
+				expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid queries or expressions"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				u := fmt.Sprintf("http://%s/api/v1/eval", grafanaListedAddr)
+				r := strings.NewReader(tc.payload)
+				// nolint:gosec
+				resp, err := http.Post(u, "application/json", r)
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					err := resp.Body.Close()
+					require.NoError(t, err)
+				})
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+
+				assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+				require.JSONEq(t, tc.expectedResponse, string(b))
+			})
+		}
+	})
+
+	t.Run("test alert rule CRUD", func(t *testing.T) {
+		// Create the namespace we'll save our alerts to.
+		require.NoError(t, createFolder(t, store, 0, "default"))
+
+		// Now, let's create two alerts.
+		{
+			rules := apimodels.PostableRuleGroupConfig{
+				Name: "arulegroup",
+				Rules: []apimodels.PostableExtendedRuleNode{
+					{
+						GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+							OrgID:     2,
+							Title:     "AlwaysFiring",
+							Condition: "A",
+							Data: []ngmodels.AlertQuery{
+								{
+									RefID: "A",
+									RelativeTimeRange: ngmodels.RelativeTimeRange{
+										From: ngmodels.Duration(time.Duration(5) * time.Hour),
+										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+									},
+									Model: json.RawMessage(`{
+										"datasourceUid": "-100",
+										"type": "math",
+										"expression": "2 + 3 > 1"
+										}`),
+								},
+							},
+						},
+					},
+					{
+						GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+							OrgID:     2,
+							Title:     "AlwaysFiringButSilenced",
+							Condition: "A",
+							Data: []ngmodels.AlertQuery{
+								{
+									RefID: "A",
+									RelativeTimeRange: ngmodels.RelativeTimeRange{
+										From: ngmodels.Duration(time.Duration(5) * time.Hour),
+										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+									},
+									Model: json.RawMessage(`{
+										"datasourceUid": "-100",
+										"type": "math",
+										"expression": "2 + 3 > 1"
+										}`),
+								},
+							},
+						},
+					},
+				},
+			}
+			buf := bytes.Buffer{}
+			enc := json.NewEncoder(&buf)
+			err := enc.Encode(&rules)
+			require.NoError(t, err)
+
+			u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
 			// nolint:gosec
-			resp, err := http.Post(u, "application/json", r)
+			resp, err := http.Post(u, "application/json", &buf)
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				err := resp.Body.Close()
@@ -403,225 +474,143 @@ func TestEval(t *testing.T) {
 			b, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			require.JSONEq(t, tc.expectedResponse, string(b))
-		})
-	}
-}
-
-func TestAlertRuleCRUD(t *testing.T) {
-	// Setup Grafana and its Database
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		AnonymousUserRole:    models.ROLE_EDITOR,
-	})
-	store := testinfra.SetUpDatabase(t, dir)
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
-
-	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
-
-	// Now, let's create two alerts.
-	{
-		rules := apimodels.PostableRuleGroupConfig{
-			Name: "arulegroup",
-			Rules: []apimodels.PostableExtendedRuleNode{
-				{
-					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
-						Title:     "AlwaysFiring",
-						Condition: "A",
-						Data: []ngmodels.AlertQuery{
-							{
-								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-								},
-								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
-									"type": "math",
-									"expression": "2 + 3 > 1"
-									}`),
-							},
-						},
-					},
-				},
-				{
-					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
-						Title:     "AlwaysFiringButSilenced",
-						Condition: "A",
-						Data: []ngmodels.AlertQuery{
-							{
-								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-								},
-								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
-									"type": "math",
-									"expression": "2 + 3 > 1"
-									}`),
-							},
-						},
-					},
-				},
-			},
+			assert.Equal(t, resp.StatusCode, 202)
+			require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
 		}
-		buf := bytes.Buffer{}
-		enc := json.NewEncoder(&buf)
-		err := enc.Encode(&rules)
-		require.NoError(t, err)
 
-		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Post(u, "application/json", &buf)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
+		// With the rules created, let's make sure that rule definition is stored correctly.
+		{
+			u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+			// nolint:gosec
+			resp, err := http.Get(u)
 			require.NoError(t, err)
-		})
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
 
-		assert.Equal(t, resp.StatusCode, 202)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
-	}
-
-	// With the rules created, let's make sure that rule definition is stored correctly.
+			assert.Equal(t, resp.StatusCode, 202)
+			assert.JSONEq(t, `
 	{
-		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(u)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
+	"default":[
+		{
+			"name":"arulegroup",
+			"interval":"1m",
+			"rules":[
+				{
+				"expr":"",
+				"grafana_alert":{
+					"id":1,
+					"orgId":2,
+					"title":"AlwaysFiring",
+					"condition":"A",
+					"data":[
+						{
+							"refId":"A",
+							"queryType":"",
+							"relativeTimeRange":{
+							"from":18000,
+							"to":10800
+							},
+							"model":{
+							"datasourceUid":"-100",
+							"expression":"2 + 3 \u003e 1",
+							"intervalMs":1000,
+							"maxDataPoints":100,
+							"type":"math"
+							}
+						}
+					],
+					"updated":"2021-02-21T01:10:30Z",
+					"intervalSeconds":60,
+					"version":1,
+					"uid":"uid",
+					"namespace_uid":"nsuid",
+					"namespace_id":1,
+					"rule_group":"arulegroup",
+					"no_data_state":"",
+					"exec_err_state":""
+				}
+				},
+				{
+				"expr":"",
+				"grafana_alert":{
+					"id":2,
+					"orgId":2,
+					"title":"AlwaysFiringButSilenced",
+					"condition":"A",
+					"data":[
+						{
+							"refId":"A",
+							"queryType":"",
+							"relativeTimeRange":{
+							"from":18000,
+							"to":10800
+							},
+							"model":{
+							"datasourceUid":"-100",
+							"expression":"2 + 3 \u003e 1",
+							"intervalMs":1000,
+							"maxDataPoints":100,
+							"type":"math"
+							}
+						}
+					],
+					"updated":"2021-02-21T01:10:30Z",
+					"intervalSeconds":60,
+					"version":1,
+					"uid":"uid",
+					"namespace_uid":"nsuid",
+					"namespace_id":1,
+					"rule_group":"arulegroup",
+					"no_data_state":"",
+					"exec_err_state":""
+				}
+				}
+			]
+		}
+	]
+	}`, rulesNamespaceWithoutVariableValues(t, b))
+		}
+
+		client := &http.Client{}
+		// Finally, make sure we can delete it.
+		{
+			// If the rule group name does not exists
+			u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/groupnotexist", grafanaListedAddr)
+			req, err := http.NewRequest(http.MethodDelete, u, nil)
 			require.NoError(t, err)
-		})
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
-
-		assert.Equal(t, resp.StatusCode, 202)
-		assert.JSONEq(t, `
-{
-   "default":[
-      {
-         "name":"arulegroup",
-         "interval":"1m",
-         "rules":[
-            {
-               "expr":"",
-               "grafana_alert":{
-                  "id":1,
-                  "orgId":2,
-                  "title":"AlwaysFiring",
-                  "condition":"A",
-                  "data":[
-                     {
-                        "refId":"A",
-                        "queryType":"",
-                        "relativeTimeRange":{
-                           "from":18000,
-                           "to":10800
-                        },
-                        "model":{
-                           "datasourceUid":"-100",
-                           "expression":"2 + 3 \u003e 1",
-                           "intervalMs":1000,
-                           "maxDataPoints":100,
-                           "type":"math"
-                        }
-                     }
-                  ],
-                  "updated":"2021-02-21T01:10:30Z",
-                  "intervalSeconds":60,
-                  "version":1,
-                  "uid":"uid",
-                  "namespace_uid":"nsuid",
-                  "namespace_id":1,
-                  "rule_group":"arulegroup",
-                  "no_data_state":"",
-                  "exec_err_state":""
-               }
-            },
-            {
-               "expr":"",
-               "grafana_alert":{
-                  "id":2,
-                  "orgId":2,
-                  "title":"AlwaysFiringButSilenced",
-                  "condition":"A",
-                  "data":[
-                     {
-                        "refId":"A",
-                        "queryType":"",
-                        "relativeTimeRange":{
-                           "from":18000,
-                           "to":10800
-                        },
-                        "model":{
-                           "datasourceUid":"-100",
-                           "expression":"2 + 3 \u003e 1",
-                           "intervalMs":1000,
-                           "maxDataPoints":100,
-                           "type":"math"
-                        }
-                     }
-                  ],
-                  "updated":"2021-02-21T01:10:30Z",
-                  "intervalSeconds":60,
-                  "version":1,
-                  "uid":"uid",
-                  "namespace_uid":"nsuid",
-                  "namespace_id":1,
-                  "rule_group":"arulegroup",
-                  "no_data_state":"",
-                  "exec_err_state":""
-               }
-            }
-         ]
-      }
-   ]
-}`, rulesNamespaceWithoutVariableValues(t, b))
-	}
-
-	client := &http.Client{}
-	// Finally, make sure we can delete it.
-	{
-		// If the rule group name does not exists
-		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/groupnotexist", grafanaListedAddr)
-		req, err := http.NewRequest(http.MethodDelete, u, nil)
-		require.NoError(t, err)
-		resp, err := client.Do(req)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
+			resp, err := client.Do(req)
 			require.NoError(t, err)
-		})
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
-
-		require.Equal(t, http.StatusNotFound, resp.StatusCode)
-		require.JSONEq(t, `{"error":"rule group not found under this namespace", "message": "failed to delete rule group"}`, string(b))
-
-		// If the rule group name does exist
-		u = fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/arulegroup", grafanaListedAddr)
-		req, err = http.NewRequest(http.MethodDelete, u, nil)
-		require.NoError(t, err)
-		resp, err = client.Do(req)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
-		})
-		b, err = ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
 
-		require.Equal(t, http.StatusAccepted, resp.StatusCode)
-		require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
-	}
+			require.Equal(t, http.StatusNotFound, resp.StatusCode)
+			require.JSONEq(t, `{"error":"rule group not found under this namespace", "message": "failed to delete rule group"}`, string(b))
+
+			// If the rule group name does exist
+			u = fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/arulegroup", grafanaListedAddr)
+			req, err = http.NewRequest(http.MethodDelete, u, nil)
+			require.NoError(t, err)
+			resp, err = client.Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err = ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			require.Equal(t, http.StatusAccepted, resp.StatusCode)
+			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
+		}
+	})
 }
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
