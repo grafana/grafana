@@ -714,7 +714,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						"annotations": {
 							"annotation1": "val42",
 							"foo": "bar"
-					   },	
+					   },
 		               "expr":"",
 					   "for": "30s",
 					   "labels": {
@@ -796,6 +796,71 @@ func TestAlertRuleCRUD(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
 		})
+	}
+}
+
+func TestAlertmanagerStatus(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+	})
+	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Get the Alertmanager current status.
+	{
+		alertsURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/api/v2/status", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(alertsURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		fmt.Println(string(b))
+		require.Equal(t, 200, resp.StatusCode)
+		require.JSONEq(t, `
+{
+	"cluster": {
+		"peers": [],
+		"status": "disabled"
+	},
+	"config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"templates": null,
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"sendReminder": false,
+				"disableResolveMessage": false,
+				"frequency": "",
+				"isDefault": true,
+				"settings": {
+					"addresses": "\u003cexample@email.com\u003e"
+				},
+				"secureSettings": null,
+				"Result": null
+			}]
+		}]
+	},
+	"uptime": null,
+	"versionInfo": {
+		"branch": "N/A",
+		"buildDate": "N/A",
+		"buildUser": "N/A",
+		"goVersion": "N/A",
+		"revision": "N/A",
+		"version": "N/A"
+	}
+}
+`, string(b))
 	}
 }
 

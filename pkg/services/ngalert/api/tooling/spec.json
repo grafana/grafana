@@ -327,7 +327,7 @@
             "name": "Silence",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/postableSilence"
+              "$ref": "#/definitions/PostableSilence"
             }
           },
           {
@@ -349,6 +349,32 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/alertmanager/{Recipient}/api/v2/status": {
+      "get": {
+        "description": "get alertmanager status and configuration",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetAMStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GettableStatus",
+            "schema": {
+              "$ref": "#/definitions/GettableStatus"
             }
           }
         }
@@ -1641,7 +1667,10 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/GettableSilences"
+      "$ref": "#/definitions/gettableSilences"
+    },
+    "GettableStatus": {
+      "$ref": "#/definitions/GettableStatus"
     },
     "GettableUserConfig": {
       "type": "object",
@@ -2471,7 +2500,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "$ref": "#/definitions/receiver"
+      "$ref": "#/definitions/Receiver"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -2993,9 +3022,8 @@
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -3028,7 +3056,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3204,7 +3232,7 @@
           "description": "alerts",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/gettableAlert"
+            "$ref": "#/definitions/GettableAlert"
           },
           "x-go-name": "Alerts"
         },
@@ -3222,7 +3250,7 @@
       "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/alertGroup"
+        "$ref": "#/definitions/AlertGroup"
       },
       "x-go-name": "AlertGroups",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"

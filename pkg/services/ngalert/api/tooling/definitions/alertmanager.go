@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/go-openapi/strfmt"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -33,6 +35,14 @@ import (
 //
 //     Responses:
 //       200: Ack
+//       400: ValidationError
+
+// swagger:route GET /api/alertmanager/{Recipient}/api/v2/status alertmanager RouteGetAMStatus
+//
+// get alertmanager status and configuration
+//
+//     Responses:
+//       200: GettableStatus
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
@@ -110,6 +120,47 @@ type GetSilencesParams struct {
 }
 
 // swagger:model
+type GettableStatus struct {
+	// cluster
+	// Required: true
+	Cluster *amv2.ClusterStatus `json:"cluster"`
+
+	// config
+	// Required: true
+	Config *PostableApiAlertingConfig `json:"config"`
+
+	// uptime
+	// Required: true
+	// Format: date-time
+	Uptime *strfmt.DateTime `json:"uptime"`
+
+	// version info
+	// Required: true
+	VersionInfo *amv2.VersionInfo `json:"versionInfo"`
+}
+
+func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
+	// In Grafana, the only field we support is Config.
+	cs := amv2.ClusterStatusStatusDisabled
+	na := "N/A"
+	return &GettableStatus{
+		Cluster: &amv2.ClusterStatus{
+			Status: &cs,
+			Peers:  []*amv2.PeerStatus{},
+		},
+		VersionInfo: &amv2.VersionInfo{
+			Branch:    &na,
+			BuildDate: &na,
+			BuildUser: &na,
+			GoVersion: &na,
+			Revision:  &na,
+			Version:   &na,
+		},
+		Config: cfg,
+	}
+}
+
+// swagger:model
 type PostableSilence = amv2.PostableSilence
 
 // swagger:model
@@ -178,7 +229,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes

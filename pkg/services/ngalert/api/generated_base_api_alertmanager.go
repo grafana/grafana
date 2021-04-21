@@ -23,6 +23,7 @@ type AlertmanagerApiService interface {
 	RouteDeleteSilence(*models.ReqContext) response.Response
 	RouteGetAMAlertGroups(*models.ReqContext) response.Response
 	RouteGetAMAlerts(*models.ReqContext) response.Response
+	RouteGetAMStatus(*models.ReqContext) response.Response
 	RouteGetAlertingConfig(*models.ReqContext) response.Response
 	RouteGetSilence(*models.ReqContext) response.Response
 	RouteGetSilences(*models.ReqContext) response.Response
@@ -37,6 +38,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 		group.Delete(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteDeleteSilence))
 		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts/groups"), routing.Wrap(srv.RouteGetAMAlertGroups))
 		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"), routing.Wrap(srv.RouteGetAMAlerts))
+		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/status"), routing.Wrap(srv.RouteGetAMStatus))
 		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertingConfig))
 		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteGetSilence))
 		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
