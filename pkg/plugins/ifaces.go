@@ -73,6 +73,6 @@ type DataRequestHandler interface {
 }
 
 type PluginInstaller interface {
-	Install(pluginName, version, pluginFolder, downloadURL, repoURL string) error
+	Install(pluginName, version, pluginsDirectory, pluginZipURL string) error
 	DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) error
 }

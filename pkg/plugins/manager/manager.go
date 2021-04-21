@@ -687,9 +687,9 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 }
 
 // InstallPlugin downloads the plugin code as a zip file from specified URL
-// and then extracts the zip into the plugins directory.
-func (pm *PluginManager) InstallPlugin(pluginName, version, downloadURL, repoURL string) error {
-	return pm.installer.Install(pluginName, version, pm.Cfg.PluginsPath, downloadURL, repoURL)
+// and then extracts the zip into the provided plugins directory.
+func (pm *PluginManager) InstallPlugin(pluginName, version, pluginsDir, downloadURL string) error {
+	return pm.installer.Install(pluginName, version, pluginsDir, downloadURL)
 }
 
 // UninstallPlugin removes the specified plugin from the provided plugins directory.

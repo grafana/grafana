@@ -37,10 +37,14 @@ type Installer struct {
 	log                 log.Logger
 }
 
-const permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
+const (
+	permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
+	grafanaComPluginsURL     = "https://grafana.com/api/plugins"
+)
 
 var (
 	ErrNotFoundError = errors.New("404 not found error")
+	reGitBuild       = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 )
 
 type BadRequestError struct {
@@ -64,11 +68,11 @@ func New(skipTLSVerify bool, grafanaVersion string) *Installer {
 	}
 }
 
-func (g *Installer) Install(pluginName, version, pluginFolder, downloadURL, repoURL string) error {
+func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL string) error {
 	isInternal := false
 
 	var checksum string
-	if downloadURL == "" {
+	if len(pluginZipURL) > 0 {
 		if strings.HasPrefix(pluginName, "grafana-") {
 			// At this point the plugin download is going through grafana.com API and thus the name is validated.
 			// Checking for grafana prefix is how it is done there so no 3rd party plugin should have that prefix.
@@ -76,7 +80,7 @@ func (g *Installer) Install(pluginName, version, pluginFolder, downloadURL, repo
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := g.getPlugin(pluginName, repoURL)
+		plugin, err := g.getPluginMetadata(pluginName, grafanaComPluginsURL)
 		if err != nil {
 			return err
 		}
@@ -89,8 +93,8 @@ func (g *Installer) Install(pluginName, version, pluginFolder, downloadURL, repo
 		if version == "" {
 			version = v.Version
 		}
-		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download",
-			repoURL,
+		pluginZipURL = fmt.Sprintf("%s/%s/versions/%s/download",
+			grafanaComPluginsURL,
 			pluginName,
 			version,
 		)
@@ -105,8 +109,8 @@ func (g *Installer) Install(pluginName, version, pluginFolder, downloadURL, repo
 		}
 	}
 	g.log.Info(fmt.Sprintf("installing %v @ %v\n", pluginName, version))
-	g.log.Info(fmt.Sprintf("from: %v\n", downloadURL))
-	g.log.Info(fmt.Sprintf("into: %v\n", pluginFolder))
+	g.log.Info(fmt.Sprintf("from: %v\n", pluginZipURL))
+	g.log.Info(fmt.Sprintf("into: %v\n", pluginsDir))
 	g.log.Info("\n")
 
 	// Create temp file for downloading zip file
@@ -120,7 +124,7 @@ func (g *Installer) Install(pluginName, version, pluginFolder, downloadURL, repo
 		}
 	}()
 
-	err = g.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
+	err = g.DownloadFile(pluginName, tmpFile, pluginZipURL, checksum)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			g.log.Warn("Failed to close file", "err", err)
@@ -132,16 +136,17 @@ func (g *Installer) Install(pluginName, version, pluginFolder, downloadURL, repo
 		return errutil.Wrap("failed to close tmp file", err)
 	}
 
-	err = g.extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
+	err = g.extractFiles(tmpFile.Name(), pluginName, pluginsDir, isInternal)
 	if err != nil {
 		return errutil.Wrap("failed to extract plugin archive", err)
 	}
 
 	g.log.Info(fmt.Sprintf("%s Installed %s successfully \n", color.GreenString("✔"), pluginName))
 
-	res, _ := toPluginDTO(pluginFolder, pluginName)
+	// download dependency plugins
+	res, _ := toPluginDTO(pluginsDir, pluginName)
 	for _, dep := range res.Dependencies.Plugins {
-		if err := g.Install(dep.ID, normalizeVersion(dep.Version), pluginFolder, "", repoURL); err != nil {
+		if err := g.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, ""); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
 		}
 
@@ -224,13 +229,13 @@ func (g *Installer) DownloadFile(pluginName string, tmpFile *os.File, url string
 	return nil
 }
 
-func (g *Installer) getPlugin(pluginId, repoUrl string) (Plugin, error) {
-	g.log.Info(fmt.Sprintf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId))
-	body, err := g.sendRequestGetBytes(repoUrl, "repo", pluginId)
+func (g *Installer) getPluginMetadata(pluginID, repoUrl string) (Plugin, error) {
+	g.log.Info(fmt.Sprintf("getting plugin metadata from: %v pluginID: %v \n", repoUrl, pluginID))
+	body, err := g.sendRequestGetBytes(repoUrl, "repo", pluginID)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
 			return Plugin{}, errutil.Wrap(
-				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginId), err)
+				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginID), err)
 		}
 		return Plugin{}, errutil.Wrap("Failed to send request", err)
 	}
@@ -240,24 +245,6 @@ func (g *Installer) getPlugin(pluginId, repoUrl string) (Plugin, error) {
 	if err != nil {
 		g.log.Info("Failed to unmarshal plugin repo response error:", err)
 		return Plugin{}, err
-	}
-
-	return data, nil
-}
-
-func (g *Installer) ListAllPlugins(repoUrl string) (PluginRepo, error) {
-	body, err := g.sendRequestGetBytes(repoUrl, "repo")
-
-	if err != nil {
-		g.log.Info("Failed to send request", "error", err)
-		return PluginRepo{}, errutil.Wrap("Failed to send request", err)
-	}
-
-	var data PluginRepo
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		g.log.Info("Failed to unmarshal plugin repo response error:", err)
-		return PluginRepo{}, err
 	}
 
 	return data, nil
@@ -582,8 +569,6 @@ func extractFile(file *zip.File, filePath string) (err error) {
 	_, err = io.Copy(dst, src)
 	return err
 }
-
-var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
 func removeGitBuildFromName(pluginName, filename string) string {
 	return reGitBuild.ReplaceAllString(filename, pluginName+"/")
