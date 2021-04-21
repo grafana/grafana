@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaultsDeep, find, map, isString } from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
@@ -123,7 +123,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
     super($scope, $injector);
 
-    _.defaultsDeep(this.target, this.defaults);
+    defaultsDeep(this.target, this.defaults);
 
     this.migrateTimeGrains();
 
@@ -153,7 +153,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.lastQueryError = undefined;
     this.lastQuery = '';
 
-    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
+    const anySeriesFromQuery: any = find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery && anySeriesFromQuery.meta) {
       this.lastQuery = anySeriesFromQuery.meta.query;
     }
@@ -279,7 +279,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       appInsights.dimension = [];
     }
 
-    if (_.isString(appInsights.dimension)) {
+    if (isString(appInsights.dimension)) {
       appInsights.dimension = [appInsights.dimension as string];
     }
   }
@@ -336,7 +336,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (timeGrain === 'auto') {
       return TimegrainConverter.findClosestTimeGrain(
         '1m',
-        _.map(timeGrains, (o) => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
+        map(timeGrains, (o) => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
           '1m',
           '5m',
           '15m',
@@ -480,7 +480,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
 
     // Return the list of dimensions stored on the query object from the last request :(
-    return _.map(appInsights.dimensions, (option: string) => {
+    return map(appInsights.dimensions, (option: string) => {
       return { text: option, value: option };
     });
   }

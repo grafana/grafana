@@ -1,6 +1,6 @@
 import angular from 'angular';
 import $ from 'jquery';
-import _ from 'lodash';
+import { partition, each } from 'lodash';
 //@ts-ignore
 import Drop from 'tether-drop';
 import { CreatePlotOverlay } from '@grafana/data';
@@ -253,7 +253,7 @@ export class EventMarkers {
    * create internal objects for the given events
    */
   setupEvents(events: any[]) {
-    const parts = _.partition(events, 'isRegion');
+    const parts = partition(events, 'isRegion');
     const regions = parts[0];
     events = parts[1];
 
@@ -532,7 +532,7 @@ export class EventMarkers {
     const regionOffset = right > xmax ? 0 : lineWidth; // only include lineWidth when right line is visible
     regionWidth = regionEnd - regionStart + regionOffset;
 
-    _.each([left, right], (position) => {
+    each([left, right], (position) => {
       // only draw visible region lines
       if (xmin <= position && position < xmax) {
         const line = $('<div class="events_line flot-temp-elem"></div>').css({

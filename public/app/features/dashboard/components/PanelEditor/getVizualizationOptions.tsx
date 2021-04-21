@@ -41,6 +41,10 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Panel options
    */
   for (const pluginOption of plugin.optionEditors.list()) {
+    if (pluginOption.showIf && !pluginOption.showIf(currentOptions, data?.series)) {
+      continue;
+    }
+
     const category = getOptionsPaneCategory(pluginOption.category);
     const Editor = pluginOption.editor;
 

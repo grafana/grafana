@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 interface TableResponse extends Record<string, any> {
   type: string;
   refId: string;

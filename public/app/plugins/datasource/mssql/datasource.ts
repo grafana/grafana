@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map as _map } from 'lodash';
 import { of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
@@ -39,7 +39,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       return value;
     }
 
-    const quotedValues = _.map(value, (val) => {
+    const quotedValues = _map(value, (val) => {
       if (typeof value === 'number') {
         return value;
       }

@@ -59,7 +59,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
   const textColorHover = theme.v2.palette.text.primary;
   const bg = theme.v2.components.input.background;
   // remove the group inner padding (set on RadioButtonGroup)
-  const labelHeight = height * theme.v2.spacing.gridSize - 4;
+  const labelHeight = height * theme.v2.spacing.gridSize - 4 - 2;
 
   return {
     radio: css`
@@ -95,7 +95,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       font-size: ${fontSize};
       height: ${labelHeight}px;
       // Deduct border from line-height for perfect vertical centering on windows and linux
-      line-height: ${labelHeight - 2}px;
+      line-height: ${labelHeight}px;
       color: ${textColor};
       padding: ${theme.v2.spacing(0, padding)};
       border-radius: ${theme.v2.shape.borderRadius()};
