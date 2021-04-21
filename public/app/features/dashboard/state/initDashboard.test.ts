@@ -14,7 +14,10 @@ import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
 import { getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
-import { setDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import {
+  getDashboardQueryRunner,
+  setDashboardQueryRunner,
+} from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
 
 jest.mock('app/core/services/backend_srv');
@@ -40,7 +43,6 @@ const mockStore = configureMockStore([thunk]);
 
 interface ScenarioContext {
   args: InitDashboardArgs;
-  annotationsSrv: any;
   loaderSrv: any;
   backendSrv: any;
   setup: (fn: () => void) => void;
@@ -52,8 +54,6 @@ type ScenarioFn = (ctx: ScenarioContext) => void;
 
 function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   describe(description, () => {
-    const annotationsSrv = { init: jest.fn() };
-
     const loaderSrv = {
       loadDashboard: jest.fn(() => ({
         meta: {
@@ -88,33 +88,20 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     setDashboardLoaderSrv((loaderSrv as unknown) as DashboardLoaderSrv);
     setDashboardQueryRunner({
       getResult: emptyResult,
-      run: () => undefined,
+      run: jest.fn(),
       cancel: () => undefined,
       destroy: () => undefined,
     });
-
-    const injectorMock = {
-      get: (name: string) => {
-        switch (name) {
-          case 'annotationsSrv':
-            return annotationsSrv;
-          default:
-            throw { message: 'Unknown service ' + name };
-        }
-      },
-    };
 
     let setupFn = () => {};
 
     const ctx: ScenarioContext = {
       args: {
         urlUid: 'DGmvKKxZz',
-        $injector: injectorMock,
         fixUrl: false,
         routeName: DashboardRoutes.Normal,
       },
       backendSrv: getBackendSrv(),
-      annotationsSrv,
       loaderSrv,
       actions: [],
       storeState: {
@@ -193,7 +180,7 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
   it('Should initialize services', () => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardSrv().setCurrent).toBeCalled();
-    expect(ctx.annotationsSrv.init).toBeCalled();
+    expect(getDashboardQueryRunner().run).toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 });
@@ -264,8 +251,8 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   it('Should initialize services', () => {
     expect(getTimeSrv().init).toBeCalled();
-    expect(ctx.annotationsSrv.init).toBeCalled();
     expect(getDashboardSrv().setCurrent).toBeCalled();
+    expect(getDashboardQueryRunner().run).toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 
@@ -294,9 +281,9 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
     expect(dashboardInitCompletedAction).toBe(undefined);
   });
 
-  it('Should initialize timeSrv and annotationsSrv', () => {
+  it('Should initialize timeSrv and dashboard query runner', () => {
     expect(getTimeSrv().init).toBeCalled();
-    expect(ctx.annotationsSrv.init).toBeCalled();
+    expect(getDashboardQueryRunner().run).toBeCalled();
   });
 
   it('Should not initialize other services', () => {
