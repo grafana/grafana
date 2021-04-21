@@ -11,6 +11,27 @@ aliases = ["/docs/grafana/latest/http_api/authentication/"]
 
 Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
 
+## X-Grafana-Org-Id Header
+
+**X-Grafana-Org-Id**  is an optional property that specifies the organization to which the action is applied. If it is not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
+
+**Example Request**:
+
+```http
+POST /api/auth/keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+X-Grafana-Org-Id: 2
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "name": "mykey",
+  "role": "Admin",
+  "secondsToLive": 86400
+}
+```
+
+
 ## Basic Auth
 
 If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
