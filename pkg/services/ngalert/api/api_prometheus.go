@@ -51,7 +51,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
 		},
-		Data: apimodels.RuleDiscovery{},
+		Data: apimodels.RuleDiscovery{
+			RuleGroups: []*apimodels.RuleGroup{},
+		},
 	}
 
 	ruleGroupQuery := ngmodels.ListOrgRuleGroupsQuery{
