@@ -113,9 +113,9 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
 	groups, err := srv.am.GetAlertGroups(
-		c.QueryBool("active"),
-		c.QueryBool("silenced"),
-		c.QueryBool("inhibited"),
+		c.QueryBoolWithDefault("active", true),
+		c.QueryBoolWithDefault("silenced", true),
+		c.QueryBoolWithDefault("inhibited", true),
 		c.QueryStrings("filter"),
 		c.Query("receiver"),
 	)
@@ -132,9 +132,9 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.
 
 func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Response {
 	alerts, err := srv.am.GetAlerts(
-		c.QueryBool("active"),
-		c.QueryBool("silenced"),
-		c.QueryBool("inhibited"),
+		c.QueryBoolWithDefault("active", true),
+		c.QueryBoolWithDefault("silenced", true),
+		c.QueryBoolWithDefault("inhibited", true),
 		c.QueryStrings("filter"),
 		c.Query("receiver"),
 	)
