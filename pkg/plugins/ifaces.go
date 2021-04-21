@@ -61,7 +61,7 @@ type Manager interface {
 	// and installs in the provided  plugins directory.
 	InstallPlugin(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
 	// UninstallPlugin removes the specified plugin from the provided plugins directory.
-	UninstallPlugin(pluginPath, pluginID string) error
+	UninstallPlugin(pluginID, pluginPath string) error
 }
 
 type ImportDashboardInput struct {

@@ -699,7 +699,7 @@ func (pm *PluginManager) InstallPlugin(pluginID, version, pluginsDir, pluginZipU
 }
 
 // UninstallPlugin removes the specified plugin from the provided plugins directory.
-func (pm *PluginManager) UninstallPlugin(pluginPath, pluginID string) error {
+func (pm *PluginManager) UninstallPlugin(pluginID, pluginPath string) error {
 	pm.log.Info(fmt.Sprintf("Removing plugin: %v\n", pluginID))
 	pluginDir := filepath.Join(pluginPath, pluginID)
 
