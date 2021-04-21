@@ -9,19 +9,19 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
   }
 `;
 
-export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
-  const borderColor = invalid ? theme.v2.palette.error.border : theme.v2.components.input.border;
-  const borderColorHover = invalid ? theme.v2.palette.error.shade : theme.v2.components.input.borderHover;
-  const background = theme.v2.components.input.background;
-  const textColor = theme.v2.components.input.text;
+export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
+  const borderColor = invalid ? theme.colors.error.border : theme.components.input.border;
+  const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  const background = theme.components.input.background;
+  const textColor = theme.components.input.text;
 
   return css`
     background: ${background};
-    line-height: ${theme.v2.typography.body.lineHeight};
-    font-size: ${theme.v2.typography.size.md};
+    line-height: ${theme.typography.body.lineHeight};
+    font-size: ${theme.typography.size.md};
     color: ${textColor};
     border: 1px solid ${borderColor};
-    padding: ${theme.v2.spacing(0, 1, 0, 1)};
+    padding: ${theme.spacing(0, 1, 0, 1)};
 
     &:-webkit-autofill,
     &:-webkit-autofill:hover {
@@ -32,7 +32,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
 
     &:-webkit-autofill:focus {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-      box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline},
+      box-shadow: 0 0 0 2px ${theme.colors.background.primary}, 0 0 0px 4px ${theme.colors.primary.main},
         inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important;
       -webkit-text-fill-color: ${textColor} !important;
     }
@@ -46,9 +46,9 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     }
 
     &:disabled {
-      background-color: ${theme.v2.palette.action.disabledBackground};
-      color: ${theme.v2.palette.action.disabledText};
-      border: 1px solid ${theme.v2.palette.action.disabledBackground};
+      background-color: ${theme.colors.action.disabledBackground};
+      color: ${theme.colors.action.disabledText};
+      border: 1px solid ${theme.colors.action.disabledBackground};
 
       &:hover {
         border-color: ${borderColor};
@@ -56,7 +56,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     }
 
     &::placeholder {
-      color: ${theme.v2.palette.text.disabled};
+      color: ${theme.colors.text.disabled};
       opacity: 1;
     }
   `;

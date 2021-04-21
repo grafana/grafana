@@ -156,7 +156,7 @@ function rulerRuleToCombinedRule(
       }
     : {
         name: rule.grafana_alert.title,
-        queries: rule.grafana_alert.data.map((d) => d.model),
+        queries: (rule.grafana_alert.data ?? []).map((d) => d.model),
         query: '',
         labels: rule.labels || {},
         annotations: rule.annotations || {},

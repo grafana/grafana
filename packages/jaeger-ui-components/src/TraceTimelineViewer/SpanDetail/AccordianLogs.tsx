@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import _sortBy from 'lodash/sortBy';
+import { sortBy as _sortBy } from 'lodash';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
 import { css } from '@emotion/css';
