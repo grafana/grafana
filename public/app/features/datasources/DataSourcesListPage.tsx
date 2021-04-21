@@ -8,10 +8,9 @@ import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 // Types
-import { DataSourceSettings, NavModel } from '@grafana/data';
+import { DataSourceSettings, NavModel, LayoutMode } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 // Actions
 import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';

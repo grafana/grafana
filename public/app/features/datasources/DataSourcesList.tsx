@@ -2,8 +2,7 @@
 import React, { FC } from 'react';
 
 // Types
-import { DataSourceSettings } from '@grafana/data';
-import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
+import { DataSourceSettings, LayoutMode } from '@grafana/data';
 import { Card, Tag, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 
