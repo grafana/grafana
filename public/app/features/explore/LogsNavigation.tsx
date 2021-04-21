@@ -1,13 +1,13 @@
 import React, { memo, useState, useEffect } from 'react';
 import classNames from 'classNames';
-import { uniqBy, sortBy } from 'lodash';
+import { isEqual } from 'lodash';
 import { css } from 'emotion';
 import { LogsSortOrder, AbsoluteTimeRange, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
 import { Button, Icon, Spinner } from '@grafana/ui';
 
 type Props = {
   logsSortOrder?: LogsSortOrder | null;
-  visibleRange: AbsoluteTimeRange;
+  visibleRange?: AbsoluteTimeRange;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   loading: boolean;
@@ -16,8 +16,12 @@ type Props = {
   clearLogsNavigation: (shouldClear: boolean) => void;
 };
 
+type LogsTimelineChunk = {
+  logsRange: AbsoluteTimeRange;
+  queryRange: AbsoluteTimeRange;
+};
+
 function LogsNavigation({
-  logsSortOrder,
   visibleRange,
   absoluteRange,
   timeZone,
@@ -26,21 +30,30 @@ function LogsNavigation({
   logsNavigationCleared,
   clearLogsNavigation,
 }: Props) {
-  const [chunksArray, setChunksArray] = useState<AbsoluteTimeRange[]>([]);
+  const [chunksArray, setChunksArray] = useState<LogsTimelineChunk[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    const newChunk = { logsRange: visibleRange || absoluteRange, queryRange: absoluteRange };
     if (logsNavigationCleared) {
-      setChunksArray([visibleRange]);
-      setCurrentIndex(0);
+      setChunksArray([newChunk]);
     } else {
-      const currentChunksArray = chunksArray;
-      const newChunksArray = sortBy(uniqBy([...currentChunksArray, visibleRange], 'to'), 'from').reverse();
-      const currentIndex = newChunksArray.findIndex((chunk) => chunk.to === visibleRange.to);
-      setChunksArray(newChunksArray);
-      setCurrentIndex(currentIndex);
+      setChunksArray((array) => {
+        const filteredChunksArray = array.filter((chunk) => !isEqual(newChunk.queryRange, chunk.queryRange));
+        console.log(filteredChunksArray);
+
+        const newChunksArray = [...filteredChunksArray, newChunk].sort((a, b) =>
+          a.queryRange.to > b.queryRange.to ? -1 : 1
+        );
+        return newChunksArray;
+      });
     }
-  }, [visibleRange, logsNavigationCleared]);
+  }, [visibleRange, absoluteRange, logsNavigationCleared]);
+
+  useEffect(() => {
+    const index = chunksArray.findIndex((chunk) => chunk.queryRange.to === absoluteRange.to);
+    setCurrentIndex(index);
+  }, [chunksArray, absoluteRange]);
 
   function changeTime({ from, to }: AbsoluteTimeRange) {
     clearLogsNavigation(false);
@@ -48,25 +61,22 @@ function LogsNavigation({
   }
 
   const styles = getStyles();
-  const newLogsOnTop = !logsSortOrder || logsSortOrder === LogsSortOrder.Descending;
   return (
     <div className={styles.wrapper}>
-      <Button className={styles.navigationButton} variant="secondary">
-        <div className={styles.navigationButtonContent}>
-          <Icon name="angle-up" size="lg" />
-          <div>{newLogsOnTop ? 'Newer' : 'Older'}</div>
-        </div>
-      </Button>
       <div className={styles.timeline}>
-        {chunksArray.map((range: AbsoluteTimeRange, index) => (
-          <div className="wrap" key={range.from} onClick={() => changeTime({ from: range.from, to: range.to })}>
+        {chunksArray.map((chunk: LogsTimelineChunk, index) => (
+          <div
+            className="wrap"
+            key={index}
+            onClick={() => changeTime({ from: chunk.queryRange.from, to: chunk.queryRange.to })}
+          >
             <div className={classNames('line', { blueBg: currentIndex === index })} />
             <div className={classNames(styles.time, { blueText: currentIndex === index })}>{`${dateTimeFormat(
-              range.to,
+              chunk.logsRange.to,
               {
                 format: systemDateFormats.interval.second,
               }
-            )} - ${dateTimeFormat(range.from, {
+            )} - ${dateTimeFormat(chunk.logsRange.from, {
               format: systemDateFormats.interval.second,
               timeZone: timeZone,
             })}`}</div>
@@ -82,7 +92,7 @@ function LogsNavigation({
         disabled={loading}
       >
         <div className={styles.navigationButtonContent}>
-          <div>{newLogsOnTop ? 'Older' : 'Newer'}</div>
+          <div>Older</div>
           {loading ? <Spinner /> : <Icon name="angle-down" size="lg" />}
         </div>
       </Button>

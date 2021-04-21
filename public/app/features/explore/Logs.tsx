@@ -293,7 +293,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     const series = logsSeries ? logsSeries : [];
     const styles = getStyles(theme);
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
-
     return (
       <>
         <ExploreGraphPanel
@@ -420,7 +419,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           </CustomScrollbar>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={{ from: logRows[logRows.length - 1].timeEpochMs, to: logRows[0].timeEpochMs }}
+            visibleRange={visibleRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}
