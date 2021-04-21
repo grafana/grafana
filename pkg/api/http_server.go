@@ -114,7 +114,7 @@ func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
 }
 
 func (hs *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	if strings.HasPrefix(request.URL.Path, "/api/live/push") {
+	if hs.Cfg.IsLiveEnabled() && strings.HasPrefix(request.URL.Path, "/api/live/push") {
 		// For Live Push API we want minimal latency, so here we avoid pretty
 		// expensive and garbage-extensive Macaron path and do all required
 		// processing inside LivePushGateway.
