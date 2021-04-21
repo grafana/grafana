@@ -13,9 +13,8 @@ import {
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import { getBackendSrv, getDataSourceSrv } from '../services';
+import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
-import { getLiveDataStream } from './liveQuery';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -237,7 +236,7 @@ export function toStreamingDataResponse(
     const addr = parseLiveChannelAddress(frame.meta?.channel);
     if (addr) {
       streams.push(
-        getLiveDataStream({
+        getGrafanaLiveSrv().getDataStream({
           addr,
           buffer,
           frame: frame as DataFrame,

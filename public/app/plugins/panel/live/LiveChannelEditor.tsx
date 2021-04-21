@@ -9,6 +9,7 @@ import {
   StandardEditorProps,
   FeatureState,
   GrafanaTheme,
+  toLiveChannelId,
 } from '@grafana/data';
 
 import { LivePanelOptions } from './types';
@@ -58,9 +59,9 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
       support,
       paths: paths
         ? paths.map((p) => ({
-            label: p.path,
-            value: p.path,
-            description: p.description,
+            label: toLiveChannelId(p.addr),
+            value: toLiveChannelId(p.addr),
+            description: p.config.description,
           }))
         : [],
     });

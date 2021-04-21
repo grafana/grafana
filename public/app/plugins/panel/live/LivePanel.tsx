@@ -6,7 +6,6 @@ import {
   PanelProps,
   LiveChannelStatusEvent,
   isValidLiveChannelAddress,
-  LiveChannel,
   LiveChannelEvent,
   isLiveChannelStatusEvent,
   isLiveChannelMessageEvent,
@@ -15,17 +14,21 @@ import {
   LoadingState,
   applyFieldOverrides,
   StreamingDataFrame,
+  LiveChannelAddress,
+  LiveChannelConfig,
 } from '@grafana/data';
 import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
 interface State {
   error?: any;
-  channel?: LiveChannel;
+  addr?: LiveChannelAddress;
+  info?: LiveChannelConfig;
   status?: LiveChannelStatusEvent;
   message?: any;
   changed: number;
@@ -84,26 +87,37 @@ export class LivePanel extends PureComponent<Props, State> {
       console.log('INVALID', addr);
       this.unsubscribe();
       this.setState({
-        channel: undefined,
+        addr: undefined,
+        info: undefined,
       });
       return;
     }
 
-    const channel = getGrafanaLiveSrv().getChannel(addr);
-    const changed = channel.id !== this.state.channel?.id;
-    console.log('LOAD', addr, changed, channel);
-    if (changed) {
-      this.unsubscribe();
+    if (isEqual(addr, this.state.addr)) {
+      console.log('Same channel', this.state.addr);
+      return;
+    }
 
-      // Subscribe to new events
-      try {
-        this.subscription = channel.getStream().subscribe(this.streamObserver);
-        this.setState({ channel, error: undefined });
-      } catch (err) {
-        this.setState({ channel: undefined, error: err });
-      }
-    } else {
-      console.log('Same channel', channel);
+    const live = getGrafanaLiveSrv();
+    if (!live) {
+      console.log('INVALID', addr);
+      this.unsubscribe();
+      this.setState({
+        addr: undefined,
+        info: undefined,
+      });
+      return;
+    }
+    this.unsubscribe();
+
+    console.log('LOAD', addr);
+
+    // Subscribe to new events
+    try {
+      this.subscription = live.getStream(addr).subscribe(this.streamObserver);
+      this.setState({ addr, error: undefined });
+    } catch (err) {
+      this.setState({ addr: undefined, error: err });
     }
   }
 
@@ -137,18 +151,19 @@ export class LivePanel extends PureComponent<Props, State> {
   };
 
   onPublishClicked = async () => {
-    const { channel } = this.state;
-    if (!channel?.publish) {
-      console.log('channel does not support publishing');
-      return;
-    }
-    const json = this.props.options?.json;
-    if (json) {
-      const rsp = await channel.publish(json);
-      console.log('onPublishClicked (response from publish)', rsp);
-    } else {
-      console.log('nothing to publish');
-    }
+    // const { channel } = this.state;
+    // if (!channel?.publish) {
+    //   console.log('channel does not support publishing');
+    //   return;
+    // }
+    // const json = this.props.options?.json;
+    // if (json) {
+    //   const rsp = await channel.publish(json);
+    //   console.log('onPublishClicked (response from publish)', rsp);
+    // } else {
+    //   console.log('nothing to publish');
+    // }
+    alert('TODO, publish!!!');
   };
 
   renderMessage(height: number) {
@@ -194,8 +209,11 @@ export class LivePanel extends PureComponent<Props, State> {
   }
 
   renderPublish(height: number) {
-    const { channel } = this.state;
-    if (!channel?.publish) {
+    const { info } = this.state;
+    if (!info) {
+      return <div>No info</div>;
+    }
+    if (!info.canPublish) {
       return <div>This channel does not support publishing</div>;
     }
 
@@ -272,8 +290,8 @@ export class LivePanel extends PureComponent<Props, State> {
     if (!this.isValid) {
       return this.renderNotEnabled();
     }
-    const { channel, error } = this.state;
-    if (!channel) {
+    const { addr, error } = this.state;
+    if (!addr) {
       return (
         <FeatureInfoBox
           title="Grafana Live"

@@ -5,8 +5,6 @@ import {
   AppEvents,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
-  LiveChannel,
-  LiveChannelConfig,
   LiveChannelConnectionState,
   LiveChannelEvent,
   LiveChannelScope,
@@ -16,14 +14,14 @@ import { DashboardEvent, DashboardEventAction } from './types';
 import { CoreGrafanaLiveFeature } from '../scopes';
 import { sessionId } from '../live';
 import { ShowModalReactEvent } from '../../../types/events';
+import { Unsubscribable } from 'rxjs';
 
 class DashboardWatcher {
-  channel?: LiveChannel<DashboardEvent>;
-
   uid?: string;
   ignoreSave?: boolean;
   editing = false;
   lastEditing?: DashboardEvent;
+  subscription?: Unsubscribable;
 
   setEditingState(state: boolean) {
     const changed = (this.editing = state);
@@ -35,10 +33,6 @@ class DashboardWatcher {
   }
 
   private sendEditingState() {
-    if (!this.channel?.publish) {
-      return;
-    }
-
     const msg: DashboardEvent = {
       sessionId,
       uid: this.uid!,
@@ -46,7 +40,9 @@ class DashboardWatcher {
       message: (window as any).grafanaBootData?.user?.name,
       timestamp: Date.now(),
     };
-    this.channel!.publish!(msg);
+    alert('TODO POST!');
+    console.log('POST', msg);
+    // this.channel!.publish!(msg);
   }
 
   watch(uid: string) {
@@ -58,20 +54,22 @@ class DashboardWatcher {
     // Check for changes
     if (uid !== this.uid) {
       this.leave();
-      this.channel = live.getChannel({
-        scope: LiveChannelScope.Grafana,
-        namespace: 'dashboard',
-        path: `uid/${uid}`,
-      });
-      this.channel.getStream().subscribe(this.observer);
+      this.subscription = live
+        .getStream({
+          scope: LiveChannelScope.Grafana,
+          namespace: 'dashboard',
+          path: `uid/${uid}`,
+        })
+        .subscribe(this.observer);
       this.uid = uid;
     }
   }
 
   leave() {
-    if (this.channel) {
-      this.channel.disconnect();
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
+    this.subscription = undefined;
     this.uid = undefined;
   }
 
@@ -160,23 +158,14 @@ class DashboardWatcher {
 export const dashboardWatcher = new DashboardWatcher();
 
 export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
-  const dashboardConfig: LiveChannelConfig = {
-    path: '${uid}',
-    description: 'Dashboard change events',
-    hasPresence: true,
-    canPublish: () => true,
-  };
-
   return {
     name: 'dashboard',
     support: {
-      getChannelConfig: (path: string) => {
-        return {
-          ...dashboardConfig,
-          path, // set the real path
-        };
-      },
-      getSupportedPaths: () => [dashboardConfig],
+      getChannelConfig: (path: string) => ({
+        description: 'Dashboard change events',
+        hasPresence: true,
+      }),
+      getSupportedPaths: () => Promise.resolve([]),
     },
     description: 'Dashboard listener',
   };

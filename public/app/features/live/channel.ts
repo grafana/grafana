@@ -1,6 +1,5 @@
 import {
   LiveChannelConfig,
-  LiveChannel,
   LiveChannelStatusEvent,
   LiveChannelEvent,
   LiveChannelEventType,
@@ -22,14 +21,14 @@ import { Subject, of, Observable } from 'rxjs';
 /**
  * Internal class that maps Centrifuge support to GrafanaLive
  */
-export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements LiveChannel<TMessage, TPublish> {
+export class CentrifugeLiveChannel<T = any> {
   readonly currentStatus: LiveChannelStatusEvent;
 
   readonly opened = Date.now();
   readonly id: string;
   readonly addr: LiveChannelAddress;
 
-  readonly stream = new Subject<LiveChannelEvent<TMessage>>();
+  readonly stream = new Subject<LiveChannelEvent<T>>();
 
   /** Static definition of the channel definition.  This may describe the channel usage */
   config?: LiveChannelConfig;
@@ -72,7 +71,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
             this.sendStatus();
           }
         } catch (err) {
-          console.log('publish error', config.path, err);
+          console.log('publish error', this.addr, err);
           this.currentStatus.error = err;
           this.currentStatus.timestamp = Date.now();
           this.sendStatus();
@@ -140,7 +139,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
           this.disconnect();
         }
       };
-    }) as Observable<LiveChannelEvent<TMessage>>;
+    }) as Observable<LiveChannelEvent<T>>;
   }
 
   /**
@@ -151,7 +150,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   /**
    * This is configured by the server when config supports writing
    */
-  publish?: (msg: TPublish) => Promise<any>;
+  publish?: (msg: any) => Promise<any>;
 
   /**
    * This will close and terminate all streams for this channel
@@ -183,7 +182,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   }
 }
 
-export function getErrorChannel(msg: string, id: string, addr: LiveChannelAddress): LiveChannel {
+export function getErrorChannel<TMessage>(msg: string, id: string, addr: LiveChannelAddress) {
   return {
     id,
     opened: Date.now(),
