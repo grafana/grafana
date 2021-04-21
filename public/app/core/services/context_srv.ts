@@ -1,5 +1,5 @@
 import config from '../../core/config';
-import _ from 'lodash';
+import { extend } from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
 import { AccessControlAction, AccessControlScope, UserPermission } from 'app/types';
@@ -35,7 +35,7 @@ export class User {
     this.hasEditPermissionInFolders = false;
     this.email = undefined;
     if (config.bootData.user) {
-      _.extend(this, config.bootData.user);
+      extend(this, config.bootData.user);
     }
   }
 }
@@ -110,8 +110,15 @@ export class ContextSrv {
   }
 }
 
-const contextSrv = new ContextSrv();
+let contextSrv = new ContextSrv();
 export { contextSrv };
+
+export const setContextSrv = (override: ContextSrv) => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('contextSrv can be only overriden in test environment');
+  }
+  contextSrv = override;
+};
 
 coreModule.factory('contextSrv', () => {
   return contextSrv;

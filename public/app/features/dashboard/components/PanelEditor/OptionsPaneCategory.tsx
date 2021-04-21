@@ -1,6 +1,5 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { Counter, Icon, useStyles } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';

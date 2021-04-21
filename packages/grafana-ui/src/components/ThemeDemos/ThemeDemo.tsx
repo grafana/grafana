@@ -148,8 +148,8 @@ export const ThemeDemo = () => {
               <Field label="Switch true">
                 <Switch value={true} />
               </Field>
-              <Field label="Switch false disabled">
-                <Switch value={false} disabled />
+              <Field label="Switch false disabled" disabled={true}>
+                <Switch value={false} />
               </Field>
             </HorizontalGroup>
             <VerticalGroup>

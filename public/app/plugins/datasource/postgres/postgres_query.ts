@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find, map } from 'lodash';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
 
@@ -58,7 +58,7 @@ export default class PostgresQuery {
   }
 
   hasTimeGroup() {
-    return _.find(this.target.group, (g: any) => g.type === 'time');
+    return find(this.target.group, (g: any) => g.type === 'time');
   }
 
   hasMetricColumn() {
@@ -75,7 +75,7 @@ export default class PostgresQuery {
       return this.quoteLiteral(value);
     }
 
-    const escapedValues = _.map(value, this.quoteLiteral);
+    const escapedValues = map(value, this.quoteLiteral);
     return escapedValues.join(',');
   }
 
@@ -151,11 +151,11 @@ export default class PostgresQuery {
   buildValueColumn(column: any) {
     let query = '';
 
-    const columnName: any = _.find(column, (g: any) => g.type === 'column');
+    const columnName: any = find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    const aggregate: any = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    const windows: any = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+    const aggregate: any = find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+    const windows: any = find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
 
     if (aggregate) {
       const func = aggregate.params[0];
@@ -220,7 +220,7 @@ export default class PostgresQuery {
       }
     }
 
-    const alias: any = _.find(column, (g: any) => g.type === 'alias');
+    const alias: any = find(column, (g: any) => g.type === 'alias');
     if (alias) {
       query += ' AS ' + this.quoteIdentifier(alias.params[0]);
     }
@@ -230,7 +230,7 @@ export default class PostgresQuery {
 
   buildWhereClause() {
     let query = '';
-    const conditions = _.map(this.target.where, (tag, index) => {
+    const conditions = map(this.target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
           return tag.name + '(' + this.target.timeColumn + ')';

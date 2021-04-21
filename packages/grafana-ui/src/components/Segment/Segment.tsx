@@ -1,6 +1,6 @@
 import React, { HTMLProps } from 'react';
 import { cx } from '@emotion/css';
-import _ from 'lodash';
+import { isObject } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 import { getSegmentStyles } from './styles';
@@ -28,7 +28,7 @@ export function Segment<T>({
   const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
-    const label = _.isObject(value) ? value.label : value;
+    const label = isObject(value) ? value.label : value;
 
     return (
       <Label
@@ -56,7 +56,7 @@ export function Segment<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !_.isObject(value) ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
       options={options}
       width={width}
       onClickOutside={() => setExpanded(false)}

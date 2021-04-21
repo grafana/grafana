@@ -206,14 +206,22 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		if hs.Cfg.IsNgAlertEnabled() {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
 		}
+		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
+			if hs.Cfg.IsNgAlertEnabled() {
+				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+					Text: "Contact points", Id: "receivers", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
+					Icon: "comment-alt-share",
+				})
+			} else {
+				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+					Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
+					Icon: "comment-alt-share",
+				})
+			}
+		}
+
 		if c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsNgAlertEnabled() {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Routes", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
-		}
-		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-				Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
-				Icon: "comment-alt-share",
-			})
 		}
 
 		navTree = append(navTree, &dtos.NavLink{
