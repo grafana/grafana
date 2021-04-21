@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { PluginSettings } from './PluginSettings';
@@ -233,7 +233,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           />
         )}
 
-        <div className="gf-form-group">
+        <div className="gf-form-group p-t-2">
           {testingStatus?.message && (
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}

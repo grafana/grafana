@@ -7,7 +7,7 @@ import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
 import { Button } from '../../Button';
 import { TimeZonePicker } from '../TimeZonePicker';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
@@ -85,7 +85,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
 const getStyle = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
-      border-top: 1px solid ${theme.colors.border1};
+      border-top: 1px solid ${theme.v2.palette.border.weak};
       padding: 11px;
       display: flex;
       flex-direction: row;

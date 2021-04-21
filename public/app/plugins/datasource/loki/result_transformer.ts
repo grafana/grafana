@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { capitalize, groupBy, isEmpty } from 'lodash';
 import md5 from 'md5';
 import { of } from 'rxjs';
 
@@ -278,7 +278,7 @@ export function lokiResultsToTableModel(
 
 export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
-    options === undefined || _.isEmpty(options.legendFormat)
+    options === undefined || isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
       : renderTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
@@ -326,7 +326,7 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
       } else if (/bytes/i.test(label)) {
         unit = 'decbytes';
       }
-      const title = `${_.capitalize(section)}: ${decamelize(label)}`;
+      const title = `${capitalize(section)}: ${decamelize(label)}`;
       result.push({ displayName: title, value, unit });
     }
   }
@@ -397,7 +397,7 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-  const derivedFieldsGrouped = _.groupBy(derivedFields, 'name');
+  const derivedFieldsGrouped = groupBy(derivedFields, 'name');
 
   const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 

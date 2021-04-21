@@ -1,13 +1,7 @@
-import map from 'lodash/map';
-import sortBy from 'lodash/sortBy';
-import flattenDeep from 'lodash/flattenDeep';
-import chunk from 'lodash/chunk';
-import zip from 'lodash/zip';
+import { map, sortBy, flattenDeep, chunk, zip } from 'lodash';
 import tinycolor from 'tinycolor2';
 import lightTheme from '../themes/light';
 import darkTheme from '../themes/dark';
-import { GrafanaTheme } from '@grafana/data';
-import { AlertVariant } from '../components/Alert/Alert';
 
 const PALETTE_ROWS = 4;
 
@@ -126,23 +120,3 @@ export function getTextColorForBackground(color: string) {
 }
 
 export let sortedColors = sortColorsByHue(colors);
-
-/**
- * Returns colors used for severity color coding. Use for single color retrievel(0 index) or gradient definition
- * @internal
- **/
-export function getColorsFromSeverity(severity: AlertVariant, theme: GrafanaTheme): [string, string] {
-  switch (severity) {
-    case 'error':
-      return [theme.palette.redBase, theme.palette.redShade];
-    case 'warning':
-      return [theme.palette.queryOrange, theme.palette.orange];
-    case 'info':
-    case 'info':
-      return [theme.palette.blue80, theme.palette.blue77];
-    case 'success':
-      return [theme.palette.greenBase, theme.palette.greenShade];
-    default:
-      return [theme.palette.blue80, theme.palette.blue77];
-  }
-}

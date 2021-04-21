@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useRef } from 'react';
-import isNil from 'lodash/isNil';
+import { isNil } from 'lodash';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
 import Scrollbars from 'react-custom-scrollbars';
@@ -155,12 +155,12 @@ const getStyles = (theme: GrafanaTheme) => {
         left: ${theme.spacing.xxs};
       }
       .thumb-vertical {
-        background: ${theme.colors.bg3};
+        background: ${theme.v2.palette.action.focus};
         border-radius: ${theme.border.radius.md};
         opacity: 0;
       }
       .thumb-horizontal {
-        background: ${theme.colors.bg3};
+        background: ${theme.v2.palette.action.focus};
         border-radius: ${theme.border.radius.md};
         opacity: 0;
       }

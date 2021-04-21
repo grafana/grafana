@@ -1,9 +1,9 @@
 import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import uniqueId from 'lodash/uniqueId';
+import { uniqueId } from 'lodash';
 import { GrafanaTheme, deprecationWarning } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
-import { focusCss } from '../../themes/mixins';
+import { focusCss, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
@@ -12,7 +12,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, disabled = false, onChange, id, ...inputProps }, ref) => {
+  ({ value, checked, disabled, onChange, id, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
@@ -69,24 +69,31 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
         position: absolute;
 
         &:disabled + label {
-          background: ${theme.colors.formSwitchBgDisabled};
+          background: ${theme.v2.palette.action.disabledBackground};
           cursor: not-allowed;
         }
 
         &:checked + label {
-          background: ${theme.colors.formSwitchBgActive};
+          background: ${theme.v2.palette.primary.main};
+          border-color: ${theme.v2.palette.primary.main};
 
           &:hover {
-            background: ${theme.colors.formSwitchBgActiveHover};
+            background: ${theme.v2.palette.primary.shade};
           }
 
           &::after {
             transform: translate3d(18px, -50%, 0);
+            background: ${theme.v2.palette.primary.contrastText};
           }
         }
 
-        &:focus + label {
-          ${focusCss(theme)};
+        &:focus + label,
+        &:focus-visible + label {
+          ${focusCss(theme)}
+        }
+
+        &:focus:not(:focus-visible) + label {
+          ${getMouseFocusStyles(theme.v2)}
         }
       }
 
@@ -96,11 +103,12 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
         cursor: pointer;
         border: none;
         border-radius: 50px;
-        background: ${theme.colors.formSwitchBg};
+        background: ${theme.v2.components.input.background};
+        border: 1px solid ${theme.v2.components.input.border};
         transition: all 0.3s ease;
 
         &:hover {
-          background: ${theme.colors.formSwitchBgHover};
+          border-color: ${theme.v2.components.input.borderHover};
         }
 
         &::after {
@@ -110,7 +118,8 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
           width: 12px;
           height: 12px;
           border-radius: 6px;
-          background: ${theme.colors.formSwitchDot};
+          background: ${theme.v2.palette.text.secondary};
+          box-shadow: ${theme.v2.shadows.z1};
           top: 50%;
           transform: translate3d(2px, -50%, 0);
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
@@ -118,13 +127,13 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
       }
     `,
     inlineContainer: css`
-      padding: 0 ${theme.spacing.sm};
-      height: ${theme.spacing.formInputHeight}px;
+      padding: ${theme.v2.spacing(0, 1)};
+      height: ${theme.v2.spacing(theme.v2.components.height.md)};
       display: flex;
       align-items: center;
-      background: ${transparent ? 'transparent' : theme.colors.formInputBg};
-      border: 1px solid ${transparent ? 'transparent' : theme.colors.formInputBorder};
-      border-radius: ${theme.border.radius.md};
+      background: ${transparent ? 'transparent' : theme.v2.components.input.background};
+      border: 1px solid ${transparent ? 'transparent' : theme.v2.components.input.border};
+      border-radius: ${theme.v2.shape.borderRadius()};
     `,
   };
 });

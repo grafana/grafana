@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, extend, isString } from 'lodash';
 import {
   dateMath,
   dateTime,
@@ -23,9 +23,9 @@ export class TimeSrv {
   refreshTimer: any;
   refresh: any;
   oldRefresh: string | null | undefined;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
   timeAtLoad: any;
-  private autoRefreshBlocked: boolean;
+  private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
@@ -57,7 +57,7 @@ export class TimeSrv {
     this.parseTime();
 
     // remember time at load so we can go back to it
-    this.timeAtLoad = _.cloneDeep(this.time);
+    this.timeAtLoad = cloneDeep(this.time);
 
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);
@@ -74,10 +74,10 @@ export class TimeSrv {
 
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
-    if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
+    if (isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
       this.time.from = dateTime(this.time.from).utc();
     }
-    if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
+    if (isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
       this.time.to = dateTime(this.time.to).utc();
     }
   }
@@ -141,7 +141,9 @@ export class TimeSrv {
     // if absolute ignore refresh option saved to dashboard
     if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
-      this.dashboard.refresh = false;
+      if (this.dashboard) {
+        this.dashboard.refresh = false;
+      }
     }
 
     let paramsJSON: Record<string, string> = {};
@@ -188,7 +190,10 @@ export class TimeSrv {
   }
 
   setAutoRefresh(interval: any) {
-    this.dashboard.refresh = interval;
+    if (this.dashboard) {
+      this.dashboard.refresh = interval;
+    }
+
     this.stopAutoRefresh();
 
     if (interval) {
@@ -210,7 +215,7 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.dashboard.timeRangeUpdated(this.timeRange());
+    this.dashboard?.timeRangeUpdated(this.timeRange());
   }
 
   private startNextRefreshTimer(afterMs: number) {
@@ -229,13 +234,13 @@ export class TimeSrv {
   }
 
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
-    _.extend(this.time, time);
+    extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
-      this.oldRefresh = this.dashboard.refresh || this.oldRefresh;
+      this.oldRefresh = this.dashboard?.refresh || this.oldRefresh;
       this.setAutoRefresh(false);
-    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard.refresh) {
+    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
       this.oldRefresh = null;
     }

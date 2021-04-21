@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -112,7 +112,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 			),
 		),
 		nil,
-		yamlExtractor(apimodels.RuleGroupConfigResponse{}),
+		yamlExtractor(&apimodels.GettableRuleGroupConfig{}),
 		nil,
 	)
 }
