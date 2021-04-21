@@ -1,5 +1,5 @@
 import angular, { ILocationService } from 'angular';
-import _ from 'lodash';
+import { each } from 'lodash';
 
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
@@ -216,7 +216,7 @@ function pluginDirectiveLoader(
 
   function appendAndCompile(scope: any, elem: JQuery, componentInfo: any) {
     const child = angular.element(document.createElement(componentInfo.name));
-    _.each(componentInfo.attrs, (value, key) => {
+    each(componentInfo.attrs, (value, key) => {
       child.attr(key, value);
     });
 
