@@ -1,11 +1,11 @@
 import React from 'react';
-import { useTheme } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getInputStyles } from '../Input/Input';
 import { cx, css } from '@emotion/css';
 
 export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren<any>>((props, ref) => {
   const { children } = props;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getInputStyles({ theme, invalid: false });
 
   return (
