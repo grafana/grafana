@@ -328,7 +328,7 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 		for i := 0; i < len(originFrame.Fields); i++ {
-			_, err := convertSQLValueColumnToFloat(originFrame, i)
+			_, err := convertSQLValueColumnToFloat(log.New("test"), originFrame, i)
 			require.NoError(t, err)
 			if i == 8 {
 				require.Equal(t, float64(1), originFrame.Fields[i].At(0).(float64))
@@ -385,7 +385,7 @@ func TestSQLEngine(t *testing.T) {
 		)
 		for i := 0; i < len(originFrame.Fields); i++ {
 			t.Run("", func(t *testing.T) {
-				_, err := convertSQLValueColumnToFloat(originFrame, i)
+				_, err := convertSQLValueColumnToFloat(log.New("test"), originFrame, i)
 				require.NoError(t, err)
 				require.Nil(t, originFrame.Fields[i].At(0))
 			})

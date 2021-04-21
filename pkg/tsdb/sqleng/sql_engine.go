@@ -198,14 +198,14 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	}
 
 	// data source specific substitutions
-	interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
+	interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, interpolatedQuery)
 	if err != nil {
 		queryResult.Error = err
 		ch <- queryResult
 		return
 	}
 
-	backend.Logger.Debug("SQL query after interpolation", "sqlQuery", interpolatedQuery)
+	e.log.Debug("SQL query after interpolation", "sqlQuery", interpolatedQuery)
 
 	errAppendDebug := func(frameErr string, err error) {
 		var emptyFrame data.Frame
@@ -249,7 +249,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		ExecutedQueryString: interpolatedQuery,
 	})
 
-	backend.Logger.Debug("SQL query result row number", "queryResult", frame.Fields[0].Len())
+	e.log.Debug("SQL query result row number", "queryResult", frame.Fields[0].Len())
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
@@ -275,14 +275,14 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			}
 
 			var err error
-			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
+			if frame, err = convertSQLValueColumnToFloat(e.log, frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err)
 				return
 			}
 		}
 
 		tsSchema := frame.TimeSeriesSchema()
-		backend.Logger.Debug("Timeseries schema", "schema", tsSchema.Type)
+		e.log.Debug("Timeseries schema", "schema", tsSchema.Type)
 
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			var err error
@@ -296,11 +296,11 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			var err error
 			frame, err = resample(frame, *qm)
 			if err != nil {
-				backend.Logger.Debug("Failed to resample dataframe", "err", err)
+				e.log.Debug("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
 			if err := trim(frame, *qm); err != nil {
-				backend.Logger.Debug("Failed to trim dataframe", "err", err)
+				e.log.Debug("Failed to trim dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
 			}
 		}
@@ -803,7 +803,7 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 
 // convertSQLValueColumnToFloat converts timeseries value column to float.
 //nolint: gocyclo
-func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
+func convertSQLValueColumnToFloat(logger log.Logger, frame *data.Frame, Index int) (*data.Frame, error) {
 	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
 	}
@@ -818,7 +818,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	newField.Name = origin.Name
 	newField.Labels = origin.Labels
 
-	backend.Logger.Info("SQL column type converting to float64", "sqlConvertFloat64", valueType)
+	logger.Debug("SQL column type converting to float64", "sqlConvertFloat64", valueType)
 	switch valueType {
 	case data.FieldTypeInt64:
 		convertInt64ToFloat64(frame.Fields[Index], newField)

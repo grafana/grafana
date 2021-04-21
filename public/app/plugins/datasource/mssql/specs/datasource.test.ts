@@ -1,8 +1,7 @@
 import { of } from 'rxjs';
-import { dateTime } from '@grafana/data';
+import { dataFrameToJSON, dateTime, MetricFindValue, MutableDataFrame } from '@grafana/data';
 
 import { MssqlDatasource } from '../datasource';
-import { TimeSrvStub } from 'test/specs/helpers';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
@@ -17,15 +16,13 @@ describe('MSSQLDatasource', () => {
   const templateSrv: TemplateSrv = new TemplateSrv();
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
-  const ctx: any = {
-    timeSrv: new TimeSrvStub(),
-  };
+  const ctx: any = {};
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     ctx.instanceSettings = { name: 'mssql' };
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv, ctx.timeSrv);
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv);
   });
 
   describe('When performing annotationQuery', () => {
@@ -85,24 +82,20 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results: any;
+    let results: MetricFindValue[];
     const query = 'select * from atable';
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                ],
+              })
+            ),
           ],
         },
       },
@@ -111,7 +104,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data: any) => {
+      return ctx.ds.metricFindQuery(query).then((data: MetricFindValue[]) => {
         results = data;
       });
     });
@@ -129,19 +122,15 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [
-                ['value1', 'aTitle'],
-                ['value2', 'aTitle2'],
-                ['value3', 'aTitle3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__value', values: ['value1', 'value2', 'value3'] },
+                  { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                ],
+              })
+            ),
           ],
         },
       },
@@ -170,19 +159,15 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [
-                ['aTitle', 'same'],
-                ['aTitle', 'same'],
-                ['aTitle', 'diff'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
+                  { name: '__value', values: ['same', 'same', 'diff'] },
+                ],
+              })
+            ),
           ],
         },
       },
@@ -207,15 +192,12 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 1,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }],
-              rows: [['aTitle']],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [{ name: 'test', values: ['aTitle'] }],
+              })
+            ),
           ],
         },
       },
@@ -226,11 +208,9 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.timeSrv.setTime(time);
-
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query);
+      return ctx.ds.metricFindQuery(query, { range: time });
     });
 
     it('should pass timerange to datasourceRequest', () => {
