@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	cw "github.com/weaveworks/common/middleware"
 	"gopkg.in/macaron.v1"
 )
 
@@ -68,6 +69,11 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 		AllowAnonymous: false,
 		SkipCache:      false,
 		Logger:         log.New("context"),
+	}
+
+	traceID, exists := cw.ExtractTraceID(c.Req.Request.Context())
+	if exists {
+		ctx.Logger = ctx.Logger.New("traceID", traceID)
 	}
 
 	const headerName = "X-Grafana-Org-Id"
