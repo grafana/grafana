@@ -62,10 +62,12 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 
+	repo := c.PluginRepoURL()
+
 	pm := manager.NewManagerInstaller(skipTLSVerify, log.New("gcli.logger"))
 
-	logger.Infof("Plugin=%s, version=%s, dir=%s, URL=%s\n", pluginToInstall, version, c.PluginDirectory(), c.PluginURL())
-	return pm.InstallPlugin(pluginToInstall, version, c.PluginDirectory(), c.PluginURL())
+	logger.Infof("Plugin=%s, version=%s, dir=%s, pluginZipURL=%s, repo=%s\n", pluginToInstall, version, c.PluginDirectory(), c.PluginURL(), repo)
+	return pm.InstallPlugin(pluginToInstall, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
@@ -84,7 +86,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := client.GetPlugin(pluginName, c.RepoDirectory())
+		plugin, err := client.GetPlugin(pluginName, c.PluginRepoURL())
 		if err != nil {
 			return err
 		}

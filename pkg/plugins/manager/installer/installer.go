@@ -39,7 +39,6 @@ type Installer struct {
 
 const (
 	permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
-	grafanaComPluginsURL     = "https://grafana.com/api/plugins"
 )
 
 var (
@@ -68,7 +67,7 @@ func New(skipTLSVerify bool, logger log.Logger) *Installer {
 	}
 }
 
-func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL string) error {
+func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
 	var checksum string
@@ -80,7 +79,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL string
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := g.getPluginMetadataFromGCOM(pluginName)
+		plugin, err := g.getPluginMetadataFromPluginRepo(pluginName, pluginRepoURL)
 		if err != nil {
 			return err
 		}
@@ -94,7 +93,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL string
 			version = v.Version
 		}
 		pluginZipURL = fmt.Sprintf("%s/%s/versions/%s/download",
-			grafanaComPluginsURL,
+			pluginRepoURL,
 			pluginName,
 			version,
 		)
@@ -146,7 +145,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL string
 	// download dependency plugins
 	res, _ := toPluginDTO(pluginsDir, pluginName)
 	for _, dep := range res.Dependencies.Plugins {
-		if err := g.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, ""); err != nil {
+		if err := g.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
 		}
 
@@ -229,9 +228,9 @@ func (g *Installer) DownloadFile(pluginName string, tmpFile *os.File, url string
 	return nil
 }
 
-func (g *Installer) getPluginMetadataFromGCOM(pluginID string) (Plugin, error) {
+func (g *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
 	g.log.Info(fmt.Sprintf("getting %v metadata from GCOM\n", pluginID))
-	body, err := g.sendRequestGetBytes(grafanaComPluginsURL, "repo", pluginID)
+	body, err := g.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
 			return Plugin{}, errutil.Wrap(
