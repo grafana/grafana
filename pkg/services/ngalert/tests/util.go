@@ -77,7 +77,6 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     1,
 						Title:     fmt.Sprintf("an alert definition %d", d),
 						Condition: "A",
 						Data: []models.AlertQuery{
@@ -126,8 +125,7 @@ func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID: 1,
-						UID:   existingRule.UID,
+						UID: existingRule.UID,
 					},
 				},
 			},

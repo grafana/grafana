@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import difference from 'lodash/difference';
+import { difference } from 'lodash';
 
 import { Select } from '../Select/Select';
 

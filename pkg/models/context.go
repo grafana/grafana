@@ -78,3 +78,13 @@ func (ctx *ReqContext) HasHelpFlag(flag HelpFlags1) bool {
 func (ctx *ReqContext) TimeRequest(timer prometheus.Summary) {
 	ctx.Data["perfmon.timer"] = timer
 }
+
+// QueryBoolWithDefault extracts a value from the request query params and applies a bool default if not present.
+func (ctx *ReqContext) QueryBoolWithDefault(field string, d bool) bool {
+	f := ctx.Query(field)
+	if f == "" {
+		return d
+	}
+
+	return ctx.QueryBool(field)
+}
