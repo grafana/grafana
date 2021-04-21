@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
@@ -20,45 +20,57 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeri
   const styles = useStyles(getStyles);
   const eventBus = useContext(EventBusWithSourceContext);
 
-  function onMouseEnter(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (eventBus) {
-      eventBus.publish({
-        type: DataHoverEvent.type,
-        payload: {
-          raw: event,
-          x: 0,
-          y: 0,
-          dataId: item.label,
-        },
-      });
-    }
-  }
+  const onMouseEnter = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (eventBus) {
+        eventBus.publish({
+          type: DataHoverEvent.type,
+          payload: {
+            raw: event,
+            x: 0,
+            y: 0,
+            dataId: item.label,
+          },
+        });
+      }
+    },
+    [eventBus, item]
+  );
 
-  function onMouseOut(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (eventBus) {
-      eventBus.publish({
-        type: DataHoverClearEvent.type,
-        payload: {
-          raw: event,
-          x: 0,
-          y: 0,
-          dataId: item.label,
-        },
-      });
-    }
-  }
+  const onMouseOut = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (eventBus) {
+        eventBus.publish({
+          type: DataHoverClearEvent.type,
+          payload: {
+            raw: event,
+            x: 0,
+            y: 0,
+            dataId: item.label,
+          },
+        });
+      }
+    },
+    [eventBus, item]
+  );
 
-  function onClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (onLabelClick) {
-      onLabelClick(item, event);
-    }
-  }
+  const onClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (onLabelClick) {
+        onLabelClick(item, event);
+      }
+    },
+    [item, onLabelClick]
+  );
 
-  function onColorChange(color: string) {
-    if (onSeriesColorChange) {
-      onSeriesColorChange(item.label, color);
-    }
-  }
+  const onColorChange = useCallback(
+    (color: string) => {
+      if (onSeriesColorChange) {
+        onSeriesColorChange(item.label, color);
+      }
+    },
+    [item, onSeriesColorChange]
+  );
 
   return (
     <div className={styles.itemWrapper}>
