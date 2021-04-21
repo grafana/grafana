@@ -30,7 +30,7 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { useNewTheme, getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
@@ -59,6 +59,8 @@ if (process.env.NODE_ENV === 'development') {
   initDevFeatures();
 }
 
+// eslint-disable-next-line
+console.info(useNewTheme());
 export class GrafanaApp {
   angularApp: AngularApp;
 

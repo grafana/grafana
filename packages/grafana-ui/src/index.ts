@@ -9,5 +9,11 @@ export * from './utils';
 export * from './themes';
 export * from './slate-plugins';
 
+export const useNewTheme = () => 'NEW THEME';
+
+export const DEPRECATED_COMPAT_EXPORTS = {
+  useNewTheme: () => 'DEPRECATED OLD THEME',
+};
+
 // Exposes standard editors for registries of optionsUi config and panel options UI
 export { getStandardFieldConfigs, getStandardOptionEditors } from './utils/standardEditors';

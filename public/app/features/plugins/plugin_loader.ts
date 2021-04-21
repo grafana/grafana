@@ -53,9 +53,12 @@ function locate(load: { address: string }) {
   return load.address + bust;
 }
 
-grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
+const legacyRuntime = new grafanaRuntime.SystemJS.constructor();
 
-grafanaRuntime.SystemJS.config({
+grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
+legacyRuntime.registry.set('plugin-loader', legacyRuntime.newModule({ locate: locate }));
+
+const SYSTEM_JS_CONFIG = {
   baseURL: 'public',
   defaultExtension: 'js',
   packages: {
@@ -74,16 +77,23 @@ grafanaRuntime.SystemJS.config({
       loader: 'plugin-loader',
     },
   },
-});
+};
 
-function exposeToPlugin(name: string, component: any) {
-  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
-    module.exports = component;
-  });
+grafanaRuntime.SystemJS.config(SYSTEM_JS_CONFIG);
+legacyRuntime.config(SYSTEM_JS_CONFIG);
+
+const register = (component: any) => (_: any, __: any, module: any) => {
+  module.exports = component;
+};
+
+function exposeToPlugin(name: string, component: any, legacyComponent?: any) {
+  grafanaRuntime.SystemJS.registerDynamic(name, [], true, register(component));
+
+  legacyRuntime.registerDynamic(name, [], true, register(legacyComponent || component));
 }
 
 exposeToPlugin('@grafana/data', grafanaData);
-exposeToPlugin('@grafana/ui', grafanaUI);
+exposeToPlugin('@grafana/ui', grafanaUI, { ...grafanaUI, ...grafanaUI.DEPRECATED_COMPAT_EXPORTS });
 exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
@@ -170,7 +180,7 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export async function importPluginModule(path: string): Promise<any> {
+export async function importPluginModule(path: string, useLegacyContex = false): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     // for handling dynamic imports
@@ -180,11 +190,19 @@ export async function importPluginModule(path: string): Promise<any> {
       return Promise.resolve(builtIn);
     }
   }
+  if (useLegacyContex) {
+    return legacyRuntime.import(path);
+  }
   return grafanaRuntime.SystemJS.import(path);
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return importPluginModule(meta.module).then((pluginExports) => {
+  // We need to have an identifier in the plugins to check if we should provide
+  // the new or old version of the dependencies. Given the new theme is
+  // going to be introduced in v8 i think the following could be a viable option:
+  // if meta.dependencies.grafanaVersion < 8
+  const useLegacyContext = meta.id === 'grafana-es-open-distro-datasource';
+  return importPluginModule(meta.module, useLegacyContext).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
