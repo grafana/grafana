@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FC, FormEvent, useEffect, useState } from 'react';
-import { EventsWithValidation, InlineFormLabel, LegacyForms, ValidationEvents } from '@grafana/ui';
+import { EventsWithValidation, InlineFormLabel, LegacyForms, ValidationEvents, Button } from '@grafana/ui';
 import { NewApiKey, OrgRole } from '../../types';
 import { rangeUtil } from '@grafana/data';
 import { SlideDown } from '../../core/components/Animations/SlideDown';
@@ -100,7 +100,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
               />
             </div>
             <div className="gf-form">
-              <button className="btn gf-form-btn btn-primary">Add</button>
+              <Button>Add</Button>
             </div>
           </div>
         </form>
