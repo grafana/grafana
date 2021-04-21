@@ -35,12 +35,6 @@ export const NoDataSourceCallToAction = () => {
   `;
 
   return (
-    <CallToActionCard
-      callToActionElement={ctaElement}
-      className={cardClassName}
-      footer={footer}
-      message={message}
-      theme={theme}
-    />
+    <CallToActionCard callToActionElement={ctaElement} className={cardClassName} footer={footer} message={message} />
   );
 };
