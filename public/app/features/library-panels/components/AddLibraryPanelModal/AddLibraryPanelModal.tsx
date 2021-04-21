@@ -4,22 +4,20 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { PanelModel } from '../../../dashboard/state';
 import { css } from '@emotion/css';
 import { usePanelSave } from '../../utils/usePanelSave';
-
-interface Props {
+interface AddLibraryPanelContentsProps {
   onDismiss: () => void;
-  isOpen?: boolean;
   panel: PanelModel;
   initialFolderId?: number;
 }
 
-export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, initialFolderId, ...props }) => {
+export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: AddLibraryPanelContentsProps) => {
   const styles = useStyles(getStyles);
   const [folderId, setFolderId] = useState(initialFolderId);
   const [panelTitle, setPanelTitle] = useState(panel.title);
   const { saveLibraryPanel } = usePanelSave();
 
   return (
-    <Modal title="Add this panel to the panel library" isOpen={isOpen} onDismiss={props.onDismiss}>
+    <>
       <Field label="Library panel name">
         <Input name="name" value={panelTitle} onChange={(e) => setPanelTitle(e.currentTarget.value)} />
       </Field>
@@ -31,15 +29,27 @@ export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, i
         <Button
           onClick={() => {
             panel.title = panelTitle;
-            saveLibraryPanel(panel, folderId!).then(() => props.onDismiss());
+            saveLibraryPanel(panel, folderId!).then(() => onDismiss());
           }}
         >
           Add panel to the panel library
         </Button>
-        <Button variant="secondary" onClick={props.onDismiss}>
+        <Button variant="secondary" onClick={onDismiss}>
           Cancel
         </Button>
       </div>
+    </>
+  );
+};
+
+interface Props extends AddLibraryPanelContentsProps {
+  isOpen?: boolean;
+}
+
+export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, initialFolderId, ...props }) => {
+  return (
+    <Modal title="Add this panel to the panel library" isOpen={isOpen} onDismiss={props.onDismiss}>
+      <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={props.onDismiss} />
     </Modal>
   );
 };

@@ -10,10 +10,10 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
@@ -79,7 +79,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		newGroup := &apimodels.RuleGroup{
 			Name: groupId,
 			// This doesn't make sense in our architecture
-			// so we use this field for passing to the frontend the namaspace
+			// so we use this field for passing to the frontend the namespace
 			File:           namespace,
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
@@ -99,8 +99,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
-				Query:       "", // TODO: get this from parsing AlertRule.Data
-				Duration:    time.Duration(rule.For).Seconds(),
+				Query:       rule.DataToString(), // TODO: don't escape <>& etc
+				Duration:    rule.For.Seconds(),
 				Annotations: rule.Annotations,
 			}
 

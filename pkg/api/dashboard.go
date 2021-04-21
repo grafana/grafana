@@ -464,6 +464,98 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	})
 }
 
+func (hs *HTTPServer) PostTrimedDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+	var err error
+	cmd.OrgId = c.OrgId
+	cmd.UserId = c.UserId
+	cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
+	if err != nil {
+		return response.Error(500, "Error while applying default value to the dashboard json", err)
+	}
+
+	dash := cmd.GetDashboardModel()
+	newDashboard := dash.Id == 0 && dash.Uid == ""
+	if newDashboard {
+		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
+		if err != nil {
+			return response.Error(500, "failed to get quota", err)
+		}
+		if limitReached {
+			return response.Error(403, "Quota reached", nil)
+		}
+	}
+
+	svc := dashboards.NewProvisioningService(hs.SQLStore)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+	if err != nil {
+		return response.Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
+	allowUiUpdate := true
+	if provisioningData != nil {
+		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
+	}
+
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// clean up all unnecessary library panels JSON properties so we store a minimum JSON
+		err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
+		if err != nil {
+			return response.Error(500, "Error while cleaning library panels", err)
+		}
+	}
+
+	dashItem := &dashboards.SaveDashboardDTO{
+		Dashboard: dash,
+		Message:   cmd.Message,
+		OrgId:     c.OrgId,
+		User:      c.SignedInUser,
+		Overwrite: cmd.Overwrite,
+	}
+
+	dashSvc := dashboards.NewService(hs.SQLStore)
+	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
+	if err != nil {
+		return hs.dashboardSaveErrorToApiResponse(err)
+	}
+
+	if hs.Cfg.EditorsCanAdmin && newDashboard {
+		inFolder := cmd.FolderId > 0
+		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		if err != nil {
+			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
+		}
+	}
+
+	// Tell everyone listening that the dashboard changed
+	if hs.Live.IsEnabled() {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
+			dashboard.Uid,
+			c.UserId,
+		)
+		if err != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
+
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// connect library panels for this dashboard after the dashboard is stored and has an ID
+		err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
+		if err != nil {
+			return response.Error(500, "Error while connecting library panels", err)
+		}
+	}
+
+	c.TimeRequest(metrics.MApiDashboardSave)
+	return response.JSON(200, util.DynMap{
+		"status":  "success",
+		"slug":    dashboard.Slug,
+		"version": dashboard.Version,
+		"id":      dashboard.Id,
+		"uid":     dashboard.Uid,
+		"url":     dashboard.GetUrl(),
+	})
+}
+
 func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {

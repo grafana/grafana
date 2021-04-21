@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find, first, isArray, isString, escape } from 'lodash';
 import {
   escapeStringForRegex,
   formattedValueToString,
@@ -78,7 +78,7 @@ export class TableRenderer {
         return getColorForTheme(style.colors[i], this.theme);
       }
     }
-    return getColorForTheme(_.first(style.colors), this.theme);
+    return getColorForTheme(first(style.colors), this.theme);
   }
 
   defaultCellFormatter(v: any, style: ColumnStyle) {
@@ -86,14 +86,14 @@ export class TableRenderer {
       return '';
     }
 
-    if (_.isArray(v)) {
+    if (isArray(v)) {
       v = v.join(', ');
     }
 
     if (style && style.sanitize) {
       return this.sanitize(v);
     } else {
-      return _.escape(v);
+      return escape(v);
     }
   }
 
@@ -112,12 +112,12 @@ export class TableRenderer {
           return '-';
         }
 
-        if (_.isArray(v)) {
+        if (isArray(v)) {
           v = v[0];
         }
 
         // if is an epoch (numeric string and len > 12)
-        if (_.isString(v) && !isNaN(v as any) && v.length > 12) {
+        if (isString(v) && !isNaN(v as any) && v.length > 12) {
           v = parseInt(v, 10);
         }
 
@@ -136,7 +136,7 @@ export class TableRenderer {
 
     if (column.style.type === 'string') {
       return (v: any): any => {
-        if (_.isArray(v)) {
+        if (isArray(v)) {
           v = v.join(', ');
         }
 
@@ -154,7 +154,7 @@ export class TableRenderer {
             }
 
             // Allow both numeric and string values to be mapped
-            if ((!_.isString(v) && Number(map.value) === Number(v)) || map.value === v) {
+            if ((!isString(v) && Number(map.value) === Number(v)) || map.value === v) {
               this.setColorState(v, column.style);
               return this.defaultCellFormatter(map.text, column.style);
             }
@@ -196,7 +196,7 @@ export class TableRenderer {
           return '-';
         }
 
-        if (isNaN(v) || _.isArray(v)) {
+        if (isNaN(v) || isArray(v)) {
           return this.defaultCellFormatter(v, column.style);
         }
 
@@ -215,7 +215,7 @@ export class TableRenderer {
       return;
     }
 
-    if (value === null || value === void 0 || _.isArray(value)) {
+    if (value === null || value === void 0 || isArray(value)) {
       return;
     }
 
@@ -287,7 +287,7 @@ export class TableRenderer {
     }
 
     if (column.style && column.style.align) {
-      const textAlign = _.find(ColumnOptionsCtrl.alignTypesEnum, ['text', column.style.align]);
+      const textAlign = find(ColumnOptionsCtrl.alignTypesEnum, ['text', column.style.align]);
       if (textAlign && textAlign['value']) {
         cellStyles.push(`text-align:${textAlign['value']}`);
       }

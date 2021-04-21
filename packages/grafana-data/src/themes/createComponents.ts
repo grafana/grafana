@@ -1,4 +1,4 @@
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 import { ThemeShadows } from './createShadows';
 
 /** @beta */
@@ -9,11 +9,15 @@ export interface ThemeComponents {
     md: number;
     lg: number;
   };
-  form: {
+  input: {
     background: string;
     border: string;
     borderHover: string;
     text: string;
+  };
+  tooltip: {
+    text: string;
+    background: string;
   };
   panel: {
     padding: number;
@@ -28,12 +32,12 @@ export interface ThemeComponents {
   };
 }
 
-export function createComponents(palette: ThemePalette, shadows: ThemeShadows): ThemeComponents {
+export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
   const panel = {
     padding: 1,
     headerHeight: 4,
-    background: palette.layer1,
-    border: palette.border0,
+    background: colors.background.primary,
+    border: colors.background.primary,
     boxShadow: shadows.z0,
   };
 
@@ -43,23 +47,27 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       md: 4,
       lg: 6,
     },
-    form:
-      palette.mode === 'dark'
+    input:
+      colors.mode === 'dark'
         ? {
-            background: palette.layer0,
-            border: palette.border1,
-            borderHover: palette.border2,
-            text: palette.text.primary,
+            background: colors.background.canvas,
+            border: colors.border.medium,
+            borderHover: colors.border.strong,
+            text: colors.text.primary,
           }
         : {
-            background: palette.layer1,
-            border: palette.border1,
-            borderHover: palette.border2,
-            text: palette.text.primary,
+            background: colors.background.primary,
+            border: colors.border.medium,
+            borderHover: colors.border.strong,
+            text: colors.text.primary,
           },
     panel,
+    tooltip: {
+      background: colors.background.secondary,
+      text: colors.text.primary,
+    },
     dashboard: {
-      background: palette.layer0,
+      background: colors.background.canvas,
       padding: 1,
     },
   };

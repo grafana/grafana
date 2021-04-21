@@ -52,25 +52,23 @@ func (rs *SchemaLoaderService) Init() error {
 		return fmt.Errorf("failed to load dashboard cue schema from path %q: %w", baseLoadPath, err)
 	}
 	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<I passed", len(schema.AsArray(rs.DashFamily)))
-	// // ensure ImagesDir exists
-	// err := os.MkdirAll(rs.Cfg.ImagesDir, 0700)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to create images directory %q: %w", rs.Cfg.ImagesDir, err)
-	// }
-
-	// set value used for domain attribute of renderKey cookie
-	// switch {
-	// case rs.Cfg.RendererUrl != "":
-	// RendererCallbackUrl has already been passed, it won't generate an error.
-	// u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
-	// 	rs.domain = u.Hostname()
-	// case rs.Cfg.HTTPAddr != setting.DefaultHTTPAddr:
-	// 	rs.domain = rs.Cfg.HTTPAddr
-	// default:
-	// 	rs.domain = "localhost"
-	// }
-
 	return nil
+}
+
+func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {
+	val, _ := input.Map()
+	val = removeNils(val)
+	data, _ := json.Marshal(val)
+	dsSchema := schema.Find(rs.DashFamily, schema.Latest())
+	result, err := dsSchema.ApplyDefaults(schema.Resource{Value: data})
+	if err != nil {
+		return input, err
+	}
+	output, err := simplejson.NewJson([]byte(result.Value.(string)))
+	if err != nil {
+		return input, err
+	}
+	return output, nil
 }
 
 func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (simplejson.Json, error) {

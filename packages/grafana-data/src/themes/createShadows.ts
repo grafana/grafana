@@ -1,4 +1,4 @@
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 
 /** @beta */
 export interface ThemeShadows {
@@ -10,9 +10,9 @@ export interface ThemeShadows {
 }
 
 function createDarkShadow(...px: number[]) {
-  const shadowKeyUmbraOpacity = 0.5;
-  const shadowKeyPenumbraOpacity = 0.4;
-  const shadowAmbientShadowOpacity = 0.3;
+  const shadowKeyUmbraOpacity = 0.2;
+  const shadowKeyPenumbraOpacity = 0.15;
+  const shadowAmbientShadowOpacity = 0.1;
 
   return [
     `${px[0]}px ${px[1]}px ${px[2]}px ${px[3]}px rgba(0,0,0,${shadowKeyUmbraOpacity})`,
@@ -34,11 +34,11 @@ function createLightShadow(...px: number[]) {
 }
 
 /** @alpha */
-export function createShadows(palette: ThemePalette): ThemeShadows {
-  if (palette.mode === 'dark') {
+export function createShadows(colors: ThemeColors): ThemeShadows {
+  if (colors.mode === 'dark') {
     return {
       z0: createDarkShadow(0, 1, 1, -1, 0, 1, 1, 0, 0, 1, 3, 0),
-      z1: createDarkShadow(0, 2, 1, -1, 0, 1, 1, 0, 0, 1, 3, 0),
+      z1: createDarkShadow(0, 1, 1, -1, 0, 1, 2, 0, 0, 1, 3, 0),
       z2: createDarkShadow(0, 3, 1, -2, 0, 2, 2, 0, 0, 1, 5, 0),
       z3: createDarkShadow(0, 2, 4, -1, 0, 4, 5, 0, 0, 1, 10, 0),
       z4: createDarkShadow(0, 5, 5, -3, 0, 8, 10, 1, 0, 3, 14, 2),

@@ -1,6 +1,9 @@
 package load
 
 import (
+	"bytes"
+	"fmt"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	cuejson "cuelang.org/go/pkg/encoding/json"
@@ -113,11 +116,25 @@ func (gvs *genericVersionedSchema) ApplyDefaults(r schema.Resource) (schema.Reso
 		return r, err
 	}
 	rvUnified := rv.Value().Unify(gvs.CUE())
-	result, err := cuejson.Marshal(rvUnified)
+	re, err := convertCUEValueToString(rvUnified)
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", string(re))
 	if err != nil {
 		return r, err
 	}
-	return schema.Resource{Value: result}, nil
+	return schema.Resource{Value: re}, nil
+}
+
+func convertCUEValueToString(inputCUE cue.Value) (string, error) {
+	re, err := cuejson.Marshal(inputCUE)
+	if err != nil {
+		return re, err
+	}
+
+	result := []byte(re)
+	result = bytes.Replace(result, []byte("\\u003c"), []byte("<"), -1)
+	result = bytes.Replace(result, []byte("\\u003e"), []byte(">"), -1)
+	result = bytes.Replace(result, []byte("\\u0026"), []byte("&"), -1)
+	return string(result), nil
 }
 
 // TrimDefaults returns a new, concrete copy of the Resource where all paths
@@ -128,45 +145,83 @@ func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resou
 	if err != nil {
 		return r, err
 	}
-	rv, _, err := removeDefaultHelper(gvs.actual, rvInstance.Value())
+	rv, _, err := removeDefaultHelper(gvs.CUE(), rvInstance.Value())
 	if err != nil {
 		return r, err
 	}
-
-	return schema.Resource{Value: rv}, nil
+	re, err := convertCUEValueToString(rv)
+	if err != nil {
+		return r, err
+	}
+	return schema.Resource{Value: re}, nil
 }
 
-func removeDefaultHelper(schema cue.Value, r cue.Value) (cue.Value, bool, error) {
-	var rv cue.Value
-	if schema.Kind() == cue.StructKind {
-		iter, err := r.Fields(cue.Definitions(true), cue.Optional(true))
+func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
+	// Since for now, panel definition is open validation,
+	// we need to loop on the input CUE for trimming
+	rvInstance, err := rt.Compile("resource", []byte{})
+	if err != nil {
+		return input, false, err
+	}
+	rv := rvInstance.Value()
+	// emptyPath := []string{}
+
+	switch inputdef.Kind() {
+	case cue.StructKind:
+		// Get all fields including optional fields
+		iter, err := input.Fields(cue.All())
 		if err != nil {
 			return rv, false, err
 		}
 		for iter.Next() {
-			lv := r.LookupPath(iter.Value().Path())
+			lable, _ := iter.Value().Label()
+			fmt.Println(lable)
+			fmt.Printf(">>>>> the pathhhhhhhhhhh        %+v          \n", iter.Value().Path())
+			fmt.Printf(">>>>> the pathhhhhhhhhhh        %+v          \n", iter.Value().Path().Optional())
+			lv := inputdef.LookupPath(iter.Value().Path())
 			if lv.Exists() {
-				newlv, isEqual, err := removeDefaultHelper(iter.Value(), lv)
-				if err != nil {
-					return r, false, err
-				}
-				if isEqual {
+				_, isEqual, err := removeDefaultHelper(iter.Value(), lv)
+				if err != nil || isEqual {
 					continue
 				}
-				rv = rv.Unify(newlv)
+				rv = rv.FillPath(iter.Value().Path(), iter.Value())
+			} else {
+				// mylable, _ := iter.Value().Label()
+				// if mylable == "timepicker" {
+				// 	lv := inputdef.LookupPath(iter.Value().Path().Optional())
+				// 	if lv.Exists() {
+				// 		_, isEqual, err := removeDefaultHelper(iter.Value(), lv)
+				// 		if err != nil || isEqual {
+				// 			continue
+				// 		}
+				// 	}
+				// }
+				rv = rv.FillPath(iter.Value().Path(), iter.Value())
 			}
 		}
-	} else {
-		if schema.Kind() == cue.ListKind {
-			rv = rv.Unify(r)
-		} else {
-			val, isDefault := schema.Default()
-			if !isDefault || (isDefault && !val.Equals(r)) {
-				rv = rv.Unify(r)
-			}
+		return rv, false, nil
+	case cue.ListKind:
+		val, _ := inputdef.Default()
+		err1 := input.Subsume(val)
+		err2 := val.Subsume(input)
+		if val.IsConcrete() && err1 == nil && err2 == nil {
+			return rv, true, nil
 		}
+		rv = rv.FillPath(cue.Path{}, input)
+		return rv, false, nil
+	default:
+		val, _ := inputdef.Default()
+		// a, _ := val.String()
+		// b, _ := input.String()
+		// fmt.Println("<<<<<<<<<<<<<<<<< val: ", a, " <<<<<<<<<<< input: ", b, "equal result: ", val.Equals(input))
+		err1 := input.Subsume(val)
+		err2 := val.Subsume(input)
+		if val.IsConcrete() && err1 == nil && err2 == nil {
+			// fmt.Println("<<<<<<<<<<<<<<<<< equallllllll")
+			return input, true, nil
+		}
+		return input, false, nil
 	}
-	return rv, false, nil
 }
 
 // CUE returns the cue.Value representing the actual schema.

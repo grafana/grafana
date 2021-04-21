@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map as _map, filter } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 import { getBackendSrv } from '@grafana/runtime';
@@ -43,7 +43,7 @@ export class MysqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, (v: any) => {
+    const quotedValues = _map(value, (v: any) => {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
@@ -69,7 +69,7 @@ export class MysqlDatasource {
   }
 
   query(options: any): Observable<MysqlResponse> {
-    const queries = _.filter(options.targets, (target) => {
+    const queries = filter(options.targets, (target) => {
       return target.hide !== true;
     }).map((target) => {
       const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);

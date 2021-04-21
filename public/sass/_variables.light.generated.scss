@@ -15,14 +15,14 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-light: #5794f2;
-$blue-base: #3274d9;
-$blue-shade: #1f60c4;
-$red-base: #e02f44;
-$red-shade: #c4162a;
-$green-base: #3eb15b;
-$green-shade: #369b4f;
-$orange-dark: #ed5700;
+$blue-light: #0465d7;
+$blue-base: #3871DC;
+$blue-shade: rgb(44, 90, 176);
+$red-base: #E0226E;
+$red-shade: rgb(179, 27, 88);
+$green-base: #1A7F4B;
+$green-shade: rgb(20, 101, 60);
+$orange-dark: #ff780a;
 
 $gray98: #f7f8fa;
 $gray95: #e9edf2;
@@ -39,17 +39,17 @@ $gray05: #0b0c0e;
 // -------------------------
 $black: #000000;
 
-$dark-1: #1e2028;
-$dark-2: #41444b;
-$dark-4: #35373f;
+$dark-1: #141414;
+$dark-2: #161719;
+$dark-4: #212124;
 $dark-10: #424345;
-$gray-1: #52545c;
-$gray-2: #767980;
-$gray-3: #acb6bf;
-$gray-4: #c7d0d9;
-$gray-5: #dde4ed;
-$gray-6: #e9edf2;
-$gray-7: #f7f8fa;
+$gray-1: #555555;
+$gray-2: #8e8e8e;
+$gray-3: #b3b3b3;
+$gray-4: #d8d9da;
+$gray-5: #ececec;
+$gray-6: #f4f5f8;
+$gray-7: #fbfbfb;
 
 $white: #ffffff;
 
@@ -57,49 +57,49 @@ $layer0: #F4F5F5;
 $layer1: #fff;
 $layer2: #F4F5F5;
 
-$divider: rgba(0, 2, 78, 0.07);
+$divider: rgba(36, 41, 46, 0.12);
 
-$border0: #fff;
-$border1: rgba(0, 2, 78, 0.20);
+$border0: rgba(36, 41, 46, 0.12);
+$border1: rgba(36, 41, 46, 0.30);
 
 // Accent colors
 // -------------------------
-$blue: #1F62E0;
+$blue: #0465d7;
 $red: $red-base;
-$yellow: #ff851b;
-$orange: #ff7941;
-$purple: #9954bb;
-$variable: #1F62E0;
+$yellow: #ecbb13;
+$orange: #eb7b18;
+$purple: #9933cc;
+$variable: #0465d7;
 
-$brand-primary: #ff7941;
-$brand-success: #3eb15b;
-$brand-warning: #ff7941;
+$brand-primary: #eb7b18;
+$brand-success: #299c46;
+$brand-warning: #eb7b18;
 $brand-danger: #e02f44;
 
 $query-red: #e02f44;
-$query-green: #3eb15b;
-$query-purple: #9954bb;
-$query-orange: #ff7941;
+$query-green: #74e680;
+$query-purple: #fe85fc;
+$query-orange: #eb7b18;
 
 // Status colors
 // -------------------------
-$online: #369b4f;
+$online: #299c46;
 $warn: #f79520;
-$critical: #c4162a;
+$critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #fff;
-$page-bg: #fff;
+$body-bg: #F4F5F5;
+$page-bg: #F4F5F5;
 $dashboard-bg: #F4F5F5;
 
-$text-color: rgba(0, 0, 0, 0.75);
+$text-color: rgba(36, 41, 46, 1);
 $text-color-strong: #000;
-$text-color-semi-weak: rgba(0, 0, 0, 0.60);
-$text-color-weak: rgba(0, 0, 0, 0.60);
-$text-color-faint: rgba(0, 0, 0, 0.45);
+$text-color-semi-weak: rgba(36, 41, 46, 0.75);
+$text-color-weak: rgba(36, 41, 46, 0.75);
+$text-color-faint: rgba(36, 41, 46, 0.50);
 $text-color-emphasis: #000;
-$text-blue: #1F62E0;
+$text-blue: #0465d7;
 
 $text-shadow-faint: none;
 
@@ -109,14 +109,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: rgba(0, 0, 0, 0.75);
-$link-color-disabled: rgba(0, 0, 0, 0.60);
+$link-color: rgba(36, 41, 46, 1);
+$link-color-disabled: rgba(36, 41, 46, 0.50);
 $link-hover-color: #000;
-$external-link-color: #33a2e5;
+$external-link-color: #0465d7;
 
 // Typography
 // -------------------------
-$headings-color: rgba(0, 0, 0, 0.75);
+$headings-color: rgba(36, 41, 46, 1);
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -126,14 +126,14 @@ $hr-border-color: $gray-4 !default;
 // -------------------------
 $panel-bg: #fff;
 $panel-border: #fff;
-$panel-header-hover-bg: rgba(0, 0, 0, 0.04);
+$panel-header-hover-bg: rgba(36, 41, 46, 0.04);
 $panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.15),0px 0px 0px 0px rgba(0,0,0,0.1),0px 1px 3px 0px rgba(0,0,0,0.1);
 $panel-corner: $panel-bg;
 
 // Page header
 $page-header-bg: #F4F5F5;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #fff;
+$page-header-border-color: #F4F5F5;
 
 $divider-border-color: $gray-2;
 
@@ -165,7 +165,7 @@ $scrollbarBorder: $gray-7;
 // Tables
 // -------------------------
 $table-bg-accent: #F4F5F5;
-$table-border: rgba(0, 2, 78, 0.20);
+$table-border: rgba(36, 41, 46, 0.30);
 $table-bg-odd: rgb(249, 249, 249);
 $table-bg-hover: rgb(242, 242, 242);
 
@@ -206,12 +206,12 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: rgba(0, 0, 0, 0.75);
-$input-border-color: #c7d0d9;
+$input-color: #c7d0d9;
+$input-border-color: rgba(36, 41, 46, 0.30);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
-$input-color-placeholder: rgba(0, 0, 0, 0.45);
+$input-color-placeholder: rgba(36, 41, 46, 0.50);
 $input-label-bg: #F4F5F5;
 $input-color-select-arrow: #7b8087;
 
@@ -226,9 +226,9 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: #F4F5F5;
-$dropdownBorder: #fff;
-$dropdownDividerTop: rgba(0, 2, 78, 0.07);
-$dropdownDividerBottom: rgba(0, 2, 78, 0.07);
+$dropdownBorder: rgba(36, 41, 46, 0.12);
+$dropdownDividerTop: rgba(36, 41, 46, 0.12);
+$dropdownDividerBottom: rgba(36, 41, 46, 0.12);
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -259,7 +259,7 @@ $side-menu-header-color: #e9edf2;
 // Menu dropdowns
 // -------------------------
 $menu-dropdown-bg: #F4F5F5;
-$menu-dropdown-hover-bg: rgba(0, 0, 0, 0.04);
+$menu-dropdown-hover-bg: rgba(36, 41, 46, 0.04);
 $menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.15),0px 4px 5px 0px rgba(0,0,0,0.1),0px 1px 10px 0px rgba(0,0,0,0.1);
 
 // Tabs
@@ -279,14 +279,14 @@ $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
 $tooltipBackground: #F4F5F5;
-$tooltipColor: rgba(0, 0, 0, 0.75);
+$tooltipColor: rgba(36, 41, 46, 1);
 $tooltipArrowColor: #F4F5F5;
 $tooltipBackgroundError: #E0226E;
 $tooltipShadow: 0px 2px 1px -2px rgba(0,0,0,0.15),0px 2px 2px 0px rgba(0,0,0,0.1),0px 1px 5px 0px rgba(0,0,0,0.1);
 
 $popover-bg: #F4F5F5;
-$popover-color: rgba(0, 0, 0, 0.75);
-$popover-border-color: rgba(0, 2, 78, 0.20);
+$popover-color: rgba(36, 41, 46, 1);
+$popover-border-color: rgba(36, 41, 46, 0.30);
 $popover-header-bg: #F4F5F5;
 $popover-shadow: 0px 5px 5px -5px rgba(0,0,0,0.15),0px 8px 10px 1px rgba(0,0,0,0.1),0px 3px 14px 2px rgba(0,0,0,0.1);
 
@@ -328,14 +328,14 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: rgba(0, 0, 0, 0.04);
+$diff-label-bg: rgba(36, 41, 46, 0.04);
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
 $diff-group-bg: #F4F5F5;
 
 $diff-json-bg: #F4F5F5;
-$diff-json-fg: rgba(0, 0, 0, 0.75);
+$diff-json-fg: rgba(36, 41, 46, 1);
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;

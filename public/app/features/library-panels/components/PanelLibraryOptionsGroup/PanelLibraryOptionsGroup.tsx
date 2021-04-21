@@ -45,7 +45,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
       libraryPanel: toPanelModelLibraryPanel(changeToPanel),
     });
 
-    panel.hasChanged = false;
+    panel.configRev = 0;
     panel.refresh();
     panel.events.publish(new PanelQueriesChangedEvent());
     panel.events.publish(new PanelOptionsChangedEvent());
@@ -84,7 +84,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
         <AddLibraryPanelModal
           panel={panel}
           onDismiss={() => setShowingAddPanelModal(false)}
-          initialFolderId={dashboard.meta.folderId}
+          initialFolderId={dashboard?.meta.folderId}
           isOpen={showingAddPanelModal}
         />
       )}

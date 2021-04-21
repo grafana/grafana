@@ -131,6 +131,9 @@ func (hs *HTTPServer) registerRoutes() {
 	// api renew session based on cookie
 	r.Get("/api/login/ping", quota("session"), routing.Wrap(hs.LoginAPIPing))
 
+	// expose plugin file system assets
+	r.Get("/public/plugins/:pluginId/*", hs.GetPluginAssets)
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
@@ -323,6 +326,8 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), routing.Wrap(CalculateDashboardDiff))
 
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostDashboard))
+			dashboardRoute.Post("/trim/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostTrimedDashboard))
+
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), routing.Wrap(hs.ImportDashboard))

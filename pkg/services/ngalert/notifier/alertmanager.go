@@ -11,9 +11,10 @@ import (
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
+	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
 	"github.com/prometheus/alertmanager/nflog/nflogpb"
 	"github.com/prometheus/alertmanager/notify"
@@ -74,13 +75,14 @@ type Alertmanager struct {
 	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
 	// silences keeps the track of which notifications we should not fire due to user configuration.
-	silencer     *silence.Silencer
-	silences     *silence.Silences
-	marker       types.Marker
-	alerts       *AlertProvider
-	route        *dispatch.Route
-	dispatcher   *dispatch.Dispatcher
-	dispatcherWG sync.WaitGroup
+	silencer   *silence.Silencer
+	silences   *silence.Silences
+	marker     types.Marker
+	alerts     *AlertProvider
+	route      *dispatch.Route
+	dispatcher *dispatch.Dispatcher
+	inhibitor  *inhibit.Inhibitor
+	wg         sync.WaitGroup
 
 	stageMetrics      *notify.Metrics
 	dispatcherMetrics *dispatch.DispatcherMetrics
@@ -123,7 +125,7 @@ func (am *Alertmanager) Init() (err error) {
 		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
 	}
 
-	am.alerts, err = NewAlertProvider(nil, am.marker)
+	am.alerts, err = NewAlertProvider(am.marker)
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize the alert provider component of alerting")
 	}
@@ -159,7 +161,11 @@ func (am *Alertmanager) StopAndWait() {
 	if am.dispatcher != nil {
 		am.dispatcher.Stop()
 	}
-	am.dispatcherWG.Wait()
+
+	if am.inhibitor != nil {
+		am.inhibitor.Stop()
+	}
+	am.wg.Wait()
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
@@ -260,23 +266,30 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) error {
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(integrationsMap))
 
+	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, gokit_log.NewNopLogger())
 	am.silencer = silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger())
+
+	inhibitionStage := notify.NewMuteStage(am.inhibitor)
 	silencingStage := notify.NewMuteStage(am.silencer)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{silencingStage, stage}
+		routingStage[name] = notify.MultiStage{silencingStage, inhibitionStage, stage}
 	}
-
-	am.alerts.SetStage(routingStage)
 
 	am.StopAndWait()
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
 
-	am.dispatcherWG.Add(1)
+	am.wg.Add(1)
 	go func() {
-		defer am.dispatcherWG.Done()
+		defer am.wg.Done()
 		am.dispatcher.Run()
+	}()
+
+	am.wg.Add(1)
+	go func() {
+		defer am.wg.Done()
+		am.inhibitor.Run()
 	}()
 
 	am.config = rawConfig
@@ -334,6 +347,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewEmailNotifier(cfg, externalURL)
 		case "pagerduty":
 			n, err = channels.NewPagerdutyNotifier(cfg, tmpl, externalURL)
+		case "slack":
+			n, err = channels.NewSlackNotifier(cfg, tmpl, externalURL)
 		}
 		if err != nil {
 			return nil, err
@@ -345,8 +360,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *Alertmanager) PutAlerts(alerts ...*PostableAlert) error {
-	return am.alerts.PutPostableAlert(alerts...)
+func (am *Alertmanager) PutAlerts(alerts apimodels.PostableAlerts) error {
+	return am.alerts.PutPostableAlert(alerts)
 }
 
 // createReceiverStage creates a pipeline of stages for a receiver.

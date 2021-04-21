@@ -1,6 +1,5 @@
 Verifies common usecases for trimdefault/applydefault functions:
-* Basic cases
-* Real dashboard
+* Struct inside of list
 
 -- CUE --
 { 
