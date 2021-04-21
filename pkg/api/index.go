@@ -126,6 +126,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
 	if hasEditPerm {
@@ -251,6 +252,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Id:          "datasources",
 			Url:         hs.Cfg.AppSubURL + "/datasources",
 		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, ac.ActionOrgUsersRead, ac.ScopeOrgCurrentUsersAll) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Users",
 			Id:          "users",

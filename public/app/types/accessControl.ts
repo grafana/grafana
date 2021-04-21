@@ -44,4 +44,8 @@ export enum AccessControlAction {
 export enum AccessControlScope {
   UsersAll = 'users:*',
   UsersSelf = 'users:self',
+
+  OrgAllUsersAll = 'org:*/users:*',
+  OrgCurrentUsersAll = 'org:current/users:*',
+  OrgCurrentUsersSelf = 'org:current/users:self',
 }

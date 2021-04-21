@@ -37,6 +37,10 @@ var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
+var ReqOrgAdmin = func(c *models.ReqContext) bool {
+	return c.OrgRole == models.ROLE_ADMIN
+}
+
 func BuildPermissionsMap(permissions []*Permission) map[string]map[string]string {
 	permissionsMap := make(map[string]map[string]string)
 	for _, p := range permissions {
