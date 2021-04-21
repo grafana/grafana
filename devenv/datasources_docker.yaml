@@ -23,19 +23,19 @@ datasources:
     isDefault: true
     type: testdata
 
-  - name: gdev-influxdb
+  - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
     database: site
     user: grafana
-    url: http://influxdb:8086
+    url: http://influxdb1:8086
     secureJsonData:
       password: grafana
 
-  - name: gdev-influxdb2
+  - name: gdev-influxdb-flux
     type: influxdb
     access: proxy
-    url: http://influxdb2:8086
+    url: http://influxdb:8086
     secureJsonData:
       token: mytoken
     jsonData:
@@ -43,24 +43,15 @@ datasources:
       organization: myorg
       defaultBucket: mybucket
       
-  - name: gdev-influxdb2-influxql
+  - name: gdev-influxdb-influxql
     type: influxdb
     access: proxy
-    database: site
-    url: http://influxdb2:8086
+    database: mybucket
+    url: http://influxdb:8086
     jsonData:
       httpHeaderName1: "Authorization"
     secureJsonData:
       httpHeaderValue1: "Token mytoken"
-
-  - name: gdev-influxdb-telegraf
-    type: influxdb
-    access: proxy
-    database: telegraf
-    user: grafana
-    url: http://influxdb:8086
-    secureJsonData:
-      password: grafana
 
   - name: gdev-opentsdb
     type: opentsdb

@@ -2,7 +2,7 @@ import React from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import { CursorPlugin } from './CursorPlugin';
-import { SeriesTable, SeriesTableRowProps } from '../../Graph/GraphTooltip/SeriesTable';
+import { VizTooltipContainer, SeriesTable, SeriesTableRowProps, TooltipDisplayMode } from '../../VizTooltip';
 import {
   DataFrame,
   FieldType,
@@ -11,12 +11,10 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { TooltipContainer } from '../../Chart/TooltipContainer';
-import { TooltipMode } from '../../Chart/models.gen';
 import { useGraphNGContext } from '../../GraphNG/hooks';
 
 interface TooltipPluginProps {
-  mode?: TooltipMode;
+  mode?: TooltipDisplayMode;
   timeZone: TimeZone;
   data: DataFrame[];
 }
@@ -58,10 +56,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
 
         // when interacting with a point in single mode
         if (mode === 'single' && originFieldIndex !== null) {
-          const field = otherProps.data[originFieldIndex.frameIndex].fields[originFieldIndex.fieldIndex];
+          const field = graphContext.alignedData.fields[focusedSeriesIdx!];
           const plotSeries = plotContext.getSeries();
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
-          const value = fieldFmt(plotContext.data[focusedSeriesIdx!][focusedPointIdx]);
+
+          const value = fieldFmt(field.values.get(focusedPointIdx));
 
           tooltip = (
             <SeriesTable
@@ -95,7 +94,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               continue;
             }
 
-            const value = field.display!(plotContext.data[i][focusedPointIdx]);
+            // using aligned data value field here as it's indexes are in line with Plot data
+            const valueField = graphContext.alignedData.fields[i];
+            const value = valueField.display!(valueField.values.get(focusedPointIdx));
 
             series.push({
               // TODO: align with uPlot typings
@@ -118,9 +119,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
 
         return (
           <Portal>
-            <TooltipContainer position={{ x: coords.viewport.x, y: coords.viewport.y }} offset={{ x: 10, y: 10 }}>
+            <VizTooltipContainer position={{ x: coords.viewport.x, y: coords.viewport.y }} offset={{ x: 10, y: 10 }}>
               {tooltip}
-            </TooltipContainer>
+            </VizTooltipContainer>
           </Portal>
         );
       }}

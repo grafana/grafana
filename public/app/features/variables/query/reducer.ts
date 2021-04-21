@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import _ from 'lodash';
+import { isNumber, sortBy, toLower, uniqBy } from 'lodash';
 import { DataSourceApi, MetricFindValue, stringToJsRegex } from '@grafana/data';
 
 import {
@@ -62,9 +62,9 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   const reverseSort = sortOrder % 2 === 0;
 
   if (sortType === 1) {
-    options = _.sortBy(options, 'text');
+    options = sortBy(options, 'text');
   } else if (sortType === 2) {
-    options = _.sortBy(options, (opt) => {
+    options = sortBy(options, (opt) => {
       if (!opt.text) {
         return -1;
       }
@@ -77,8 +77,8 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
       }
     });
   } else if (sortType === 3) {
-    options = _.sortBy(options, (opt) => {
-      return _.toLower(opt.text);
+    options = sortBy(options, (opt) => {
+      return toLower(opt.text);
     });
   }
 
@@ -118,11 +118,11 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
     let text = item.text === undefined || item.text === null ? item.value : item.text;
     let value = item.value === undefined || item.value === null ? item.text : item.value;
 
-    if (_.isNumber(value)) {
+    if (isNumber(value)) {
       value = value.toString();
     }
 
-    if (_.isNumber(text)) {
+    if (isNumber(text)) {
       text = text.toString();
     }
 
@@ -155,7 +155,7 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
     options.push({ text: text, value: value, selected: false });
   }
 
-  options = _.uniqBy(options, 'value');
+  options = uniqBy(options, 'value');
   return sortVariableValues(options, sort);
 };
 

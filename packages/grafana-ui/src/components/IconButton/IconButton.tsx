@@ -3,10 +3,11 @@ import { Icon, getSvgSize } from '../Icon/Icon';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';
-import { useTheme } from '../../themes/ThemeContext';
-import { GrafanaTheme } from '@grafana/data';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TooltipPlacement } from '../Tooltip/PopoverController';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
@@ -27,7 +28,7 @@ type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
   ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, ...restProps }, ref) => {
-    const theme = useTheme();
+    const theme = useTheme2();
     const styles = getStyles(theme, size);
 
     const button = (
@@ -50,9 +51,10 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 
 IconButton.displayName = 'IconButton';
 
-const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
-  const hoverColor = theme.v2.palette.action.hover;
+const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
+  const hoverColor = theme.colors.action.hover;
   const pixelSize = getSvgSize(size);
+  const hoverSize = pixelSize / 2;
 
   return {
     button: css`
@@ -68,8 +70,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
       align-items: center;
       justify-content: center;
       position: relative;
+      border-radius: ${theme.shape.borderRadius()};
       z-index: 0;
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
 
       &[disabled],
       &:disabled {
@@ -86,10 +89,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
         transition-duration: 0.2s;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         z-index: -1;
-        bottom: -8px;
-        left: -8px;
-        right: -8px;
-        top: -8px;
+        bottom: -${hoverSize}px;
+        left: -${hoverSize}px;
+        right: -${hoverSize}px;
+        top: -${hoverSize}px;
         background: none;
         border-radius: 50%;
         box-sizing: border-box;
@@ -97,8 +100,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
         transition-property: transform, opacity;
       }
 
+      &:focus,
+      &:focus-visible {
+        ${getFocusStyles(theme)}
+      }
+
+      &:focus:not(:focus-visible) {
+        ${getMouseFocusStyles(theme)}
+      }
+
       &:hover {
-        color: ${theme.colors.linkHover};
+        color: ${theme.colors.text.primary};
 
         &:before {
           background-color: ${hoverColor};

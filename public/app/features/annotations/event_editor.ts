@@ -1,16 +1,18 @@
-import _ from 'lodash';
+import { cloneDeep, isNumber } from 'lodash';
 import { coreModule } from 'app/core/core';
 import { AnnotationEvent, dateTime } from '@grafana/data';
 import { AnnotationsSrv } from './all';
 import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
 
 export class EventEditorCtrl {
+  // @ts-ignore initialized through Angular not constructor
   panelCtrl: MetricsPanelCtrl;
+  // @ts-ignore initialized through Angular not constructor
   event: AnnotationEvent;
-  timeRange: { from: number; to: number };
+  timeRange?: { from: number; to: number };
   form: any;
   close: any;
-  timeFormated: string;
+  timeFormated?: string;
 
   /** @ngInject */
   constructor(private annotationsSrv: AnnotationsSrv) {}
@@ -33,7 +35,7 @@ export class EventEditorCtrl {
       return;
     }
 
-    const saveModel = _.cloneDeep(this.event);
+    const saveModel = cloneDeep(this.event);
     saveModel.time = saveModel.time!.valueOf();
     saveModel.timeEnd = 0;
 
@@ -86,7 +88,7 @@ export class EventEditorCtrl {
 }
 
 function tryEpochToMoment(timestamp: any) {
-  if (timestamp && _.isNumber(timestamp)) {
+  if (timestamp && isNumber(timestamp)) {
     const epoch = Number(timestamp);
     return dateTime(epoch);
   } else {

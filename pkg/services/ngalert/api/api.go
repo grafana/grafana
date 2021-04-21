@@ -7,12 +7,12 @@ import (
 
 	"github.com/go-macaron/binding"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -69,7 +69,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusSrv{log: logger, stateTracker: api.StateTracker},
+		PrometheusSrv{log: logger, stateTracker: api.StateTracker, store: api.RuleStore},
 	))
 	// Register endpoints for proxing to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
@@ -77,8 +77,13 @@ func (api *API) RegisterAPIEndpoints() {
 		NewLotexRuler(proxy, logger),
 		RulerSrv{store: api.RuleStore, log: logger},
 	))
-	// Register endpoints for testing evaluation of rules and notification channels.
-	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
+	api.RegisterTestingApiEndpoints(TestingApiSrv{
+		AlertingProxy:   proxy,
+		Cfg:             api.Cfg,
+		DataService:     api.DataService,
+		DatasourceCache: api.DatasourceCache,
+		log:             logger,
+	})
 
 	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {

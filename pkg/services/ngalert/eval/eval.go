@@ -76,6 +76,11 @@ const (
 	// that evaluated to true (Alerting).
 	Alerting
 
+	// Pending is the eval state for an alert instance condition
+	// that evaluated to true (Alerting) but has not yet met
+	// the For duration defined in AlertRule
+	Pending
+
 	// NoData is the eval state for an alert rule condition
 	// that evaluated to NoData.
 	NoData
@@ -86,7 +91,7 @@ const (
 )
 
 func (s State) String() string {
-	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
+	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
 // AlertExecCtx is the context provided for executing an alert condition.
@@ -165,7 +170,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 	}
 
 	if len(result.Results) == 0 {
-		err = fmt.Errorf("no GEL results")
+		err = fmt.Errorf("no transformation results")
 		result.Error = err
 		return &result, err
 	}

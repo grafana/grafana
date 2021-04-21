@@ -23,4 +23,16 @@ export const getAlertTableStyles = (theme: GrafanaTheme) => ({
   evenRow: css`
     background-color: ${theme.colors.bodyBg};
   `,
+  colExpand: css`
+    width: 36px;
+  `,
+  actionsCell: css`
+    text-align: right;
+    width: 1%;
+    white-space: nowrap;
+
+    & > * + * {
+      margin-left: ${theme.spacing.sm};
+    }
+  `,
 });

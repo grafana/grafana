@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
 import { select, boolean, number } from '@storybook/addon-knobs';
-import kebabCase from 'lodash/kebabCase';
+import { kebabCase } from 'lodash';
 import { generateOptions } from './mockOptions';
 import mdx from './Select.mdx';
 

@@ -9,7 +9,6 @@ import '../../../public/vendor/flot/jquery.flot.crosshair';
 import '../../../public/vendor/flot/jquery.flot.dashes';
 import '../../../public/vendor/flot/jquery.flot.gauge';
 import { withTheme } from '../src/utils/storybook/withTheme';
-import { withPaddedStory } from '../src/utils/storybook/withPaddedStory';
 // @ts-ignore
 import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
@@ -33,7 +32,7 @@ addons.setConfig({
   theme: GrafanaDark,
 });
 
-export const decorators = [withTheme(handleThemeChange), withPaddedStory];
+export const decorators = [withTheme(handleThemeChange)];
 
 export const parameters = {
   docs: {
@@ -43,6 +42,7 @@ export const parameters = {
     dark: GrafanaDark,
     light: GrafanaLight,
   },
+  layout: 'fullscreen',
   actions: { argTypesRegex: '^on[A-Z].*' },
   options: {
     showPanel: true,
