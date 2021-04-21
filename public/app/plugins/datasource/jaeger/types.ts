@@ -55,6 +55,10 @@ export type JaegerQuery = {
   service?: string;
   operation?: string;
   traceID?: string;
+  tags?: { [index: string]: string };
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
 } & DataQuery;
 
 export type JaegerQueryType = 'traceID' | 'search';

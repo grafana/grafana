@@ -16,6 +16,7 @@ import { catchError, map } from 'rxjs/operators';
 import { createTableFrame, createTraceFrame } from './responseTransform';
 import { createGraphFrames } from './graphTransform';
 import { JaegerQuery } from './types';
+import { identity, pick, pickBy } from 'lodash';
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
@@ -49,8 +50,15 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       );
     }
 
+    const jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
+
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-    return this._request(`/api/traces`, { service: target.service, operation: target.operation }).pipe(
+    return this._request(`/api/traces`, {
+      // remove empty values
+      ...pickBy(jaegerQuery, identity),
+      ...this.getTimeRange(),
+      lookback: 'custom',
+    }).pipe(
       map((response) => {
         return {
           data: [createTableFrame(response.data.data, this.instanceSettings)],

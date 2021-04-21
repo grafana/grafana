@@ -1,4 +1,5 @@
 import { DataFrame, DataSourceInstanceSettings, FieldType, MutableDataFrame, TraceSpanRow } from '@grafana/data';
+import { transformTraceData } from '@jaegertracing/jaeger-ui-components';
 import { Span, TraceProcess, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {
@@ -59,6 +60,7 @@ export function createTableFrame(data: TraceResponse[], instanceSettings: DataSo
         name: 'traceID',
         type: FieldType.string,
         config: {
+          displayNameFromDS: 'Trace ID',
           links: [
             {
               title: 'Trace: ${__value.raw}',
@@ -75,10 +77,9 @@ export function createTableFrame(data: TraceResponse[], instanceSettings: DataSo
           ],
         },
       },
-      { name: 'service', type: FieldType.string },
-      { name: 'operation', type: FieldType.string },
-      { name: 'startTime', type: FieldType.number },
-      { name: 'duration', type: FieldType.number },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
+      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'µs' } },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -94,7 +95,15 @@ export function createTableFrame(data: TraceResponse[], instanceSettings: DataSo
 }
 
 function transformToTraceData(data: TraceResponse) {
+  const traceData = transformTraceData(data);
+  if (!traceData) {
+    return;
+  }
+
   return {
-    traceID: data.traceID,
+    traceID: traceData.traceID,
+    startTime: traceData.startTime / 1000,
+    duration: traceData.duration,
+    traceName: traceData.traceName,
   };
 }

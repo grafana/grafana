@@ -1,14 +1,17 @@
 import { SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
+
+const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
 type Props = {
   datasource: JaegerDatasource;
   query: JaegerQuery;
   onChange: (value: JaegerQuery) => void;
 };
+
 export function SearchForm({ datasource, query, onChange }: Props) {
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [operationOptions, setOperationOptions] = useState<Array<SelectableValue<string>>>();
@@ -66,6 +69,45 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             })
           }
           menuPlacement="bottom"
+        />
+      </InlineField>
+
+      <InlineField label="Min Duration">
+        <Input
+          value={query.minDuration}
+          placeholder={durationPlaceholder}
+          onChange={(v) =>
+            onChange({
+              ...query,
+              minDuration: v.currentTarget.value,
+            })
+          }
+        />
+      </InlineField>
+
+      <InlineField label="Max Duration">
+        <Input
+          value={query.maxDuration}
+          placeholder={durationPlaceholder}
+          onChange={(v) =>
+            onChange({
+              ...query,
+              maxDuration: v.currentTarget.value,
+            })
+          }
+        />
+      </InlineField>
+
+      <InlineField label="Limit">
+        <Input
+          value={query.limit}
+          type="number"
+          onChange={(v) =>
+            onChange({
+              ...query,
+              limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
+            })
+          }
         />
       </InlineField>
     </InlineFieldRow>
