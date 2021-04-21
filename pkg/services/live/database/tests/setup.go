@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// setupTestStorage initializes a storage to used by the integration tests.
+// SetupTestStorage initializes a storage to used by the integration tests.
 // This is required to properly register and execute migrations.
-func setupTestStorage(t *testing.T) *database.Storage {
+func SetupTestStorage(t *testing.T) *database.Storage {
 	cfg := setting.NewCfg()
 	// Live is disabled by default and only if it's enabled its database migrations run
 	// and the related database tables are created.

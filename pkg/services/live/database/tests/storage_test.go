@@ -12,7 +12,7 @@ import (
 )
 
 func TestLiveChannel(t *testing.T) {
-	storage := setupTestStorage(t)
+	storage := SetupTestStorage(t)
 
 	getQuery := &models.GetLiveChannelQuery{
 		OrgId:   1,
