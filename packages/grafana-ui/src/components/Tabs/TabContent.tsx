@@ -11,7 +11,7 @@ const getTabContentStyle = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     tabContent: css`
       padding: ${theme.spacing(1)};
-      background: ${theme.palette.background.primary};
+      background: ${theme.colors.background.primary};
     `,
   };
 });

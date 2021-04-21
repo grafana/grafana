@@ -1,13 +1,13 @@
 import { merge } from 'lodash';
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { colors } from './colors';
-import { DeepPartial, ThemePaletteColor } from './types';
+import { DeepPartial, ThemeRichColor } from './types';
 
 /** @internal */
 export type ThemePaletteMode = 'light' | 'dark';
 
 /** @internal */
-export interface ThemePaletteBase<TColor> {
+export interface ThemeColorsBase<TColor> {
   mode: ThemePaletteMode;
 
   primary: TColor;
@@ -71,7 +71,7 @@ export interface ThemePaletteBase<TColor> {
 export interface ThemeHoverStrengh {}
 
 /** @beta */
-export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
+export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
   /* Brighten or darken a color by specified factor (0-1) */
@@ -79,9 +79,9 @@ export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
 }
 
 /** @internal */
-export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>;
+export type ThemeColorsInput = DeepPartial<ThemeColorsBase<ThemeRichColor>>;
 
-class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
+class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemePaletteMode = 'dark';
 
   whiteBase = '201, 209, 217';
@@ -156,7 +156,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   tonalOffset = 0.15;
 }
 
-class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
+class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemePaletteMode = 'light';
 
   blackBase = '36, 41, 46';
@@ -236,10 +236,10 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   tonalOffset = 0.2;
 }
 
-export function createPalette(palette: ThemePaletteInput): ThemePalette {
-  const dark = new DarkPalette();
-  const light = new LightPalette();
-  const base = (palette.mode ?? 'dark') === 'dark' ? dark : light;
+export function createColors(colors: ThemeColorsInput): ThemeColors {
+  const dark = new DarkColors();
+  const light = new LightColors();
+  const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
   const {
     primary = base.primary,
     secondary = base.secondary,
@@ -251,7 +251,7 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     hoverFactor = base.hoverFactor,
     contrastThreshold = base.contrastThreshold,
     ...other
-  } = palette;
+  } = colors;
 
   function getContrastText(background: string) {
     const contrastText =
@@ -262,7 +262,7 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     return contrastText;
   }
 
-  const getRichColor = ({ color, name }: GetRichColorProps): ThemePaletteColor => {
+  const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
     color = { ...color, name };
     if (!color.main) {
       throw new Error(`Missing main color for ${name}`);
@@ -282,7 +282,7 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
     }
-    return color as ThemePaletteColor;
+    return color as ThemeRichColor;
   };
 
   return merge(
@@ -304,6 +304,6 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
 }
 
 interface GetRichColorProps {
-  color: Partial<ThemePaletteColor>;
+  color: Partial<ThemeRichColor>;
   name: string;
 }

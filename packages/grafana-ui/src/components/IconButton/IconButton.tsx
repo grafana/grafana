@@ -52,7 +52,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 IconButton.displayName = 'IconButton';
 
 const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
-  const hoverColor = theme.palette.action.hover;
+  const hoverColor = theme.colors.action.hover;
   const pixelSize = getSvgSize(size);
   const hoverSize = pixelSize / 2;
 
@@ -110,7 +110,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
       }
 
       &:hover {
-        color: ${theme.palette.text.primary};
+        color: ${theme.colors.text.primary};
 
         &:before {
           background-color: ${hoverColor};

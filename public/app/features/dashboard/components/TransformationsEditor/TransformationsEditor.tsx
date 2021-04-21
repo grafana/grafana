@@ -368,7 +368,7 @@ const TransformationCard: React.FC<CardProps> = (props) => {
 const getStyles = (theme: GrafanaThemeV2) => {
   return {
     card: css`
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       width: 100%;
       border: none;
       padding: ${theme.spacing(1)};
@@ -379,7 +379,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       }
 
       &:hover {
-        background: ${theme.palette.action.hover};
+        background: ${theme.colors.action.hover};
         box-shadow: none;
         border: none;
       }

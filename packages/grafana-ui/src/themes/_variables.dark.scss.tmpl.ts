@@ -12,13 +12,13 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-light: ${theme.palette.primary.text};
-$blue-base: ${theme.palette.primary.main};
-$blue-shade: ${theme.palette.primary.shade};
-$red-base: ${theme.palette.error.main};
-$red-shade: ${theme.palette.error.shade};
-$green-base: ${theme.palette.success.main};
-$green-shade: ${theme.palette.success.shade};
+$blue-light: ${theme.colors.primary.text};
+$blue-base: ${theme.colors.primary.main};
+$blue-shade: ${theme.colors.primary.shade};
+$red-base: ${theme.colors.error.main};
+$red-shade: ${theme.colors.error.shade};
+$green-base: ${theme.colors.success.main};
+$green-shade: ${theme.colors.success.shade};
 $orange-dark: ${theme.v1.palette.orangeDark};
 
 $gray98: ${theme.v1.palette.gray98};
@@ -55,14 +55,14 @@ $gray-6: ${theme.v1.palette.gray6};
 $input-black: ${theme.v1.colors.formInputBg};
 $white: ${theme.v1.palette.white};
 
-$layer0: ${theme.palette.background.canvas};
-$layer1: ${theme.palette.background.primary};
-$layer2: ${theme.palette.background.secondary};
+$layer0: ${theme.colors.background.canvas};
+$layer1: ${theme.colors.background.primary};
+$layer2: ${theme.colors.background.secondary};
 
-$divider: ${theme.palette.border.weak};
+$divider: ${theme.colors.border.weak};
 
-$border0: ${theme.palette.border.weak};
-$border1: ${theme.palette.border.medium};
+$border0: ${theme.colors.border.weak};
+$border1: ${theme.colors.border.medium};
 
 // Accent colors
 // -------------------------
@@ -129,7 +129,7 @@ $hr-border-color: $dark-9;
 // -------------------------
 $panel-bg: ${theme.components.panel.background};
 $panel-border: ${theme.components.panel.border};
-$panel-header-hover-bg: ${theme.palette.action.hover};
+$panel-header-hover-bg: ${theme.colors.action.hover};
 $panel-box-shadow: ${theme.components.panel.boxShadow};
 $panel-corner: $panel-bg;
 
@@ -141,16 +141,16 @@ $page-header-border-color: ${theme.v1.colors.pageHeaderBorder};
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: ${theme.palette.background.secondary};
-$tight-form-func-highlight-bg: ${theme.palette.emphasize(theme.palette.background.secondary, 0.03)};
+$tight-form-func-bg: ${theme.colors.background.secondary};
+$tight-form-func-highlight-bg: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
 
 $modal-backdrop-bg: ${theme.v1.colors.bg3};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: ${theme.palette.background.secondary};
-$card-background-hover: ${theme.palette.emphasize(theme.palette.background.secondary, 0.03)};
+$card-background: ${theme.colors.background.secondary};
+$card-background-hover: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
 $card-shadow: none;
 
 // Lists
@@ -167,10 +167,10 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${theme.palette.background.secondary};
-$table-border: ${theme.palette.border.medium};
-$table-bg-odd: ${theme.palette.emphasize(theme.palette.background.primary, 0.02)};
-$table-bg-hover: ${theme.palette.emphasize(theme.palette.background.primary, 0.05)};
+$table-bg-accent: ${theme.colors.background.secondary};
+$table-border: ${theme.colors.border.medium};
+$table-bg-odd: ${theme.colors.emphasize(theme.colors.background.primary, 0.02)};
+$table-bg-hover: ${theme.colors.emphasize(theme.colors.background.primary, 0.05)};
 
 // Buttons
 // -------------------------
@@ -228,10 +228,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: ${theme.palette.background.secondary};
-$dropdownBorder: ${theme.palette.border.weak};
-$dropdownDividerTop: ${theme.palette.border.weak};
-$dropdownDividerBottom: ${theme.palette.border.weak};
+$dropdownBackground: ${theme.colors.background.secondary};
+$dropdownBorder: ${theme.colors.border.weak};
+$dropdownDividerTop: ${theme.colors.border.weak};
+$dropdownDividerBottom: ${theme.colors.border.weak};
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -259,8 +259,8 @@ $side-menu-header-color: ${theme.v1.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.palette.background.secondary};
-$menu-dropdown-hover-bg: ${theme.palette.action.hover};
+$menu-dropdown-bg: ${theme.colors.background.secondary};
+$menu-dropdown-hover-bg: ${theme.colors.action.hover};
 $menu-dropdown-shadow: ${theme.shadows.z3};
 
 // Tabs
@@ -284,16 +284,16 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: ${theme.palette.background.secondary};
-$tooltipColor: ${theme.palette.text.primary};
-$tooltipArrowColor: ${theme.palette.background.secondary};
-$tooltipBackgroundError: ${theme.palette.error.main};
+$tooltipBackground: ${theme.colors.background.secondary};
+$tooltipColor: ${theme.colors.text.primary};
+$tooltipArrowColor: ${theme.colors.background.secondary};
+$tooltipBackgroundError: ${theme.colors.error.main};
 $tooltipShadow: ${theme.shadows.z2};
 
-$popover-bg: ${theme.palette.background.secondary};
-$popover-color: ${theme.palette.text.primary};
-$popover-border-color: ${theme.palette.border.medium};
-$popover-header-bg: ${theme.palette.background.secondary};
+$popover-bg: ${theme.colors.background.secondary};
+$popover-color: ${theme.colors.text.primary};
+$popover-border-color: ${theme.colors.border.medium};
+$popover-header-bg: ${theme.colors.background.secondary};
 $popover-shadow: ${theme.shadows.z4};
 
 $popover-help-bg: $tooltipBackground;
