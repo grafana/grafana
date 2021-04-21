@@ -68,11 +68,12 @@ type DashboardActivityChannel interface {
 }
 
 type LiveChannel struct {
-	Id      int64
-	OrgId   int64
-	Channel string
-	Data    json.RawMessage
-	Created time.Time
+	Id        int64
+	OrgId     int64
+	Channel   string
+	Data      json.RawMessage
+	Published *time.Time
+	Created   time.Time
 }
 
 type SaveLiveChannelDataQuery struct {
