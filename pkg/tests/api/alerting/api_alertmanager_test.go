@@ -62,7 +62,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 }
 
-func TestEvalCondition(t *testing.T) {
+func TestEval(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
@@ -70,6 +70,7 @@ func TestEvalCondition(t *testing.T) {
 	store := testinfra.SetUpDatabase(t, dir)
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
+	// test eval conditions
 	testCases := []struct {
 		desc               string
 		payload            string
@@ -250,17 +251,9 @@ func TestEvalCondition(t *testing.T) {
 			require.JSONEq(t, tc.expectedResponse, string(b))
 		})
 	}
-}
 
-func TestEvalQueriesAndExpressions(t *testing.T) {
-	// Setup Grafana and its Database
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-	})
-	store := testinfra.SetUpDatabase(t, dir)
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
-
-	testCases := []struct {
+	// test eval queries and expressions
+	testCases = []struct {
 		desc               string
 		payload            string
 		expectedStatusCode int
