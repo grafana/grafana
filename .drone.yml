@@ -33,6 +33,11 @@ steps:
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
   depends_on:
   - initialize
 
@@ -41,6 +46,9 @@ steps:
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
+  when:
+    paths:
+    - docs/**
   depends_on:
   - initialize
 
@@ -48,6 +56,9 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
+  when:
+    paths:
+    - "*.sh"
   depends_on:
   - initialize
 
@@ -57,6 +68,11 @@ steps:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
   depends_on:
   - initialize
   - lint-backend
@@ -67,6 +83,12 @@ steps:
   - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
+  when:
+    paths:
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
   depends_on:
   - initialize
 
@@ -74,6 +96,16 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - initialize
   - lint-backend
@@ -83,6 +115,16 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - initialize
   - test-frontend
@@ -91,6 +133,9 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  when:
+    paths:
+    - plugins-bundled/**
   depends_on:
   - initialize
   - lint-backend
@@ -99,6 +144,16 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - build-backend
   - build-frontend
@@ -112,6 +167,16 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - gen-version
 
@@ -122,6 +187,16 @@ steps:
   - ./e2e/start-server
   environment:
     PORT: 3001
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - package
 
@@ -132,6 +207,16 @@ steps:
   - ./bin/grabpl e2e-tests --port 3001
   environment:
     HOST: end-to-end-tests-server
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - end-to-end-tests-server
 
@@ -142,6 +227,12 @@ steps:
   - ./bin/grabpl verify-storybook
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
+  when:
+    paths:
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
   depends_on:
   - package
 
@@ -149,6 +240,12 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./scripts/ci-reference-docs-lint.sh ci
+  when:
+    paths:
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
   depends_on:
   - build-frontend
 
@@ -158,6 +255,12 @@ steps:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
+  when:
+    paths:
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
   depends_on:
   - initialize
   - build-frontend-docs
@@ -167,6 +270,16 @@ steps:
   commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - package
 
@@ -176,6 +289,16 @@ steps:
     archs: amd64
     dry_run: true
     edition: oss
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - copy-packages-for-docker
 
@@ -192,6 +315,11 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
   depends_on:
   - test-backend
   - test-frontend
@@ -208,6 +336,11 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
+  when:
+    paths:
+    - go.mod
+    - go.sum
+    - pkg/**
   depends_on:
   - test-backend
   - test-frontend

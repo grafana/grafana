@@ -205,7 +205,7 @@ def enterprise_downstream_step(edition):
         },
     }
 
-def lint_backend_step(edition):
+def lint_backend_step(edition, when={}):
     return {
         'name': 'lint-backend' + enterprise2_sfx(edition),
         'image': build_image,
@@ -220,6 +220,7 @@ def lint_backend_step(edition):
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
+        'when': when
     }
 
 def benchmark_ldap_step():
@@ -249,7 +250,7 @@ def ldap_service():
         },
     }
 
-def build_storybook_step(edition, ver_mode):
+def build_storybook_step(edition, ver_mode, when={}):
     if edition in ('enterprise', 'enterprise2') and ver_mode in ('release', 'test-release'):
         return None
 
@@ -267,6 +268,7 @@ def build_storybook_step(edition, ver_mode):
             'yarn storybook:build',
             './bin/grabpl verify-storybook',
         ],
+        'when': when,
     }
 
 def publish_storybook_step(edition, ver_mode):
@@ -323,7 +325,7 @@ def upload_cdn(edition):
         ],
     }
 
-def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
+def build_backend_step(edition, ver_mode, variants=None, is_downstream=False, when={}):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -373,9 +375,10 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         ],
         'environment': env,
         'commands': cmds,
+        'when': when,
     }
 
-def build_frontend_step(edition, ver_mode, is_downstream=False):
+def build_frontend_step(edition, ver_mode, is_downstream=False, when={}):
     if not is_downstream:
         build_no = '${DRONE_BUILD_NUMBER}'
     else:
@@ -406,9 +409,10 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
             'test-frontend',
         ],
         'commands': cmds,
+        'when': when,
     }
 
-def build_frontend_docs_step(edition):
+def build_frontend_docs_step(edition, when={}):
     return {
         'name': 'build-frontend-docs',
         'image': build_image,
@@ -417,10 +421,11 @@ def build_frontend_docs_step(edition):
         ],
         'commands': [
             './scripts/ci-reference-docs-lint.sh ci',
-        ]
+        ],
+        'when': when,
     }
 
-def build_plugins_step(edition, sign=False):
+def build_plugins_step(edition, sign=False, when={}):
     if sign:
         env = {
             'GRAFANA_API_KEY': {
@@ -443,9 +448,10 @@ def build_plugins_step(edition, sign=False):
             # TODO: Use percentage for num jobs
             './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps{}'.format(edition, sign_args),
         ],
+        'when': when,
     }
 
-def test_backend_step(edition):
+def test_backend_step(edition, when={}):
     return {
         'name': 'test-backend' + enterprise2_sfx(edition),
         'image': build_image,
@@ -461,9 +467,10 @@ def test_backend_step(edition):
             # Then execute integration tests in serial
             './bin/grabpl integration-tests --edition {}'.format(edition),
         ],
+        'when': when,
     }
 
-def test_frontend_step():
+def test_frontend_step(when={}):
     return {
         'name': 'test-frontend',
         'image': build_image,
@@ -476,6 +483,7 @@ def test_frontend_step():
         'commands': [
             'yarn run ci:test-frontend',
         ],
+        'when': when,
     }
 
 def frontend_metrics_step(edition):
@@ -500,7 +508,7 @@ def frontend_metrics_step(edition):
     }
 
 
-def codespell_step():
+def codespell_step(when={}):
     return {
         'name': 'codespell',
         'image': build_image,
@@ -512,9 +520,10 @@ def codespell_step():
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
         ],
+        'when': when,
     }
 
-def shellcheck_step():
+def shellcheck_step(when={}):
     return {
         'name': 'shellcheck',
         'image': build_image,
@@ -524,9 +533,10 @@ def shellcheck_step():
         'commands': [
             './bin/grabpl shellcheck',
         ],
+        'when': when,
     }
 
-def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
+def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False, when={}):
     deps = [
         'build-backend',
         'build-frontend',
@@ -561,10 +571,11 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
         'commands': [
             './bin/grabpl gen-version {}'.format(args),
         ],
+        'when': when,
     }
 
 
-def package_step(edition, ver_mode, variants=None, is_downstream=False):
+def package_step(edition, ver_mode, variants=None, is_downstream=False, when={}):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -629,9 +640,10 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         ],
         'environment': env,
         'commands': cmds,
+        'when': when,
     }
 
-def e2e_tests_server_step(edition, port=3001):
+def e2e_tests_server_step(edition, port=3001, when={}):
     package_file_pfx = ''
     if edition == 'enterprise2':
         package_file_pfx = 'grafana' + enterprise2_sfx(edition)
@@ -656,9 +668,10 @@ def e2e_tests_server_step(edition, port=3001):
         'commands': [
             './e2e/start-server',
         ],
+        'when': when,
     }
 
-def e2e_tests_step(edition, port=3001, tries=None):
+def e2e_tests_step(edition, port=3001, tries=None, when={}):
     cmd = './bin/grabpl e2e-tests --port {}'.format(port)
     if tries:
         cmd += ' --tries {}'.format(tries)
@@ -677,9 +690,10 @@ def e2e_tests_step(edition, port=3001, tries=None):
             './node_modules/.bin/cypress install',
             cmd,
         ],
+        'when': when,
     }
 
-def build_docs_website_step():
+def build_docs_website_step(when={}):
     return {
         'name': 'build-docs-website',
         # Use latest revision here, since we want to catch if it breaks
@@ -693,9 +707,10 @@ def build_docs_website_step():
             'cp -r docs/sources/* /hugo/content/docs/grafana/latest/',
             'cd /hugo && make prod',
         ],
+        'when': when,
     }
 
-def copy_packages_for_docker_step():
+def copy_packages_for_docker_step(when={}):
     return {
         'name': 'copy-packages-for-docker',
         'image': build_image,
@@ -706,9 +721,10 @@ def copy_packages_for_docker_step():
             'ls dist/*.tar.gz*',
             'cp dist/*.tar.gz* packaging/docker/',
         ],
+        'when': when,
     }
 
-def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False, when={}):
     if ver_mode == 'test-release':
         publish = False
 
@@ -736,9 +752,10 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         'image': grafana_docker_image,
         'depends_on': ['copy-packages-for-docker'],
         'settings': settings,
+        'when': when,
     }
 
-def postgres_integration_tests_step():
+def postgres_integration_tests_step(when={}):
     return {
         'name': 'postgres-integration-tests',
         'image': build_image,
@@ -761,9 +778,10 @@ def postgres_integration_tests_step():
             'go clean -testcache',
             './bin/grabpl integration-tests --database postgres',
         ],
+        'when': when,
     }
 
-def mysql_integration_tests_step():
+def mysql_integration_tests_step(when={}):
     return {
         'name': 'mysql-integration-tests',
         'image': build_image,
@@ -784,6 +802,7 @@ def mysql_integration_tests_step():
             'go clean -testcache',
             './bin/grabpl integration-tests --database mysql',
         ],
+        'when': when,
     }
 
 def redis_integration_tests_step():
