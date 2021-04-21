@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,8 @@ import (
 	"xorm.io/xorm"
 )
 
-// To run this test, remove the Skip from SkipConvey
+// To run this test, set runMssqlTests=true
+// Or from the commandline: GRAFANA_TEST_DB=mssql go test -v ./pkg/tsdb/mssql
 // The tests require a MSSQL db named grafanatest and a user/password grafana/Password!
 // Use the docker/blocks/mssql_tests/docker-compose.yaml to spin up a
 // preconfigured MSSQL server suitable for running these tests.
@@ -32,25 +34,21 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	// Skip for now
-	const shouldSkip = true
-	if shouldSkip {
+	// change to true to run the PostgreSQL tests
+	const runMssqlTests = false
+
+	if !sqlstore.IsTestDbMsSQL() && !runMssqlTests {
 		t.Skip()
 	}
 
 	x := initMSSQLTestDB(t)
 	origXormEngine := sqleng.NewXormEngine
-	origInterpolate := sqleng.Interpolate
 	t.Cleanup(func() {
 		sqleng.NewXormEngine = origXormEngine
-		sqleng.Interpolate = origInterpolate
 	})
 
 	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 		return x, nil
-	}
-	sqleng.Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
-		return sql, nil
 	}
 
 	endpoint, err := NewExecutor(&models.DataSource{
@@ -319,13 +317,6 @@ func TestMSSQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup and $__interval", func(t *testing.T) {
-			mockInterpolate := sqleng.Interpolate
-			t.Cleanup(func() {
-				sqleng.Interpolate = mockInterpolate
-			})
-
-			sqleng.Interpolate = origInterpolate
-
 			t.Run("Should replace $__interval", func(t *testing.T) {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
@@ -722,7 +713,6 @@ func TestMSSQL(t *testing.T) {
 		})
 
 		t.Run("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func(t *testing.T) {
-			sqleng.Interpolate = origInterpolate
 			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart}
 			query := plugins.DataQuery{
 				TimeRange: &timeRange,
@@ -792,7 +782,11 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
-				sqleng.Interpolate = origInterpolate
+				endpoint, err := NewExecutor(&models.DataSource{
+					JsonData:       simplejson.New(),
+					SecureJsonData: securejsondata.SecureJsonData{},
+				})
+				require.NoError(t, err)
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -877,7 +871,6 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("When doing a metric query using stored procedure should return correct result", func(t *testing.T) {
-				sqleng.Interpolate = origInterpolate
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
