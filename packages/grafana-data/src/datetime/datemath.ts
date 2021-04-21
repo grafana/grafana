@@ -161,6 +161,12 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
   return dateTime;
 }
 
+/**
+ * Converts a TimeRange to a RelativeTimeRange that can be used in
+ * e.g. alerting queries/rules.
+ *
+ * @internal
+ */
 export function timeRangeToRelative(timeRange: TimeRange): RelativeTimeRange {
   const now = dateTime().unix();
   const from = (now - timeRange.from.unix()) / 1000;
@@ -172,6 +178,11 @@ export function timeRangeToRelative(timeRange: TimeRange): RelativeTimeRange {
   };
 }
 
+/**
+ * Converts a RelativeTimeRange to a TimeRange
+ *
+ * @internal
+ */
 export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: DateTime = dateTime()): TimeRange {
   const from = dateTime(now).subtract(relativeTimeRange.from, 's');
   const to = relativeTimeRange.to === 0 ? dateTime(now) : dateTime(now).subtract(relativeTimeRange.to, 's');

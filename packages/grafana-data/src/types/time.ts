@@ -11,9 +11,9 @@ export interface TimeRange {
   raw: RawTimeRange;
 }
 
-/*
-  from: seconds from now
-  to: seconds from now
+/**
+ * Type to describe relative time to now in seconds.
+ * @internal
  */
 export interface RelativeTimeRange {
   from: number;
