@@ -99,7 +99,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			newRule := apimodels.Rule{
 				Name:           rule.Title,
 				Labels:         rule.Labels,
-				Health:         "ok", // TODO: update this in the future when error and noData states are being evaluated and set
+				Health:         "ok",
 				Type:           apiv1.RuleTypeAlerting,
 				LastEvaluation: time.Time{},
 			}
@@ -131,9 +131,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				case eval.Alerting:
 					alertingRule.State = "firing"
 				case eval.Error:
-					// handle Error case based on configuration in alertRule
+					newRule.Health = "error"
 				case eval.NoData:
-					// handle NoData case based on configuration in alertRule
+					newRule.Health = "nodata"
 				}
 				alertingRule.Alerts = append(alertingRule.Alerts, alert)
 			}
