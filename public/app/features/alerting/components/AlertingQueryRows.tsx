@@ -3,8 +3,6 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { DataQuery, DataSourceApi, DataSourceInstanceSettings, dateMath, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { AlertingQuery } from '../types';
-import { ExpressionQuery } from 'app/features/expressions/types';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 
@@ -81,7 +79,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
-  getDataSourceSettings = (query: ExpressionQuery | AlertingQuery): DataSourceInstanceSettings | undefined => {
+  getDataSourceSettings = (query: DataQuery): DataSourceInstanceSettings | undefined => {
     const { defaultDataSource } = this.state;
 
     if (isExpressionQuery(query)) {
@@ -119,7 +117,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       onChange={(query) => this.onChangeQuery(query, index)}
                       timeRange={
                         !isExpressionQuery(query.model)
-                          ? dateMath.relativeTimeRangeToTimeRange(query.relativeTimeRange)
+                          ? dateMath.relativeToTimeRange(query.relativeTimeRange)
                           : undefined
                       }
                       onChangeTimeRange={

@@ -172,10 +172,7 @@ export function timeRangeToRelative(timeRange: TimeRange): RelativeTimeRange {
   };
 }
 
-export function relativeTimeRangeToTimeRange(
-  relativeTimeRange: RelativeTimeRange,
-  now: DateTime = dateTime()
-): TimeRange {
+export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: DateTime = dateTime()): TimeRange {
   const from = dateTime(now).subtract(relativeTimeRange.from, 's');
   const to = relativeTimeRange.to === 0 ? dateTime(now) : dateTime(now).subtract(relativeTimeRange.to, 's');
 

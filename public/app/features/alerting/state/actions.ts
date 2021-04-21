@@ -1,4 +1,11 @@
-import { AppEvents, applyFieldOverrides, dataFrameFromJSON, DataFrameJSON, DataSourceApi } from '@grafana/data';
+import {
+  AppEvents,
+  applyFieldOverrides,
+  dataFrameFromJSON,
+  DataFrameJSON,
+  DataQuery,
+  DataSourceApi,
+} from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
@@ -26,9 +33,7 @@ import {
   ThunkResult,
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
-import { ExpressionQuery } from '../../expressions/types';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { AlertingQuery } from '../types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -218,7 +223,7 @@ function handleJSONResponse(frames: DataFrameJSON[]) {
 }
 
 function buildDataQueryModel(queryOptions: QueryGroupOptions, defaultDataSource: DataSourceApi) {
-  return queryOptions.queries.map((query: ExpressionQuery | AlertingQuery) => {
+  return queryOptions.queries.map((query: DataQuery) => {
     if (isExpressionQuery(query)) {
       const dataSource: QueryGroupDataSource = {
         name: ExpressionDatasourceID,
@@ -251,8 +256,8 @@ function buildDataQueryModel(queryOptions: QueryGroupOptions, defaultDataSource:
       },
       refId: query.refId,
       relativeTimeRange: {
-        From: query.timeRange!.from,
-        To: query.timeRange!.to,
+        from: 600,
+        to: 0,
       },
     };
   });
