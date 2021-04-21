@@ -58,7 +58,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	pluginToInstall := c.Args().First()
+	pluginID := c.Args().First()
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 
@@ -66,8 +66,8 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pm := manager.NewManagerInstaller(skipTLSVerify, log.New("gcli.logger"))
 
-	logger.Infof("Plugin=%s, version=%s, dir=%s, pluginZipURL=%s, repo=%s\n", pluginToInstall, version, c.PluginDirectory(), c.PluginURL(), repo)
-	return pm.InstallPlugin(pluginToInstall, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
+	logger.Infof("PluginID=%s, version=%s, dir=%s, pluginZipURL=%s, repo=%s\n", pluginID, version, c.PluginDirectory(), c.PluginURL(), repo)
+	return pm.InstallPlugin(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API

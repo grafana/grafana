@@ -694,14 +694,14 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 
 // InstallPlugin downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
-func (pm *PluginManager) InstallPlugin(pluginName, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
-	return pm.installer.Install(pluginName, version, pluginsDir, pluginZipURL, pluginRepoURL)
+func (pm *PluginManager) InstallPlugin(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+	return pm.installer.Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL)
 }
 
 // UninstallPlugin removes the specified plugin from the provided plugins directory.
-func (pm *PluginManager) UninstallPlugin(pluginPath, pluginName string) error {
-	pm.log.Info(fmt.Sprintf("Removing plugin: %v\n", pluginName))
-	pluginDir := filepath.Join(pluginPath, pluginName)
+func (pm *PluginManager) UninstallPlugin(pluginPath, pluginID string) error {
+	pm.log.Info(fmt.Sprintf("Removing plugin: %v\n", pluginID))
+	pluginDir := filepath.Join(pluginPath, pluginID)
 
 	_, err := os.Stat(pluginDir)
 	if err != nil {

@@ -67,19 +67,19 @@ func New(skipTLSVerify bool, logger log.Logger) *Installer {
 	}
 }
 
-func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+func (g *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
 	var checksum string
 	if pluginZipURL == "" {
-		if strings.HasPrefix(pluginName, "grafana-") {
+		if strings.HasPrefix(pluginID, "grafana-") {
 			// At this point the plugin download is going through grafana.com API and thus the name is validated.
 			// Checking for grafana prefix is how it is done there so no 3rd party plugin should have that prefix.
 			// You can supply custom plugin name and then set custom download url to 3rd party plugin but then that
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := g.getPluginMetadataFromPluginRepo(pluginName, pluginRepoURL)
+		plugin, err := g.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL, plugi
 		}
 		pluginZipURL = fmt.Sprintf("%s/%s/versions/%s/download",
 			pluginRepoURL,
-			pluginName,
+			pluginID,
 			version,
 		)
 
@@ -107,7 +107,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL, plugi
 			checksum = archMeta.SHA256
 		}
 	}
-	g.log.Info(fmt.Sprintf("installing %v @ %v\n", pluginName, version))
+	g.log.Info(fmt.Sprintf("installing %v @ %v\n", pluginID, version))
 	g.log.Info(fmt.Sprintf("from: %v\n", pluginZipURL))
 	g.log.Info(fmt.Sprintf("into: %v\n", pluginsDir))
 	g.log.Info("\n")
@@ -123,7 +123,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL, plugi
 		}
 	}()
 
-	err = g.DownloadFile(pluginName, tmpFile, pluginZipURL, checksum)
+	err = g.DownloadFile(pluginID, tmpFile, pluginZipURL, checksum)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			g.log.Warn("Failed to close file", "err", err)
@@ -135,15 +135,15 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL, plugi
 		return errutil.Wrap("failed to close tmp file", err)
 	}
 
-	err = g.extractFiles(tmpFile.Name(), pluginName, pluginsDir, isInternal)
+	err = g.extractFiles(tmpFile.Name(), pluginID, pluginsDir, isInternal)
 	if err != nil {
 		return errutil.Wrap("failed to extract plugin archive", err)
 	}
 
-	g.log.Info(fmt.Sprintf("%s Installed %s successfully \n", color.GreenString("✔"), pluginName))
+	g.log.Info(fmt.Sprintf("%s Installed %s successfully \n", color.GreenString("✔"), pluginID))
 
 	// download dependency plugins
-	res, _ := toPluginDTO(pluginsDir, pluginName)
+	res, _ := toPluginDTO(pluginsDir, pluginID)
 	for _, dep := range res.Dependencies.Plugins {
 		if err := g.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
@@ -155,7 +155,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL, plugi
 	return err
 }
 
-func (g *Installer) DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
+func (g *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(url); err == nil {
 		// We can ignore this gosec G304 warning since `url` stems from command line flag "pluginUrl". If the
@@ -187,7 +187,7 @@ func (g *Installer) DownloadFile(pluginName string, tmpFile *os.File, url string
 				if err != nil {
 					return
 				}
-				err = g.DownloadFile(pluginName, tmpFile, url, checksum)
+				err = g.DownloadFile(pluginID, tmpFile, url, checksum)
 			} else {
 				g.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -437,7 +437,7 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (g *Installer) extractFiles(archiveFile string, pluginName string, dstDir string, allowSymlinks bool) error {
+func (g *Installer) extractFiles(archiveFile string, pluginID string, dstDir string, allowSymlinks bool) error {
 	var err error
 	dstDir, err = filepath.Abs(dstDir)
 	if err != nil {
@@ -445,14 +445,14 @@ func (g *Installer) extractFiles(archiveFile string, pluginName string, dstDir s
 	}
 	g.log.Debug(fmt.Sprintf("Extracting archive %q to %q...\n", archiveFile, dstDir))
 
-	existingInstallDir := filepath.Join(dstDir, pluginName)
+	existingInstallDir := filepath.Join(dstDir, pluginID)
 	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
 		err = os.RemoveAll(existingInstallDir)
 		if err != nil {
 			return err
 		}
 
-		g.log.Info(fmt.Sprintf("Removed existing installation of %s\n\n", pluginName))
+		g.log.Info(fmt.Sprintf("Removed existing installation of %s\n\n", pluginID))
 	}
 
 	r, err := zip.OpenReader(archiveFile)
@@ -466,7 +466,7 @@ func (g *Installer) extractFiles(archiveFile string, pluginName string, dstDir s
 				zf.Name, dstDir)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
+		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginID, zf.Name)))
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
@@ -569,19 +569,19 @@ func extractFile(file *zip.File, filePath string) (err error) {
 	return err
 }
 
-func removeGitBuildFromName(pluginName, filename string) string {
-	return reGitBuild.ReplaceAllString(filename, pluginName+"/")
+func removeGitBuildFromName(pluginID, filename string) string {
+	return reGitBuild.ReplaceAllString(filename, pluginID+"/")
 }
 
-func toPluginDTO(pluginDir, pluginName string) (InstalledPlugin, error) {
-	distPluginDataPath := filepath.Join(pluginDir, pluginName, "dist", "plugin.json")
+func toPluginDTO(pluginDir, pluginID string) (InstalledPlugin, error) {
+	distPluginDataPath := filepath.Join(pluginDir, pluginID, "dist", "plugin.json")
 
 	data, err := ioutil.ReadFile(distPluginDataPath)
 	if err != nil {
-		pluginDataPath := filepath.Join(pluginDir, pluginName, "plugin.json")
+		pluginDataPath := filepath.Join(pluginDir, pluginID, "plugin.json")
 		data, err = ioutil.ReadFile(pluginDataPath)
 		if err != nil {
-			return InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
+			return InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginID + " in " + pluginDir)
 		}
 	}
 
@@ -595,7 +595,7 @@ func toPluginDTO(pluginDir, pluginName string) (InstalledPlugin, error) {
 	}
 
 	if res.ID == "" {
-		return InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
+		return InstalledPlugin{}, errors.New("could not find plugin " + pluginID + " in " + pluginDir)
 	}
 
 	return res, nil

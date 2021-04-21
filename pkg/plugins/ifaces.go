@@ -59,9 +59,9 @@ type Manager interface {
 	IsAppInstalled(id string) bool
 	// InstallPlugin finds the plugin given the provided information
 	// and installs in the provided  plugins directory.
-	InstallPlugin(pluginName, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
+	InstallPlugin(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
 	// UninstallPlugin removes the specified plugin from the provided plugins directory.
-	UninstallPlugin(pluginPath, pluginName string) error
+	UninstallPlugin(pluginPath, pluginID string) error
 }
 
 type ImportDashboardInput struct {
@@ -78,6 +78,6 @@ type DataRequestHandler interface {
 }
 
 type PluginInstaller interface {
-	Install(pluginName, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
-	DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) error
+	Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
+	DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) error
 }
