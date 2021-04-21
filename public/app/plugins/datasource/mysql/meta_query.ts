@@ -1,5 +1,5 @@
 import { DataQuery } from '@grafana/data';
-import { quoteLiteral } from './sql';
+import { quoteLiteral, unquoteIdentifier } from './sql';
 
 export class MySqlMetaQuery {
   constructor(private target: DataQuery) {}
@@ -76,7 +76,8 @@ export class MySqlMetaQuery {
     return query;
   }
 
-  buildTableConstraint(table: string) {
+  buildTableConstraint() {
+    const table = (this.target as any).table;
     let query = '';
 
     // check for schema qualified table
@@ -97,8 +98,9 @@ export class MySqlMetaQuery {
   }
 
   buildColumnQuery(type?: string) {
+    const timeColumn = (this.target as any).timeColumn;
     let query = 'SELECT column_name FROM information_schema.columns WHERE ';
-    query += this.buildTableConstraint(this.target.table);
+    query += this.buildTableConstraint();
 
     switch (type) {
       case 'time': {
@@ -111,7 +113,7 @@ export class MySqlMetaQuery {
       }
       case 'value': {
         query += " AND data_type IN ('bigint','int','smallint','mediumint','tinyint','double','decimal','float')";
-        query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
+        query += ' AND column_name <> ' + this.quoteIdentAsLiteral(timeColumn);
         break;
       }
       case 'group': {
@@ -126,9 +128,10 @@ export class MySqlMetaQuery {
   }
 
   buildValueQuery(column: string) {
+    const timeColumn = (this.target as any).timeColumn;
     let query = 'SELECT DISTINCT QUOTE(' + column + ')';
-    query += ' FROM ' + this.target.table;
-    query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
+    query += ' FROM ' + (this.target as any).table;
+    query += ' WHERE $__timeFilter(' + timeColumn + ')';
     query += ' ORDER BY 1 LIMIT 100';
     return query;
   }
@@ -138,7 +141,7 @@ export class MySqlMetaQuery {
 SELECT data_type
 FROM information_schema.columns
 WHERE `;
-    query += ' table_name = ' + this.quoteIdentAsLiteral(this.target.table);
+    query += ' table_name = ' + this.quoteIdentAsLiteral((this.target as any).table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
     return query;
   }

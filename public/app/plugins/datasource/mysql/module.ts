@@ -1,12 +1,12 @@
 import { MySqlDatasource } from './datasource';
-import { MysqlQueryCtrl } from './query_ctrl';
+import { MySqlQueryCtrl } from './query_ctrl';
 import {
   createChangeHandler,
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
 
-class MysqlConfigCtrl {
+class MySqlConfigCtrl {
   static templateUrl = 'partials/config.html';
   current: any;
   onPasswordReset: ReturnType<typeof createResetHandler>;
@@ -28,7 +28,7 @@ const defaultQuery = `SELECT
   LIMIT 100
   `;
 
-class MysqlAnnotationsQueryCtrl {
+class MySqlAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 
   annotation: any;
@@ -42,7 +42,7 @@ class MysqlAnnotationsQueryCtrl {
 export {
   MySqlDatasource,
   MySqlDatasource as Datasource,
-  MysqlQueryCtrl as QueryCtrl,
-  MysqlConfigCtrl as ConfigCtrl,
-  MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
+  MySqlQueryCtrl as QueryCtrl,
+  MySqlConfigCtrl as ConfigCtrl,
+  MySqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };

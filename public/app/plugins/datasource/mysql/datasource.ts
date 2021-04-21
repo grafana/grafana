@@ -1,8 +1,9 @@
-import { map as _map, filter } from 'lodash';
+import { map as _map } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import {
+  AnnotationEvent,
   DataQueryRequest,
   DataSourceInstanceSettings,
   ScopedVars,
@@ -78,14 +79,12 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
 
   applyTemplateVariables(target: MySqlQuery, scopedVars: ScopedVars): Record<string, any> {
     // new query with no table set yet
-    let rawSql = target.rawSql;
-    if (!target.rawQuery) {
-      if (!('table' in target)) {
-        rawSql = '';
-      } else {
-        target.rawSql = buildQuery(target);
+    let rawSql = target.rawSql || '';
+    if (rawSql.length === 0) {
+      if ('table' in target) {
+        rawSql = buildQuery(target);
       }
-    } else if (interpolate) {
+    } else if (this.interpolateVariable != null) {
       rawSql = this.templateSrv.replace(rawSql, scopedVars, interpolateQueryStr);
     }
 
@@ -101,7 +100,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     return super.query(request);
   }
 
-  annotationQuery(options: any) {
+  annotationQuery(options: any): Promise<AnnotationEvent[]> {
     if (!options.annotation.rawQuery) {
       throw new Error('Query missing in annotation definition');
     }
@@ -195,7 +194,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
   targetContainsTemplate(target: any) {
     let rawSql = '';
 
-    if (target.rawQuery) {
+    if ((target.rawSql || '').length > 0) {
       rawSql = target.rawSql;
     } else {
       rawSql = buildQuery(target);
@@ -221,6 +220,6 @@ const interpolateQueryStr = (
     return quoteLiteral(value);
   }
 
-  const escapedValues = _.map(value, quoteLiteral);
+  const escapedValues = _map(value, quoteLiteral);
   return escapedValues.join(',');
 };

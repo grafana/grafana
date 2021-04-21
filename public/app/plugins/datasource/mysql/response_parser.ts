@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 interface TableResponse extends Record<string, any> {
   type: string;
   refId: string;
@@ -13,12 +11,12 @@ interface SeriesResponse extends Record<string, any> {
   datapoints: [any[]];
 }
 
-export interface MysqlResponse {
+export interface MySqlResponse {
   data: Array<TableResponse | SeriesResponse>;
 }
 
 export default class ResponseParser {
-  processQueryResult(res: any): MysqlResponse {
+  processQueryResult(res: any): MySqlResponse {
     const data: any[] = [];
 
     if (!res.data.results) {

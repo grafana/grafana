@@ -9,7 +9,7 @@ import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { TemplateSrv } from '@grafana/runtime';
 import { ShowConfirmModalEvent } from '../../../types/events';
-import { buildQuery, quoteLiteral, hasTimeGroup } from './sql';
+import { buildQuery, quoteLiteral, findTimeGroup, hasUnixEpochTimeColumn } from './sql';
 
 const defaultQuery = `SELECT
   UNIX_TIMESTAMP(<time_column>) as time_sec,
@@ -20,7 +20,7 @@ WHERE $__timeFilter(time_column)
 ORDER BY <time_column> ASC
 `;
 
-export class MysqlQueryCtrl extends QueryCtrl {
+export class MySqlQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
@@ -197,7 +197,8 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
     const task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then((result: any) => {
       // check if time column is still valid
-      if (result.length > 0 && !find(result, (r: any) => r.text === this.target.timeColumn)) {
+      const timeColumn = (this.target as any).timeColumn;
+      if (result.length > 0 && !find(result, (r: any) => r.text === timeColumn)) {
         const segment = this.uiSegmentSrv.newSegment(result[0].text);
         this.timeColumnSegment.html = segment.html;
         this.timeColumnSegment.value = segment.value;
@@ -233,7 +234,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
             this.target.timeColumnType = result[0].text;
           }
           let partModel;
-          if (hasUnixEpochTimecolumn(this.target)) {
+          if (hasUnixEpochTimeColumn(this.target)) {
             partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
           } else {
             partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
@@ -569,7 +570,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   getWhereOptions() {
     const options = [];
-    if (hasUnixEpochTimecolumn(this.target)) {
+    if (hasUnixEpochTimeColumn(this.target)) {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__unixEpochFilter' }));
     } else {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__timeFilter' }));
@@ -605,7 +606,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
       .metricFindQuery(this.metaBuilder.buildColumnQuery('group'))
       .then((tags: any) => {
         const options = [];
-        if (!hasTimeGroup(this.target)) {
+        if (findTimeGroup(this.target) == null) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time($__interval,none)' }));
         }
         for (const tag of tags) {
