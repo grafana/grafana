@@ -36,11 +36,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
+	// [orgID, dataSourceId] -> [UID, Name]
 	dsIDMap, err := m.slurpDSIDs()
 	if err != nil {
 		return err
 	}
 
+	// [orgID, dashboardId] -> dashUID
 	dashIDMap, err := m.slurpDashUIDs()
 	if err != nil {
 		return err
@@ -90,8 +92,6 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 		}
 	}
-
-	// For assume a dev created a "Unified Alerts Migration folder"
 
 	return nil
 }

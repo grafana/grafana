@@ -26,7 +26,7 @@ type alertRule struct {
 }
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
-	migAnnotation := fmt.Sprintf(`{"dashboard_uid": "%v", "panel_id": %v, "alert_id": %v}`, da.DashboardUID, da.PanelId, da.Id)
+	migAnnotation := fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
 
 	annotations := da.ParsedSettings.AlertRuleTags
 	if annotations == nil {
@@ -40,12 +40,11 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Condition:       cond.Condition,
 		Data:            cond.Data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
-		//Uid: util.GenerateShortUID()
-		NamespaceUid: folderUID, //HardCoded to a Folder already created in Kyle's instance
-		RuleGroup:    da.Name,
-		For:          duration(da.For),
-		Updated:      time.Now().UTC(),
-		Annotations:  annotations,
+		NamespaceUid:    folderUID, // Folder already created, comes from env var.
+		RuleGroup:       da.Name,
+		For:             duration(da.For),
+		Updated:         time.Now().UTC(),
+		Annotations:     annotations,
 	}
 	var err error
 	ar.Uid, err = m.generateAlertRuleUID(ar.OrgId)
