@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -13,8 +15,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -112,7 +114,7 @@ func TestSlackNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
+			expInitError: alerting.ValidationError{Reason: "token must be specified when using the Slack chat API"},
 		}, {
 			name: "Error in building message",
 			settings: `{
@@ -145,10 +147,19 @@ func TestSlackNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
+			origSendSlackRequest := sendSlackRequest
+			t.Cleanup(func() {
+				sendSlackRequest = origSendSlackRequest
 			})
+			sendSlackRequest = func(request *http.Request, log log.Logger) error {
+				t.Helper()
+				defer request.Body.Close()
+
+				b, err := io.ReadAll(request.Body)
+				require.NoError(t, err)
+				body = string(b)
+				return nil
+			}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
@@ -163,8 +174,8 @@ func TestSlackNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			// Getting Ts from actual since that can't be predicted.
-			obj := &slackMessage{}
-			require.NoError(t, json.Unmarshal([]byte(body), obj))
+			var obj slackMessage
+			require.NoError(t, json.Unmarshal([]byte(body), &obj))
 			c.expMsg.Attachments[0].Ts = obj.Attachments[0].Ts
 
 			expBody, err := json.Marshal(c.expMsg)
