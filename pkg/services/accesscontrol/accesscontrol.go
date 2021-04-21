@@ -41,20 +41,10 @@ var ReqOrgAdmin = func(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN
 }
 
-func BuildPermissionsMap(permissions []*Permission) map[string]map[string]string {
-	permissionsMap := make(map[string]map[string]string)
+func BuildPermissionsMap(permissions []*Permission) map[string]bool {
+	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
-		if item, ok := permissionsMap[p.Action]; ok {
-			if _, ok := item[p.Scope]; !ok && p.Scope != "" {
-				permissionsMap[p.Action][p.Scope] = p.Scope
-			}
-		} else {
-			newItem := make(map[string]string)
-			if p.Scope != "" {
-				newItem[p.Scope] = p.Scope
-			}
-			permissionsMap[p.Action] = newItem
-		}
+		permissionsMap[p.Action] = true
 	}
 
 	return permissionsMap

@@ -8,11 +8,6 @@ export type UserPermission = {
   [key: string]: { [key: string]: string };
 };
 
-export interface AccessControlPermission {
-  action: AccessControlAction;
-  scope?: AccessControlScope;
-}
-
 // Permission actions
 export enum AccessControlAction {
   UsersRead = 'users:read',
@@ -38,14 +33,4 @@ export enum AccessControlAction {
   LDAPUsersRead = 'ldap.user:read',
   LDAPUsersSync = 'ldap.user:sync',
   LDAPStatusRead = 'ldap.status:read',
-}
-
-// Global Scopes
-export enum AccessControlScope {
-  UsersAll = 'users:*',
-  UsersSelf = 'users:self',
-
-  OrgAllUsersAll = 'org:*/users:*',
-  OrgCurrentUsersAll = 'org:current/users:*',
-  OrgCurrentUsersSelf = 'org:current/users:self',
 }
