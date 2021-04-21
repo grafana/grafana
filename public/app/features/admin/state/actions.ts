@@ -189,10 +189,6 @@ export function loadLdapSyncStatus(): ThunkResult<void> {
 
 export function syncLdapUser(userId: number): ThunkResult<void> {
   return async (dispatch) => {
-    if (!contextSrv.hasPermission(AccessControlAction.LDAPUsersSync)) {
-      return;
-    }
-
     await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
     dispatch(loadAdminUserPage(userId));
   };
