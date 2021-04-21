@@ -15,14 +15,14 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-light: #5794f2;
-$blue-base: #3274d9;
-$blue-shade: #1f60c4;
-$red-base: #e02f44;
-$red-shade: #c4162a;
-$green-base: #3eb15b;
-$green-shade: #369b4f;
-$orange-dark: #ed5700;
+$blue-light: #0465d7;
+$blue-base: #3871DC;
+$blue-shade: rgb(44, 90, 176);
+$red-base: #E0226E;
+$red-shade: rgb(179, 27, 88);
+$green-base: #1A7F4B;
+$green-shade: rgb(20, 101, 60);
+$orange-dark: #ff780a;
 
 $gray98: #f7f8fa;
 $gray95: #e9edf2;
@@ -39,17 +39,17 @@ $gray05: #0b0c0e;
 // -------------------------
 $black: #000000;
 
-$dark-1: #1e2028;
-$dark-2: #41444b;
-$dark-4: #35373f;
+$dark-1: #141414;
+$dark-2: #161719;
+$dark-4: #212124;
 $dark-10: #424345;
-$gray-1: #52545c;
-$gray-2: #767980;
-$gray-3: #acb6bf;
-$gray-4: #c7d0d9;
-$gray-5: #dde4ed;
-$gray-6: #e9edf2;
-$gray-7: #f7f8fa;
+$gray-1: #555555;
+$gray-2: #8e8e8e;
+$gray-3: #b3b3b3;
+$gray-4: #d8d9da;
+$gray-5: #ececec;
+$gray-6: #f4f5f8;
+$gray-7: #fbfbfb;
 
 $white: #ffffff;
 
@@ -66,26 +66,26 @@ $border1: rgba(36, 41, 46, 0.30);
 // -------------------------
 $blue: #0465d7;
 $red: $red-base;
-$yellow: #ff851b;
-$orange: #ff7941;
-$purple: #9954bb;
+$yellow: #ecbb13;
+$orange: #eb7b18;
+$purple: #9933cc;
 $variable: #0465d7;
 
-$brand-primary: #ff7941;
-$brand-success: #3eb15b;
-$brand-warning: #ff7941;
+$brand-primary: #eb7b18;
+$brand-success: #299c46;
+$brand-warning: #eb7b18;
 $brand-danger: #e02f44;
 
 $query-red: #e02f44;
-$query-green: #3eb15b;
-$query-purple: #9954bb;
-$query-orange: #ff7941;
+$query-green: #74e680;
+$query-purple: #fe85fc;
+$query-orange: #eb7b18;
 
 // Status colors
 // -------------------------
-$online: #369b4f;
+$online: #299c46;
 $warn: #f79520;
-$critical: #c4162a;
+$critical: #e02f44;
 
 // Scaffolding
 // -------------------------
@@ -110,9 +110,9 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 // Links
 // -------------------------
 $link-color: rgba(36, 41, 46, 1);
-$link-color-disabled: rgba(36, 41, 46, 0.75);
+$link-color-disabled: rgba(36, 41, 46, 0.50);
 $link-hover-color: #000;
-$external-link-color: #33a2e5;
+$external-link-color: #0465d7;
 
 // Typography
 // -------------------------
@@ -133,7 +133,7 @@ $panel-corner: $panel-bg;
 // Page header
 $page-header-bg: #F4F5F5;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: rgba(36, 41, 46, 0.12);
+$page-header-border-color: #F4F5F5;
 
 $divider-border-color: $gray-2;
 
@@ -206,8 +206,8 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: rgba(36, 41, 46, 1);
-$input-border-color: #c7d0d9;
+$input-color: #c7d0d9;
+$input-border-color: rgba(36, 41, 46, 0.30);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;

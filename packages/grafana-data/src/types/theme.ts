@@ -1,5 +1,3 @@
-import { GrafanaThemeV2 } from '../themes/createTheme';
-
 export enum GrafanaThemeType {
   Light = 'light',
   Dark = 'dark',
@@ -113,7 +111,6 @@ export interface GrafanaThemeCommons {
 }
 
 export interface GrafanaTheme extends GrafanaThemeCommons {
-  v2: GrafanaThemeV2;
   type: GrafanaThemeType;
   isDark: boolean;
   isLight: boolean;

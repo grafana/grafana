@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 
-import { GrafanaThemeCommons } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
-export const commonThemeVarsTemplate = (theme: GrafanaThemeCommons) =>
+export const commonThemeVarsTemplate = (theme: GrafanaThemeV2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/default.ts', 'grafana-ui/src/themes/_variables.scss.tmpl.ts')}
 // Options
 //
@@ -17,16 +17,16 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
-$space-inset-squish-md: ${theme.spacing.insetSquishMd} !default;
+$space-inset-squish-md: ${theme.v1.spacing.insetSquishMd} !default;
 
-$space-xxs: ${theme.spacing.xxs} !default;
-$space-xs: ${theme.spacing.xs} !default;
-$space-sm: ${theme.spacing.sm} !default;
-$space-md: ${theme.spacing.md} !default;
-$space-lg: ${theme.spacing.lg} !default;
-$space-xl: ${theme.spacing.xl} !default;
+$space-xxs: ${theme.v1.spacing.xxs} !default;
+$space-xs: ${theme.v1.spacing.xs} !default;
+$space-sm: ${theme.v1.spacing.sm} !default;
+$space-md: ${theme.v1.spacing.md} !default;
+$space-lg: ${theme.v1.spacing.lg} !default;
+$space-xl: ${theme.v1.spacing.xl} !default;
 
-$spacer: ${theme.spacing.d} !default;
+$spacer: ${theme.v1.spacing.d} !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
@@ -62,11 +62,11 @@ $spacers: (
 // adapting to different screen sizes, for use in media queries.
 
 $grid-breakpoints: (
-  xs: ${theme.breakpoints.xs},
-  sm: ${theme.breakpoints.sm},
-  md: ${theme.breakpoints.md},
-  lg: ${theme.breakpoints.lg},
-  xl: ${theme.breakpoints.xl},
+  xs: ${theme.v1.breakpoints.xs},
+  sm: ${theme.v1.breakpoints.sm},
+  md: ${theme.v1.breakpoints.md},
+  lg: ${theme.v1.breakpoints.lg},
+  xl: ${theme.v1.breakpoints.xl},
 ) !default;
 
 // Grid containers
@@ -85,50 +85,50 @@ $container-max-widths: (
 // Set the number of columns and specify the width of the gutters.
 
 $grid-columns: 12 !default;
-$grid-gutter-width: ${theme.spacing.gutter} !default;
+$grid-gutter-width: ${theme.v1.spacing.gutter} !default;
 
 // Component heights
 // -------------------------
-$height-sm: ${theme.height.sm};
-$height-md: ${theme.height.md};
-$height-lg: ${theme.height.lg};
+$height-sm: ${theme.v1.height.sm};
+$height-md: ${theme.v1.height.md};
+$height-lg: ${theme.v1.height.lg};
 
 // Typography
 // -------------------------
 
-$font-family-sans-serif: ${theme.typography.fontFamily.sansSerif};
-$font-family-monospace: ${theme.typography.fontFamily.monospace};
+$font-family-sans-serif: ${theme.v1.typography.fontFamily.sansSerif};
+$font-family-monospace: ${theme.v1.typography.fontFamily.monospace};
 
-$font-size-base: ${theme.typography.size.base} !default;
+$font-size-base: ${theme.v1.typography.size.base} !default;
 
-$font-size-lg: ${theme.typography.size.lg} !default;
-$font-size-md: ${theme.typography.size.md} !default;
-$font-size-sm: ${theme.typography.size.sm} !default;
-$font-size-xs: ${theme.typography.size.xs} !default;
+$font-size-lg: ${theme.v1.typography.size.lg} !default;
+$font-size-md: ${theme.v1.typography.size.md} !default;
+$font-size-sm: ${theme.v1.typography.size.sm} !default;
+$font-size-xs: ${theme.v1.typography.size.xs} !default;
 
-$line-height-base: ${theme.typography.lineHeight.md} !default;
+$line-height-base: ${theme.v1.typography.lineHeight.md} !default;
 
-$font-weight-regular: ${theme.typography.weight.regular} !default;
-$font-weight-semi-bold: ${theme.typography.weight.semibold} !default;
+$font-weight-regular: ${theme.v1.typography.weight.regular} !default;
+$font-weight-semi-bold: ${theme.v1.typography.weight.semibold} !default;
 
-$font-size-h1: ${theme.typography.heading.h1} !default;
-$font-size-h2: ${theme.typography.heading.h2} !default;
-$font-size-h3: ${theme.typography.heading.h3} !default;
-$font-size-h4: ${theme.typography.heading.h4} !default;
-$font-size-h5: ${theme.typography.heading.h5} !default;
-$font-size-h6: ${theme.typography.heading.h6} !default;
+$font-size-h1: ${theme.v1.typography.heading.h1} !default;
+$font-size-h2: ${theme.v1.typography.heading.h2} !default;
+$font-size-h3: ${theme.v1.typography.heading.h3} !default;
+$font-size-h4: ${theme.v1.typography.heading.h4} !default;
+$font-size-h5: ${theme.v1.typography.heading.h5} !default;
+$font-size-h6: ${theme.v1.typography.heading.h6} !default;
 
-$headings-line-height: ${theme.typography.lineHeight.sm} !default;
+$headings-line-height: ${theme.v1.typography.lineHeight.sm} !default;
 
 // Components
 //
 // Define common padding and border radius sizes and more.
 
-$border-width: ${theme.border.width.sm} !default;
+$border-width: ${theme.v1.border.width.sm} !default;
 
-$border-radius: ${theme.border.radius.md} !default;
-$border-radius-lg: ${theme.border.radius.lg} !default;
-$border-radius-sm: ${theme.border.radius.sm} !default;
+$border-radius: ${theme.v1.border.radius.md} !default;
+$border-radius-lg: ${theme.v1.border.radius.lg} !default;
+$border-radius-sm: ${theme.v1.border.radius.sm} !default;
 
 // Page
 
@@ -137,13 +137,13 @@ $page-sidebar-margin: 56px;
 
 // Links
 // -------------------------
-$link-decoration: ${theme.typography.link.decoration} !default;
-$link-hover-decoration: ${theme.typography.link.hoverDecoration} !default;
+$link-decoration: ${theme.v1.typography.link.decoration} !default;
+$link-hover-decoration: ${theme.v1.typography.link.hoverDecoration} !default;
 
 // Forms
 $input-line-height: 18px !default;
 $input-border-radius: $border-radius;
-$input-padding: 0 ${theme.spacing.sm};
+$input-padding: 0 ${theme.v1.spacing.sm};
 $input-height: 32px !default;
 
 $cursor-disabled: not-allowed !default;
@@ -157,13 +157,13 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // -------------------------
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
-$zindex-dropdown: ${theme.zIndex.dropdown};
-$zindex-navbar-fixed: ${theme.zIndex.navbarFixed};
-$zindex-sidemenu: ${theme.zIndex.sidemenu};
-$zindex-tooltip: ${theme.zIndex.tooltip};
-$zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
-$zindex-modal: ${theme.zIndex.modal};
-$zindex-typeahead: ${theme.zIndex.typeahead};
+$zindex-dropdown: ${theme.v1.zIndex.dropdown};
+$zindex-navbar-fixed: ${theme.v1.zIndex.navbarFixed};
+$zindex-sidemenu: ${theme.v1.zIndex.sidemenu};
+$zindex-tooltip: ${theme.v1.zIndex.tooltip};
+$zindex-modal-backdrop: ${theme.v1.zIndex.modalBackdrop};
+$zindex-modal: ${theme.v1.zIndex.modal};
+$zindex-typeahead: ${theme.v1.zIndex.typeahead};
 
 // Buttons
 //
@@ -171,7 +171,7 @@ $zindex-typeahead: ${theme.zIndex.typeahead};
 $btn-padding-x: 14px !default;
 $btn-padding-y: 0 !default;
 $btn-line-height: $line-height-base;
-$btn-font-weight: ${theme.typography.weight.semibold} !default;
+$btn-font-weight: ${theme.v1.typography.weight.semibold} !default;
 
 $btn-padding-x-sm: 7px !default;
 $btn-padding-y-sm: 4px !default;
@@ -190,8 +190,8 @@ $navbar-padding: 20px;
 
 // dashboard
 $dashboard-padding: $space-md;
-$panel-padding: ${theme.panelPadding}px;
-$panel-header-height: ${theme.panelHeaderHeight}px;
+$panel-padding: ${theme.v1.panelPadding}px;
+$panel-header-height: ${theme.v1.panelHeaderHeight}px;
 $panel-header-z-index: 10;
 
 // tabs

@@ -1,3 +1,31 @@
+import { GrafanaTheme } from '../types/theme';
+import { ThemeBreakpoints } from './breakpoints';
+import { ThemeComponents } from './createComponents';
+import { ThemePalette } from './createPalette';
+import { ThemeShadows } from './createShadows';
+import { ThemeShape } from './createShape';
+import { ThemeSpacing } from './createSpacing';
+import { ThemeTransitions } from './createTransitions';
+import { ThemeTypography } from './createTypography';
+import { ThemeZIndices } from './zIndex';
+
+/** @beta */
+export interface GrafanaThemeV2 {
+  name: string;
+  isDark: boolean;
+  isLight: boolean;
+  palette: ThemePalette;
+  breakpoints: ThemeBreakpoints;
+  spacing: ThemeSpacing;
+  shape: ThemeShape;
+  components: ThemeComponents;
+  typography: ThemeTypography;
+  zIndex: ThemeZIndices;
+  shadows: ThemeShadows;
+  transitions: ThemeTransitions;
+  v1: GrafanaTheme;
+}
+
 /** @alpha */
 export interface ThemePaletteColor {
   /** color intent (primary, secondary, info, error, etc) */

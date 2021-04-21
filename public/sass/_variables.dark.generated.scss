@@ -15,13 +15,13 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-light: #5794f2;
-$blue-base: #3274d9;
-$blue-shade: #1f60c4;
-$red-base: #e02f44;
-$red-shade: #c4162a;
-$green-base: #299c46;
-$green-shade: #23843b;
+$blue-light: #6E9FFF;
+$blue-base: #3D71D9;
+$blue-shade: rgb(90, 134, 222);
+$red-base: #D10E5C;
+$red-shade: rgb(215, 50, 116);
+$green-base: #1A7F4B;
+$green-shade: rgb(60, 146, 102);
 $orange-dark: #ff780a;
 
 $gray98: #f7f8fa;
@@ -115,10 +115,10 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: #d8d9da;
-$link-color-disabled: #8e8e8e;
-$link-hover-color: #ffffff;
-$external-link-color: #33a2e5;
+$link-color: rgb(201, 209, 217);
+$link-color-disabled: rgba(201, 209, 217, 0.40);
+$link-hover-color: #fff;
+$external-link-color: #6E9FFF;
 
 // Typography
 // -------------------------

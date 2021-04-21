@@ -15,6 +15,10 @@ export interface ThemeComponents {
     borderHover: string;
     text: string;
   };
+  tooltip: {
+    text: string;
+    background: string;
+  };
   panel: {
     padding: number;
     headerHeight: number;
@@ -58,6 +62,10 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
             text: palette.text.primary,
           },
     panel,
+    tooltip: {
+      background: palette.background.secondary,
+      text: palette.text.primary,
+    },
     dashboard: {
       background: palette.background.canvas,
       padding: 1,

@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { getModalStyles } from './getModalStyles';
 import { IconName } from '../../types';
-import { ThemeContext } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '..';
 
@@ -12,8 +12,7 @@ interface Props {
 }
 
 export const ModalHeader: React.FC<Props> = ({ icon, iconTooltip, title, children }) => {
-  const theme = useContext(ThemeContext);
-  const styles = getModalStyles(theme);
+  const styles = useStyles2(getModalStyles);
 
   return (
     <>

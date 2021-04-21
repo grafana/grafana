@@ -1,7 +1,7 @@
 import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
-import { useStyles } from '../../themes/ThemeContext';
+import { dateMath, dateTime, getDefaultTimeRange, GrafanaThemeV2, TimeRange, TimeZone } from '@grafana/data';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
@@ -40,7 +40,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   hideQuickRanges = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const onOpen = (event: FormEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -100,7 +100,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   const inputStyles = getInputStyles({ theme, invalid: false });
   return {
     container: css`
@@ -119,25 +119,25 @@ const getStyles = (theme: GrafanaTheme) => {
         justify-content: space-between;
         cursor: pointer;
         padding-right: 0;
-        line-height: ${theme.spacing.formInputHeight - 2}px;
-        ${getFocusStyle(theme)};
+        line-height: ${theme.v1.spacing.formInputHeight - 2}px;
+        ${getFocusStyle(theme.v1)};
       `
     ),
     caretIcon: cx(
       inputStyles.suffix,
       css`
         position: relative;
-        margin-left: ${theme.spacing.xs};
+        margin-left: ${theme.v1.spacing.xs};
       `
     ),
     clearIcon: css`
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.v1.spacing.xs};
       &:hover {
-        color: ${theme.colors.linkHover};
+        color: ${theme.v1.colors.linkHover};
       }
     `,
     placeholder: css`
-      color: ${theme.colors.formInputPlaceholderText};
+      color: ${theme.v1.colors.formInputPlaceholderText};
       opacity: 1;
     `,
   };

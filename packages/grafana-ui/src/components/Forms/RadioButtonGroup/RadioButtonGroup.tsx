@@ -1,11 +1,11 @@
 import React, { useCallback, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
 import { Icon } from '../../Icon/Icon';
 import { IconName } from '../../../types/icon';
-import { useStyles } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 
 export interface RadioButtonGroupProps<T> {
   value?: T;
@@ -40,7 +40,7 @@ export function RadioButtonGroup<T>({
   );
   const id = uniqueId('radiogroup-');
   const groupName = useRef(id);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
@@ -69,14 +69,14 @@ export function RadioButtonGroup<T>({
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     radioGroup: css({
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      border: `1px solid ${theme.v2.components.input.border}`,
-      borderRadius: theme.v2.shape.borderRadius(),
+      border: `1px solid ${theme.components.input.border}`,
+      borderRadius: theme.shape.borderRadius(),
       padding: '2px',
     }),
     fullWidth: css({
