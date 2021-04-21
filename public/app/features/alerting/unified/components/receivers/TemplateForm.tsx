@@ -83,8 +83,6 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
       : 'Another template with this name already exists.';
   };
 
-  console.log(errors);
-
   return (
     <form onSubmit={handleSubmit(submit)}>
       <h4>Create message template</h4>
