@@ -6,7 +6,7 @@
  "definitions": {
   "Ack": {
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Alert": {
    "properties": {
@@ -38,7 +38,7 @@
    ],
    "title": "Alert has info for an alert.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertDiscovery": {
    "properties": {
@@ -55,14 +55,12 @@
    ],
    "title": "AlertDiscovery has info for all active alerts.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertGroup": {
    "$ref": "#/definitions/alertGroup"
   },
-  "AlertGroups": {
-   "$ref": "#/definitions/alertGroups"
-  },
+  "AlertGroups": {},
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -79,7 +77,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertNotification": {
    "properties": {
@@ -186,7 +184,7 @@
     "status"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertingRule": {
    "description": "adapted from cortex",
@@ -254,7 +252,7 @@
     "alerts"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "ApiRuleNode": {
    "properties": {
@@ -289,7 +287,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Authorization": {
    "properties": {
@@ -355,7 +353,7 @@
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "CreateAlertNotificationCommand": {
    "properties": {
@@ -428,7 +426,7 @@
     "status"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Duration": {
    "format": "int64",
@@ -557,15 +555,13 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
   "GettableAlert": {},
-  "GettableAlerts": {
-   "$ref": "#/definitions/gettableAlerts"
-  },
+  "GettableAlerts": {},
   "GettableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -598,7 +594,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableApiReceiver": {
    "properties": {
@@ -672,7 +668,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableExtendedRuleNode": {
    "properties": {
@@ -710,7 +706,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableGrafanaReceiver": {
    "$ref": "#/definitions/AlertNotification"
@@ -726,7 +722,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableGrafanaRule": {
    "properties": {
@@ -807,7 +803,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableRuleGroupConfig": {
    "properties": {
@@ -827,7 +823,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableSilence": {
    "$ref": "#/definitions/gettableSilence"
@@ -847,7 +843,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GlobalConfig": {
    "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
@@ -1081,7 +1077,7 @@
     "type": "array"
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "NotifierConfig": {
    "properties": {
@@ -1329,7 +1325,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableApiReceiver": {
    "properties": {
@@ -1403,7 +1399,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableExtendedRuleNode": {
    "properties": {
@@ -1441,7 +1437,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableGrafanaReceiver": {
    "$ref": "#/definitions/CreateAlertNotificationCommand"
@@ -1457,7 +1453,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableGrafanaRule": {
    "properties": {
@@ -1500,7 +1496,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableRuleGroupConfig": {
    "properties": {
@@ -1520,7 +1516,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableSilence": {},
   "PostableUserConfig": {
@@ -1537,7 +1533,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PushoverConfig": {
    "properties": {
@@ -1593,6 +1589,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
   "Receiver": {
+   "$ref": "#/definitions/receiver",
    "properties": {
     "email_configs": {
      "items": {
@@ -1686,7 +1683,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Route": {
    "properties": {
@@ -1720,6 +1717,13 @@
     },
     "matchers": {
      "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
     },
     "receiver": {
      "type": "string",
@@ -1783,7 +1787,7 @@
     "type"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleDiscovery": {
    "properties": {
@@ -1799,7 +1803,7 @@
     "groups"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleGroup": {
    "properties": {
@@ -1842,7 +1846,7 @@
     "interval"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleGroupConfigResponse": {
    "properties": {
@@ -1862,7 +1866,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleResponse": {
    "properties": {
@@ -1885,7 +1889,7 @@
     "status"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleType": {
    "title": "RuleType models the type of a rule.",
@@ -2157,7 +2161,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "TestRuleResponse": {
    "properties": {
@@ -2169,9 +2173,10 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2204,9 +2209,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "x-go-package": "net/url"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -2221,7 +2226,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Vector": {
    "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
@@ -2551,7 +2556,7 @@
     "receivers": {
      "description": "receivers",
      "items": {
-      "$ref": "#/definitions/receiver"
+      "$ref": "#/definitions/Receiver"
      },
      "type": "array",
      "x-go-name": "Receivers"
@@ -2589,7 +2594,7 @@
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/gettableAlert"
+    "$ref": "#/definitions/GettableAlert"
    },
    "type": "array",
    "x-go-name": "GettableAlerts",
@@ -2655,7 +2660,7 @@
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
    "items": {
-    "$ref": "#/definitions/GettableSilence"
+    "$ref": "#/definitions/gettableSilence"
    },
    "type": "array",
    "x-go-name": "GettableSilences",
@@ -2677,11 +2682,16 @@
    "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
    "title": "override the labels type with a map for generation.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "matcher": {
    "description": "Matcher matcher",
    "properties": {
+    "isEqual": {
+     "description": "is equal",
+     "type": "boolean",
+     "x-go-name": "IsEqual"
+    },
     "isRegex": {
      "description": "is regex",
      "type": "boolean",
@@ -2950,8 +2960,9 @@
   }
  },
  "info": {
-  "title": "Documentation of the API.",
-  "version": "1.0.0"
+  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Unified Alerting API.\nDocumentation of the API.",
+  "title": "Unified Alerting API",
+  "version": "1.1.0"
  },
  "paths": {
   "/api/alertmanager/{Recipient}/api/v2/alerts": {
