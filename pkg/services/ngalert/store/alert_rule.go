@@ -410,7 +410,6 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	fmt.Println(">>>>>", alertRule.IntervalSeconds, st.BaseInterval.Seconds(), alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()))
 	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 {
 		return fmt.Errorf("%w: interval (%v) should be divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
 	}
@@ -469,7 +468,6 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 				ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
 			}
-			fmt.Println("<<<<<< new.IntervalSeconds: ", new.IntervalSeconds, cmd.RuleGroupConfig.Interval, new.OrgID)
 
 			if r.ApiRuleNode != nil {
 				new.For = time.Duration(r.ApiRuleNode.For)
