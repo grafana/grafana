@@ -8,8 +8,10 @@ import SVG from '@leeoniya/react-inlinesvg';
 
 declare let __webpack_public_path__: string;
 
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
+// Lazy load the root url
 let iconRoot: string | undefined = undefined;
+const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
+
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
