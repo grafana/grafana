@@ -10,7 +10,6 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { DataFrame, FieldConfigProperty, getColorForTheme, PanelEvents, PanelPlugin } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
@@ -27,6 +26,7 @@ import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotat
 import { appEvents } from '../../../core/core';
 import { ZoomOutEvent } from '../../../types/events';
 import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
+import { loadSnapshotData } from '../../../features/dashboard/utils/loadSnapshotData';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -193,8 +193,9 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataSnapshotLoad(snapshotData: any) {
-    const frames = getProcessedDataFrames(snapshotData);
-    this.onDataFramesReceived(frames);
+    const { series, annotations } = loadSnapshotData(this.panel, this.dashboard);
+    this.panelData!.annotations = annotations;
+    this.onDataFramesReceived(series);
   }
 
   onDataFramesReceived(data: DataFrame[]) {

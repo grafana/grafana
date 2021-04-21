@@ -20,7 +20,7 @@ export class SnapshotWorker implements DashboardQueryRunnerWorker {
     return of({ annotations, alertStates: [] });
   }
 
-  getAnnotationsFromSnapshot(options: DashboardQueryRunnerOptions) {
+  getAnnotationsFromSnapshot(options: DashboardQueryRunnerOptions): AnnotationEvent[] {
     const { dashboard } = options;
     const dashAnnotations = dashboard.annotations.list.filter((a) => a.enable);
     const snapshots = dashAnnotations.filter((a) => Boolean(a.snapshotData));
