@@ -242,7 +242,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
 	postableExtendedRuleNode := apimodels.PostableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-			OrgID:        r.OrgID,
 			Title:        r.Title,
 			Condition:    r.Condition,
 			Data:         r.Data,

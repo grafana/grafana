@@ -88,6 +88,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		testCases := []struct {
 			desc             string
 			rulegroup        string
+			interval         model.Duration
 			rule             apimodels.PostableExtendedRuleNode
 			expectedResponse string
 		}{
@@ -101,7 +102,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiring",
 						Condition: "A",
 					},
@@ -118,7 +118,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -149,7 +148,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     getLongString(ngstore.AlertRuleMaxTitleLength + 1),
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -180,7 +178,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiring",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -204,14 +201,14 @@ func TestAlertRuleCRUD(t *testing.T) {
 			{
 				desc:      "alert rule with invalid interval",
 				rulegroup: "arulegroup",
+				interval:  invalidInterval,
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         invalidInterval,
+						For:         interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiring",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -237,7 +234,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				rules := apimodels.PostableRuleGroupConfig{
-					Name: tc.rulegroup,
+					Name:     tc.rulegroup,
+					Interval: tc.interval,
 					Rules: []apimodels.PostableExtendedRuleNode{
 						tc.rule,
 					},
@@ -280,7 +278,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 					// this rule does not explicitly set no data and error states
 					// therefore it should get the default values
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiring",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -301,7 +298,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 				},
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiringButSilenced",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -480,7 +476,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						UID:       "unknown",
 						Title:     "AlwaysNormal",
 						Condition: "A",
@@ -565,7 +560,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
 						Title:     "AlwaysNormal",
 						Condition: "A",
