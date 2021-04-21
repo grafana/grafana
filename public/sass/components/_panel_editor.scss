@@ -1,13 +1,3 @@
-.panel-wrapper {
-  height: 100%;
-  position: relative;
-
-  &--view {
-    flex: 1 1 0;
-    height: 90%;
-  }
-}
-
 .panel-editor__scroll {
   flex-grow: 1;
   min-width: 0;
