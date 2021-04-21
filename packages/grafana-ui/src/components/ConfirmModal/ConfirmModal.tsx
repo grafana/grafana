@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import { Modal } from '../Modal/Modal';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button';
-import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useStyles2 } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { HorizontalGroup, Input } from '..';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -50,7 +50,7 @@ export const ConfirmModal = ({
   onAlternative,
 }: ConfirmModalProps): JSX.Element => {
   const [disabled, setDisabled] = useState(Boolean(confirmationText));
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
     setDisabled(confirmationText?.localeCompare(event.currentTarget.value) !== 0);
   };
@@ -92,7 +92,7 @@ export const ConfirmModal = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   modal: css`
     width: 500px;
   `,
@@ -100,16 +100,16 @@ const getStyles = (theme: GrafanaTheme) => ({
     text-align: center;
   `,
   modalText: css({
-    fontSize: theme.v2.typography.h4.fontSize,
-    color: theme.v2.palette.text.primary,
-    marginBottom: `calc(${theme.v2.spacing(2)}*2)`,
-    paddingTop: theme.v2.spacing(2),
+    fontSize: theme.typography.h4.fontSize,
+    color: theme.colors.text.primary,
+    marginBottom: `calc(${theme.spacing(2)}*2)`,
+    paddingTop: theme.spacing(2),
   }),
   modalDescription: css({
-    fontSize: theme.v2.typography.h6.fontSize,
-    paddingTop: theme.v2.spacing(2),
+    fontSize: theme.typography.h6.fontSize,
+    paddingTop: theme.spacing(2),
   }),
   modalConfirmationInput: css({
-    paddingTop: theme.v2.spacing(2),
+    paddingTop: theme.spacing(2),
   }),
 });

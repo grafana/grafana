@@ -1,4 +1,4 @@
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 import { ThemeShadows } from './createShadows';
 
 /** @beta */
@@ -15,6 +15,10 @@ export interface ThemeComponents {
     borderHover: string;
     text: string;
   };
+  tooltip: {
+    text: string;
+    background: string;
+  };
   panel: {
     padding: number;
     headerHeight: number;
@@ -28,12 +32,12 @@ export interface ThemeComponents {
   };
 }
 
-export function createComponents(palette: ThemePalette, shadows: ThemeShadows): ThemeComponents {
+export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
   const panel = {
     padding: 1,
     headerHeight: 4,
-    background: palette.background.primary,
-    border: palette.background.primary,
+    background: colors.background.primary,
+    border: colors.background.primary,
     boxShadow: shadows.z0,
   };
 
@@ -44,22 +48,26 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       lg: 6,
     },
     input:
-      palette.mode === 'dark'
+      colors.mode === 'dark'
         ? {
-            background: palette.background.canvas,
-            border: palette.border.medium,
-            borderHover: palette.border.strong,
-            text: palette.text.primary,
+            background: colors.background.canvas,
+            border: colors.border.medium,
+            borderHover: colors.border.strong,
+            text: colors.text.primary,
           }
         : {
-            background: palette.background.primary,
-            border: palette.border.medium,
-            borderHover: palette.border.strong,
-            text: palette.text.primary,
+            background: colors.background.primary,
+            border: colors.border.medium,
+            borderHover: colors.border.strong,
+            text: colors.text.primary,
           },
     panel,
+    tooltip: {
+      background: colors.background.secondary,
+      text: colors.text.primary,
+    },
     dashboard: {
-      background: palette.background.canvas,
+      background: colors.background.canvas,
       padding: 1,
     },
   };

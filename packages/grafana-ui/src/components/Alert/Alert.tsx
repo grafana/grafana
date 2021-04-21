@@ -1,8 +1,8 @@
 import React, { FC, HTMLAttributes, ReactNode } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -36,7 +36,7 @@ function getIconFromSeverity(severity: AlertVariant): string {
 
 export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
   ({ title, onRemove, children, buttonContent, elevated, severity = 'error', ...restProps }, ref) => {
-    const theme = useTheme();
+    const theme = useTheme2();
     const styles = getStyles(theme, severity, elevated);
 
     return (
@@ -68,19 +68,19 @@ export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boolean) => {
-  const color = theme.v2.palette[severity];
+const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boolean) => {
+  const color = theme.colors[severity];
 
   return {
     alert: css`
       flex-grow: 1;
       position: relative;
-      border-radius: ${theme.v2.shape.borderRadius()};
+      border-radius: ${theme.shape.borderRadius()};
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      background: ${theme.v2.palette.background.secondary};
-      box-shadow: ${elevated ? theme.v2.shadows.z4 : theme.v2.shadows.z1};
+      background: ${theme.colors.background.secondary};
+      box-shadow: ${elevated ? theme.shadows.z4 : theme.shadows.z1};
 
       &:before {
         content: '';
@@ -89,12 +89,12 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
         left: 0;
         bottom: 0;
         right: 0;
-        background: ${theme.v2.palette.background.primary};
+        background: ${theme.colors.background.primary};
         z-index: -1;
       }
     `,
     icon: css`
-      padding: ${theme.v2.spacing(2, 3)};
+      padding: ${theme.spacing(2, 3)};
       background: ${color.main};
       color: ${color.contrastText};
       display: flex;
@@ -102,12 +102,12 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
       justify-content: center;
     `,
     title: css`
-      font-weight: ${theme.v2.typography.fontWeightMedium};
-      color: ${theme.v2.palette.text.primary};
+      font-weight: ${theme.typography.fontWeightMedium};
+      color: ${theme.colors.text.primary};
     `,
     body: css`
-      color: ${theme.v2.palette.text.secondary};
-      padding: ${theme.v2.spacing(2)};
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(2)};
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -116,13 +116,13 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
       word-break: break-word;
     `,
     buttonWrapper: css`
-      padding: ${theme.v2.spacing(1)};
+      padding: ${theme.spacing(1)};
       background: none;
       display: flex;
       align-items: center;
     `,
     close: css`
-      padding: ${theme.v2.spacing(1)};
+      padding: ${theme.spacing(1)};
       background: none;
       align-items: center;
       display: flex;

@@ -1,13 +1,13 @@
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 
-export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     menu: css`
       label: grafana-select-menu;
-      background: ${theme.v2.palette.background.secondary};
-      box-shadow: ${theme.v2.shadows.z3};
+      background: ${theme.colors.background.secondary};
+      box-shadow: ${theme.shadows.z3};
       position: relative;
       min-width: 100%;
       z-index: 1;
@@ -24,7 +24,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       border-left: 2px solid transparent;
 
       &:hover {
-        background: ${theme.v2.palette.action.hover};
+        background: ${theme.colors.action.hover};
       }
     `,
     optionImage: css`
@@ -35,28 +35,28 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     optionDescription: css`
       label: grafana-select-option-description;
       font-weight: normal;
-      font-size: ${theme.v2.typography.size.sm};
-      color: ${theme.v2.palette.text.secondary};
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.text.secondary};
       white-space: normal;
-      line-height: ${theme.v2.typography.body.lineHeight};
+      line-height: ${theme.typography.body.lineHeight};
     `,
     optionBody: css`
       label: grafana-select-option-body;
       display: flex;
-      font-weight: ${theme.v2.typography.fontWeightMedium};
+      font-weight: ${theme.typography.fontWeightMedium};
       flex-direction: column;
       flex-grow: 1;
     `,
     optionFocused: css`
       label: grafana-select-option-focused;
-      background: ${theme.v2.palette.action.focus};
+      background: ${theme.colors.action.focus};
     `,
     optionSelected: css`
-      background: ${theme.v2.palette.action.selected};
+      background: ${theme.colors.action.selected};
     `,
     singleValue: css`
       label: grafana-select-single-value;
-      color: ${theme.v2.components.input.text};
+      color: ${theme.components.input.text};
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -79,7 +79,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     loadingMessage: css`
       label: grafana-select-loading-message;
-      padding: ${theme.v2.spacing(1)};
+      padding: ${theme.spacing(1)};
       text-align: center;
       width: 100%;
     `,
@@ -88,16 +88,16 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       line-height: 1;
-      background: ${theme.v2.palette.background.secondary};
-      border-radius: ${theme.v2.shape.borderRadius()};
-      margin: ${theme.v2.spacing(0, 1, 0, 0)};
-      padding: ${theme.v2.spacing(0.25, 0, 0.25, 1)};
-      color: ${theme.v2.palette.text.primary};
+      background: ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(0, 1, 0, 0)};
+      padding: ${theme.spacing(0.25, 0, 0.25, 1)};
+      color: ${theme.colors.text.primary};
       font-size: ${theme.typography.size.sm};
     `,
     multiValueRemove: css`
       label: grafana-select-multi-value-remove;
-      margin: ${theme.v2.spacing(0, 0.5)};
+      margin: ${theme.spacing(0, 0.5)};
       cursor: pointer;
     `,
   };
