@@ -16,7 +16,7 @@ type Props = {
   clearLogsNavigation: (shouldClear: boolean) => void;
 };
 
-type LogsTimelineChunk = {
+type LogsPage = {
   logsRange: AbsoluteTimeRange;
   queryRange: AbsoluteTimeRange;
 };
@@ -30,19 +30,18 @@ function LogsNavigation({
   logsNavigationCleared,
   clearLogsNavigation,
 }: Props) {
-  const [chunksArray, setChunksArray] = useState<LogsTimelineChunk[]>([]);
+  const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    const newChunk = { logsRange: visibleRange || absoluteRange, queryRange: absoluteRange };
+    const newPage = { logsRange: visibleRange || absoluteRange, queryRange: absoluteRange };
     if (logsNavigationCleared) {
-      setChunksArray([newChunk]);
+      setPages([newPage]);
     } else {
-      setChunksArray((array) => {
-        const filteredChunksArray = array.filter((chunk) => !isEqual(newChunk.queryRange, chunk.queryRange));
-        console.log(filteredChunksArray);
+      setPages((pages) => {
+        const filteredChunksArray = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
 
-        const newChunksArray = [...filteredChunksArray, newChunk].sort((a, b) =>
+        const newChunksArray = [...filteredChunksArray, newPage].sort((a, b) =>
           a.queryRange.to > b.queryRange.to ? -1 : 1
         );
         return newChunksArray;
@@ -51,35 +50,37 @@ function LogsNavigation({
   }, [visibleRange, absoluteRange, logsNavigationCleared]);
 
   useEffect(() => {
-    const index = chunksArray.findIndex((chunk) => chunk.queryRange.to === absoluteRange.to);
+    const index = pages.findIndex((page) => page.queryRange.to === absoluteRange.to);
     setCurrentIndex(index);
-  }, [chunksArray, absoluteRange]);
+  }, [pages, absoluteRange]);
 
   function changeTime({ from, to }: AbsoluteTimeRange) {
     clearLogsNavigation(false);
     onChangeTime({ from, to });
   }
 
+  function formatTime(time: number) {
+    return `${dateTimeFormat(time, {
+      format: systemDateFormats.interval.second,
+      timeZone: timeZone,
+    })}`;
+  }
+
   const styles = getStyles();
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.timeline}>
-        {chunksArray.map((chunk: LogsTimelineChunk, index) => (
+        {pages.map((page: LogsPage, index) => (
           <div
             className="wrap"
-            key={index}
-            onClick={() => changeTime({ from: chunk.queryRange.from, to: chunk.queryRange.to })}
+            key={page.queryRange.to}
+            onClick={() => changeTime({ from: page.queryRange.from, to: page.queryRange.to })}
           >
             <div className={classNames('line', { blueBg: currentIndex === index })} />
-            <div className={classNames(styles.time, { blueText: currentIndex === index })}>{`${dateTimeFormat(
-              chunk.logsRange.to,
-              {
-                format: systemDateFormats.interval.second,
-              }
-            )} - ${dateTimeFormat(chunk.logsRange.from, {
-              format: systemDateFormats.interval.second,
-              timeZone: timeZone,
-            })}`}</div>
+            <div className={classNames(styles.time, { blueText: currentIndex === index })}>
+              {`${formatTime(page.logsRange.to)} - ${formatTime(page.logsRange.from)}`}
+            </div>
           </div>
         ))}
       </div>
@@ -87,7 +88,7 @@ function LogsNavigation({
         className={styles.navigationButton}
         variant="secondary"
         onClick={() => {
-          changeTime({ from: absoluteRange.from, to: visibleRange.from });
+          changeTime({ from: absoluteRange.from, to: absoluteRange.to });
         }}
         disabled={loading}
       >
