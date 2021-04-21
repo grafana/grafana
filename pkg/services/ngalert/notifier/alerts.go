@@ -138,6 +138,7 @@ func (am *Alertmanager) alertFilter(matchers []*labels.Matcher, silenced, inhibi
 
 		// Set alert's current status based on its label set.
 		am.silencer.Mutes(a.Labels)
+		am.inhibitor.Mutes(a.Labels)
 
 		// Get alert's current status after seeing if it is suppressed.
 		status := am.marker.Status(a.Fingerprint())
