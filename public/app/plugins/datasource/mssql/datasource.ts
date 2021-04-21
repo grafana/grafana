@@ -127,7 +127,8 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
         url: '/api/ds/query',
         method: 'POST',
         data: {
-          ...optionalOptions, // includes 'range',
+          from: optionalOptions.range.from.valueOf().toString(),
+          to: optionalOptions.range.to.valueOf().toString(),
           queries: [interpolatedQuery],
         },
         requestId: refId,
@@ -140,7 +141,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       .toPromise();
   }
 
-  testDatasource() {
+  testDatasource(): Promise<any> {
     return getBackendSrv()
       .fetch({
         url: '/api/tsdb/query',
@@ -174,8 +175,8 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       .toPromise();
   }
 
-  targetContainsTemplate(target: any) {
-    const rawSql = target.rawSql.replace('$__', '');
+  targetContainsTemplate(query: MssqlQuery): boolean {
+    const rawSql = query.rawSql.replace('$__', '');
     return this.templateSrv.variableExists(rawSql);
   }
 }

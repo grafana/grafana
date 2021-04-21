@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { AnnotationEvent, DataFrame, FieldType, MetricFindValue } from '@grafana/data';
 import { BackendDataSourceResponse, toDataQueryResponse, FetchResponse } from '@grafana/runtime';
 
@@ -19,60 +20,99 @@ export default class ResponseParser {
       for (let i = 0; i < textField.values.length; i++) {
         values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
       }
-
-      return values;
+    } else {
+      const textFields = frame.fields.filter((f) => f.type === FieldType.string);
+      if (textFields) {
+        values.push(
+          ...textFields
+            .flatMap((f) => f.values.toArray())
+            .map((v) => ({
+              text: '' + v,
+            }))
+        );
+      }
     }
 
-    const textFields = frame.fields.filter((f) => f.type === FieldType.string);
-    if (textFields) {
-      values.push(
-        ...textFields
-          .flatMap((f) => f.values.toArray())
-          .map((v) => ({
-            text: '' + v,
-          }))
-      );
+    return Array.from(new Set(values.map((v) => v.text))).map((text) => {
+      return { text, value: values.find((v) => v.text === text)?.value } as MetricFindValue;
+    });
+  }
+
+  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number): MetricFindValue[] {
+    const res = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      if (!this.containsKey(res, rows[i][textColIndex])) {
+        res.push({ text: rows[i][textColIndex], value: rows[i][valueColIndex] });
+      }
     }
-    return values;
+
+    return res;
+  }
+
+  transformToSimpleList(rows: any): MetricFindValue[] {
+    const res = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = 0; j < rows[i].length; j++) {
+        res.push(rows[i][j]);
+      }
+    }
+
+    const unique = Array.from(new Set(res));
+
+    return _.map(unique, (value) => {
+      return { text: value };
+    });
+  }
+
+  findColIndex(columns: any[], colName: string) {
+    for (let i = 0; i < columns.length; i++) {
+      if (columns[i].text === colName) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  containsKey(res: any[], key: any) {
+    for (let i = 0; i < res.length; i++) {
+      if (res[i].text === key) {
+        return true;
+      }
+    }
+    return false;
   }
 
   async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
     const frames = toDataQueryResponse({ data: data }).data as DataFrame[];
     const frame = frames[0];
-    let timeColumnIndex = -1;
-    let timeEndColumnIndex = -1;
-    let textColumnIndex = -1;
-    let tagsColumnIndex = -1;
+    const timeField = frame.fields.find((f) => f.name === 'time');
 
-    for (let i = 0; i < frame.fields.length; i++) {
-      const fieldName = frame.fields[i].name;
-      if (fieldName === 'time') {
-        timeColumnIndex = i;
-      } else if (fieldName === 'timeend') {
-        timeEndColumnIndex = i;
-      } else if (fieldName === 'text') {
-        textColumnIndex = i;
-      } else if (fieldName === 'tags') {
-        tagsColumnIndex = i;
-      }
-    }
-
-    if (timeColumnIndex === -1) {
+    if (!timeField) {
       return Promise.reject({ message: 'Missing mandatory time column (with time column alias) in annotation query.' });
     }
 
+    const timeEndField = frame.fields.find((f) => f.name === 'timeend');
+    const textField = frame.fields.find((f) => f.name === 'text');
+    const tagsField = frame.fields.find((f) => f.name === 'tags');
+
     const list: AnnotationEvent[] = [];
-    for (let i = 0; i < frame.fields.length; i++) {
-      const field = frame.fields[i];
-      const row = field.values.get(0);
-      const timeEnd =
-        timeEndColumnIndex !== -1 && row[timeEndColumnIndex] ? Math.floor(row[timeEndColumnIndex]) : undefined;
+    for (let i = 0; i < frame.length; i++) {
+      const timeEnd = timeEndField && timeEndField.values.get(i) ? Math.floor(timeEndField.values.get(i)) : undefined;
       list.push({
         annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]),
+        time: Math.floor(timeField.values.get(i)),
         timeEnd,
-        text: row[textColumnIndex],
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
+        text: textField && textField.values.get(i) ? textField.values.get(i) : '',
+        tags:
+          tagsField && tagsField.values.get(i)
+            ? tagsField.values
+                .get(i)
+                .trim()
+                .split(/\s*,\s*/)
+            : [],
       });
     }
 

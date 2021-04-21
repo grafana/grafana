@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { dateTime, MetricFindValue } from '@grafana/data';
+import { dataFrameToJSON, dateTime, MetricFindValue, MutableDataFrame } from '@grafana/data';
 
 import { MssqlDatasource } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -84,44 +84,18 @@ describe('MSSQLDatasource', () => {
   describe('When performing metricFindQuery', () => {
     let results: MetricFindValue[];
     const query = 'select * from atable';
-    // const response = {
-    //   results: {
-    //     tempvar: {
-    //       meta: {
-    //         rowCount: 3,
-    //       },
-    //       refId: 'tempvar',
-    //       tables: [
-    //         {
-    //           columns: [{ text: 'title' }, { text: 'text' }],
-    //           rows: [
-    //             ['aTitle', 'some text'],
-    //             ['aTitle2', 'some text2'],
-    //             ['aTitle3', 'some text3'],
-    //           ],
-    //         },
-    //       ],
-    //     },
-    //   },
-    // };
     const response = {
       results: {
         tempvar: {
           frames: [
-            {
-              schema: {
+            dataFrameToJSON(
+              new MutableDataFrame({
                 fields: [
-                  { name: 'title', type: 'string', typeInfo: { frame: 'string', nullable: true } },
-                  { name: 'text', type: 'string', typeInfo: { frame: 'string', nullable: true } },
+                  { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
                 ],
-              },
-              data: {
-                values: [
-                  ['aTitle', 'aTitle2', 'aTitle3'],
-                  ['some text', 'some text2', 'some text3'],
-                ],
-              },
-            },
+              })
+            ),
           ],
         },
       },
@@ -148,19 +122,15 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [
-                ['value1', 'aTitle'],
-                ['value2', 'aTitle2'],
-                ['value3', 'aTitle3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__value', values: ['value1', 'value2', 'value3'] },
+                  { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                ],
+              })
+            ),
           ],
         },
       },
@@ -189,19 +159,15 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [
-                ['aTitle', 'same'],
-                ['aTitle', 'same'],
-                ['aTitle', 'diff'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
+                  { name: '__value', values: ['same', 'same', 'diff'] },
+                ],
+              })
+            ),
           ],
         },
       },
@@ -226,15 +192,12 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 1,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }],
-              rows: [['aTitle']],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [{ name: 'test', values: ['aTitle'] }],
+              })
+            ),
           ],
         },
       },
