@@ -45,15 +45,10 @@ def pr_pipelines(edition):
     frontendFilesChanged = {
         'paths': [ 'package.json', 'yarn.lock', 'public/**', 'packages/**']
     }
-    bundledPluginsFilesChanged = {
-        'paths': [ 'plugins-bundled/**']
-    }
     fullBuildFilesChanged = {
-        'paths':
-            backendFilesChanged['paths'] +
-            frontendFilesChanged['paths'] +
-            bundledPluginsFilesChanged['paths'] +
-            [ 'packaging/docker/**' ]
+        'paths': backendFilesChanged['paths'] + frontendFilesChanged['paths'] + [
+            'packaging/docker/**'
+        ],
     }
     steps = [
         lint_backend_step(edition=edition, when=backendFilesChanged),
@@ -63,7 +58,7 @@ def pr_pipelines(edition):
         test_frontend_step(when=frontendFilesChanged),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants, when=fullBuildFilesChanged),
         build_frontend_step(edition=edition, ver_mode=ver_mode, when=fullBuildFilesChanged),
-        build_plugins_step(edition=edition, when=bundledPluginsFilesChanged),
+        build_plugins_step(edition=edition, when=fullBuildFilesChanged),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
