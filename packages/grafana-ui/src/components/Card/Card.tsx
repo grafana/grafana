@@ -140,7 +140,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false,
   return css({
     display: 'flex',
     width: '100%',
-    background: theme.v2.palette.layer2,
+    background: theme.v2.palette.background.secondary,
     borderRadius: theme.v2.shape.borderRadius(),
     position: 'relative',
     pointerEvents: disabled ? 'none' : 'auto',
@@ -151,7 +151,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false,
 
     ...(!disableHover && {
       '&:hover': {
-        background: theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03),
+        background: theme.v2.palette.emphasize(theme.v2.palette.background.secondary, 0.03),
         cursor: 'pointer',
         zIndex: 1,
       },

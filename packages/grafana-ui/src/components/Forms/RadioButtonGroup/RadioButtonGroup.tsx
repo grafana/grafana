@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import uniqueId from 'lodash/uniqueId';
+import { uniqueId } from 'lodash';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
 import { Icon } from '../../Icon/Icon';
@@ -75,7 +75,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      border: `1px solid ${theme.v2.components.form.border}`,
+      border: `1px solid ${theme.v2.components.input.border}`,
       borderRadius: theme.v2.shape.borderRadius(),
       padding: '2px',
     }),

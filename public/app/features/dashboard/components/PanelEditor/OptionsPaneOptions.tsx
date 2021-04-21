@@ -30,7 +30,9 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
-    [props]
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [panel.configRev]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
@@ -180,7 +182,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   mainBox: css`
     background: ${theme.colors.bg1};
-    border: 1px solid ${theme.colors.border1};
+    border: 1px solid ${theme.v2.components.panel.border};
     border-top: none;
     flex-grow: 1;
   `,

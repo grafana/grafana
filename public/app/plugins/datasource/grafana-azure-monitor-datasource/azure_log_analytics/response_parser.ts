@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { concat, find, flattenDeep, forEach, map } from 'lodash';
 import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
 import {
   AzureLogsTableData,
@@ -25,9 +25,9 @@ export default class ResponseParser {
       const rows = this.results[i].result.data.tables[0].rows;
 
       if (this.results[i].query.resultFormat === 'time_series') {
-        data = _.concat(data, this.parseTimeSeriesResult(this.results[i].query, columns, rows));
+        data = concat(data, this.parseTimeSeriesResult(this.results[i].query, columns, rows));
       } else {
-        data = _.concat(data, this.parseTableResult(this.results[i].query, columns, rows));
+        data = concat(data, this.parseTableResult(this.results[i].query, columns, rows));
       }
     }
 
@@ -58,7 +58,7 @@ export default class ResponseParser {
       throw new Error('No datetime column found in the result. The Time Series format requires a time column.');
     }
 
-    _.forEach(rows, (row) => {
+    forEach(rows, (row) => {
       const epoch = ResponseParser.dateTimeToEpoch(row[timeIndex]);
       const metricName = metricIndex > -1 ? row[metricIndex] : columns[valueIndex].name;
       const bucket = ResponseParser.findOrCreateBucket(data, metricName);
@@ -75,7 +75,7 @@ export default class ResponseParser {
   parseTableResult(query: { refId: string; query: string }, columns: any[], rows: any[]): AzureLogsTableData {
     const tableResult: AzureLogsTableData = {
       type: 'table',
-      columns: _.map(columns, (col) => {
+      columns: map(columns, (col) => {
         return { text: col.name, type: col.type };
       }),
       rows: rows,
@@ -92,8 +92,8 @@ export default class ResponseParser {
     const queryResult = this.parseQueryResult();
 
     const variables: AzureLogsVariable[] = [];
-    _.forEach(queryResult, (result) => {
-      _.forEach(_.flattenDeep(result.rows), (row) => {
+    forEach(queryResult, (result) => {
+      forEach(flattenDeep(result.rows), (row) => {
         variables.push({
           text: row,
           value: row,
@@ -109,7 +109,7 @@ export default class ResponseParser {
 
     const list: AnnotationEvent[] = [];
 
-    _.forEach(queryResult, (result) => {
+    forEach(queryResult, (result) => {
       let timeIndex = -1;
       let textIndex = -1;
       let tagsIndex = -1;
@@ -128,7 +128,7 @@ export default class ResponseParser {
         }
       }
 
-      _.forEach(result.rows, (row) => {
+      forEach(result.rows, (row) => {
         list.push({
           annotation: options.annotation,
           time: Math.floor(ResponseParser.dateTimeToEpoch(row[timeIndex])),
@@ -209,7 +209,7 @@ export default class ResponseParser {
   }
 
   static findOrCreateBucket(data: TimeSeries[], target: any): TimeSeries {
-    let dataTarget: any = _.find(data, ['target', target]);
+    let dataTarget: any = find(data, ['target', target]);
     if (!dataTarget) {
       dataTarget = { target: target, datapoints: [], refId: '', query: '' };
       data.push(dataTarget);

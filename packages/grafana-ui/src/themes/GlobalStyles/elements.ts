@@ -18,7 +18,7 @@ export function getElementStyles(theme: GrafanaThemeV2) {
       width: 100%;
       position: absolute;
       color: ${theme.palette.text.primary};
-      background-color: ${theme.palette.layer0};
+      background-color: ${theme.palette.background.canvas};
       ${getVariantStyles(theme.typography.body)}
     }
 
