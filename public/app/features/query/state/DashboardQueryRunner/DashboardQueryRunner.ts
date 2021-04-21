@@ -1,5 +1,6 @@
 import { merge, Observable, ReplaySubject, Subject, Unsubscribable } from 'rxjs';
 import { map, mergeAll, reduce } from 'rxjs/operators';
+
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 import {
   DashboardQueryRunner,

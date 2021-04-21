@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { AnnotationEvent, DataQuery, DataSourceApi, TimeRange } from '@grafana/data';
+import { AnnotationEvent, AnnotationQuery, DataSourceApi, TimeRange } from '@grafana/data';
 
 import { DashboardModel } from '../../../dashboard/state';
 import { AlertStateInfo } from '../../../annotations/types';
@@ -33,11 +33,7 @@ export interface DashboardQueryRunnerWorker {
 
 export interface AnnotationQueryRunnerOptions extends DashboardQueryRunnerOptions {
   datasource: DataSourceApi;
-  annotation: {
-    datasource: string;
-    enable: boolean;
-    name: string;
-  } & DataQuery;
+  annotation: AnnotationQuery;
 }
 
 export interface AnnotationQueryRunner {

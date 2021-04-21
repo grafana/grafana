@@ -1,8 +1,8 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { from, merge, Observable, of } from 'rxjs';
 import { map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AnnotationEvent, DataSourceApi } from '@grafana/data';
+import { AnnotationEvent, AnnotationQuery, DataSourceApi } from '@grafana/data';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { getAnnotationQueryRunners } from './DashboardQueryRunner';
@@ -60,7 +60,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     );
   }
 
-  private static getAnnotationsToProcessFilter(annotation: any): boolean {
+  private static getAnnotationsToProcessFilter(annotation: AnnotationQuery): boolean {
     return annotation.enable && !Boolean(annotation.snapshotData);
   }
 

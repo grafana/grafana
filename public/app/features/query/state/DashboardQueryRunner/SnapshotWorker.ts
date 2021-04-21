@@ -1,7 +1,8 @@
-import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { Observable, of } from 'rxjs';
+import { cloneDeep } from 'lodash';
 import { AnnotationEvent } from '@grafana/data';
-import cloneDeep from 'lodash/cloneDeep';
+
+import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
 
 export class SnapshotWorker implements DashboardQueryRunnerWorker {
