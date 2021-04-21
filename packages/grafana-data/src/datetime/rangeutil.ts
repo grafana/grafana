@@ -1,9 +1,9 @@
 import { each, groupBy, has } from 'lodash';
 
-import { RawTimeRange, TimeRange, TimeZone, IntervalValues } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime, DateTime } from './moment_wrapper';
+import { isDateTime, DateTime, dateTime } from './moment_wrapper';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 import { dateTimeParse } from './parser';
 
@@ -431,4 +431,37 @@ export function roundInterval(interval: number) {
     default:
       return 31536000000; // 1y
   }
+}
+
+/**
+ * Converts a TimeRange to a RelativeTimeRange that can be used in
+ * e.g. alerting queries/rules.
+ *
+ * @internal
+ */
+export function timeRangeToRelative(timeRange: TimeRange): RelativeTimeRange {
+  const now = dateTime().unix();
+  const from = (now - timeRange.from.unix()) / 1000;
+  const to = (now - timeRange.to.unix()) / 1000;
+
+  return {
+    from,
+    to,
+  };
+}
+
+/**
+ * Converts a RelativeTimeRange to a TimeRange
+ *
+ * @internal
+ */
+export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: DateTime = dateTime()): TimeRange {
+  const from = dateTime(now).subtract(relativeTimeRange.from, 's');
+  const to = relativeTimeRange.to === 0 ? dateTime(now) : dateTime(now).subtract(relativeTimeRange.to, 's');
+
+  return {
+    from,
+    to,
+    raw: { from, to },
+  };
 }

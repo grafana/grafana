@@ -1,14 +1,11 @@
-import React, { FC, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Icon, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Icon, Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
 import { EmptyState } from './EmptyState';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 
 enum Tabs {
   Query = 'query',
@@ -21,18 +18,17 @@ const tabs = [
 ];
 
 interface Props {
-  queryRunner: PanelQueryRunner;
   getInstances: () => DataFrame[];
   queries: DataQuery[];
   onTest: () => void;
-  onRunQueries: () => void;
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, onTest, queries, queryRunner }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, onTest, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
-  const styles = getStyles(config.theme);
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
-  const data = useObservable<PanelData>(observable);
+  const styles = useStyles(getStyles);
+
+  let data = {} as PanelData;
+
   const instances = getInstances();
 
   return (
@@ -61,7 +57,6 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, on
               onTest={onTest}
               data={data}
               activeTab={activeTab}
-              onRunQueries={onRunQueries}
               queries={queries}
             />
           ))}
@@ -76,10 +71,9 @@ interface PreviewProps {
   onTest: () => void;
   data: PanelData;
   activeTab: string;
-  onRunQueries: () => void;
 }
 
-const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, data, activeTab, onRunQueries }) => {
+const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, data, activeTab }) => {
   if (queries.length === 0) {
     return (
       <EmptyState title="No queries added.">
@@ -100,7 +94,7 @@ const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, dat
 
           case Tabs.Query:
           default:
-            return <PreviewQueryTab data={data} width={width} height={height} onRunQueries={onRunQueries} />;
+            return <PreviewQueryTab data={data} width={width} height={height} />;
         }
       }}
     </AutoSizer>

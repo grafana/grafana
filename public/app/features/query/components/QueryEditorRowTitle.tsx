@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { DataQuery, GrafanaTheme } from '@grafana/data';
-import { FieldValidationMessage, Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
+import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, TimeRange } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
+import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage, TimeRangeInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 
 export interface Props {
   query: DataQuery;
   queries: DataQuery[];
-  dataSourceName?: string;
+  dataSourceName: string;
+  inMixedMode?: boolean;
   disabled?: boolean;
+  timeRange?: TimeRange;
+  onTimeRangeChange?: (timeRange: TimeRange) => void;
   onChange: (query: DataQuery) => void;
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
@@ -16,11 +21,14 @@ export interface Props {
 
 export const QueryEditorRowTitle: React.FC<Props> = ({
   dataSourceName,
+  inMixedMode,
   disabled,
   query,
   queries,
   onClick,
   onChange,
+  onTimeRangeChange,
+  timeRange,
   collapsedText,
 }) => {
   const theme = useTheme();
@@ -83,6 +91,10 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
     event.target.select();
   };
 
+  const onDataSourceChange = (dataSource: DataSourceInstanceSettings) => {
+    onChange({ ...query, datasource: dataSource.name });
+  };
+
   return (
     <div className={styles.wrapper}>
       {!isEditing && (
@@ -114,7 +126,17 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
           {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
-      {dataSourceName && <em className={styles.contextInfo}> ({dataSourceName})</em>}
+      {inMixedMode && (
+        <div style={{ display: 'flex', marginLeft: '8px' }}>
+          {query.datasource !== ExpressionDatasourceID && (
+            <>
+              <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />
+              {onTimeRangeChange && timeRange && <TimeRangeInput onChange={onTimeRangeChange} value={timeRange} />}
+            </>
+          )}
+        </div>
+      )}
+      {dataSourceName && !inMixedMode && <em className={styles.contextInfo}> ({dataSourceName})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (

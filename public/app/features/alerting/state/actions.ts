@@ -3,8 +3,8 @@ import {
   applyFieldOverrides,
   dataFrameFromJSON,
   DataFrameJSON,
+  DataQuery,
   DataSourceApi,
-  dateMath,
 } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
@@ -19,7 +19,6 @@ import {
   setAlertDefinitions,
   setInstanceData,
   setNotificationChannels,
-  setQueryOptions,
   setUiState,
   updateAlertDefinitionOptions,
 } from './reducers';
@@ -34,7 +33,7 @@ import {
   ThunkResult,
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
-import { ExpressionQuery } from '../../expressions/types';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -159,30 +158,6 @@ export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefini
   };
 }
 
-export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult<void> {
-  return (dispatch) => {
-    dispatch(setQueryOptions(queryOptions));
-  };
-}
-
-export function onRunQueries(): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { queryRunner, getQueryOptions } = getStore().alertDefinition;
-    const timeRange = { from: 'now-1h', to: 'now' };
-    const queryOptions = getQueryOptions();
-
-    queryRunner!.run({
-      // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
-      timezone: 'browser',
-      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
-      maxDataPoints: queryOptions.maxDataPoints ?? 100,
-      minInterval: queryOptions.minInterval,
-      queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
-    });
-  };
-}
-
 export function evaluateAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { alertDefinition } = getStore().alertDefinition;
@@ -200,12 +175,12 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
 
 export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const { alertDefinition, getQueryOptions } = getStore().alertDefinition;
+    const { alertDefinition } = getStore().alertDefinition;
     const defaultDataSource = await getDataSourceSrv().get(null);
 
     const response: { instances: DataFrameJSON[] } = await getBackendSrv().post('/api/alert-definitions/eval', {
       condition: alertDefinition.condition,
-      data: buildDataQueryModel(getQueryOptions(), defaultDataSource),
+      data: buildDataQueryModel({} as QueryGroupOptions, defaultDataSource),
     });
 
     const handledResponse = handleJSONResponse(response.instances);
@@ -221,7 +196,7 @@ export function cleanUpDefinitionState(): ThunkResult<void> {
 }
 
 async function buildAlertDefinition(state: AlertDefinitionState) {
-  const queryOptions = state.getQueryOptions();
+  const queryOptions = {} as QueryGroupOptions;
   const currentAlertDefinition = state.alertDefinition;
   const defaultDataSource = await getDataSourceSrv().get(null);
 
@@ -248,32 +223,41 @@ function handleJSONResponse(frames: DataFrameJSON[]) {
 }
 
 function buildDataQueryModel(queryOptions: QueryGroupOptions, defaultDataSource: DataSourceApi) {
-  return queryOptions.queries.map((query) => {
-    let dataSource: QueryGroupDataSource;
-    const isExpression = query.datasource === ExpressionDatasourceID;
+  return queryOptions.queries.map((query: DataQuery) => {
+    if (isExpressionQuery(query)) {
+      const dataSource: QueryGroupDataSource = {
+        name: ExpressionDatasourceID,
+        uid: ExpressionDatasourceID,
+      };
 
-    if (isExpression) {
-      dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
-    } else {
-      const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
-
-      dataSource = {
-        name: dataSourceSetting?.name ?? defaultDataSource.name,
-        uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+      return {
+        model: {
+          ...query,
+          type: query.type,
+          datasource: dataSource.name,
+          datasourceUid: dataSource.uid,
+        },
+        refId: query.refId,
       };
     }
+
+    const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+    const dataSource: QueryGroupDataSource = {
+      name: dataSourceSetting?.name ?? defaultDataSource.name,
+      uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+    };
 
     return {
       model: {
         ...query,
-        type: isExpression ? (query as ExpressionQuery).type : query.queryType,
+        type: query.queryType,
         datasource: dataSource.name,
         datasourceUid: dataSource.uid,
       },
       refId: query.refId,
       relativeTimeRange: {
-        From: 500,
-        To: 0,
+        from: 600,
+        to: 0,
       },
     };
   });
