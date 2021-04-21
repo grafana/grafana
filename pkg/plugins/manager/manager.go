@@ -87,10 +87,16 @@ func newManager(cfg *setting.Cfg) *PluginManager {
 	}
 }
 
+func NewManagerInstaller(skipTLSVerify bool, logger log.Logger) *PluginManager {
+	return &PluginManager{
+		installer: installer.New(skipTLSVerify, logger),
+	}
+}
+
 func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
-	pm.installer = installer.New(true, "")
+	pm.installer = installer.New(true, pm.log.New("installer"))
 
 	pm.log.Info("Starting plugin search")
 
@@ -688,8 +694,8 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 
 // InstallPlugin downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
-func (pm *PluginManager) InstallPlugin(pluginName, version, pluginsDir, downloadURL string) error {
-	return pm.installer.Install(pluginName, version, pluginsDir, downloadURL)
+func (pm *PluginManager) InstallPlugin(pluginName, version, pluginsDir, pluginZipURL string) error {
+	return pm.installer.Install(pluginName, version, pluginsDir, pluginZipURL)
 }
 
 // UninstallPlugin removes the specified plugin from the provided plugins directory.

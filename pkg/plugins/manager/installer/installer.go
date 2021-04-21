@@ -25,12 +25,12 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Installer struct {
-	retryCount     int
-	grafanaVersion string
+	retryCount int
 
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
@@ -45,6 +45,7 @@ const (
 var (
 	ErrNotFoundError = errors.New("404 not found error")
 	reGitBuild       = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+	grafanaVersion   = setting.BuildVersion
 )
 
 type BadRequestError struct {
@@ -59,12 +60,11 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
-func New(skipTLSVerify bool, grafanaVersion string) *Installer {
+func New(skipTLSVerify bool, logger log.Logger) *Installer {
 	return &Installer{
-		grafanaVersion:      grafanaVersion,
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 10*time.Second),
-		log:                 log.New("plugin.installer"),
+		log:                 logger,
 	}
 }
 
@@ -72,7 +72,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL string
 	isInternal := false
 
 	var checksum string
-	if len(pluginZipURL) > 0 {
+	if pluginZipURL == "" {
 		if strings.HasPrefix(pluginName, "grafana-") {
 			// At this point the plugin download is going through grafana.com API and thus the name is validated.
 			// Checking for grafana prefix is how it is done there so no 3rd party plugin should have that prefix.
@@ -80,7 +80,7 @@ func (g *Installer) Install(pluginName, version, pluginsDir, pluginZipURL string
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := g.getPluginMetadata(pluginName, grafanaComPluginsURL)
+		plugin, err := g.getPluginMetadataFromGCOM(pluginName)
 		if err != nil {
 			return err
 		}
@@ -229,9 +229,9 @@ func (g *Installer) DownloadFile(pluginName string, tmpFile *os.File, url string
 	return nil
 }
 
-func (g *Installer) getPluginMetadata(pluginID, repoUrl string) (Plugin, error) {
-	g.log.Info(fmt.Sprintf("getting plugin metadata from: %v pluginID: %v \n", repoUrl, pluginID))
-	body, err := g.sendRequestGetBytes(repoUrl, "repo", pluginID)
+func (g *Installer) getPluginMetadataFromGCOM(pluginID string) (Plugin, error) {
+	g.log.Info(fmt.Sprintf("getting %v metadata from GCOM\n", pluginID))
+	body, err := g.sendRequestGetBytes(grafanaComPluginsURL, "repo", pluginID)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
 			return Plugin{}, errutil.Wrap(
@@ -250,8 +250,8 @@ func (g *Installer) getPluginMetadata(pluginID, repoUrl string) (Plugin, error) 
 	return data, nil
 }
 
-func (g *Installer) sendRequestGetBytes(repoUrl string, subPaths ...string) ([]byte, error) {
-	bodyReader, err := g.sendRequest(repoUrl, subPaths...)
+func (g *Installer) sendRequestGetBytes(URL string, subPaths ...string) ([]byte, error) {
+	bodyReader, err := g.sendRequest(URL, subPaths...)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -263,8 +263,8 @@ func (g *Installer) sendRequestGetBytes(repoUrl string, subPaths ...string) ([]b
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (g *Installer) sendRequest(repoUrl string, subPaths ...string) (io.ReadCloser, error) {
-	req, err := g.createRequest(repoUrl, subPaths...)
+func (g *Installer) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
+	req, err := g.createRequest(URL, subPaths...)
 	if err != nil {
 		return nil, err
 	}
@@ -276,8 +276,8 @@ func (g *Installer) sendRequest(repoUrl string, subPaths ...string) (io.ReadClos
 	return g.handleResponse(res)
 }
 
-func (g *Installer) sendRequestWithoutTimeout(repoUrl string, subPaths ...string) (io.ReadCloser, error) {
-	req, err := g.createRequest(repoUrl, subPaths...)
+func (g *Installer) sendRequestWithoutTimeout(URL string, subPaths ...string) (io.ReadCloser, error) {
+	req, err := g.createRequest(URL, subPaths...)
 	if err != nil {
 		return nil, err
 	}
@@ -289,8 +289,8 @@ func (g *Installer) sendRequestWithoutTimeout(repoUrl string, subPaths ...string
 	return g.handleResponse(res)
 }
 
-func (g *Installer) createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
-	u, err := url.Parse(repoUrl)
+func (g *Installer) createRequest(URL string, subPaths ...string) (*http.Request, error) {
+	u, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
 	}
@@ -304,10 +304,10 @@ func (g *Installer) createRequest(repoUrl string, subPaths ...string) (*http.Req
 		return nil, err
 	}
 
-	req.Header.Set("grafana-version", g.grafanaVersion)
+	req.Header.Set("grafana-version", grafanaVersion)
 	req.Header.Set("grafana-os", runtime.GOOS)
 	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+g.grafanaVersion)
+	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
 
 	return req, err
 }
