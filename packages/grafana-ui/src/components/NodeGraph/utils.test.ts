@@ -1,9 +1,11 @@
+import { createTheme } from '@grafana/data';
 import { makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
-import lightTheme from '../../themes/light';
 
 describe('processNodes', () => {
+  const theme = createTheme();
+
   it('handles empty args', async () => {
-    expect(processNodes(undefined, undefined, lightTheme)).toEqual({ nodes: [], edges: [] });
+    expect(processNodes(undefined, undefined, theme.v1)).toEqual({ nodes: [], edges: [] });
   });
 
   it('returns proper nodes and edges', async () => {
@@ -15,7 +17,7 @@ describe('processNodes', () => {
           [0, 2],
           [1, 2],
         ]),
-        lightTheme
+        theme.v1
       )
     ).toEqual({
       nodes: [

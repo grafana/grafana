@@ -1,5 +1,5 @@
-//@ts-ignore
 import { GrafanaThemeV2, createTheme } from '@grafana/data';
+//@ts-ignore
 import { create } from '@storybook/theming/create';
 import '../src/components/Icon/iconBundle';
 
