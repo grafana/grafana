@@ -96,7 +96,7 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
       md: theme.spacing.gridSize * theme.components.height.md,
       lg: theme.spacing.gridSize * theme.components.height.lg,
     },
-    panelPadding: theme.components.panel.padding,
+    panelPadding: theme.components.panel.padding * theme.spacing.gridSize,
     panelHeaderHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
     zIndex: {
       navbarFixed: theme.zIndex.navbarFixed,
@@ -230,10 +230,10 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
       dropdownShadow: basicColors.black,
       dropdownOptionHoverBg: backgrounds.bg2,
 
-      link: basicColors.gray4,
-      linkDisabled: basicColors.gray2,
-      linkHover: basicColors.white,
-      linkExternal: basicColors.blue85,
+      link: theme.palette.text.primary,
+      linkDisabled: theme.palette.text.disabled,
+      linkHover: theme.palette.text.maxContrast,
+      linkExternal: theme.palette.text.link,
     },
     shadows: {
       listItem: 'none',

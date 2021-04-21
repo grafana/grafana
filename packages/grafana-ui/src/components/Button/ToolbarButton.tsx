@@ -8,7 +8,7 @@ import { Icon } from '../Icon/Icon';
 import { getPropertiesForVariant } from './Button';
 import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
-import { focusCss, getMouseFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
@@ -126,7 +126,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
 
       &:focus,
       &:focus-visible {
-        ${focusCss(theme)}
+        ${getFocusStyles(theme)}
         z-index: 1;
       }
 

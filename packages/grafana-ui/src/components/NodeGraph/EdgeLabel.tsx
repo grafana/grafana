@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
 import { EdgeDatum, NodeDatum } from './types';
 import { css } from '@emotion/css';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useStyles2 } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { shortenLine } from './utils';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     mainGroup: css`
       pointer-events: none;
@@ -13,14 +13,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
 
     background: css`
-      fill: ${theme.v2.components.tooltip.background};
+      fill: ${theme.components.tooltip.background};
     `,
 
     text: css`
-      fill: ${theme.v2.components.tooltip.text};
+      fill: ${theme.components.tooltip.text};
     `,
   };
-});
+};
 
 interface Props {
   edge: EdgeDatum;
@@ -45,7 +45,7 @@ export const EdgeLabel = memo(function EdgeLabel(props: Props) {
     x: line.x1 + (line.x2 - line.x1) / 2,
     y: line.y1 + (line.y2 - line.y1) / 2,
   };
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
 
   return (
     <g className={styles.mainGroup}>

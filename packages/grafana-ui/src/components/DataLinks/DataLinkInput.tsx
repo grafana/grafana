@@ -15,8 +15,8 @@ import { css, cx } from '@emotion/css';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
-import { stylesFactory, useStyles } from '../../themes';
-import { DataLinkBuiltInVars, GrafanaTheme, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { useStyles2 } from '../../themes';
+import { DataLinkBuiltInVars, GrafanaThemeV2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 import { getInputStyles } from '../Input/Input';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
@@ -44,14 +44,14 @@ const plugins = [
   ),
 ];
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   input: getInputStyles({ theme, invalid: false }).input,
   editor: css`
     .token.builtInVariable {
-      color: ${theme.palette.queryGreen};
+      color: ${theme.palette.success.text};
     }
     .token.variable {
-      color: ${theme.colors.textBlue};
+      color: ${theme.palette.primary.text};
     }
   `,
   // Wrapper with child selector needed.
@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
   ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
     const editorRef = useRef<Editor>() as RefObject<Editor>;
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
     const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));

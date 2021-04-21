@@ -4,7 +4,7 @@ import { css, cx } from '@emotion/css';
 
 import { Alert } from '../Alert/Alert';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
-import { ThemeContext, useStyles } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { List } from '../List/List';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';

@@ -115,10 +115,10 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: #d8d9da;
-$link-color-disabled: #8e8e8e;
-$link-hover-color: #ffffff;
-$external-link-color: #33a2e5;
+$link-color: rgb(201, 209, 217);
+$link-color-disabled: rgba(201, 209, 217, 0.40);
+$link-hover-color: #fff;
+$external-link-color: #6E9FFF;
 
 // Typography
 // -------------------------
