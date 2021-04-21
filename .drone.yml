@@ -105,7 +105,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - initialize
@@ -125,7 +124,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - initialize
@@ -137,10 +135,16 @@ steps:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   when:
     paths:
-    - plugins-bundled/**
+    - go.mod
+    - go.sum
+    - pkg/**
+    - package.json
+    - yarn.lock
+    - public/**
+    - packages/**
+    - packaging/docker/**
   depends_on:
   - initialize
-  - lint-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -155,7 +159,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - build-backend
@@ -179,7 +182,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - gen-version
@@ -200,7 +202,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - package
@@ -221,7 +222,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - end-to-end-tests-server
@@ -285,7 +285,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - package
@@ -305,7 +304,6 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
-    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - copy-packages-for-docker
@@ -494,7 +492,6 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
-  - lint-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -934,7 +931,6 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
-  - lint-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -1302,7 +1298,6 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
-  - lint-backend
 
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -1869,7 +1864,6 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
-  - lint-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -2226,7 +2220,6 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
-  - lint-backend
 
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -2783,7 +2776,6 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
-  - lint-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -3111,7 +3103,6 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
-  - lint-backend
 
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
