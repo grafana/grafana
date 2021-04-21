@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { keys as _keys } from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
@@ -49,7 +49,7 @@ describe('DashboardModel', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
       const saveModel = model.getSaveModelClone();
-      const keys = _.keys(saveModel);
+      const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');

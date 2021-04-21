@@ -7,7 +7,7 @@ import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
 import { Button } from '../../Button';
 import { TimeZonePicker } from '../TimeZonePicker';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {

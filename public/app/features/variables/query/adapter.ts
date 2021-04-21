@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
