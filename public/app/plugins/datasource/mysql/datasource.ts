@@ -90,7 +90,7 @@ export class MysqlDatasource {
 
     return getBackendSrv()
       .fetch({
-        url: '/api/tsdb/query',
+        url: '/api/tsdb/query2',
         method: 'POST',
         data: {
           from: options.range.from.valueOf().toString(),
