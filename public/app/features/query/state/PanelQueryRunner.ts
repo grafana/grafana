@@ -184,7 +184,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options));
+      this.pipeToSubject(runSharedRequest(options), panelId);
       return;
     }
 
@@ -232,7 +232,7 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.pipeToSubject(runRequest(ds, request));
+      this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }

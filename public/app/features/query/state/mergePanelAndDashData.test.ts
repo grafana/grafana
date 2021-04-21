@@ -4,6 +4,7 @@ import { getDefaultTimeRange, LoadingState, PanelData, toDataFrame } from '@graf
 import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { delay } from 'rxjs/operators';
+import { AlertState } from '../../annotations/types';
 
 function getTestContext() {
   const timeRange = getDefaultTimeRange();
@@ -15,6 +16,7 @@ function getTestContext() {
   };
   const dashData: DashboardQueryRunnerResult = {
     annotations: [{ id: 'dashData' }],
+    alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
   };
   const panelObservable: Observable<PanelData> = scheduled(of(panelData), asyncScheduler);
   const dashObservable: Observable<DashboardQueryRunnerResult> = scheduled(of(dashData), asyncScheduler);
@@ -34,6 +36,7 @@ describe('mergePanelAndDashboardData', () => {
           state: LoadingState.Done,
           series: [],
           annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
+          alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
           timeRange,
         });
       });
@@ -53,12 +56,14 @@ describe('mergePanelAndDashboardData', () => {
             state: LoadingState.Done,
             series: [],
             annotations: [toDataFrame([{ id: 'panelData' }])],
+            alertState: undefined,
             timeRange,
           });
           expect(slowResults).toEqual({
             state: LoadingState.Done,
             series: [],
             annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
+            alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
             timeRange,
           });
         }
@@ -78,6 +83,7 @@ describe('mergePanelAndDashboardData', () => {
             state: LoadingState.Done,
             series: [],
             annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
+            alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
             timeRange,
           });
         }
@@ -99,12 +105,14 @@ describe('mergePanelAndDashboardData', () => {
           state: LoadingState.Done,
           series: [],
           annotations: [toDataFrame([{ id: 'panelData' }])],
+          alertState: undefined,
           timeRange,
         });
         expect(slowResults).toEqual({
           state: LoadingState.Done,
           series: [],
           annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
+          alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
           timeRange,
         });
       });

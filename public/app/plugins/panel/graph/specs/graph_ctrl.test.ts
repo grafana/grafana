@@ -42,15 +42,11 @@ describe('GraphCtrl', () => {
   const ctx = {} as any;
 
   beforeEach(() => {
-    ctx.ctrl = new GraphCtrl(scope, injector as any, {} as any);
+    ctx.ctrl = new GraphCtrl(scope, injector as any);
     ctx.ctrl.events = {
       emit: () => {},
     };
     ctx.ctrl.panelData = {};
-    ctx.ctrl.annotationsSrv = {
-      getAnnotations: () => Promise.resolve({}),
-    };
-    ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
   });
 
