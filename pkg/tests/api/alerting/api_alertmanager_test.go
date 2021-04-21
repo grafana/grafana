@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -78,6 +79,190 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
+
+	invalidInterval, err := model.ParseDuration("1s")
+	require.NoError(t, err)
+
+	// Now, let's try to create some invalid alert rules.
+	{
+		testCases := []struct {
+			desc             string
+			rulegroup        string
+			rule             apimodels.PostableExtendedRuleNode
+			expectedResponse string
+		}{
+			{
+				desc:      "alert rule without queries and expressions",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						Title:     "AlwaysFiring",
+						Condition: "A",
+					},
+				},
+				expectedResponse: `{"error":"invalid alert rule: no queries or expressions are found", "message":"failed to update rule group"}`,
+			},
+			{
+				desc:      "alert rule with empty title",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						Title:     "",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+									"datasourceUid": "-100",
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"invalid alert rule: title is empty", "message":"failed to update rule group"}`,
+			},
+			{
+				desc:      "alert rule with too long name",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						Title:     getLongString(ngstore.AlertRuleMaxTitleLength + 1),
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+									"datasourceUid": "-100",
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"invalid alert rule: name length should not be greater than 190", "message":"failed to update rule group"}`,
+			},
+			{
+				desc:      "alert rule with too long rulegroup",
+				rulegroup: getLongString(ngstore.AlertRuleMaxTitleLength + 1),
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+									"datasourceUid": "-100",
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"invalid alert rule: rule group name length should not be greater than 190", "message":"failed to update rule group"}`,
+			},
+			{
+				desc:      "alert rule with invalid interval",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         invalidInterval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+									"datasourceUid": "-100",
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				rules := apimodels.PostableRuleGroupConfig{
+					Name: tc.rulegroup,
+					Rules: []apimodels.PostableExtendedRuleNode{
+						tc.rule,
+					},
+				}
+				buf := bytes.Buffer{}
+				enc := json.NewEncoder(&buf)
+				err := enc.Encode(&rules)
+				require.NoError(t, err)
+
+				u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+				// nolint:gosec
+				resp, err := http.Post(u, "application/json", &buf)
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					err := resp.Body.Close()
+					require.NoError(t, err)
+				})
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+
+				assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
+				require.JSONEq(t, tc.expectedResponse, string(b))
+			})
+		}
+	}
 
 	var ruleUID string
 	var expectedGetNamespaceResponseBody string
@@ -583,4 +768,12 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	json, err := json.Marshal(&r)
 	require.NoError(t, err)
 	return string(json), m
+}
+
+func getLongString(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = 'a'
+	}
+	return string(b)
 }

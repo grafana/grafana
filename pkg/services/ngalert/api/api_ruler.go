@@ -203,6 +203,8 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	}); err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return response.Error(http.StatusNotFound, "failed to update rule group", err)
+		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
+			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
 	}

@@ -53,7 +53,6 @@ type RuleStore interface {
 	GetAlertInstance(*ngmodels.GetAlertInstanceQuery) error
 	ListAlertInstances(cmd *ngmodels.ListAlertInstancesQuery) error
 	SaveAlertInstance(cmd *ngmodels.SaveAlertInstanceCommand) error
-	ValidateAlertRule(ngmodels.AlertRule, bool) error
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -198,7 +197,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 					r.New.ExecErrState = ngmodels.AlertingErrState
 				}
 
-				if err := st.ValidateAlertRule(r.New, true); err != nil {
+				if err := st.validateAlertRule(r.New); err != nil {
 					return err
 				}
 
@@ -244,7 +243,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 					r.New.Labels = r.Existing.Labels
 				}
 
-				if err := st.ValidateAlertRule(r.New, true); err != nil {
+				if err := st.validateAlertRule(r.New); err != nil {
 					return err
 				}
 
@@ -401,33 +400,33 @@ func generateNewAlertRuleUID(sess *sqlstore.DBSession, orgID int64) (string, err
 	return "", ngmodels.ErrAlertRuleFailedGenerateUniqueUID
 }
 
-// ValidateAlertRule validates the alert rule interval and organisation.
-// If requireData is true checks that it contains at least one alert query
-func (st DBstore) ValidateAlertRule(alertRule ngmodels.AlertRule, requireData bool) error {
-	if !requireData && len(alertRule.Data) == 0 {
-		return fmt.Errorf("no queries or expressions are found")
+// validateAlertRule validates the alert rule interval and organisation.
+func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
+	if len(alertRule.Data) == 0 {
+		return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
 	if alertRule.Title == "" {
-		return ErrEmptyTitleError
+		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
+	fmt.Println(">>>>>", alertRule.IntervalSeconds, st.BaseInterval.Seconds(), alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()))
 	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 {
-		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
+		return fmt.Errorf("%w: interval (%v) should be divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
 	}
 
 	// enfore max name length in SQLite
 	if len(alertRule.Title) > AlertRuleMaxTitleLength {
-		return fmt.Errorf("name length should not be greater than %d", AlertRuleMaxTitleLength)
+		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxTitleLength)
 	}
 
-	// enfore max name length in SQLite
+	// enfore max rule group name length in SQLite
 	if len(alertRule.RuleGroup) > AlertRuleMaxRuleGroupNameLength {
-		return fmt.Errorf("name length should not be greater than %d", AlertRuleMaxRuleGroupNameLength)
+		return fmt.Errorf("%w: rule group name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxRuleGroupNameLength)
 	}
 
 	if alertRule.OrgID == 0 {
-		return fmt.Errorf("no organisation is found")
+		return fmt.Errorf("%w: no organisation is found", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
 	return nil
@@ -470,6 +469,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 				ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
 			}
+			fmt.Println("<<<<<< new.IntervalSeconds: ", new.IntervalSeconds, cmd.RuleGroupConfig.Interval, new.OrgID)
 
 			if r.ApiRuleNode != nil {
 				new.For = time.Duration(r.ApiRuleNode.For)
