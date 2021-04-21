@@ -52,7 +52,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
 
     const allItems = flattenGroupItems(this.props.groupedItems);
     const longestLabel = calculateLongestLabel(allItems);
-    const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context, allItems, longestLabel);
+    const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context.v1, allItems, longestLabel);
     this.setState({
       listWidth,
       listHeight,

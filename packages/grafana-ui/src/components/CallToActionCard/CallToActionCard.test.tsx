@@ -7,7 +7,7 @@ type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 const TestRenderer = (props: Omit<CallToActionCardProps, 'theme'>) => {
   const theme = useContext(ThemeContext);
-  return <CallToActionCard theme={theme} {...props} />;
+  return <CallToActionCard theme={theme.v1} {...props} />;
 };
 
 describe('CallToActionCard', () => {

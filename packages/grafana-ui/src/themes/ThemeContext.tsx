@@ -38,8 +38,13 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
   return WithTheme as Hoisted;
 };
 
+/** @deprecated use useTheme2 */
 export function useTheme(): GrafanaTheme {
   return useContext(ThemeContextMock || ThemeContext).v1;
+}
+
+export function useTheme2(): GrafanaThemeV2 {
+  return useContext(ThemeContextMock || ThemeContext);
 }
 
 /**
@@ -51,6 +56,31 @@ export function useTheme(): GrafanaTheme {
  * */
 export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
   const theme = useTheme();
+
+  let memoizedStyleCreator = memoizedStyleCreators.get(getStyles) as typeof getStyles;
+  if (!memoizedStyleCreator) {
+    memoizedStyleCreator = stylesFactory(getStyles);
+    memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
+  }
+
+  useEffect(() => {
+    return () => {
+      memoizedStyleCreators.delete(getStyles);
+    };
+  }, [getStyles]);
+
+  return memoizedStyleCreator(theme);
+}
+
+/**
+ * Hook for using memoized styles with access to the theme.
+ *
+ * NOTE: For memoization to work, you need to ensure that the function
+ * you pass in doesn't change, or only if it needs to. (i.e. declare
+ * your style creator outside of a function component or use `useCallback()`.)
+ * */
+export function useStyles2<T>(getStyles: (theme: GrafanaThemeV2) => T) {
+  const theme = useTheme2();
 
   let memoizedStyleCreator = memoizedStyleCreators.get(getStyles) as typeof getStyles;
   if (!memoizedStyleCreator) {
