@@ -15,6 +15,8 @@ var (
 	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
 	// ErrRuleGroupNamespaceNotFound
 	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
+	// ErrAlertRuleFailedValidation
+	ErrAlertRuleFailedValidation = errors.New("invalid alert rule")
 )
 
 type NoDataState string
