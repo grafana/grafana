@@ -252,7 +252,7 @@ func TestEvalCondition(t *testing.T) {
 	}
 }
 
-func TestEvalQueries(t *testing.T) {
+func TestEvalQueriesAndExpressions(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
@@ -270,161 +270,135 @@ func TestEvalQueries(t *testing.T) {
 			desc: "alerting condition",
 			payload: `
 			{
-				"grafana_condition": {
-				"condition": "A",
 				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
-						},
-						"model": {
-							"datasourceUid": "-100",
-							"type":"math",
-							"expression":"1 < 2"
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"model": {
+								"datasourceUid": "-100",
+								"type":"math",
+								"expression":"1 < 2"
+							}
 						}
-					}
-				],
+					],
 				"now": "2021-04-11T14:38:14Z"
-				}
 			}
 			`,
 			expectedStatusCode: http.StatusOK,
 			expectedResponse: `{
-			"instances": [
-			  {
-				"schema": {
-				  "name": "evaluation results",
-				  "fields": [
-					{
-					  "name": "State",
-					  "type": "string",
-					  "typeInfo": {
-						"frame": "string"
+				"results": {
+				  "A": {
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
+						},
+						"data": {
+						  "values": [
+							[
+							  1
+							]
+						  ]
+						}
 					  }
-					}
-				  ]
-				},
-				"data": {
-				  "values": [
-					[
-					  "Alerting"
 					]
-				  ]
+				  }
 				}
-			  }
-			]
-		  }`,
+			}`,
 		},
 		{
 			desc: "normal condition",
 			payload: `
 			{
-				"grafana_condition": {
-				"condition": "A",
 				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
-						},
-						"model": {
-							"datasourceUid": "-100",
-							"type":"math",
-							"expression":"1 > 2"
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"model": {
+								"datasourceUid": "-100",
+								"type":"math",
+								"expression":"1 > 2"
+							}
 						}
-					}
-				],
+					],
 				"now": "2021-04-11T14:38:14Z"
-				}
 			}
 			`,
 			expectedStatusCode: http.StatusOK,
 			expectedResponse: `{
-			"instances": [
-			  {
-				"schema": {
-				  "name": "evaluation results",
-				  "fields": [
-					{
-					  "name": "State",
-					  "type": "string",
-					  "typeInfo": {
-						"frame": "string"
-					  }
-					}
-				  ]
-				},
-				"data": {
-				  "values": [
-					[
-					  "Normal"
-					]
-				  ]
-				}
-			  }
-			]
-		  }`,
-		},
-		{
-			desc: "condition not found in any query or expression",
-			payload: `
-			{
-				"grafana_condition": {
-				"condition": "B",
-				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
+				"results": {
+				  "A": {
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
 						},
-						"model": {
-							"datasourceUid": "-100",
-							"type":"math",
-							"expression":"1 > 2"
+						"data": {
+						  "values": [
+							[
+							  0
+							]
+						  ]
 						}
-					}
-				],
-				"now": "2021-04-11T14:38:14Z"
+					  }
+					]
+				  }
 				}
-			}
-			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
+			}`,
 		},
 		{
 			desc: "unknown query datasource",
 			payload: `
 			{
-				"grafana_condition": {
-				"condition": "A",
 				"data": [
-					{
-						"refId": "A",
-						"relativeTimeRange": {
-							"from": 18000,
-							"to": 10800
-						},
-						"model": {
-							"datasourceUid": "unknown"
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"model": {
+								"datasourceUid": "unknown"
+							}
 						}
-					}
-				],
+					],
 				"now": "2021-04-11T14:38:14Z"
-				}
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
+			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid queries or expressions"}`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			u := fmt.Sprintf("http://%s/api/v1/rule/test/grafana", grafanaListedAddr)
+			u := fmt.Sprintf("http://%s/api/v1/eval", grafanaListedAddr)
 			r := strings.NewReader(tc.payload)
 			// nolint:gosec
 			resp, err := http.Post(u, "application/json", r)
