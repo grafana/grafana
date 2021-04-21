@@ -1,5 +1,4 @@
-import toString from 'lodash/toString';
-import isEmpty from 'lodash/isEmpty';
+import { toString, isEmpty } from 'lodash';
 
 import { getDisplayProcessor } from './displayProcessor';
 import {

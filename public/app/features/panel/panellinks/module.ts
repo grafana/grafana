@@ -1,5 +1,5 @@
 import angular from 'angular';
-import _ from 'lodash';
+import { map, find, without } from 'lodash';
 import './link_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -28,7 +28,7 @@ export class PanelLinksEditorCtrl {
 
     $scope.searchDashboards = (queryStr: string, callback: Function) => {
       backendSrv.search({ query: queryStr }).then((hits) => {
-        const dashboards = _.map(hits, (dash) => {
+        const dashboards = map(hits, (dash) => {
           return dash.title;
         });
 
@@ -38,7 +38,7 @@ export class PanelLinksEditorCtrl {
 
     $scope.dashboardChanged = (link: any) => {
       backendSrv.search({ query: link.dashboard }).then((hits) => {
-        const dashboard: any = _.find(hits, { title: link.dashboard });
+        const dashboard: any = find(hits, { title: link.dashboard });
         if (dashboard) {
           if (dashboard.url) {
             link.url = dashboard.url;
@@ -52,7 +52,7 @@ export class PanelLinksEditorCtrl {
     };
 
     $scope.deleteLink = (link: any) => {
-      $scope.panel.links = _.without($scope.panel.links, link);
+      $scope.panel.links = without($scope.panel.links, link);
     };
   }
 }

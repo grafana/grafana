@@ -1,5 +1,4 @@
 import React, { FunctionComponent } from 'react';
-import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { QueryType, queryTypes } from '../types';
