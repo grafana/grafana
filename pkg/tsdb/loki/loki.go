@@ -45,7 +45,7 @@ func (e *LokiExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsd
 
 	tlsConfig, err := dsInfo.GetTLSConfig()
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	client := &client.DefaultClient{
