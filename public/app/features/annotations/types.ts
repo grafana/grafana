@@ -7,23 +7,6 @@ export interface AnnotationQueryOptions {
   range: TimeRange;
 }
 
-export enum AlertState {
-  NoData = 'no_data',
-  Paused = 'paused',
-  Alerting = 'alerting',
-  OK = 'ok',
-  Pending = 'pending',
-  Unknown = 'unknown',
-}
-
-export interface AlertStateInfo {
-  id: number;
-  dashboardId: number;
-  panelId: number;
-  state: AlertState;
-  newStateDate: string;
-}
-
 export interface AnnotationQueryResponse {
   /**
    * The processed annotation events

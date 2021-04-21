@@ -1,9 +1,10 @@
-import { AnnotationsWorker } from './AnnotationsWorker';
+import { throwError } from 'rxjs';
 import { setDataSourceSrv } from '@grafana/runtime';
+
+import { AnnotationsWorker } from './AnnotationsWorker';
 import * as annotationsSrv from '../../../annotations/annotations_srv';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
-import { throwError } from 'rxjs';
 
 function getTestContext() {
   jest.clearAllMocks();

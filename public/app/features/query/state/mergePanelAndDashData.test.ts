@@ -1,10 +1,9 @@
 import { asyncScheduler, Observable, of, scheduled } from 'rxjs';
-import { getDefaultTimeRange, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import { AlertState, getDefaultTimeRange, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 
 import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { delay } from 'rxjs/operators';
-import { AlertState } from '../../annotations/types';
 
 function getTestContext() {
   const timeRange = getDefaultTimeRange();

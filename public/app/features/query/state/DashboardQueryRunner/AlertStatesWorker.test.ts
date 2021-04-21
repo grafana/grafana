@@ -1,9 +1,8 @@
-import { getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { AlertState, AlertStateInfo, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardQueryRunnerOptions } from './types';
 import { AlertStatesWorker } from './AlertStatesWorker';
-import { AlertState, AlertStateInfo } from '../../../annotations/types';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as store from '../../../../store/store';
 

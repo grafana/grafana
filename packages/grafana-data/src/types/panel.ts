@@ -10,7 +10,7 @@ import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
-import { AlertStateInfo } from '../../../../public/app/features/annotations/types';
+import { AlertStateInfo } from './alerts';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
