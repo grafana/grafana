@@ -72,7 +72,7 @@ type DataRequestHandler interface {
 	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
 }
 
-type RemotePluginAPIClient interface {
+type PluginInstaller interface {
 	Install(pluginName, version, pluginFolder, downloadURL, repoURL string) error
 	DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) error
 }

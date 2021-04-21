@@ -1,4 +1,4 @@
-package gcom
+package installer
 
 import (
 	"archive/zip"
@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-type GrafanaComClient struct {
+type Installer struct {
 	retryCount     int
 	grafanaVersion string
 
@@ -48,16 +48,23 @@ type BadRequestError struct {
 	Status  string
 }
 
-func New(skipTLSVerify bool, grafanaVersion string) *GrafanaComClient {
-	return &GrafanaComClient{
+func (e *BadRequestError) Error() string {
+	if len(e.Message) > 0 {
+		return fmt.Sprintf("%s: %s", e.Status, e.Message)
+	}
+	return e.Status
+}
+
+func New(skipTLSVerify bool, grafanaVersion string) *Installer {
+	return &Installer{
 		grafanaVersion:      grafanaVersion,
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 10*time.Second),
-		log:                 log.New("gcom.plugin.client"),
+		log:                 log.New("plugin.installer"),
 	}
 }
 
-func (g *GrafanaComClient) Install(pluginName, version, pluginFolder, downloadURL, repoURL string) error {
+func (g *Installer) Install(pluginName, version, pluginFolder, downloadURL, repoURL string) error {
 	isInternal := false
 
 	var checksum string
@@ -69,7 +76,7 @@ func (g *GrafanaComClient) Install(pluginName, version, pluginFolder, downloadUR
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := g.GetPlugin(pluginName, repoURL)
+		plugin, err := g.getPlugin(pluginName, repoURL)
 		if err != nil {
 			return err
 		}
@@ -144,35 +151,7 @@ func (g *GrafanaComClient) Install(pluginName, version, pluginFolder, downloadUR
 	return err
 }
 
-func (e *BadRequestError) Error() string {
-	if len(e.Message) > 0 {
-		return fmt.Sprintf("%s: %s", e.Status, e.Message)
-	}
-	return e.Status
-}
-
-func (g *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (Plugin, error) {
-	g.log.Info(fmt.Sprintf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId))
-	body, err := g.sendRequestGetBytes(repoUrl, "repo", pluginId)
-	if err != nil {
-		if errors.Is(err, ErrNotFoundError) {
-			return Plugin{}, errutil.Wrap(
-				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginId), err)
-		}
-		return Plugin{}, errutil.Wrap("Failed to send request", err)
-	}
-
-	var data Plugin
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		g.log.Info("Failed to unmarshal plugin repo response error:", err)
-		return Plugin{}, err
-	}
-
-	return data, nil
-}
-
-func (g *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
+func (g *Installer) DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(url); err == nil {
 		// We can ignore this gosec G304 warning since `url` stems from command line flag "pluginUrl". If the
@@ -245,7 +224,28 @@ func (g *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File, url
 	return nil
 }
 
-func (g *GrafanaComClient) ListAllPlugins(repoUrl string) (PluginRepo, error) {
+func (g *Installer) getPlugin(pluginId, repoUrl string) (Plugin, error) {
+	g.log.Info(fmt.Sprintf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId))
+	body, err := g.sendRequestGetBytes(repoUrl, "repo", pluginId)
+	if err != nil {
+		if errors.Is(err, ErrNotFoundError) {
+			return Plugin{}, errutil.Wrap(
+				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginId), err)
+		}
+		return Plugin{}, errutil.Wrap("Failed to send request", err)
+	}
+
+	var data Plugin
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		g.log.Info("Failed to unmarshal plugin repo response error:", err)
+		return Plugin{}, err
+	}
+
+	return data, nil
+}
+
+func (g *Installer) ListAllPlugins(repoUrl string) (PluginRepo, error) {
 	body, err := g.sendRequestGetBytes(repoUrl, "repo")
 
 	if err != nil {
@@ -263,7 +263,7 @@ func (g *GrafanaComClient) ListAllPlugins(repoUrl string) (PluginRepo, error) {
 	return data, nil
 }
 
-func (g *GrafanaComClient) sendRequestGetBytes(repoUrl string, subPaths ...string) ([]byte, error) {
+func (g *Installer) sendRequestGetBytes(repoUrl string, subPaths ...string) ([]byte, error) {
 	bodyReader, err := g.sendRequest(repoUrl, subPaths...)
 	if err != nil {
 		return []byte{}, err
@@ -276,7 +276,7 @@ func (g *GrafanaComClient) sendRequestGetBytes(repoUrl string, subPaths ...strin
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (g *GrafanaComClient) sendRequest(repoUrl string, subPaths ...string) (io.ReadCloser, error) {
+func (g *Installer) sendRequest(repoUrl string, subPaths ...string) (io.ReadCloser, error) {
 	req, err := g.createRequest(repoUrl, subPaths...)
 	if err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func (g *GrafanaComClient) sendRequest(repoUrl string, subPaths ...string) (io.R
 	return g.handleResponse(res)
 }
 
-func (g *GrafanaComClient) sendRequestWithoutTimeout(repoUrl string, subPaths ...string) (io.ReadCloser, error) {
+func (g *Installer) sendRequestWithoutTimeout(repoUrl string, subPaths ...string) (io.ReadCloser, error) {
 	req, err := g.createRequest(repoUrl, subPaths...)
 	if err != nil {
 		return nil, err
@@ -302,7 +302,7 @@ func (g *GrafanaComClient) sendRequestWithoutTimeout(repoUrl string, subPaths ..
 	return g.handleResponse(res)
 }
 
-func (g *GrafanaComClient) createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
+func (g *Installer) createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
 	u, err := url.Parse(repoUrl)
 	if err != nil {
 		return nil, err
@@ -325,7 +325,7 @@ func (g *GrafanaComClient) createRequest(repoUrl string, subPaths ...string) (*h
 	return req, err
 }
 
-func (g *GrafanaComClient) handleResponse(res *http.Response) (io.ReadCloser, error) {
+func (g *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode == 404 {
 		return nil, ErrNotFoundError
 	}
@@ -451,7 +451,7 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (g *GrafanaComClient) extractFiles(archiveFile string, pluginName string, dstDir string, allowSymlinks bool) error {
+func (g *Installer) extractFiles(archiveFile string, pluginName string, dstDir string, allowSymlinks bool) error {
 	var err error
 	dstDir, err = filepath.Abs(dstDir)
 	if err != nil {

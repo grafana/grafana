@@ -61,8 +61,8 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pm := manager.PluginManager{}
 
-	logger.Infof("Plugin=%s, version=%s, folder=%s, URL=%s, repo=%s\n", pluginToInstall, version, pluginFolder, c.PluginURL(), c.RepoDirectory())
-	return pm.InstallPluginFromGCOM(pluginToInstall, version, pluginFolder, c.PluginURL(), c.RepoDirectory())
+	logger.Infof("Plugin=%s, version=%s, URL=%s, repo=%s\n", pluginToInstall, version, c.PluginURL(), c.RepoDirectory())
+	return pm.InstallPlugin(pluginToInstall, version, c.PluginURL(), c.RepoDirectory())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API

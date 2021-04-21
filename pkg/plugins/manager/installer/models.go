@@ -1,10 +1,9 @@
-package gcom
+package installer
 
 type InstalledPlugin struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-
+	ID           string       `json:"id"`
+	Name         string       `json:"name"`
+	Type         string       `json:"type"`
 	Info         PluginInfo   `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 }
@@ -33,11 +32,10 @@ type Plugin struct {
 }
 
 type Version struct {
-	Commit  string `json:"commit"`
-	URL     string `json:"url"`
-	Version string `json:"version"`
-	// Arch contains architecture metadata.
-	Arch map[string]ArchMeta `json:"arch"`
+	Commit  string              `json:"commit"`
+	URL     string              `json:"url"`
+	Version string              `json:"version"`
+	Arch    map[string]ArchMeta `json:"arch"`
 }
 
 type ArchMeta struct {
