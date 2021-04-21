@@ -30,8 +30,12 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const defaultDataSource = await getDataSourceSrv().get();
-    this.setState({ defaultDataSource });
+    try {
+      const defaultDataSource = await getDataSourceSrv().get();
+      this.setState({ defaultDataSource });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   onRunQueries = () => {};
