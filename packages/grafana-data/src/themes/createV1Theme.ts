@@ -143,34 +143,34 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
   };
 
   const backgrounds = {
-    bg1: theme.palette.background.primary,
-    bg2: theme.palette.background.secondary,
-    bg3: theme.palette.action.hover,
-    dashboardBg: theme.palette.background.canvas,
-    bgBlue1: theme.palette.primary.main,
-    bgBlue2: theme.palette.primary.shade,
+    bg1: theme.colors.background.primary,
+    bg2: theme.colors.background.secondary,
+    bg3: theme.colors.action.hover,
+    dashboardBg: theme.colors.background.canvas,
+    bgBlue1: theme.colors.primary.main,
+    bgBlue2: theme.colors.primary.shade,
   };
 
   const borders = {
-    border1: theme.palette.border.weak,
-    border2: theme.palette.border.medium,
-    border3: theme.palette.border.strong,
+    border1: theme.colors.border.weak,
+    border2: theme.colors.border.medium,
+    border3: theme.colors.border.strong,
   };
 
   const textColors = {
-    textStrong: theme.palette.text.maxContrast,
-    textHeading: theme.palette.text.primary,
-    text: theme.palette.text.primary,
-    textSemiWeak: theme.palette.text.secondary,
-    textWeak: theme.palette.text.secondary,
-    textFaint: theme.palette.text.disabled,
-    textBlue: theme.palette.primary.text,
+    textStrong: theme.colors.text.maxContrast,
+    textHeading: theme.colors.text.primary,
+    text: theme.colors.text.primary,
+    textSemiWeak: theme.colors.text.secondary,
+    textWeak: theme.colors.text.secondary,
+    textFaint: theme.colors.text.disabled,
+    textBlue: theme.colors.primary.text,
   };
 
   const form = {
     // Next-gen forms functional colors
-    formLabel: theme.palette.text.primary,
-    formDescription: theme.palette.text.secondary,
+    formLabel: theme.colors.text.primary,
+    formDescription: theme.colors.text.secondary,
     formInputBg: basicColors.gray05,
     formInputBgDisabled: basicColors.gray10,
     formInputBorder: borders.border2,
@@ -196,7 +196,7 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
 
   return {
     ...oldCommon,
-    type: theme.palette.mode === 'dark' ? GrafanaThemeType.Dark : GrafanaThemeType.Light,
+    type: theme.colors.mode === 'dark' ? GrafanaThemeType.Dark : GrafanaThemeType.Light,
     isDark: theme.isDark,
     isLight: theme.isLight,
     name: theme.name,
@@ -220,20 +220,20 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
       ...form,
       ...textColors,
 
-      bodyBg: theme.palette.background.canvas,
+      bodyBg: theme.colors.background.canvas,
       panelBg: theme.components.panel.background,
       panelBorder: theme.components.panel.border,
-      pageHeaderBg: theme.palette.background.canvas,
-      pageHeaderBorder: theme.palette.background.canvas,
+      pageHeaderBg: theme.colors.background.canvas,
+      pageHeaderBorder: theme.colors.background.canvas,
 
       dropdownBg: form.formInputBg,
       dropdownShadow: basicColors.black,
       dropdownOptionHoverBg: backgrounds.bg2,
 
-      link: theme.palette.text.primary,
-      linkDisabled: theme.palette.text.disabled,
-      linkHover: theme.palette.text.maxContrast,
-      linkExternal: theme.palette.text.link,
+      link: theme.colors.text.primary,
+      linkDisabled: theme.colors.text.disabled,
+      linkHover: theme.colors.text.maxContrast,
+      linkExternal: theme.colors.text.link,
     },
     shadows: {
       listItem: 'none',

@@ -14,14 +14,14 @@ import { TimePickerFooter } from './TimePickerFooter';
 const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
     container: css`
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       box-shadow: ${theme.shadows.z4};
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       width: 546px;
       top: 116%;
       border-radius: 2px;
-      border: 1px solid ${theme.palette.border.weak};
+      border: 1px solid ${theme.colors.border.weak};
       ${isReversed ? 'left' : 'right'}: 0;
 
       @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
@@ -35,14 +35,14 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed, hideQuickRan
     leftSide: css`
       display: flex;
       flex-direction: column;
-      border-right: ${isReversed ? 'none' : `1px solid ${theme.palette.border.weak}`};
+      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`};
       width: ${!hideQuickRanges ? '60%' : '100%'};
       overflow: hidden;
       order: ${isReversed ? 1 : 0};
     `,
     rightSide: css`
       width: 40% !important;
-      border-right: ${isReversed ? `1px solid ${theme.palette.border.weak}` : 'none'};
+      border-right: ${isReversed ? `1px solid ${theme.colors.border.weak}` : 'none'};
 
       @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
         width: 100% !important;
@@ -61,11 +61,11 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaThemeV2) => {
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid ${theme.palette.border.weak};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       padding: 7px 9px 7px 9px;
     `,
     body: css`
-      border-bottom: 1px solid ${theme.palette.border.weak};
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     form: css`
       padding: 7px 9px 7px 9px;
@@ -105,7 +105,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaThemeV2) => {
       }
     `,
     link: css`
-      color: ${theme.palette.text.link};
+      color: ${theme.colors.text.link};
     `,
   };
 });

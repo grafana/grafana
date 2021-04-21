@@ -11,7 +11,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
     modal: css`
       position: fixed;
       z-index: ${theme.zIndex.modal};
-      background: ${theme.palette.background.primary};
+      background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z4};
       border-radius: ${borderRadius};
       background-clip: padding-box;
@@ -35,8 +35,8 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
     `,
     modalHeader: css`
       label: modalHeader;
-      background: ${theme.palette.background.secondary};
-      border-bottom: 1px solid ${theme.palette.border.weak};
+      background: ${theme.colors.background.secondary};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       border-radius: ${borderRadius} ${borderRadius} 0 0;
       display: flex;
       height: 42px;

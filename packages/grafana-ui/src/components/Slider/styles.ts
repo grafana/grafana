@@ -5,10 +5,10 @@ import { css } from '@emotion/css';
 
 export const getStyles = stylesFactory((theme: GrafanaThemeV2, isHorizontal: boolean) => {
   const { spacing } = theme;
-  const railColor = theme.palette.border.strong;
-  const trackColor = theme.palette.primary.main;
-  const handleColor = theme.palette.primary.main;
-  const blueOpacity = theme.palette.primary.transparent;
+  const railColor = theme.colors.border.strong;
+  const trackColor = theme.colors.primary.main;
+  const handleColor = theme.colors.primary.main;
+  const blueOpacity = theme.colors.primary.transparent;
   const hoverSyle = `box-shadow: 0px 0px 0px 6px ${blueOpacity}`;
 
   return {
@@ -59,7 +59,7 @@ export const getStyles = stylesFactory((theme: GrafanaThemeV2, isHorizontal: boo
         }
 
         .rc-slider-tooltip-inner {
-          color: ${theme.palette.text.primary};
+          color: ${theme.colors.text.primary};
           background-color: transparent !important;
           border-radius: 0;
           box-shadow: none;

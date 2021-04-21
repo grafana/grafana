@@ -13,13 +13,13 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-light: ${theme.palette.primary.text};
-$blue-base: ${theme.palette.primary.main};
-$blue-shade: ${theme.palette.primary.shade};
-$red-base: ${theme.palette.error.main};
-$red-shade: ${theme.palette.error.shade};
-$green-base: ${theme.palette.success.main};
-$green-shade: ${theme.palette.success.shade};
+$blue-light: ${theme.colors.primary.text};
+$blue-base: ${theme.colors.primary.main};
+$blue-shade: ${theme.colors.primary.shade};
+$red-base: ${theme.colors.error.main};
+$red-shade: ${theme.colors.error.shade};
+$green-base: ${theme.colors.success.main};
+$green-shade: ${theme.colors.success.shade};
 $orange-dark: ${theme.v1.palette.orangeDark};
 
 $gray98: ${theme.v1.palette.gray98};
@@ -51,14 +51,14 @@ $gray-7: ${theme.v1.palette.gray7};
 
 $white: ${theme.v1.palette.white};
 
-$layer0: ${theme.palette.background.canvas};
-$layer1: ${theme.palette.background.primary};
-$layer2: ${theme.palette.background.secondary};
+$layer0: ${theme.colors.background.canvas};
+$layer1: ${theme.colors.background.primary};
+$layer2: ${theme.colors.background.secondary};
 
-$divider: ${theme.palette.border.weak};
+$divider: ${theme.colors.border.weak};
 
-$border0: ${theme.palette.border.weak};
-$border1: ${theme.palette.border.medium};
+$border0: ${theme.colors.border.weak};
+$border1: ${theme.colors.border.medium};
 
 // Accent colors
 // -------------------------
@@ -124,7 +124,7 @@ $hr-border-color: $gray-4 !default;
 // -------------------------
 $panel-bg: ${theme.components.panel.background};
 $panel-border: ${theme.components.panel.border};
-$panel-header-hover-bg: ${theme.palette.action.hover};
+$panel-header-hover-bg: ${theme.colors.action.hover};
 $panel-box-shadow: ${theme.components.panel.boxShadow};
 $panel-corner: $panel-bg;
 
@@ -144,8 +144,8 @@ $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: ${theme.palette.background.secondary};
-$card-background-hover: ${theme.palette.background.secondary};
+$card-background: ${theme.colors.background.secondary};
+$card-background-hover: ${theme.colors.background.secondary};
 $card-shadow: none;
 
 // Lists
@@ -162,10 +162,10 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${theme.palette.background.secondary};
-$table-border: ${theme.palette.border.medium};
-$table-bg-odd: ${theme.palette.emphasize(theme.palette.background.primary, 0.02)};
-$table-bg-hover: ${theme.palette.emphasize(theme.palette.background.primary, 0.05)};
+$table-bg-accent: ${theme.colors.background.secondary};
+$table-border: ${theme.colors.border.medium};
+$table-bg-odd: ${theme.colors.emphasize(theme.colors.background.primary, 0.02)};
+$table-bg-hover: ${theme.colors.emphasize(theme.colors.background.primary, 0.05)};
 
 // Buttons
 // -------------------------
@@ -223,10 +223,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: ${theme.palette.background.secondary};
-$dropdownBorder: ${theme.palette.border.weak};
-$dropdownDividerTop: ${theme.palette.border.weak};
-$dropdownDividerBottom: ${theme.palette.border.weak};
+$dropdownBackground: ${theme.colors.background.secondary};
+$dropdownBorder: ${theme.colors.border.weak};
+$dropdownDividerTop: ${theme.colors.border.weak};
+$dropdownDividerBottom: ${theme.colors.border.weak};
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -256,8 +256,8 @@ $side-menu-header-color: ${theme.v1.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.palette.background.secondary};
-$menu-dropdown-hover-bg: ${theme.palette.action.hover};
+$menu-dropdown-bg: ${theme.colors.background.secondary};
+$menu-dropdown-hover-bg: ${theme.colors.action.hover};
 $menu-dropdown-shadow: ${theme.shadows.z3};
 
 // Tabs
@@ -276,16 +276,16 @@ $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
-$tooltipBackground: ${theme.palette.background.secondary};
-$tooltipColor: ${theme.palette.text.primary};
-$tooltipArrowColor: ${theme.palette.background.secondary};
-$tooltipBackgroundError: ${theme.palette.error.main};
+$tooltipBackground: ${theme.colors.background.secondary};
+$tooltipColor: ${theme.colors.text.primary};
+$tooltipArrowColor: ${theme.colors.background.secondary};
+$tooltipBackgroundError: ${theme.colors.error.main};
 $tooltipShadow: ${theme.shadows.z2};
 
-$popover-bg: ${theme.palette.background.secondary};
-$popover-color: ${theme.palette.text.primary};
-$popover-border-color: ${theme.palette.border.medium};
-$popover-header-bg: ${theme.palette.background.secondary};
+$popover-bg: ${theme.colors.background.secondary};
+$popover-color: ${theme.colors.text.primary};
+$popover-border-color: ${theme.colors.border.medium};
+$popover-header-bg: ${theme.colors.background.secondary};
 $popover-shadow: ${theme.shadows.z4};
 
 $graph-tooltip-bg: $gray-5;

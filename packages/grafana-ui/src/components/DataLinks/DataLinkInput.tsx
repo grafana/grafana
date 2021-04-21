@@ -48,10 +48,10 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   input: getInputStyles({ theme, invalid: false }).input,
   editor: css`
     .token.builtInVariable {
-      color: ${theme.palette.success.text};
+      color: ${theme.colors.success.text};
     }
     .token.variable {
-      color: ${theme.palette.primary.text};
+      color: ${theme.colors.primary.text};
     }
   `,
   // Wrapper with child selector needed.

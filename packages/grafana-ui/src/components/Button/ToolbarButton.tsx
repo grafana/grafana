@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       border-radius: ${theme.shape.borderRadius()};
       line-height: ${theme.components.height.md * theme.spacing.gridSize - 2}px;
       font-weight: ${theme.typography.fontWeightMedium};
-      border: 1px solid ${theme.palette.border.medium};
+      border: 1px solid ${theme.colors.border.medium};
       white-space: nowrap;
       transition: ${theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
@@ -141,24 +141,24 @@ const getStyles = (theme: GrafanaThemeV2) => {
       &[disabled],
       &:disabled {
         cursor: not-allowed;
-        opacity: ${theme.palette.action.disabledOpacity};
-        background: ${theme.palette.action.disabledBackground};
+        opacity: ${theme.colors.action.disabledOpacity};
+        background: ${theme.colors.action.disabledBackground};
         box-shadow: none;
 
         &:hover {
-          color: ${theme.palette.text.disabled};
-          background: ${theme.palette.action.disabledBackground};
+          color: ${theme.colors.text.disabled};
+          background: ${theme.colors.action.disabledBackground};
           box-shadow: none;
         }
       }
     `,
     default: css`
-      color: ${theme.palette.text.secondary};
-      background-color: ${theme.palette.background.primary};
+      color: ${theme.colors.text.secondary};
+      background-color: ${theme.colors.background.primary};
 
       &:hover {
-        color: ${theme.palette.text.primary};
-        background: ${theme.palette.background.secondary};
+        color: ${theme.colors.text.primary};
+        background: ${theme.colors.background.secondary};
       }
     `,
     active: css`
@@ -167,8 +167,8 @@ const getStyles = (theme: GrafanaThemeV2) => {
       background-color: transparent;
 
       &:hover {
-        color: ${theme.palette.text.primary};
-        background: ${theme.palette.emphasize(theme.palette.background.canvas, 0.03)};
+        color: ${theme.colors.text.primary};
+        background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
       }
     `,
     primary: css(primaryVariant),

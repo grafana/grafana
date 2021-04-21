@@ -89,7 +89,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaThemeV2) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.palette.border.weak};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       &:last-child {
         border-bottom: none;
       }
@@ -101,7 +101,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       margin-bottom: ${theme.spacing(2)};
     `,
     toggle: css`
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       margin-right: ${theme.spacing(1)};
     `,
     title: css`
@@ -113,15 +113,15 @@ const getStyles = (theme: GrafanaThemeV2) => {
       cursor: pointer;
       align-items: baseline;
       padding: ${theme.spacing(1)};
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightMedium};
 
       &:hover {
-        background: ${theme.palette.emphasize(theme.palette.background.primary, 0.03)};
+        background: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
       }
     `,
     headerExpanded: css`
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
     `,
     headerNested: css`
       padding: ${theme.spacing(0.5, 0, 0.5, 0)};
@@ -139,7 +139,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
         left: 8px;
         width: 1px;
         height: 100%;
-        background: ${theme.palette.border.weak};
+        background: ${theme.colors.border.weak};
       }
     `,
   };

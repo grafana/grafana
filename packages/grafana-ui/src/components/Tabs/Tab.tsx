@@ -60,7 +60,7 @@ const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
       display: flex;
     `,
     link: css`
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1.5, 2, 1)};
 
       svg {
@@ -70,14 +70,14 @@ const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
       a {
         display: block;
         height: 100%;
-        color: ${theme.palette.text.secondary};
+        color: ${theme.colors.text.secondary};
       }
     `,
     notActive: css`
       a:hover,
       &:hover,
       &:focus {
-        color: ${theme.palette.text.primary};
+        color: ${theme.colors.text.primary};
 
         &::before {
           display: block;
@@ -88,18 +88,18 @@ const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
           height: 4px;
           border-radius: 2px;
           bottom: 0px;
-          background: ${theme.palette.action.hover};
+          background: ${theme.colors.action.hover};
         }
       }
     `,
     activeStyle: css`
       label: activeTabStyle;
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
       overflow: hidden;
       font-weight: ${theme.typography.fontWeightMedium};
 
       a {
-        color: ${theme.palette.text.primary};
+        color: ${theme.colors.text.primary};
       }
 
       &::before {
@@ -111,7 +111,7 @@ const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
         height: 4px;
         border-radius: 2px;
         bottom: 0px;
-        background-image: ${theme.palette.gradients.brandHorizontal} !important;
+        background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }
     `,
   };

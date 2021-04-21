@@ -69,7 +69,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       display: flex;
       flex-shrink: 0;
       cursor: pointer;
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius()};
       box-shadow: ${theme.shadows.z0};
       align-items: center;
@@ -83,7 +83,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       })};
 
       &:hover {
-        background: ${theme.palette.emphasize(theme.palette.background.secondary, 0.03)};
+        background: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
       }
     `,
     itemContent: css`
@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
     `,
     current: css`
       label: currentVisualizationItem;
-      border-color: ${theme.palette.primary.border};
+      border-color: ${theme.colors.primary.border};
     `,
     disabled: css`
       opacity: 0.2;
@@ -116,7 +116,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       align-items: center;
     `,
     badge: css`
-      background: ${theme.palette.background.primary};
+      background: ${theme.colors.background.primary};
     `,
   };
 };

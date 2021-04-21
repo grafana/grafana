@@ -91,7 +91,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.palette.background.primary};
+      background: ${theme.colors.background.primary};
       border-right: 1px solid ${theme.components.panel.border};
     `,
   };

@@ -16,7 +16,7 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaThemeV2, hideBorder = fals
     tabsWrapper:
       !hideBorder &&
       css`
-        border-bottom: 1px solid ${theme.palette.border.weak};
+        border-bottom: 1px solid ${theme.colors.border.weak};
       `,
     tabs: css`
       position: relative;

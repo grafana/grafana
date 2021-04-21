@@ -12,12 +12,12 @@ const getStyles = (theme: GrafanaThemeV2) => {
       padding: 7px 9px 7px 9px;
 
       &:hover {
-        background: ${theme.palette.action.hover};
+        background: ${theme.colors.action.hover};
         cursor: pointer;
       }
     `,
     selected: css`    
-      background: ${theme.palette.action.selected};    
+      background: ${theme.colors.action.selected};    
     }
   `,
   };

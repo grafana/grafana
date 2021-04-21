@@ -31,10 +31,10 @@ const getStyles = (theme: GrafanaThemeV2) => {
   return {
     header: css`
       padding: ${theme.spacing(0.5, 0.5, 1, 0.5)};
-      border-bottom: 1px solid ${theme.palette.border.medium};
+      border-bottom: 1px solid ${theme.colors.border.medium};
     `,
     wrapper: css`
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       box-shadow: ${theme.shadows.z2};
       display: inline-block;
       border-radius: ${theme.shape.borderRadius()};

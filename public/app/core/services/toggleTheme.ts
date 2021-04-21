@@ -8,7 +8,7 @@ import { createTheme } from '@grafana/data';
 export async function toggleTheme(runtimeOnly: boolean) {
   const currentTheme = config.theme;
   const newTheme = createTheme({
-    palette: {
+    colors: {
       mode: currentTheme.isDark ? 'light' : 'dark',
     },
   });
@@ -22,7 +22,7 @@ export async function toggleTheme(runtimeOnly: boolean) {
   // Add css file for new theme
   const newCssLink = document.createElement('link');
   newCssLink.rel = 'stylesheet';
-  newCssLink.href = config.bootData.themePaths[newTheme.palette.mode];
+  newCssLink.href = config.bootData.themePaths[newTheme.colors.mode];
   document.body.appendChild(newCssLink);
 
   // Remove old css file
@@ -48,6 +48,6 @@ export async function toggleTheme(runtimeOnly: boolean) {
 
   await service.update({
     ...currentPref,
-    theme: newTheme.palette.mode,
+    theme: newTheme.colors.mode,
   });
 }

@@ -7,13 +7,13 @@ const createStorybookTheme = (theme: GrafanaThemeV2) => {
   return create({
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
-    colorPrimary: theme.palette.primary.main,
-    colorSecondary: theme.palette.error.main,
+    colorPrimary: theme.colors.primary.main,
+    colorSecondary: theme.colors.error.main,
 
     // UI
-    appBg: theme.palette.background.canvas,
-    appContentBg: theme.palette.background.primary,
-    appBorderColor: theme.palette.border.medium,
+    appBg: theme.colors.background.canvas,
+    appContentBg: theme.colors.background.primary,
+    appBorderColor: theme.colors.border.medium,
     appBorderRadius: theme.shape.borderRadius(1),
 
     // Typography
@@ -21,13 +21,13 @@ const createStorybookTheme = (theme: GrafanaThemeV2) => {
     fontCode: theme.typography.fontFamilyMonospace,
 
     // Text colors
-    textColor: theme.palette.primary.text,
-    textInverseColor: theme.palette.primary.contrastText,
+    textColor: theme.colors.primary.text,
+    textInverseColor: theme.colors.primary.contrastText,
 
     // Toolbar default and active colors
-    barTextColor: theme.palette.text.primary,
-    barSelectedColor: theme.palette.emphasize(theme.palette.primary.text),
-    barBg: theme.palette.background.primary,
+    barTextColor: theme.colors.text.primary,
+    barSelectedColor: theme.colors.emphasize(theme.colors.primary.text),
+    barBg: theme.colors.background.primary,
 
     // Form colors
     inputBg: theme.components.input.background,
@@ -41,7 +41,7 @@ const createStorybookTheme = (theme: GrafanaThemeV2) => {
   });
 };
 
-const GrafanaLight = createStorybookTheme(createTheme({ palette: { mode: 'light' } }));
-const GrafanaDark = createStorybookTheme(createTheme({ palette: { mode: 'dark' } }));
+const GrafanaLight = createStorybookTheme(createTheme({ colors: { mode: 'light' } }));
+const GrafanaDark = createStorybookTheme(createTheme({ colors: { mode: 'dark' } }));
 
 export { GrafanaLight, GrafanaDark };

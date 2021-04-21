@@ -55,8 +55,8 @@ RadioButton.displayName = 'RadioButton';
 const getRadioButtonStyles = stylesFactory((theme: GrafanaThemeV2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
-  const textColor = theme.palette.text.secondary;
-  const textColorHover = theme.palette.text.primary;
+  const textColor = theme.colors.text.secondary;
+  const textColorHover = theme.colors.text.primary;
   const bg = theme.components.input.background;
   // remove the group inner padding (set on RadioButtonGroup)
   const labelHeight = height * theme.spacing.gridSize - 4 - 2;
@@ -68,9 +68,9 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaThemeV2, size: RadioBu
       z-index: -1000;
 
       &:checked + label {
-        color: ${theme.palette.text.primary};
+        color: ${theme.colors.text.primary};
         font-weight: ${theme.typography.fontWeightMedium};
-        background: ${theme.palette.action.selected};
+        background: ${theme.colors.action.selected};
         z-index: 3;
       }
 
@@ -85,7 +85,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaThemeV2, size: RadioBu
 
       &:disabled + label {
         cursor: default;
-        color: ${theme.palette.text.disabled};
+        color: ${theme.colors.text.disabled};
         cursor: not-allowed;
       }
     `,

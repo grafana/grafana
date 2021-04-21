@@ -12,7 +12,7 @@ const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
         padding: '20px',
         display: 'flex',
         minHeight: '80vh',
-        background: `${theme.palette.background.primary}`,
+        background: `${theme.colors.background.primary}`,
       }}
     >
       <GlobalStyles />

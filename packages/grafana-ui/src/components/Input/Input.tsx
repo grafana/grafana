@@ -44,7 +44,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
-    color: ${theme.palette.text.secondary};
+    color: ${theme.colors.text.secondary};
   `;
 
   return {
@@ -60,7 +60,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? theme.palette.error.border : theme.palette.primary.border};
+            border-color: ${invalid ? theme.colors.error.border : theme.colors.primary.border};
           }
 
           // only show number buttons on hover
@@ -143,8 +143,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       `
     ),
     inputDisabled: css`
-      background-color: ${theme.palette.action.disabledBackground};
-      color: ${theme.palette.action.disabledText};
+      background-color: ${theme.colors.action.disabledBackground};
+      color: ${theme.colors.action.disabledText};
     `,
     addon: css`
       label: input-addon;

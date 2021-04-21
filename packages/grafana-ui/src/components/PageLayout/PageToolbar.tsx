@@ -132,7 +132,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
   return {
     toolbar: css`
       display: flex;
-      background: ${theme.palette.background.canvas};
+      background: ${theme.colors.background.canvas};
       justify-content: flex-end;
       flex-wrap: wrap;
       padding: ${theme.spacing(0, 1, 1, 2)};

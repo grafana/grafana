@@ -179,7 +179,7 @@ function getStylesObjectMain(theme: GrafanaThemeV2): any {
     padding: theme.spacing(1),
     shadow: theme.shadows.z1,
     ':hover': {
-      background: theme.palette.background.primary,
+      background: theme.colors.background.primary,
     },
   };
 }

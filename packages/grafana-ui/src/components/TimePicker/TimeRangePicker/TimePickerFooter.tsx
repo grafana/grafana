@@ -85,7 +85,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
 const getStyle = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     container: css`
-      border-top: 1px solid ${theme.palette.border.weak};
+      border-top: 1px solid ${theme.colors.border.weak};
       padding: 11px;
       display: flex;
       flex-direction: row;

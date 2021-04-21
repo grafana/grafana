@@ -57,7 +57,7 @@ export const InfoBox = React.memo(
 InfoBox.displayName = 'InfoBox';
 
 const getInfoBoxStyles = stylesFactory((theme: GrafanaThemeV2, severity: AlertVariant) => {
-  const color = theme.palette[severity];
+  const color = theme.colors[severity];
 
   return {
     wrapper: css`

@@ -57,7 +57,7 @@ export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
   return {
     outline: '2px dotted transparent',
     outlineOffset: '2px',
-    boxShadow: `0 0 0 2px ${theme.palette.background.canvas}, 0 0 0px 4px ${theme.palette.primary.main}`,
+    boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main}`,
     transition: `all 0.2s cubic-bezier(0.19, 1, 0.22, 1)`,
   };
 }

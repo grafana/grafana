@@ -59,7 +59,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
       margin: ${theme.spacing(1, 0, 2)};
     `,
     backdrop: css`
-      background-color: ${theme.palette.background.canvas};
+      background-color: ${theme.colors.background.canvas};
       opacity: 0.8;
     `,
   };
