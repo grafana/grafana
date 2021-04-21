@@ -62,11 +62,9 @@ export class CentrifugeLiveChannel<T = any> {
       publish: (ctx: PublicationContext) => {
         try {
           if (ctx.data) {
-            if (ctx.data.data?.schema) {
-              this.lastMessageWithSchema = ctx.data.data as DataFrameJSON;
+            if (ctx.data.schema) {
+              this.lastMessageWithSchema = ctx.data as DataFrameJSON;
               console.log('PUBLISH (SCHEMA)', ctx.data);
-            } else {
-              console.log('PUBLISH (NO-SCHEMA)', ctx.data);
             }
 
             this.stream.next({
@@ -98,13 +96,9 @@ export class CentrifugeLiveChannel<T = any> {
         this.currentStatus.state = LiveChannelConnectionState.Connected;
         delete this.currentStatus.error;
 
-        if (ctx.data) {
-          if (ctx.data?.data?.schema) {
-            this.lastMessageWithSchema = ctx.data.data as DataFrameJSON;
-            console.log('subscribe (SCHEMA)', ctx.data);
-          } else {
-            console.log('subscribe (NO-SCHEMA)', ctx.data);
-          }
+        if (ctx.data?.schema) {
+          this.lastMessageWithSchema = ctx.data as DataFrameJSON;
+          console.log('subscribe (SCHEMA)', ctx.data);
         }
 
         this.sendStatus(ctx.data);
