@@ -12,12 +12,10 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -115,80 +113,16 @@ func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
 }
 
-type CachedKey struct {
-	IsValid   bool
-	CheckedAt time.Time
-}
-
-// Note: need to periodically invalidate this cache in separate goroutine.
-var keyMu sync.RWMutex
-var keyCache = map[string]CachedKey{}
-
-func (hs *HTTPServer) handlePush(rw http.ResponseWriter, req *http.Request) {
-	header := req.Header.Get("Authorization")
-	parts := strings.SplitN(header, " ", 2)
-	var keyString string
-	if len(parts) == 2 && parts[0] == "Bearer" {
-		keyString = parts[1]
-	}
-	if keyString == "" {
-		rw.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	keyMu.RLock()
-	existingKey, ok := keyCache[keyString]
-	keyMu.RUnlock()
-	if !ok {
-		decoded, err := apikeygen.Decode(keyString)
-		if err != nil {
-			rw.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		// fetch key
-		keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-		if err := bus.Dispatch(&keyQuery); err != nil {
-			rw.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		apikey := keyQuery.Result
-
-		// validate api key
-		isValid, err := apikeygen.IsValid(decoded, apikey.Key)
-		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if !isValid {
-			rw.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		// check for expiration.
-		getTime := time.Now
-
-		if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
-			rw.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		keyMu.Lock()
-		keyCache[keyString] = CachedKey{CheckedAt: time.Now(), IsValid: true}
-		keyMu.Unlock()
-	} else {
-		if !existingKey.IsValid {
-			rw.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-	}
-	hs.LivePushGateway.HandleStream(req, "telegraf")
-	rw.WriteHeader(http.StatusOK)
-}
-
 func (hs *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if strings.HasPrefix(request.URL.Path, "/api/live/push") {
-		hs.handlePush(writer, request)
+		// For Live Push API we want minimal latency, so here we avoid pretty
+		// expensive and garbage-extensive Macaron path and do all required
+		// processing inside LivePushGateway.
+		// Original latency for each request was 10-14ms, with removing middlewares
+		// and caching API key strategy we got 1-3ms, with further removing Macaron
+		// from request path we got 700-1000µs which is acceptable for us at the moment.
+		// This also results into less generated garbage so we get smaller GC pauses.
+		hs.LivePushGateway.ServeHTTP(writer, request)
 		return
 	}
 	hs.macaron.ServeHTTP(writer, request)
