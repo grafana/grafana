@@ -1,6 +1,4 @@
-import each from 'lodash/each';
-import groupBy from 'lodash/groupBy';
-import has from 'lodash/has';
+import { each, groupBy, has } from 'lodash';
 
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues } from '../types/time';
 
@@ -261,6 +259,23 @@ export function secondsToHms(seconds: number): string {
   }
 
   return 'less than a millisecond'; //'just now' //or other string you like;
+}
+
+// Format timeSpan (in sec) to string used in log's meta info
+export function msRangeToTimeString(rangeMs: number): string {
+  const rangeSec = Number((rangeMs / 1000).toFixed());
+
+  const h = Math.floor(rangeSec / 60 / 60);
+  const m = Math.floor(rangeSec / 60) - h * 60;
+  const s = Number((rangeSec % 60).toFixed());
+  let formattedH = h ? h + 'h' : '';
+  let formattedM = m ? m + 'min' : '';
+  let formattedS = s ? s + 'sec' : '';
+
+  formattedH && formattedM ? (formattedH = formattedH + ' ') : (formattedH = formattedH);
+  (formattedM || formattedH) && formattedS ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
+
+  return formattedH + formattedM + formattedS || 'less than 1sec';
 }
 
 export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string): IntervalValues {

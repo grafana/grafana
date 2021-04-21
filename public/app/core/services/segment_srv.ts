@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { each, isString, map } from 'lodash';
 import coreModule from '../core_module';
 
 /** @ngInject */
@@ -25,7 +25,7 @@ export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
         return;
       }
 
-      if (_.isString(options)) {
+      if (isString(options)) {
         this.value = options;
         this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
         return;
@@ -82,19 +82,19 @@ export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
   };
 
   this.newOperators = (ops: string[]) => {
-    return _.map(ops, (op) => {
+    return map(ops, (op) => {
       return new MetricSegment({ value: op, type: 'operator', cssClass: 'query-segment-operator' });
     });
   };
 
   this.transformToSegments = (addTemplateVars: boolean, variableTypeFilter: string) => {
     return (results: any[]) => {
-      const segments = _.map(results, (segment) => {
+      const segments = map(results, (segment) => {
         return self.newSegment({ value: segment.text, expandable: segment.expandable });
       });
 
       if (addTemplateVars) {
-        _.each(templateSrv.getVariables(), (variable) => {
+        each(templateSrv.getVariables(), (variable) => {
           if (variableTypeFilter === void 0 || variableTypeFilter === variable.type) {
             segments.unshift(self.newSegment({ type: 'value', value: '$' + variable.name, expandable: true }));
           }

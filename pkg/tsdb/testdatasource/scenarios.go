@@ -328,6 +328,47 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 	return resp, nil
 }
 
+func csvToFieldValues(stringInput string) (*data.Field, error) {
+	parts := strings.Split(strings.ReplaceAll(stringInput, " ", ""), ",")
+	if len(parts) < 1 {
+		return nil, fmt.Errorf("csv must have at least one value")
+	}
+
+	first := parts[0]
+	if first == "T" || first == "F" {
+		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
+		for idx, strVal := range parts {
+			if strVal == "null" || strVal == "" {
+				continue
+			}
+			field.SetConcrete(idx, strVal == "T")
+		}
+		return field, nil
+	}
+
+	// If we can not parse the first value as a number, assume strings
+	_, err := strconv.ParseFloat(first, 64)
+	if err != nil {
+		field := data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
+		for idx, strVal := range parts {
+			if strVal == "null" || strVal == "" {
+				continue
+			}
+			field.SetConcrete(idx, strVal)
+		}
+		return field, nil
+	}
+
+	// Set any valid numbers
+	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
+	for idx, strVal := range parts {
+		if val, err := strconv.ParseFloat(strVal, 64); err == nil {
+			field.SetConcrete(idx, val)
+		}
+	}
+	return field, nil
+}
+
 func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -338,37 +379,31 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 		}
 
 		stringInput := model.Get("stringInput").MustString()
-		stringInput = strings.ReplaceAll(stringInput, " ", "")
 
-		var values []*float64
-		for _, strVal := range strings.Split(stringInput, ",") {
-			if strVal == "null" {
-				values = append(values, nil)
-			}
-			if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-				values = append(values, &val)
-			}
+		valueField, err := csvToFieldValues(stringInput)
+		if err != nil {
+			return nil, err
 		}
+		valueField.Name = frameNameForQuery(q, model, 0)
 
-		if len(values) == 0 {
-			return resp, nil
-		}
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, valueField.Len())
+		timeField.Name = "time"
 
-		frame := data.NewFrame("",
-			data.NewField("time", nil, []*time.Time{}),
-			data.NewField(frameNameForQuery(q, model, 0), nil, []*float64{}))
 		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+		count := valueField.Len()
 		var step int64 = 0
-		if len(values) > 1 {
-			step = (endTime - startTime) / int64(len(values)-1)
+		if count > 1 {
+			step = (endTime - startTime) / int64(count-1)
 		}
 
-		for _, val := range values {
+		for i := 0; i < count; i++ {
 			t := time.Unix(startTime/int64(1e+3), (startTime%int64(1e+3))*int64(1e+6))
-			frame.AppendRow(&t, val)
+			timeField.Set(i, t)
 			startTime += step
 		}
+
+		frame := data.NewFrame("", timeField, valueField)
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)

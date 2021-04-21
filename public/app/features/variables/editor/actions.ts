@@ -10,7 +10,7 @@ import {
 } from './reducer';
 import { variableAdapters } from '../adapters';
 import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
