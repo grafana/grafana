@@ -10,12 +10,13 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 
 // Actions
 import { initDashboardPanel } from '../state/actions';
-import { updateLocation } from 'app/core/reducers/location';
 
 // Types
-import { PanelModel, DashboardModel } from '../state';
+import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
+import { css } from 'emotion';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -40,7 +41,7 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
   };
 };
 
-const mapDispatchToProps = { initDashboardPanel, updateLocation };
+const mapDispatchToProps = { initDashboardPanel };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
@@ -67,16 +68,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     }
   }
 
-  onMouseEnter = () => {
-    this.props.dashboard.setPanelFocus(this.props.panel.id);
-  };
-
-  onMouseLeave = () => {
-    this.props.dashboard.setPanelFocus(0);
-  };
-
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, updateLocation } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing } = this.props;
 
     return (
       <AutoSizer>
@@ -110,7 +103,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
               isInView={isInView}
               width={width}
               height={height}
-              updateLocation={updateLocation}
             />
           );
         }}
@@ -121,8 +113,9 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   render() {
     const { isViewing, plugin } = this.props;
     const { isLazy } = this.state;
+    const styles = getStyles();
 
-    // if we have not loaded plugin exports yet, wait
+    // If we have not loaded plugin exports yet, wait
     if (!plugin) {
       return null;
     }
@@ -132,17 +125,27 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
-    const panelWrapperClass = classNames({
-      'panel-wrapper': true,
-      'panel-wrapper--view': isViewing,
-    });
-
     return (
-      <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+      <div
+        className={isViewing === true ? classNames(styles.panelWrapper, styles.panelWrapperView) : styles.panelWrapper}
+      >
         {this.renderPanel(plugin)}
       </div>
     );
   }
 }
+
+export const getStyles = stylesFactory(() => {
+  return {
+    panelWrapper: css`
+      height: 100%;
+      position: relative;
+    `,
+    panelWrapperView: css`
+      flex: 1 1 0;
+      height: 90%;
+    `,
+  };
+});
 
 export const DashboardPanel = connector(DashboardPanelUnconnected);

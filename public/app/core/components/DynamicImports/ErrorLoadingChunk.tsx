@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { Button, stylesFactory } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 const getStyles = stylesFactory(() => {
   return css`

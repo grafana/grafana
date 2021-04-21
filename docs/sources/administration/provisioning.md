@@ -3,7 +3,7 @@ title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
 aliases = ["/docs/grafana/latest/installation/provisioning"]
-weight = 8
+weight = 800
 +++
 
 # Provisioning Grafana
@@ -147,9 +147,11 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                     |
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | serverName              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
+| timeout                 | string  | _All_                                                            | Request timeout in seconds. Overrides dataproxy.timeout option                              |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                         |
+| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                        |
 | httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| maxSeries               | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                          |
 | httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
@@ -171,6 +173,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
 | tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
 | sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
+| tlsConfigurationMethod  | string  | PostgreSQL                                        | SSL Certificate configuration, either by 'file-path' or 'file-content'                       |
 | sslRootCertFile         | string  | PostgreSQL                                                       | SSL server root certificate file, must be readable by the Grafana user                      |
 | sslCertFile             | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                           |
 | sslKeyFile              | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                            |
@@ -305,9 +308,9 @@ Note: The JSON definition in the input field when using `Copy JSON to Clipboard`
 
 ### Reusable Dashboard URLs
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
-When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
-By default, Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
+If the dashboard in the JSON file contains an [UID]({{< relref "../dashboards/json-model.md" >}}), Grafana forces insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
+When Grafana starts, it updates/inserts all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
+By default, Grafana deletes dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
 > **Note:** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
@@ -421,13 +424,17 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `pushover`
 
-| Name     | Secure setting |
-| -------- | -------------- |
-| apiToken | yes            |
-| userKey  | yes            |
-| device   |                |
-| retry    |                |
-| expire   |                |
+| Name       | Secure setting |
+| --------   | -------------- |
+| apiToken   | yes            |
+| userKey    | yes            |
+| device     |                |
+| priority   |                |
+| okPriority |                |
+| retry      |                |
+| expire     |                |
+| sound      |                |
+| okSound    |                |
 
 #### Alert notification `slack`
 
@@ -535,6 +542,7 @@ The following sections detail the supported settings and secure settings for eac
 | apiUrl           |                |
 | autoClose        |                |
 | overridePriority |                |
+| sendTagsAs       |                |
 
 #### Alert notification `telegram`
 

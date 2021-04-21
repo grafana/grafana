@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import { Card, FeatureBadge, Icon } from '@grafana/ui';
-import { AlertDefinition } from 'app/types';
 import { FeatureState } from '@grafana/data';
+import { Card, FeatureBadge, Icon, LinkButton } from '@grafana/ui';
+import { AlertDefinition } from 'app/types';
+import { config } from '@grafana/runtime';
 
 interface Props {
   alertDefinition: AlertDefinition;
@@ -21,6 +22,22 @@ export const AlertDefinitionItem: FC<Props> = ({ alertDefinition, search }) => {
           <span key="text">{alertDefinition.description}</span>
         </span>
       </Card.Meta>
+      <Card.Actions>
+        {[
+          <LinkButton
+            key="edit"
+            variant="secondary"
+            href={
+              config.featureToggles.ngalert
+                ? `/alerting/ng/${alertDefinition.uid}/edit`
+                : `/alerting/${alertDefinition.uid}/edit`
+            }
+            icon="cog"
+          >
+            Edit alert
+          </LinkButton>,
+        ]}
+      </Card.Actions>
     </Card>
   );
 };

@@ -1,10 +1,8 @@
-// Libraries
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 // Components
 import Page from 'app/core/components/Page/Page';
-import { GenericDataSourcePlugin, PluginSettings } from './PluginSettings';
+import { PluginSettings } from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 // Services & Utils
@@ -19,44 +17,72 @@ import {
   updateDataSource,
 } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getRouteParamsId } from 'app/core/selectors/location';
+
 // Types
-import { CoreEvents, StoreState } from 'app/types/';
-import { DataSourcePluginMeta, DataSourceSettings, NavModel, UrlQueryMap } from '@grafana/data';
-import { Alert } from '@grafana/ui';
+import { StoreState } from 'app/types/';
+import { DataSourceSettings } from '@grafana/data';
+import { Alert, InfoBox } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
-import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { selectors } from '@grafana/e2e-selectors';
+import { CloudInfoBox } from './CloudInfoBox';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { connect, ConnectedProps } from 'react-redux';
+import { cleanUpAction } from 'app/core/actions/cleanUp';
+import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface Props {
-  navModel: NavModel;
-  dataSource: DataSourceSettings;
-  dataSourceMeta: DataSourcePluginMeta;
-  pageId: number;
-  deleteDataSource: typeof deleteDataSource;
-  loadDataSource: typeof loadDataSource;
-  setDataSourceName: typeof setDataSourceName;
-  updateDataSource: typeof updateDataSource;
-  setIsDefault: typeof setIsDefault;
-  dataSourceLoaded: typeof dataSourceLoaded;
-  initDataSourceSettings: typeof initDataSourceSettings;
-  testDataSource: typeof testDataSource;
-  plugin?: GenericDataSourcePlugin;
-  query: UrlQueryMap;
-  page?: string;
-  testingStatus?: {
-    message?: string;
-    status?: string;
+export interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
+
+function mapStateToProps(state: StoreState, props: OwnProps) {
+  const dataSourceId = props.match.params.id;
+  const params = new URLSearchParams(props.location.search);
+  const dataSource = getDataSource(state.dataSources, dataSourceId);
+  const { plugin, loadError, testingStatus } = state.dataSourceSettings;
+  const page = params.get('page');
+
+  return {
+    navModel: getNavModel(
+      state.navIndex,
+      page ? `datasource-page-${page}` : `datasource-settings-${dataSourceId}`,
+      getDataSourceLoadingNav('settings')
+    ),
+    dataSource: getDataSource(state.dataSources, dataSourceId),
+    dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
+    dataSourceId: parseInt(dataSourceId, 10),
+    page,
+    plugin,
+    loadError,
+    testingStatus,
   };
-  loadError?: Error | string;
 }
+
+const mapDispatchToProps = {
+  deleteDataSource,
+  loadDataSource,
+  setDataSourceName,
+  updateDataSource,
+  setIsDefault,
+  dataSourceLoaded,
+  initDataSourceSettings,
+  testDataSource,
+  cleanUpAction,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class DataSourceSettingsPage extends PureComponent<Props> {
   componentDidMount() {
-    const { initDataSourceSettings, pageId } = this.props;
-    initDataSourceSettings(pageId);
+    const { initDataSourceSettings, dataSourceId } = this.props;
+    initDataSourceSettings(dataSourceId);
+  }
+
+  componentWillUnmount() {
+    this.props.cleanUpAction({
+      stateSelector: (state) => state.dataSourceSettings,
+    });
   }
 
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
@@ -74,15 +100,17 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   };
 
   onDelete = () => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Are you sure you want to delete this data source?',
-      yesText: 'Delete',
-      icon: 'trash-alt',
-      onConfirm: () => {
-        this.confirmDelete();
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Are you sure you want to delete this data source?',
+        yesText: 'Delete',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          this.confirmDelete();
+        },
+      })
+    );
   };
 
   confirmDelete = () => {
@@ -99,10 +127,10 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderIsReadOnlyMessage() {
     return (
-      <div className="grafana-info-box span8">
-        This datasource was added by config and cannot be modified using the UI. Please contact your server admin to
-        update this datasource.
-      </div>
+      <InfoBox aria-label={selectors.pages.DataSource.readOnly} severity="info">
+        This data source was added by config and cannot be modified using the UI. Please contact your server admin to
+        update this data source.
+      </InfoBox>
     );
   }
 
@@ -164,11 +192,12 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
     for (const p of plugin.configPages) {
       if (p.id === page) {
-        return <p.body plugin={plugin} query={this.props.query} />;
+        // Investigate is any plugins using this? We should change this interface
+        return <p.body plugin={plugin} query={{}} />;
       }
     }
 
-    return <div>Page Not Found: {page}</div>;
+    return <div>Page not found: {page}</div>;
   }
 
   renderSettings() {
@@ -186,6 +215,8 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           </div>
         )}
 
+        <CloudInfoBox dataSource={dataSource} />
+
         <BasicSettings
           dataSourceName={dataSource.name}
           isDefault={dataSource.isDefault}
@@ -202,13 +233,15 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           />
         )}
 
-        <div className="gf-form-group">
-          {testingStatus && testingStatus.message && (
+        <div className="gf-form-group p-t-2">
+          {testingStatus?.message && (
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}
               title={testingStatus.message}
               aria-label={selectors.pages.DataSource.alert}
-            />
+            >
+              {testingStatus.details?.message ?? null}
+            </Alert>
           )}
         </div>
 
@@ -239,40 +272,4 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  const pageId = getRouteParamsId(state.location);
-  const dataSource = getDataSource(state.dataSources, pageId);
-  const page = state.location.query.page as string;
-  const { plugin, loadError, testingStatus } = state.dataSourceSettings;
-
-  return {
-    navModel: getNavModel(
-      state.navIndex,
-      page ? `datasource-page-${page}` : `datasource-settings-${pageId}`,
-      getDataSourceLoadingNav('settings')
-    ),
-    dataSource: getDataSource(state.dataSources, pageId),
-    dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
-    pageId: pageId,
-    query: state.location.query,
-    page,
-    plugin,
-    loadError,
-    testingStatus,
-  };
-}
-
-const mapDispatchToProps = {
-  deleteDataSource,
-  loadDataSource,
-  setDataSourceName,
-  updateDataSource,
-  setIsDefault,
-  dataSourceLoaded,
-  initDataSourceSettings,
-  testDataSource,
-};
-
-export default hot(module)(
-  connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.dataSourceSettings)(DataSourceSettingsPage)
-);
+export default connector(DataSourceSettingsPage);

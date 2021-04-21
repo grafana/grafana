@@ -61,7 +61,7 @@ At this stage, you have optimized your dashboard management use with a consisten
 - Actively reducing sprawl.
   - Regularly review existing dashboards to make sure they are still relevant.
   - Only approved dashboards added to master dashboard list.
-  - Tracking dashboard use. If you're an Enterprise user, you might take advantage of [Usage insights]({{< relref "../enterprise/usage-insights.md" >}}).
+  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../enterprise/usage-insights/_index.md" >}}).
 - Consistency by design.
 - Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
   - grafonnet (Jsonnet)

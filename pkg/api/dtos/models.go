@@ -25,23 +25,26 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	IsSignedIn                 bool              `json:"isSignedIn"`
-	Id                         int64             `json:"id"`
-	Login                      string            `json:"login"`
-	Email                      string            `json:"email"`
-	Name                       string            `json:"name"`
-	LightTheme                 bool              `json:"lightTheme"`
-	OrgCount                   int               `json:"orgCount"`
-	OrgId                      int64             `json:"orgId"`
-	OrgName                    string            `json:"orgName"`
-	OrgRole                    models.RoleType   `json:"orgRole"`
-	IsGrafanaAdmin             bool              `json:"isGrafanaAdmin"`
-	GravatarUrl                string            `json:"gravatarUrl"`
-	Timezone                   string            `json:"timezone"`
-	Locale                     string            `json:"locale"`
-	HelpFlags1                 models.HelpFlags1 `json:"helpFlags1"`
-	HasEditPermissionInFolders bool              `json:"hasEditPermissionInFolders"`
+	IsSignedIn                 bool               `json:"isSignedIn"`
+	Id                         int64              `json:"id"`
+	Login                      string             `json:"login"`
+	Email                      string             `json:"email"`
+	Name                       string             `json:"name"`
+	LightTheme                 bool               `json:"lightTheme"`
+	OrgCount                   int                `json:"orgCount"`
+	OrgId                      int64              `json:"orgId"`
+	OrgName                    string             `json:"orgName"`
+	OrgRole                    models.RoleType    `json:"orgRole"`
+	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
+	GravatarUrl                string             `json:"gravatarUrl"`
+	Timezone                   string             `json:"timezone"`
+	Locale                     string             `json:"locale"`
+	HelpFlags1                 models.HelpFlags1  `json:"helpFlags1"`
+	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
+	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 }
+
+type UserPermissionsMap map[string]map[string]string
 
 type MetricRequest struct {
 	From    string             `json:"from"`
@@ -77,7 +80,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 }
 
 func IsHiddenUser(userLogin string, signedInUser *models.SignedInUser, cfg *setting.Cfg) bool {
-	if signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
+	if userLogin == "" || signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
 		return false
 	}
 

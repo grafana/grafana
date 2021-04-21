@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Global, css as cssCore } from '@emotion/core';
+import React, { useCallback, useEffect, useState } from 'react';
+import { css as cssCore, Global } from '@emotion/react';
+import { CartesianCoords2D } from '@grafana/data';
 
 import { PlotPluginProps } from '../types';
 import { usePlotPluginContext } from '../context';
@@ -10,9 +11,9 @@ interface ClickPluginAPI {
   point: { seriesIdx: number | null; dataIdx: number | null };
   coords: {
     // coords relative to plot canvas, css px
-    plotCanvas: Coords;
+    plotCanvas: CartesianCoords2D;
     // coords relative to viewport , css px
-    viewport: Coords;
+    viewport: CartesianCoords2D;
   };
   // coords relative to plot canvas, css px
   clearSelection: () => void;
@@ -26,12 +27,10 @@ interface ClickPluginProps extends PlotPluginProps {
   children: (api: ClickPluginAPI) => React.ReactElement | null;
 }
 
-interface Coords {
-  x: number;
-  y: number;
-}
-
-// Exposes API for Graph click interactions
+/**
+ * @alpha
+ * Exposes API for Graph click interactions
+ */
 export const ClickPlugin: React.FC<ClickPluginProps> = ({ id, onClick, children }) => {
   const pluginId = `ClickPlugin:${id}`;
 

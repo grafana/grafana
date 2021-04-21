@@ -71,3 +71,24 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
     padding: 0;
   }
 }
+
+.drop-popover.gf-color-picker {
+  .drop-content {
+    width: 210px;
+  }
+}
+
+// TODO: Remove. This is a temporary solution until color picker popovers are used
+// with Drop.js.
+.drop-popover.drop-popover--transparent {
+  .drop-content {
+    border: none;
+    background: none;
+    padding: 0;
+    max-width: none;
+
+    &:before {
+      display: none;
+    }
+  }
+}

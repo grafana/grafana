@@ -57,8 +57,8 @@ func (l *MuxWriter) Write(b []byte) (int, error) {
 // set os.File in writer.
 func (l *MuxWriter) setFD(fd *os.File) error {
 	if l.fd != nil {
-		if err := l.fd.Close(); err != nil {
-			return err
+		if err := l.fd.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
+			return fmt.Errorf("closing old file in MuxWriter failed: %w", err)
 		}
 	}
 
@@ -143,16 +143,18 @@ func (w *FileLogWriter) lineCounter() (int, error) {
 	count := 0
 	for {
 		c, err := r.Read(buf)
-		count += bytes.Count(buf[:c], []byte{'\n'})
-		switch {
-		case errors.Is(err, io.EOF):
-			if err := r.Close(); err != nil {
-				return count, err
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				if err := r.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
+					return 0, fmt.Errorf("closing %q failed: %w", w.Filename, err)
+				}
+				return count, nil
 			}
-			return count, nil
-		case err != nil:
-			return count, err
+
+			return 0, err
 		}
+
+		count += bytes.Count(buf[:c], []byte{'\n'})
 	}
 }
 

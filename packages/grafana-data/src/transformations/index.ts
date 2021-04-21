@@ -5,10 +5,10 @@ export { standardTransformers } from './transformers';
 export * from './fieldReducer';
 export { transformDataFrame } from './transformDataFrame';
 export {
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   standardTransformersRegistry,
 } from './standardTransformersRegistry';
 export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode } from './matchers/nameMatcher';
 export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
-export { outerJoinDataFrames } from './transformers/seriesToColumns';
+export { outerJoinDataFrames } from './transformers/joinDataFrames';

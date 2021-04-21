@@ -1,13 +1,16 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { ZipkinDatasource, ZipkinQuery } from './datasource';
-import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
-import { useAsyncFn, useMount, useMountedState } from 'react-use';
-import { appEvents } from '../../../core/core';
-import { apiPrefix } from './constants';
-import { ZipkinSpan } from './types';
 import { fromPairs } from 'lodash';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useAsyncFn, useMount, useMountedState } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsyncFn';
+import { apiPrefix } from './constants';
+import { ZipkinDatasource, ZipkinQuery } from './datasource';
+import { ZipkinSpan } from './types';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 
 type Props = ExploreQueryFieldProps<ZipkinDatasource, ZipkinQuery>;
 
@@ -37,8 +40,8 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
           </ButtonCascader>
         </div>
         <div className="gf-form gf-form--grow flex-shrink-1">
-          <div className={'slate-query-field__wrapper'}>
-            <div className="slate-query-field">
+          <div className="slate-query-field__wrapper">
+            <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
               <input
                 style={{ width: '100%' }}
                 value={query.query || ''}
@@ -73,7 +76,7 @@ export function useServices(datasource: ZipkinDatasource): AsyncState<CascaderOp
       }
       return [];
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to load services from Zipkin', error]);
+      dispatch(notifyApp(createErrorNotification('Failed to load services from Zipkin', error)));
       throw error;
     }
   }, [datasource]);
@@ -117,7 +120,7 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
           });
         }
       } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Failed to load spans from Zipkin', error]);
+        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', error)));
         throw error;
       }
     },
@@ -158,7 +161,7 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
           });
         }
       } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Failed to load spans from Zipkin', error]);
+        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', error)));
         throw error;
       }
     },

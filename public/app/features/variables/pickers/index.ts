@@ -1,1 +1,1 @@
-export { OptionsPicker } from './OptionsPicker/OptionsPicker';
+export { optionPickerFactory } from './OptionsPicker/OptionsPicker';

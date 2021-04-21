@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chain } from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { Plugin } from 'slate';
@@ -10,6 +10,8 @@ import {
   TypeaheadOutput,
   QueryField,
   BracesPlugin,
+  DOMUtil,
+  SuggestionsState,
 } from '@grafana/ui';
 
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
@@ -26,7 +28,6 @@ import {
   HistoryItem,
   TimeRange,
 } from '@grafana/data';
-import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 
 const HISTOGRAM_GROUP = '__histograms__';
@@ -73,7 +74,7 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
   const options = ruleNames.length > 0 ? [rulesOption] : [];
 
   const delimiter = '_';
-  const metricsOptions = _.chain(metrics)
+  const metricsOptions = chain(metrics)
     .filter((metric: string) => !ruleRegex.test(metric))
     .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(

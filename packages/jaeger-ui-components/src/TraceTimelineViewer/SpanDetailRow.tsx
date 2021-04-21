@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
@@ -21,7 +21,8 @@ import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
-import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '../types/trace';
+import { CreateSpanLink } from './types';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -85,6 +86,7 @@ type SpanDetailRowProps = {
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   theme: Theme;
+  createSpanLink?: CreateSpanLink;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -116,6 +118,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
       theme,
+      createSpanLink,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -154,6 +157,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}
               focusSpan={focusSpan}
+              createSpanLink={createSpanLink}
             />
           </div>
         </TimelineRow.Cell>

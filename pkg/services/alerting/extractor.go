@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -61,7 +60,7 @@ func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Jso
 func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	rawJSON, err := in.MarshalJSON()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("JSON marshaling failed: %w", err)
 	}
 
 	return simplejson.NewJson(rawJSON)
@@ -109,12 +108,10 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		}
 
 		rawFor := jsonAlert.Get("for").MustString()
-		var forValue time.Duration
-		if rawFor != "" {
-			forValue, err = time.ParseDuration(rawFor)
-			if err != nil {
-				return nil, ValidationError{Reason: "Could not parse for"}
-			}
+
+		forValue, err := getForValue(rawFor)
+		if err != nil {
+			return nil, err
 		}
 
 		alert := &models.Alert{
@@ -242,6 +239,8 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
 func (e *DashAlertExtractor) ValidateAlerts() error {
-	_, err := e.extractAlerts(func(alert *models.Alert) bool { return alert.OrgId != 0 && alert.PanelId != 0 }, false)
+	_, err := e.extractAlerts(func(alert *models.Alert) bool {
+		return alert.OrgId != 0 && alert.PanelId != 0
+	}, false)
 	return err
 }

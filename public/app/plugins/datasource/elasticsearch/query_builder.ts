@@ -9,10 +9,12 @@ import {
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
+  MetricAggregation,
+  MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
 import { ElasticsearchQuery } from './types';
-import { convertOrderByToMetricId } from './utils';
+import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -204,8 +206,9 @@ export class ElasticQueryBuilder {
     target.metrics = target.metrics || [defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;
+    let metric: MetricAggregation;
 
-    let i, j, pv, nestedAggs, metric;
+    let i, j, pv, nestedAggs;
     const query = {
       size: 0,
       query: {
@@ -340,7 +343,9 @@ export class ElasticQueryBuilder {
       if (isMetricAggregationWithSettings(metric)) {
         Object.entries(metric.settings || {})
           .filter(([_, v]) => v !== null)
-          .forEach(([k, v]) => (metricAgg[k] = v));
+          .forEach(([k, v]) => {
+            metricAgg[k] = k === 'script' ? getScriptValue(metric as MetricAggregationWithInlineScript) : v;
+          });
       }
 
       aggField[metric.type] = metricAgg;
@@ -410,7 +415,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, adhocFilters?: any, querystring?: string) {
+  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: any, querystring?: string) {
     let query: any = {
       size: 0,
       query: {
@@ -431,11 +436,19 @@ export class ElasticQueryBuilder {
       });
     }
 
-    query = this.documentQuery(query, 500);
+    query = this.documentQuery(query, limit);
 
     return {
       ...query,
       aggs: this.build(target, null, querystring).aggs,
+      highlight: {
+        fields: {
+          '*': {},
+        },
+        pre_tags: [highlightTags.pre],
+        post_tags: [highlightTags.post],
+        fragment_size: 2147483647,
+      },
     };
   }
 }

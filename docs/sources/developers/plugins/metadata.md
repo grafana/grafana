@@ -23,6 +23,7 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 | `$schema`       | string                  | No       | Schema definition for the plugin.json file                                                                                                                                                                                                                                                                                                                                                              |
 | `alerting`      | boolean                 | No       | For data source plugins. If the plugin supports alerting.                                                                                                                                                                                                                                                                                                                                               |
 | `annotations`   | boolean                 | No       | For data source plugins. If the plugin supports annotation queries.                                                                                                                                                                                                                                                                                                                                     |
+| `autoEnabled`   | boolean                 | No       | Set to true for app plugins that should be enabled by default in all orgs                                                                                                                                                                                                                                                                                                                               |
 | `backend`       | boolean                 | No       | If the plugin has a backend component.                                                                                                                                                                                                                                                                                                                                                                  |
 | `category`      | string                  | No       | Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql`, `enterprise`, `other`.                                                                                                                                                                                                                                                             |
 | `executable`    | string                  | No       | The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment. |
@@ -32,7 +33,7 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 | `metrics`       | boolean                 | No       | For data source plugins. If the plugin supports metric queries. Used in the Explore feature.                                                                                                                                                                                                                                                                                                            |
 | `preload`       | boolean                 | No       | Initialize plugin on startup. By default, the plugin initializes on first use.                                                                                                                                                                                                                                                                                                                          |
 | `queryOptions`  | [object](#queryoptions) | No       | For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.                                                                                                                                                                                                                                                                    |
-| `routes`        | [object](#routes)[]     | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).                                                                                                                       |
+| `routes`        | [object](#routes)[]     | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins.md">}}).                                                                                                                       |
 | `skipDataQuery` | boolean                 | No       | For panel plugins. Hides the query editor.                                                                                                                                                                                                                                                                                                                                                              |
 | `state`         | string                  | No       | Marks a plugin as a pre-release. Possible values are: `alpha`, `beta`.                                                                                                                                                                                                                                                                                                                                  |
 | `streaming`     | boolean                 | No       | For data source plugins. If the plugin supports streaming.                                                                                                                                                                                                                                                                                                                                              |
@@ -167,12 +168,13 @@ For data source plugins. There is a query options section in the plugin's query 
 
 ## routes
 
-For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins.md">}}).
 
 ### Properties
 
 | Property       | Type                    | Required | Description                                                                                             |
 |----------------|-------------------------|----------|---------------------------------------------------------------------------------------------------------|
+| `body`         | [object](#body)         | No       | For data source plugins. Route headers set the body content and length to the proxied request.          |
 | `headers`      | array                   | No       | For data source plugins. Route headers adds HTTP headers to the proxied request.                        |
 | `jwtTokenAuth` | [object](#jwttokenauth) | No       | For data source plugins. Token authentication section used with an JWT OAuth API.                       |
 | `method`       | string                  | No       | For data source plugins. Route method matches the HTTP verb like GET or POST.                           |
@@ -182,29 +184,37 @@ For data source plugins. Proxy routes used for plugin authentication and adding 
 | `tokenAuth`    | [object](#tokenauth)    | No       | For data source plugins. Token authentication section used with an OAuth API.                           |
 | `url`          | string                  | No       | For data source plugins. Route URL is where the request is proxied to.                                  |
 
+### body
+
+For data source plugins. Route headers set the body content and length to the proxied request.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+
 ### jwtTokenAuth
 
 For data source plugins. Token authentication section used with an JWT OAuth API.
 
 #### Properties
 
-| Property | Type              | Required | Description                                                               |
-|----------|-------------------|----------|---------------------------------------------------------------------------|
-| `params` | [object](#params) | No       | For data source plugins. Parameters for the token authentication request. |
-| `url`    | string            | No       | For data source plugins. URL to fetch the JWT token.                      |
+| Property | Type              | Required | Description                                          |
+|----------|-------------------|----------|------------------------------------------------------|
+| `params` | [object](#params) | No       | Parameters for the JWT token authentication request. |
+| `scopes` | string            | No       |                                                      |
+| `url`    | string            | No       | URL to fetch the JWT token.                          |
 
 #### params
 
-For data source plugins. Parameters for the token authentication request.
+Parameters for the JWT token authentication request.
 
 ##### Properties
 
-| Property        | Type   | Required | Description                                                                                                        |
-|-----------------|--------|----------|--------------------------------------------------------------------------------------------------------------------|
-| `client_id`     | string | No       | For data source plugins. OAuth client id.                                                                          |
-| `client_secret` | string | No       | For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
-| `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
-| `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
+| Property       | Type     | Required | Description |
+|----------------|----------|----------|-------------|
+| `client_email` | string   | No       |             |
+| `private_key`  | string   | No       |             |
+| `scopes`       | string[] | No       |             |
+| `token_uri`    | string   | No       |             |
 
 ### tokenAuth
 
@@ -212,22 +222,23 @@ For data source plugins. Token authentication section used with an OAuth API.
 
 #### Properties
 
-| Property | Type              | Required | Description                                                               |
-|----------|-------------------|----------|---------------------------------------------------------------------------|
-| `params` | [object](#params) | No       | For data source plugins. Parameters for the token authentication request. |
-| `url`    | string            | No       | For data source plugins. URL to fetch the authentication token.           |
+| Property | Type              | Required | Description                                      |
+|----------|-------------------|----------|--------------------------------------------------|
+| `params` | [object](#params) | No       | Parameters for the token authentication request. |
+| `scopes` | string            | No       |                                                  |
+| `url`    | string            | No       | URL to fetch the authentication token.           |
 
 #### params
 
-For data source plugins. Parameters for the token authentication request.
+Parameters for the token authentication request.
 
 ##### Properties
 
-| Property        | Type   | Required | Description                                                                                                        |
-|-----------------|--------|----------|--------------------------------------------------------------------------------------------------------------------|
-| `client_id`     | string | No       | For data source plugins. OAuth client id.                                                                          |
-| `client_secret` | string | No       | For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
-| `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
-| `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
+| Property        | Type   | Required | Description                                                                               |
+|-----------------|--------|----------|-------------------------------------------------------------------------------------------|
+| `client_id`     | string | No       | OAuth client ID                                                                           |
+| `client_secret` | string | No       | OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
+| `grant_type`    | string | No       | OAuth grant type                                                                          |
+| `resource`      | string | No       | OAuth resource                                                                            |
 
 

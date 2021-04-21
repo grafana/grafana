@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { mergeMap } from 'rxjs/operators';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Icon, JSONFormatter, useStyles } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
   GrafanaTheme,
   transformDataFrame,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -17,7 +17,7 @@ interface TransformationEditorProps {
   debugMode?: boolean;
   index: number;
   data: DataFrame[];
-  uiConfig: TransformerRegistyItem<any>;
+  uiConfig: TransformerRegistryItem<any>;
   configs: TransformationsEditorTransformation[];
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
@@ -61,10 +61,11 @@ export const TransformationEditor = ({
     [
       uiConfig.editor,
       uiConfig.transformation.defaultOptions,
-      config.transformation.id,
       config.transformation.options,
+      config.transformation.id,
       input,
       onChange,
+      index,
     ]
   );
 

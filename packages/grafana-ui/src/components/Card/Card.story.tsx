@@ -1,5 +1,4 @@
 import React from 'react';
-import { action } from '@storybook/addon-actions';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card, Props } from './Card';
@@ -7,6 +6,7 @@ import mdx from './Card.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 import { TagList } from '../Tags/TagList';
+import { VerticalGroup } from '../Layout/Layout';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
@@ -43,12 +43,23 @@ export const Basic: Story<Props> = ({ disabled }) => {
 
 export const AsLink: Story<Props> = ({ disabled }) => {
   return (
-    <Card
-      href="https://grafana.com"
-      heading="Filter by name"
-      description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
-      disabled={disabled}
-    />
+    <VerticalGroup>
+      <Card
+        href="https://grafana.com"
+        heading="Filter by name"
+        description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+        disabled={disabled}
+      />
+      <Card
+        href="https://grafana.com"
+        heading="Filter by name2"
+        description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+        disabled={disabled}
+      />
+      <Card href="https://grafana.com" heading="Production system overview" disabled={disabled}>
+        <Card.Meta>Meta tags</Card.Meta>
+      </Card>
+    </VerticalGroup>
   );
 };
 
@@ -76,7 +87,7 @@ export const WithTags: Story<Props> = ({ disabled }) => {
 
 export const WithMedia: Story<Props> = ({ disabled }) => {
   return (
-    <Card href="https://ops-us-east4.grafana.net/api/prom" heading="1-ops-tools1-fallback" disabled={disabled}>
+    <Card heading="1-ops-tools1-fallback" disabled={disabled}>
       <Card.Meta>
         Prometheus
         <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
@@ -133,9 +144,6 @@ export const Full: Story<Props> = ({ disabled }) => {
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" />
       </Card.Figure>
-      <Card.Tags>
-        <TagList tags={['firing', 'active', 'test', 'testdata', 'prometheus']} onClick={action('Clicked tag')} />
-      </Card.Tags>
       <Card.Actions>
         <Button key="settings" variant="secondary">
           Main action

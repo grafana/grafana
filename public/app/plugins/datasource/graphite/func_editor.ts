@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { assign, clone, each, last, map, partial } from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -77,8 +77,8 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
         if (index < func.def.params.length) {
           return func.def.params[index];
         }
-        if ((_.last(func.def.params) as any).multiple) {
-          return _.assign({}, _.last(func.def.params), { optional: true });
+        if ((last(func.def.params) as any).multiple) {
+          return assign({}, last(func.def.params), { optional: true });
         }
         return {};
       }
@@ -91,7 +91,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
 
         const $link = $input.prev();
         const $comma = $link.prev('.comma');
-        const newValue = $input.val();
+        const newValue = $input.val() as any;
 
         // remove optional empty params
         if (newValue !== '' || paramDef(paramIndex).optional) {
@@ -140,7 +140,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
 
         let options = paramDef(paramIndex).options;
         if (paramDef(paramIndex).type === 'int') {
-          options = _.map(options, (val) => {
+          options = map(options, (val) => {
             return val.toString();
           });
         }
@@ -166,14 +166,18 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
       function addElementsAndCompile() {
         $funcLink.appendTo(elem);
 
-        const defParams: any = _.clone(func.def.params);
-        const lastParam: any = _.last(func.def.params);
-
-        while (func.params.length >= defParams.length && lastParam && lastParam.multiple) {
-          defParams.push(_.assign({}, lastParam, { optional: true }));
+        if (func.def.unknown) {
+          elem.addClass('unknown-function');
         }
 
-        _.each(defParams, (param: any, index: number) => {
+        const defParams: any = clone(func.def.params);
+        const lastParam: any = last(func.def.params);
+
+        while (func.params.length >= defParams.length && lastParam && lastParam.multiple) {
+          defParams.push(assign({}, lastParam, { optional: true }));
+        }
+
+        each(defParams, (param: any, index: number) => {
           if (param.optional && func.params.length < index) {
             return false;
           }
@@ -208,10 +212,10 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
           $paramLink.appendTo(elem);
           $input.appendTo(elem);
 
-          $input.blur(_.partial(inputBlur, index));
+          $input.blur(partial(inputBlur, index));
           $input.keyup(inputKeyDown);
-          $input.keypress(_.partial(inputKeyPress, index));
-          $paramLink.click(_.partial(clickFuncParam, index));
+          $input.keypress(partial(inputKeyPress, index));
+          $paramLink.click(partial(clickFuncParam, index));
 
           if (param.options) {
             addTypeahead($input, index);

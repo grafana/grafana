@@ -1,30 +1,39 @@
-import { AppEvents, dateMath } from '@grafana/data';
-import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import {
+  AppEvents,
+  applyFieldOverrides,
+  dataFrameFromJSON,
+  DataFrameJSON,
+  DataQuery,
+  DataSourceApi,
+} from '@grafana/data';
+import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
-import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
 import {
-  notificationChannelLoaded,
+  ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
+  cleanUpState,
   loadAlertRules,
   loadedAlertRules,
+  notificationChannelLoaded,
+  setAlertDefinition,
+  setAlertDefinitions,
+  setInstanceData,
   setNotificationChannels,
   setUiState,
-  ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
-  updateAlertDefinition,
-  setQueryOptions,
-  setAlertDefinitions,
+  updateAlertDefinitionOptions,
 } from './reducers';
 import {
   AlertDefinition,
+  AlertDefinitionState,
   AlertDefinitionUiState,
   AlertRuleDTO,
   NotifierDTO,
-  ThunkResult,
-  QueryGroupOptions,
   QueryGroupDataSource,
+  QueryGroupOptions,
+  ThunkResult,
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
-import { ExpressionQuery } from '../../expressions/types';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -41,9 +50,9 @@ export function getAlertRulesAsync(options: { state: string }): ThunkResult<void
 }
 
 export function togglePauseAlertRule(id: number, options: { paused: boolean }): ThunkResult<void> {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     await getBackendSrv().post(`/api/alerts/${id}/pause`, options);
-    const stateFilter = getState().location.query.state || 'all';
+    const stateFilter = locationService.getSearchObject().state || 'all';
     dispatch(getAlertRulesAsync({ state: stateFilter.toString() }));
   };
 }
@@ -53,7 +62,7 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
     try {
       await getBackendSrv().post(`/api/alert-notifications`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
-      dispatch(updateLocation({ path: 'alerting/notifications' }));
+      locationService.push('/alerting/notifications');
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [error.data.error]);
     }
@@ -65,7 +74,6 @@ export function updateNotificationChannel(data: any): ThunkResult<void> {
     try {
       await getBackendSrv().put(`/api/alert-notifications/${data.id}`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
-      dispatch(updateLocation({ path: 'alerting/notifications' }));
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [error.data.error]);
     }
@@ -102,51 +110,32 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
   };
 }
 
+export function getAlertDefinition(id: string): ThunkResult<void> {
+  return async (dispatch) => {
+    const alertDefinition = await getBackendSrv().get(`/api/alert-definitions/${id}`);
+    dispatch(setAlertDefinition(alertDefinition));
+  };
+}
+
 export function createAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const queryOptions = getStore().alertDefinition.queryOptions;
-    const currentAlertDefinition = getStore().alertDefinition.alertDefinition;
-    const defaultDataSource = await getDataSourceSrv().get(null);
-
-    const alertDefinition: AlertDefinition = {
-      ...currentAlertDefinition,
-      condition: {
-        refId: currentAlertDefinition.condition.refId,
-        queriesAndExpressions: queryOptions.queries.map((query) => {
-          let dataSource: QueryGroupDataSource;
-          const isExpression = query.datasource === ExpressionDatasourceID;
-
-          if (isExpression) {
-            dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
-          } else {
-            const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
-
-            dataSource = {
-              name: dataSourceSetting?.name ?? defaultDataSource.name,
-              uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
-            };
-          }
-
-          return {
-            model: {
-              ...query,
-              type: isExpression ? (query as ExpressionQuery).type : query.queryType,
-              datasource: dataSource.name,
-              datasourceUid: dataSource.uid,
-            },
-            refId: query.refId,
-            relativeTimeRange: {
-              From: 500,
-              To: 0,
-            },
-          };
-        }),
-      },
-    };
-
+    const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
-    dispatch(updateLocation({ path: 'alerting/list' }));
+    locationService.push('/alerting/ng/list');
+  };
+}
+
+export function updateAlertDefinition(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
+
+    const updatedAlertDefinition = await getBackendSrv().put(
+      `/api/alert-definitions/${alertDefinition.uid}`,
+      alertDefinition
+    );
+    appEvents.emit(AppEvents.alertSuccess, ['Alert definition updated']);
+    dispatch(setAlertDefinition(updatedAlertDefinition));
   };
 }
 
@@ -165,28 +154,111 @@ export function updateAlertDefinitionUiState(uiState: Partial<AlertDefinitionUiS
 
 export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefinition>): ThunkResult<void> {
   return (dispatch) => {
-    dispatch(updateAlertDefinition(alertDefinition));
+    dispatch(updateAlertDefinitionOptions(alertDefinition));
   };
 }
 
-export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult<void> {
-  return (dispatch) => {
-    dispatch(setQueryOptions(queryOptions));
+export function evaluateAlertDefinition(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { alertDefinition } = getStore().alertDefinition;
+
+    const response: { instances: DataFrameJSON[] } = await getBackendSrv().get(
+      `/api/alert-definitions/eval/${alertDefinition.uid}`
+    );
+
+    const handledResponse = handleJSONResponse(response.instances);
+
+    dispatch(setInstanceData(handledResponse));
+    appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
   };
 }
 
-export function onRunQueries(): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { queryRunner, queryOptions } = getStore().alertDefinition;
-    const timeRange = { from: 'now-1h', to: 'now' };
+export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { alertDefinition } = getStore().alertDefinition;
+    const defaultDataSource = await getDataSourceSrv().get(null);
 
-    queryRunner.run({
-      timezone: 'browser',
-      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
-      maxDataPoints: queryOptions.maxDataPoints ?? 100,
-      minInterval: queryOptions.minInterval,
-      queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
+    const response: { instances: DataFrameJSON[] } = await getBackendSrv().post('/api/alert-definitions/eval', {
+      condition: alertDefinition.condition,
+      data: buildDataQueryModel({} as QueryGroupOptions, defaultDataSource),
     });
+
+    const handledResponse = handleJSONResponse(response.instances);
+    dispatch(setInstanceData(handledResponse));
+    appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
   };
+}
+
+export function cleanUpDefinitionState(): ThunkResult<void> {
+  return (dispatch) => {
+    dispatch(cleanUpState(undefined));
+  };
+}
+
+async function buildAlertDefinition(state: AlertDefinitionState) {
+  const queryOptions = {} as QueryGroupOptions;
+  const currentAlertDefinition = state.alertDefinition;
+  const defaultDataSource = await getDataSourceSrv().get(null);
+
+  return {
+    ...currentAlertDefinition,
+    data: buildDataQueryModel(queryOptions, defaultDataSource),
+  };
+}
+
+function handleJSONResponse(frames: DataFrameJSON[]) {
+  const dataFrames = frames.map((instance) => {
+    return dataFrameFromJSON(instance);
+  });
+
+  return applyFieldOverrides({
+    data: dataFrames,
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value: any) => value,
+    theme: config.theme,
+  });
+}
+
+function buildDataQueryModel(queryOptions: QueryGroupOptions, defaultDataSource: DataSourceApi) {
+  return queryOptions.queries.map((query: DataQuery) => {
+    if (isExpressionQuery(query)) {
+      const dataSource: QueryGroupDataSource = {
+        name: ExpressionDatasourceID,
+        uid: ExpressionDatasourceID,
+      };
+
+      return {
+        model: {
+          ...query,
+          type: query.type,
+          datasource: dataSource.name,
+          datasourceUid: dataSource.uid,
+        },
+        refId: query.refId,
+      };
+    }
+
+    const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+    const dataSource: QueryGroupDataSource = {
+      name: dataSourceSetting?.name ?? defaultDataSource.name,
+      uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+    };
+
+    return {
+      model: {
+        ...query,
+        type: query.queryType,
+        datasource: dataSource.name,
+        datasourceUid: dataSource.uid,
+      },
+      refId: query.refId,
+      relativeTimeRange: {
+        from: 600,
+        to: 0,
+      },
+    };
+  });
 }

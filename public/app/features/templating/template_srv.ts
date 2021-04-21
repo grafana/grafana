@@ -1,12 +1,12 @@
-import _ from 'lodash';
+import { isString, property, escape } from 'lodash';
 import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { formatRegistry, FormatOptions } from './formatRegistry';
-import { ALL_VARIABLE_TEXT } from '../variables/state/types';
+import { FormatOptions, formatRegistry } from './formatRegistry';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -184,11 +184,11 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   highlightVariablesAsHtml(str: string) {
-    if (!str || !_.isString(str)) {
+    if (!str || !isString(str)) {
       return str;
     }
 
-    str = _.escape(str);
+    str = escape(str);
     this.regex.lastIndex = 0;
     return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
       if (this.getVariableAtIndex(var1 || var2 || var3)) {
@@ -215,7 +215,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return accessor;
     }
 
-    return (this.fieldAccessorCache[fieldPath] = _.property(fieldPath));
+    return (this.fieldAccessorCache[fieldPath] = property(fieldPath));
   }
 
   private getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
@@ -282,7 +282,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         value = this.getAllValue(variable);
         text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
-        if (variable.allValue) {
+        if (variable.allValue && fmt !== 'text' && fmt !== 'queryparam') {
           return this.replace(value);
         }
       }
@@ -302,7 +302,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   isAllValue(value: any) {
-    return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
+    return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
   replaceWithText(target: string, scopedVars?: ScopedVars) {
@@ -329,5 +329,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
 // Expose the template srv
 const srv = new TemplateSrv();
+
 setTemplateSrv(srv);
+
 export const getTemplateSrv = () => srv;

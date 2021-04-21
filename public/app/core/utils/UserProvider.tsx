@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { User, Team, UserOrg, UserSession } from 'app/types';
+import { UserDTO, Team, UserOrg, UserSession } from 'app/types';
 import { config } from 'app/core/config';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 
@@ -45,12 +45,12 @@ export interface Props {
     teams: Team[],
     orgs: UserOrg[],
     sessions: UserSession[],
-    user?: User
+    user?: UserDTO
   ) => JSX.Element;
 }
 
 export interface State {
-  user?: User;
+  user?: UserDTO;
   teams: Team[];
   orgs: UserOrg[];
   sessions: UserSession[];

@@ -2,12 +2,12 @@ import React from 'react';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   stringToJsRegex,
 } from '@grafana/data';
 import { Field, Input } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { RenameByRegexTransformerOptions } from '@grafana/data/src/transformations/transformers/renameByRegex';
 
 interface RenameByRegexTransformerEditorProps extends TransformerUIProps<RenameByRegexTransformerOptions> {}
@@ -122,7 +122,7 @@ export class RenameByRegexTransformerEditor extends React.PureComponent<
   }
 }
 
-export const renameByRegexTransformRegistryItem: TransformerRegistyItem<RenameByRegexTransformerOptions> = {
+export const renameByRegexTransformRegistryItem: TransformerRegistryItem<RenameByRegexTransformerOptions> = {
   id: DataTransformerID.renameByRegex,
   editor: RenameByRegexTransformerEditor,
   transformation: standardTransformers.renameByRegexTransformer,

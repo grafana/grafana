@@ -21,6 +21,7 @@ export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {};
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
+  private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
   private defaultName = '';
 
   /** @ngInject */
@@ -38,6 +39,7 @@ export class DatasourceSrv implements DataSourceService {
 
     for (const dsSettings of Object.values(settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
+      this.settingsMapById[dsSettings.id] = dsSettings;
     }
   }
 
@@ -54,13 +56,24 @@ export class DatasourceSrv implements DataSourceService {
     // For this we just pick the current or first data source in the variable
     if (nameOrUid[0] === '$') {
       const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
-      const dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+
+      let dsSettings;
+
+      if (interpolatedName === 'default') {
+        dsSettings = this.settingsMapByName[this.defaultName];
+      } else {
+        dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+      }
+
       if (!dsSettings) {
         return undefined;
       }
       // The return name or uid needs preservet string containing the variable
       const clone = cloneDeep(dsSettings);
       clone.name = nameOrUid;
+      // A data source being looked up using a variable should not be considered default
+      clone.isDefault = false;
+
       return clone;
     }
 
@@ -86,7 +99,7 @@ export class DatasourceSrv implements DataSourceService {
     // Interpolation here is to support template variable in data source selection
     nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
-    if (nameOrUid === 'default') {
+    if (nameOrUid === 'default' && this.defaultName !== 'default') {
       return this.get(this.defaultName);
     }
 
@@ -104,9 +117,12 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(expressionDatasource);
     }
 
-    const dsConfig = this.settingsMapByName[name];
+    let dsConfig = this.settingsMapByName[name];
     if (!dsConfig) {
-      return Promise.reject({ message: `Datasource named ${name} was not found` });
+      dsConfig = this.settingsMapById[name];
+      if (!dsConfig) {
+        return Promise.reject({ message: `Datasource named ${name} was not found` });
+      }
     }
 
     try {
@@ -148,13 +164,35 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.metrics && !x.meta.metrics) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.tracing && !x.meta.tracing) {
         return false;
       }
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
+        return false;
+      }
+      if (filters.filter && !filters.filter(x)) {
+        return false;
+      }
+      if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
+        return false;
+      }
+      if (
+        !filters.all &&
+        x.meta.metrics !== true &&
+        x.meta.annotations !== true &&
+        x.meta.tracing !== true &&
+        x.meta.logs !== true &&
+        x.meta.alerting !== true
+      ) {
         return false;
       }
       return true;
@@ -187,7 +225,7 @@ export class DatasourceSrv implements DataSourceService {
       return 0;
     });
 
-    if (!filters.pluginId) {
+    if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
         base.push(this.getInstanceSettings('-- Mixed --')!);
       }

@@ -1,23 +1,23 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { DataSourceVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
-import { OptionsPicker } from '../pickers';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
 import { containsVariable, isAllVariable } from '../utils';
+import { optionPickerFactory } from '../pickers';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
     id: 'datasource',
-    description: 'Enabled you to dynamically switch the datasource for multiple panels',
-    name: 'Datasource',
+    description: 'Enabled you to dynamically switch the data source for multiple panels.',
+    name: 'Data source',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<DataSourceVariableModel>(),
     editor: DataSourceVariableEditor,
     dependsOn: (variable, variableToTest) => {
       if (variable.regex) {

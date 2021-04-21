@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { GroupProps } from 'react-select';
-import { stylesFactory, withTheme, selectThemeVariant } from '../../themes';
+import { stylesFactory, withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { Icon } from '../Icon/Icon';
 
-interface ExtendedGroupProps extends GroupProps<any>, Themeable {
+interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable {
   data: {
     label: string;
     expanded: boolean;
@@ -19,13 +19,6 @@ interface State {
 }
 
 const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
-  const optionBorder = selectThemeVariant(
-    {
-      light: theme.palette.gray4,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
   return {
     header: css`
       display: flex;
@@ -35,7 +28,7 @@ const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       padding: 7px 10px;
       width: 100%;
-      border-bottom: 1px solid ${optionBorder};
+      border-bottom: 1px solid ${theme.colors.bg2};
 
       &:hover {
         color: ${theme.colors.textStrong};

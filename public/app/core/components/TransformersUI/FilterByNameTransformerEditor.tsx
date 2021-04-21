@@ -3,13 +3,13 @@ import {
   DataTransformerID,
   KeyValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   getFieldDisplayName,
   stringToJsRegex,
 } from '@grafana/data';
 import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
@@ -202,7 +202,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFieldsByNameTransformRegistryItem: TransformerRegistyItem<FilterFieldsByNameTransformerOptions> = {
+export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.filterFieldsByName,
   editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,

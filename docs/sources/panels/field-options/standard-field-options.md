@@ -17,7 +17,7 @@ For more information about applying these options, refer to:
 - [Configure all fields]({{< relref "configure-all-fields.md" >}})
 - [Configure specific fields]({{< relref "configure-specific-fields.md" >}})
 
-> **Note:** We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations. 
+> **Note:** We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
 
 ## Decimals
 

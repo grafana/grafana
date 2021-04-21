@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
@@ -6,12 +5,14 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-  LiveChannelScope,
+  isValidLiveChannelAddress,
+  parseLiveChannelAddress,
+  StreamingFrameOptions,
 } from '@grafana/data';
 
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
-import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurementsObserver } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
+import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveDataStream } from '@grafana/runtime';
+import { Observable, of, merge } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 let counter = 100;
@@ -28,20 +29,37 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         continue;
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
-        const { channel, measurements } = target;
-        if (channel) {
-          queries.push(
-            getLiveMeasurementsObserver(
-              {
-                scope: LiveChannelScope.Grafana,
-                namespace: 'measurements',
-                path: channel,
-              },
-              `${request.requestId}.${counter++}`,
-              measurements
-            )
-          );
+        let { channel, filter } = target;
+
+        // Help migrate pre-release channel paths saved in dashboards
+        // NOTE: this should be removed before V8 is released
+        if (channel && channel.startsWith('telegraf/')) {
+          channel = 'stream/' + channel;
+          target.channel = channel; // mutate the current query object so it is saved with `stream/` prefix
         }
+
+        const addr = parseLiveChannelAddress(channel);
+        if (!isValidLiveChannelAddress(addr)) {
+          continue;
+        }
+        const buffer: StreamingFrameOptions = {
+          maxLength: request.maxDataPoints ?? 500,
+        };
+        if (target.buffer) {
+          buffer.maxDelta = target.buffer;
+          buffer.maxLength = buffer.maxLength! * 2; //??
+        } else if (request.rangeRaw?.to === 'now') {
+          buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+        }
+
+        queries.push(
+          getLiveDataStream({
+            key: `${request.requestId}.${counter++}`,
+            addr: addr!,
+            filter,
+            buffer,
+          })
+        );
       } else {
         queries.push(getRandomWalk(request));
       }
@@ -51,8 +69,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       return queries[0];
     }
     if (queries.length > 1) {
-      // HELP!!!
-      return queries[0];
+      return merge(...queries);
     }
     return of(); // nothing
   }

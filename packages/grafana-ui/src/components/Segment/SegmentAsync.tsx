@@ -1,6 +1,6 @@
 import React, { HTMLProps } from 'react';
-import { cx } from 'emotion';
-import _ from 'lodash';
+import { cx } from '@emotion/css';
+import { isObject } from 'lodash';
 import { SegmentSelect } from './SegmentSelect';
 import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
@@ -14,6 +14,7 @@ export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HT
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   onChange: (item: SelectableValue<T>) => void;
+  noOptionMessageHandler?: (state: AsyncState<Array<SelectableValue<T>>>) => string;
 }
 
 export function SegmentAsync<T>({
@@ -25,6 +26,7 @@ export function SegmentAsync<T>({
   allowCustomValue,
   disabled,
   placeholder,
+  noOptionMessageHandler = mapStateToNoOptionsMessage,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
@@ -32,7 +34,7 @@ export function SegmentAsync<T>({
   const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
-    const label = _.isObject(value) ? value.label : value;
+    const label = isObject(value) ? value.label : value;
 
     return (
       <Label
@@ -61,10 +63,10 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !_.isObject(value) ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
       options={state.value ?? []}
       width={width}
-      noOptionsMessage={mapStateToNoOptionsMessage(state)}
+      noOptionsMessage={noOptionMessageHandler(state)}
       allowCustomValue={allowCustomValue}
       onClickOutside={() => {
         setExpanded(false);

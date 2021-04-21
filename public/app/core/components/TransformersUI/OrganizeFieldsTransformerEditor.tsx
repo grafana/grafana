@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
   DataFrame,
   DataTransformerID,
   GrafanaTheme,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   getFieldDisplayName,
 } from '@grafana/data';
@@ -34,7 +34,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
         },
       });
     },
-    [onChange, excludeByName, indexByName]
+    [onChange, options, excludeByName]
   );
 
   const onDragEnd = useCallback(
@@ -55,7 +55,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
         indexByName: reorderToIndex(fieldNames, startIndex, endIndex),
       });
     },
-    [onChange, indexByName, excludeByName, fieldNames]
+    [onChange, options, fieldNames]
   );
 
   const onRenameField = useCallback(
@@ -68,7 +68,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
         },
       });
     },
-    [onChange, fieldNames, renameByName]
+    [onChange, options]
   );
 
   // Show warning that we only apply the first frame
@@ -221,7 +221,7 @@ export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => 
   );
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerRegistyItem<OrganizeFieldsTransformerOptions> = {
+export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {
   id: DataTransformerID.organize,
   editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,

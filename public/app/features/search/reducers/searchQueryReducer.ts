@@ -1,4 +1,4 @@
-import { DashboardQuery, RouteParams, SearchAction, SearchLayout } from '../types';
+import { DashboardQuery, SearchQueryParams, SearchAction, SearchLayout } from '../types';
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -20,9 +20,10 @@ export const defaultQuery: DashboardQuery = {
   folderIds: [],
   sort: null,
   layout: SearchLayout.Folders,
+  prevSort: null,
 };
 
-export const defaultQueryParams: RouteParams = {
+export const defaultQueryParams: SearchQueryParams = {
   sort: null,
   starred: null,
   query: null,
@@ -58,9 +59,9 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
     case LAYOUT_CHANGE: {
       const layout = action.payload;
       if (state.sort && layout === SearchLayout.Folders) {
-        return { ...state, layout, sort: null };
+        return { ...state, layout, sort: null, prevSort: state.sort };
       }
-      return { ...state, layout };
+      return { ...state, layout, sort: state.prevSort };
     }
     default:
       return state;

@@ -1,5 +1,5 @@
 import React, { FC, MouseEvent, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { getTagColorsFromName, Icon, Tooltip, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
@@ -83,7 +83,13 @@ const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
 
   return (
     <Tooltip content="Cancel query">
-      <Icon className="spin-clockwise" name="sync" size="xs" onClick={onClick} />
+      <Icon
+        className="spin-clockwise"
+        name="sync"
+        size="xs"
+        onClick={onClick}
+        aria-label={selectors.components.LoadingIndicator.icon}
+      />
     </Tooltip>
   );
 };

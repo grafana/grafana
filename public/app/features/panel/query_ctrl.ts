@@ -1,18 +1,21 @@
-import _ from 'lodash';
+import { indexOf } from 'lodash';
 import { auto } from 'angular';
 
 export class QueryCtrl {
-  target: any;
-  datasource: any;
-  panelCtrl: any;
+  target!: any;
+  datasource!: any;
+  panelCtrl!: any;
   panel: any;
-  hasRawMode: boolean;
+  hasRawMode!: boolean;
   error?: string | null;
   isLastQuery: boolean;
 
   constructor(public $scope: any, public $injector: auto.IInjectorService) {
-    this.panel = this.panelCtrl.panel;
-    this.isLastQuery = _.indexOf(this.panel.targets, this.target) === this.panel.targets.length - 1;
+    this.panelCtrl = this.panelCtrl ?? $scope.ctrl.panelCtrl;
+    this.target = this.target ?? $scope.ctrl.target;
+    this.datasource = this.datasource ?? $scope.ctrl.datasource;
+    this.panel = this.panelCtrl?.panel ?? $scope.ctrl.panelCtrl.panel;
+    this.isLastQuery = indexOf(this.panel.targets, this.target) === this.panel.targets.length - 1;
   }
 
   refresh() {

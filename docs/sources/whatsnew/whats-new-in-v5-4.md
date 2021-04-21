@@ -45,9 +45,9 @@ Stackdriver is the first data source which has support for a custom templating q
 create their very own templating query editor.
 
 Additionally, if Grafana is running on a Google Compute Engine (GCE) virtual machine, it is now possible for Grafana to automatically retrieve default credentials from the metadata server.
-This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. [Learn more]({{< relref "../datasources/cloudmonitoring/#using-gce-default-service-account" >}}).
+This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. [Learn more]({{< relref "../datasources/google-cloud-monitoring/_index.md/#using-gce-default-service-account" >}}).
 
-Please read [Using Google Stackdriver in Grafana]({{< relref "../datasources/cloudmonitoring/" >}}) for more detailed information on how to get started and use it.
+Please read [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/_index.md/" >}}) for more detailed information on how to get started and use it.
 
 <div class="clearfix"></div>
 

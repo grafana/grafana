@@ -70,6 +70,7 @@ const variableEditorReducerSlice = createSlice({
         [action.payload.propName]: action.payload.propValue,
       };
     },
+    cleanEditorState: () => initialVariableEditorState,
   },
 });
 
@@ -85,4 +86,5 @@ export const {
   changeVariableEditorExtended,
   addVariableEditorError,
   removeVariableEditorError,
+  cleanEditorState,
 } = variableEditorReducerSlice.actions;

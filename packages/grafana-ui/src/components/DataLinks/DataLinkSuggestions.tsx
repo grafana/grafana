@@ -1,12 +1,10 @@
-import { selectThemeVariant, ThemeContext } from '../../index';
 import { GrafanaTheme, VariableSuggestion } from '@grafana/data';
-import { css, cx } from 'emotion';
-import _ from 'lodash';
-import React, { useRef, useContext, useMemo } from 'react';
+import { css, cx } from '@emotion/css';
+import { groupBy, capitalize } from 'lodash';
+import React, { useRef, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
-import tinycolor from 'tinycolor2';
-import { stylesFactory } from '../../themes';
+import { styleMixins, useStyles } from '../../themes';
 
 interface DataLinkSuggestionsProps {
   suggestions: VariableSuggestion[];
@@ -15,62 +13,13 @@ interface DataLinkSuggestionsProps {
   onClose?: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const wrapperBg = selectThemeVariant(
-    {
-      light: theme.palette.white,
-      dark: theme.palette.dark2,
-    },
-    theme.type
-  );
-
-  const wrapperShadow = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.black,
-    },
-    theme.type
-  );
-
-  const itemColor = selectThemeVariant(
-    {
-      light: theme.palette.black,
-      dark: theme.palette.white,
-    },
-    theme.type
-  );
-
-  const itemDocsColor = selectThemeVariant(
-    {
-      light: theme.palette.dark3,
-      dark: theme.palette.gray2,
-    },
-    theme.type
-  );
-
-  const itemBgHover = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.dark7,
-    },
-    theme.type
-  );
-
-  const itemBgActive = selectThemeVariant(
-    {
-      light: theme.palette.gray6,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
-
-  const separatorColor = selectThemeVariant(
-    {
-      light: tinycolor(wrapperBg.toString()).darken(10).toString(),
-      dark: tinycolor(wrapperBg.toString()).lighten(10).toString(),
-    },
-    theme.type
-  );
+const getStyles = (theme: GrafanaTheme) => {
+  const wrapperBg = theme.colors.bg1;
+  const wrapperShadow = theme.colors.dropdownShadow;
+  const itemColor = theme.colors.text;
+  const itemBgHover = styleMixins.hoverColor(theme.colors.bg1, theme);
+  const itemBgActive = theme.colors.bg2;
+  const separatorColor = theme.colors.border2;
 
   return {
     list: css`
@@ -107,16 +56,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       font-family: ${theme.typography.fontFamily.monospace};
       font-size: ${theme.typography.size.sm};
     `,
-    itemDocs: css`
-      margin-top: ${theme.spacing.xs};
-      color: ${itemDocsColor};
-    `,
   };
-});
+};
 
 export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
   const ref = useRef(null);
-  const theme = useContext(ThemeContext);
+
   useClickAway(ref, () => {
     if (otherProps.onClose) {
       otherProps.onClose();
@@ -124,10 +69,11 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   });
 
   const groupedSuggestions = useMemo(() => {
-    return _.groupBy(suggestions, (s) => s.origin);
+    return groupBy(suggestions, (s) => s.origin);
   }, [suggestions]);
 
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
+
   return (
     <div ref={ref} className={styles.wrapper}>
       {Object.keys(groupedSuggestions).map((key, i) => {
@@ -145,7 +91,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
           <DataLinkSuggestionsList
             {...otherProps}
             suggestions={groupedSuggestions[key]}
-            label={`${_.capitalize(key)}`}
+            label={`${capitalize(key)}`}
             activeIndex={otherProps.activeIndex}
             activeIndexOffset={indexOffset}
             key={key}
@@ -165,8 +111,7 @@ interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
 
 const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
   ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
-    const theme = useContext(ThemeContext);
-    const styles = getStyles(theme);
+    const styles = useStyles(getStyles);
 
     return (
       <>

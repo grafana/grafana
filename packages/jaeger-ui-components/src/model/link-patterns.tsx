@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _uniq from 'lodash/uniq';
+import { uniq as _uniq } from 'lodash';
 import memoize from 'lru-memoize';
 import { getConfigValue } from '../utils/config/get-config';
 import { getParent } from './span';
 import { TNil } from '../types';
-import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '@grafana/data';
+import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '../types/trace';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 

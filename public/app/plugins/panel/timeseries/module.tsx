@@ -12,6 +12,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
     builder.addRadio({
       path: 'tooltipOptions.mode',
       name: 'Tooltip mode',
+      category: ['Legend'],
       description: '',
       defaultValue: 'single',
       settings: {
@@ -22,5 +23,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         ],
       },
     });
+
     addLegendOptions(builder);
   });

@@ -1,9 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Explore should render component 1`] = `
-<div
-  aria-label="Explore"
-  className="explore"
+<CustomScrollbar
+  autoHeightMin="100%"
 >
   <Connect(UnConnectedExploreToolbar)
     exploreId="left"
@@ -16,14 +15,6 @@ exports[`Explore should render component 1`] = `
       className="panel-container css-kj45dn-queryContainer"
     >
       <QueryRows
-        exploreEvents={
-          EventBusSrv {
-            "emitter": EventEmitter {
-              "_events": Object {},
-              "_eventsCount": 0,
-            },
-          }
-        }
         exploreId="left"
         queryKeys={Array []}
       />
@@ -37,7 +28,9 @@ exports[`Explore should render component 1`] = `
         richHistoryButtonActive={false}
       />
     </div>
-    <ErrorContainer />
+    <ResponseErrorContainer
+      exploreId="left"
+    />
     <AutoSizer
       disableHeight={true}
       disableWidth={false}
@@ -47,5 +40,5 @@ exports[`Explore should render component 1`] = `
       <Component />
     </AutoSizer>
   </div>
-</div>
+</CustomScrollbar>
 `;

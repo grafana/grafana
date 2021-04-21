@@ -21,12 +21,13 @@ import {
   useStyles,
   useTheme,
   ZoomPlugin,
+  TooltipDisplayMode,
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { hideSeriesConfigFactory } from 'app/plugins/panel/timeseries/overrides/hideSeriesConfigFactory';
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
@@ -128,14 +129,10 @@ export function ExploreGraphNGPanel({
           legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
           timeZone={timeZone}
         >
-          <TooltipPlugin mode="single" timeZone={timeZone} />
           <ZoomPlugin onZoom={onUpdateTimeRange} />
-          <ContextMenuPlugin timeZone={timeZone} />
-          {annotations ? (
-            <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
-          ) : (
-            <></>
-          )}
+          <TooltipPlugin data={data} mode={TooltipDisplayMode.Single} timeZone={timeZone} />
+          <ContextMenuPlugin data={data} timeZone={timeZone} />
+          {annotations && <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />}
         </GraphNG>
       </Collapse>
     </>

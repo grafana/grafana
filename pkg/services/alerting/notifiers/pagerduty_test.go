@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -138,7 +140,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Name:    "someRule",
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.IsTestRun = true
 
 				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
@@ -157,12 +159,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 						},
 					},
 					"payload": map[string]interface{}{
-						"component":      "Grafana",
-						"source":         "<<PRESENCE>>",
-						"custom_details": map[string]interface{}{},
-						"severity":       "critical",
-						"summary":        "someRule - someMessage",
-						"timestamp":      "<<PRESENCE>>",
+						"component": "Grafana",
+						"source":    "<<PRESENCE>>",
+						"custom_details": map[string]interface{}{
+							"state": "alerting",
+						},
+						"severity":  "critical",
+						"summary":   "someRule - someMessage",
+						"timestamp": "<<PRESENCE>>",
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
@@ -194,7 +198,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Name:    "someRule",
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.IsTestRun = true
 				evalContext.EvalMatches = []*alerting.EvalMatch{
 					{
@@ -229,6 +233,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"queries": map[string]interface{}{
 								"someMetric": nil,
 							},
+							"state": "alerting",
 						},
 						"severity":  "critical",
 						"summary":   "someRule",
@@ -272,7 +277,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 						{Key: "severity", Value: "warning"},
 						{Key: "dedup_key", Value: "key-" + strings.Repeat("x", 260)},
 					},
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 				evalContext.IsTestRun = true
 
@@ -301,6 +306,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"severity":  "warning",
 							"dedup_key": "key-" + strings.Repeat("x", 250),
 							"keyOnly":   "",
+							"state":     "alerting",
 						},
 						"severity":  "warning",
 						"summary":   "someRule - someMessage",
@@ -350,7 +356,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 						{Key: "component", Value: "aComponent"},
 						{Key: "severity", Value: "info"},
 					},
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 				evalContext.IsTestRun = true
 
@@ -378,6 +384,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"component": "aComponent",
 							"severity":  "info",
 							"keyOnly":   "",
+							"state":     "alerting",
 						},
 						"severity":  "info",
 						"summary":   "someRule - someMessage",
@@ -428,7 +435,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 						{Key: "component", Value: "aComponent"},
 						{Key: "severity", Value: "llama"},
 					},
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 				evalContext.IsTestRun = true
 
@@ -456,6 +463,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"component": "aComponent",
 							"severity":  "llama",
 							"keyOnly":   "",
+							"state":     "alerting",
 						},
 						"severity":  "critical",
 						"summary":   "someRule - someMessage",

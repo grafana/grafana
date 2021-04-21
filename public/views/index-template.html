@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script nonce="[[.Nonce]]">
-      // https://github.com/GoogleChromeLabs/tti-polyfill
-      !(function() {
-        if ('PerformanceLongTaskTiming' in window) {
-          var g = (window.__tti = { e: [] });
-          g.o = new PerformanceObserver(function(l) {
-            g.e = g.e.concat(l.getEntries());
-          });
-          g.o.observe({ entryTypes: ['longtask'] });
-        }
-      })();
-
-    </script>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width" />
@@ -25,20 +12,20 @@
 
     <link
       rel="preload"
-      href="public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
+      href="[[.ContentDeliveryURL]]public/fonts/roboto/RxZJdnzeo3R5zSexge8UUVtXRa8TVwTICgirnJhmVJw.woff2"
       as="font"
       crossorigin
     />
 
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
-    <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28" />
-
-    <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
+    <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
     <script nonce="[[.Nonce]]">
-      performance.mark('css done blocking');
+      performance.mark('frontend_boot_css_time_seconds');
     </script>
+
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
@@ -199,33 +186,71 @@
         </p>
         <p>
           1. This could be caused by your reverse proxy settings.<br /><br />
-          2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not using a reverse proxy make sure to set serve_from_sub_path to true.<br />
+          2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath. If not
+          using a reverse proxy make sure to set serve_from_sub_path to true.<br />
           <br />
           3. If you have a local dev build make sure you build frontend using: yarn start, yarn start:hot, or yarn
           build<br />
           <br />
           4. Sometimes restarting grafana-server can help<br />
           <br />
-          5. You might be using a non-supported browser. To make sure read the documentation on <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">supported browsers</a>.
+          5. Check if you are using a non-supported browser. For more information, refer to the list of
+          <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
+            supported browsers</a
+          >.
         </p>
       </div>
+      <script>
+        // Check to see if browser is not supported by Grafana
+        // Source file in app/core/utils/browser.ts & tests make edits there and copy compiled typescript here
+        function checkBrowserCompatibility() {
+          var isIE = navigator.userAgent.indexOf('MSIE') > -1;
+          var isEdge = navigator.userAgent.indexOf('Edge/') > -1 || navigator.userAgent.indexOf('Edg/') > -1;
+          var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+          var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+
+          /* Check for
+          <= IE11 (Trident 7)
+          Edge <= 16
+          Firefox <= 64
+          Chrome <= 54
+          */
+          var isEdgeVersion = /Edge\/([0-9.]+)/.exec(navigator.userAgent);
+
+          if (isIE && parseFloat(/Trident\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 7) {
+            return false;
+          } else if (
+            isEdge &&
+            ((isEdgeVersion && parseFloat(isEdgeVersion[1]) <= 16) ||
+              parseFloat(/Edg\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 16)
+          ) {
+            return false;
+          } else if (isFirefox && parseFloat(/Firefox\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 64) {
+            return false;
+          } else if (isChrome && parseFloat(/Chrome\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 54) {
+            return false;
+          }
+
+          return true;
+        }
+
+        if (!checkBrowserCompatibility()) {
+          alert('Your browser is not fully supported, please try newer version.');
+        }
+      </script>
     </div>
 
-    <grafana-app class="grafana-app" ng-cloak>
-      <sidemenu class="sidemenu"></sidemenu>
-      <app-notifications-list class="page-alert-list"></app-notifications-list>
-      <search-wrapper></search-wrapper>
-
-      <div class="main-view">
-				<div ng-view class="scroll-canvas"></div>
-      </div>
-    </grafana-app>
+    <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
         window.grafanaBootData = {
           user: [[.User]],
           settings: [[.Settings]],
-          navTree: [[.NavTree]]
+          navTree: [[.NavTree]],
+          themePaths: {
+            light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= webpack.hash %>.css',
+            dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= webpack.hash %>.css'
+          }
         };
 
       // In case the js files fails to load the code below will show an info message.
@@ -235,6 +260,9 @@
             preloader[0].className = "preloader preloader--done";
           }
         };
+        [[if .ContentDeliveryURL]]
+          window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
+        [[end]]
     </script>
 
     [[if .GoogleTagManagerId]]
@@ -256,11 +284,11 @@
         src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
         height="0"
         width="0"
-        style="display:none;visibility:hidden"
+        style="display: none; visibility: hidden"
       ></iframe>
     </noscript>
     <script nonce="[[.Nonce]]">
-      (function(w, d, s, l, i) {
+      (function (w, d, s, l, i) {
         w[l] = w[l] || [];
         w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
         var f = d.getElementsByTagName(s)[0],
@@ -272,22 +300,24 @@
       })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
     </script>
     <!-- End Google Tag Manager -->
-    [[end]]
-
-    <%
-    for (key in htmlWebpackPlugin.files.chunks) { %><%
-      if (htmlWebpackPlugin.files.jsIntegrity) { %>
-    <script nonce="[[.Nonce]]"
-      src="<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+    [[end]] <% for (key in htmlWebpackPlugin.files.chunks) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
+    <script
+      nonce="[[.Nonce]]"
+      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
       type="text/javascript"
       integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
-      crossorigin="<%= webpackConfig.output.crossOriginLoading %>"></script><%
-      } else { %>
-    <script nonce="[[.Nonce]]" src="<%= htmlWebpackPlugin.files.chunks[key].entry %>" type="text/javascript"></script><%
-      } %><%
-    } %>
+      crossorigin="<%= webpackConfig.output.crossOriginLoading %>"
+    ></script>
+    <% } else { %>
+    <script
+      nonce="[[.Nonce]]"
+      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+      type="text/javascript"
+    ></script>
+    <% } %> <% } %>
+
     <script nonce="[[.Nonce]]">
-      performance.mark('js done blocking');
+      performance.mark('frontend_boot_js_done_time_seconds');
     </script>
   </body>
 </html>

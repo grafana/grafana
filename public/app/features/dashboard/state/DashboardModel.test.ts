@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { keys as _keys } from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
@@ -49,7 +49,7 @@ describe('DashboardModel', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
       const saveModel = model.getSaveModelClone();
-      const keys = _.keys(saveModel);
+      const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');
@@ -260,20 +260,19 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('updateSubmenuVisibility with empty lists', () => {
+  describe('isSubMenuVisible with empty lists', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({});
-      model.updateSubmenuVisibility();
     });
 
-    it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+    it('should not show submenu', () => {
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with annotation', () => {
+  describe('isSubMenuVisible with annotation', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -282,32 +281,35 @@ describe('DashboardModel', () => {
           list: [{}],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
-    it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+    it('should show submmenu', () => {
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with template var', () => {
+  describe('isSubMenuVisible with template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
-        templating: {
-          list: [{}],
+      model = new DashboardModel(
+        {
+          templating: {
+            list: [{}],
+          },
         },
-      });
-      model.updateSubmenuVisibility();
+        {},
+        // getVariablesFromState stub to return a variable
+        () => [{} as any]
+      );
     });
 
     it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden template var', () => {
+  describe('isSubMenuVisible with hidden template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -316,15 +318,14 @@ describe('DashboardModel', () => {
           list: [{ hide: 2 }],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden annotation toggle', () => {
+  describe('isSubMenuVisible with hidden annotation toggle', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
@@ -333,11 +334,10 @@ describe('DashboardModel', () => {
           list: [{ hide: true }],
         },
       });
-      dashboard.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(dashboard.meta.submenuEnabled).toBe(false);
+      expect(dashboard.isSubMenuVisible()).toBe(false);
     });
   });
 
@@ -510,6 +510,57 @@ describe('DashboardModel', () => {
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
+    });
+
+    it('getSaveModelClone should remove repeated panels and scopedVars', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.length).toBe(2);
+      expect(saveModel.panels[0].scopedVars).toBe(undefined);
+      expect(saveModel.panels[1].scopedVars).toBe(undefined);
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
     });
   });
 

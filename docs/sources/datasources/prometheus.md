@@ -23,7 +23,8 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                              |
 | `User`                    | User name for basic authentication.                                                                                                                                                                     |
 | `Password`                | Password for basic authentication.                                                                                                                                                                      |
-| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                       |
+| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.             
+| `HTTP method`             | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.                                                                                       |
 | `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.           |
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
 | `Label name`              | Add the name of the field in the label object.                                                                                                                                                          |
@@ -141,6 +142,11 @@ There are two syntaxes:
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
 
+### Ad hoc filters variable
+
+Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters.md" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
+applied to all your Prometheus queries.
+
 ## Annotations
 
 [Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
@@ -157,7 +163,7 @@ The step option is useful to limit the number of events returned from your query
 
 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md">}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md">}}).
 
 ## Prometheus API
 
@@ -182,6 +188,7 @@ datasources:
     type: prometheus
     # Access mode - proxy (server in the UI) or direct (browser in the UI).
     access: proxy
+    httpMethod: POST
     url: http://localhost:9090
     jsonData:
       exemplarTraceIdDestinations:
@@ -207,12 +214,11 @@ If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Qu
 
 ## Exemplars
 
-> **Note:** This feature is available in Prometheus 2.25+ and Grafana 7.4+.
+> **Note:** This feature is available in Prometheus 2.26+ and Grafana 7.4+.
 
 Grafana 7.4 and later versions have the capability to show exemplars data alongside a metric both in Explore and Dashboards.
 Exemplars are a way to associate higher cardinality metadata from a specific event with traditional timeseries data.
 {{< docs-imagebox img="/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
 Configure Exemplars in the data source settings by adding external or internal links.
-{{< docs-imagebox img="/img/docs/v74/exemplars-settings.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
-
+{{< docs-imagebox img="/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}

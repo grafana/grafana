@@ -16,7 +16,7 @@ exports[`Render should render action bar and datasources 1`] = `
   <PageContents
     isLoading={false}
   >
-    <OrgActionBar
+    <PageActionBar
       key="action-bar"
       linkButton={
         Object {
@@ -117,25 +117,6 @@ exports[`Render should render action bar and datasources 1`] = `
               "defaultRegion": "eu-west-2",
             },
             "name": "dataSource-4",
-            "orgId": 1,
-            "password": "",
-            "readOnly": false,
-            "type": "cloudwatch",
-            "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-            "url": "",
-            "user": "",
-          },
-          Object {
-            "access": "",
-            "basicAuth": false,
-            "database": "database-5",
-            "id": 5,
-            "isDefault": false,
-            "jsonData": Object {
-              "authType": "credentials",
-              "defaultRegion": "eu-west-2",
-            },
-            "name": "dataSource-5",
             "orgId": 1,
             "password": "",
             "readOnly": false,

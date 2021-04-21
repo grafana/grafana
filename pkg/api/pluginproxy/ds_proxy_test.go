@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -68,6 +68,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				{
 					Path:    "api/restricted",
 					ReqRole: models.ROLE_ADMIN,
+				},
+				{
+					Path: "api/body",
+					URL:  "http://www.test.com",
+					Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 				},
 			},
 		}
@@ -134,6 +139,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
+		})
+
+		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/body", &setting.Cfg{})
+			require.NoError(t, err)
+			proxy.route = plugin.Routes[5]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+
+			content, err := ioutil.ReadAll(req.Body)
+			require.NoError(t, err)
+			require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 		})
 
 		t.Run("Validating request", func(t *testing.T) {
@@ -527,7 +544,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	type setUpCfg struct {
 		headers map[string]string
-		writeCb func(w http.ResponseWriter)
+		writeCb func(w http.ResponseWriter, r *http.Request)
 	}
 
 	setUp := func(t *testing.T, cfgs ...setUpCfg) (*models.ReqContext, *models.DataSource) {
@@ -539,7 +556,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			for _, cfg := range cfgs {
 				if cfg.writeCb != nil {
 					t.Log("Writing response via callback")
-					cfg.writeCb(w)
+					cfg.writeCb(w, r)
 					written = true
 				}
 			}
@@ -607,7 +624,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	t.Run("Data source returns status code 401", func(t *testing.T) {
 		ctx, ds := setUp(t, setUpCfg{
-			writeCb: func(w http.ResponseWriter) {
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(401)
 				w.Header().Set("www-authenticate", `Basic realm="Access to the server"`)
 				_, err := w.Write([]byte("Not authenticated"))
@@ -623,6 +640,28 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		require.NoError(t, writeErr)
 		assert.Equal(t, 400, proxy.ctx.Resp.Status(), "Status code 401 should be converted to 400")
 		assert.Empty(t, proxy.ctx.Resp.Header().Get("www-authenticate"))
+	})
+
+	t.Run("Data source should handle proxy path url encoding correctly", func(t *testing.T) {
+		var req *http.Request
+		ctx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				req = r
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("OK"))
+				require.NoError(t, err)
+			},
+		})
+
+		ctx.Req.Request = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{})
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		require.NotNil(t, req)
+		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
 	})
 }
 
@@ -855,4 +894,41 @@ func runDatasourceAuthTest(t *testing.T, test *testCase) {
 	proxy.director(req)
 
 	test.checkReq(req)
+}
+
+func Test_PathCheck(t *testing.T) {
+	// Ensure that we test routes appropriately. This test reproduces a historical bug where two routes were defined with different role requirements but the same method and the more privileged route was tested first. Here we ensure auth checks are applied based on the correct route, not just the method.
+	plugin := &plugins.DataSourcePlugin{
+		Routes: []*plugins.AppPluginRoute{
+			{
+				Path:    "a",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_EDITOR,
+				Method:  http.MethodGet,
+			},
+			{
+				Path:    "b",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_VIEWER,
+				Method:  http.MethodGet,
+			},
+		},
+	}
+	setUp := func() (*models.ReqContext, *http.Request) {
+		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
+		require.NoError(t, err)
+		ctx := &models.ReqContext{
+			Context: &macaron.Context{
+				Req: macaron.Request{Request: req},
+			},
+			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_VIEWER},
+		}
+		return ctx, req
+	}
+	ctx, _ := setUp()
+	proxy, err := NewDataSourceProxy(&models.DataSource{}, plugin, ctx, "b", &setting.Cfg{})
+	require.NoError(t, err)
+
+	require.Nil(t, proxy.validateRequest())
+	require.Equal(t, plugin.Routes[1], proxy.route)
 }

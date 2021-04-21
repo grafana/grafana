@@ -23,3 +23,30 @@ describe('toUrlParams', () => {
     expect(url).toBe('server=:@');
   });
 });
+
+describe('parseKeyValue', () => {
+  it('should parse url search params to object', () => {
+    const obj = urlUtil.parseKeyValue('param=value&param2=value2&kiosk');
+    expect(obj).toEqual({ param: 'value', param2: 'value2', kiosk: true });
+  });
+
+  it('should parse same url key multiple times to array', () => {
+    const obj = urlUtil.parseKeyValue('servers=A&servers=B');
+    expect(obj).toEqual({ servers: ['A', 'B'] });
+  });
+
+  it('should parse numeric params', () => {
+    const obj = urlUtil.parseKeyValue('num1=12&num2=12.2');
+    expect(obj).toEqual({ num1: 12, num2: 12.2 });
+  });
+
+  it('should not parse empty strinhg as number', () => {
+    const obj = urlUtil.parseKeyValue('num1=&num2=12.2');
+    expect(obj).toEqual({ num1: '', num2: 12.2 });
+  });
+
+  it('should parse boolean params', () => {
+    const obj = urlUtil.parseKeyValue('bool1&bool2=true&bool3=false');
+    expect(obj).toEqual({ bool1: true, bool2: true, bool3: false });
+  });
+});

@@ -4,12 +4,10 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
-import { rangeUtil } from '@grafana/data';
-import { dateMath } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 
@@ -17,26 +15,32 @@ import config from 'app/core/config';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
-import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import { CoreEvents } from 'app/types';
+import { DEPRECATED_PANELS, LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
+import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
-    const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : undefined;
+    const text2 = panel.alert
+      ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+      : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
-      text2: text2,
-      icon: 'trash-alt',
-      confirmText: confirmText,
-      yesText: 'Remove',
-      onConfirm: () => removePanel(dashboard, panel, false),
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Remove panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'trash-alt',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => removePanel(dashboard, panel, false),
+      })
+    );
     return;
   }
 
@@ -48,18 +52,53 @@ export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => 
 };
 
 export const copyPanel = (panel: PanelModel) => {
-  store.set(LS_PANEL_COPY_KEY, JSON.stringify(panel.getSaveModel()));
-  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
+  let saveModel = panel;
+  if (panel instanceof PanelModel) {
+    saveModel = panel.getSaveModel();
+  }
+
+  store.set(LS_PANEL_COPY_KEY, JSON.stringify(saveModel));
+  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
-  appEvents.emit(CoreEvents.showModalReact, {
-    component: ShareModal,
-    props: {
-      dashboard: dashboard,
-      panel: panel,
-    },
-  });
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: ShareModal,
+      props: {
+        dashboard: dashboard,
+        panel: panel,
+      },
+    })
+  );
+};
+
+export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) => {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: AddLibraryPanelModal,
+      props: {
+        panel,
+        initialFolderId: dashboard.meta.folderId,
+        isOpen: true,
+      },
+    })
+  );
+};
+
+export const unlinkLibraryPanel = (panel: PanelModel) => {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: UnlinkModal,
+      props: {
+        onConfirm: () => {
+          delete panel.libraryPanel;
+          panel.render();
+        },
+        isOpen: true,
+      },
+    })
+  );
 };
 
 export const refreshPanel = (panel: PanelModel) => {
@@ -147,4 +186,8 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
+}
+
+export function isDeprecatedPanel(panelType: string) {
+  return !!DEPRECATED_PANELS[panelType];
 }

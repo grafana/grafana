@@ -45,7 +45,6 @@ export function transform(
     target: PromQuery;
     responseListLength: number;
     scopedVars?: ScopedVars;
-    mixedQueries?: boolean;
   }
 ) {
   // Create options object from transformOptions
@@ -61,14 +60,8 @@ export function transform(
     refId: transformOptions.target.refId,
     valueWithRefId: transformOptions.target.valueWithRefId,
     meta: {
-      /**
-       * Fix for showing of Prometheus results in Explore table.
-       * We want to show result of instant query always in table and result of range query based on target.runAll;
-       */
-      preferredVisualisationType: getPreferredVisualisationType(
-        transformOptions.query.instant,
-        transformOptions.mixedQueries
-      ),
+      // Fix for showing of Prometheus results in Explore table
+      preferredVisualisationType: transformOptions.query.instant ? 'table' : 'graph',
     },
   };
   const prometheusResult = response.data.data;
@@ -78,9 +71,9 @@ export function transform(
     prometheusResult.forEach((exemplarData) => {
       const data = exemplarData.exemplars.map((exemplar) => {
         return {
-          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.scrapeTimestamp,
-          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.exemplar.value,
-          ...exemplar.exemplar.labels,
+          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.timestamp * 1000,
+          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.value,
+          ...exemplar.labels,
           ...exemplarData.seriesLabels,
         };
       });
@@ -165,8 +158,9 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: 'Open link',
+      title: `Go to ${options.url}`,
       url: options.url,
+      targetBlank: true,
     });
   }
   return dataLinks;
@@ -225,14 +219,6 @@ function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
     }
   }
   return sampledExemplars;
-}
-
-function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {
-  if (isInstantQuery) {
-    return 'table';
-  }
-
-  return mixedQueries ? 'graph' : undefined;
 }
 
 /**
@@ -299,10 +285,13 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
   const metricFields = Object.keys(md.reduce((acc, series) => ({ ...acc, ...series.metric }), {}))
     .sort()
     .map((label) => {
+      // Labels have string field type, otherwise table tries to figure out the type which can result in unexpected results
+      // Only "le" label has a number field type
+      const numberField = label === 'le';
       return {
         name: label,
         config: { filterable: true },
-        type: FieldType.other,
+        type: numberField ? FieldType.number : FieldType.string,
         values: new ArrayVector(),
       };
     });

@@ -1,14 +1,13 @@
 import React, { ChangeEvent, useState } from 'react';
-import { css } from 'emotion';
-
+import { css } from '@emotion/css';
 import { Input, Field, Icon } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme, selectThemeVariant } from '../../themes';
+import { useTheme } from '../../themes';
 import mdx from './Icon.mdx';
 
 export default {
-  title: 'Docs Overview/Icon',
+  title: 'General/Icon',
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {
@@ -23,13 +22,7 @@ export default {
 
 const IconWrapper = ({ name }: { name: IconName }) => {
   const theme = useTheme();
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.dark6,
-    },
-    theme.type
-  );
+  const borderColor = theme.colors.border2;
 
   return (
     <div

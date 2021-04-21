@@ -1,16 +1,16 @@
 import { e2e } from '@grafana/e2e';
 
-const PAGE_UNDER_TEST = '-Y-tnEDWk';
+const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
 describe('Variables - Set options from ui', () => {
   it('clicking a value that is not part of dependents options should change these to All', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?var-datacenter=A&var-server=AA&var-pod=AAA` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-server=AA&var-pod=AAA` });
     e2e().server();
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 
@@ -25,6 +25,8 @@ describe('Variables - Set options from ui', () => {
     e2e().wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
+
+    e2e.components.LoadingIndicator.icon().should('have.length', 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 2);
 
@@ -63,12 +65,12 @@ describe('Variables - Set options from ui', () => {
 
   it('adding a value that is not part of dependents options should add the new values dependant options', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?var-datacenter=A&var-server=AA&var-pod=AAA` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-server=AA&var-pod=AAA` });
     e2e().server();
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 
@@ -83,6 +85,8 @@ describe('Variables - Set options from ui', () => {
     e2e().wait(500);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').scrollIntoView().should('be.visible');
+
+    e2e.components.LoadingIndicator.icon().should('have.length', 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA').should('be.visible').click();
 
@@ -117,13 +121,13 @@ describe('Variables - Set options from ui', () => {
   it('removing a value that is part of dependents options should remove the new values dependant options', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({
-      uid: `${PAGE_UNDER_TEST}?var-datacenter=A&var-datacenter=B&var-server=AA&var-server=BB&var-pod=AAA&var-pod=BBB`,
+      uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-datacenter=B&var-server=AA&var-server=BB&var-pod=AAA&var-pod=BBB`,
     });
     e2e().server();
     e2e()
       .route({
         method: 'POST',
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
       })
       .as('query');
 
@@ -138,6 +142,8 @@ describe('Variables - Set options from ui', () => {
     e2e().wait(500);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
+
+    e2e.components.LoadingIndicator.icon().should('have.length', 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB').should('be.visible').click();
 

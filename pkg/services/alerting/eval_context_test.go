@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -13,7 +15,7 @@ import (
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
-	ctx := NewEvalContext(context.TODO(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}})
+	ctx := NewEvalContext(context.TODO(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{})
 
 	t.Run("ok -> alerting", func(t *testing.T) {
 		ctx.PrevAlertState = models.AlertStateOK
@@ -198,7 +200,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}})
+		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{})
 
 		tc.applyFn(evalContext)
 		newState := evalContext.GetNewState()

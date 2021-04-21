@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import Graph from './Graph';
-import Chart from '../Chart';
+import { VizTooltip, TooltipDisplayMode } from '../VizTooltip';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
 
 const series: GraphSeriesXY[] = [
@@ -79,13 +79,20 @@ const mockGraphProps = (multiSeries = false) => {
     timeZone: 'browser',
   };
 };
+
+(window as any).ResizeObserver = class ResizeObserver {
+  constructor() {}
+  observe() {}
+  disconnect() {}
+};
+
 describe('Graph', () => {
   describe('with tooltip', () => {
     describe('in single mode', () => {
       it("doesn't render tooltip when not hovering over a datapoint", () => {
         const graphWithTooltip = (
           <Graph {...mockGraphProps()}>
-            <Chart.Tooltip mode="single" />
+            <VizTooltip mode={TooltipDisplayMode.Single} />
           </Graph>
         );
 
@@ -98,7 +105,7 @@ describe('Graph', () => {
         // Given
         const graphWithTooltip = (
           <Graph {...mockGraphProps()}>
-            <Chart.Tooltip mode="single" />
+            <VizTooltip mode={TooltipDisplayMode.Single} />
           </Graph>
         );
         const container = mount(graphWithTooltip);
@@ -138,7 +145,7 @@ describe('Graph', () => {
         // Given
         const graphWithTooltip = (
           <Graph {...mockGraphProps(true)}>
-            <Chart.Tooltip mode="multi" />
+            <VizTooltip mode={TooltipDisplayMode.Multi} />
           </Graph>
         );
         const container = mount(graphWithTooltip);

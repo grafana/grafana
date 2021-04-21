@@ -18,10 +18,6 @@ describe('GraphCtrl', () => {
     },
   };
 
-  const scope: any = {
-    $on: () => {},
-  };
-
   GraphCtrl.prototype.panel = {
     events: {
       on: () => {},
@@ -29,6 +25,17 @@ describe('GraphCtrl', () => {
     },
     gridPos: {
       w: 100,
+    },
+    fieldConfig: {
+      defaults: {},
+    },
+  };
+
+  const scope: any = {
+    $on: () => {},
+    $parent: {
+      panel: GraphCtrl.prototype.panel,
+      dashboard: {},
     },
   };
 

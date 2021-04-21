@@ -1,3 +1,5 @@
+import { DataFrame } from './dataFrame';
+
 /**
  * Base class for editor builders
  *
@@ -39,7 +41,7 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   /**
    * Array of strings representing category of the option. First element in the array will make option render as collapsible section.
    */
-  category?: Array<string | undefined>;
+  category?: string[];
 
   /**
    * Set this value if undefined
@@ -49,5 +51,5 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   /**
    * Function that enables configuration of when option editor should be shown based on current panel option properties.
    */
-  showIf?: (currentOptions: TOptions) => boolean | undefined;
+  showIf?: (currentOptions: TOptions, data?: DataFrame[]) => boolean | undefined;
 }

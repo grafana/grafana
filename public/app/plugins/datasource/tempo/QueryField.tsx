@@ -1,8 +1,8 @@
+import { ExploreQueryFieldProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { LegacyForms } from '@grafana/ui';
 import React from 'react';
 import { TempoDatasource, TempoQuery } from './datasource';
-
-import { ExploreQueryFieldProps } from '@grafana/data';
-import { LegacyForms } from '@grafana/ui';
 
 type Props = ExploreQueryFieldProps<TempoDatasource, TempoQuery>;
 export class TempoQueryField extends React.PureComponent<Props> {
@@ -15,7 +15,7 @@ export class TempoQueryField extends React.PureComponent<Props> {
         labelWidth={4}
         inputEl={
           <div className="slate-query-field__wrapper">
-            <div className="slate-query-field">
+            <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
               <input
                 style={{ width: '100%' }}
                 value={query.query || ''}

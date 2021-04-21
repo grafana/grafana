@@ -1,5 +1,4 @@
 import React, { FC, useState, useMemo } from 'react';
-import _ from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 import { Segment, Icon } from '@grafana/ui';
@@ -57,19 +56,19 @@ export const Aggregations: FC<Props> = (props) => {
 };
 
 const useAggregationOptionsByMetric = ({ metricDescriptor }: Props): Array<SelectableValue<string>> => {
+  const valueType = metricDescriptor?.valueType;
+  const metricKind = metricDescriptor?.metricKind;
+
   return useMemo(() => {
-    if (!metricDescriptor) {
+    if (!valueType || !metricKind) {
       return [];
     }
 
-    return getAggregationOptionsByMetric(
-      metricDescriptor.valueType as ValueTypes,
-      metricDescriptor.metricKind as MetricKind
-    ).map((a) => ({
+    return getAggregationOptionsByMetric(valueType as ValueTypes, metricKind as MetricKind).map((a) => ({
       ...a,
       label: a.text,
     }));
-  }, [metricDescriptor?.metricKind, metricDescriptor?.valueType]);
+  }, [valueType, metricKind]);
 };
 
 const useSelectedFromOptions = (aggOptions: Array<SelectableValue<string>>, props: Props) => {

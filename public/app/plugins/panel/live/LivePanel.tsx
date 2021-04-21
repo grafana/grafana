@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { FeatureInfoBox, stylesFactory, Button, JSONFormatter, CustomScrollbar } from '@grafana/ui';
+import { FeatureInfoBox, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
 import {
   GrafanaTheme,
   PanelProps,
@@ -14,12 +14,12 @@ import {
   PanelData,
   LoadingState,
   applyFieldOverrides,
+  StreamingDataFrame,
 } from '@grafana/data';
 import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
-import { config, getGrafanaLiveSrv, MeasurementCollector } from '@grafana/runtime';
-import { css, cx } from 'emotion';
-import { CodeEditor } from '@grafana/ui';
+import { config, getGrafanaLiveSrv } from '@grafana/runtime';
+import { css, cx } from '@emotion/css';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
@@ -145,7 +145,7 @@ export class LivePanel extends PureComponent<Props, State> {
     const json = this.props.options?.json;
     if (json) {
       const rsp = await channel.publish(json);
-      console.log('GOT', rsp);
+      console.log('onPublishClicked (response from publish)', rsp);
     } else {
       console.log('nothing to publish');
     }
@@ -169,10 +169,10 @@ export class LivePanel extends PureComponent<Props, State> {
     }
 
     if (options.message === MessageDisplayMode.Auto) {
-      if (message instanceof MeasurementCollector) {
+      if (message instanceof StreamingDataFrame) {
         const data: PanelData = {
           series: applyFieldOverrides({
-            data: message.getData(),
+            data: [message],
             theme: config.theme,
             replaceVariables: (v: string) => v,
             fieldConfig: {

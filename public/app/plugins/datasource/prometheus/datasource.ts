@@ -17,10 +17,9 @@ import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import cloneDeep from 'lodash/cloneDeep';
-import defaults from 'lodash/defaults';
+import { defaults, cloneDeep } from 'lodash';
 import LRU from 'lru-cache';
-import { forkJoin, merge, Observable, of, pipe, throwError } from 'rxjs';
+import { forkJoin, merge, Observable, of, pipe, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
@@ -44,6 +43,8 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
+const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this data source are not available.';
+const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -61,6 +62,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
+  exemplarErrors: Subject<string> = new Subject();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -83,7 +85,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
   }
 
@@ -137,14 +138,29 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   // Use this for tab completion features, wont publish response to other components
-  metadataRequest<T = any>(url: string) {
+  async metadataRequest<T = any>(url: string) {
     const data: any = {};
     for (const [key, value] of this.customQueryParameters) {
       if (data[key] == null) {
         data[key] = value;
       }
     }
-    return this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
+
+    // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
+    if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
+      try {
+        return await this._request<T>(url, data, { method: this.httpMethod, hideFromInspector: true }).toPromise();
+      } catch (err) {
+        // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
+        if (this.httpMethod === 'POST' && err.status === 405) {
+          console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    return await this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -222,12 +238,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(instantTarget, options, start, end));
         activeTargets.push(instantTarget);
       } else {
-        if (target.exemplar) {
+        // It doesn't make sense to query for exemplars in dashboard if only instant is selected
+        if (target.exemplar && !target.instant) {
           const exemplarTarget = cloneDeep(target);
           exemplarTarget.requestId += '_exemplar';
           target.exemplar = false;
           queries.push(this.createQuery(exemplarTarget, options, start, end));
           activeTargets.push(exemplarTarget);
+          this.exemplarErrors.next();
+        }
+        if (target.exemplar && target.instant) {
+          this.exemplarErrors.next('Exemplars are not available for instant queries.');
         }
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
@@ -262,7 +283,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
-    const mixedQueries = activeTargets.some((t) => t.range) && activeTargets.some((t) => t.instant);
 
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
@@ -277,7 +297,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             query,
             target,
             responseListLength: queries.length,
-            mixedQueries,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
           return {
@@ -293,7 +312,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       if (query.exemplar) {
-        return this.getExemplars(query).pipe(filterAndMapResponse);
+        return this.getExemplars(query).pipe(
+          catchError(() => {
+            this.exemplarErrors.next(EXEMPLARS_NOT_AVAILABLE);
+            return of({
+              data: [],
+              state: LoadingState.Done,
+            });
+          }),
+          filterAndMapResponse
+        );
       }
 
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
@@ -331,7 +359,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       if (query.exemplar) {
-        return this.getExemplars(query).pipe(filterAndMapResponse);
+        return this.getExemplars(query).pipe(
+          catchError(() => {
+            this.exemplarErrors.next(EXEMPLARS_NOT_AVAILABLE);
+            return of({
+              data: [],
+              state: LoadingState.Done,
+            });
+          }),
+          filterAndMapResponse
+        );
       }
 
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);

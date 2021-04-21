@@ -13,6 +13,11 @@ export const Components = {
       },
     },
   },
+  Menu: {
+    MenuComponent: (title: string) => `${title} menu`,
+    MenuGroup: (title: string) => `${title} menu group`,
+    MenuItem: (title: string) => `${title} menu item`,
+  },
   Panels: {
     Panel: {
       title: (title: string) => `Panel header title item ${title}`,
@@ -56,18 +61,15 @@ export const Components = {
     },
     OptionsPane: {
       content: 'Panel editor option pane content',
-      close: 'Page toolbar button Close options pane',
-      open: 'Page toolbar button Open options pane',
       select: 'Panel editor option pane select',
-      tab: (title: string) => `Panel editor option pane tab ${title}`,
+      fieldLabel: (type: string) => `${type} field property editor`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    FieldOptions: {
-      propertyEditor: (type: string) => `${type} field property editor`,
-    },
+    toggleVizPicker: 'toggle-viz-picker',
+    toggleVizOptions: 'toggle-viz-options',
   },
   PanelInspector: {
     Data: {
@@ -122,6 +124,7 @@ export const Components = {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+    searchInput: 'search transformations',
   },
   PageToolbar: {
     container: () => '.page-toolbar',
@@ -160,6 +163,9 @@ export const Components = {
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  TraceViewer: {
+    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
+  },
   QueryField: { container: 'Query field' },
   ValuePicker: {
     button: 'Value picker add button',
@@ -173,5 +179,14 @@ export const Components = {
     container: 'Dashboard link container',
     dropDown: 'Dashboard link dropdown',
     link: 'Dashboard link',
+  },
+  LoadingIndicator: {
+    icon: 'Loading indicator',
+  },
+  CallToActionCard: {
+    button: (name: string) => `Call to action button ${name}`,
+  },
+  DataLinksContextMenu: {
+    singleLink: 'Data link',
   },
 };

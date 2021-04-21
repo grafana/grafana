@@ -28,7 +28,7 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/index.md#trace-to-logs" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.

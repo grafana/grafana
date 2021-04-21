@@ -14,7 +14,7 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns } from './utils';
+import { getColumns, sortCaseInsensitive } from './utils';
 import { useTheme } from '../../themes';
 import {
   TableColumnResizeActionCallback,
@@ -151,6 +151,9 @@ export const Table: FC<Props> = memo((props: Props) => {
       disableResizing: !resizable,
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
+      sortTypes: {
+        'alphanumeric-insensitive': sortCaseInsensitive,
+      },
     }),
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );
@@ -166,8 +169,8 @@ export const Table: FC<Props> = memo((props: Props) => {
   const { fields } = data;
 
   const RenderRow = React.useCallback(
-    ({ index, style }) => {
-      const row = rows[index];
+    ({ index: rowIndex, style }) => {
+      const row = rows[rowIndex];
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
@@ -178,6 +181,9 @@ export const Table: FC<Props> = memo((props: Props) => {
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
+              columnIndex={index}
+              columnCount={row.cells.length}
+              dataRowIndex={row.index}
             />
           ))}
         </div>
@@ -206,15 +212,21 @@ export const Table: FC<Props> = memo((props: Props) => {
               })}
             </div>
           )}
-          <FixedSizeList
-            height={height - headerHeight}
-            itemCount={rows.length}
-            itemSize={tableStyles.rowHeight}
-            width={'100%'}
-            style={{ overflow: 'hidden auto' }}
-          >
-            {RenderRow}
-          </FixedSizeList>
+          {rows.length > 0 ? (
+            <FixedSizeList
+              height={height - headerHeight}
+              itemCount={rows.length}
+              itemSize={tableStyles.rowHeight}
+              width={'100%'}
+              style={{ overflow: 'hidden auto' }}
+            >
+              {RenderRow}
+            </FixedSizeList>
+          ) : (
+            <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
+              No data to show
+            </div>
+          )}
         </div>
       </CustomScrollbar>
     </div>

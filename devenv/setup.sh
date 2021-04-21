@@ -64,7 +64,7 @@ usage() {
 
 main() {
 	echo -e "------------------------------------------------------------------"
-	echo -e "This script setups provisioning for dev datasources and dashboards"
+	echo -e "This script sets up provisioning for dev datasources and dashboards"
 	echo -e "------------------------------------------------------------------"
 	echo -e "\n"
 

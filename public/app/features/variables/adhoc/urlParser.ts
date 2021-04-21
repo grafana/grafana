@@ -17,11 +17,19 @@ export const toFilters = (value: UrlQueryValue): AdHocVariableFilter[] => {
 };
 
 function escapeDelimiter(value: string | undefined): string {
-  return value?.replace(/\|/g, '__gfp__') ?? '';
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return /\|/g[Symbol.replace](value, '__gfp__');
 }
 
 function unescapeDelimiter(value: string | undefined): string {
-  return value?.replace(/__gfp__/g, '|') ?? '';
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return /__gfp__/g[Symbol.replace](value, '|');
 }
 
 function toArray(filter: AdHocVariableFilter): string[] {

@@ -23,7 +23,6 @@ import {
   PluginMeta,
   QueryResultMeta,
   ScopedVars,
-  TimeRange,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
@@ -46,7 +45,7 @@ import {
   LokiStreamResponse,
 } from './types';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
-import LanguageProvider, { rangeToParams } from './language_provider';
+import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
@@ -54,6 +53,7 @@ import syntax from './syntax';
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
+const NS_IN_MS = 1000000;
 
 const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
@@ -124,7 +124,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   runInstantQuery = (
     target: LokiQuery,
     options: DataQueryRequest<LokiQuery>,
-    responseListLength: number
+    responseListLength = 1
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
     const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
@@ -287,6 +287,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return query.expr;
   }
 
+  getTimeRangeParams() {
+    const timeRange = this.timeSrv.timeRange();
+    return { from: timeRange.from.valueOf() * NS_IN_MS, to: timeRange.to.valueOf() * NS_IN_MS };
+  }
+
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
@@ -296,21 +301,19 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return res.data.data || res.data.values || [];
   }
 
-  async metricFindQuery(query: string, optionalOptions?: any) {
+  async metricFindQuery(query: string) {
     if (!query) {
       return Promise.resolve([]);
     }
     const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
-    return await this.processMetricFindQuery(interpolated, optionalOptions?.range);
+    return await this.processMetricFindQuery(interpolated);
   }
 
-  async processMetricFindQuery(query: string, range?: TimeRange) {
+  async processMetricFindQuery(query: string) {
     const labelNamesRegex = /^label_names\(\)\s*$/;
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
 
-    const timeRange = range || this.timeSrv.timeRange();
-    const params = rangeToParams({ from: timeRange.from.valueOf(), to: timeRange.to.valueOf() });
-
+    const params = this.getTimeRangeParams();
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
       return await this.labelNamesQuery(params);
@@ -490,20 +493,31 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
-    if (!options.annotation.expr) {
+    const { expr, maxLines, instant } = options.annotation;
+
+    if (!expr) {
       return [];
     }
 
-    const interpolatedExpr = this.templateSrv.replace(options.annotation.expr, {}, this.interpolateQueryExpr);
-    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr };
-    const { data } = await this.runRangeQuery(query, options as any).toPromise();
+    const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
+    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr, maxLines, instant };
+    const { data } = instant
+      ? await this.runInstantQuery(query, options as any).toPromise()
+      : await this.runRangeQuery(query, options as any).toPromise();
+
     const annotations: AnnotationEvent[] = [];
 
     for (const frame of data) {
       const tags: string[] = [];
       for (const field of frame.fields) {
         if (field.labels) {
-          tags.push.apply(tags, [...new Set(Object.values(field.labels).map((label: string) => label.trim()))]);
+          tags.push.apply(tags, [
+            ...new Set(
+              Object.values(field.labels)
+                .map((label: string) => label.trim())
+                .filter((label: string) => label !== '')
+            ),
+          ]);
         }
       }
       const view = new DataFrameView<{ ts: string; line: string }>(frame);

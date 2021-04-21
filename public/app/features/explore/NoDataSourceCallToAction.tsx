@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
-import { css } from 'emotion';
-import { ThemeContext, LinkButton, CallToActionCard, Icon } from '@grafana/ui';
+import React from 'react';
+import { css } from '@emotion/css';
+import { LinkButton, CallToActionCard, Icon, useTheme } from '@grafana/ui';
 
 export const NoDataSourceCallToAction = () => {
-  const theme = useContext(ThemeContext);
+  const theme = useTheme();
 
   const message =
     'Explore requires at least one data source. Once you have added a data source, you can query it here.';
@@ -35,12 +35,6 @@ export const NoDataSourceCallToAction = () => {
   `;
 
   return (
-    <CallToActionCard
-      callToActionElement={ctaElement}
-      className={cardClassName}
-      footer={footer}
-      message={message}
-      theme={theme}
-    />
+    <CallToActionCard callToActionElement={ctaElement} className={cardClassName} footer={footer} message={message} />
   );
 };

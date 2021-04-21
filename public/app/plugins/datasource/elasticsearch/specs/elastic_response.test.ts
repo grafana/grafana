@@ -2,6 +2,7 @@ import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/
 import { ElasticResponse } from '../elastic_response';
 import flatten from 'app/core/utils/flatten';
 import { ElasticsearchQuery } from '../types';
+import { highlightTags } from '../query_def';
 
 describe('ElasticResponse', () => {
   let targets: ElasticsearchQuery[];
@@ -1207,18 +1208,13 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple logs query and count', () => {
-    const targets: any = [
+    const targets: ElasticsearchQuery[] = [
       {
         refId: 'A',
         metrics: [{ type: 'count', id: '1' }],
         bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-        context: 'explore',
-        interval: '10s',
-        isLogsQuery: true,
         key: 'Q-1561369883389-0.7611823271062786-0',
-        liveStreaming: false,
-        maxDataPoints: 1620,
-        query: '',
+        query: 'hello AND message',
         timeField: '@timestamp',
       },
     ];
@@ -1248,11 +1244,17 @@ describe('ElasticResponse', () => {
                 _source: {
                   '@timestamp': '2019-06-24T09:51:19.765Z',
                   host: 'djisaodjsoad',
+                  number: 1,
                   message: 'hello, i am a message',
                   level: 'debug',
                   fields: {
                     lvl: 'debug',
                   },
+                },
+                highlight: {
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
                 },
               },
               {
@@ -1262,11 +1264,17 @@ describe('ElasticResponse', () => {
                 _source: {
                   '@timestamp': '2019-06-24T09:52:19.765Z',
                   host: 'dsalkdakdop',
+                  number: 2,
                   message: 'hello, i am also message',
                   level: 'error',
                   fields: {
                     lvl: 'info',
                   },
+                },
+                highlight: {
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
                 },
               },
             ],
@@ -1279,6 +1287,12 @@ describe('ElasticResponse', () => {
       const result = new ElasticResponse(targets, response).getLogs();
       expect(result.data.length).toBe(2);
       const logResults = result.data[0] as MutableDataFrame;
+      expect(logResults).toHaveProperty('meta');
+      expect(logResults.meta).toEqual({
+        searchWords: ['hello', 'message'],
+        preferredVisualisationType: 'logs',
+      });
+
       const fields = logResults.fields.map((f) => {
         return {
           name: f.name,
@@ -1331,6 +1345,22 @@ describe('ElasticResponse', () => {
       const fieldCache = new FieldCache(result.data[0]);
       const field = fieldCache.getFieldByName('level');
       expect(field?.values.toArray()).toEqual(['debug', 'info']);
+    });
+
+    it('should correctly guess field types', () => {
+      const result = new ElasticResponse(targets, response).getLogs();
+      const logResults = result.data[0] as MutableDataFrame;
+
+      const fields = logResults.fields.map((f) => {
+        return {
+          name: f.name,
+          type: f.type,
+        };
+      });
+
+      expect(fields).toContainEqual({ name: '@timestamp', type: 'time' });
+      expect(fields).toContainEqual({ name: 'number', type: 'number' });
+      expect(fields).toContainEqual({ name: 'message', type: 'string' });
     });
   });
 });

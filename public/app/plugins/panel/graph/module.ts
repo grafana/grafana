@@ -4,9 +4,8 @@ import './thresholds_form';
 import './time_regions_form';
 
 import template from './template';
-import _ from 'lodash';
+import { defaults, find, without } from 'lodash';
 
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
@@ -20,13 +19,15 @@ import { DataWarning, GraphFieldConfig, GraphPanelOptions } from './types';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
-import { CoreEvents } from 'app/types';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
+import { appEvents } from '../../../core/core';
+import { ZoomOutEvent } from '../../../types/events';
+import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -147,15 +148,16 @@ export class GraphCtrl extends MetricsPanelCtrl {
   constructor($scope: any, $injector: auto.IInjectorService, private annotationsSrv: AnnotationsSrv) {
     super($scope, $injector);
 
-    _.defaults(this.panel, this.panelDefaults);
-    _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
-    _.defaults(this.panel.legend, this.panelDefaults.legend);
-    _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
-    _.defaults(this.panel.options, this.panelDefaults.options);
+    defaults(this.panel, this.panelDefaults);
+    defaults(this.panel.tooltip, this.panelDefaults.tooltip);
+    defaults(this.panel.legend, this.panelDefaults.legend);
+    defaults(this.panel.xaxis, this.panelDefaults.xaxis);
+    defaults(this.panel.options, this.panelDefaults.options);
 
     this.useDataFrames = true;
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
+    this.annotationsPromise = Promise.resolve({ annotations: [] });
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
@@ -163,7 +165,11 @@ export class GraphCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
-    this.annotationsPromise = Promise.resolve({ annotations: [] });
+    // set axes format from field config
+    const fieldConfigUnit = this.panel.fieldConfig.defaults.unit;
+    if (fieldConfigUnit) {
+      this.panel.yaxes[0].format = fieldConfigUnit;
+    }
   }
 
   onInitEditMode() {
@@ -200,7 +206,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent(CoreEvents.zoomOut, 2);
+    appEvents.publish(new ZoomOutEvent(2));
   }
 
   onDataSnapshotLoad(snapshotData: any) {
@@ -345,7 +351,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   };
 
   onToggleAxis = (info: { alias: any; yaxis: any }) => {
-    let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
+    let override: any = find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
@@ -359,7 +365,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   removeSeriesOverride(override: any) {
-    this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
+    this.panel.seriesOverrides = without(this.panel.seriesOverrides, override);
     this.render();
   }
 

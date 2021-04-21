@@ -6,6 +6,7 @@ import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 export enum CoreApp {
   Dashboard = 'dashboard',
   Explore = 'explore',
+  Unknown = 'unknown',
 }
 
 export interface AppRootProps<T = KeyValue> {

@@ -21,7 +21,9 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   aliasBy: '',
   selectorName: 'select_slo_health',
   serviceId: '',
+  serviceName: '',
   sloId: '',
+  sloName: '',
 });
 
 export function SLOQueryEditor({
@@ -42,7 +44,7 @@ export function SLOQueryEditor({
       <QueryInlineField label="Service">
         <SegmentAsync
           allowCustomValue
-          value={query?.serviceId}
+          value={{ value: query?.serviceId, label: query?.serviceName || query?.serviceId }}
           placeholder="Select service"
           loadOptions={() =>
             datasource.getSLOServices(query.projectName).then((services) => [
@@ -53,14 +55,16 @@ export function SLOQueryEditor({
               ...services,
             ])
           }
-          onChange={({ value: serviceId = '' }) => onChange({ ...query, serviceId, sloId: '' })}
+          onChange={({ value: serviceId = '', label: serviceName = '' }) =>
+            onChange({ ...query, serviceId, serviceName, sloId: '' })
+          }
         />
       </QueryInlineField>
 
       <QueryInlineField label="SLO">
         <SegmentAsync
           allowCustomValue
-          value={query?.sloId}
+          value={{ value: query?.sloId, label: query?.sloName || query?.sloId }}
           placeholder="Select SLO"
           loadOptions={() =>
             datasource.getServiceLevelObjectives(query.projectName, query.serviceId).then((sloIds) => [
@@ -71,10 +75,10 @@ export function SLOQueryEditor({
               ...sloIds,
             ])
           }
-          onChange={async ({ value: sloId = '' }) => {
+          onChange={async ({ value: sloId = '', label: sloName = '' }) => {
             const slos = await datasource.getServiceLevelObjectives(query.projectName, query.serviceId);
             const slo = slos.find(({ value }) => value === datasource.templateSrv.replace(sloId));
-            onChange({ ...query, sloId, goal: slo?.goal });
+            onChange({ ...query, sloId, sloName, goal: slo?.goal });
           }}
         />
       </QueryInlineField>

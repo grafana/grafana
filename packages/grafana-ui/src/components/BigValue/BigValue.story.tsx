@@ -1,28 +1,17 @@
 import React from 'react';
-import { color, number, select, text } from '@storybook/addon-knobs';
-import { BigValue, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { Story, Meta } from '@storybook/react';
+import {
+  BigValue,
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  Props,
+} from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
 import { useTheme } from '../../themes';
 import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
-
-const getKnobs = () => {
-  return {
-    value: text('value', '$5022'),
-    title: text('title', 'Total Earnings'),
-    colorMode: select('Color mode', [BigValueColorMode.Value, BigValueColorMode.Background], BigValueColorMode.Value),
-    graphMode: select('Graph mode', [BigValueGraphMode.Area, BigValueGraphMode.None], BigValueGraphMode.Area),
-    justifyMode: select('Justify', [BigValueJustifyMode.Auto, BigValueJustifyMode.Center], BigValueJustifyMode.Auto),
-    width: number('Width', 400, { range: true, max: 800, min: 200 }),
-    height: number('Height', 300, { range: true, max: 800, min: 200 }),
-    color: color('Value color', 'red'),
-    textMode: select(
-      'Text mode',
-      [BigValueTextMode.Auto, BigValueTextMode.Name, BigValueTextMode.ValueAndName, BigValueTextMode.None],
-      BigValueTextMode.Auto
-    ),
-  };
-};
 
 export default {
   title: 'Visualizations/BigValue',
@@ -32,11 +21,53 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['value', 'sparkline', 'onClick', 'className', 'alignmentFactors', 'text', 'count', 'theme'],
+    },
   },
-};
+  argTypes: {
+    width: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 800 } },
+    colorMode: { control: { type: 'select', options: [BigValueColorMode.Value, BigValueColorMode.Background] } },
+    graphMode: { control: { type: 'select', options: [BigValueGraphMode.Area, BigValueGraphMode.None] } },
+    justifyMode: { control: { type: 'select', options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center] } },
+    textMode: {
+      control: {
+        type: 'radio',
+        options: [
+          BigValueTextMode.Auto,
+          BigValueTextMode.Name,
+          BigValueTextMode.ValueAndName,
+          BigValueTextMode.None,
+          BigValueTextMode.Value,
+        ],
+      },
+    },
+    color: { control: 'color' },
+  },
+} as Meta;
 
-export const Basic = () => {
-  const { value, title, colorMode, graphMode, height, width, color, textMode, justifyMode } = getKnobs();
+interface StoryProps extends Partial<Props> {
+  numeric: number;
+  title: string;
+  color: string;
+  valueText: string;
+}
+
+export const Basic: Story<StoryProps> = ({
+  valueText,
+  title,
+  colorMode,
+  graphMode,
+  height,
+  width,
+  color,
+  textMode,
+  justifyMode,
+}) => {
   const theme = useTheme();
   const sparkline: FieldSparkline = {
     y: {
@@ -57,7 +88,7 @@ export const Basic = () => {
       textMode={textMode}
       justifyMode={justifyMode}
       value={{
-        text: value,
+        text: valueText,
         numeric: 5022,
         color: color,
         title,
@@ -65,4 +96,16 @@ export const Basic = () => {
       sparkline={graphMode === BigValueGraphMode.None ? undefined : sparkline}
     />
   );
+};
+
+Basic.args = {
+  valueText: '$5022',
+  title: 'Total Earnings',
+  colorMode: BigValueColorMode.Value,
+  graphMode: BigValueGraphMode.Area,
+  justifyMode: BigValueJustifyMode.Auto,
+  width: 400,
+  height: 300,
+  color: 'red',
+  textMode: BigValueTextMode.Auto,
 };

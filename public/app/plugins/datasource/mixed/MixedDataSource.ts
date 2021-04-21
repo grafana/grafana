@@ -1,5 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
-import groupBy from 'lodash/groupBy';
+import { cloneDeep, groupBy } from 'lodash';
 import { forkJoin, from, Observable, of } from 'rxjs';
 import { catchError, map, mergeAll, mergeMap } from 'rxjs/operators';
 

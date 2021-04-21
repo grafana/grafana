@@ -1,5 +1,13 @@
 apiVersion: 1
 
+deleteDatasources:
+  - name: gdev-influxdb
+  - name: gdev-influxdb-telegraf
+  - name: gdev-influxdb2
+  - name: gdev-influxdb2-influxql
+  - name: gdev-loki-0.3
+  - name: gdev-loki-0.4
+
 datasources:
   - name: gdev-graphite
     type: graphite
@@ -7,6 +15,20 @@ datasources:
     url: http://localhost:8180
     jsonData:
       graphiteVersion: "1.1"
+
+  - name: gdev-graphite-1.0
+    type: graphite
+    access: proxy
+    url: http://localhost:8280
+    jsonData:
+      graphiteVersion: "1.0"
+
+  - name: gdev-graphite-0.9
+    type: graphite
+    access: proxy
+    url: http://localhost:8380
+    jsonData:
+      graphiteVersion: "0.9"
 
   - name: gdev-prometheus
     type: prometheus
@@ -22,27 +44,37 @@ datasources:
     isDefault: true
     type: testdata
 
-  - name: gdev-influxdb
+  - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
     database: site
     user: grafana
-    url: http://localhost:8086
-    jsonData:
-      timeInterval: "15s"
+    url: http://localhost:8087
     secureJsonData:
       password: grafana
 
-  - name: gdev-influxdb-telegraf
+  - name: gdev-influxdb-flux
     type: influxdb
     access: proxy
-    database: telegraf
+    url: http://localhost:8086
     user: grafana
+    secureJsonData:
+      token: mytoken
+      password: grafana12345
+    jsonData:
+      version: Flux
+      organization: myorg
+      defaultBucket: mybucket
+
+  - name: gdev-influxdb-influxql
+    type: influxdb
+    access: proxy
+    database: mybucket
     url: http://localhost:8086
     jsonData:
-      timeInterval: "10s"
+      httpHeaderName1: "Authorization"
     secureJsonData:
-      password: grafana
+      httpHeaderValue1: "Token mytoken"
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -227,20 +259,6 @@ datasources:
       defaultRegion: eu-west-2
       customMetricsNamespaces: "CWAgent"
 
-  # Keep to test old /api/prom API
-  - name: gdev-loki-0.3
-    type: loki
-    access: proxy
-    url: http://localhost:3103
-    editable: false
-
-  # First version with new v1 API (remove once v1 is out)
-  - name: gdev-loki-0.4
-    type: loki
-    access: proxy
-    url: http://localhost:3104
-    editable: false
-
   - name: gdev-loki
     type: loki
     access: proxy
@@ -269,4 +287,11 @@ datasources:
     uid: gdev-zipkin
     access: proxy
     url: http://localhost:9411
+    editable: false
+
+  - name: gdev-tempo
+    type: tempo
+    uid: gdev-tempo
+    access: proxy
+    url: http://localhost:3101
     editable: false

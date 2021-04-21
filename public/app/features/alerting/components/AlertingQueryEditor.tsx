@@ -1,89 +1,151 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { RefreshPicker, stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { QueryGroup } from '../../query/components/QueryGroup';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { onRunQueries, queryOptionsChange } from '../state/actions';
-import { QueryGroupOptions, StoreState } from 'app/types';
+import { css } from '@emotion/css';
+import { DataSourceApi, GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { AlertingQueryRows } from './AlertingQueryRows';
+import {
+  expressionDatasource,
+  ExpressionDatasourceID,
+  ExpressionDatasourceUID,
+} from '../../expressions/ExpressionDatasource';
+import { getNextRefIdChar } from 'app/core/utils/query';
+import { defaultCondition } from '../../expressions/utils/expressionTypes';
+import { ExpressionQueryType } from '../../expressions/types';
+import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
 
-interface OwnProps {}
-
-interface ConnectedProps {
-  queryOptions: QueryGroupOptions;
-  queryRunner: PanelQueryRunner;
+interface Props {
+  value?: GrafanaQuery[];
+  onChange: (queries: GrafanaQuery[]) => void;
 }
-interface DispatchProps {
-  queryOptionsChange: typeof queryOptionsChange;
-  onRunQueries: typeof onRunQueries;
+
+interface State {
+  defaultDataSource?: DataSourceApi;
 }
+export class AlertingQueryEditor extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {};
+  }
 
-type Props = ConnectedProps & DispatchProps & OwnProps;
+  async componentDidMount() {
+    try {
+      const defaultDataSource = await getDataSourceSrv().get();
+      this.setState({ defaultDataSource });
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
-export class AlertingQueryEditor extends PureComponent<Props> {
-  onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {
-    this.props.queryOptionsChange(queryOptions);
+  onRunQueries = () => {};
+
+  onDuplicateQuery = (query: GrafanaQuery) => {
+    const { onChange, value = [] } = this.props;
+    onChange([...value, query]);
   };
 
-  onRunQueries = () => {
-    this.props.onRunQueries();
+  onNewAlertingQuery = () => {
+    const { onChange, value = [] } = this.props;
+    const { defaultDataSource } = this.state;
+
+    if (!defaultDataSource) {
+      return;
+    }
+
+    const alertingQuery: GrafanaQueryModel = {
+      refId: '',
+      datasourceUid: defaultDataSource.uid,
+      datasource: defaultDataSource.name,
+    };
+
+    onChange(addQuery(value, alertingQuery));
   };
 
-  onIntervalChanged = (interval: string) => {
-    this.props.queryOptionsChange({ ...this.props.queryOptions, minInterval: interval });
+  onNewExpressionQuery = () => {
+    const { onChange, value = [] } = this.props;
+    const expressionQuery: GrafanaQueryModel = {
+      ...expressionDatasource.newQuery({
+        type: ExpressionQueryType.classic,
+        conditions: [defaultCondition],
+      }),
+      datasourceUid: ExpressionDatasourceUID,
+      datasource: ExpressionDatasourceID,
+    };
+
+    onChange(addQuery(value, expressionQuery));
   };
+
+  renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
+    return (
+      <HorizontalGroup spacing="md" align="flex-start">
+        <Button
+          type="button"
+          icon="plus"
+          onClick={this.onNewAlertingQuery}
+          variant="secondary"
+          aria-label={selectors.components.QueryTab.addQuery}
+        >
+          Query
+        </Button>
+        {config.expressionsEnabled && (
+          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+            <Button
+              type="button"
+              icon="plus"
+              onClick={this.onNewExpressionQuery}
+              variant="secondary"
+              className={styles.expressionButton}
+            >
+              <span>Expression&nbsp;</span>
+              <Icon name="exclamation-triangle" className="muted" size="sm" />
+            </Button>
+          </Tooltip>
+        )}
+      </HorizontalGroup>
+    );
+  }
 
   render() {
-    const { queryOptions, queryRunner } = this.props;
+    const { value = [] } = this.props;
     const styles = getStyles(config.theme);
-
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.container}>
-          <h4>Queries</h4>
-          <div className={styles.refreshWrapper}>
-            <RefreshPicker
-              onIntervalChanged={this.onIntervalChanged}
-              onRefresh={this.onRunQueries}
-              intervals={['15s', '30s']}
-            />
-          </div>
-          <QueryGroup
-            queryRunner={queryRunner}
-            options={queryOptions}
-            onRunQueries={this.onRunQueries}
-            onOptionsChange={this.onQueryOptionsChange}
-          />
-        </div>
+      <div className={styles.container}>
+        <AlertingQueryRows
+          queries={value}
+          onQueriesChange={this.props.onChange}
+          onDuplicateQuery={this.onDuplicateQuery}
+          onRunQueries={this.onRunQueries}
+        />
+        {this.renderAddQueryRow(styles)}
       </div>
     );
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
-  return {
-    queryOptions: state.alertDefinition.queryOptions,
-    queryRunner: state.alertDefinition.queryRunner,
+const addQuery = (queries: GrafanaQuery[], model: GrafanaQueryModel): GrafanaQuery[] => {
+  const refId = getNextRefIdChar(queries);
+
+  const query: GrafanaQuery = {
+    refId,
+    queryType: '',
+    model: {
+      ...model,
+      hide: false,
+      refId: refId,
+    },
+    relativeTimeRange: {
+      from: 21600,
+      to: 0,
+    },
   };
-};
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  queryOptionsChange,
-  onRunQueries,
+  return [...queries, query];
 };
-
-export default connect(mapStateToProps, mapDispatchToProps)(AlertingQueryEditor);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      padding-left: ${theme.spacing.md};
-      height: 100%;
-    `,
     container: css`
-      padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
       height: 100%;
     `,
@@ -94,6 +156,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};
       border-radius: ${theme.border.radius.md};
+    `,
+    expressionButton: css`
+      margin-right: ${theme.spacing.sm};
     `,
   };
 });

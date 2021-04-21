@@ -1,14 +1,15 @@
 import './add_graphite_func';
 import './func_editor';
 
-import _ from 'lodash';
+import { each, eachRight, map, remove } from 'lodash';
 import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
-import appEvents from 'app/core/app_events';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
-import { AppEvents } from '@grafana/data';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 
 const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
 const TAG_PREFIX = 'tag: ';
@@ -22,6 +23,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   removeTagValue: string;
   supportsTags: boolean;
   paused: boolean;
+
+  // to avoid error flooding, these errors are shown only once per session
+  private _tagsAutoCompleteErrorShown = false;
+  private _metricAutoCompleteErrorShown = false;
 
   /** @ngInject */
   constructor(
@@ -55,7 +60,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   buildSegments(modifyLastSegment = true) {
-    this.segments = _.map(this.queryModel.segments, (segment) => {
+    this.segments = map(this.queryModel.segments, (segment) => {
       return this.uiSegmentSrv.newSegment(segment);
     });
 
@@ -106,12 +111,12 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       })
       .catch((err: any) => {
-        appEvents.emit(AppEvents.alertError, ['Error', err]);
+        this.handleMetricsAutoCompleteError(err);
       });
   }
 
   setSegmentFocus(segmentIndex: any) {
-    _.each(this.segments, (segment, index) => {
+    each(this.segments, (segment, index) => {
       segment.focus = segmentIndex === index;
     });
   }
@@ -129,7 +134,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.datasource
       .metricFindQuery(query, options)
       .then((segments: any[]) => {
-        const altSegments = _.map(segments, (segment) => {
+        const altSegments = map(segments, (segment) => {
           return this.uiSegmentSrv.newSegment({
             value: segment.text,
             expandable: segment.expandable,
@@ -142,7 +147,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
         // add query references
         if (index === 0) {
-          _.eachRight(this.panelCtrl.panel.targets, (target) => {
+          eachRight(this.panelCtrl.panel.targets, (target) => {
             if (target.refId === this.queryModel.target.refId) {
               return;
             }
@@ -158,7 +163,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
 
         // add template variables
-        _.eachRight(this.templateSrv.getVariables(), (variable) => {
+        eachRight(this.templateSrv.getVariables(), (variable) => {
           altSegments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'template',
@@ -179,13 +184,14 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       })
       .catch((err: any): any[] => {
+        this.handleMetricsAutoCompleteError(err);
         return [];
       });
   }
 
   addAltTagSegments(prefix: string, altSegments: any[]) {
     return this.getTagsAsSegments(prefix).then((tagSegments: any[]) => {
-      tagSegments = _.map(tagSegments, (segment) => {
+      tagSegments = map(tagSegments, (segment) => {
         segment.value = TAG_PREFIX + segment.value;
         return segment;
       });
@@ -194,7 +200,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   removeTaggedEntry(altSegments: any[]) {
-    altSegments = _.remove(altSegments, (s) => s.value === '_tagged');
+    altSegments = remove(altSegments, (s) => s.value === '_tagged');
   }
 
   segmentValueChanged(segment: { type: string; value: string; expandable: any }, segmentIndex: number) {
@@ -323,7 +329,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   getAllTags() {
     return this.datasource.getTags().then((values: any[]) => {
-      const altTags = _.map(values, 'text');
+      const altTags = map(values, 'text');
       altTags.splice(0, 0, this.removeTagValue);
       return mapToDropdownOptions(altTags);
     });
@@ -331,24 +337,34 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   getTags(index: number, tagPrefix: any) {
     const tagExpressions = this.queryModel.renderTagExpressions(index);
-    return this.datasource.getTagsAutoComplete(tagExpressions, tagPrefix).then((values: any) => {
-      const altTags = _.map(values, 'text');
-      altTags.splice(0, 0, this.removeTagValue);
-      return mapToDropdownOptions(altTags);
-    });
+    return this.datasource
+      .getTagsAutoComplete(tagExpressions, tagPrefix)
+      .then((values: any) => {
+        const altTags = map(values, 'text');
+        altTags.splice(0, 0, this.removeTagValue);
+        return mapToDropdownOptions(altTags);
+      })
+      .catch((err: any) => {
+        this.handleTagsAutoCompleteError(err);
+      });
   }
 
   getTagsAsSegments(tagPrefix: string) {
     const tagExpressions = this.queryModel.renderTagExpressions();
-    return this.datasource.getTagsAutoComplete(tagExpressions, tagPrefix).then((values: any) => {
-      return _.map(values, (val) => {
-        return this.uiSegmentSrv.newSegment({
-          value: val.text,
-          type: 'tag',
-          expandable: false,
+    return this.datasource
+      .getTagsAutoComplete(tagExpressions, tagPrefix)
+      .then((values: any) => {
+        return map(values, (val) => {
+          return this.uiSegmentSrv.newSegment({
+            value: val.text,
+            type: 'tag',
+            expandable: false,
+          });
         });
+      })
+      .catch((err: any) => {
+        this.handleTagsAutoCompleteError(err);
       });
-    });
   }
 
   getTagOperators() {
@@ -358,7 +374,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   getAllTagValues(tag: { key: any }) {
     const tagKey = tag.key;
     return this.datasource.getTagValues(tagKey).then((values: any[]) => {
-      const altValues = _.map(values, 'text');
+      const altValues = map(values, 'text');
       return mapToDropdownOptions(altValues);
     });
   }
@@ -367,9 +383,9 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     const tagExpressions = this.queryModel.renderTagExpressions(index);
     const tagKey = tag.key;
     return this.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix).then((values: any[]) => {
-      const altValues = _.map(values, 'text');
+      const altValues = map(values, 'text');
       // Add template variables as additional values
-      _.eachRight(this.templateSrv.getVariables(), (variable) => {
+      eachRight(this.templateSrv.getVariables(), (variable) => {
         altValues.push('${' + variable.name + ':regex}');
       });
       return mapToDropdownOptions(altValues);
@@ -415,10 +431,26 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   getCollapsedText() {
     return this.target.target;
   }
+
+  private handleTagsAutoCompleteError(error: Error): void {
+    console.error(error);
+    if (!this._tagsAutoCompleteErrorShown) {
+      this._tagsAutoCompleteErrorShown = true;
+      dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
+    }
+  }
+
+  private handleMetricsAutoCompleteError(error: Error): void {
+    console.error(error);
+    if (!this._metricAutoCompleteErrorShown) {
+      this._metricAutoCompleteErrorShown = true;
+      dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
+    }
+  }
 }
 
 function mapToDropdownOptions(results: any[]) {
-  return _.map(results, (value) => {
+  return map(results, (value) => {
     return { text: value, value: value };
   });
 }

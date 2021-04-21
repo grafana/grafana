@@ -61,6 +61,14 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       text: 'Insights',
       url: `datasources/edit/${dataSource.id}/insights`,
     });
+
+    navModel.children!.push({
+      active: false,
+      icon: 'database',
+      id: `datasource-cache-${dataSource.id}`,
+      text: 'Cache',
+      url: `datasources/edit/${dataSource.id}/cache`,
+    });
   }
 
   return navModel;
@@ -83,6 +91,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       password: '',
       readOnly: false,
       type: 'Loading',
+      typeName: 'Loading',
       typeLogoUrl: 'public/img/icn-datasource.svg',
       url: '',
       user: '',

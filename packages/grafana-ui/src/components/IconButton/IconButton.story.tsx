@@ -1,9 +1,8 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme } from '../../themes/ThemeContext';
-import { GrafanaTheme } from '@grafana/data';
+import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
 import mdx from './IconButton.mdx';
 
@@ -19,42 +18,29 @@ export default {
 };
 
 export const Simple = () => {
-  const theme = useTheme();
-
   return (
     <div>
-      {renderScenario(
-        'dashboard',
-        theme,
-        ['sm', 'md', 'lg', 'xl', 'xxl'],
-        ['search', 'trash-alt', 'arrow-left', 'times']
-      )}
-      {renderScenario('panel', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
-      {renderScenario('header', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
+      <RenderScenario background="canvas" />
+      <RenderScenario background="primary" />
+      <RenderScenario background="secondary" />
     </div>
   );
 };
 
-function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[], icons: IconName[]) {
-  let bg = 'red';
+interface ScenarioProps {
+  background: 'canvas' | 'primary' | 'secondary';
+}
 
-  switch (surface) {
-    case 'dashboard':
-      bg = theme.colors.dashboardBg;
-      break;
-    case 'panel':
-      bg = theme.colors.bodyBg;
-      break;
-    case 'header': {
-      bg = theme.colors.pageHeaderBg;
-    }
-  }
+const RenderScenario = ({ background }: ScenarioProps) => {
+  const theme = useTheme2();
+  const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
+  const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
 
   return (
     <div
       className={css`
         padding: 30px;
-        background: ${bg};
+        background: ${theme.colors.background[background]};
         button {
           margin-right: 8px;
           margin-left: 8px;
@@ -62,14 +48,14 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
         }
       `}
     >
-      <div>Surface: {surface}</div>
+      <div>{background}</div>
       {icons.map((icon) => {
         return sizes.map((size) => (
           <span key={icon + size}>
-            <IconButton name={icon} size={size} surface={surface as any} />
+            <IconButton name={icon} size={size} />
           </span>
         ));
       })}
     </div>
   );
-}
+};

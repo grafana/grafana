@@ -1,7 +1,7 @@
-import React, { FC, PropsWithChildren, useCallback } from 'react';
+import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import { Portal } from '../Portal/Portal';
-import { cx } from 'emotion';
-import { useTheme } from '../../themes';
+import { cx } from '@emotion/css';
+import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
@@ -14,6 +14,7 @@ export interface Props {
   title: string | JSX.Element;
   className?: string;
   contentClassName?: string;
+  closeOnEscape?: boolean;
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -27,18 +28,35 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     title,
     children,
     isOpen = false,
+    closeOnEscape = true,
     className,
     contentClassName,
     onDismiss: propsOnDismiss,
     onClickBackdrop,
   } = props;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getModalStyles(theme);
   const onDismiss = useCallback(() => {
     if (propsOnDismiss) {
       propsOnDismiss();
     }
   }, [propsOnDismiss]);
+
+  useEffect(() => {
+    const onEscKey = (ev: KeyboardEvent) => {
+      if (ev.key === 'Esc' || ev.key === 'Escape') {
+        onDismiss();
+      }
+    };
+    if (isOpen && closeOnEscape) {
+      document.addEventListener('keydown', onEscKey, false);
+    } else {
+      document.removeEventListener('keydown', onEscKey, false);
+    }
+    return () => {
+      document.removeEventListener('keydown', onEscKey, false);
+    };
+  }, [closeOnEscape, isOpen, onDismiss]);
 
   if (!isOpen) {
     return null;

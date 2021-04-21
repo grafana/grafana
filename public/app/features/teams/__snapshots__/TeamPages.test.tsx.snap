@@ -44,7 +44,18 @@ exports[`Render should render settings and preferences page 1`] = `
   <PageContents
     isLoading={true}
   >
-    <Connect(TeamSettings) />
+    <Connect(TeamSettings)
+      team={
+        Object {
+          "avatarUrl": "some/url/",
+          "email": "test@test.com",
+          "id": 1,
+          "memberCount": 1,
+          "name": "test",
+          "permission": 0,
+        }
+      }
+    />
   </PageContents>
 </Page>
 `;
@@ -66,7 +77,18 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   <PageContents
     isLoading={true}
   >
-    <Connect(TeamSettings) />
+    <Connect(TeamSettings)
+      team={
+        Object {
+          "avatarUrl": "some/url/",
+          "email": "test@test.com",
+          "id": 1,
+          "memberCount": 1,
+          "name": "test",
+          "permission": 0,
+        }
+      }
+    />
   </PageContents>
 </Page>
 `;

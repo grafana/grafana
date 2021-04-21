@@ -1,12 +1,12 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
+import { ErrorBoundaryAlert, stylesFactory, withTheme, CustomScrollbar } from '@grafana/ui';
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -15,46 +15,31 @@ import {
   LoadingState,
   PanelData,
   RawTimeRange,
-  TimeRange,
   TimeZone,
-  ExploreUrlState,
   LogsModel,
-  EventBusExtended,
-  EventBusSrv,
-  TraceViewData,
   DataFrame,
 } from '@grafana/data';
 
-import store from 'app/core/store';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
-import { changeSize, initializeExplore, refreshExplore } from './state/explorePane';
+import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
 import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
-import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import {
-  DEFAULT_RANGE,
-  ensureQueries,
-  getFirstNonQueryRowSpecificError,
-  getTimeRange,
-  getTimeRangeFromUrl,
-  lastUsedDatasourceKeyForOrgId,
-} from 'app/core/utils/explore';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
-import { ErrorContainer } from './ErrorContainer';
-//TODO:unification
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
+import { ResponseErrorContainer } from './ResponseErrorContainer';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -83,21 +68,13 @@ export interface ExploreProps {
   datasourceInstance: DataSourceApi | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
-  initializeExplore: typeof initializeExplore;
-  initialized: boolean;
   modifyQueries: typeof modifyQueries;
-  update: ExploreUpdateState;
-  refreshExplore: typeof refreshExplore;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
   scanStopAction: typeof scanStopAction;
   setQueries: typeof setQueries;
-  split: boolean;
   queryKeys: string[];
-  initialDatasource: string;
-  initialQueries: DataQuery[];
-  initialRange: TimeRange;
   isLive: boolean;
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
@@ -153,46 +130,12 @@ interface ExploreState {
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
-  el: any;
-  exploreEvents: EventBusExtended;
-
   constructor(props: ExploreProps) {
     super(props);
-    this.exploreEvents = new EventBusSrv();
     this.state = {
       openDrawer: undefined,
     };
   }
-
-  componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, originPanelId } = this.props;
-    const width = this.el ? this.el.offsetWidth : 0;
-
-    // initialize the whole explore first time we mount and if browser history contains a change in datasource
-    if (!initialized) {
-      this.props.initializeExplore(
-        exploreId,
-        initialDatasource,
-        initialQueries,
-        initialRange,
-        width,
-        this.exploreEvents,
-        originPanelId
-      );
-    }
-  }
-
-  componentWillUnmount() {
-    this.exploreEvents.removeAllListeners();
-  }
-
-  componentDidUpdate(prevProps: ExploreProps) {
-    this.refreshExplore();
-  }
-
-  getRef = (el: any) => {
-    this.el = el;
-  };
 
   onChangeTime = (rawRange: RawTimeRange) => {
     const { updateTimeRange, exploreId } = this.props;
@@ -271,14 +214,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   };
 
-  refreshExplore = () => {
-    const { exploreId, update } = this.props;
-
-    if (update.queries || update.range || update.datasource || update.mode) {
-      this.props.refreshExplore(exploreId);
-    }
-  };
-
   renderEmptyState() {
     return (
       <div className="explore-container">
@@ -350,15 +285,12 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   });
 
   renderTraceViewPanel() {
-    const { queryResponse, splitOpen } = this.props;
+    const { queryResponse, splitOpen, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
     return (
-      // We expect only one trace at the moment to be in the dataframe
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames[0] && (
-        <TraceView trace={dataFrames[0].fields[0].values.get(0) as TraceViewData | undefined} splitOpenFn={splitOpen} />
-      )
+      dataFrames.length && <TraceView exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
     );
   }
 
@@ -367,7 +299,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       datasourceInstance,
       datasourceMissing,
       exploreId,
-      split,
       queryKeys,
       graphResult,
       queryResponse,
@@ -380,26 +311,19 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showNodeGraph,
     } = this.props;
     const { openDrawer } = this.state;
-    const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-
-    // gets an error without a refID, so non-query-row-related error, like a connection error
-    const queryErrors =
-      queryResponse.state === LoadingState.Error && queryResponse.error ? [queryResponse.error] : undefined;
-    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
-
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
-      <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
+      <CustomScrollbar autoHeightMin={'100%'}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
             <div className={cx('panel-container', styles.queryContainer)}>
-              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+              <QueryRows exploreId={exploreId} queryKeys={queryKeys} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
                 // We cannot show multiple traces at the same time right now so we do not show add query button.
@@ -412,7 +336,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
             </div>
-            <ErrorContainer queryError={queryError} />
+            <ResponseErrorContainer exploreId={exploreId} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -452,26 +376,20 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             </AutoSizer>
           </div>
         )}
-      </div>
+      </CustomScrollbar>
     );
   }
 }
 
-const ensureQueriesMemoized = memoizeOne(ensureQueries);
-const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
-
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
-  const { split, syncedTimes } = explore;
-  const item: ExploreItemState = explore[exploreId];
+  const { syncedTimes } = explore;
+  const item: ExploreItemState = explore[exploreId]!;
   const timeZone = getTimeZone(state.user);
   const {
     datasourceInstance,
     datasourceMissing,
-    initialized,
     queryKeys,
-    urlState,
-    update,
     isLive,
     graphResult,
     logsResult,
@@ -485,29 +403,15 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     loading,
   } = item;
 
-  const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
-  const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
-  const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
-  const initialRange = urlRange
-    ? getTimeRangeFromUrlMemoized(urlRange, timeZone)
-    : getTimeRange(timeZone, DEFAULT_RANGE);
-
   return {
     datasourceInstance,
     datasourceMissing,
-    initialized,
-    split,
     queryKeys,
-    update,
-    initialDatasource,
-    initialQueries,
-    initialRange,
     isLive,
     graphResult,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
-    originPanelId,
     syncedTimes,
     timeZone,
     showLogs,
@@ -521,9 +425,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
 
 const mapDispatchToProps: Partial<ExploreProps> = {
   changeSize,
-  initializeExplore,
   modifyQueries,
-  refreshExplore,
   scanStart,
   scanStopAction,
   setQueries,

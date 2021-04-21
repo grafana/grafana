@@ -1,6 +1,13 @@
-import { PieChartType, SingleStatBaseOptions } from '@grafana/ui';
-
+import {
+  PieChartType,
+  SingleStatBaseOptions,
+  PieChartLabels,
+  PieChartLegendOptions,
+  VizTooltipOptions,
+} from '@grafana/ui';
 export interface PieChartOptions extends SingleStatBaseOptions {
   pieType: PieChartType;
-  strokeWidth: number;
+  displayLabels: PieChartLabels[];
+  legend: PieChartLegendOptions;
+  tooltip: VizTooltipOptions;
 }

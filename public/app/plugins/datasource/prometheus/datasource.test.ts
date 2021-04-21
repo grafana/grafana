@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map, cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
 import {
   CoreApp,
@@ -105,14 +105,21 @@ describe('PrometheusDatasource', () => {
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
     });
-
-    it('should still perform a GET request with the DS HTTP method set to POST', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
+    it('should still perform a GET request with the DS HTTP method set to POST and not POST-friendly endpoint', () => {
+      const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('/foo');
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
+    });
+    it('should try to perform a POST request with the DS HTTP method set to POST and POST-friendly endpoint', () => {
+      const postSettings = cloneDeep(instanceSettings);
+      postSettings.jsonData.httpMethod = 'POST';
+      const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
+      promDs.metadataRequest('api/v1/series');
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].method).toBe('POST');
     });
   });
 
@@ -273,7 +280,7 @@ describe('PrometheusDatasource', () => {
 
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
-        const seriesLabels = _.map(result[0].data, 'name');
+        const seriesLabels = map(result[0].data, 'name');
         expect(seriesLabels).toEqual(expected);
       });
     });
@@ -1592,7 +1599,6 @@ describe('PrometheusDatasource', () => {
 });
 
 describe('PrometheusDatasource for POST', () => {
-  //   const ctx = new helpers.ServiceTestContext();
   const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
@@ -1739,6 +1745,32 @@ describe('prepareTargets', () => {
         step: 1,
       });
       expect(activeTargets[0]).toEqual(target);
+    });
+    it('should give back 2 targets when exemplar enabled', () => {
+      const target: PromQuery = {
+        refId: 'A',
+        expr: 'up',
+        exemplar: true,
+      };
+
+      const { queries, activeTargets } = getPrepareTargetsContext(target);
+      expect(queries).toHaveLength(2);
+      expect(activeTargets).toHaveLength(2);
+      expect(activeTargets[0].exemplar).toBe(true);
+      expect(activeTargets[1].exemplar).toBe(false);
+    });
+    it('should give back 1 target when exemplar and instant are enabled', () => {
+      const target: PromQuery = {
+        refId: 'A',
+        expr: 'up',
+        exemplar: true,
+        instant: true,
+      };
+
+      const { queries, activeTargets } = getPrepareTargetsContext(target);
+      expect(queries).toHaveLength(1);
+      expect(activeTargets).toHaveLength(1);
+      expect(activeTargets[0].instant).toBe(true);
     });
   });
 

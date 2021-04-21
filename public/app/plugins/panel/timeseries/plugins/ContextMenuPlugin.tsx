@@ -1,27 +1,29 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ClickPlugin,
   ContextMenu,
   GraphContextMenuHeader,
   IconName,
-  MenuItem,
+  MenuItemProps,
   MenuItemsGroup,
+  MenuGroup,
+  MenuItem,
   Portal,
-  usePlotData,
+  useGraphNGContext,
 } from '@grafana/ui';
 import {
+  DataFrame,
   DataFrameView,
-  DisplayValue,
-  Field,
   getDisplayProcessor,
   getFieldDisplayName,
   InterpolateFunction,
+  TimeZone,
 } from '@grafana/data';
-import { TimeZone } from '@grafana/data';
 import { useClickAway } from 'react-use';
 import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/linkSuppliers';
 
 interface ContextMenuPluginProps {
+  data: DataFrame[];
   defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onOpen?: () => void;
@@ -30,16 +32,17 @@ interface ContextMenuPluginProps {
 }
 
 export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
+  data,
+  defaultItems,
   onClose,
   timeZone,
-  defaultItems,
   replaceVariables,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onClick = useCallback(() => {
     setIsOpen(!isOpen);
-  }, [setIsOpen]);
+  }, [isOpen]);
 
   return (
     <ClickPlugin id="ContextMenu" onClick={onClick}>
@@ -47,6 +50,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
         return (
           <Portal>
             <ContextMenuView
+              data={data}
               defaultItems={defaultItems}
               timeZone={timeZone}
               selection={{ point, coords }}
@@ -66,6 +70,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 };
 
 interface ContextMenuProps {
+  data: DataFrame[];
   defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onClose?: () => void;
@@ -81,11 +86,11 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
   timeZone,
   defaultItems,
   replaceVariables,
+  data,
   ...otherProps
 }) => {
   const ref = useRef(null);
-  const { data } = usePlotData();
-  const { seriesIdx, dataIdx } = selection.point;
+  const graphContext = useGraphNGContext();
 
   const onClose = () => {
     if (otherProps.onClose) {
@@ -97,65 +102,88 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     onClose();
   });
 
-  const contextMenuProps = useMemo(() => {
-    const items = defaultItems ? [...defaultItems] : [];
-    let field: Field;
-    let displayValue: DisplayValue;
-    const timeField = data.fields[0];
-    const timeFormatter = timeField.display || getDisplayProcessor({ field: timeField, timeZone });
-    let renderHeader: () => JSX.Element | null = () => null;
+  const xField = graphContext.getXAxisField();
 
-    if (seriesIdx && dataIdx) {
-      field = data.fields[seriesIdx];
-      displayValue = field.display!(field.values.get(dataIdx));
-      const hasLinks = field.config.links && field.config.links.length > 0;
+  if (!xField) {
+    return null;
+  }
+  const items = defaultItems ? [...defaultItems] : [];
+  let renderHeader: () => JSX.Element | null = () => null;
 
-      if (hasLinks) {
-        const linksSupplier = getFieldLinksSupplier({
-          display: displayValue,
-          name: field.name,
-          view: new DataFrameView(data),
-          rowIndex: dataIdx,
-          colIndex: seriesIdx,
-          field: field.config,
-          hasLinks,
+  const { seriesIdx, dataIdx } = selection.point;
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone });
+
+  if (seriesIdx && dataIdx) {
+    // origin field/frame indexes for inspecting the data
+    const originFieldIndex = graphContext.mapSeriesIndexToDataFrameFieldIndex(seriesIdx);
+    const frame = data[originFieldIndex.frameIndex];
+    const field = frame.fields[originFieldIndex.fieldIndex];
+
+    const displayValue = field.display!(field.values.get(dataIdx));
+
+    const hasLinks = field.config.links && field.config.links.length > 0;
+
+    if (hasLinks) {
+      const linksSupplier = getFieldLinksSupplier({
+        display: displayValue,
+        name: field.name,
+        view: new DataFrameView(frame),
+        rowIndex: dataIdx,
+        colIndex: originFieldIndex.fieldIndex,
+        field: field.config,
+        hasLinks,
+      });
+
+      if (linksSupplier) {
+        items.push({
+          items: linksSupplier.getLinks(replaceVariables).map<MenuItemProps>((link) => {
+            return {
+              label: link.title,
+              ariaLabel: link.title,
+              url: link.href,
+              target: link.target,
+              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
+              onClick: link.onClick,
+            };
+          }),
         });
-
-        if (linksSupplier) {
-          items.push({
-            items: linksSupplier.getLinks(replaceVariables).map<MenuItem>((link) => {
-              return {
-                label: link.title,
-                url: link.href,
-                target: link.target,
-                icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
-                onClick: link.onClick,
-              };
-            }),
-          });
-        }
       }
-
-      // eslint-disable-next-line react/display-name
-      renderHeader = () => (
-        <GraphContextMenuHeader
-          timestamp={timeFormatter(timeField.values.get(dataIdx)).text}
-          displayValue={displayValue}
-          seriesColor={displayValue.color!}
-          displayName={getFieldDisplayName(field, data)}
-        />
-      );
     }
 
-    return {
-      renderHeader,
-      items,
-    };
-  }, [defaultItems, seriesIdx, dataIdx, data]);
+    // eslint-disable-next-line react/display-name
+    renderHeader = () => (
+      <GraphContextMenuHeader
+        timestamp={xFieldFmt(xField.values.get(dataIdx)).text}
+        displayValue={displayValue}
+        seriesColor={displayValue.color!}
+        displayName={getFieldDisplayName(field, frame)}
+      />
+    );
+  }
+
+  const renderMenuGroupItems = () => {
+    return items?.map((group, index) => (
+      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+        {(group.items || []).map((item) => (
+          <MenuItem
+            key={item.label}
+            url={item.url}
+            label={item.label}
+            ariaLabel={item.label}
+            target={item.target}
+            icon={item.icon}
+            active={item.active}
+            onClick={item.onClick}
+          />
+        ))}
+      </MenuGroup>
+    ));
+  };
 
   return (
     <ContextMenu
-      {...contextMenuProps}
+      renderMenuItems={renderMenuGroupItems}
+      renderHeader={renderHeader}
       x={selection.coords.viewport.x}
       y={selection.coords.viewport.y}
       onClose={onClose}

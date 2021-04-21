@@ -2,7 +2,6 @@ import {
   buildQueryTransaction,
   clearHistory,
   DEFAULT_RANGE,
-  getFirstQueryErrorWithoutRefId,
   getRefIds,
   getValueWithRefId,
   hasNonEmptyQuery,
@@ -14,7 +13,7 @@ import {
   getTimeRangeFromUrl,
 } from './explore';
 import store from 'app/core/store';
-import { DataQueryError, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
@@ -320,40 +319,6 @@ describe('getTimeRangeFromUrl', () => {
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
     expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
-  });
-});
-
-describe('getFirstQueryErrorWithoutRefId', () => {
-  describe('when called with a null value', () => {
-    it('then it should return undefined', () => {
-      const errors: DataQueryError[] | undefined = undefined;
-      const result = getFirstQueryErrorWithoutRefId(errors);
-
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('when called with an array with only refIds', () => {
-    it('then it should return undefined', () => {
-      const errors: DataQueryError[] = [{ refId: 'A' }, { refId: 'B' }];
-      const result = getFirstQueryErrorWithoutRefId(errors);
-
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('when called with an array with and without refIds', () => {
-    it('then it should return undefined', () => {
-      const errors: DataQueryError[] = [
-        { refId: 'A' },
-        { message: 'A message' },
-        { refId: 'B' },
-        { message: 'B message' },
-      ];
-      const result = getFirstQueryErrorWithoutRefId(errors);
-
-      expect(result).toBe(errors[1]);
-    });
   });
 });
 

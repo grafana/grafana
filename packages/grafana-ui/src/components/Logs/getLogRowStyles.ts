@@ -1,18 +1,10 @@
-import { css } from 'emotion';
-import { LogLevel } from '@grafana/data';
-import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
+import { GrafanaTheme, LogLevel } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.palette.gray5 : theme.palette.gray2;
   const hoverBgColor = styleMixins.hoverColor(theme.colors.panelBg, theme);
-
-  const context = css`
-    label: context;
-    visibility: hidden;
-    white-space: nowrap;
-    position: relative;
-  `;
 
   switch (logLevel) {
     case LogLevel.crit:
@@ -61,7 +53,12 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-rows__horizontal-scroll;
       overflow: auto;
     `,
-    context: context,
+    context: css`
+      label: context;
+      visibility: hidden;
+      white-space: nowrap;
+      position: relative;
+    `,
     logsRow: css`
       label: logs-row;
       width: 100%;
@@ -69,7 +66,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       vertical-align: top;
 
       &:hover {
-        .${context} {
+        .log-row-context {
           visibility: visible;
           z-index: 1;
           margin-left: 10px;

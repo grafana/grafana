@@ -133,7 +133,7 @@ func Recovery(cfg *setting.Cfg) macaron.Handler {
 				}
 
 				c.Data["Title"] = "Server Error"
-				c.Data["AppSubUrl"] = setting.AppSubUrl
+				c.Data["AppSubUrl"] = cfg.AppSubURL
 				c.Data["Theme"] = cfg.DefaultTheme
 
 				if setting.Env == setting.Dev {

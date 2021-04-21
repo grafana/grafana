@@ -8,11 +8,10 @@ import {
   InputType,
   ImportDashboardDTO,
 } from './reducers';
-import { updateLocation } from 'app/core/actions';
 import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -99,8 +98,9 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       inputs: inputsToPersist,
       folderId: importDashboardForm.folder.id,
     });
+
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
-    dispatch(updateLocation({ path: dashboardUrl }));
+    locationService.push(dashboardUrl);
   };
 }
 

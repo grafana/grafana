@@ -1,9 +1,9 @@
 import React, { useMemo, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   getFieldDisplayName,
   DataFrame,
@@ -13,7 +13,7 @@ import {
   valueMatchers,
 } from '@grafana/data';
 import { Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import {
   FilterByValueFilter,
   FilterByValueMatch,
@@ -59,7 +59,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       },
     });
     onChange({ ...options, filters });
-  }, [onChange, options, valueMatchers, input]);
+  }, [onChange, options, input]);
 
   const onDeleteFilter = useCallback(
     (index: number) => {
@@ -133,13 +133,13 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   );
 };
 
-export const filterByValueTransformRegistryItem: TransformerRegistyItem<FilterByValueTransformerOptions> = {
+export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterByValueTransformerOptions> = {
   id: DataTransformerID.filterByValue,
   editor: FilterByValueTransformerEditor,
   transformation: standardTransformers.filterByValueTransformer,
   name: standardTransformers.filterByValueTransformer.name,
   description:
-    'Removes rows of the query results using user definied filters. This is useful if you can not filter your data in the data source.',
+    'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
 };
 
 const getEditorStyles = stylesFactory(() => ({

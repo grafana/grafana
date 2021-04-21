@@ -27,7 +27,7 @@ func init() {
 		Namespace: "grafana",
 		Name:      "database_queries_duration_seconds",
 		Help:      "Database query histogram",
-		Buckets:   prometheus.ExponentialBuckets(0.0001, 4, 9),
+		Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 	}, []string{"status"})
 
 	prometheus.MustRegister(databaseQueryHistogram)

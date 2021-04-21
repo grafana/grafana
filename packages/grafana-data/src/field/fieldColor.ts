@@ -6,8 +6,10 @@ import { fallBackTreshold } from './thresholds';
 import { getScaleCalculator, ColorScaleValue } from './scale';
 import { reduceField } from '../transformations/fieldReducer';
 
+/** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
 
+/** @beta */
 export interface FieldColorMode extends RegistryItem {
   getCalculator: (field: Field, theme: GrafanaTheme) => FieldValueColorCalculator;
   colors?: string[];
@@ -15,6 +17,7 @@ export interface FieldColorMode extends RegistryItem {
   isByValue?: boolean;
 }
 
+/** @internal */
 export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
   return [
     {
@@ -37,7 +40,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     },
     // new FieldColorSchemeMode({
     //   id: FieldColorModeId.PaletteSaturated,
-    //   name: 'By series / Saturated palette',
+    //   name: 'Saturated palette',
     //   //description: 'Assigns color based on series or field index',
     //   isContinuous: false,
     //   isByValue: false,
@@ -45,7 +48,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     //     'blue',
     //     'red',
     //     'green',
-    //     'yellow',
+    //     'orange',
     //     'purple',
     //     'orange',
     //     'dark-blue',
@@ -203,11 +206,13 @@ export class FieldColorSchemeMode implements FieldColorMode {
   }
 }
 
+/** @beta */
 export function getFieldColorModeForField(field: Field): FieldColorMode {
   return fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorModeId.Thresholds);
 }
 
-export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
+/** @beta */
+export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorMode {
   return fieldColorModeRegistry.get(mode ?? FieldColorModeId.Thresholds);
 }
 

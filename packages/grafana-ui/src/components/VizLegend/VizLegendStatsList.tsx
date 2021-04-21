@@ -1,28 +1,41 @@
 import React from 'react';
 import { InlineList } from '../List/InlineList';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { DisplayValue, formattedValueToString } from '@grafana/data';
-import capitalize from 'lodash/capitalize';
+import { capitalize } from 'lodash';
+import { useStyles } from '../../themes/ThemeContext';
 
-const VizLegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ stat }) => {
-  const styles = css`
-    margin-left: 8px;
-  `;
-
-  return (
-    <div className={styles}>
-      {stat.title && `${capitalize(stat.title)}:`} {formattedValueToString(stat)}
-    </div>
-  );
-};
-
-VizLegendItemStat.displayName = 'VizLegendItemStat';
-
+/**
+ * @internal
+ */
 export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
+  const styles = useStyles(getStyles);
+
   if (stats.length === 0) {
     return null;
   }
-  return <InlineList items={stats} renderItem={(stat) => <VizLegendItemStat stat={stat} />} />;
+
+  return (
+    <InlineList
+      className={styles.list}
+      items={stats}
+      renderItem={(stat) => (
+        <div className={styles.item}>
+          {stat.title && `${capitalize(stat.title)}:`} {formattedValueToString(stat)}
+        </div>
+      )}
+    />
+  );
 };
+
+const getStyles = () => ({
+  list: css`
+    flex-grow: 1;
+    text-align: right;
+  `,
+  item: css`
+    margin-left: 8px;
+  `,
+});
 
 VizLegendStatsList.displayName = 'VizLegendStatsList';

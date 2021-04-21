@@ -10,7 +10,7 @@ export default {
   parameters: {
     docs: {},
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   argTypes: {

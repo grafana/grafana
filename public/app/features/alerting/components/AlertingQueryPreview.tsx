@@ -1,12 +1,11 @@
-import React, { FC, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
-import { css } from 'emotion';
+import React, { FC, useState } from 'react';
+import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { GrafanaTheme } from '@grafana/data';
-import { TabsBar, TabContent, Tab, useStyles, Icon } from '@grafana/ui';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
+import { Icon, Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
+import { EmptyState } from './EmptyState';
 
 enum Tabs {
   Query = 'query',
@@ -19,15 +18,18 @@ const tabs = [
 ];
 
 interface Props {
-  queryRunner: PanelQueryRunner;
+  getInstances: () => DataFrame[];
+  queries: DataQuery[];
+  onTest: () => void;
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, onTest, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
-  const data = useObservable(observable);
+  let data = {} as PanelData;
+
+  const instances = getInstances();
 
   return (
     <div className={styles.wrapper}>
@@ -44,42 +46,64 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {data && data.state === 'Error' ? (
-          <div className={styles.noQueries}>
-            <h4 className={styles.noQueriesHeader}>There was an error :(</h4>
-            <div>{data.error?.data?.error}</div>
-          </div>
-        ) : data && data.series.length > 0 ? (
-          <AutoSizer style={{ width: '100%', height: '100%' }}>
-            {({ width, height }) => {
-              switch (activeTab) {
-                case Tabs.Instances:
-                  return <PreviewInstancesTab isTested={false} data={data} styles={styles} />;
-
-                case Tabs.Query:
-                default:
-                  return <PreviewQueryTab data={data} width={width} height={height} />;
-              }
-            }}
-          </AutoSizer>
-        ) : (
-          <div className={styles.noQueries}>
-            <h4 className={styles.noQueriesHeader}>No queries added.</h4>
-            <div>Start adding queries to this alert and a visualisation for your queries will appear here.</div>
-            <div>
-              Learn more about how to create alert definitions <Icon name="external-link-alt" />
-            </div>
-          </div>
-        )}
+        {data &&
+          (data.state === 'Error' ? (
+            <EmptyState title="There was an error :(">
+              <div>{data.error?.data?.error}</div>
+            </EmptyState>
+          ) : (
+            <QueriesAndInstances
+              instances={instances}
+              onTest={onTest}
+              data={data}
+              activeTab={activeTab}
+              queries={queries}
+            />
+          ))}
       </TabContent>
     </div>
+  );
+};
+
+interface PreviewProps {
+  queries: DataQuery[];
+  instances: DataFrame[];
+  onTest: () => void;
+  data: PanelData;
+  activeTab: string;
+}
+
+const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, data, activeTab }) => {
+  if (queries.length === 0) {
+    return (
+      <EmptyState title="No queries added.">
+        <div>Start adding queries to this alert and a visualisation for your queries will appear here.</div>
+        <div>
+          Learn more about how to create alert definitions <Icon name="external-link-alt" />
+        </div>
+      </EmptyState>
+    );
+  }
+
+  return (
+    <AutoSizer style={{ width: '100%', height: '100%' }}>
+      {({ width, height }) => {
+        switch (activeTab) {
+          case Tabs.Instances:
+            return <PreviewInstancesTab instances={instances} width={width} height={height} onTest={onTest} />;
+
+          case Tabs.Query:
+          default:
+            return <PreviewQueryTab data={data} width={width} height={height} />;
+        }
+      }}
+    </AutoSizer>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      label: alertDefinitionPreviewTabs;
       display: flex;
       flex-direction: column;
       width: 100%;
@@ -90,19 +114,5 @@ const getStyles = (theme: GrafanaTheme) => {
       background: ${theme.colors.panelBg};
       height: 100%;
     `,
-    noQueries: css`
-      color: ${theme.colors.textSemiWeak};
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-      width: 100%;
-    `,
-    noQueriesHeader: css`
-      color: ${theme.colors.textSemiWeak};
-    `,
   };
 };
-
-export type PreviewStyles = ReturnType<typeof getStyles>;

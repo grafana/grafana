@@ -75,6 +75,10 @@ Customize user login using `login_attribute_path` configuration option. Order of
 
 You can customize the attribute name used to extract the ID token from the returned OAuth token with the `id_token_attribute_name` option.
 
+You can set the user's display name with JMESPath using the `name_attribute_path` configuration option. It operates the same way as the `login_attribute_path` option.
+
+> **Note:** `name_attribute_path` is available in Grafana 7.4+.
+
 ## Set up OAuth2 with Auth0
 
 1. Create a new Client in Auth0
@@ -189,6 +193,8 @@ allowed_organizations =
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
 ### Role mapping
+
+If  the`role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
 **Basic example:**
 

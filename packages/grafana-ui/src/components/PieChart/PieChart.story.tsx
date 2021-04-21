@@ -1,7 +1,16 @@
 import React from 'react';
-import { number, object, select } from '@storybook/addon-knobs';
-import { PieChart, PieChartType } from '@grafana/ui';
+import { select, number, boolean } from '@storybook/addon-knobs';
+import { PieChart, PieChartType, TooltipDisplayMode } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import {
+  FieldColorModeId,
+  FieldConfigSource,
+  FieldType,
+  InterpolateFunction,
+  ReduceDataOptions,
+  ThresholdsMode,
+  toDataFrame,
+} from '@grafana/data';
 
 export default {
   title: 'Visualizations/PieChart',
@@ -9,27 +18,78 @@ export default {
   component: PieChart,
 };
 
+const fieldConfig: FieldConfigSource = {
+  defaults: {
+    thresholds: {
+      mode: ThresholdsMode.Percentage,
+      steps: [{ color: 'green', value: 0 }],
+    },
+    color: {
+      mode: FieldColorModeId.PaletteClassic,
+    },
+  },
+  overrides: [],
+};
+
+const reduceOptions: ReduceDataOptions = { calcs: [] };
+const replaceVariables: InterpolateFunction = (v) => v;
+const datapoints = [
+  toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1618197346845, 1618197346845] },
+      { name: 'Living room', type: FieldType.number, values: [19, 21] },
+    ],
+  }),
+  toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1618197346845, 1618197346845] },
+      { name: 'Cellar', type: FieldType.number, values: [5, 6] },
+    ],
+  }),
+];
+
 const getKnobs = () => {
   return {
-    datapoints: object('datapoints', [
-      {
-        numeric: 100,
-        text: '100',
-        color: '#7EB26D',
-      },
-      {
-        numeric: 200,
-        text: '200',
-        color: '#6ED0E0',
-      },
-    ]),
-    pieType: select('pieType', [PieChartType.PIE, PieChartType.DONUT], PieChartType.PIE),
-    strokeWidth: number('strokeWidth', 1),
+    width: number('Width', 500),
+    height: number('Height', 500),
+    pieType: select('pieType', Object.values(PieChartType), PieChartType.Pie),
+    showLabelName: boolean('Label.showName', true),
+    showLabelValue: boolean('Label.showValue', false),
+    showLabelPercent: boolean('Label.showPercent', false),
+    tooltipMode: select('Tooltip mode', Object.values(TooltipDisplayMode), TooltipDisplayMode.Single),
   };
 };
 
 export const basic = () => {
-  const { datapoints, pieType, strokeWidth } = getKnobs();
+  const { pieType, width, height, tooltipMode } = getKnobs();
 
-  return <PieChart width={200} height={400} values={datapoints} pieType={pieType} strokeWidth={strokeWidth} />;
+  return (
+    <PieChart
+      width={width}
+      height={height}
+      replaceVariables={replaceVariables}
+      reduceOptions={reduceOptions}
+      fieldConfig={fieldConfig}
+      data={datapoints}
+      pieType={pieType}
+      tooltipOptions={{ mode: tooltipMode }}
+    />
+  );
+};
+
+export const donut = () => {
+  const { width, height, tooltipMode } = getKnobs();
+
+  return (
+    <PieChart
+      width={width}
+      height={height}
+      replaceVariables={replaceVariables}
+      reduceOptions={reduceOptions}
+      fieldConfig={fieldConfig}
+      data={datapoints}
+      pieType={PieChartType.Donut}
+      tooltipOptions={{ mode: tooltipMode }}
+    />
+  );
 };

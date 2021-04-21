@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import debounce from 'lodash/debounce';
-import has from 'lodash/has';
+import { debounce, has } from 'lodash';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
@@ -31,7 +30,6 @@ import { HelpToggle } from '../query/components/HelpToggle';
 interface PropsFromParent {
   exploreId: ExploreId;
   index: number;
-  exploreEvents: EventBusExtended;
 }
 
 export interface QueryRowProps extends PropsFromParent {
@@ -49,6 +47,7 @@ export interface QueryRowProps extends PropsFromParent {
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
+  exploreEvents: EventBusExtended;
 }
 
 interface QueryRowState {
@@ -177,6 +176,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     const canToggleEditorModes = has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
+
+    // We show error without refId in ResponseErrorContainer so this condition needs to match se we don't loose errors.
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
 
     return (
@@ -201,8 +202,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
-  const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, latency } = item;
+  const item: ExploreItemState = explore[exploreId]!;
+  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, latency, eventBridge } = item;
   const query = queries[index];
 
   return {
@@ -213,6 +214,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     absoluteRange,
     queryResponse,
     latency,
+    exploreEvents: eventBridge,
   };
 }
 

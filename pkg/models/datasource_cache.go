@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
+
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -122,6 +124,17 @@ var ptc = proxyTransportCache{
 	cache: make(map[int64]cachedTransport),
 }
 
+func (ds *DataSource) getTimeout() time.Duration {
+	timeout := 0
+	if ds.JsonData != nil {
+		timeout = ds.JsonData.Get("timeout").MustInt()
+	}
+	if timeout == 0 {
+		timeout = setting.DataProxyTimeout
+	}
+	return time.Duration(timeout) * time.Second
+}
+
 func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	transport, err := ds.GetHttpTransport()
 	if err != nil {
@@ -129,7 +142,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}
 
 	return &http.Client{
-		Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
+		Timeout:   ds.getTimeout(),
 		Transport: transport,
 	}, nil
 }
@@ -156,7 +169,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		TLSClientConfig: tlsConfig,
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
-			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
+			Timeout:   ds.getTimeout(),
 			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
 		}).Dial,
 		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
@@ -191,19 +204,19 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper {
 	decrypted := ds.DecryptedValues()
 
-	return &SigV4Middleware{
-		Config: &Config{
-			DatasourceType: ds.Type,
-			AccessKey:      decrypted["sigV4AccessKey"],
-			SecretKey:      decrypted["sigV4SecretKey"],
-			Region:         ds.JsonData.Get("sigV4Region").MustString(),
-			AssumeRoleARN:  ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
-			AuthType:       ds.JsonData.Get("sigV4AuthType").MustString(),
-			ExternalID:     ds.JsonData.Get("sigV4ExternalId").MustString(),
-			Profile:        ds.JsonData.Get("sigV4Profile").MustString(),
+	return sigv4.New(
+		&sigv4.Config{
+			Service:       awsServiceNamespace(ds.Type),
+			AccessKey:     decrypted["sigV4AccessKey"],
+			SecretKey:     decrypted["sigV4SecretKey"],
+			Region:        ds.JsonData.Get("sigV4Region").MustString(),
+			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
+			AuthType:      ds.JsonData.Get("sigV4AuthType").MustString(),
+			ExternalID:    ds.JsonData.Get("sigV4ExternalId").MustString(),
+			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
 		},
-		Next: next,
-	}
+		next,
+	)
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
@@ -318,4 +331,15 @@ func ClearDSDecryptionCache() {
 	defer dsDecryptionCache.Unlock()
 
 	dsDecryptionCache.cache = make(map[int64]cachedDecryptedJSON)
+}
+
+func awsServiceNamespace(dsType string) string {
+	switch dsType {
+	case DS_ES, DS_ES_OPEN_DISTRO:
+		return "es"
+	case DS_PROMETHEUS:
+		return "aps"
+	default:
+		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
+	}
 }

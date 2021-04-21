@@ -14,9 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,84 +28,110 @@ import (
 
 // Test generateConnectionString.
 func TestGenerateConnectionString(t *testing.T) {
-	logger := log.New("tsdb.postgres")
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
 
 	testCases := []struct {
-		desc       string
-		host       string
-		user       string
-		password   string
-		database   string
-		tlsMode    string
-		expConnStr string
-		expErr     string
+		desc        string
+		host        string
+		user        string
+		password    string
+		database    string
+		tlsSettings tlsSettings
+		expConnStr  string
+		expErr      string
+		uid         string
 	}{
 		{
-			desc:       "Unix socket host",
-			host:       "/var/run/postgresql",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+			desc:        "Unix socket host",
+			host:        "/var/run/postgresql",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
 		},
 		{
-			desc:       "TCP host",
-			host:       "host",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+			desc:        "TCP host",
+			host:        "host",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
 		},
 		{
-			desc:       "TCP/port host",
-			host:       "host:1234",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' port=1234",
+			desc:        "TCP/port host",
+			host:        "host:1234",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
 		},
 		{
-			desc:     "Invalid port",
-			host:     "host:invalid",
+			desc:        "Invalid port",
+			host:        "host:invalid",
+			user:        "user",
+			database:    "database",
+			tlsSettings: tlsSettings{},
+			expErr:      "invalid port in host specifier",
+		},
+		{
+			desc:        "Password with single quote and backslash",
+			host:        "host",
+			user:        "user",
+			password:    `p'\assword`,
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+		},
+		{
+			desc:        "Custom TLS mode disabled",
+			host:        "host",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "disable"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+		},
+		{
+			desc:     "Custom TLS mode verify-full with certificate files",
+			host:     "host",
 			user:     "user",
+			password: "password",
 			database: "database",
-			expErr:   "invalid port in host specifier",
-		},
-		{
-			desc:       "Password with single quote and backslash",
-			host:       "host",
-			user:       "user",
-			password:   `p'\assword`,
-			database:   "database",
-			expConnStr: `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
-		},
-		{
-			desc:       "Custom TLS/SSL mode",
-			host:       "host",
-			user:       "user",
-			password:   "password",
-			database:   "database",
-			tlsMode:    "disable",
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+			tlsSettings: tlsSettings{
+				Mode:         "verify-full",
+				RootCertFile: "i/am/coding/ca.crt",
+				CertFile:     "i/am/coding/client.crt",
+				CertKeyFile:  "i/am/coding/client.key",
+			},
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
+				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			data := map[string]interface{}{}
-			if tt.tlsMode != "" {
-				data["sslmode"] = tt.tlsMode
+			svc := PostgresService{
+				Cfg:        cfg,
+				logger:     log.New("tsdb.postgres"),
+				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
 			}
+
 			ds := &models.DataSource{
 				Url:      tt.host,
 				User:     tt.user,
 				Password: tt.password,
 				Database: tt.database,
-				JsonData: simplejson.NewFromAny(data),
+				Uid:      tt.uid,
 			}
-			connStr, err := generateConnectionString(ds, logger)
+
+			connStr, err := svc.generateConnectionString(ds)
+
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
-				assert.Equal(t, tt.expConnStr, connStr, tt.desc)
+				assert.Equal(t, tt.expConnStr, connStr)
 			} else {
 				require.Error(t, err, tt.desc)
 				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
@@ -127,7 +154,7 @@ func TestPostgres(t *testing.T) {
 	runPostgresTests := false
 	// runPostgresTests := true
 
-	if !(sqlstore.IsTestDbPostgres() || runPostgresTests) {
+	if !sqlstore.IsTestDbPostgres() && !runPostgresTests {
 		t.Skip()
 	}
 
@@ -142,11 +169,19 @@ func TestPostgres(t *testing.T) {
 	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 		return x, nil
 	}
-	sqleng.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+	sqleng.Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 		return sql, nil
 	}
 
-	endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
+	svc := PostgresService{
+		Cfg:        cfg,
+		logger:     log.New("tsdb.postgres"),
+		tlsManager: &tlsTestManager{settings: tlsSettings{Mode: "disable"}},
+	}
+
+	exe, err := svc.NewExecutor(&models.DataSource{
 		JsonData:       simplejson.New(),
 		SecureJsonData: securejsondata.SecureJsonData{},
 	})
@@ -198,19 +233,19 @@ func TestPostgres(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("When doing a table query should map Postgres column types to Go types", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT * FROM postgres_types",
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -283,19 +318,19 @@ func TestPostgres(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("When doing a metric query using timeGroup", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -333,24 +368,24 @@ func TestPostgres(t *testing.T) {
 				sqleng.Interpolate = mockInterpolate
 			})
 
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{},
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
-				TimeRange: &tsdb.TimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -360,23 +395,23 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup with NULL fill enabled", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
-				TimeRange: &tsdb.TimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -413,23 +448,23 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup with value fill enabled", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
-				TimeRange: &tsdb.TimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -440,23 +475,23 @@ func TestPostgres(t *testing.T) {
 	})
 
 	t.Run("When doing a metric query using timeGroup with previous fill enabled", func(t *testing.T) {
-		query := &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		query := plugins.DataQuery{
+			Queries: []plugins.DataSubQuery{
 				{
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 						"format": "time_series",
 					}),
-					RefId: "A",
+					RefID: "A",
 				},
 			},
-			TimeRange: &tsdb.TimeRange{
+			TimeRange: &plugins.DataTimeRange{
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
 		}
 
-		resp, err := endpoint.Query(context.Background(), nil, query)
+		resp, err := exe.DataQuery(context.Background(), nil, query)
 		require.NoError(t, err)
 		queryResult := resp.Results["A"]
 		require.NoError(t, queryResult.Error)
@@ -483,9 +518,9 @@ func TestPostgres(t *testing.T) {
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 		}
 
-		if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
+		if exists, err := sess.IsTableExist(metric_values{}); err != nil || exists {
 			require.NoError(t, err)
-			err = sess.DropTable(metric_values{})
+			err := sess.DropTable(metric_values{})
 			require.NoError(t, err)
 		}
 		err := sess.CreateTable(metric_values{})
@@ -537,19 +572,19 @@ func TestPostgres(t *testing.T) {
 		t.Run(
 			"When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt64" as time, "timeInt64" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -560,19 +595,19 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable,) should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt64Nullable" as time, "timeInt64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -583,19 +618,19 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float64) as time column and value column (float64), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat64" as time, "timeFloat64" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -606,19 +641,19 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat64Nullable" as time, "timeFloat64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -629,19 +664,19 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (int32) as time column and value column (int32), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt32" as time, "timeInt32" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -652,19 +687,19 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt32Nullable" as time, "timeInt32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -675,19 +710,19 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float32) as time column and value column (float32), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat32" as time, "timeFloat32" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -698,19 +733,19 @@ func TestPostgres(t *testing.T) {
 
 		t.Run("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable), should return metric with time in milliseconds",
 			func(t *testing.T) {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat32Nullable" as time, "timeFloat32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
@@ -720,19 +755,19 @@ func TestPostgres(t *testing.T) {
 			})
 
 		t.Run("When doing a metric query grouping by time and select metric column should return correct series", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT $__timeEpoch(time), measurement || ' - value one' as metric, "valueOne" FROM metric_values ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -743,19 +778,19 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query with metric column and multiple value columns", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT $__timeEpoch(time), measurement as metric, "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -768,19 +803,19 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query grouping by time should return correct series", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT $__timeEpoch(time), "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -797,21 +832,21 @@ func TestPostgres(t *testing.T) {
 			})
 			sqleng.Interpolate = origInterpolate
 
-			query := &tsdb.TsdbQuery{
-				TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				TimeRange: &plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart},
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{JsonData: simplejson.New()},
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -856,46 +891,46 @@ func TestPostgres(t *testing.T) {
 		}
 
 		t.Run("When doing an annotation query of deploy events should return expected result", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC`,
 							"format": "table",
 						}),
-						RefId: "Deploys",
+						RefID: "Deploys",
 					},
 				},
-				TimeRange: &tsdb.TimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			queryResult := resp.Results["Deploys"]
 			require.NoError(t, err)
 			require.Len(t, queryResult.Tables[0].Rows, 3)
 		})
 
 		t.Run("When doing an annotation query of ticket events should return expected result", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC`,
 							"format": "table",
 						}),
-						RefId: "Tickets",
+						RefID: "Tickets",
 					},
 				},
-				TimeRange: &tsdb.TimeRange{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			queryResult := resp.Results["Tickets"]
 			require.NoError(t, err)
 			require.Len(t, queryResult.Tables[0].Rows, 3)
@@ -905,8 +940,8 @@ func TestPostgres(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 			dtFormat := "2006-01-02 15:04:05.999999999"
 
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -916,12 +951,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Format(dtFormat)),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -935,8 +970,8 @@ func TestPostgres(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch second format should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -946,12 +981,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Unix()),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -965,8 +1000,8 @@ func TestPostgres(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch second format (t *testing.Tint) should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -976,12 +1011,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Unix()),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -995,8 +1030,8 @@ func TestPostgres(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch millisecond format should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
@@ -1006,12 +1041,12 @@ func TestPostgres(t *testing.T) {
 							`, dt.Unix()*1000),
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -1023,8 +1058,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query with a time column holding a bigint null value should return nil", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT
@@ -1034,12 +1069,12 @@ func TestPostgres(t *testing.T) {
 							`,
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -1051,8 +1086,8 @@ func TestPostgres(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query with a time column holding a timestamp null value should return nil", func(t *testing.T) {
-			query := &tsdb.TsdbQuery{
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT
@@ -1062,12 +1097,12 @@ func TestPostgres(t *testing.T) {
 							`,
 							"format": "table",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
@@ -1084,9 +1119,7 @@ func InitPostgresTestDB(t *testing.T) *xorm.Engine {
 	testDB := sqlutil.PostgresTestDB()
 	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "dbname=grafanatest",
 		"dbname=grafanadstest", 1))
-	if err != nil {
-		t.Fatalf("Failed to init postgres DB %v", err)
-	}
+	require.NoError(t, err, "Failed to init postgres DB")
 
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC
@@ -1107,4 +1140,12 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
+}
+
+type tlsTestManager struct {
+	settings tlsSettings
+}
+
+func (m *tlsTestManager) getTLSSettings(datasource *models.DataSource) (tlsSettings, error) {
+	return m.settings, nil
 }

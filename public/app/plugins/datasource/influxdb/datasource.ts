@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, map as _map, reduce, get, has, extend, omit, pick, isString } from 'lodash';
 
 import {
   dateMath,
@@ -73,7 +73,14 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     if (this.isFlux) {
-      return super.query(request);
+      // for not-flux queries we call `this.classicQuery`, and that
+      // handles the is-hidden situation.
+      // for the flux-case, we do the filtering here
+      const filteredRequest = {
+        ...request,
+        targets: request.targets.filter((t) => t.hide !== true),
+      };
+      return super.query(filteredRequest);
     }
 
     // Fallback to classic query support
@@ -113,12 +120,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   classicQuery(options: any): Observable<DataQueryResponse> {
     let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
-    const targets = _.cloneDeep(options.targets);
+    const targets = cloneDeep(options.targets);
     const queryTargets: any[] = [];
 
     let i, y;
 
-    let allQueries = _.map(targets, (target) => {
+    let allQueries = _map(targets, (target) => {
       if (target.hide) {
         return '';
       }
@@ -346,7 +353,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return '';
     }
 
-    return _.reduce(
+    return reduce(
       params,
       (memo, value, key) => {
         if (value === null || value === undefined) {
@@ -403,7 +410,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this._seriesQuery(query)
       .toPromise()
       .then((res: any) => {
-        const error = _.get(res, 'results[0].error');
+        const error = get(res, 'results[0].error');
         if (error) {
           return { status: 'error', message: error };
         }
@@ -433,13 +440,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     const { q } = data;
 
-    if (method === 'POST' && _.has(data, 'q')) {
+    if (method === 'POST' && has(data, 'q')) {
       // verb is POST and 'q' param is defined
-      _.extend(params, _.omit(data, ['q']));
-      data = this.serializeParams(_.pick(data, ['q']));
+      extend(params, omit(data, ['q']));
+      data = this.serializeParams(pick(data, ['q']));
     } else if (method === 'GET' || method === 'POST') {
       // verb is GET, or POST without 'q' param
-      _.extend(params, data);
+      extend(params, data);
       data = null;
     }
 
@@ -533,7 +540,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   getInfluxTime(date: any, roundUp: any, timezone: any) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       if (date === 'now') {
         return 'now()';
       }

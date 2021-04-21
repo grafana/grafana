@@ -1,4 +1,3 @@
-import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DataSourceInstanceSettings, DataSourcePlugin } from '@grafana/data';
 
@@ -12,9 +11,18 @@ const templateSrv: any = {
         value: 'BBB',
       },
     },
+    {
+      type: 'datasource',
+      name: 'datasourceDefault',
+      current: {
+        value: 'default',
+      },
+    },
   ],
   replace: (v: string) => {
-    return v.replace('${datasource}', 'BBB');
+    let result = v.replace('${datasource}', 'BBB');
+    result = result.replace('${datasourceDefault}', 'default');
+    return result;
   },
 };
 
@@ -69,12 +77,19 @@ describe('datasource_srv', () => {
       name: 'BBB',
       uid: 'uid-code-BBB',
       meta: { metrics: true },
+      isDefault: true,
     },
     Jaeger: {
       type: 'jaeger-db',
       name: 'Jaeger',
       uid: 'uid-code-Jaeger',
       meta: { tracing: true, id: 'jaeger' },
+    },
+    CannotBeQueried: {
+      type: 'no-query',
+      name: 'no-query',
+      uid: 'no-query',
+      meta: { id: 'no-query' },
     },
   };
 
@@ -112,6 +127,17 @@ describe('datasource_srv', () => {
         expect(ds?.name).toBe('${datasource}');
         expect(ds?.uid).toBe('uid-code-BBB');
       });
+
+      it('should not set isDefault when being fetched via variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}');
+        expect(ds?.isDefault).toBe(false);
+      });
+
+      it('should work with variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
+        expect(ds?.name).toBe('${datasourceDefault}');
+        expect(ds?.uid).toBe('uid-code-BBB');
+      });
     });
 
     describe('when getting external metric sources', () => {
@@ -121,9 +147,17 @@ describe('datasource_srv', () => {
       });
     });
 
+    it('Should by default filter out data sources that cannot be queried', () => {
+      const list = dataSourceSrv.getList({});
+      expect(list.find((x) => x.name === 'no-query')).toBeUndefined();
+      const all = dataSourceSrv.getList({ all: true });
+      expect(all.find((x) => x.name === 'no-query')).toBeDefined();
+    });
+
     it('Can get list of data sources with variables: true', () => {
       const list = dataSourceSrv.getList({ metrics: true, variables: true });
-      expect(list[0].name).toBe('${datasource}');
+      expect(list[0].name).toBe('${datasourceDefault}');
+      expect(list[1].name).toBe('${datasource}');
     });
 
     it('Can get list of data sources with tracing: true', () => {
@@ -154,6 +188,7 @@ describe('datasource_srv', () => {
             "uid": "uid-code-aaa",
           },
           Object {
+            "isDefault": true,
             "meta": Object {
               "metrics": true,
             },

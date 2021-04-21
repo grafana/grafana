@@ -1,6 +1,8 @@
 import { DataFrame, Field, FieldMatcher, FieldType, getFieldDisplayName } from '@grafana/data';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { XYDimensionConfig } from './types';
+
+// TODO: fix import
+import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 
 export enum DimensionError {
   NoData,
@@ -21,7 +23,7 @@ export function isGraphable(field: Field) {
   return field.type === FieldType.number;
 }
 
-export function getXYDimensions(cfg: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
+export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
   if (!data || !data.length) {
     return { error: DimensionError.NoData } as XYDimensions;
   }

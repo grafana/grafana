@@ -1,9 +1,8 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Components
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -25,7 +24,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -46,6 +45,7 @@ interface State {
   scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
+  defaultDataSource?: DataSourceApi;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -77,7 +77,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
-      this.setState({ dataSource: ds, dsSettings });
+      const defaultDataSource = await this.dataSourceSrv.get();
+      this.setState({ dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -141,14 +142,22 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddQueryClick = () => {
-    if (this.state.dsSettings?.meta.mixed) {
-      this.setState({ isAddingMixed: true });
-      return;
-    }
-
-    this.onChange({ queries: addQuery(this.props.options.queries) });
+    const { options } = this.props;
+    this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
     this.onScrollBottom();
   };
+
+  newQuery(): Partial<DataQuery> {
+    const { dsSettings, defaultDataSource } = this.state;
+
+    if (!dsSettings?.meta.mixed) {
+      return {};
+    }
+
+    return {
+      datasource: defaultDataSource?.name,
+    };
+  }
 
   onChange(changedProps: Partial<QueryGroupOptions>) {
     this.props.onOptionsChange({
@@ -277,7 +286,14 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { data } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
-      return <DashboardQueryEditor queries={options.queries} panelData={data} onChange={this.onQueriesChange} />;
+      return (
+        <DashboardQueryEditor
+          queries={options.queries}
+          panelData={data}
+          onChange={this.onQueriesChange}
+          onRunQueries={onRunQueries}
+        />
+      );
     }
 
     return (
@@ -314,7 +330,6 @@ export class QueryGroup extends PureComponent<Props, State> {
             Query
           </Button>
         )}
-        {isAddingMixed && this.renderMixedPicker()}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
           <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
             <Button

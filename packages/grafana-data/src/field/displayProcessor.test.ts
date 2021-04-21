@@ -164,6 +164,16 @@ describe('Format value', () => {
     expect(instance(value).numeric).toEqual(1);
   });
 
+  it('should not map 1kW to the value for 1W', () => {
+    const valueMappings: ValueMapping[] = [{ id: 0, text: 'mapped', type: MappingType.ValueToText, value: '1' }];
+    const value = '1000';
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings, unit: 'watt' });
+
+    const result = instance(value);
+
+    expect(result.text).toEqual('1.0');
+  });
+
   it('With null value and thresholds should use base color', () => {
     const instance = getDisplayProcessorFromConfig({
       thresholds: {

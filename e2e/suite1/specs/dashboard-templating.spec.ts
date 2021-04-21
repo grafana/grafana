@@ -35,11 +35,12 @@ e2e.scenario({
       `Server:sqlstring = 'A''A"A','BB\\\B','CCC'`,
       `Server:date = null`,
       `Server:text = All`,
+      `Server:queryparam = var-Server=All`,
     ];
 
     e2e()
       .get('.markdown-html li')
-      .should('have.length', 23)
+      .should('have.length', 24)
       .each((element) => {
         items.push(element.text());
       })

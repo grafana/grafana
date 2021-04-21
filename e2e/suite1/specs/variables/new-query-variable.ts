@@ -1,11 +1,11 @@
 import { e2e } from '@grafana/e2e';
 
-const PAGE_UNDER_TEST = '-Y-tnEDWk';
+const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
 describe('Variables - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -73,7 +73,7 @@ describe('Variables - Add variable', () => {
 
   it('adding a single value query variable', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -95,32 +95,39 @@ describe('Variables - Add variable', () => {
       .type('*')
       .blur();
 
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
+      .should('be.visible')
+      .type('/.*C.*/')
+      .blur();
+
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().should('be.visible').click();
 
-    e2e().wait(500);
+    e2e().wait(1500);
 
     e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
-
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').eq(1).should('be.visible').click();
-
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
-      .should('be.visible')
+    e2e.pages.Dashboard.SubMenu.submenuItem()
+      .should('have.length', 4)
+      .eq(3)
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 3);
-      });
+        e2e().get('.variable-link-wrapper').should('be.visible').click();
+        e2e().wait(500);
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+          .should('be.visible')
+          .within(() => {
+            e2e().get('.variable-option').should('have.length', 1);
+          });
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
+      });
   });
 
   it('adding a multi value query variable', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -140,6 +147,11 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
       .type('*')
+      .blur();
+
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
+      .should('be.visible')
+      .type('/.*C.*/')
       .blur();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch()
@@ -163,21 +175,21 @@ describe('Variables - Add variable', () => {
 
     e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
 
-    e2e().wait(500);
-
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
-
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').eq(1).should('be.visible').click();
-
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
-      .should('be.visible')
+    e2e.pages.Dashboard.SubMenu.submenuItem()
+      .should('have.length', 4)
+      .eq(3)
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
-      });
+        e2e().get('.variable-link-wrapper').should('be.visible').click();
+        e2e().wait(500);
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+          .should('be.visible')
+          .within(() => {
+            e2e().get('.variable-option').should('have.length', 2);
+          });
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+        e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
+      });
   });
 });
