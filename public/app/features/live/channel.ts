@@ -6,6 +6,7 @@ import {
   LiveChannelConnectionState,
   LiveChannelPresenceStatus,
   LiveChannelAddress,
+  DataFrameJSON,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -29,6 +30,9 @@ export class CentrifugeLiveChannel<T = any> {
   readonly addr: LiveChannelAddress;
 
   readonly stream = new Subject<LiveChannelEvent<T>>();
+
+  // Hold on to the last header with schema
+  lastMessageWithSchema?: DataFrameJSON;
 
   /** Static definition of the channel definition.  This may describe the channel usage */
   config?: LiveChannelConfig;
@@ -58,6 +62,13 @@ export class CentrifugeLiveChannel<T = any> {
       publish: (ctx: PublicationContext) => {
         try {
           if (ctx.data) {
+            if (ctx.data.data?.schema) {
+              this.lastMessageWithSchema = ctx.data.data as DataFrameJSON;
+              console.log('PUBLISH (SCHEMA)', ctx.data);
+            } else {
+              console.log('PUBLISH (NO-SCHEMA)', ctx.data);
+            }
+
             this.stream.next({
               type: LiveChannelEventType.Message,
               message: ctx.data,
@@ -86,6 +97,16 @@ export class CentrifugeLiveChannel<T = any> {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
         delete this.currentStatus.error;
+
+        if (ctx.data) {
+          if (ctx.data?.data?.schema) {
+            this.lastMessageWithSchema = ctx.data.data as DataFrameJSON;
+            console.log('subscribe (SCHEMA)', ctx.data);
+          } else {
+            console.log('subscribe (NO-SCHEMA)', ctx.data);
+          }
+        }
+
         this.sendStatus(ctx.data);
       },
       unsubscribe: (ctx: UnsubscribeContext) => {
