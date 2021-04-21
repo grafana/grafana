@@ -39,7 +39,7 @@ describe('JaegerDatasource', () => {
       ...defaultQuery,
       targets: [
         {
-          query: 'a/b',
+          traceID: 'a/b',
           refId: '1',
         },
       ],
