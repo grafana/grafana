@@ -8,7 +8,6 @@ import {
   PanelProps,
   PanelTypeChangedHandler,
   FieldConfigProperty,
-  DashboardQuerySupport,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -107,7 +106,12 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
-  dashboardQuerySupport: DashboardQuerySupport = { annotations: false, alertStates: false };
+  supportsAnnotations = false;
+
+  /**
+   * @deprecated supportsAlertStates is deprecated and will be removed when the next generation alerting is in place
+   */
+  supportsAlertStates = false;
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -262,7 +266,7 @@ export class PanelPlugin<
   }
 
   /**
-   * Tells Grafana if the plugin should subscribe to DashboardQueryRunner results.
+   * Tells Grafana if the plugin should subscribe to annotation results.
    *
    * @example
    * ```typescript
@@ -275,16 +279,38 @@ export class PanelPlugin<
    *     .useFieldConfig({})
    *     ...
    *     ...
-   *     .setDashboardQuerySupport({
-   *       annotations: true,
-   *       alertStates: true,
-   *     });
+   *     .setAnnotationSupport(true);
    * ```
    *
    * @public
    **/
-  setDashboardQuerySupport(supportOptions: Partial<DashboardQuerySupport>) {
-    this.dashboardQuerySupport = { ...this.dashboardQuerySupport, ...supportOptions };
+  setAnnotationSupport(supported: boolean) {
+    this.supportsAnnotations = supported;
+    return this;
+  }
+
+  /**
+   * @deprecated setAlertStatesSupport is deprecated and will be removed when the next generation alerting is in place
+   * Tells Grafana if the plugin should subscribe to alert state results.
+   *
+   * @example
+   * ```typescript
+   *
+   * import { ShapePanel } from './ShapePanel';
+   *
+   * interface ShapePanelOptions {}
+   *
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *     .useFieldConfig({})
+   *     ...
+   *     ...
+   *     .setAlertStatesSupport(true);
+   * ```
+   *
+   * @public
+   **/
+  setAlertStateSupport(supported: boolean) {
+    this.supportsAlertStates = supported;
     return this;
   }
 

@@ -182,8 +182,3 @@ export enum VizOrientation {
   Vertical = 'vertical',
   Horizontal = 'horizontal',
 }
-
-export interface DashboardQuerySupport {
-  annotations: boolean;
-  alertStates: boolean;
-}
