@@ -53,15 +53,18 @@ export async function buildShareUrl(
   return shareUrl;
 }
 
-export async function buildPublicShareUrl(dashboard?: DashboardModel, shortenUrl?: boolean) {
+export async function buildPublicShareUrl(dashboard: DashboardModel, shortenUrl?: boolean) {
   const baseUrl = buildBaseUrl();
   let publicShareUrl = '';
-  await window
-    .fetch(`/encrypt/${dashboard.uid}/${dashboard.meta.slug}`)
-    .then((res) => res.text())
-    .then((token) => {
-      publicShareUrl = `${baseUrl}?shareduid=${token}`;
-    });
+  if (dashboard) {
+    await window
+      .fetch(`/encrypt/${dashboard.uid}/${dashboard.meta.slug}`)
+      .then((res) => res.text())
+      .then((token) => {
+        publicShareUrl = `${baseUrl}?shareduid=${token}`;
+      });
+  }
+
   if (shortenUrl) {
     return await createShortLink(publicShareUrl);
   }
