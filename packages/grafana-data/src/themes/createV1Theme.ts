@@ -222,7 +222,7 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
 
       bodyBg: theme.colors.background.canvas,
       panelBg: theme.components.panel.background,
-      panelBorder: theme.components.panel.border,
+      panelBorder: theme.components.panel.borderColor,
       pageHeaderBg: theme.colors.background.canvas,
       pageHeaderBorder: theme.colors.background.canvas,
 

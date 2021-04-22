@@ -25,7 +25,7 @@ const getTextAreaStyle = stylesFactory((theme: GrafanaThemeV2, invalid = false) 
         border-radius: ${theme.shape.borderRadius()};
         padding: ${theme.spacing.gridSize / 4}px ${theme.spacing.gridSize}px;
         width: 100%;
-        border-color: ${invalid ? theme.colors.error.border : theme.components.input.border};
+        border-color: ${invalid ? theme.colors.error.border : theme.components.input.borderColor};
       `
     ),
   };

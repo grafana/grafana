@@ -80,7 +80,7 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
       flex-direction: row;
       align-items: stretch;
       background: ${theme.colors.background.secondary};
-      box-shadow: ${elevated ? theme.shadows.z4 : theme.shadows.z1};
+      box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
 
       &:before {
         content: '';

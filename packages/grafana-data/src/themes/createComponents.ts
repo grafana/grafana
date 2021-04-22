@@ -11,10 +11,11 @@ export interface ThemeComponents {
   };
   input: {
     background: string;
-    border: string;
+    borderColor: string;
     borderHover: string;
     text: string;
   };
+
   tooltip: {
     text: string;
     background: string;
@@ -22,8 +23,11 @@ export interface ThemeComponents {
   panel: {
     padding: number;
     headerHeight: number;
-    border: string;
+    borderColor: string;
     boxShadow: string;
+    background: string;
+  };
+  dropdown: {
     background: string;
   };
   dashboard: {
@@ -37,8 +41,15 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     padding: 1,
     headerHeight: 4,
     background: colors.background.primary,
-    border: colors.background.primary,
-    boxShadow: shadows.z0,
+    borderColor: colors.background.primary,
+    boxShadow: shadows.z1,
+  };
+
+  const input = {
+    borderColor: colors.border.medium,
+    borderHover: colors.border.strong,
+    text: colors.text.primary,
+    background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
   };
 
   return {
@@ -47,21 +58,11 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       md: 4,
       lg: 6,
     },
-    input:
-      colors.mode === 'dark'
-        ? {
-            background: colors.background.canvas,
-            border: colors.border.medium,
-            borderHover: colors.border.strong,
-            text: colors.text.primary,
-          }
-        : {
-            background: colors.background.primary,
-            border: colors.border.medium,
-            borderHover: colors.border.strong,
-            text: colors.text.primary,
-          },
+    input,
     panel,
+    dropdown: {
+      background: input.background,
+    },
     tooltip: {
       background: colors.background.secondary,
       text: colors.text.primary,

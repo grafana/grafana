@@ -172,7 +172,7 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor): C
     '&:hover': {
       background: color.shade,
       color: color.contrastText,
-      boxShadow: theme.shadows.z2,
+      boxShadow: theme.shadows.z1,
     },
   };
 }
