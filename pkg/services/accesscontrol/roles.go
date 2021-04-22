@@ -122,6 +122,14 @@ var PredefinedRoles = map[string]RoleDTO{
 				Scope:  ScopeOrgAllUsersAll,
 			},
 			{
+				// Inherited from grafana:roles:users:admin:read
+				Action: ActionLDAPUsersRead,
+			},
+			{
+				// Inherited from grafana:roles:users:admin:read
+				Action: ActionLDAPStatusRead,
+			},
+			{
 				Action: ActionLDAPUsersSync,
 			},
 		},
