@@ -108,7 +108,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 		}
 	}
 
-	i.log.Debug(fmt.Sprintf("Installing plugin\nfrom: %s\ninto: %s\n\n", pluginZipURL, pluginsDir))
+	i.log.Debug(fmt.Sprintf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsDir))
 
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
@@ -140,11 +140,11 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 
 	res, _ := toPluginDTO(pluginsDir, pluginID)
 
-	i.log.Success(fmt.Sprintf("Installed %s v%s successfully\n\n", res.ID, res.Info.Version))
+	i.log.Success(fmt.Sprintf("Installed %s v%s successfully", res.ID, res.Info.Version))
 
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
-		i.log.Info(fmt.Sprintf("Fetching %s dependencies...\n\n", res.ID))
+		i.log.Info(fmt.Sprintf("Fetching %s dependencies...", res.ID))
 		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
 		}
@@ -168,7 +168,7 @@ func (i *Installer) Uninstall(pluginID, pluginPath string) error {
 		}
 	}
 
-	i.log.Info(fmt.Sprintf("Uninstalling plugin %v\n", pluginID))
+	i.log.Info(fmt.Sprintf("Uninstalling plugin %v", pluginID))
 
 	return os.RemoveAll(pluginDir)
 }
@@ -250,7 +250,7 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 }
 
 func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
-	i.log.Debug(fmt.Sprintf("Fetching metadata for plugin \"%s\" from repo %s\n\n", pluginID, pluginRepoURL))
+	i.log.Debug(fmt.Sprintf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, pluginRepoURL))
 	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
@@ -466,11 +466,11 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dstDir str
 	if err != nil {
 		return err
 	}
-	i.log.Debug(fmt.Sprintf("Extracting archive %q to %q...\n", archiveFile, dstDir))
+	i.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archiveFile, dstDir))
 
 	existingInstallDir := filepath.Join(dstDir, pluginID)
 	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
-		i.log.Debug(fmt.Sprintf("Removing existing installation of plugin %s\n\n", existingInstallDir))
+		i.log.Debug(fmt.Sprintf("Removing existing installation of plugin %s", existingInstallDir))
 		err = os.RemoveAll(existingInstallDir)
 		if err != nil {
 			return err
@@ -513,7 +513,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dstDir str
 
 		if isSymlink(zf) {
 			if !allowSymlinks {
-				i.log.Warn(fmt.Sprintf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", zf.Name))
+				i.log.Warn(fmt.Sprintf("%v: plugin archive contains a symlink, which is not allowed. Skipping", zf.Name))
 				continue
 			}
 			if err := extractSymlink(zf, dstPath); err != nil {
