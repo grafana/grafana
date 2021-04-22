@@ -8,6 +8,7 @@ import {
   PanelProps,
   PanelTypeChangedHandler,
   FieldConfigProperty,
+  DashboardQuerySupport,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -106,6 +107,7 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
+  dashboardQuerySupport: DashboardQuerySupport = { annotations: false, alertStates: false };
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -256,6 +258,33 @@ export class PanelPlugin<
   setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
+    return this;
+  }
+
+  /**
+   * Tells Grafana if the plugin should subscribe to DashboardQueryRunner results.
+   *
+   * @example
+   * ```typescript
+   *
+   * import { ShapePanel } from './ShapePanel';
+   *
+   * interface ShapePanelOptions {}
+   *
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *     .useFieldConfig({})
+   *     ...
+   *     ...
+   *     .setDashboardQuerySupport({
+   *       annotations: true,
+   *       alertStates: true,
+   *     });
+   * ```
+   *
+   * @public
+   **/
+  setDashboardQuerySupport(supportOptions: Partial<DashboardQuerySupport>) {
+    this.dashboardQuerySupport = { ...this.dashboardQuerySupport, ...supportOptions };
     return this;
   }
 

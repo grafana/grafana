@@ -5,6 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
+  DashboardQuerySupport,
   DataConfigSource,
   DataFrameDTO,
   DataLink,
@@ -150,6 +151,7 @@ export class PanelModel implements DataConfigSource {
     [key: string]: any;
   };
   declare fieldConfig: FieldConfigSource;
+  dashboardQuerySupport: DashboardQuerySupport;
 
   maxDataPoints?: number | null;
   interval?: string | null;
