@@ -79,9 +79,8 @@ const (
 	ScopeUsersAll  = "users:*"
 	ScopeUsersSelf = "users:self"
 
-	ScopeOrgAllUsersAll      = "org:*/users:*"
-	ScopeOrgCurrentUsersAll  = "org:current/users:*"
-	ScopeOrgCurrentUsersSelf = "org:current/users:self"
+	ScopeOrgAllUsersAll     = "org:*/users:*"
+	ScopeOrgCurrentUsersAll = "org:current/users:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
