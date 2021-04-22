@@ -1,27 +1,26 @@
 import React, { FC, Fragment, useState } from 'react';
 import { dateMath, GrafanaTheme, toDuration } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Silence, SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { Silence, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AlertLabel } from '../AlertLabel';
 import { StateTag } from '../StateTag';
 import { CollapseToggle } from '../CollapseToggle';
-import { useRulesByMatcher } from '../../hooks/useRulesByMatcher';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
 import { useStyles } from '@grafana/ui';
-import { RulesTable } from '../rules/RulesTable';
+import SilencedAlertsTable from './SilencedAlertsTable';
 
 interface Props {
   className?: string;
   silence: Silence;
+  silencedAlerts: AlertmanagerAlert[];
 }
 
-const SilenceTableRow: FC<Props> = ({ silence, className }) => {
+const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
 
   const styles = useStyles(getStyles);
   const { status, matchers, startsAt, endsAt, comment, createdBy } = silence;
-  const matchingRules = useRulesByMatcher(matchers as SilenceMatcher[]);
 
   const dateDisplayFormat = 'YYYY-MM-DD HH:mm';
   const startsAtDate = dateMath.parse(startsAt);
@@ -38,11 +37,11 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
           <StateTag status={status.state}>{status.state}</StateTag>
         </td>
         <td className={styles.matchersCell}>
-          {matchers?.map(({ name, value }) => {
-            return <AlertLabel key={`${name}-${value}`} labelKey={name} value={value} />;
+          {matchers?.map(({ name, value, isRegex }) => {
+            return <AlertLabel key={`${name}-${value}`} labelKey={name} value={value} isRegex={isRegex} />;
           })}
         </td>
-        <td>{matchingRules.length}</td>
+        <td>{silencedAlerts.length}</td>
         <td>
           {startsAtDate?.format(dateDisplayFormat)} {'-'}
           <br />
@@ -55,7 +54,6 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
             <ActionButton icon="bell">Unsilence</ActionButton>
           )}
           <ActionIcon icon="pen" tooltip="edit" />
-          <ActionIcon icon="trash-alt" tooltip="delete" />
         </td>
       </tr>
       {!isCollapsed && (
@@ -82,12 +80,12 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
             <td>Created by</td>
             <td colSpan={4}>{createdBy}</td>
           </tr>
-          {!!matchingRules.length && (
+          {!!silencedAlerts.length && (
             <tr className={className}>
               <td />
               <td>Affected alert rules</td>
               <td colSpan={4}>
-                <RulesTable rules={matchingRules} />
+                <SilencedAlertsTable silencedAlerts={silencedAlerts} />
               </td>
             </tr>
           )}

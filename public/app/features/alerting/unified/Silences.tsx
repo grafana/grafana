@@ -49,7 +49,7 @@ const Silences: FC = () => {
         </Alert>
       )}
       {loading && <LoadingPlaceholder text="loading silences..." />}
-      {result && !loading && !error && <SilencesTable silences={result} />}
+      {result && !error && alerts.result && <SilencesTable silences={result} alertManagerAlerts={alerts.result} />}
     </AlertingPageWrapper>
   );
 };

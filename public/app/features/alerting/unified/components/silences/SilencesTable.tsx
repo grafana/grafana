@@ -2,80 +2,60 @@ import React, { FC } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { Silence } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
 import SilenceTableRow from './SilenceTableRow';
+import { getAlertTableStyles } from '../../styles/table';
 
 interface Props {
   silences: Silence[];
+  alertManagerAlerts: AlertmanagerAlert[];
 }
 
-const SilencesTable: FC<Props> = ({ silences }) => {
+const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts }) => {
   const styles = useStyles(getStyles);
+  const tableStyles = useStyles(getAlertTableStyles);
+
+  const findSilencedAlerts = (id: string) => {
+    return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
+  };
   return (
-    <div className={styles.wrapper}>
-      <table className={styles.table}>
-        <colgroup>
-          <col className={styles.colExpand} />
-          <col className={styles.colState} />
-          <col className={styles.colMatchers} />
-          <col />
-          <col />
-          <col />
-        </colgroup>
-        <thead>
-          <tr>
-            <th />
-            <th>State</th>
-            <th>Matchers</th>
-            <th>Alerts</th>
-            <th>Schedule</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {silences.map((silence, index) => {
-            return (
-              <SilenceTableRow
-                key={silence.id}
-                silence={silence}
-                className={index % 2 === 0 ? styles.evenRow : undefined}
-              />
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <table className={tableStyles.table}>
+      <colgroup>
+        <col className={tableStyles.colExpand} />
+        <col className={styles.colState} />
+        <col className={styles.colMatchers} />
+        <col />
+        <col />
+        <col />
+      </colgroup>
+      <thead>
+        <tr>
+          <th />
+          <th>State</th>
+          <th>Matchers</th>
+          <th>Alerts</th>
+          <th>Schedule</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {silences.map((silence, index) => {
+          const silencedAlerts = findSilencedAlerts(silence.id);
+          return (
+            <SilenceTableRow
+              key={silence.id}
+              silence={silence}
+              className={index % 2 === 0 ? tableStyles.evenRow : undefined}
+              silencedAlerts={silencedAlerts}
+            />
+          );
+        })}
+      </tbody>
+    </table>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
-  wrapper: css`
-    width: auto;
-    background-color: ${theme.colors.bg2};
-    border-radius: 3px;
-    border: solid 1px ${theme.colors.border3};
-  `,
-  table: css`
-    width: 100%;
-
-    th {
-      padding: ${theme.spacing.sm};
-    }
-
-    td + td {
-      padding: 0 ${theme.spacing.sm};
-    }
-
-    tr {
-      height: 38px;
-    }
-  `,
-  evenRow: css`
-    background-color: ${theme.colors.bodyBg};
-  `,
-  colExpand: css`
-    width: 36px;
-  `,
   colState: css`
     width: 110px;
   `,
