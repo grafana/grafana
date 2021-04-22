@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -137,6 +138,36 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 	return true
 }
 
+// CheckAPIKey checks that API key is valid. It returns an instance of valid API key, boolean
+// value that indicates whether token is valid or not, human-friendly reason description in case
+// of invalid token or server error.
+func CheckAPIKey(key string, nowFunc func() time.Time) (*models.ApiKey, bool, string, error) {
+	decoded, err := apikeygen.Decode(key)
+	if err != nil {
+		return nil, false, InvalidAPIKey, nil
+	}
+	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	if err := bus.Dispatch(&keyQuery); err != nil {
+		if errors.Is(err, models.ErrInvalidApiKey) {
+			return nil, false, InvalidAPIKey, nil
+		}
+		return nil, false, http.StatusText(http.StatusInternalServerError), err
+	}
+	apikey := keyQuery.Result
+	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
+	if err != nil {
+		return nil, false, "Validating API key failed", err
+	}
+	if !isValid {
+		return nil, false, InvalidAPIKey, nil
+	}
+
+	if apikey.Expires != nil && *apikey.Expires <= nowFunc().Unix() {
+		return nil, false, "Expired API key", nil
+	}
+	return apikey, true, "", nil
+}
+
 func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 	header := ctx.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
@@ -149,36 +180,8 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 			keyString = password
 		}
 	}
-
 	if keyString == "" {
 		return false
-	}
-
-	// base64 decode key
-	decoded, err := apikeygen.Decode(keyString)
-	if err != nil {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
-		return true
-	}
-
-	// fetch key
-	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := bus.Dispatch(&keyQuery); err != nil {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
-		return true
-	}
-
-	apikey := keyQuery.Result
-
-	// validate api key
-	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
-	if err != nil {
-		ctx.JsonApiErr(500, "Validating API key failed", err)
-		return true
-	}
-	if !isValid {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
-		return true
 	}
 
 	// check for expiration
@@ -186,8 +189,14 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 	if getTime == nil {
 		getTime = time.Now
 	}
-	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
-		ctx.JsonApiErr(401, "Expired API key", err)
+
+	apikey, ok, reason, err := CheckAPIKey(keyString, getTime)
+	if err != nil {
+		ctx.JsonApiErr(500, reason, err)
+		return true
+	}
+	if !ok {
+		ctx.JsonApiErr(401, reason, nil)
 		return true
 	}
 

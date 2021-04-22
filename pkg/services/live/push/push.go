@@ -3,17 +3,17 @@ package push
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"path"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
@@ -28,27 +28,24 @@ func init() {
 	registry.RegisterServiceWithPriority(NewGateway(), registry.Low)
 }
 
-// CachedKey ...
-type CachedKey struct {
-	IsValid   bool
-	CheckedAt time.Time
-}
-
 // Gateway receives data and translates it to Grafana Live publications.
 type Gateway struct {
 	Cfg         *setting.Cfg      `inject:""`
 	GrafanaLive *live.GrafanaLive `inject:""`
 
-	converter *convert.Converter
-
-	// TODO: need to periodically invalidate this cache in separate goroutine.
-	keyMu    sync.RWMutex
-	keyCache map[string]CachedKey
+	converter   *convert.Converter
+	apiKeyCache *apiKeyCache
 }
 
+func checkAPIKey(keyString string) (*models.ApiKey, bool, error) {
+	apiKey, ok, _, err := contexthandler.CheckAPIKey(keyString, time.Now)
+	return apiKey, ok, err
+}
+
+// NewGateway creates Gateway.
 func NewGateway() *Gateway {
 	return &Gateway{
-		keyCache: map[string]CachedKey{},
+		apiKeyCache: newAPIKeyCache(checkAPIKey, 5*time.Second),
 	}
 }
 
@@ -71,8 +68,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 		logger.Debug("GrafanaLive feature not enabled, skipping initialization of Live Push Gateway")
 		return nil
 	}
-	<-ctx.Done()
-	return ctx.Err()
+	return g.apiKeyCache.Run(ctx)
 }
 
 // IsEnabled returns true if the Grafana Live feature is enabled.
@@ -95,55 +91,31 @@ func (g *Gateway) isAuthenticated(req *http.Request) (bool, error) {
 	if keyString == "" {
 		return false, nil
 	}
-	g.keyMu.RLock()
-	existingKey, ok := g.keyCache[keyString]
-	g.keyMu.RUnlock()
+	_, ok := g.apiKeyCache.Get(keyString)
 	if !ok {
-		// TODO: share the code below with middleware package.
-		decoded, err := apikeygen.Decode(keyString)
+		apiKey, ok, err := checkAPIKey(keyString)
 		if err != nil {
-			return false, nil
-		}
-		keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-		if err := bus.Dispatch(&keyQuery); err != nil {
-			if errors.Is(err, models.ErrInvalidApiKey) {
-				return false, nil
-			}
 			return false, err
 		}
-		apikey := keyQuery.Result
-		// validate api key.
-		isValid, err := apikeygen.IsValid(decoded, apikey.Key)
-		if err != nil {
+		if !ok {
 			return false, nil
 		}
-		if !isValid {
-			return false, nil
-		}
-
-		now := time.Now()
-
-		if apikey.Expires != nil && *apikey.Expires <= now.Unix() {
-			return false, nil
-		}
-		g.keyMu.Lock()
-		g.keyCache[keyString] = CachedKey{CheckedAt: now, IsValid: true}
-		g.keyMu.Unlock()
-	} else {
-		if !existingKey.IsValid {
-			g.keyMu.Lock()
-			delete(g.keyCache, keyString)
-			g.keyMu.Unlock()
-			return false, nil
-		}
+		g.apiKeyCache.Set(keyString, apiKey.Expires)
 	}
 	return true, nil
 }
 
 func (g *Gateway) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			stack := middleware.Stack(3)
+			logger.Error("Request error", "error", r, "stack", string(stack))
+			rw.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
 	ok, err := g.isAuthenticated(req)
 	if err != nil {
-		logger.Error("Error authenticating push request", "error", err)
+		logger.Error("Error authenticating request", "error", err)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -155,8 +127,8 @@ func (g *Gateway) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (g *Gateway) handleStreamPush(rw http.ResponseWriter, req *http.Request) {
-	// TODO: properly extract streamID.
-	streamID := "telegraf"
+	streamID := path.Base(req.URL.Path)
+
 	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
@@ -168,18 +140,22 @@ func (g *Gateway) handleStreamPush(rw http.ResponseWriter, req *http.Request) {
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
 	stableSchema := pushurl.StableSchemaFromValues(urlValues)
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
 		return
 	}
-	logger.Debug("Live Push request",
-		"protocol", "http",
-		"streamId", streamID,
-		"bodyLength", len(body),
-		"stableSchema", stableSchema,
-		"frameFormat", frameFormat,
-	)
+
+	if setting.Env != setting.Prod {
+		// Do not log in production as it should be pretty hot path.
+		logger.Debug("Live Push request",
+			"protocol", "http",
+			"streamId", streamID,
+			"bodyLen", len(body),
+			"stableSchema", stableSchema,
+			"frameFormat", frameFormat,
+		)
+	}
 
 	metricFrames, err := g.converter.Convert(body, frameFormat)
 	if err != nil {
@@ -192,9 +168,6 @@ func (g *Gateway) handleStreamPush(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// TODO -- make sure all packets are combined together!
-	// interval = "1s" vs flush_interval = "5s"
-
 	for _, mf := range metricFrames {
 		err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
 		if err != nil {
@@ -205,4 +178,5 @@ func (g *Gateway) handleStreamPush(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	rw.WriteHeader(http.StatusOK)
+	_, _ = rw.Write([]byte(`{}`))
 }
