@@ -97,7 +97,7 @@ describe('Metric Editor', () => {
       expect(getTypeOptions(previousMetrics, 77, false).some((option) => option.value === 'top_metrics')).toBe(false);
       expect(getTypeOptions(previousMetrics, 77, true).some((option) => option.value === 'top_metrics')).toBe(true);
     });
-    it('should return top_metrics when esVersion is greater than 70 ', () => {
+    it('should return top_metrics only when esVersion is equal or greater than 77', () => {
       const previousMetrics: MetricAggregation[] = [
         {
           id: '1',
