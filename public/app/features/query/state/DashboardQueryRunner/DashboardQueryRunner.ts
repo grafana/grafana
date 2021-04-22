@@ -14,7 +14,7 @@ import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
-import { AnnotationEvent } from '@grafana/data';
+import { getAnnotationsByPanelId } from './utils';
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly results: ReplaySubject<DashboardQueryRunnerWorkerResult>;
@@ -50,9 +50,7 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   getResult(panelId?: number): Observable<DashboardQueryRunnerResult> {
     return this.results.asObservable().pipe(
       map((result) => {
-        const annotations = result.annotations.filter((item) =>
-          DashboardQueryRunnerImpl.getPanelAnnotationsFilter(item, panelId)
-        );
+        const annotations = getAnnotationsByPanelId(result.annotations, panelId);
 
         const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
 
@@ -67,13 +65,6 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.results.complete();
     this.cancellations.complete();
     this.subscription.unsubscribe();
-  }
-
-  static getPanelAnnotationsFilter(item: AnnotationEvent, panelId?: number) {
-    if (panelId !== undefined && item.panelId && item.source?.type === 'dashboard') {
-      return item.panelId === panelId;
-    }
-    return true;
   }
 }
 

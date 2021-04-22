@@ -1,9 +1,9 @@
 import { Observable, of } from 'rxjs';
-import { cloneDeep } from 'lodash';
-import { AnnotationEvent, AnnotationQuery } from '@grafana/data';
+import { AnnotationEvent } from '@grafana/data';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
-import { emptyResult } from './utils';
+import { emptyResult, getAnnotationsByPanelId, translateQueryResult } from './utils';
+import { DashboardModel } from '../../../dashboard/state';
 
 export class SnapshotWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
@@ -15,32 +15,23 @@ export class SnapshotWorker implements DashboardQueryRunnerWorker {
       return emptyResult();
     }
 
-    const annotations = this.getAnnotationsFromSnapshot(options);
+    const annotations = this.getAnnotationsFromSnapshot(options.dashboard);
     return of({ annotations, alertStates: [] });
   }
 
-  getAnnotationsFromSnapshot(options: DashboardQueryRunnerOptions): AnnotationEvent[] {
-    const { dashboard } = options;
-    const dashAnnotations = dashboard.annotations.list.filter((a) => a.enable);
+  private getAnnotationsFromSnapshot(dashboard: DashboardModel): AnnotationEvent[] {
+    const dashAnnotations = dashboard?.annotations?.list?.filter((a) => a.enable);
     const snapshots = dashAnnotations.filter((a) => Boolean(a.snapshotData));
-    const annotations = snapshots.reduce((acc, curr) => {
-      return acc.concat(SnapshotWorker.translateQueryResult(curr, curr.snapshotData));
-    }, [] as AnnotationEvent[]);
+    const annotations = snapshots.reduce(
+      (acc, curr) => acc.concat(translateQueryResult(curr, curr.snapshotData)),
+      [] as AnnotationEvent[]
+    );
 
     return annotations;
   }
 
-  private static translateQueryResult(annotation: AnnotationQuery, results: AnnotationEvent[]): AnnotationEvent[] {
-    annotation = cloneDeep(annotation);
-    delete annotation.snapshotData;
-
-    for (const item of results) {
-      item.source = annotation;
-      item.color = annotation.iconColor;
-      item.type = annotation.name;
-      item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
-    }
-
-    return results;
+  getAnnotationsInSnapshot(dashboard: DashboardModel, panelId?: number): AnnotationEvent[] {
+    const annotations = this.getAnnotationsFromSnapshot(dashboard);
+    return getAnnotationsByPanelId(annotations, panelId);
   }
 }

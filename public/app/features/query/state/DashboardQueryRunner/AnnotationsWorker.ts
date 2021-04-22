@@ -2,11 +2,11 @@ import { cloneDeep } from 'lodash';
 import { from, merge, Observable, of } from 'rxjs';
 import { map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AnnotationEvent, AnnotationQuery, DataSourceApi } from '@grafana/data';
+import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { getAnnotationQueryRunners } from './DashboardQueryRunner';
-import { emptyResult } from './utils';
+import { emptyResult, translateQueryResult } from './utils';
 
 export class AnnotationsWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
@@ -38,7 +38,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
                 annotation.snapshotData = cloneDeep(results);
               }
               // translate result
-              return AnnotationsWorker.translateQueryResult(annotation, results);
+              return translateQueryResult(annotation, results);
             })
           );
         })
@@ -62,23 +62,5 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
   private static getAnnotationsToProcessFilter(annotation: AnnotationQuery): boolean {
     return annotation.enable && !Boolean(annotation.snapshotData);
-  }
-
-  private static translateQueryResult(annotation: any, results: AnnotationEvent[]): AnnotationEvent[] {
-    // if annotation has snapshotData
-    // make clone and remove it
-    if (annotation.snapshotData) {
-      annotation = cloneDeep(annotation);
-      delete annotation.snapshotData;
-    }
-
-    for (const item of results) {
-      item.source = annotation;
-      item.color = annotation.iconColor;
-      item.type = annotation.name;
-      item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
-    }
-
-    return results;
   }
 }
