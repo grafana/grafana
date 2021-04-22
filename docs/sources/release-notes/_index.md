@@ -20,6 +20,7 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 7.4.2]({{< relref "release-notes-7-4-2" >}})
 - [Release notes for 7.4.1]({{< relref "release-notes-7-4-1" >}})
 - [Release notes for 7.4.0]({{< relref "release-notes-7-4-0" >}})
+- [Release notes for 7.3.10]({{< relref "release-notes-7-3-10" >}})
 - [Release notes for 7.3.7]({{< relref "release-notes-7-3-7" >}})
 - [Release notes for 7.3.6]({{< relref "release-notes-7-3-6" >}})
 - [Release notes for 7.3.5]({{< relref "release-notes-7-3-5" >}})

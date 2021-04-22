@@ -59,7 +59,7 @@ Hipchat | `hipchat` | yes, external only | no
 [Kafka](#kafka) | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
-OpsGenie | `opsgenie` | yes, external only | yes
+[Opsgenie](#opsgenie) | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 [Pushover](#pushover) | `pushover` | yes | no
@@ -68,7 +68,7 @@ Sensu | `sensu` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
-VictorOps | `victorops` | yes, external only | no
+VictorOps | `victorops` | yes, external only | yes
 [Webhook](#webhook) | `webhook` | yes, external only | yes
 [Zenduty](#zenduty) | `webhook` | yes, external only | yes
 
@@ -111,6 +111,19 @@ Token | If provided, Grafana will upload the generated image via Slack's file.up
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
 
+### Opsgenie
+
+To setup Opsgenie you will need an API Key and the Alert API Url. These can be obtained by configuring a new [Grafana Integration](https://docs.opsgenie.com/docs/grafana-integration).
+
+Setting | Description
+--------|------------
+Alert API URL | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.
+API Key | The API Key as provided by Opsgenie for your configured Grafana integration.
+Override priority | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.
+Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie. 
+
+> **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. 
+
 ### PagerDuty
 
 To set up PagerDuty, all you have to do is to provide an integration key.
@@ -133,6 +146,11 @@ This behavior will become the default in a future version of Grafana.
 
 > **Note:** The `state` tag overrides the current alert state inside the `custom_details` payload.
 
+### VictorOps
+
+To configure VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
+
+> **Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to VictorOps.
 ### Pushover
 
 To set up Pushover, you must provide a user key and an API token. Refer to [What is Pushover and how do I use it](https://support.pushover.net/i7-what-is-pushover-and-how-do-i-use-it) for instructions on how to generate them.
@@ -186,23 +204,21 @@ Example json body:
 
 ### DingDing/DingTalk
 
-[Instructions in Chinese](https://open-doc.dingtalk.com/docs/doc.htm?spm=a219a.7629140.0.0.p2lr6t&treeId=257&articleId=105733&docType=1).
+DingTalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported. Refer to the [configuration instructions](https://developers.dingtalk.com/document/app/custom-robot-access) in Chinese language.
 
 In DingTalk PC Client:
 
 1. Click "more" icon on upper right of the panel.
 
-1. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
+2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
-1. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
+3. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
 
-1. In the next new panel named "robot detail", click "Add" button.
+4. In the next new panel named "robot detail", click "Add" button.
 
-1. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
+5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
 
-1. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
-
-DingTalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
+6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
 
 ### Kafka
 
@@ -251,4 +267,4 @@ This URL is based on the [domain]({{< relref "../administration/configuration/#d
 
 > **Note:** Alert notification templating is only available in Grafana v7.4 and above.
 
-The alert notification template feature allows you to take the [label]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template.md" >}}).
+The alert notification template feature allows you to take the [label]({{< relref "../basics/timeseries-dimensions.md#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template.md" >}}).

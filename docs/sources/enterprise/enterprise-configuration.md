@@ -326,3 +326,38 @@ A list of headers that are stripped from the outgoing data source and alerting r
 ### cookie_drop_list
 
 A list of cookies that are stripped from the outgoing data source and alerting requests.
+
+## [caching]
+
+> **Note:** Available in Grafana Enterprise v7.5 and later versions.
+> **Note:** The Memcached cache backend is unavailable in Grafana Enterprise v7.5.
+
+When query caching is enabled, Grafana temporarily stores the results of data source queries and serves cached responses to similar requests.
+
+### backend
+
+The caching backend to use when storing cached queries. Options: memory
+
+### enabled
+
+Setting 'enabled' to true enables caching datasource queries for all data sources.
+
+### ttl
+
+The default TTL (time to live) if no other TTL is available.
+
+## [caching.memory]
+
+### gc_interval
+
+When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
+
+## [caching.redis]
+
+### url
+
+The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
+
+### prefix
+
+A string that prefixes all Redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.

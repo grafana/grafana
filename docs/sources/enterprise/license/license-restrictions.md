@@ -8,9 +8,13 @@ weight = 300
 
 # License restrictions
 
-Enterprise licenses are limited by the number of active users, a license expiration date, and the URL of the Grafana instance.
+Enterprise licenses are limited by the number of active users, the license expiration date, and the URL of the Grafana instance.
 
 ## User limits
+
+Users are limited by the number of active users and the number of concurrent sessions for a given account.
+
+### Active users limit
 
 Grafana licenses allow for a certain number of active users per instance. An active user is any user that has signed in to Grafana within the past 30 days.
 
@@ -19,7 +23,7 @@ In the context of licensing, each user is classified as either a viewer or an ed
 - An editor is a user who has permission to edit and save a dashboard. Examples of editors are as follows:
     - Grafana server administrators.
     - Users who are assigned an organizational role of Editor or Admin.
-    - Users that have been granted Admin or Edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard_folder_permissions.md" >}}).
+    - Users that have been granted Admin or Edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}.
 - A viewer is a user with the Viewer role, which does not permit the user to save a dashboard.
 
 Restrictions are applied separately for viewers and editors.
@@ -52,11 +56,10 @@ This CSV report helps to identify users, teams, and roles that have been granted
 
 To download the report:
 1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click **Licensing**.
-2. At the bottom of the page, click **Download report**.
+1. At the bottom of the page, click **Download report**.
 
 ## Update license restrictions
 
-To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana. 
+To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana.
 
-For instructions on how to activate your license after it is updated, refer to 
-[Activate an Enterprise license]({{< relref "./activate-license.md" >}})
+For instructions on how to activate your license after it is updated, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
