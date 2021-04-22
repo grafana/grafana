@@ -22,7 +22,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer/logger"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -41,7 +40,6 @@ const (
 )
 
 var (
-	l                = log.New("installer")
 	ErrNotFoundError = errors.New("404 not found error")
 	reGitBuild       = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 )
@@ -147,7 +145,6 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Info(fmt.Sprintf("Fetching %s dependencies...\n\n", res.ID))
-		l.Info(fmt.Sprintf("Fetching %s dependencies...\n\n", res.ID))
 		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
 		}
