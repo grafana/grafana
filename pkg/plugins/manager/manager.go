@@ -86,6 +86,7 @@ func newManager(cfg *setting.Cfg) *PluginManager {
 
 func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
+	plog = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 
 	pm.log.Info("Starting plugin search")
