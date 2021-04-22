@@ -20,18 +20,18 @@ const SilencedAlertsTable: FC<Props> = ({ silencedAlerts }) => {
         <colgroup>
           <col className={tableStyles.colExpand} />
           <col className={styles.colState} />
+          <col />
           <col className={styles.colName} />
-          <col />
-          <col />
           <col />
         </colgroup>
         <thead>
-          <th></th>
-          <th>State</th>
-          <th>Alert name</th>
-          <th>State change</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <tr>
+            <th></th>
+            <th>State</th>
+            <th></th>
+            <th>Alert name</th>
+            <th>Actions</th>
+          </tr>
         </thead>
         <tbody>
           {silencedAlerts.map((alert, index) => {
@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     width: 110px;
   `,
   colName: css`
-    width: 40%;
+    width: 65%;
   `,
 });
 
