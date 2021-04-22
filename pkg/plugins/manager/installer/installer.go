@@ -598,9 +598,13 @@ func removeGitBuildFromName(filename, pluginID string) string {
 func toPluginDTO(pluginDir, pluginID string) (InstalledPlugin, error) {
 	distPluginDataPath := filepath.Join(pluginDir, pluginID, "dist", "plugin.json")
 
+	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
+	// nolint:gosec
 	data, err := ioutil.ReadFile(distPluginDataPath)
 	if err != nil {
 		pluginDataPath := filepath.Join(pluginDir, pluginID, "plugin.json")
+		// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
+		// nolint:gosec
 		data, err = ioutil.ReadFile(pluginDataPath)
 		if err != nil {
 			return InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginID + " in " + pluginDir)
