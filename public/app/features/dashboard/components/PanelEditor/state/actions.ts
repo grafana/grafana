@@ -12,7 +12,7 @@ import {
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
-import pick from 'lodash/pick';
+import { pick } from 'lodash';
 import { locationService } from '@grafana/runtime';
 import { ShowModalReactEvent } from '../../../../../types/events';
 
@@ -45,7 +45,7 @@ export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
 export function discardPanelChanges(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { getPanel } = getStore().panelEditor;
-    getPanel().hasChanged = false;
+    getPanel().configRev = 0;
     dispatch(setDiscardChanges(true));
   };
 }

@@ -15,13 +15,13 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-light: #5794f2;
-$blue-base: #3274d9;
-$blue-shade: #1f60c4;
-$red-base: #e02f44;
-$red-shade: #c4162a;
-$green-base: #299c46;
-$green-shade: #23843b;
+$blue-light: #6E9FFF;
+$blue-base: #3D71D9;
+$blue-shade: rgb(90, 134, 222);
+$red-base: #D10E5C;
+$red-shade: rgb(215, 50, 116);
+$green-base: #1A7F4B;
+$green-shade: rgb(60, 146, 102);
 $orange-dark: #ff780a;
 
 $gray98: #f7f8fa;
@@ -64,7 +64,7 @@ $layer2: #22252b;
 
 $divider: rgba(201, 209, 217, 0.10);
 
-$border0: #181b1f;
+$border0: rgba(201, 209, 217, 0.10);
 $border1: rgba(201, 209, 217, 0.15);
 
 // Accent colors
@@ -74,7 +74,7 @@ $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #58a6ff;
+$variable: #6E9FFF;
 
 $brand-primary: #eb7b18;
 $brand-success: #299c46;
@@ -94,8 +94,8 @@ $critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #181b1f;
-$page-bg: #181b1f;
+$body-bg: #111217;
+$page-bg: #111217;
 $dashboard-bg: #111217;
 
 $text-color-strong: #fff;
@@ -104,7 +104,7 @@ $text-color-semi-weak: rgba(201, 209, 217, 0.65);
 $text-color-weak: rgba(201, 209, 217, 0.65);
 $text-color-faint: rgba(201, 209, 217, 0.40);
 $text-color-emphasis: #fff;
-$text-blue: #58a6ff;
+$text-blue: #6E9FFF;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -115,10 +115,10 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: #d8d9da;
-$link-color-disabled: #8e8e8e;
-$link-hover-color: #ffffff;
-$external-link-color: #33a2e5;
+$link-color: rgb(201, 209, 217);
+$link-color-disabled: rgba(201, 209, 217, 0.40);
+$link-hover-color: #fff;
+$external-link-color: #6E9FFF;
 
 // Typography
 // -------------------------
@@ -131,15 +131,15 @@ $hr-border-color: $dark-9;
 // Panel
 // -------------------------
 $panel-bg: #181b1f;
-$panel-border: #181b1f;
+$panel-border: 1px solid #181b1f;
 $panel-header-hover-bg: rgba(201, 209, 217, 0.08);
-$panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.15),0px 1px 3px 0px rgba(0,0,0,0.1);
+$panel-box-shadow: 0px 1px 2px rgba(24, 26, 27, 0.75);
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: #22252b;
+$page-header-bg: #111217;
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: #181b1f;
+$page-header-border-color: #111217;
 
 $divider-border-color: $gray-1;
 
@@ -232,7 +232,7 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: #22252b;
-$dropdownBorder: #181b1f;
+$dropdownBorder: rgba(201, 209, 217, 0.10);
 $dropdownDividerTop: rgba(201, 209, 217, 0.10);
 $dropdownDividerBottom: rgba(201, 209, 217, 0.10);
 
@@ -262,9 +262,9 @@ $side-menu-header-color: rgb(201, 209, 217);
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #22252b;
+$menu-dropdown-bg: #181b1f;
 $menu-dropdown-hover-bg: rgba(201, 209, 217, 0.08);
-$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.15),0px 1px 10px 0px rgba(0,0,0,0.1);
+$menu-dropdown-shadow: 0px 10px 20px #181A1B;
 
 // Tabs
 // -------------------------
@@ -291,13 +291,13 @@ $tooltipBackground: #22252b;
 $tooltipColor: rgb(201, 209, 217);
 $tooltipArrowColor: #22252b;
 $tooltipBackgroundError: #D10E5C;
-$tooltipShadow: 0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.15),0px 1px 5px 0px rgba(0,0,0,0.1);
+$tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.75);
 
-$popover-bg: #22252b;
+$popover-bg: #181b1f;
 $popover-color: rgb(201, 209, 217);
-$popover-border-color: rgba(201, 209, 217, 0.15);
+$popover-border-color: rgba(201, 209, 217, 0.10);
 $popover-header-bg: #22252b;
-$popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.15),0px 3px 14px 2px rgba(0,0,0,0.1);
+$popover-shadow: 0px 10px 20px #181A1B;
 
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;

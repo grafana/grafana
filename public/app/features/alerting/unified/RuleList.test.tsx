@@ -125,6 +125,11 @@ describe('RuleList', () => {
             groups: [
               mockPromRuleGroup({
                 name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
               }),
             ],
           }),

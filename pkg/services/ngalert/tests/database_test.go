@@ -74,7 +74,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			desc:                 "should fail to create an alert definition with empty title",
 			inputIntervalSeconds: &customIntervalSeconds,
 			inputTitle:           "",
-			expectedError:        store.ErrEmptyTitleError,
+			expectedError:        fmt.Errorf("title is empty"),
 		},
 	}
 
@@ -88,7 +88,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 				Data: []models.AlertQuery{
 					{
 						Model: json.RawMessage(`{
-								"datasource": "__expr__",
+								"datasourceUid": "-100",
 								"type":"math",
 								"expression":"2 + 3 > 1"
 							}`),
@@ -129,7 +129,7 @@ func TestCreatingConflictionAlertDefinition(t *testing.T) {
 			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
-								"datasource": "__expr__",
+								"datasourceUid": "-100",
 								"type":"math",
 								"expression":"2 + 3 > 1"
 							}`),
@@ -167,7 +167,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
-							"datasource": "__expr__",
+							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"2 + 2 > 1"
 						}`),
@@ -257,7 +257,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
-							"datasource": "__expr__",
+							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"2 + 3 > 1"
 						}`),
@@ -341,7 +341,7 @@ func TestUpdatingConflictingAlertDefinition(t *testing.T) {
 			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
-							"datasource": "__expr__",
+							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"2 + 3 > 1"
 						}`),
@@ -430,7 +430,7 @@ func createTestAlertDefinition(t *testing.T, dbstore *store.DBstore, intervalSec
 		Data: []models.AlertQuery{
 			{
 				Model: json.RawMessage(`{
-						"datasource": "__expr__",
+						"datasourceUid": "-100",
 						"type":"math",
 						"expression":"2 + 2 > 1"
 					}`),

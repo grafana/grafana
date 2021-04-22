@@ -34,7 +34,7 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condi
 		return nil, err
 	}
 
-	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond, time.Unix(500, 0))
+	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond.Data, time.Unix(500, 0))
 
 	if err != nil {
 		return nil, err
@@ -240,14 +240,14 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	ngCond.OrgID = orgID
 
 	exprModel := struct {
-		Type       string                         `json:"type"`
-		RefID      string                         `json:"refId"`
-		Datasource string                         `json:"datasource"`
-		Conditions []classic.ClassicConditionJSON `json:"conditions"`
+		Type          string                         `json:"type"`
+		RefID         string                         `json:"refId"`
+		DatasourceUID string                         `json:"datasourceUid"`
+		Conditions    []classic.ClassicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		"__expr__",
+		expr.DatasourceUID,
 		conditions,
 	}
 

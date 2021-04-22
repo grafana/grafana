@@ -15,7 +15,7 @@ import { DataFrame } from '../types/dataFrame';
  *
  * @beta
  */
-export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean {
+export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfig?: boolean): boolean {
   if (a === b) {
     return true;
   }
@@ -30,6 +30,11 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean 
 
     if (fA.type !== fB.type) {
       return false;
+    }
+
+    // Do not check the config fields
+    if (skipConfig) {
+      continue;
     }
 
     const cfgA = fA.config as any;
