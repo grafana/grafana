@@ -9,15 +9,18 @@ import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
 import { useStyles } from '@grafana/ui';
 import SilencedAlertsTable from './SilencedAlertsTable';
-
+import { expireSilenceAction } from '../../state/actions';
+import { useDispatch } from 'react-redux';
 interface Props {
   className?: string;
   silence: Silence;
   silencedAlerts: AlertmanagerAlert[];
+  alertManagerSourceName: string;
 }
 
-const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts }) => {
+const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertManagerSourceName }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+  const dispatch = useDispatch();
 
   const styles = useStyles(getStyles);
   const { status, matchers, startsAt, endsAt, comment, createdBy } = silence;
@@ -26,6 +29,10 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts }) => {
   const startsAtDate = dateMath.parse(startsAt);
   const endsAtDate = dateMath.parse(endsAt);
   const duration = toDuration(endsAtDate?.diff(startsAtDate || '')).humanize();
+
+  const handleExpireSilenceClick = () => {
+    dispatch(expireSilenceAction(alertManagerSourceName, silence.id));
+  };
 
   return (
     <Fragment>
@@ -51,7 +58,9 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts }) => {
           {status.state === 'expired' ? (
             <ActionButton icon="sync">Recreate</ActionButton>
           ) : (
-            <ActionButton icon="bell">Unsilence</ActionButton>
+            <ActionButton icon="bell" onClick={handleExpireSilenceClick}>
+              Unsilence
+            </ActionButton>
           )}
           <ActionIcon icon="pen" tooltip="edit" />
         </td>
