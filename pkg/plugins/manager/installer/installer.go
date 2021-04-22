@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer/logger"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -31,21 +33,7 @@ type Installer struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	grafanaVersion      string
-	log                 Logger
-}
-
-type Logger interface {
-	Success(message string, args ...interface{})
-	Failure(message string, args ...interface{})
-
-	//Infof(message string, args ...interface{})
-	Info(args ...interface{})
-	//Debugf(message string, args ...interface{})
-	Debug(args ...interface{})
-	//Warnf(message string, args ...interface{})
-	Warn(args ...interface{})
-	//Errorf(message string, args ...interface{})
-	Error(args ...interface{})
+	log                 logger.Logger
 }
 
 const (
@@ -53,6 +41,7 @@ const (
 )
 
 var (
+	l                = log.New("installer")
 	ErrNotFoundError = errors.New("404 not found error")
 	reGitBuild       = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 )
@@ -69,7 +58,7 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Installer {
+func New(skipTLSVerify bool, grafanaVersion string, logger logger.Logger) *Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 10*time.Second),
@@ -158,6 +147,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Info(fmt.Sprintf("Fetching %s dependencies...\n\n", res.ID))
+		l.Info(fmt.Sprintf("Fetching %s dependencies...\n\n", res.ID))
 		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
 		}
@@ -251,7 +241,7 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 }
 
 func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
-	i.log.Debug(fmt.Sprintf("Fetching metadata for plugin \"%s\" from repo %s\n", pluginID, pluginRepoURL))
+	i.log.Debug(fmt.Sprintf("Fetching metadata for plugin \"%s\" from repo %s\n\n", pluginID, pluginRepoURL))
 	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
