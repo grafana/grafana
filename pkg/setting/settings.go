@@ -1,7 +1,8 @@
-package settings
+package setting
 
 import (
 	"errors"
+	"gopkg.in/ini.v1"
 	"strings"
 	"time"
 )
@@ -78,4 +79,62 @@ type ReloadHandler interface {
 	// Validate validates the configuration, if the validations
 	// fails the configuration will not be updated in the database
 	Validate(section Section) error
+}
+
+type SettingsBag map[string]map[string]string
+type SettingsRemovals map[string][]string
+
+type OSSImpl struct {
+	Cfg *Cfg `inject:""`
+}
+
+func (o OSSImpl) Init() error {
+	return nil
+}
+
+func (OSSImpl) Update(SettingsBag, SettingsRemovals) error {
+	return nil
+}
+
+func (o *OSSImpl) KeyValue(section, key string) KeyValue {
+	return o.Section(section).KeyValue(key)
+}
+
+func (o *OSSImpl) Section(section string) Section {
+	return &sectionImpl{section: o.Cfg.Raw.Section(section)}
+}
+
+func (OSSImpl) RegisterReloadHandler(section string, handler ReloadHandler) {
+}
+
+type keyValImpl struct {
+	key *ini.Key
+}
+
+func (k *keyValImpl) Key() string {
+	return k.key.Name()
+}
+
+func (k *keyValImpl) Value() string {
+	return k.key.Value()
+}
+
+func (k *keyValImpl) MustString(defaultVal string) string {
+	return k.key.MustString(defaultVal)
+}
+
+func (k *keyValImpl) MustBool(defaultVal bool) bool {
+	return k.key.MustBool(defaultVal)
+}
+
+func (k *keyValImpl) MustDuration(defaultVal time.Duration) time.Duration {
+	return k.key.MustDuration(defaultVal)
+}
+
+type sectionImpl struct {
+	section *ini.Section
+}
+
+func (s *sectionImpl) KeyValue(key string) KeyValue {
+	return &keyValImpl{s.section.Key(key)}
 }

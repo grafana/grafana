@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/settings"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -74,7 +73,7 @@ type HTTPServer struct {
 	Bus                    bus.Bus                                 `inject:""`
 	RenderService          rendering.Service                       `inject:""`
 	Cfg                    *setting.Cfg                            `inject:""`
-	SettingsProvider       settings.Provider                       `inject:""`
+	SettingsProvider       setting.Provider                        `inject:""`
 	HooksService           *hooks.HooksService                     `inject:""`
 	CacheService           *localcache.CacheService                `inject:""`
 	DatasourceCache        datasources.CacheService                `inject:""`
