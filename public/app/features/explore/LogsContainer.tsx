@@ -172,6 +172,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   } = item;
   const dedupedRows = deduplicatedRowsSelector(item) || undefined;
   const timeZone = getTimeZone(state.user);
+
   return {
     loading,
     logsHighlighterExpressions,

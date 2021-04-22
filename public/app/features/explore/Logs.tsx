@@ -266,6 +266,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       showDetectedFields,
       forceEscape,
     } = this.state;
+
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
@@ -292,6 +293,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     const series = logsSeries ? logsSeries : [];
     const styles = getStyles(theme);
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
+
     return (
       <>
         <ExploreGraphPanel
@@ -478,7 +480,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     logsSection: css`
       display: flex;
       flexdirection: row;
-      height: 90vh;
+      height: 95vh;
     `,
   };
 });

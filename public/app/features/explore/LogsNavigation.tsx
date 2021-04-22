@@ -39,6 +39,8 @@ function LogsNavigation({
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [requestRange, setRequestRange] = useState(0);
+  // These are to determine, if we want to clear up logs navigation when totally new query is run
   const [expectedRange, setExpectedRange] = useState<AbsoluteTimeRange>();
   const [expectedQueries, setExpectedQueries] = useState<DataQuery[]>([]);
 
@@ -50,15 +52,15 @@ function LogsNavigation({
       setExpectedQueries(queries);
     } else {
       setPages((pages) => {
-        const filteredChunksArray = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
+        const pagesWithNoDuplicates = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
 
-        const newChunksArray = [...filteredChunksArray, newPage].sort((a, b) => {
+        const newPagesArray = [...pagesWithNoDuplicates, newPage].sort((a, b) => {
           if (logsSortOrder === LogsSortOrder.Ascending) {
             return a.queryRange.to > b.queryRange.to ? 1 : -1;
           }
           return a.queryRange.to > b.queryRange.to ? -1 : 1;
         });
-        return newChunksArray;
+        return newPagesArray;
       });
     }
     // We don't want to add expectedRange as we want to run this only is absolute and visible range changes
@@ -69,6 +71,13 @@ function LogsNavigation({
     const index = pages.findIndex((page) => page.queryRange.to === absoluteRange.to);
     setCurrentPageIndex(index);
   }, [pages, absoluteRange]);
+
+  useEffect(() => {
+    const initialRange = absoluteRange.to - absoluteRange.from;
+    setRequestRange(initialRange);
+    // We want to set requestRange only when the first query is run
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
     setExpectedRange({ from, to });
@@ -82,21 +91,23 @@ function LogsNavigation({
     })}`;
   };
 
-  const oldestFirst = logsSortOrder === LogsSortOrder.Ascending;
+  const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const theme = useTheme();
-  const styles = getStyles(theme, oldestFirst, loading);
+  const styles = getStyles(theme, oldestLogsFirst, loading);
   return (
     <div className={styles.navContainer}>
-      {/*We are going to have 2 buttons (on the top and bottom), Oldest and Newest. 
-      Therefore I have at the moment duplicated the same code, but in the future iteration, it ill be updated */}
-      {oldestFirst && (
+      {/*
+       * We are going to have 2 buttons - on the top and bottom - Oldest and Newest.
+       * Therefore I have at the moment duplicated the same code, but in the future iteration, it ill be updated
+       */}
+      {oldestLogsFirst && (
         <Button
+          data-testid="fetchLogsTop"
           className={styles.navButton}
           variant="secondary"
           onClick={() => {
-            // From is currently hard coded
-            // TODO: Update based on selected range (to is based on the last received log)
-            changeTime({ from: absoluteRange.from - 3600000, to: visibleRange.from });
+            // the range is based on initally selected range
+            changeTime({ from: visibleRange.from - requestRange, to: visibleRange.from });
           }}
           disabled={loading}
         >
@@ -118,8 +129,8 @@ function LogsNavigation({
               >
                 <div className={classNames(styles.line, { selectedBg: currentPageIndex === index })} />
                 <div className={classNames(styles.time, { selectedText: currentPageIndex === index })}>
-                  {`${formatTime(oldestFirst ? page.logsRange.from : page.logsRange.to)} - ${formatTime(
-                    oldestFirst ? page.logsRange.to : page.logsRange.from
+                  {`${formatTime(oldestLogsFirst ? page.logsRange.from : page.logsRange.to)} - ${formatTime(
+                    oldestLogsFirst ? page.logsRange.to : page.logsRange.from
                   )}`}
                 </div>
               </div>
@@ -129,12 +140,14 @@ function LogsNavigation({
         </div>
       </CustomScrollbar>
 
-      {!oldestFirst && (
+      {!oldestLogsFirst && (
         <Button
+          data-testid="fetchLogsBottom"
           className={styles.navButton}
           variant="secondary"
           onClick={() => {
-            changeTime({ from: absoluteRange.from - 3600000, to: visibleRange.from });
+            // the range is based on initally selected range
+            changeTime({ from: visibleRange.from - requestRange, to: visibleRange.from });
           }}
           disabled={loading}
         >
@@ -151,15 +164,15 @@ function LogsNavigation({
 
 export default memo(LogsNavigation);
 
-const getStyles = stylesFactory((theme: GrafanaTheme, oldestFirst: boolean, loading: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, loading: boolean) => {
   return {
     navContainer: css`
       width: 70px;
-      height: 90vh;
+      height: 95vh;
       display: flex;
       flex-direction: column;
       padding-left: ${theme.spacing.xs};
-      justify-content: ${oldestFirst ? 'flex-start' : 'space-between'};
+      justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
     `,
     navButton: css`
       width: 58px;
