@@ -8,6 +8,7 @@ import {
   PanelProps,
   PanelTypeChangedHandler,
   FieldConfigProperty,
+  PanelPluginDataSupport,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -106,12 +107,10 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
-  supportsAnnotations = false;
-
-  /**
-   * @deprecated supportsAlertStates is deprecated and will be removed when the next generation alerting is in place
-   */
-  supportsAlertStates = false;
+  dataSupport: PanelPluginDataSupport = {
+    annotations: false,
+    alertStates: false,
+  };
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -279,7 +278,7 @@ export class PanelPlugin<
    *     .useFieldConfig({})
    *     ...
    *     ...
-   *     .setAnnotationSupport({
+   *     .setDataSupport({
    *       annotations: true,
    *       alertStates: true,
    *     });
@@ -287,9 +286,8 @@ export class PanelPlugin<
    *
    * @public
    **/
-  setAnnotationSupport({ annotations, alertStates }: { annotations?: boolean; alertStates?: boolean }) {
-    this.supportsAlertStates = alertStates ?? this.supportsAlertStates;
-    this.supportsAnnotations = annotations ?? this.supportsAnnotations;
+  setDataSupport(support: Partial<PanelPluginDataSupport>) {
+    this.dataSupport = { ...this.dataSupport, ...support };
     return this;
   }
 
