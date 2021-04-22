@@ -183,7 +183,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface{} {
 	setFloatPath := func(path ...string) {
 		if stringValue, err := metricAggregation.Settings.GetPath(path...).String(); err == nil {
-			if value, err := strconv.ParseFloat(stringValue, 32); err == nil {
+			if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
 				metricAggregation.Settings.SetPath(path, value)
 			}
 		}

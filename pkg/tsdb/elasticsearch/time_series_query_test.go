@@ -861,7 +861,7 @@ func TestSettingsCasting(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 
-	t.Run("Correctly cast moving_average settings", func(t *testing.T) {
+	t.Run("Correctly transforms moving_average settings", func(t *testing.T) {
 		c := newFakeClient(5)
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
@@ -880,9 +880,9 @@ func TestSettingsCasting(t *testing.T) {
 						"window": "10",
 						"predict": "5",
 						"settings": {
-							"alpha": "1",
-							"beta": "2",
-							"gamma": "3",
+							"alpha": "0.5",
+							"beta": "0.7",
+							"gamma": "SHOULD NOT CHANGE",
 							"period": "4"
 						}
 					}
@@ -894,18 +894,18 @@ func TestSettingsCasting(t *testing.T) {
 
 		movingAvgSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
 
-		assert.Equal(t, 10, movingAvgSettings["window"])
-		assert.Equal(t, 5, movingAvgSettings["predict"])
+		assert.Equal(t, 10., movingAvgSettings["window"])
+		assert.Equal(t, 5., movingAvgSettings["predict"])
 
 		modelSettings := movingAvgSettings["settings"].(map[string]interface{})
 
-		assert.Equal(t, 1, modelSettings["alpha"])
-		assert.Equal(t, 2, modelSettings["beta"])
-		assert.Equal(t, 3, modelSettings["gamma"])
-		assert.Equal(t, 4, modelSettings["period"])
+		assert.Equal(t, .5, modelSettings["alpha"])
+		assert.Equal(t, .7, modelSettings["beta"])
+		assert.Equal(t, "SHOULD NOT CHANGE", modelSettings["gamma"])
+		assert.Equal(t, 4., modelSettings["period"])
 	})
 
-	t.Run("Correctly cast serial_diff settings", func(t *testing.T) {
+	t.Run("Correctly transforms serial_diff settings", func(t *testing.T) {
 		c := newFakeClient(5)
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
@@ -930,7 +930,7 @@ func TestSettingsCasting(t *testing.T) {
 
 		serialDiffSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
 
-		assert.Equal(t, 1, serialDiffSettings["lag"])
+		assert.Equal(t, 1., serialDiffSettings["lag"])
 	})
 }
 
