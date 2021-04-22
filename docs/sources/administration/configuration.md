@@ -1020,6 +1020,9 @@ Limit the number of data sources allowed per organization. Default is 10.
 ### org_api_key
 
 Limit the number of API keys that can be entered per organization. Default is 10.
+### org_alert_rulle
+
+Limit the number of alert rulles that can be entered per organization. Default is 10.
 
 ### user_org
 
@@ -1044,6 +1047,9 @@ Sets global limit of API keys that can be entered. Default is -1 (unlimited).
 ### global_session
 
 Sets a global limit on number of users that can be logged in at one time. Default is -1 (unlimited).
+### global_alert_rule
+
+Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
 <hr>
 

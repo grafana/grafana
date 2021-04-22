@@ -3,6 +3,8 @@ package api
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/quota"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/go-macaron/binding"
@@ -44,6 +46,7 @@ type API struct {
 	DatasourceCache datasources.CacheService
 	RouteRegister   routing.RouteRegister
 	DataService     *tsdb.Service
+	QuotaService    *quota.QuotaService
 	Schedule        schedule.ScheduleService
 	Store           store.Store
 	RuleStore       store.RuleStore
@@ -75,7 +78,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerSrv{store: api.RuleStore, log: logger},
+		RulerSrv{QuotaService: api.QuotaService, store: api.RuleStore, log: logger},
 	))
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
 		AlertingProxy:   proxy,

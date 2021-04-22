@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/quota"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/benbjohnson/clock"
@@ -45,6 +47,7 @@ type AlertNG struct {
 	DataService     *tsdb.Service                           `inject:""`
 	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
+	QuotaService    *quota.QuotaService                     `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateTracker    *state.StateTracker
@@ -81,6 +84,7 @@ func (ng *AlertNG) Init() error {
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
+		QuotaService:    ng.QuotaService,
 		Store:           store,
 		RuleStore:       store,
 		AlertingStore:   store,

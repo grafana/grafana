@@ -9,6 +9,7 @@ type OrgQuota struct {
 	DataSource int64 `target:"data_source"`
 	Dashboard  int64 `target:"dashboard"`
 	ApiKey     int64 `target:"api_key"`
+	AlertRule  int64 `target:"alert_rule"`
 }
 
 type UserQuota struct {
@@ -22,6 +23,7 @@ type GlobalQuota struct {
 	Dashboard  int64 `target:"dashboard"`
 	ApiKey     int64 `target:"api_key"`
 	Session    int64 `target:"-"`
+	AlertRule  int64 `target:"alert_rule"`
 }
 
 func (q *OrgQuota) ToMap() map[string]int64 {
@@ -70,6 +72,7 @@ func (cfg *Cfg) readQuotaSettings() {
 		DataSource: quota.Key("org_data_source").MustInt64(10),
 		Dashboard:  quota.Key("org_dashboard").MustInt64(10),
 		ApiKey:     quota.Key("org_api_key").MustInt64(10),
+		AlertRule:  quota.Key("org_alert_rule").MustInt64(10),
 	}
 
 	// per User limits
@@ -85,6 +88,7 @@ func (cfg *Cfg) readQuotaSettings() {
 		Dashboard:  quota.Key("global_dashboard").MustInt64(-1),
 		ApiKey:     quota.Key("global_api_key").MustInt64(-1),
 		Session:    quota.Key("global_session").MustInt64(-1),
+		AlertRule:  quota.Key("global_alert_rule").MustInt64(-1),
 	}
 
 	cfg.Quota = Quota

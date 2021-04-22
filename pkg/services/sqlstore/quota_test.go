@@ -24,6 +24,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Dashboard:  5,
 				DataSource: 5,
 				ApiKey:     5,
+				AlertRule:  5,
 			},
 			User: &setting.UserQuota{
 				Org: 5,
@@ -35,6 +36,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				DataSource: 5,
 				ApiKey:     5,
 				Session:    5,
+				AlertRule:  5,
 			},
 		}
 
@@ -92,7 +94,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				err = GetOrgQuotas(&query)
 
 				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 4)
+				So(len(query.Result), ShouldEqual, 5)
 				for _, res := range query.Result {
 					limit := 5 // default quota limit
 					used := 0
