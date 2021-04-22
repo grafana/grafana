@@ -1,7 +1,7 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React, { FC, useMemo, useState, Fragment } from 'react';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, locationUtil } from '@grafana/data';
 import { css } from '@emotion/css';
 import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -13,7 +13,6 @@ import { ActionIcon } from './ActionIcon';
 import pluralize from 'pluralize';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import kbn from 'app/core/utils/kbn';
-import { config } from '@grafana/runtime';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -69,7 +68,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
     const rulerRule = group.rules[0]?.rulerRule;
     const folderUID = rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid;
     if (folderUID) {
-      const baseUrl = `${config.appSubUrl ?? ''}/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
+      const baseUrl = locationUtil.assureBaseUrl(`/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`);
       actionIcons.push(
         <ActionIcon key="edit" icon="pen" tooltip="edit" href={baseUrl + '/settings'} target="__blank" />
       );

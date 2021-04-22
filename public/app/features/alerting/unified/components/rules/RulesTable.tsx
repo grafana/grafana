@@ -1,4 +1,4 @@
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, locationUtil } from '@grafana/data';
 import { ConfirmModal, useStyles } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
@@ -14,7 +14,6 @@ import { useDispatch } from 'react-redux';
 import { deleteRuleAction } from '../../state/actions';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { config } from '@grafana/runtime';
 
 interface Props {
   rules: CombinedRule[];
@@ -139,18 +138,25 @@ export const RulesTable: FC<Props> = ({
                           icon="chart-line"
                           tooltip="view in explore"
                           target="__blank"
-                          href={createExploreLink(rulesSource.name, rule.query)}
+                          href={locationUtil.assureBaseUrl(createExploreLink(rulesSource.name, rule.query))}
                         />
                       )}
                       {!!rulerRule && (
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          href={`${config.appSubUrl ?? ''}/alerting/${encodeURIComponent(
-                            stringifyRuleIdentifier(
-                              getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
-                            )
-                          )}/edit`}
+                          href={locationUtil.assureBaseUrl(
+                            `/alerting/${encodeURIComponent(
+                              stringifyRuleIdentifier(
+                                getRuleIdentifier(
+                                  getRulesSourceName(rulesSource),
+                                  namespace.name,
+                                  group.name,
+                                  rulerRule
+                                )
+                              )
+                            )}/edit`
+                          )}
                         />
                       )}
                       {!!rulerRule && (

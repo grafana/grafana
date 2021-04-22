@@ -1,10 +1,9 @@
-import { config } from '@grafana/runtime';
 import { urlUtil, UrlQueryMap } from '@grafana/data';
 import { RuleFilterState } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 
 export function createExploreLink(dataSourceName: string, query: string) {
-  return urlUtil.renderUrl(config.appSubUrl + '/explore', {
+  return urlUtil.renderUrl('/explore', {
     left: JSON.stringify([
       'now-1h',
       'now',
@@ -49,7 +48,5 @@ export function recordToArray(record: Record<string, string>): Array<{ key: stri
 }
 
 export function makeAMLink(path: string, alertManagerName?: string): string {
-  return `${config.appSubUrl ?? ''}${path}${
-    alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''
-  }`;
+  return `${path}${alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''}`;
 }

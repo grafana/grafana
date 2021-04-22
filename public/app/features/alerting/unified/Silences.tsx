@@ -25,7 +25,7 @@ const Silences: FC = () => {
     (alertManagerSourceName && silences[alertManagerSourceName]) || initialAsyncRequestState;
 
   if (!alertManagerSourceName) {
-    return <Redirect to="alerting/silences" />;
+    return <Redirect to="/alerting/silences" />;
   }
 
   return (
