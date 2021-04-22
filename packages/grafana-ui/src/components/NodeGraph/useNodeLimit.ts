@@ -3,6 +3,9 @@ import { useMemo } from 'react';
 import { EdgeDatumLayout, NodeDatum, NodesMarker } from './types';
 import { Config } from './layout';
 
+type NodesMap = Record<string, NodeDatum>;
+type EdgesMap = Record<string, EdgeDatumLayout[]>;
+
 /**
  * Limits the number of nodes by going from the roots breadth first until we have desired number of nodes.
  * TODO: there is some possible perf gains as some of the processing is the same as in layout and so we do double
@@ -15,30 +18,40 @@ export function useNodeLimit(
   config: Config,
   rootId?: string
 ): { nodes: NodeDatum[]; edges: EdgeDatumLayout[]; markers?: NodesMarker[] } {
+  const [edgesMap, nodesMap] = useMemo(() => {
+    const edgesMap = edges.reduce<EdgesMap>((acc, e) => {
+      return {
+        ...acc,
+        [e.source.id]: [...(acc[e.source.id] || []), e],
+        [e.target.id]: [...(acc[e.target.id] || []), e],
+      };
+    }, {});
+
+    const nodesMap = nodes.reduce<NodesMap>((acc, node) => ({ ...acc, [node.id]: node }), {});
+    return [edgesMap, nodesMap];
+  }, [edges, nodes]);
+
   return useMemo(() => {
     if (nodes.length <= limit) {
       return { nodes, edges };
     }
 
     if (config.gridLayout) {
-      return limitGridLayout(nodes, edges, limit, rootId);
+      return limitGridLayout(nodes, limit, rootId);
     }
 
-    return limitGraphLayout(nodes, edges, limit, rootId);
-  }, [edges, limit, nodes, rootId, config.gridLayout]);
+    return limitGraphLayout(nodes, edges, nodesMap, edgesMap, limit, rootId);
+  }, [edges, edgesMap, limit, nodes, nodesMap, rootId, config.gridLayout]);
 }
 
-function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, rootId?: string) {
-  const edgesMap = edges.reduce<{ [id: string]: EdgeDatumLayout[] }>((acc, e) => {
-    return {
-      ...acc,
-      [e.source.id]: [...(acc[e.source.id] || []), e],
-      [e.target.id]: [...(acc[e.target.id] || []), e],
-    };
-  }, {});
-
-  const nodesMap = nodes.reduce((acc, node) => ({ ...acc, [node.id]: node }), {} as Record<string, NodeDatum>);
-
+export function limitGraphLayout(
+  nodes: NodeDatum[],
+  edges: EdgeDatumLayout[],
+  nodesMap: NodesMap,
+  edgesMap: EdgesMap,
+  limit: number,
+  rootId?: string
+) {
   let roots;
   if (rootId) {
     roots = [nodesMap[rootId]];
@@ -51,6 +64,7 @@ function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: n
   }
 
   const { visibleNodes, markers } = collectVisibleNodes(limit, roots, nodesMap, edgesMap);
+
   const markersWithStats = collectMarkerStats(markers, visibleNodes, nodesMap, edgesMap);
   const markersMap = fromPairs(markersWithStats.map((m) => [m.node.id, m]));
 
@@ -74,7 +88,7 @@ function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: n
   };
 }
 
-function limitGridLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, rootId?: string) {
+export function limitGridLayout(nodes: NodeDatum[], limit: number, rootId?: string) {
   let start = 0;
   let stop = limit;
   let markers: NodesMarker[] = [];
@@ -112,7 +126,7 @@ function limitGridLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: nu
 
   return {
     nodes: nodes.slice(start, stop),
-    edges,
+    edges: [],
     markers,
   };
 }

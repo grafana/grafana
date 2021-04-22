@@ -8,7 +8,7 @@ import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
 import { DataFrame, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
-import { Bounds, Config, defaultConfig, graphBounds, useLayout } from './layout';
+import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from '@emotion/css';
@@ -17,9 +17,10 @@ import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
 import { processNodes } from './utils';
 import { Icon } from '..';
-import { useNodeLimit } from './useNodeLimit';
 import { Marker } from './Marker';
 import { Legend } from './Legend';
+import { useHighlight } from './useHighlight';
+import { usePrevious } from 'react-use';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -105,22 +106,35 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     theme,
   ]);
 
+  const [focusedNodeId, setFocusedNodeId] = useState<string>();
+
   // May seem weird that we do layout first and then limit the nodes shown but the problem is we want to keep the node
   // position stable which means we need the full layout first and then just visually hide the nodes. As hiding/showing
   // nodes should not have effect on layout it should not be recalculated.
-  const layout = useLayout(processed.nodes, processed.edges, config);
-
-  const [focusedNodeId, setFocusedNodeId] = useState<string>();
-  const { nodes, edges, markers } = useNodeLimit(layout.nodes, layout.edges, nodeCountLimit, config, focusedNodeId);
-
-  // We do centering here instead of using centering force to keep this more stable
-  const bounds = useMemo(() => graphBounds(nodes), [nodes]);
-
-  const hiddenNodesCount = processed.nodes.length - nodes.length;
-
-  const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
-    bounds
+  const { nodes, edges, markers, bounds, hiddenNodesCount } = useLayout(
+    processed.nodes,
+    processed.edges,
+    config,
+    nodeCountLimit,
+    focusedNodeId
   );
+
+  const prevLayoutGrid = usePrevious(config.gridLayout);
+  let focusPosition;
+  if (prevLayoutGrid === true && !config.gridLayout && focusedNodeId) {
+    const node = nodes.find((n) => n.id === focusedNodeId);
+    if (node) {
+      focusPosition = {
+        x: -node.x!,
+        y: -node.y!,
+      };
+    }
+  }
+  const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
+    bounds,
+    focusPosition
+  );
+
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(
     getLinks,
     nodesDataFrames[0],
@@ -131,8 +145,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
             {
               label: 'Show in Graph layout',
               onClick: (node) => {
-                setConfig({ ...config, gridLayout: false });
                 setFocusedNodeId(node.id);
+                setConfig({ ...config, gridLayout: false });
               },
             },
           ],
@@ -149,6 +163,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     },
     [measureRef, zoomRef]
   );
+
+  const highlightId = useHighlight(focusedNodeId);
 
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
@@ -177,7 +193,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
             onMouseEnter={setNodeHover}
             onMouseLeave={clearNodeHover}
             onClick={onNodeOpen}
-            hoveringId={nodeHover}
+            hoveringId={nodeHover || highlightId}
           />
 
           <Markers markers={markers || []} onClick={(e, m) => setFocusedNodeId(m.node.id)} />
@@ -319,11 +335,12 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   );
 });
 
-function usePanAndZoom(bounds: Bounds) {
+function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }) {
   const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom();
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
     bounds,
+    focus,
   });
   const { position, isPanning } = panningState;
   return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp, isMaxZoom: isMax, isMinZoom: isMin };

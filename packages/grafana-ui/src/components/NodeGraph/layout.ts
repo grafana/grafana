@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { forceSimulation, forceLink, forceCollide, forceX } from 'd3-force';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { Field } from '@grafana/data';
+import { useNodeLimit } from './useNodeLimit';
 
 export interface Config {
   linkDistance: number;
@@ -36,10 +37,15 @@ export const defaultConfig: Config = {
 export function useLayout(
   rawNodes: NodeDatum[],
   rawEdges: EdgeDatum[],
-  config: Config = defaultConfig
-): { nodes: NodeDatum[]; edges: EdgeDatumLayout[] } {
-  const [nodes, setNodes] = useState<NodeDatum[]>([]);
-  const [edges, setEdges] = useState<EdgeDatumLayout[]>([]);
+  config: Config = defaultConfig,
+  nodeCountLimit: number,
+  rootNodeId?: string
+) {
+  const [nodesGrid, setNodesGrid] = useState<NodeDatum[]>([]);
+  const [edgesGrid, setEdgesGrid] = useState<EdgeDatumLayout[]>([]);
+
+  const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
+  const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
 
   // TODO the use effect is probably not needed here right now, but may make sense later if we decide to move the layout
   // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
@@ -49,23 +55,41 @@ export function useLayout(
     }
 
     // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
-    const rawNodesCopy = rawNodes.map((n) => ({ ...n }));
-    const rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
+    let rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+    let rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
 
-    if (config.gridLayout) {
-      gridLayout(rawNodesCopy, config);
-    } else {
-      defaultLayout(rawNodesCopy, rawEdgesCopy, config);
-    }
+    defaultLayout(rawNodesCopy, rawEdgesCopy);
 
-    setNodes(rawNodesCopy);
-    // The forceSimulation modifies the edges
-    setEdges(rawEdgesCopy as EdgeDatumLayout[]);
-  }, [config, rawNodes, rawEdges]);
+    setNodesGraph(rawNodesCopy);
+    setEdgesGraph(rawEdgesCopy as EdgeDatumLayout[]);
+
+    rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+    rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
+    gridLayout(rawNodesCopy, config.sort);
+
+    setNodesGrid(rawNodesCopy);
+    setEdgesGrid(rawEdgesCopy as EdgeDatumLayout[]);
+  }, [config.sort, rawNodes, rawEdges]);
+
+  const { nodes: nodesWithLimit, edges: edgesWithLimit, markers } = useNodeLimit(
+    config.gridLayout ? nodesGrid : nodesGraph,
+    config.gridLayout ? edgesGrid : edgesGraph,
+    nodeCountLimit,
+    config,
+    rootNodeId
+  );
+
+  const bounds = useMemo(() => graphBounds([...nodesWithLimit, ...(markers || []).map((m) => m.node)]), [
+    nodesWithLimit,
+    markers,
+  ]);
 
   return {
-    nodes,
-    edges,
+    nodes: nodesWithLimit,
+    edges: edgesWithLimit,
+    markers,
+    bounds,
+    hiddenNodesCount: rawNodes.length - nodesWithLimit.length,
   };
 }
 
@@ -73,7 +97,7 @@ export function useLayout(
  * Use d3 force layout to lay the nodes in a sensible way. This function modifies the nodes adding the x,y positions
  * and also fills in node references in edges instead of node ids.
  */
-function defaultLayout(nodes: NodeDatum[], edges: EdgeDatum[], config: Config) {
+function defaultLayout(nodes: NodeDatum[], edges: EdgeDatum[], config: Config = defaultConfig) {
   // Start withs some hardcoded positions so it starts laid out from left to right
   let { roots, secondLevelRoots } = initializePositions(nodes, edges);
 
@@ -106,18 +130,25 @@ function defaultLayout(nodes: NodeDatum[], edges: EdgeDatum[], config: Config) {
   centerNodes(nodes);
 }
 
-function gridLayout(nodes: NodeDatum[], config: Config /* TODO for selecting the sort */) {
+function gridLayout(
+  nodes: NodeDatum[],
+  sort?: {
+    field: Field;
+    ascending: boolean;
+  }
+  /* TODO for selecting the sort */
+) {
   const spacingVertical = 140;
   const spacingHorizontal = 120;
   const perRow = 4;
 
-  if (config.sort) {
+  if (sort) {
     nodes.sort((node1, node2) => {
-      const val1 = config.sort!.field.values.get(node1.dataFrameRowIndex);
-      const val2 = config.sort!.field.values.get(node2.dataFrameRowIndex);
+      const val1 = sort!.field.values.get(node1.dataFrameRowIndex);
+      const val2 = sort!.field.values.get(node2.dataFrameRowIndex);
 
       // Lets pretend we don't care about type for a while
-      return config.sort!.ascending ? val2 - val1 : val1 - val2;
+      return sort!.ascending ? val2 - val1 : val1 - val2;
     });
   }
 
