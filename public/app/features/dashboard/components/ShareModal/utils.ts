@@ -56,7 +56,8 @@ export async function buildShareUrl(
 export async function buildPublicShareUrl(dashboard: DashboardModel, shortenUrl?: boolean) {
   const baseUrl = buildBaseUrl();
   let publicShareUrl = '';
-  await window.fetch(`/encrypt/${dashboard.uid}/${dashboard.meta.slug}`)
+  await window
+    .fetch(`/encrypt/${dashboard.uid}/${dashboard.meta.slug}`)
     .then((res) => res.text())
     .then((token) => {
       publicShareUrl = `${baseUrl}?shareduid=${token}`;
