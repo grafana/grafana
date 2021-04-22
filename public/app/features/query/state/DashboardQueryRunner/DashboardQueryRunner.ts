@@ -12,8 +12,6 @@ import {
 import { AlertStatesWorker } from './AlertStatesWorker';
 import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
-import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
-import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { getAnnotationsByPanelId } from './utils';
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
@@ -21,13 +19,19 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly cancellations: Subject<{}>;
   private readonly subscription: Unsubscribable;
 
-  constructor() {
+  constructor(
+    private readonly workers: DashboardQueryRunnerWorker[] = [
+      new AlertStatesWorker(),
+      new SnapshotWorker(),
+      new AnnotationsWorker(),
+    ]
+  ) {
     this.results = new Subject<DashboardQueryRunnerWorkerResult>();
     this.cancellations = new Subject<{}>();
   }
 
   run(options: DashboardQueryRunnerOptions): void {
-    const workers = getDashboardQueryRunnerWorkers().filter((w) => w.canWork(options));
+    const workers = this.workers.filter((w) => w.canWork(options));
     const observables = workers.map((w) => w.work(options));
     merge(observables)
       .pipe(
@@ -67,14 +71,6 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.cancellations.complete();
     this.subscription.unsubscribe();
   }
-}
-
-export function getDashboardQueryRunnerWorkers(): DashboardQueryRunnerWorker[] {
-  return [new AlertStatesWorker(), new SnapshotWorker(), new AnnotationsWorker()];
-}
-
-export function getAnnotationQueryRunners() {
-  return [new LegacyAnnotationQueryRunner(), new AnnotationsQueryRunner()];
 }
 
 let dashboardQueryRunner: DashboardQueryRunner | undefined;

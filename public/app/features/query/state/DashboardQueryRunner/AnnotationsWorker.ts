@@ -4,11 +4,24 @@ import { map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 
-import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
-import { getAnnotationQueryRunners } from './DashboardQueryRunner';
+import {
+  AnnotationQueryRunner,
+  DashboardQueryRunnerOptions,
+  DashboardQueryRunnerWorker,
+  DashboardQueryRunnerWorkerResult,
+} from './types';
 import { emptyResult, translateQueryResult } from './utils';
+import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
+import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 
 export class AnnotationsWorker implements DashboardQueryRunnerWorker {
+  constructor(
+    private readonly runners: AnnotationQueryRunner[] = [
+      new LegacyAnnotationQueryRunner(),
+      new AnnotationsQueryRunner(),
+    ]
+  ) {}
+
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
     const annotations = dashboard.annotations.list.find(AnnotationsWorker.getAnnotationsToProcessFilter);
     return Boolean(annotations);
@@ -21,12 +34,11 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
     const { dashboard, range } = options;
     const annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
-    const runners = getAnnotationQueryRunners();
     const observables = annotations.map((annotation) => {
       const datasourcePromise = getDataSourceSrv().get(annotation.datasource);
       return from(datasourcePromise).pipe(
         mergeMap((datasource: DataSourceApi) => {
-          const runner = runners.find((r) => r.canRun(datasource));
+          const runner = this.runners.find((r) => r.canRun(datasource));
           if (!runner) {
             return of([]);
           }
