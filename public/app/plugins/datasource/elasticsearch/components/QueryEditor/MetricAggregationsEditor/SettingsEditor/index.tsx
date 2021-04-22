@@ -127,7 +127,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
 
       {metric.type === 'rate' && (
         <>
-          <InlineField label="Unit" {...inlineFieldProps}>
+          <InlineField label="Unit" {...inlineFieldProps} data-testid="unit-select">
             <Select
               id={`ES-query-${query.refId}_metric-${metric.id}-unit`}
               onChange={(e) => dispatch(changeMetricSetting(metric, 'unit', e.value))}
@@ -136,7 +136,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
             />
           </InlineField>
 
-          <InlineField label="Mode" {...inlineFieldProps}>
+          <InlineField label="Mode" {...inlineFieldProps} data-testid="mode-select">
             <Select
               id={`ES-query-${query.refId}_metric-${metric.id}-mode`}
               onChange={(e) => dispatch(changeMetricSetting(metric, 'mode', e.value))}
