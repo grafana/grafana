@@ -68,7 +68,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
         iconRoot = publicpath + 'img/icons/';
       } else {
-        iconRoot = '/public/img/icons/'; // a reasonable guess for a non-grafana build
+        iconRoot = '/public/img/icons/'; // will only happen for non-grafana builds
       }
     }
 
