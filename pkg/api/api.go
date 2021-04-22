@@ -207,9 +207,9 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRemove, orgScope), routing.Wrap(RemoveOrgUserForCurrentOrg))
 
 			// invites
-			orgRoute.Get("/invites", reqOrgAdmin, routing.Wrap(GetPendingOrgInvites))
-			orgRoute.Post("/invites", reqOrgAdmin, quota("user"), bind(dtos.AddInviteForm{}), routing.Wrap(AddOrgInvite))
-			orgRoute.Patch("/invites/:code/revoke", reqOrgAdmin, routing.Wrap(RevokeInvite))
+			orgRoute.Get("/invites", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), routing.Wrap(GetPendingOrgInvites))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), quota("user"), bind(dtos.AddInviteForm{}), routing.Wrap(AddOrgInvite))
+			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), routing.Wrap(RevokeInvite))
 
 			// prefs
 			orgRoute.Get("/preferences", reqOrgAdmin, routing.Wrap(GetOrgPreferences))
