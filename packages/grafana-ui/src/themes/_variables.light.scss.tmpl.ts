@@ -286,7 +286,7 @@ $popover-bg: ${theme.colors.background.primary};
 $popover-color: ${theme.colors.text.primary};
 $popover-border-color: ${theme.colors.border.weak};
 $popover-header-bg: ${theme.colors.background.secondary};
-$popover-shadow: ${theme.shadows.z4};
+$popover-shadow: ${theme.shadows.z3};
 
 $graph-tooltip-bg: $gray-5;
 
