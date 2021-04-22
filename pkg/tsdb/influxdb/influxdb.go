@@ -2,7 +2,6 @@ package influxdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -91,19 +90,9 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 		return plugins.DataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
 	}
 
-	var response Response
-	dec := json.NewDecoder(resp.Body)
-	dec.UseNumber()
-	if err := dec.Decode(&response); err != nil {
-		return plugins.DataResponse{}, err
-	}
-	if response.Err != nil {
-		return plugins.DataResponse{}, response.Err
-	}
-
 	result := plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{
-			"A": e.ResponseParser.Parse(&response, query),
+			"A": e.ResponseParser.Parse(resp.Body, query),
 		},
 	}
 
