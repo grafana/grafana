@@ -4,7 +4,7 @@ import TimeSeries from 'app/core/time_series2';
 
 jest.mock('../graph', () => ({}));
 
-describe('GraphCtrl', () => {
+describe.skip('GraphCtrl', () => {
   const injector = {
     get: () => {
       return {
