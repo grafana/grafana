@@ -3,8 +3,7 @@
   "type": "app",
   "name": "Marketplace",
   "id": "grafana-marketplace-app",
-  "backend": true,
-  "executable": "gpx_marketplace-app",
+  "backend": false,
   "info": {
     "author": {
       "name": "Grafana Labs",
