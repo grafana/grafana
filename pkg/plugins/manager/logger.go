@@ -19,16 +19,20 @@ func New(name string, debugMode bool) (l *InfraLogWrapper) {
 	}
 }
 
-func (l *InfraLogWrapper) Success(message string, args ...interface{}) {
-	l.l.Info(message, args...)
+func (l *InfraLogWrapper) Success(format string, args ...interface{}) {
+	l.l.Info(fmt.Sprintf(format, args...))
 }
 
-func (l *InfraLogWrapper) Failure(message string, args ...interface{}) {
-	l.l.Error(message, args...)
+func (l *InfraLogWrapper) Failure(format string, args ...interface{}) {
+	l.l.Error(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Info(args ...interface{}) {
 	l.l.Info(fmt.Sprint(args...))
+}
+
+func (l *InfraLogWrapper) Infof(format string, args ...interface{}) {
+	l.l.Info(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Debug(args ...interface{}) {
@@ -37,10 +41,24 @@ func (l *InfraLogWrapper) Debug(args ...interface{}) {
 	}
 }
 
+func (l *InfraLogWrapper) Debugf(format string, args ...interface{}) {
+	if l.debugMode {
+		l.l.Debug(fmt.Sprintf(format, args...))
+	}
+}
+
 func (l *InfraLogWrapper) Warn(args ...interface{}) {
 	l.l.Warn(fmt.Sprint(args...))
 }
 
+func (l *InfraLogWrapper) Warnf(format string, args ...interface{}) {
+	l.l.Warn(fmt.Sprintf(format, args...))
+}
+
 func (l *InfraLogWrapper) Error(args ...interface{}) {
 	l.l.Error(fmt.Sprint(args...))
+}
+
+func (l *InfraLogWrapper) Errorf(format string, args ...interface{}) {
+	l.l.Error(fmt.Sprintf(format, args...))
 }

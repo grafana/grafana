@@ -82,11 +82,15 @@ type PluginInstaller interface {
 }
 
 type PluginInstallerLogger interface {
-	Success(message string, args ...interface{})
-	Failure(message string, args ...interface{})
+	Success(format string, args ...interface{})
+	Failure(format string, args ...interface{})
 
 	Info(args ...interface{})
+	Infof(format string, args ...interface{})
 	Debug(args ...interface{})
+	Debugf(format string, args ...interface{})
 	Warn(args ...interface{})
+	Warnf(format string, args ...interface{})
 	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
 }
