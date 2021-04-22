@@ -37,7 +37,7 @@ func TestMSSQL(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runMssqlTests = false
 
-	if !sqlstore.IsTestDbMsSQL() && !runMssqlTests {
+	if !sqlstore.IsTestDBMSSQL() && !runMssqlTests {
 		t.Skip()
 	}
 

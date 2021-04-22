@@ -511,7 +511,7 @@ func IsTestDbPostgres() bool {
 	return false
 }
 
-func IsTestDbMsSQL() bool {
+func IsTestDBMSSQL() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 		return db == migrator.MSSQL
 	}
