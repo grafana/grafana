@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { css } from '@emotion/css';
 
 // Types
 import { InputDatasource, describeDataFrame } from './InputDatasource';
