@@ -236,6 +236,17 @@ export const metricAggregationConfig: MetricsConfiguration = {
       },
     },
   },
+  rate: {
+    label: 'Rate',
+    requiresField: true,
+    isPipelineAgg: false,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
+    hasMeta: false,
+    defaults: {},
+  },
 };
 
 interface PipelineOption {

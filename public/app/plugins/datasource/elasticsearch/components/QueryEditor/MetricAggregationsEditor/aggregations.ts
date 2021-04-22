@@ -20,6 +20,7 @@ export type MetricAggregationType =
   | 'raw_document'
   | 'raw_data'
   | 'logs'
+  | 'rate'
   | PipelineMetricAggregationType;
 
 interface BaseMetricAggregation {
@@ -150,6 +151,14 @@ export interface Logs extends BaseMetricAggregation {
   type: 'logs';
   settings?: {
     limit?: string;
+  };
+}
+
+export interface Rate extends MetricAggregationWithField {
+  type: 'rate';
+  settings?: {
+    unit?: string;
+    mode?: string;
   };
 }
 
@@ -293,7 +302,8 @@ export type MetricAggregationWithSettings =
   | Average
   | MovingAverage
   | MovingFunction
-  | Logs;
+  | Logs
+  | Rate;
 
 export type MetricAggregationWithMeta = ExtendedStats;
 
@@ -355,6 +365,7 @@ export const METRIC_AGGREGATION_TYPES = [
   'serial_diff',
   'cumulative_sum',
   'bucket_script',
+  'rate',
 ];
 
 export const isMetricAggregationType = (s: MetricAggregationType | string): s is MetricAggregationType =>

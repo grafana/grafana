@@ -1,4 +1,4 @@
-import { InlineField, Input, InlineSwitch } from '@grafana/ui';
+import { InlineField, Input, InlineSwitch, Select } from '@grafana/ui';
 import React, { FunctionComponent, ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
@@ -32,6 +32,22 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
   const dispatch = useDispatch();
   const description = useDescription(metric);
   const query = useQuery();
+
+  const rateAggUnitOptions = [
+    { value: 'seconds', label: 'Seconds' },
+    { value: 'minute', label: 'Minute' },
+    { value: 'hour', label: 'Hour' },
+    { value: 'day', label: 'Day' },
+    { value: 'week', label: 'Week' },
+    { value: 'month', label: 'Month' },
+    { value: 'quarter', label: 'Quarter' },
+    { value: 'Year', label: 'Year' },
+  ];
+
+  const rateAggModeOptions = [
+    { value: 'sum', label: 'Sum' },
+    { value: 'value_count', label: 'Value count' },
+  ];
 
   return (
     <SettingsEditorContainer label={description} hidden={metric.hide}>
@@ -107,6 +123,28 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
             placeholder="1,5,25,50,75,95,99"
           />
         </InlineField>
+      )}
+
+      {metric.type === 'rate' && (
+        <>
+          <InlineField label="Unit" {...inlineFieldProps}>
+            <Select
+              id={`ES-query-${query.refId}_metric-${metric.id}-unit`}
+              onChange={(e) => dispatch(changeMetricSetting(metric, 'unit', e.value))}
+              options={rateAggUnitOptions}
+              value={metric.settings?.unit}
+            />
+          </InlineField>
+
+          <InlineField label="Mode" {...inlineFieldProps}>
+            <Select
+              id={`ES-query-${query.refId}_metric-${metric.id}-mode`}
+              onChange={(e) => dispatch(changeMetricSetting(metric, 'mode', e.value))}
+              options={rateAggModeOptions}
+              value={metric.settings?.unit}
+            />
+          </InlineField>
+        </>
       )}
 
       {isMetricAggregationWithInlineScript(metric) && (
