@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataSourceApi, GrafanaTheme } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
+import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 import {
   expressionDatasource,
   ExpressionDatasourceID,
@@ -111,6 +112,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     const styles = getStyles(config.theme);
     return (
       <div className={styles.container}>
+        <VizWrapper data={{} as PanelData} />
         <AlertingQueryRows
           queries={value}
           onQueriesChange={this.props.onChange}
