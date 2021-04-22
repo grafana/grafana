@@ -1,7 +1,8 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { css } from '@emotion/css';
-import { useTheme, useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useTheme2, useStyles2 } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { PanelChromeMenu } from './PanelChromeMenu';
 
 /**
  * @internal
@@ -31,13 +32,13 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   padding = 'md',
   leftItems = [],
 }) => {
-  const theme = useTheme();
-  const styles = useStyles(getStyles);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const headerHeight = getHeaderHeight(theme, title, leftItems);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
-    height: theme.panelHeaderHeight,
+    height: headerHeight,
   };
 
   const containerStyles: CSSProperties = { width, height };
@@ -45,6 +46,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.header} style={headerStyles}>
+        <PanelChromeMenu />
         <div className={styles.headerTitle}>{title}</div>
         {itemsRenderer(leftItems, (items) => {
           return <div className={styles.leftItems}>{items}</div>;
@@ -62,15 +64,21 @@ const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => Rea
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme, title: string, items: ReactNode[]) => {
+const getHeaderHeight = (theme: GrafanaThemeV2, title: string, items: ReactNode[]) => {
   if (title.length > 0 || items.length > 0) {
-    return theme.panelHeaderHeight;
+    return theme.components.panel.headerHeight * theme.spacing.gridSize;
   }
   return 0;
 };
 
-const getContentStyle = (padding: string, theme: GrafanaTheme, width: number, headerHeight: number, height: number) => {
-  const chromePadding = padding === 'md' ? theme.panelPadding : 0;
+const getContentStyle = (
+  padding: string,
+  theme: GrafanaThemeV2,
+  width: number,
+  headerHeight: number,
+  height: number
+) => {
+  const chromePadding = padding === 'md' ? theme.components.panel.padding * theme.spacing.gridSize : 0;
   const panelBorder = 1 * 2;
   const innerWidth = width - chromePadding * 2 - panelBorder;
   const innerHeight = height - headerHeight - chromePadding * 2 - panelBorder;
@@ -82,12 +90,12 @@ const getContentStyle = (padding: string, theme: GrafanaTheme, width: number, he
   return { contentStyle, innerWidth, innerHeight };
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
       label: panel-container;
-      background-color: ${theme.colors.panelBg};
-      border: 1px solid ${theme.colors.panelBorder};
+      background-color: ${theme.components.panel.background};
+      border: 1px solid ${theme.components.panel.borderColor};
       position: relative;
       border-radius: 3px;
       height: 100%;
@@ -110,12 +118,12 @@ const getStyles = (theme: GrafanaTheme) => {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
-      padding-left: ${theme.panelPadding}px;
+      padding-left: ${theme.spacing(theme.components.panel.padding)};
       flex-grow: 1;
     `,
     leftItems: css`
       display: flex;
-      padding-right: ${theme.panelPadding}px;
+      padding-right: ${theme.spacing(theme.components.panel.padding)};
     `,
   };
 };
