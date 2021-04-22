@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       flex-grow: 1;
       min-height: 0;
       background: ${theme.colors.background.primary};
-      border-right: 1px solid ${theme.components.panel.border};
+      border-right: 1px solid ${theme.components.panel.borderColor};
     `,
   };
 };

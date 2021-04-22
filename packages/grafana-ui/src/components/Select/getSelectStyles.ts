@@ -6,7 +6,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     menu: css`
       label: grafana-select-menu;
-      background: ${theme.colors.background.secondary};
+      background: ${theme.components.dropdown.background};
       box-shadow: ${theme.shadows.z3};
       position: relative;
       min-width: 100%;

@@ -31,7 +31,7 @@ const createStorybookTheme = (theme: GrafanaThemeV2) => {
 
     // Form colors
     inputBg: theme.components.input.background,
-    inputBorder: theme.components.input.border,
+    inputBorder: theme.components.input.borderColor,
     inputTextColor: theme.components.input.text,
     inputBorderRadius: theme.shape.borderRadius(1),
 
