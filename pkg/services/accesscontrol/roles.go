@@ -196,16 +196,16 @@ const (
 // to which set of PredefinedRoles by default. Alphabetically sorted.
 var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
-		usersAdminEdit,
-		usersAdminRead,
-		orgsAdminEdit,
-		orgsAdminRead,
 		ldapAdminEdit,
 		ldapAdminRead,
+		orgsAdminEdit,
+		orgsAdminRead,
+		usersAdminEdit,
+		usersAdminRead,
 	},
 	string(models.ROLE_ADMIN): {
-		orgsCurrentRead,
 		orgsCurrentEdit,
+		orgsCurrentRead,
 	},
 }
 
