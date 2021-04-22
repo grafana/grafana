@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, locationUtil } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
+import { ensureDefine } from '../../utils/templates';
 
 interface Values {
   name: string;
@@ -35,15 +36,9 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
   const submit = (values: Values) => {
-    // wrap content in "define" if it's not already wrapped
-    let content = values.content.trim();
-    if (!content.match(/\{\{\s*define/)) {
-      const indentedContent = content
-        .split('\n')
-        .map((line) => '  ' + line)
-        .join('\n');
-      content = `{{ define "${values.name}" }}\n${indentedContent}\n{{ end }}`;
-    }
+    // wrap content in "define" if it's not already wrapped, in case user did not do it/
+    // it's not obvious that this is needed for template to work
+    const content = ensureDefine(values.name, values.content);
 
     // add new template to template map
     const template_files = {
@@ -135,7 +130,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         {!loading && <Button variant="primary">Save template</Button>}
         <LinkButton
           disabled={loading}
-          href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
+          href={locationUtil.assureBaseUrl(makeAMLink('/alerting/notifications', alertManagerSourceName))}
           variant="secondary"
           type="button"
         >
