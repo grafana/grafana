@@ -17,8 +17,8 @@ export const AlphaNotice: FC<Props> = ({ state, text, className }) => {
   const styles = cx(
     className,
     css`
-      background: ${theme.palette.primary.transparent};
-      color: ${theme.palette.text.secondary};
+      background: ${theme.colors.primary.transparent};
+      color: ${theme.colors.text.secondary};
       white-space: nowrap;
       border-radius: 3px;
       text-shadow: none;

@@ -245,7 +245,7 @@ export function SelectBase<T>({
                   css(props.getStyles('placeholder', props)),
                   css`
                     display: inline-block;
-                    color: ${theme.palette.text.disabled};
+                    color: ${theme.colors.text.disabled};
                     position: absolute;
                     top: 50%;
                     transform: translateY(-50%);

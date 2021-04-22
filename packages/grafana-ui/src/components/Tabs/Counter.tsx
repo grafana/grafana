@@ -9,9 +9,9 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
       label: counter;
       margin-left: ${theme.spacing(1)};
       border-radius: ${theme.spacing(3)};
-      background-color: ${theme.palette.action.hover};
+      background-color: ${theme.colors.action.hover};
       padding: ${theme.spacing(0.25, 1)};
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       font-weight: ${theme.typography.fontWeightMedium};
       font-size: ${theme.typography.size.sm};
     `,

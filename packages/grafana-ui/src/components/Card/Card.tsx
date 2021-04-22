@@ -140,7 +140,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaThemeV2, disabled = fals
   return css({
     display: 'flex',
     width: '100%',
-    background: theme.palette.background.secondary,
+    background: theme.colors.background.secondary,
     borderRadius: theme.shape.borderRadius(),
     position: 'relative',
     pointerEvents: disabled ? 'none' : 'auto',
@@ -151,7 +151,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaThemeV2, disabled = fals
 
     ...(!disableHover && {
       '&:hover': {
-        background: theme.palette.emphasize(theme.palette.background.secondary, 0.03),
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
         cursor: 'pointer',
         zIndex: 1,
       },
@@ -180,7 +180,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaThemeV2) => {
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
       line-height: ${theme.typography.body.lineHeight};
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightMedium};
     `,
     info: css`
@@ -195,14 +195,14 @@ export const getCardStyles = stylesFactory((theme: GrafanaThemeV2) => {
       align-items: center;
       width: 100%;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       margin: ${theme.spacing(0.5, 0, 0)};
       line-height: ${theme.typography.bodySmall.lineHeight};
     `,
     description: css`
       width: 100%;
       margin: ${theme.spacing(1, 0, 0)};
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       line-height: ${theme.typography.body.lineHeight};
     `,
     media: css`
@@ -234,7 +234,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaThemeV2) => {
     secondaryActions: css`
       display: flex;
       align-items: center;
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       // align to the right
       margin-left: auto;
       & > * {

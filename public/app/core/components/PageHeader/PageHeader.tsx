@@ -139,8 +139,8 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
 
 const getStyles = (theme: GrafanaThemeV2) => ({
   headerCanvas: css`
-    background: ${theme.palette.background.canvas};
-    border-bottom: 1px solid ${theme.palette.border.weak};
+    background: ${theme.colors.background.canvas};
+    border-bottom: 1px solid ${theme.colors.border.weak};
   `,
 });
 
