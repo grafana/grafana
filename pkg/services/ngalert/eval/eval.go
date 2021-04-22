@@ -102,8 +102,8 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
-func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
+// GetExprRequest validates the condition and creates a expr.Request from it.
+func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId: ctx.OrgID,
 	}
@@ -129,6 +129,7 @@ func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Ti
 				From: q.RelativeTimeRange.ToTimeRange(now).From,
 				To:   q.RelativeTimeRange.ToTimeRange(now).To,
 			},
+			DatasourceUID: q.DatasourceUID,
 			JSON:          model,
 			Interval:      interval,
 			RefID:         q.RefID,
@@ -165,7 +166,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 }
 
 func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
-	queryDataReq, err := GetQueryDataRequest(ctx, data, now)
+	queryDataReq, err := GetExprRequest(ctx, data, now)
 	if err != nil {
 		return nil, err
 	}

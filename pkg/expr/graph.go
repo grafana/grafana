@@ -127,10 +127,11 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		}
 
 		rn := &rawNode{
-			Query:     rawQueryProp,
-			RefID:     query.RefID,
-			TimeRange: query.TimeRange,
-			QueryType: query.QueryType,
+			Query:         rawQueryProp,
+			RefID:         query.RefID,
+			TimeRange:     query.TimeRange,
+			QueryType:     query.QueryType,
+			DatasourceUID: query.DatasourceUID,
 		}
 
 		dsName, err := rn.GetDatasourceName()
@@ -138,7 +139,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			return nil, err
 		}
 
-		dsUID, err := rn.GetDatasourceUid()
+		dsUID := rn.GetDatasourceUid()
 		if err != nil {
 			return nil, err
 		}

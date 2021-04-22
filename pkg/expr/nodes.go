@@ -21,10 +21,11 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID     string `json:"refId"`
-	Query     map[string]interface{}
-	QueryType string
-	TimeRange TimeRange
+	RefID         string `json:"refId"`
+	Query         map[string]interface{}
+	QueryType     string
+	TimeRange     TimeRange
+	DatasourceUID string
 }
 
 func (rn *rawNode) GetDatasourceName() (string, error) {
@@ -39,16 +40,8 @@ func (rn *rawNode) GetDatasourceName() (string, error) {
 	return dsName, nil
 }
 
-func (rn *rawNode) GetDatasourceUid() (string, error) {
-	rawDs, ok := rn.Query["datasourceUid"]
-	if !ok {
-		return "", nil
-	}
-	dsUID, ok := rawDs.(string)
-	if !ok {
-		return "", fmt.Errorf("expected datasource identifier to be a string, got %T", rawDs)
-	}
-	return dsUID, nil
+func (rn *rawNode) GetDatasourceUid() string {
+	return rn.DatasourceUID
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -182,15 +175,10 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 		}
 		dsNode.datasourceID = int64(floatDsID)
 	default:
-		rawDsUID, ok := rn.Query["datasourceUid"]
-		if !ok {
+		if rn.DatasourceUID == "" {
 			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
 		}
-		strDsUID, ok := rawDsUID.(string)
-		if !ok {
-			return nil, fmt.Errorf("expected datasourceUid to be a string, got type %T for refId %v", rawDsUID, rn.RefID)
-		}
-		dsNode.datasourceUID = strDsUID
+		dsNode.datasourceUID = rn.DatasourceUID
 	}
 
 	var floatIntervalMS float64
