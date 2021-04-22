@@ -41,7 +41,7 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
   );
 }
 
-export const StandardPanel = () => {
+export const Examples = () => {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
 
