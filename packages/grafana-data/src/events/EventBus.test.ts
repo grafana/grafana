@@ -50,8 +50,8 @@ describe('EventBus', () => {
   describe('EventBusWithSource', () => {
     it('can add sources to the source path', () => {
       const bus = new EventBusSrv();
-      const busWithSource = new EventBusWithSource(bus, 'foo').appendSource('bar');
-      expect(busWithSource.source).toEqual(['foo', 'bar']);
+      const busWithSource = new EventBusWithSource(bus, 'foo');
+      expect(busWithSource.source).toEqual('foo');
     });
 
     it('adds the source to the event payload', () => {
@@ -60,25 +60,11 @@ describe('EventBus', () => {
 
       bus.subscribe(DataHoverEvent, (event) => events.push(event));
 
-      const busWithSource = new EventBusWithSource(bus, 'foo').appendSource('bar');
+      const busWithSource = new EventBusWithSource(bus, 'foo');
       busWithSource.publish({ type: DataHoverEvent.type });
 
       expect(events.length).toEqual(1);
-      expect(events[0].payload.source).toEqual(['foo', 'bar']);
-    });
-
-    it('can identify that its part of the source path', () => {
-      const bus = new EventBusSrv();
-      let events: BusEvent[] = [];
-
-      bus.subscribe(DataHoverEvent, (event) => events.push(event));
-
-      const busWithSource = new EventBusWithSource(bus, 'foo');
-      const busWithAdditionalSources = busWithSource.appendSource('bar');
-      busWithAdditionalSources.publish({ type: DataHoverEvent.type });
-
-      expect(events.length).toEqual(1);
-      expect(busWithSource.sourceIsDescendant(events[0].payload.source)).toBeTruthy();
+      expect(events[0].payload.source).toEqual('foo');
     });
   });
 

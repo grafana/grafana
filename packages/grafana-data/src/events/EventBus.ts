@@ -94,29 +94,21 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
 /**
  * @alpha
  *
- * Wraps EventBus and adds a source path to help with identifying if a subscriber should react to the event or not.
+ * Wraps EventBus and adds a source to help with identifying if a subscriber should react to the event or not.
  */
 export class EventBusWithSource implements EventBus {
-  private _sourceFragment: string;
-  get source(): string[] {
-    if (this.eventBus instanceof EventBusWithSource) {
-      return this.eventBus.source.concat([this._sourceFragment]);
-    }
-    return [this._sourceFragment];
-  }
-
+  source: string;
   eventBus: EventBus;
 
-  constructor(eventBus: EventBus, sourceFragment: string) {
+  constructor(eventBus: EventBus, source: string) {
     this.eventBus = eventBus;
-    this._sourceFragment = sourceFragment;
+    this.source = source;
   }
 
   publish<T extends BusEvent>(event: T): void {
-    const payload = event.payload ?? { source: [] };
     const decoratedEvent = {
       ...event,
-      ...{ payload: { ...payload, ...{ source: [...[this._sourceFragment], ...(payload.source ?? [])] } } },
+      ...{ payload: { ...event.payload, ...{ source: this.source } } },
     };
     this.eventBus.publish(decoratedEvent);
   }
@@ -131,29 +123,5 @@ export class EventBusWithSource implements EventBus {
 
   removeAllListeners(): void {
     this.eventBus.removeAllListeners();
-  }
-
-  /**
-   * Appends a source fragment id to the source
-   *
-   * @param sourceFragmentId source id to append to the eventbus
-   * @returns a new instance of EventBusWithSource with the new source fragment appended
-   */
-  appendSource(sourceFragmentId: string) {
-    return new EventBusWithSource(this, sourceFragmentId);
-  }
-
-  /**
-   * Checks if this eventBus or it's descendants is the source of the event
-   *
-   * @param source source of the payload to be checked against the source of the eventbus
-   */
-  sourceIsDescendant(source: string[]) {
-    for (let i in this.source) {
-      if (this.source[i] !== source[i]) {
-        return false;
-      }
-    }
-    return true;
   }
 }
