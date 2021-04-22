@@ -40,11 +40,15 @@ func init() {
 				PropertyName: "recipient",
 				Required:     true,
 			},
+			// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
+			// However, since the UI doesn't allow to say that a field is required or not depending on another field,
+			// we've gone with the compromise of making this field optional and instead return a validation error
+			// if it's necessary and missing.
 			{
 				Label:        "Token",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
-				Description:  "Provide a Slack API token (starts with \"xoxb\")",
+				Description:  "Provide a Slack API token (starts with \"xoxb\") - required unless you provide a webhook",
 				PropertyName: "token",
 				Secure:       true,
 			},
