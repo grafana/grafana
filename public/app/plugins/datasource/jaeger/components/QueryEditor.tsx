@@ -1,4 +1,5 @@
 import { QueryEditorProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input, RadioButtonGroup } from '@grafana/ui';
 import React, { useEffect } from 'react';
 import { JaegerDatasource } from '../datasource';
@@ -43,6 +44,7 @@ export function QueryEditor({ datasource, query, onChange }: Props) {
         <InlineFieldRow>
           <InlineField label="Trace ID">
             <Input
+              aria-label={selectors.components.DataSource.Jaeger.traceIDInput}
               value={query.traceID}
               onChange={(v) =>
                 onChange({
