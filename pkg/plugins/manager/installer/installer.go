@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/installer/logger"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -32,7 +32,7 @@ type Installer struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	grafanaVersion      string
-	log                 logger.Logger
+	log                 plugins.PluginInstallerLogger
 }
 
 const (
@@ -56,7 +56,7 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger logger.Logger) *Installer {
+func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstallerLogger) *Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 10*time.Second),

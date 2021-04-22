@@ -80,3 +80,13 @@ type PluginInstaller interface {
 	Uninstall(pluginID, pluginPath string) error
 	DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) error
 }
+
+type PluginInstallerLogger interface {
+	Success(message string, args ...interface{})
+	Failure(message string, args ...interface{})
+
+	Info(args ...interface{})
+	Debug(args ...interface{})
+	Warn(args ...interface{})
+	Error(args ...interface{})
+}

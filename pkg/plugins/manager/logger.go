@@ -1,20 +1,10 @@
-package logger
+package manager
 
 import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
-
-type Logger interface {
-	Success(message string, args ...interface{})
-	Failure(message string, args ...interface{})
-
-	Info(args ...interface{})
-	Debug(args ...interface{})
-	Warn(args ...interface{})
-	Error(args ...interface{})
-}
 
 type InfraLogWrapper struct {
 	l log.Logger
