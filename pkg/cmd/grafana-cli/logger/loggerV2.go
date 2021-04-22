@@ -10,6 +10,12 @@ type CLILogger struct {
 	DebugMode bool
 }
 
+func New(debugMode bool) *CLILogger {
+	return &CLILogger{
+		DebugMode: debugMode,
+	}
+}
+
 func (l *CLILogger) Success(message string, args ...interface{}) {
 	fmt.Printf(fmt.Sprintf("%s %s", color.GreenString("✔"), message), args...)
 }

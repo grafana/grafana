@@ -59,10 +59,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 
-	l := &logger.CLILogger{
-		DebugMode: c.Bool("debug"),
-	}
-	i := installer.New(skipTLSVerify, services.GrafanaVersion, l)
+	i := installer.New(skipTLSVerify, services.GrafanaVersion, services.Logger)
 	return i.Install(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 

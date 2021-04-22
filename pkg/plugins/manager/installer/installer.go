@@ -83,16 +83,6 @@ func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Installer {
 func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
-	if len(pluginZipURL) > 0 {
-		i.log.Debug(fmt.Sprintf("Installing plugin\nfrom: %s\ninto: %s\n\n", pluginZipURL, pluginsDir))
-	} else {
-		if len(version) > 0 {
-			i.log.Debug(fmt.Sprintf("Installing plugin v%s\nfrom: %s\ninto: %s\n\n", version, pluginZipURL, pluginsDir))
-		} else {
-			i.log.Debug(fmt.Sprintf("Installing latest version of %s\nfrom: %s\ninto: %s\n\n", pluginID, pluginZipURL, pluginsDir))
-		}
-	}
-
 	var checksum string
 	if pluginZipURL == "" {
 		if strings.HasPrefix(pluginID, "grafana-") {
@@ -130,6 +120,8 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 			checksum = archMeta.SHA256
 		}
 	}
+
+	i.log.Debug(fmt.Sprintf("Installing plugin\nfrom: %s\ninto: %s\n\n", pluginZipURL, pluginsDir))
 
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
@@ -264,7 +256,7 @@ func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL stri
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
 			return Plugin{},
-				fmt.Errorf("failed to find plugin \"%s\" in plugin repository Please check if plugin ID is correct",
+				fmt.Errorf("failed to find plugin \"%s\" in plugin repository. Please check if plugin ID is correct",
 					pluginID)
 		}
 		return Plugin{}, errutil.Wrap("Failed to send request", err)

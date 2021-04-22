@@ -20,6 +20,7 @@ var (
 	HttpClientNoTimeout http.Client
 	GrafanaVersion      string
 	ErrNotFoundError    = errors.New("404 not found error")
+	Logger              *logger.CLILogger
 )
 
 type BadRequestError struct {
@@ -34,11 +35,12 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
-func Init(version string, skipTLSVerify bool) {
+func Init(version string, skipTLSVerify bool, debugMode bool) {
 	GrafanaVersion = version
 
 	HttpClient = makeHttpClient(skipTLSVerify, 10*time.Second)
 	HttpClientNoTimeout = makeHttpClient(skipTLSVerify, 0)
+	Logger = logger.New(debugMode)
 }
 
 func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
