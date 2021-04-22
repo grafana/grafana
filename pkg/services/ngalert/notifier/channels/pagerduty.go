@@ -3,11 +3,11 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"os"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -35,7 +35,6 @@ type PagerdutyNotifier struct {
 	old_notifiers.NotifierBase
 	Key           string
 	Severity      string
-	AutoResolve   bool
 	CustomDetails map[string]string
 	Class         string
 	Component     string
@@ -76,7 +75,6 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 		Key:           key,
 		CustomDetails: details,
 		Severity:      model.Settings.Get("severity").MustString("critical"),
-		AutoResolve:   model.Settings.Get("autoResolve").MustBool(true),
 		Class:         model.Settings.Get("class").MustString("todo_class"), // TODO
 		Component:     model.Settings.Get("component").MustString("Grafana"),
 		Group:         model.Settings.Get("group").MustString("todo_group"), // TODO
@@ -90,19 +88,19 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved && !pn.AutoResolve {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.AutoResolve)
+	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
+		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
 	msg, eventType, err := pn.buildPagerdutyMessage(ctx, alerts, as)
 	if err != nil {
-		return false, errors.Wrap(err, "build pagerduty message")
+		return false, fmt.Errorf("build pagerduty message: %w", err)
 	}
 
 	body, err := json.Marshal(msg)
 	if err != nil {
-		return false, errors.Wrap(err, "marshal json")
+		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
@@ -115,7 +113,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		},
 	}
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
-		return false, errors.Wrap(err, "send notification to Pagerduty")
+		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
 	return true, nil
@@ -140,7 +138,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	for k, v := range pn.CustomDetails {
 		detail, err := pn.tmpl.ExecuteTextString(v, data)
 		if err != nil {
-			return nil, "", errors.Wrapf(err, "%q: failed to template %q", k, v)
+			return nil, "", fmt.Errorf("%q: failed to template %q: %w", k, v, err)
 		}
 		details[k] = detail
 	}
@@ -172,14 +170,14 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		return nil, "", errors.Wrap(tmplErr, "failed to template PagerDuty message")
+		return nil, "", fmt.Errorf("failed to template PagerDuty message: %w", tmplErr)
 	}
 
 	return msg, eventType, nil
 }
 
 func (pn *PagerdutyNotifier) SendResolved() bool {
-	return pn.AutoResolve
+	return !pn.GetDisableResolveMessage()
 }
 
 type pagerDutyMessage struct {

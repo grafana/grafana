@@ -1,9 +1,9 @@
 import { each, groupBy, has } from 'lodash';
 
-import { RawTimeRange, TimeRange, TimeZone, IntervalValues } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime, DateTime } from './moment_wrapper';
+import { isDateTime, DateTime, dateTime } from './moment_wrapper';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 import { dateTimeParse } from './parser';
 
@@ -261,6 +261,23 @@ export function secondsToHms(seconds: number): string {
   return 'less than a millisecond'; //'just now' //or other string you like;
 }
 
+// Format timeSpan (in sec) to string used in log's meta info
+export function msRangeToTimeString(rangeMs: number): string {
+  const rangeSec = Number((rangeMs / 1000).toFixed());
+
+  const h = Math.floor(rangeSec / 60 / 60);
+  const m = Math.floor(rangeSec / 60) - h * 60;
+  const s = Number((rangeSec % 60).toFixed());
+  let formattedH = h ? h + 'h' : '';
+  let formattedM = m ? m + 'min' : '';
+  let formattedS = s ? s + 'sec' : '';
+
+  formattedH && formattedM ? (formattedH = formattedH + ' ') : (formattedH = formattedH);
+  (formattedM || formattedH) && formattedS ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
+
+  return formattedH + formattedM + formattedS || 'less than 1sec';
+}
+
 export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string): IntervalValues {
   let lowLimitMs = 1; // 1 millisecond default low limit
   if (lowLimitInterval) {
@@ -414,4 +431,37 @@ export function roundInterval(interval: number) {
     default:
       return 31536000000; // 1y
   }
+}
+
+/**
+ * Converts a TimeRange to a RelativeTimeRange that can be used in
+ * e.g. alerting queries/rules.
+ *
+ * @internal
+ */
+export function timeRangeToRelative(timeRange: TimeRange): RelativeTimeRange {
+  const now = dateTime().unix();
+  const from = (now - timeRange.from.unix()) / 1000;
+  const to = (now - timeRange.to.unix()) / 1000;
+
+  return {
+    from,
+    to,
+  };
+}
+
+/**
+ * Converts a RelativeTimeRange to a TimeRange
+ *
+ * @internal
+ */
+export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: DateTime = dateTime()): TimeRange {
+  const from = dateTime(now).subtract(relativeTimeRange.from, 's');
+  const to = relativeTimeRange.to === 0 ? dateTime(now) : dateTime(now).subtract(relativeTimeRange.to, 's');
+
+  return {
+    from,
+    to,
+    raw: { from, to },
+  };
 }
