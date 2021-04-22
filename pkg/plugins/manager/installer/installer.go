@@ -483,7 +483,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dstDir str
 				zf.Name, dstDir)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginID, zf.Name)))
+		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(zf.Name, pluginID)))
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
@@ -586,7 +586,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 	return err
 }
 
-func removeGitBuildFromName(pluginID, filename string) string {
+func removeGitBuildFromName(filename, pluginID string) string {
 	return reGitBuild.ReplaceAllString(filename, pluginID+"/")
 }
 

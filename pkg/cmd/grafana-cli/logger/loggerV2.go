@@ -30,7 +30,7 @@ func (l *CLILogger) Info(args ...interface{}) {
 
 func (l *CLILogger) Debug(args ...interface{}) {
 	if l.DebugMode {
-		fmt.Print(color.BlueString(fmt.Sprint(args...)))
+		fmt.Print(color.HiBlueString(fmt.Sprint(args...)))
 	}
 }
 
