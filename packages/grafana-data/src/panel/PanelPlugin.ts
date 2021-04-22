@@ -266,7 +266,7 @@ export class PanelPlugin<
   }
 
   /**
-   * Tells Grafana if the plugin should subscribe to annotation results.
+   * Tells Grafana if the plugin should subscribe to annotation and alertState results.
    *
    * @example
    * ```typescript
@@ -279,38 +279,17 @@ export class PanelPlugin<
    *     .useFieldConfig({})
    *     ...
    *     ...
-   *     .setAnnotationSupport(true);
+   *     .setAnnotationSupport({
+   *       annotations: true,
+   *       alertStates: true,
+   *     });
    * ```
    *
    * @public
    **/
-  setAnnotationSupport(supported: boolean) {
-    this.supportsAnnotations = supported;
-    return this;
-  }
-
-  /**
-   * @deprecated setAlertStatesSupport is deprecated and will be removed when the next generation alerting is in place
-   * Tells Grafana if the plugin should subscribe to alert state results.
-   *
-   * @example
-   * ```typescript
-   *
-   * import { ShapePanel } from './ShapePanel';
-   *
-   * interface ShapePanelOptions {}
-   *
-   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
-   *     .useFieldConfig({})
-   *     ...
-   *     ...
-   *     .setAlertStatesSupport(true);
-   * ```
-   *
-   * @public
-   **/
-  setAlertStateSupport(supported: boolean) {
-    this.supportsAlertStates = supported;
+  setAnnotationSupport({ annotations, alertStates }: { annotations?: boolean; alertStates?: boolean }) {
+    this.supportsAlertStates = alertStates ?? this.supportsAlertStates;
+    this.supportsAnnotations = annotations ?? this.supportsAnnotations;
     return this;
   }
 
