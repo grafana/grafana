@@ -48,13 +48,13 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, scrollableContent: boole
         background-color: ${theme.components.overlay.background};
         backdrop-filter: blur(1px);
       }
-      .drawer-right.drawer-open .drawer-content-wrapper {
+      .drawer-open .drawer-content-wrapper {
         box-shadow: ${theme.shadows.z3};
       }
       z-index: ${theme.zIndex.dropdown};
     `,
     header: css`
-      background-color: ${theme.colors.background.secondary};
+      background-color: ${theme.colors.background.canvas};
       z-index: 1;
       flex-grow: 0;
       padding-top: ${theme.spacing(0.5)};
@@ -72,7 +72,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, scrollableContent: boole
       margin-bottom: ${theme.spacing(2)};
     `,
     content: css`
-      margin-bottom: ${theme.spacing(2)};
+      padding: ${theme.spacing(2)};
       flex-grow: 1;
       overflow: ${!scrollableContent ? 'hidden' : 'auto'};
       z-index: 0;
