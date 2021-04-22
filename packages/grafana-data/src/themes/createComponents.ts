@@ -11,7 +11,7 @@ export interface ThemeComponents {
   };
   input: {
     background: string;
-    border: string;
+    borderColor: string;
     borderHover: string;
     text: string;
   };
@@ -22,8 +22,14 @@ export interface ThemeComponents {
   panel: {
     padding: number;
     headerHeight: number;
-    border: string;
+    borderColor: string;
     boxShadow: string;
+    background: string;
+  };
+  dropdown: {
+    background: string;
+  };
+  overlay: {
     background: string;
   };
   dashboard: {
@@ -37,8 +43,15 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     padding: 1,
     headerHeight: 4,
     background: colors.background.primary,
-    border: colors.background.primary,
-    boxShadow: shadows.z0,
+    borderColor: colors.background.primary,
+    boxShadow: shadows.z1,
+  };
+
+  const input = {
+    borderColor: colors.border.medium,
+    borderHover: colors.border.strong,
+    text: colors.text.primary,
+    background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
   };
 
   return {
@@ -47,21 +60,11 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       md: 4,
       lg: 6,
     },
-    input:
-      colors.mode === 'dark'
-        ? {
-            background: colors.background.canvas,
-            border: colors.border.medium,
-            borderHover: colors.border.strong,
-            text: colors.text.primary,
-          }
-        : {
-            background: colors.background.primary,
-            border: colors.border.medium,
-            borderHover: colors.border.strong,
-            text: colors.text.primary,
-          },
+    input,
     panel,
+    dropdown: {
+      background: input.background,
+    },
     tooltip: {
       background: colors.background.secondary,
       text: colors.text.primary,
@@ -69,6 +72,9 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     dashboard: {
       background: colors.background.canvas,
       padding: 1,
+    },
+    overlay: {
+      background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.27)' : 'rgba(208, 209, 211, 0.24)',
     },
   };
 }

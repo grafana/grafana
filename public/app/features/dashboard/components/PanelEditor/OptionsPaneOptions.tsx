@@ -161,7 +161,7 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   formBox: css`
     padding: ${theme.spacing(1)};
     background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.border};
+    border: 1px solid ${theme.components.panel.borderColor};
     border-bottom: none;
   `,
   closeButton: css`
@@ -182,7 +182,7 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   `,
   mainBox: css`
     background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.border};
+    border: 1px solid ${theme.components.panel.borderColor};
     border-top: none;
     flex-grow: 1;
   `,
