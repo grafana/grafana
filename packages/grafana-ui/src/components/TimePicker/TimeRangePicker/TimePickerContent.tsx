@@ -14,8 +14,8 @@ import { TimePickerFooter } from './TimePickerFooter';
 const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
     container: css`
-      background: ${theme.colors.background.secondary};
-      box-shadow: ${theme.shadows.z4};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       width: 546px;
