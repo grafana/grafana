@@ -104,7 +104,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
         border: none;
         border-radius: 50px;
         background: ${theme.components.input.background};
-        border: 1px solid ${theme.components.input.border};
+        border: 1px solid ${theme.components.input.borderColor};
         transition: all 0.3s ease;
 
         &:hover {
@@ -132,7 +132,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
       display: flex;
       align-items: center;
       background: ${transparent ? 'transparent' : theme.components.input.background};
-      border: 1px solid ${transparent ? 'transparent' : theme.components.input.border};
+      border: 1px solid ${transparent ? 'transparent' : theme.components.input.borderColor};
       border-radius: ${theme.shape.borderRadius()};
     `,
   };
