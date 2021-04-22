@@ -14,13 +14,13 @@ import (
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type AlertState struct {
+type State struct {
 	AlertRuleUID       string
 	OrgID              int64
 	CacheId            string
 	Labels             data.Labels
 	State              eval.State
-	Results            []StateEvaluation
+	Results            []Evaluation
 	StartsAt           time.Time
 	EndsAt             time.Time
 	LastEvaluationTime time.Time
@@ -28,39 +28,39 @@ type AlertState struct {
 	Annotations        map[string]string
 }
 
-type StateEvaluation struct {
+type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
 }
 
 type cache struct {
-	states    map[string]AlertState
+	states    map[string]State
 	mtxStates sync.Mutex
 }
 
-type StateTracker struct {
+type Manager struct {
 	cache cache
 	quit  chan struct{}
 	Log   log.Logger
 }
 
-func NewStateTracker(logger log.Logger) *StateTracker {
-	tracker := &StateTracker{
+func NewManager(logger log.Logger) *Manager {
+	manager := &Manager{
 		cache: cache{
-			states: make(map[string]AlertState),
+			states: make(map[string]State),
 		},
 		quit: make(chan struct{}),
 		Log:  logger,
 	}
-	go tracker.cleanUp()
-	return tracker
+	go manager.cleanUp()
+	return manager
 }
 
-func (st *StateTracker) Close() {
+func (st *Manager) Close() {
 	st.quit <- struct{}{}
 }
 
-func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result, evaluationDuration time.Duration) AlertState {
+func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result, evaluationDuration time.Duration) State {
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 
@@ -83,7 +83,7 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 	// If the first result we get is alerting, set StartsAt to EvaluatedAt because we
 	// do not have data for determining StartsAt otherwise
 	st.Log.Debug("adding new alert state cache entry", "cacheId", id, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
-	newState := AlertState{
+	newState := State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
 		CacheId:            id,
@@ -99,28 +99,28 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 	return newState
 }
 
-func (st *StateTracker) set(entry AlertState) {
+func (st *Manager) set(entry State) {
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 	st.cache.states[entry.CacheId] = entry
 }
 
-func (st *StateTracker) Get(id string) AlertState {
+func (st *Manager) Get(id string) State {
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 	return st.cache.states[id]
 }
 
 //Used to ensure a clean cache on startup
-func (st *StateTracker) ResetCache() {
+func (st *Manager) ResetCache() {
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
-	st.cache.states = make(map[string]AlertState)
+	st.cache.states = make(map[string]State)
 }
 
-func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results, evaluationDuration time.Duration) []AlertState {
+func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results, evaluationDuration time.Duration) []State {
 	st.Log.Info("state tracker processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
-	var states []AlertState
+	var states []State
 	for _, result := range results {
 		s := st.setNextState(alertRule, result, evaluationDuration)
 		states = append(states, s)
@@ -132,12 +132,12 @@ func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, result
 //TODO: When calculating if an alert should not be firing anymore, we should take three things into account:
 // 1. The re-send the delay if any, we don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
 //Set the current state based on evaluation results
-func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.Result, evaluationDuration time.Duration) AlertState {
+func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result, evaluationDuration time.Duration) State {
 	currentState := st.getOrCreate(alertRule, result, evaluationDuration)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = evaluationDuration
-	currentState.Results = append(currentState.Results, StateEvaluation{
+	currentState.Results = append(currentState.Results, Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 	})
@@ -159,7 +159,7 @@ func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.
 	return currentState
 }
 
-func resultNormal(alertState AlertState, result eval.Result) AlertState {
+func resultNormal(alertState State, result eval.Result) State {
 	newState := alertState
 	if alertState.State != eval.Normal {
 		newState.EndsAt = result.EvaluatedAt
@@ -168,7 +168,7 @@ func resultNormal(alertState AlertState, result eval.Result) AlertState {
 	return newState
 }
 
-func (a AlertState) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
+func (a State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) State {
 	switch a.State {
 	case eval.Alerting:
 		if !(alertRule.For > 0) {
@@ -204,7 +204,7 @@ func (a AlertState) resultAlerting(alertRule *ngModels.AlertRule, result eval.Re
 	return a
 }
 
-func (a AlertState) resultError(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
+func (a State) resultError(alertRule *ngModels.AlertRule, result eval.Result) State {
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
 	}
@@ -225,7 +225,7 @@ func (a AlertState) resultError(alertRule *ngModels.AlertRule, result eval.Resul
 	return a
 }
 
-func (a AlertState) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
+func (a State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) State {
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
 	}
@@ -250,8 +250,8 @@ func (a AlertState) resultNoData(alertRule *ngModels.AlertRule, result eval.Resu
 	return a
 }
 
-func (st *StateTracker) GetAll() []AlertState {
-	var states []AlertState
+func (st *Manager) GetAll() []State {
+	var states []State
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 	for _, v := range st.cache.states {
@@ -260,8 +260,8 @@ func (st *StateTracker) GetAll() []AlertState {
 	return states
 }
 
-func (st *StateTracker) GetStatesByRuleUID() map[string][]AlertState {
-	ruleMap := make(map[string][]AlertState)
+func (st *Manager) GetStatesByRuleUID() map[string][]State {
+	ruleMap := make(map[string][]State)
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 	for _, state := range st.cache.states {
@@ -269,14 +269,14 @@ func (st *StateTracker) GetStatesByRuleUID() map[string][]AlertState {
 			ruleStates = append(ruleStates, state)
 			ruleMap[state.AlertRuleUID] = ruleStates
 		} else {
-			ruleStates := []AlertState{state}
+			ruleStates := []State{state}
 			ruleMap[state.AlertRuleUID] = ruleStates
 		}
 	}
 	return ruleMap
 }
 
-func (st *StateTracker) cleanUp() {
+func (st *Manager) cleanUp() {
 	ticker := time.NewTicker(time.Duration(60) * time.Minute)
 	st.Log.Debug("starting cleanup process", "intervalMinutes", 60)
 	for {
@@ -291,14 +291,14 @@ func (st *StateTracker) cleanUp() {
 	}
 }
 
-func (st *StateTracker) trim() {
+func (st *Manager) trim() {
 	st.Log.Info("trimming alert state cache", "now", time.Now())
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 	for _, v := range st.cache.states {
 		if len(v.Results) > 100 {
 			st.Log.Debug("trimming result set", "cacheId", v.CacheId, "count", len(v.Results)-100)
-			newResults := make([]StateEvaluation, 100)
+			newResults := make([]Evaluation, 100)
 			copy(newResults, v.Results[100:])
 			v.Results = newResults
 			st.set(v)
@@ -306,7 +306,7 @@ func (st *StateTracker) trim() {
 	}
 }
 
-func (a AlertState) Equals(b AlertState) bool {
+func (a State) Equals(b State) bool {
 	return a.AlertRuleUID == b.AlertRuleUID &&
 		a.OrgID == b.OrgID &&
 		a.CacheId == b.CacheId &&
@@ -317,7 +317,7 @@ func (a AlertState) Equals(b AlertState) bool {
 		a.LastEvaluationTime == b.LastEvaluationTime
 }
 
-func (st *StateTracker) Put(states []AlertState) {
+func (st *Manager) Put(states []State) {
 	for _, s := range states {
 		st.set(s)
 	}

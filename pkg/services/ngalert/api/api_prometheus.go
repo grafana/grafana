@@ -19,9 +19,9 @@ import (
 )
 
 type PrometheusSrv struct {
-	log          log.Logger
-	stateTracker *state.StateTracker
-	store        store.RuleStore
+	log     log.Logger
+	manager *state.Manager
+	store   store.RuleStore
 }
 
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
@@ -33,7 +33,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			Alerts: []*apimodels.Alert{},
 		},
 	}
-	for _, alertState := range srv.stateTracker.GetAll() {
+	for _, alertState := range srv.manager.GetAll() {
 		startsAt := alertState.StartsAt
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
@@ -88,7 +88,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
 
-		stateMap := srv.stateTracker.GetStatesByRuleUID()
+		stateMap := srv.manager.GetStatesByRuleUID()
 		for _, rule := range alertRuleQuery.Result {
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
