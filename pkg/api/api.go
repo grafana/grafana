@@ -131,6 +131,9 @@ func (hs *HTTPServer) registerRoutes() {
 	// api renew session based on cookie
 	r.Get("/api/login/ping", quota("session"), routing.Wrap(hs.LoginAPIPing))
 
+	// expose plugin file system assets
+	r.Get("/public/plugins/:pluginId/*", hs.GetPluginAssets)
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
