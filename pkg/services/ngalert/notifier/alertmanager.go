@@ -368,6 +368,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewSlackNotifier(cfg, tmpl, externalURL)
 		case "telegram":
 			n, err = channels.NewTelegramNotifier(cfg, tmpl, externalURL)
+		case "teams":
+			n, err = channels.NewTeamsNotifier(cfg, tmpl, externalURL)
 		}
 		if err != nil {
 			return nil, err

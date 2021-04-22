@@ -35,7 +35,6 @@ type PagerdutyNotifier struct {
 	old_notifiers.NotifierBase
 	Key           string
 	Severity      string
-	AutoResolve   bool
 	CustomDetails map[string]string
 	Class         string
 	Component     string
@@ -76,7 +75,6 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 		Key:           key,
 		CustomDetails: details,
 		Severity:      model.Settings.Get("severity").MustString("critical"),
-		AutoResolve:   model.Settings.Get("autoResolve").MustBool(true),
 		Class:         model.Settings.Get("class").MustString("todo_class"), // TODO
 		Component:     model.Settings.Get("component").MustString("Grafana"),
 		Group:         model.Settings.Get("group").MustString("todo_group"), // TODO
@@ -90,8 +88,8 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved && !pn.AutoResolve {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.AutoResolve)
+	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
+		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
@@ -179,7 +177,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 }
 
 func (pn *PagerdutyNotifier) SendResolved() bool {
-	return pn.AutoResolve
+	return !pn.GetDisableResolveMessage()
 }
 
 type pagerDutyMessage struct {
