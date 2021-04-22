@@ -16,7 +16,7 @@ import (
 	"github.com/timberio/go-datemath"
 )
 
-// Deprecated: DataSubQuery represents a data sub-query.  New work should use the plugin SDK.
+// DataSubQuery represents a data sub-query.  New work should use the plugin SDK.
 type DataSubQuery struct {
 	RefID         string             `json:"refId"`
 	Model         *simplejson.Json   `json:"model,omitempty"`
@@ -26,7 +26,7 @@ type DataSubQuery struct {
 	QueryType     string             `json:"queryType"`
 }
 
-// Deprecated: DataQuery contains all information about a data query request.  New work should use the plugin SDK.
+// DataQuery contains all information about a data query request.  New work should use the plugin SDK.
 type DataQuery struct {
 	TimeRange *DataTimeRange
 	Queries   []DataSubQuery
@@ -41,7 +41,6 @@ type DataTimeRange struct {
 	Now  time.Time
 }
 
-// Deprecated: DataTable should use DataFrames from the SDK
 type DataTable struct {
 	Columns []DataTableColumn `json:"columns"`
 	Rows    []DataRowValues   `json:"rows"`
@@ -181,7 +180,7 @@ func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Deprecated: DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK
+// DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK
 type DataTimeSeries struct {
 	Name   string               `json:"name"`
 	Points DataTimeSeriesPoints `json:"points"`
@@ -237,7 +236,6 @@ type DataPlugin interface {
 	DataQuery(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error)
 }
 
-// Deprecated: use the plugin SDK
 func NewDataTimeRange(from, to string) DataTimeRange {
 	return DataTimeRange{
 		From: from,
