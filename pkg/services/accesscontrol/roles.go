@@ -209,12 +209,15 @@ var PredefinedRoleGrants = map[string][]string{
 	},
 }
 
-func concat(permissions []Permission, inheritedPermissions ...[]Permission) []Permission {
-	if inheritedPermissions == nil {
-		return permissions
+func concat(permissions ...[]Permission) []Permission {
+	if permissions == nil {
+		return nil
 	}
-	for _, p := range inheritedPermissions {
-		permissions = append(permissions, p...)
+	perms := make([]Permission, 0)
+	for _, p := range permissions {
+		pCopy := make([]Permission, 0, len(p))
+		copy(pCopy, p)
+		perms = append(perms, p...)
 	}
-	return permissions
+	return perms
 }
