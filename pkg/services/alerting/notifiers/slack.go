@@ -46,7 +46,6 @@ func init() {
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a Slack API token (starts with \"xoxb\")",
 				PropertyName: "token",
-				Required:     true,
 				Secure:       true,
 			},
 			{
