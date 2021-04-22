@@ -4,8 +4,6 @@ import { useStyles2 } from '../../themes';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { MenuTrigger } from './MenuTrigger';
-import { Menu } from '../Menu/Menu';
 
 /**
  * @internal
