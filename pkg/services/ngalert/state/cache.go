@@ -13,7 +13,7 @@ import (
 
 type cache struct {
 	states    map[string]*State
-	mtxStates sync.Mutex
+	mtxStates sync.RWMutex
 }
 
 func newCache() *cache {
@@ -103,7 +103,7 @@ func (c *cache) getStatesByRuleUID() map[string][]*State {
 
 func (c *cache) reset() {
 	c.mtxStates.Lock()
-	c.mtxStates.Unlock()
+	defer c.mtxStates.Unlock()
 	c.states = make(map[string]*State)
 }
 
