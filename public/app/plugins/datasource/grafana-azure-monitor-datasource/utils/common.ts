@@ -6,6 +6,9 @@ import { AzureMonitorOption } from '../types';
 export const findOption = (options: AzureMonitorOption[], value: string | undefined) =>
   value ? options.find((v) => v.value === value) ?? { value, label: value } : null;
 
+export const findOptions = (options: AzureMonitorOption[], values: string[] | undefined) =>
+  values ? options.filter((option) => values.find((v) => v === option.value)) : [];
+
 export const toOption = (v: { text: string; value: string }) => ({ value: v.value, label: v.text });
 
 export function convertTimeGrainsToMs<T extends { value: string }>(timeGrains: T[]) {

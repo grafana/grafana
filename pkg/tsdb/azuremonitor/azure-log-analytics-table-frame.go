@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// LogTableToFrame converts an AzureLogAnalyticsTable to a data.Frame.
-func LogTableToFrame(table *AzureLogAnalyticsTable) (*data.Frame, error) {
+// LogTableToFrame converts an AzureResponseTable to a data.Frame.
+func LogTableToFrame(table *AzureResponseTable) (*data.Frame, error) {
 	converterFrame, err := converterFrameForTable(table)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func LogTableToFrame(table *AzureLogAnalyticsTable) (*data.Frame, error) {
 	return converterFrame.Frame, nil
 }
 
-func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverter, error) {
+func converterFrameForTable(t *AzureResponseTable) (*data.FrameInputConverter, error) {
 	converters := []data.FieldConverter{}
 	colNames := make([]string, len(t.Columns))
 	colTypes := make([]string, len(t.Columns)) // for metadata
@@ -70,6 +70,7 @@ var converterMap = map[string]data.FieldConverter{
 	"real":     realConverter,
 	"bool":     boolConverter,
 	"decimal":  decimalConverter,
+	"integer":  intConverter,
 }
 
 var stringConverter = data.FieldConverter{

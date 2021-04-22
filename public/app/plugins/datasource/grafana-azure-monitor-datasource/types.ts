@@ -10,6 +10,7 @@ export enum AzureQueryType {
   ApplicationInsights = 'Application Insights',
   InsightsAnalytics = 'Insights Analytics',
   LogAnalytics = 'Azure Log Analytics',
+  AzureResourceGraph = 'Azure Resource Graph',
 }
 
 export interface AzureMonitorQuery extends DataQuery {
@@ -21,6 +22,7 @@ export interface AzureMonitorQuery extends DataQuery {
   azureLogAnalytics: AzureLogsQuery;
   appInsights?: ApplicationInsightsQuery;
   insightsAnalytics: InsightsAnalyticsQuery;
+  azureResourceGraph: AzureResourceGraphQuery;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
@@ -73,6 +75,12 @@ export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
   workspace: string;
+}
+
+export interface AzureResourceGraphQuery {
+  subscriptions: string[];
+  query: string;
+  resultFormat: string;
 }
 
 export interface ApplicationInsightsQuery {

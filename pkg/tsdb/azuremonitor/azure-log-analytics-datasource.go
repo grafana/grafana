@@ -256,7 +256,7 @@ func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourceP
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
 // error if there is no table by that name.
-func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalyticsTable, error) {
+func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureResponseTable, error) {
 	for _, t := range ar.Tables {
 		if t.Name == "PrimaryResult" {
 			return &t, nil

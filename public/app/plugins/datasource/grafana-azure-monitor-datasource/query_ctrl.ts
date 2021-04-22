@@ -27,10 +27,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     { id: AzureQueryType.LogAnalytics, label: 'Logs' },
     { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
+    { id: AzureQueryType.AzureResourceGraph, label: AzureQueryType.AzureResourceGraph },
   ];
 
   // Query types that have been migrated to React
-  reactQueryEditors = [AzureQueryType.AzureMonitor, AzureQueryType.LogAnalytics];
+  reactQueryEditors = [AzureQueryType.AzureMonitor, AzureQueryType.LogAnalytics, AzureQueryType.AzureResourceGraph];
 
   // target: AzureMonitorQuery;
 
@@ -44,6 +45,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       query: string;
       resultFormat: string;
       workspace: string;
+    };
+    azureResourceGraph: {
+      query: string;
+      resultFormat: string;
+      subscriptions: string[];
     };
     appInsights: {
       // metric style query when rawQuery == false
@@ -99,6 +105,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.datasource && this.datasource.azureLogAnalyticsDatasource
           ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace
           : '',
+    },
+    azureResourceGraph: {
+      resultFormat: 'time_series',
     },
     appInsights: {
       metricName: this.defaultDropdownValue,
@@ -322,6 +331,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.subscription = this.subscriptions[0].value;
       }
 
+      if (!this.target.azureResourceGraph.subscriptions) {
+        this.target.azureResourceGraph.subscriptions = subscriptions.map((sub) => sub.value);
+      }
+
       return this.subscriptions;
     });
   }
@@ -406,6 +419,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   onLogAnalyticsQueryChange = (nextQuery: string) => {
     this.target.azureLogAnalytics.query = nextQuery;
+  };
+
+  onResourceGraphQueryChange = (nextQuery: string) => {
+    this.target.azureResourceGraph.query = nextQuery;
   };
 
   onLogAnalyticsQueryExecute = () => {
