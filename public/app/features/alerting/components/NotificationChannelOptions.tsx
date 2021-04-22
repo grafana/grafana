@@ -39,8 +39,9 @@ export const NotificationChannelOptions: FC<Props> = ({
           return (
             <Field key={key}>
               <Checkbox
-                name={option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`}
-                ref={register}
+                {...register(
+                  option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`
+                )}
                 label={option.label}
                 description={option.description}
               />
