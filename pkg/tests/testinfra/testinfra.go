@@ -83,6 +83,7 @@ func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 
 	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{
 		EnsureDefaultOrgAndUser: true,
+		ConfDir:                 grafDir,
 	})
 	// We need the main org, since it's used for anonymous access
 	org, err := sqlStore.GetOrgByName(sqlstore.MainOrgName)
@@ -207,6 +208,38 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
 			require.NoError(t, err)
 		}
+		if o.EnableQuota {
+			quotaSection, err := cfg.NewSection("quota")
+			require.NoError(t, err)
+			_, err = quotaSection.NewKey("enabled", "true")
+			require.NoError(t, err)
+		}
+		if o.AdminUser != "" {
+			securitySect, err := cfg.GetSection("security")
+			if err != nil {
+				securitySect, err = cfg.NewSection("security")
+				require.NoError(t, err)
+			}
+			require.NotNil(t, securitySect)
+			_, err = securitySect.NewKey("admin_user", o.AdminUser)
+			require.NoError(t, err)
+		}
+		if o.AdminPassword != "" {
+			securitySect, err := cfg.GetSection("security")
+			if err != nil {
+				securitySect, err = cfg.NewSection("security")
+				require.NoError(t, err)
+			}
+			require.NotNil(t, securitySect)
+			_, err = securitySect.NewKey("admin_password", o.AdminPassword)
+			require.NoError(t, err)
+		}
+		if o.DisableAnonymous {
+			anonSect, err := cfg.GetSection("auth.anonymous")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("enabled", "false")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -223,4 +256,8 @@ type GrafanaOpts struct {
 	EnableCSP            bool
 	EnableFeatureToggles []string
 	AnonymousUserRole    models.RoleType
+	EnableQuota          bool
+	AdminUser            string
+	AdminPassword        string
+	DisableAnonymous     bool
 }

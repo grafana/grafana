@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net/url"
 	"os"
@@ -158,7 +159,6 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
-			ss.log.Debug("Creating default admin user")
 			ss.log.Debug("Creating default admin user")
 			if _, err := ss.createUser(ctx, sess, userCreationArgs{
 				Login:    ss.Cfg.AdminUser,
@@ -399,6 +399,8 @@ var testSQLStore *SQLStore
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
+	// ConfDir is optional and points to the configuration location
+	ConfDir string
 }
 
 // InitTestDB initializes the test DB.
@@ -410,8 +412,12 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		testSQLStore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
 		testSQLStore.skipEnsureDefaultOrgAndUser = true
 
+		var confDir string
 		for _, opt := range opts {
 			testSQLStore.skipEnsureDefaultOrgAndUser = !opt.EnsureDefaultOrgAndUser
+			if opt.ConfDir != "" {
+				confDir = opt.ConfDir
+			}
 		}
 
 		dbType := migrator.SQLite
@@ -424,6 +430,18 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 
 		// set test db config
 		testSQLStore.Cfg = setting.NewCfg()
+		if confDir != "" {
+			args := &setting.CommandLineArgs{
+				Config:   fmt.Sprintf("%s/conf/test.ini", confDir),
+				HomePath: confDir,
+				Args:     flag.Args(),
+			}
+
+			if err := testSQLStore.Cfg.Load(args); err != nil {
+				t.Fatalf("Failed to load existing configuration: %s", err)
+			}
+		}
+
 		sec, err := testSQLStore.Cfg.Raw.NewSection("database")
 		if err != nil {
 			t.Fatalf("Failed to create section: %s", err)
