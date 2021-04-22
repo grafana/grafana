@@ -66,8 +66,8 @@ func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result
 
 	// if duplicate labels exist, alertRule label will take precedence
 	lbs := mergeLabels(alertRule.Labels, result.Instance)
-	lbs["__alert_rule_uid__"] = alertRule.UID
-	lbs["__alert_rule_namespace_uid__"] = alertRule.NamespaceUID
+	lbs[ngModels.UIDLabel] = alertRule.UID
+	lbs[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
 	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
 
 	id := fmt.Sprintf("%s", map[string]string(lbs))
