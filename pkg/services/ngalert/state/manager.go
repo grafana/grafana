@@ -60,7 +60,7 @@ func (st *Manager) Close() {
 	st.quit <- struct{}{}
 }
 
-func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result, evaluationDuration time.Duration) State {
+func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) State {
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 
@@ -90,7 +90,7 @@ func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result
 		Labels:             lbs,
 		State:              result.State,
 		Annotations:        annotations,
-		EvaluationDuration: evaluationDuration,
+		EvaluationDuration: result.EvaluationDuration,
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
@@ -118,11 +118,11 @@ func (st *Manager) ResetCache() {
 	st.cache.states = make(map[string]State)
 }
 
-func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results, evaluationDuration time.Duration) []State {
+func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []State {
 	st.Log.Info("state tracker processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []State
 	for _, result := range results {
-		s := st.setNextState(alertRule, result, evaluationDuration)
+		s := st.setNextState(alertRule, result)
 		states = append(states, s)
 	}
 	st.Log.Debug("returning changed states to scheduler", "count", len(states))
@@ -132,11 +132,11 @@ func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eva
 //TODO: When calculating if an alert should not be firing anymore, we should take three things into account:
 // 1. The re-send the delay if any, we don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
 //Set the current state based on evaluation results
-func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result, evaluationDuration time.Duration) State {
-	currentState := st.getOrCreate(alertRule, result, evaluationDuration)
+func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result) State {
+	currentState := st.getOrCreate(alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
-	currentState.EvaluationDuration = evaluationDuration
+	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,

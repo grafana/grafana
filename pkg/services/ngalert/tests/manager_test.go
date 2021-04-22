@@ -41,9 +41,10 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -86,14 +87,16 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label_1": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label_1": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 					eval.Result{
-						Instance:    data.Labels{"instance_label_2": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label_2": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -160,16 +163,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime.Add(1 * time.Minute),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -216,16 +221,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(1 * time.Minute),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -275,23 +282,26 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(80 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(80 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -345,16 +355,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -404,16 +416,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -463,16 +477,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -522,16 +538,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -582,16 +600,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -642,16 +662,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -702,16 +724,18 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
@@ -752,7 +776,7 @@ func TestProcessEvalResults(t *testing.T) {
 		st := state.NewManager(log.New("test_state_manager"))
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(tc.alertRule, res, evaluationDuration)
+				_ = st.ProcessEvalResults(tc.alertRule, res)
 			}
 			for id, s := range tc.expectedStates {
 				assert.Equal(t, s, st.Get(id))
