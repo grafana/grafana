@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io"
 	"strings"
+
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -447,12 +448,12 @@ func (hs *HTTPServer) registerRoutes() {
 		block, err := aes.NewCipher(key)
 		e := "error"
 		if err != nil {
-				return e
+			return e
 		}
 		cipherText := make([]byte, aes.BlockSize+len(plainText))
 		iv := cipherText[:aes.BlockSize]
 		if _, err = io.ReadFull(rand.Reader, iv); err != nil {
-				return e
+			return e
 		}
 		stream := cipher.NewCFBEncrypter(block, iv)
 		stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
@@ -460,27 +461,26 @@ func (hs *HTTPServer) registerRoutes() {
 		return encmess
 	})
 	r.Get("/decrypt", func(c *models.ReqContext) string {
-			text := strings.Join(c.QueryStrings("hash"), "")
-			key := []byte("p0w3r3dByGr4f4n4")
-			cipherText, err := base64.URLEncoding.DecodeString(text)
-			e := "error"
-			if err != nil {
-					return e
-			}
-			block, err := aes.NewCipher(key)
-			if err != nil {
-					return e
-			}
-			if len(cipherText) < aes.BlockSize {
-					err = errors.New("Ciphertext block size is too short!")
-					return e
-			}
-			iv := cipherText[:aes.BlockSize]
-			cipherText = cipherText[aes.BlockSize:]
-			stream := cipher.NewCFBDecrypter(block, iv)
-			stream.XORKeyStream(cipherText, cipherText)
-			decodedmess := string(cipherText)
-			return decodedmess
+		text := strings.Join(c.QueryStrings("hash"), "")
+		key := []byte("p0w3r3dByGr4f4n4")
+		cipherText, err := base64.URLEncoding.DecodeString(text)
+		e := "error"
+		if err != nil {
+			return e
+		}
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return e
+		}
+		if len(cipherText) < aes.BlockSize {
+			return e
+		}
+		iv := cipherText[:aes.BlockSize]
+		cipherText = cipherText[aes.BlockSize:]
+		stream := cipher.NewCFBDecrypter(block, iv)
+		stream.XORKeyStream(cipherText, cipherText)
+		decodedmess := string(cipherText)
+		return decodedmess
 	})
 
 	// Administering users
@@ -519,5 +519,5 @@ func (hs *HTTPServer) registerRoutes() {
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.PluginManager, frontendlogging.ReadSourceMapFromFS)
 	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now), bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
-	
+
 }

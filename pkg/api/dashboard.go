@@ -71,15 +71,15 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 			return response.Error(403, "Access denied to this dashboard. Hash error 00x3", nil)
 		}
 		iv := cipherText[:aes.BlockSize]
-			cipherText = cipherText[aes.BlockSize:]
-			stream := cipher.NewCFBDecrypter(block, iv)
-			stream.XORKeyStream(cipherText, cipherText)
-			decodedmess := string(cipherText)
-			s := strings.Split(decodedmess, ",")
-			validSharedUid = s[0] == c.Params(":uid")
-			if !validSharedUid {
-					return response.Error(403, "Access denied to this dashboard, invalid shareduid.", nil)
-			}
+		cipherText = cipherText[aes.BlockSize:]
+		stream := cipher.NewCFBDecrypter(block, iv)
+		stream.XORKeyStream(cipherText, cipherText)
+		decodedmess := string(cipherText)
+		s := strings.Split(decodedmess, ",")
+		validSharedUid = s[0] == c.Params(":uid")
+		if !validSharedUid {
+			return response.Error(403, "Access denied to this dashboard, invalid shareduid.", nil)
+		}
 	}
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
@@ -105,11 +105,11 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		//Apply Patch
 		canView, err := guardian.CanView()
 		if validSharedUid {
-				canView = true
+			canView = true
 		}
 		if err != nil || !canView {
 			return dashboardGuardianResponse(err)
-		} 
+		}
 	}
 
 	canEdit, _ := guardian.CanEdit()
