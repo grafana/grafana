@@ -5,7 +5,11 @@ import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
 
 export const ConditionField: FC = () => {
-  const { watch, setValue, errors } = useFormContext<RuleFormValues>();
+  const {
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
 
   const queries = watch('queries');
   const condition = watch('condition');
@@ -36,9 +40,8 @@ export const ConditionField: FC = () => {
       invalid={!!errors.condition?.message}
     >
       <InputControl
-        width={42}
         name="condition"
-        as={Select}
+        render={({ field }) => <Select {...field} width={42} />}
         onChange={(values: SelectableValue[]) => values[0]?.value ?? null}
         options={options}
         rules={{
