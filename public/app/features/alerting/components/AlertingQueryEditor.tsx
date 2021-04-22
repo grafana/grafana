@@ -14,6 +14,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
 import { ExpressionQueryType } from '../../expressions/types';
 import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
+import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 
 interface Props {
   value?: GrafanaQuery[];
@@ -38,7 +39,14 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     }
   }
 
-  onRunQueries = () => {};
+  onRunQueries = () => {
+    const runner = new AlertingQueryRunner();
+
+    if (!this.props.value) {
+      return;
+    }
+    runner.run(this.props.value);
+  };
 
   onDuplicateQuery = (query: GrafanaQuery) => {
     const { onChange, value = [] } = this.props;
@@ -88,6 +96,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
         >
           Query
         </Button>
+        <Button onClick={this.onRunQueries}>Run!</Button>
         {config.expressionsEnabled && (
           <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
             <Button
