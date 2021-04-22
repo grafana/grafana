@@ -3,10 +3,13 @@ package features
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 // DashboardEvent events related to dashboards
@@ -31,11 +34,43 @@ func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (h *DashboardHandler) OnSubscribe(ctx context.Context, _ *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	return models.SubscribeReply{
-		Presence:  true,
-		JoinLeave: true,
-	}, backend.SubscribeStreamStatusOK, nil
+func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	parts := strings.Split(e.Path, "/")
+	if parts[0] == "gitops" {
+		// gitops gets all changes for everything, so lets make sure it is an admin user
+		if !user.HasRole(models.ROLE_ADMIN) {
+			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
+		}
+		return models.SubscribeReply{
+			Presence:  true,
+			JoinLeave: true, // ?? likely not necessary
+		}, backend.SubscribeStreamStatusOK, nil
+
+	}
+
+	// make sure can view this dashboard
+	if len(parts) == 2 && parts[0] == "uid" {
+		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
+		if err := bus.Dispatch(&query); err != nil {
+			logger.Error("Unknown dashboard", "query", query)
+			return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
+		}
+
+		dash := query.Result
+		guardian := guardian.New(dash.Id, user.OrgId, user)
+		if canView, err := guardian.CanView(); err != nil || !canView {
+			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
+		}
+
+		return models.SubscribeReply{
+			Presence:  true,
+			JoinLeave: true,
+		}, backend.SubscribeStreamStatusOK, nil
+	}
+
+	// Unknown path
+	logger.Error("Unknown dashboard channel", "path", e.Path)
+	return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 }
 
 // OnPublish is called when someone begins to edit a dashboard
@@ -53,7 +88,7 @@ func (h *DashboardHandler) publish(event dashboardEvent) error {
 	if err != nil {
 		return err
 	}
-	return h.Publisher("grafana/dashboard/changes", msg)
+	return h.Publisher("grafana/dashboard/gitops", msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
