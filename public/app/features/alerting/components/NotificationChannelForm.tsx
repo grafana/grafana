@@ -9,7 +9,7 @@ import { ChannelSettings } from './ChannelSettings';
 
 import config from 'app/core/config';
 
-interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
+interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'setValue'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel?: NotificationChannelType;
   imageRendererAvailable: boolean;
@@ -19,7 +19,7 @@ interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
 }
 
 export interface NotificationSettingsProps
-  extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'watch' | 'getValues'> {
+  extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'watch' | 'getValues' | 'setValue'> {
   currentFormValues: NotificationChannelDTO;
 }
 

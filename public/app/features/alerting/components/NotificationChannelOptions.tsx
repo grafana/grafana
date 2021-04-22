@@ -4,7 +4,7 @@ import { Button, Checkbox, Field, FormAPI, Input } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
 import { NotificationChannelDTO, NotificationChannelOption, NotificationChannelSecureFields } from '../../../types';
 
-interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'getValues' | 'watch'> {
+interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'getValues' | 'watch' | 'setValue'> {
   selectedChannelOptions: NotificationChannelOption[];
   currentFormValues: NotificationChannelDTO;
   secureFields: NotificationChannelSecureFields;

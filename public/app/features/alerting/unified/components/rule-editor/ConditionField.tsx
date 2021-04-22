@@ -41,16 +41,21 @@ export const ConditionField: FC = () => {
     >
       <InputControl
         name="condition"
-        render={({ field }) => <Select {...field} width={42} />}
-        onChange={(values: SelectableValue[]) => values[0]?.value ?? null}
-        options={options}
+        render={({ field: { onChange }, field }) => (
+          <Select
+            {...field}
+            width={42}
+            options={options}
+            onChange={(values: SelectableValue[]) => onChange(values[0]?.value ?? null)}
+            noOptionsMessage="No queries defined"
+          />
+        )}
         rules={{
           required: {
             value: true,
             message: 'Please select the condition to alert on',
           },
         }}
-        noOptionsMessage="No queries defined"
       />
     </Field>
   );
