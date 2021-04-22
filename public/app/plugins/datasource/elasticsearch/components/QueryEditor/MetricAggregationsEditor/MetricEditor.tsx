@@ -37,7 +37,7 @@ interface Props {
 // This means we should filter them out from the type picker if there's no other "basic" aggregation before the current one.
 const isBasicAggregation = (metric: MetricAggregation) => !metricAggregationConfig[metric.type].isPipelineAgg;
 
-export const getTypeOptions = (
+const getTypeOptions = (
   previousMetrics: MetricAggregation[],
   esVersion: number,
   xpack = false
