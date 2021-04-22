@@ -183,6 +183,11 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 		if err != nil {
 			return errutil.Wrap("Failed to read plugin archive", err)
 		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				i.log.Warn("Failed to close file", "err", err)
+			}
+		}()
 		_, err = io.Copy(tmpFile, f)
 		if err != nil {
 			return errutil.Wrap("Failed to copy plugin archive", err)
