@@ -82,8 +82,8 @@ type PluginInstaller interface {
 }
 
 type PluginInstallerLogger interface {
-	Success(format string, args ...interface{})
-	Failure(format string, args ...interface{})
+	Successf(format string, args ...interface{})
+	Failuref(format string, args ...interface{})
 
 	Info(args ...interface{})
 	Infof(format string, args ...interface{})

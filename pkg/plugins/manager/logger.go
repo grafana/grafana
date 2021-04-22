@@ -19,11 +19,11 @@ func New(name string, debugMode bool) (l *InfraLogWrapper) {
 	}
 }
 
-func (l *InfraLogWrapper) Success(format string, args ...interface{}) {
+func (l *InfraLogWrapper) Successf(format string, args ...interface{}) {
 	l.l.Info(fmt.Sprintf(format, args...))
 }
 
-func (l *InfraLogWrapper) Failure(format string, args ...interface{}) {
+func (l *InfraLogWrapper) Failuref(format string, args ...interface{}) {
 	l.l.Error(fmt.Sprintf(format, args...))
 }
 

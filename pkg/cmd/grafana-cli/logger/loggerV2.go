@@ -17,11 +17,11 @@ func New(debugMode bool) *CLILogger {
 	}
 }
 
-func (l *CLILogger) Success(format string, args ...interface{}) {
+func (l *CLILogger) Successf(format string, args ...interface{}) {
 	fmt.Printf(fmt.Sprintf("%s %s\n\n", color.GreenString("✔"), format), args...)
 }
 
-func (l *CLILogger) Failure(format string, args ...interface{}) {
+func (l *CLILogger) Failuref(format string, args ...interface{}) {
 	fmt.Printf(fmt.Sprintf("%s %s %s\n\n", color.RedString("Error"), color.RedString("✗"), format), args...)
 }
 

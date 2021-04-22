@@ -140,7 +140,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 
 	res, _ := toPluginDTO(pluginsDir, pluginID)
 
-	i.log.Success("Installed %s v%s successfully", res.ID, res.Info.Version)
+	i.log.Successf("Installed %s v%s successfully", res.ID, res.Info.Version)
 
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
