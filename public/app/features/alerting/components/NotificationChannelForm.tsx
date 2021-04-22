@@ -100,7 +100,7 @@ export const NotificationChannelForm: FC<Props> = ({
       <div className={styles.formButtons}>
         <HorizontalGroup>
           <Button type="submit">Save</Button>
-          <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
+          <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues())}>
             Test
           </Button>
           <a href={`${config.appSubUrl}/alerting/notifications`}>
