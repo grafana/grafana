@@ -203,6 +203,8 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	}); err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return response.Error(http.StatusNotFound, "failed to update rule group", err)
+		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
+			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
 	}
@@ -240,7 +242,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
 	postableExtendedRuleNode := apimodels.PostableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-			OrgID:        r.OrgID,
 			Title:        r.Title,
 			Condition:    r.Condition,
 			Data:         r.Data,

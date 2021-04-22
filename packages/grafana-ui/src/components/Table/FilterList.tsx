@@ -91,7 +91,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2) => ({
     padding: ${theme.spacing(0.5)};
 
     :hover {
-      background-color: ${theme.palette.action.hover};
+      background-color: ${theme.colors.action.hover};
     }
   `,
   filterListInput: css`

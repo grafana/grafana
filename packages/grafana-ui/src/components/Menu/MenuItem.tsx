@@ -58,13 +58,13 @@ MenuItem.displayName = 'MenuItem';
 const getStyles = (theme: GrafanaThemeV2) => {
   return {
     link: css`
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
       display: flex;
       cursor: pointer;
       padding: 5px 12px 5px 10px;
 
       &:hover {
-        color: ${theme.palette.text.primary};
+        color: ${theme.colors.text.primary};
         text-decoration: none;
       }
     `,
@@ -74,16 +74,16 @@ const getStyles = (theme: GrafanaThemeV2) => {
       white-space: nowrap;
 
       &:hover {
-        background: ${theme.palette.action.hover};
+        background: ${theme.colors.action.hover};
       }
     `,
     activeItem: css`
-      background: ${theme.palette.action.selected};
+      background: ${theme.colors.action.selected};
     `,
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
     `,
   };
 };

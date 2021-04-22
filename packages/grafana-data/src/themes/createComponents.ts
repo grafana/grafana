@@ -1,4 +1,4 @@
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 import { ThemeShadows } from './createShadows';
 
 /** @beta */
@@ -11,10 +11,11 @@ export interface ThemeComponents {
   };
   input: {
     background: string;
-    border: string;
+    borderColor: string;
     borderHover: string;
     text: string;
   };
+
   tooltip: {
     text: string;
     background: string;
@@ -22,8 +23,11 @@ export interface ThemeComponents {
   panel: {
     padding: number;
     headerHeight: number;
-    border: string;
+    borderColor: string;
     boxShadow: string;
+    background: string;
+  };
+  dropdown: {
     background: string;
   };
   dashboard: {
@@ -32,13 +36,20 @@ export interface ThemeComponents {
   };
 }
 
-export function createComponents(palette: ThemePalette, shadows: ThemeShadows): ThemeComponents {
+export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
   const panel = {
     padding: 1,
     headerHeight: 4,
-    background: palette.background.primary,
-    border: palette.background.primary,
-    boxShadow: shadows.z0,
+    background: colors.background.primary,
+    borderColor: colors.background.primary,
+    boxShadow: shadows.z1,
+  };
+
+  const input = {
+    borderColor: colors.border.medium,
+    borderHover: colors.border.strong,
+    text: colors.text.primary,
+    background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
   };
 
   return {
@@ -47,27 +58,17 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       md: 4,
       lg: 6,
     },
-    input:
-      palette.mode === 'dark'
-        ? {
-            background: palette.background.canvas,
-            border: palette.border.medium,
-            borderHover: palette.border.strong,
-            text: palette.text.primary,
-          }
-        : {
-            background: palette.background.primary,
-            border: palette.border.medium,
-            borderHover: palette.border.strong,
-            text: palette.text.primary,
-          },
+    input,
     panel,
+    dropdown: {
+      background: input.background,
+    },
     tooltip: {
-      background: palette.background.secondary,
-      text: palette.text.primary,
+      background: colors.background.secondary,
+      text: colors.text.primary,
     },
     dashboard: {
-      background: palette.background.canvas,
+      background: colors.background.canvas,
       padding: 1,
     },
   };
