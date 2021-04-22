@@ -487,10 +487,14 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		return err
 	}
 	for _, zf := range r.File {
+		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
+		// nolint:gosec
 		fullPath := filepath.Join(dest, zf.Name)
 
 		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if filepath.IsAbs(zf.Name) || !strings.HasPrefix(fullPath, filepath.Clean(dest)+string(os.PathSeparator)) {
+		if filepath.IsAbs(zf.Name) ||
+			!strings.HasPrefix(fullPath, filepath.Clean(dest)+string(os.PathSeparator)) ||
+			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
 			return fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, dest)
