@@ -1,4 +1,4 @@
-import { GraphTooltipOptions } from '@grafana/ui';
+import { VizTooltipOptions } from '@grafana/ui';
 import { OptionsWithLegend } from '../timeseries/types';
 
 export interface XYDimensionConfig {
@@ -9,5 +9,5 @@ export interface XYDimensionConfig {
 
 export interface Options extends OptionsWithLegend {
   dims: XYDimensionConfig;
-  tooltipOptions: GraphTooltipOptions;
+  tooltipOptions: VizTooltipOptions;
 }

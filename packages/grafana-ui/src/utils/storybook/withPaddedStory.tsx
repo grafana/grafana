@@ -1,9 +1,9 @@
 import React from 'react';
-import { GlobalStyles, useTheme } from '../../themes';
+import { GlobalStyles, useTheme2 } from '../../themes';
 import { RenderFunction } from '../../types';
 
 const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
 
   return (
     <div
@@ -12,7 +12,7 @@ const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
         padding: '20px',
         display: 'flex',
         minHeight: '80vh',
-        background: `${theme.v2.palette.layer1}`,
+        background: `${theme.colors.background.primary}`,
       }}
     >
       <GlobalStyles />

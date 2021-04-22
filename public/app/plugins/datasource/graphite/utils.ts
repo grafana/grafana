@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { last } from 'lodash';
 
 /**
  * Graphite-web before v1.6 returns HTTP 500 with full stack traces in an HTML page
@@ -9,7 +9,7 @@ import _ from 'lodash';
 export function reduceError(error: any): any {
   if (error && error.status === 500 && error.data?.message?.startsWith('<body')) {
     // Remove all HTML tags and take the last line from the stack trace
-    const newMessage = _.last<string>(
+    const newMessage = last<string>(
       error.data.message
         .replace(/(<([^>]+)>)/gi, '')
         .trim()

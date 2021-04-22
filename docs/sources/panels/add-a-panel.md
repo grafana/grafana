@@ -14,7 +14,7 @@ Panels allow you to show your data in visual form. This topic walks you through 
 
    ![](/img/docs/panels/add-panel-icon-7-0.png)
 
-1. Click **Add new panel**.
+1. Click **Add an empty panel**.
 
 Grafana creates an empty graph panel with your default data source selected.
 

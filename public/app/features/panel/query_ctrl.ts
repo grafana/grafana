@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { indexOf } from 'lodash';
 import { auto } from 'angular';
 
 export class QueryCtrl {
@@ -15,7 +15,7 @@ export class QueryCtrl {
     this.target = this.target ?? $scope.ctrl.target;
     this.datasource = this.datasource ?? $scope.ctrl.datasource;
     this.panel = this.panelCtrl?.panel ?? $scope.ctrl.panelCtrl.panel;
-    this.isLastQuery = _.indexOf(this.panel.targets, this.target) === this.panel.targets.length - 1;
+    this.isLastQuery = indexOf(this.panel.targets, this.target) === this.panel.targets.length - 1;
   }
 
   refresh() {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import sortBy from 'lodash/sortBy';
+import { sortBy } from 'lodash';
 import { dateMath, dateTime, GrafanaTheme, PanelProps } from '@grafana/data';
 import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';

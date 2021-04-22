@@ -2,7 +2,7 @@
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
 
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 
 /** @beta */
 export interface ThemeTypography {
@@ -66,7 +66,7 @@ export interface ThemeTypographyInput {
 const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
 
-export function createTypography(palette: ThemePalette, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
+export function createTypography(colors: ThemeColors, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {
     fontFamily = defaultFontFamily,
     fontFamilyMonospace = defaultFontFamilyMonospace,
