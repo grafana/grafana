@@ -25,7 +25,11 @@ require (
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20200910202707-1e08a3fab204
+	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
+	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
+	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691 // indirect
+	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/fatih/color v1.10.0
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.10.0
@@ -41,7 +45,6 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210414165752-6625e7a4f9a9
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.5
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
@@ -54,6 +57,7 @@ require (
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/influxdata/influxdb-client-go/v2 v2.2.3
 	github.com/jmespath/go-jmespath v0.4.0
+	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/lib/pq v1.10.0
@@ -94,6 +98,8 @@ require (
 	google.golang.org/api v0.44.0
 	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.26.0
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/ldap.v3 v3.0.2
 	gopkg.in/macaron.v1 v1.4.0

@@ -10,7 +10,7 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 `;
 
 export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
-  const borderColor = invalid ? theme.colors.error.border : theme.components.input.border;
+  const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
   const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;

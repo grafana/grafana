@@ -1,5 +1,6 @@
 import { css } from '@emotion/react';
 import { GrafanaThemeV2 } from '@grafana/data';
+
 export function getCardStyles(theme: GrafanaThemeV2) {
   return css`
     .card-section {
