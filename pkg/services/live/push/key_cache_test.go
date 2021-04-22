@@ -82,7 +82,6 @@ func Test_apiKeyCache_invalidateKeys(t *testing.T) {
 		{
 			name: "expired",
 			keyCheckFunc: func(key string) (*models.ApiKey, bool, error) {
-				panic("should not be called since key must be deleted due to expiration")
 				return &models.ApiKey{}, true, nil
 			},
 			expireAt:                   time.Now().Unix() - 10, // In the past.
