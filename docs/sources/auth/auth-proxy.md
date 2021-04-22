@@ -30,7 +30,7 @@ sync_ttl = 60
 # Example `whitelist = 192.168.1.1, 192.168.1.0/24, 2001::23, 2001::0/120`
 whitelist =
 # Optionally define more headers to sync other user attributes
-# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
+# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS Orgs:X-WEBAUTH-ORGS`
 headers =
 # Check out docs on this for more details on the below setting
 enable_login_token = false
@@ -293,6 +293,33 @@ With this, the user `leonard` will be automatically placed into the Loki team as
 
 [Learn more about Team Sync]({{< relref "team-sync.md" >}})
 
+## Organization roles
+Roles can be set via the headers configuration. The specific attribute to support this feature is called 'Orgs'. e.g. 
+
+```bash
+# Optionally define more headers to sync other user attributes
+headers: 'Orgs:X-WEBAUTH-ORGS'
+```
+
+The value is something in the lines of:
+
+```bash
+X-WEBAUTH-ORGS: 1,2,3
+```
+or 
+```bash
+X-WEBAUTH-ORGS: 1:Admin,2:Viewer,3:Editor
+```
+or anything in between
+```bash
+X-WEBAUTH-ORGS: 1:Admin,2,3:Editor
+```
+
+Where 1, 2 & 3 are the IDs of existing organizations. Behind the (optional) colon (:), you can put the role assigned to this organization. You can only choose between Admin, Editor or Viewer.
+If nothing is provided or a typo is made (it is case-sensitive as well), it will default to having only viewing rights for that organization.
+
+The first organization ID listed, will also be made that users default organization.
+It should be noted that this header overwrites any organization assigned to that user via other means (API, web interface, ...).
 
 ## Login token and session cookie
 
