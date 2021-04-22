@@ -123,7 +123,7 @@ describe('Metric Editor', () => {
       expect(screen.queryByText('Top Metrics')).toBe(null);
     });
 
-    it('Should not include top metrics aggregation when esVersion is 70 and X-Pack is enabled', () => {
+    it('Should NOT include top metrics aggregation when esVersion is 70 and X-Pack is enabled', () => {
       setupTopMetricsScreen(70, true);
       expect(screen.queryByText('Top Metrics')).toBe(null);
     });
