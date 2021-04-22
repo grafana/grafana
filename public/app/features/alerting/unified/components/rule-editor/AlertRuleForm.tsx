@@ -7,7 +7,7 @@ import { AlertTypeStep } from './AlertTypeStep';
 import { ConditionsStep } from './ConditionsStep';
 import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
-import { useForm, FormContext } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -40,7 +40,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     defaultValues,
   });
 
-  const { handleSubmit, watch, errors } = formAPI;
+  const {
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = formAPI;
 
   const hasErrors = !!Object.values(errors).filter((x) => !!x).length;
 
@@ -69,7 +73,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   };
 
   return (
-    <FormContext {...formAPI}>
+    <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
           <Link to={`${config.appSubUrl ?? ''}/alerting/list`}>
@@ -121,7 +125,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           </CustomScrollbar>
         </div>
       </form>
-    </FormContext>
+    </FormProvider>
   );
 };
 
