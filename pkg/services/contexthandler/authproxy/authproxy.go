@@ -9,6 +9,8 @@ import (
 	"net/mail"
 	"path"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,7 +46,7 @@ var isLDAPEnabled = func(cfg *setting.Cfg) bool {
 var newLDAP = multildap.New
 
 // supportedHeaders states the supported headers configuration fields
-var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
+var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Orgs"}
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -277,9 +279,35 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	}
 
 	auth.headersIterator(func(field string, header string) {
-		if field == "Groups" {
+		switch field {
+		case "Groups":
 			extUser.Groups = util.SplitString(header)
-		} else {
+		case "Orgs":
+			var err error
+			var orgID int64
+			var organizations = util.SplitString(header)
+
+			extUser.OrgRoles = map[int64]models.RoleType{}
+
+			for i := 0; i < len(organizations); i++ {
+				var organization = organizations[i]
+				var splitOrganization = regexp.MustCompile("[:]+").Split(organization, -1)
+				orgID, err = strconv.ParseInt(splitOrganization[0], 10, 64)
+
+				if err == nil {
+					if len(splitOrganization) == 1 || !models.RoleType.IsValid(models.RoleType(splitOrganization[1])) {
+						extUser.OrgRoles[orgID] = models.ROLE_VIEWER
+					} else {
+						extUser.OrgRoles[orgID] = models.RoleType(splitOrganization[1])
+					}
+
+					// Assign the first organization id as the primary organization to which this user should belong
+					if auth.orgID == 0 {
+						auth.orgID = orgID
+					}
+				}
+			}
+		default:
 			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(header)
 		}
 	})

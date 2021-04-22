@@ -356,11 +356,12 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.LDAPEnabled = true
 			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			cfg.AuthProxyHeaderProperty = "username"
-			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Orgs": "X-WEBAUTH-ORGS"}
 		}
 
 		const hdrName = "markelog"
 		const group = "grafana-core-team"
+		const orgs = "1:Admin,2"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
@@ -403,6 +404,37 @@ func TestMiddlewareContext(t *testing.T) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
 			cfg.AuthProxyAutoSignUp = false
+		})
+
+		middlewareScenario(t, "Should create an user from headers and assign organizations", func(t *testing.T, sc *scenarioContext) {
+			var orgRoles = map[int64]models.RoleType{}
+			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: query.OrgId, UserId: userID}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+				orgRoles = cmd.ExternalUser.OrgRoles
+				cmd.Result = &models.User{Id: userID}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-ORGS", orgs)
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, map[int64]models.RoleType{1: models.ROLE_ADMIN, 2: models.ROLE_VIEWER}, orgRoles)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, int64(1), sc.context.OrgId)
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
 		})
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
