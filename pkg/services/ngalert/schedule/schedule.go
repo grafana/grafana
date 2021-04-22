@@ -317,7 +317,7 @@ func (sch *schedule) sendAlerts(alerts apimodels.PostableAlerts) error {
 	return sch.notifier.PutAlerts(alerts)
 }
 
-func (sch *schedule) saveAlertStates(states []state.State) {
+func (sch *schedule) saveAlertStates(states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
@@ -345,7 +345,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
-	var states []state.State
+	var states []*state.State
 	for _, orgIdResult := range orgIdsCmd.Result {
 		cmd := models.ListAlertInstancesQuery{
 			DefinitionOrgID: orgIdResult.DefinitionOrgID,
@@ -355,7 +355,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 		}
 		for _, entry := range cmd.Result {
 			lbs := map[string]string(entry.Labels)
-			stateForEntry := state.State{
+			stateForEntry := &state.State{
 				AlertRuleUID:       entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,
 				CacheId:            fmt.Sprintf("%s %s", entry.DefinitionUID, lbs),

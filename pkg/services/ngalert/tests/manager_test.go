@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,7 +27,7 @@ func TestProcessEvalResults(t *testing.T) {
 		desc           string
 		alertRule      *models.AlertRule
 		evalResults    []eval.Results
-		expectedStates map[string]state.State
+		expectedStates map[string]*state.State
 	}{
 		{
 			desc: "a cache entry is correctly created",
@@ -48,7 +50,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
@@ -100,7 +102,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_1:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
@@ -178,7 +180,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_1 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_1",
 					OrgID:        1,
@@ -236,7 +238,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -305,7 +307,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -370,7 +372,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -431,7 +433,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -492,7 +494,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -553,7 +555,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -615,7 +617,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -677,7 +679,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -739,7 +741,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedStates: map[string]state.State{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -779,7 +781,9 @@ func TestProcessEvalResults(t *testing.T) {
 				_ = st.ProcessEvalResults(tc.alertRule, res)
 			}
 			for id, s := range tc.expectedStates {
-				assert.Equal(t, s, st.Get(id))
+				cachedState, err := st.Get(id)
+				require.NoError(t, err)
+				assert.Equal(t, s, cachedState)
 			}
 		})
 	}

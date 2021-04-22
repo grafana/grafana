@@ -33,7 +33,7 @@ type evalAppliedInfo struct {
 func TestWarmStateCache(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
 
-	expectedEntries := []state.State{
+	expectedEntries := []*state.State{
 		{
 			AlertRuleUID: "test_uid",
 			OrgID:        123,
@@ -99,7 +99,8 @@ func TestWarmStateCache(t *testing.T) {
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry := st.Get(entry.CacheId)
+			cacheEntry, err := st.Get(entry.CacheId)
+			require.NoError(t, err)
 			assert.True(t, entry.Equals(cacheEntry))
 		}
 	})
