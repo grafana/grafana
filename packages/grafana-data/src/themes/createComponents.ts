@@ -15,7 +15,6 @@ export interface ThemeComponents {
     borderHover: string;
     text: string;
   };
-
   tooltip: {
     text: string;
     background: string;
@@ -28,6 +27,9 @@ export interface ThemeComponents {
     background: string;
   };
   dropdown: {
+    background: string;
+  };
+  overlay: {
     background: string;
   };
   dashboard: {
@@ -70,6 +72,9 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     dashboard: {
       background: colors.background.canvas,
       padding: 1,
+    },
+    overlay: {
+      background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.27)' : 'rgba(208, 209, 211, 0.24)',
     },
   };
 }
