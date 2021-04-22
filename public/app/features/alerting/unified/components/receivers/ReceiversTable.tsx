@@ -63,10 +63,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
                     `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
                     alertManagerName
                   )}
-                  tooltip="edit receiver"
+                  tooltip="edit contact point"
                   icon="pen"
                 />
-                <ActionIcon tooltip="delete receiver" icon="trash-alt" />
+                <ActionIcon tooltip="delete contact point" icon="trash-alt" />
               </td>
             </tr>
           ))}
