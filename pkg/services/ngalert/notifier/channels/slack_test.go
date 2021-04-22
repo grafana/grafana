@@ -189,7 +189,9 @@ func TestSlackNotifier(t *testing.T) {
 			})
 			sendSlackRequest = func(request *http.Request, log log.Logger) error {
 				t.Helper()
-				defer request.Body.Close()
+				defer func() {
+					_ = request.Body.Close()
+				}()
 
 				b, err := io.ReadAll(request.Body)
 				require.NoError(t, err)
