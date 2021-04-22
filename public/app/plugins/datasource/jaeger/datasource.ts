@@ -16,7 +16,9 @@ import { catchError, map } from 'rxjs/operators';
 import { createTableFrame, createTraceFrame } from './responseTransform';
 import { createGraphFrames } from './graphTransform';
 import { JaegerQuery } from './types';
-import { identity, pick, pickBy } from 'lodash';
+import { identity, omit, pick, pickBy } from 'lodash';
+import { convertTagsLogfmt } from './util';
+import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
@@ -50,12 +52,20 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       );
     }
 
-    const jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
+    let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
+    jaegerQuery = pickBy(jaegerQuery, identity);
+    if (jaegerQuery.tags) {
+      jaegerQuery = { ...jaegerQuery, tags: convertTagsLogfmt(jaegerQuery.tags) };
+    }
+
+    if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {
+      jaegerQuery = omit(jaegerQuery, 'operation');
+    }
 
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces`, {
       // remove empty values
-      ...pickBy(jaegerQuery, identity),
+      ...jaegerQuery,
       ...this.getTimeRange(),
       lookback: 'custom',
     }).pipe(

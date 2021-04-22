@@ -3,6 +3,7 @@ import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
+import { transformToLogfmt } from '../util';
 
 const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
@@ -10,6 +11,12 @@ type Props = {
   datasource: JaegerDatasource;
   query: JaegerQuery;
   onChange: (value: JaegerQuery) => void;
+};
+
+export const ALL_OPERATIONS_KEY = '[ALL]';
+const allOperationsOption: SelectableValue<string> = {
+  label: ALL_OPERATIONS_KEY,
+  value: undefined,
 };
 
 export function SearchForm({ datasource, query, onChange }: Props) {
@@ -35,7 +42,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
         notFoundLabel: 'No operation found',
       });
-      setOperationOptions(operations);
+      setOperationOptions([allOperationsOption, ...operations]);
     };
     if (query.service) {
       getOperations();
@@ -48,12 +55,13 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         <Select
           options={serviceOptions}
           value={{ label: query.service, value: query.service }}
-          onChange={(v) =>
+          onChange={(v) => {
             onChange({
               ...query,
               service: v.value!,
-            })
-          }
+              operation: query.service !== v.value ? undefined : query.operation,
+            });
+          }}
           menuPlacement="bottom"
         />
       </InlineField>
@@ -61,7 +69,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
       <InlineField label="Operation">
         <Select
           options={operationOptions}
-          value={{ label: query.operation, value: query.operation }}
+          value={operationOptions?.find((v) => v.value === query.operation)}
           onChange={(v) =>
             onChange({
               ...query,
@@ -69,6 +77,18 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             })
           }
           menuPlacement="bottom"
+        />
+      </InlineField>
+
+      <InlineField label="Tags">
+        <Input
+          value={transformToLogfmt(query.tags)}
+          onChange={(v) =>
+            onChange({
+              ...query,
+              tags: v.currentTarget.value,
+            })
+          }
         />
       </InlineField>
 
