@@ -2,14 +2,15 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 export function useDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLElement>(null);
+  const dropdownRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
 
   const openDropdown = useCallback(() => setIsOpen(true), []);
   const closeDropdown = useCallback(() => setIsOpen(false), []);
 
   useEffect(() => {
     const handleGlobalMouseDown = ({ target }: MouseEvent) => {
-      if (!ref.current || ref.current.contains(target as Node)) {
+      if (!dropdownRef.current || dropdownRef.current.contains(target as Node)) {
         return;
       }
 
@@ -30,5 +31,5 @@ export function useDropdown() {
     };
   }, [closeDropdown]);
 
-  return [ref, isOpen, openDropdown, closeDropdown];
+  return [dropdownRef, triggerRef, isOpen, openDropdown, closeDropdown];
 }

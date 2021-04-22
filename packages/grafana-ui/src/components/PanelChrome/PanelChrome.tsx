@@ -102,6 +102,12 @@ const getStyles = (theme: GrafanaThemeV2) => {
       display: flex;
       flex-direction: column;
       flex: 0 0 0;
+
+      &:hover {
+        .panel-chrome-bubble-menu {
+          opacity: 1;
+        }
+      }
     `,
     content: css`
       label: panel-content;

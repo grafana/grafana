@@ -5,6 +5,7 @@ import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { merge } from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { useInterval } from 'react-use';
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
 export default {
   title: 'Visualizations/PanelChrome',
@@ -15,10 +16,10 @@ export default {
   },
 };
 
-function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme) {
+function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
   const props: PanelChromeProps = {
     width: 400,
-    height: 130,
+    height: 230,
     title: 'Default title',
     children: () => undefined,
   };
@@ -26,7 +27,7 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
   merge(props, overrides);
 
   const contentStyle: CSSProperties = {
-    background: theme.colors.bg2,
+    //background: 'rgb(100,100,100,0.2)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -42,62 +43,51 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
 }
 
 export const Examples = () => {
-  const theme = useTheme();
   const [loading, setLoading] = useState(true);
 
   useInterval(() => setLoading(true), 5000);
 
   return (
-    <div style={{ background: theme.colors.dashboardBg, padding: 100 }}>
+    <DashboardStoryCanvas>
       <HorizontalGroup spacing="md">
         <VerticalGroup spacing="md">
-          {renderPanel('Default panel', {}, theme)}
-          {renderPanel('No padding', { padding: 'none' }, theme)}
+          {renderPanel('Default panel', {})}
+          {renderPanel('Default panel', {})}
         </VerticalGroup>
         <VerticalGroup spacing="md">
-          {renderPanel('No title', { title: '' }, theme)}
-          {renderPanel(
-            'Very long title',
-            { title: 'Very long title that should get ellipsis when there is no more space' },
-            theme
-          )}
+          {renderPanel('Default panel', {})}
+          {renderPanel('Very long title', {
+            title: 'Very long title that should get ellipsis when there is no more space',
+          })}
         </VerticalGroup>
       </HorizontalGroup>
-      <div style={{ marginTop: theme.spacing.md }} />
+      <div style={{ marginTop: '16px' }} />
       <HorizontalGroup spacing="md">
         <VerticalGroup spacing="md">
-          {renderPanel(
-            'No title and loading indicator',
-            {
-              title: '',
-              leftItems: [
-                <PanelChrome.LoadingIndicator
-                  loading={loading}
-                  onCancel={() => setLoading(false)}
-                  key="loading-indicator"
-                />,
-              ],
-            },
-            theme
-          )}
+          {renderPanel('No title and loading indicator', {
+            title: '',
+            leftItems: [
+              <PanelChrome.LoadingIndicator
+                loading={loading}
+                onCancel={() => setLoading(false)}
+                key="loading-indicator"
+              />,
+            ],
+          })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
-          {renderPanel(
-            'Very long title',
-            {
-              title: 'Very long title that should get ellipsis when there is no more space',
-              leftItems: [
-                <PanelChrome.LoadingIndicator
-                  loading={loading}
-                  onCancel={() => setLoading(false)}
-                  key="loading-indicator"
-                />,
-              ],
-            },
-            theme
-          )}
+          {renderPanel('Very long title', {
+            title: 'Very long title that should get ellipsis when there is no more space',
+            leftItems: [
+              <PanelChrome.LoadingIndicator
+                loading={loading}
+                onCancel={() => setLoading(false)}
+                key="loading-indicator"
+              />,
+            ],
+          })}
         </VerticalGroup>
       </HorizontalGroup>
-    </div>
+    </DashboardStoryCanvas>
   );
 };

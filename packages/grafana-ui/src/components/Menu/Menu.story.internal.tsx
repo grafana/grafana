@@ -33,8 +33,8 @@ export const Simple: Story<MenuProps> = (args) => {
       <StoryExample name="Simple">
         <Menu>
           <MenuItem label="Google" icon="search-plus" ariaLabel="Menu item" />
-          <MenuItem label="Filter" icon="filter" ariaLabel="Menu item" />
-          <MenuItem label="History" icon="history" ariaLabel="Menu item" />
+          <MenuItem label="Filter" icon="filter" ariaLabel="Menu item" shortcut="b" />
+          <MenuItem label="History" icon="history" ariaLabel="Menu item" shortcut="e" />
           <MenuItem label="Active" icon="history" active ariaLabel="Menu item" />
           <MenuItem label="Apps" icon="apps" ariaLabel="Menu item" />
         </Menu>

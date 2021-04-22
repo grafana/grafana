@@ -10,13 +10,15 @@ export interface MenuItemProps {
   /** Label of the menu item */
   label: string;
   /** Aria label for accessibility support */
-  ariaLabel: string;
+  ariaLabel?: string;
   /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
   /** Icon of the menu item */
   icon?: IconName;
   /** Url of the menu item */
   url?: string;
+  /** shortcut */
+  shortcut?: string;
   /** Handler for the click behaviour */
   onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
   /** Custom MenuItem styles*/
@@ -27,7 +29,7 @@ export interface MenuItemProps {
 
 /** @internal */
 export const MenuItem: React.FC<MenuItemProps> = React.memo(
-  ({ url, icon, label, ariaLabel, target, onClick, className, active }) => {
+  ({ url, icon, label, ariaLabel, target, onClick, className, active, shortcut }) => {
     const styles = useStyles2(getStyles);
     const itemStyle = cx(
       {
@@ -46,7 +48,9 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
           onClick={onClick}
           rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         >
-          {icon && <Icon name={icon} className={styles.icon} />} {label}
+          {icon && <Icon name={icon} className={styles.icon} />}
+          <span className={styles.label}>{label}</span>
+          {shortcut && <span className={styles.shortcut}>{shortcut}</span>}
         </a>
       </div>
     );
@@ -80,10 +84,19 @@ const getStyles = (theme: GrafanaThemeV2) => {
     activeItem: css`
       background: ${theme.colors.action.selected};
     `,
+    label: css`
+      flex-grow: 1;
+    `,
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
       color: ${theme.colors.text.secondary};
+    `,
+    shortcut: css`
+      border: 1px solid ${theme.colors.border.weak};
+      color: ${theme.colors.text.secondary};
+      margin-left: ${theme.spacing(3)};
+      padding: 0px 6px;
     `,
   };
 };
