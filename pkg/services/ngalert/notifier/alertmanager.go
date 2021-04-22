@@ -137,7 +137,7 @@ func (am *Alertmanager) Init() (err error) {
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
 	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-		am.logger.Error(fmt.Sprintf("unable to sync configuration: %s", err))
+		am.logger.Error("unable to sync configuration", "err", err)
 	}
 
 	for {
