@@ -13,14 +13,11 @@ import (
 	"runtime"
 	"strings"
 
-	log "github.com/inconshreveable/log15"
-
 	"github.com/fatih/color"
-
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -62,8 +59,11 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 
-	pm := manager.NewManagerInstaller(skipTLSVerify, services.GrafanaVersion, log.New("gcli.logger"))
-	return pm.InstallPlugin(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
+	l := &logger.CLILogger{
+		DebugMode: c.Bool("debug"),
+	}
+	i := installer.New(skipTLSVerify, services.GrafanaVersion, l)
+	return i.Install(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API

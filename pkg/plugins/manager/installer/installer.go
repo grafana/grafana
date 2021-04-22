@@ -22,9 +22,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -34,7 +31,21 @@ type Installer struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	grafanaVersion      string
-	log                 log.Logger
+	log                 Logger
+}
+
+type Logger interface {
+	Success(message string, args ...interface{})
+	Failure(message string, args ...interface{})
+
+	//Infof(message string, args ...interface{})
+	Info(args ...interface{})
+	//Debugf(message string, args ...interface{})
+	Debug(args ...interface{})
+	//Warnf(message string, args ...interface{})
+	Warn(args ...interface{})
+	//Errorf(message string, args ...interface{})
+	Error(args ...interface{})
 }
 
 const (
@@ -58,7 +69,7 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
-func New(skipTLSVerify bool, grafanaVersion string, logger log.Logger) *Installer {
+func New(skipTLSVerify bool, grafanaVersion string, logger Logger) *Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 10*time.Second),
@@ -67,8 +78,20 @@ func New(skipTLSVerify bool, grafanaVersion string, logger log.Logger) *Installe
 	}
 }
 
+// Install downloads the plugin code as a zip file from specified URL
+// and then extracts the zip into the provided plugins directory.
 func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
+
+	if len(pluginZipURL) > 0 {
+		i.log.Debug(fmt.Sprintf("Installing plugin\nfrom: %s\ninto: %s\n\n", pluginZipURL, pluginsDir))
+	} else {
+		if len(version) > 0 {
+			i.log.Debug(fmt.Sprintf("Installing plugin v%s\nfrom: %s\ninto: %s\n\n", version, pluginZipURL, pluginsDir))
+		} else {
+			i.log.Debug(fmt.Sprintf("Installing latest version of %s\nfrom: %s\ninto: %s\n\n", pluginID, pluginZipURL, pluginsDir))
+		}
+	}
 
 	var checksum string
 	if pluginZipURL == "" {
@@ -107,10 +130,6 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 			checksum = archMeta.SHA256
 		}
 	}
-	i.log.Info(fmt.Sprintf("installing %v @ %v\n", pluginID, version))
-	i.log.Info(fmt.Sprintf("from: %v\n", pluginZipURL))
-	i.log.Info(fmt.Sprintf("into: %v\n", pluginsDir))
-	i.log.Info("\n")
 
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
@@ -140,19 +159,32 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 		return errutil.Wrap("failed to extract plugin archive", err)
 	}
 
-	i.log.Info(fmt.Sprintf("%s Installed %s successfully \n", color.GreenString("✔"), pluginID))
+	res, _ := toPluginDTO(pluginsDir, pluginID)
+
+	i.log.Success(fmt.Sprintf("Installed %s v%s successfully\n\n", res.ID, res.Info.Version))
 
 	// download dependency plugins
-	res, _ := toPluginDTO(pluginsDir, pluginID)
 	for _, dep := range res.Dependencies.Plugins {
+		i.log.Info(fmt.Sprintf("Fetching %s dependencies...\n\n", res.ID))
 		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
 		}
-
-		i.log.Info(fmt.Sprintf("Installed dependency: %v ✔\n", dep.ID))
 	}
 
 	return err
+}
+
+// Uninstall removes the specified plugin from the provided plugins directory.
+func (i *Installer) Uninstall(pluginID, pluginPath string) error {
+	i.log.Info(fmt.Sprintf("Removing plugin: %v\n", pluginID))
+	pluginDir := filepath.Join(pluginPath, pluginID)
+
+	_, err := os.Stat(pluginDir)
+	if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(pluginDir)
 }
 
 func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) (err error) {
@@ -178,7 +210,7 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 		if r := recover(); r != nil {
 			i.retryCount++
 			if i.retryCount < 3 {
-				i.log.Info("Failed downloading. Will retry once.")
+				i.log.Debug("Failed downloading. Will retry once.")
 				err = tmpFile.Truncate(0)
 				if err != nil {
 					return
@@ -199,8 +231,6 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 			}
 		}
 	}()
-
-	i.log.Info("Sending request to download plugin", "url", url)
 
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
@@ -229,12 +259,13 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 }
 
 func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL string) (Plugin, error) {
-	i.log.Info(fmt.Sprintf("getting %v metadata from GCOM\n", pluginID))
+	i.log.Debug(fmt.Sprintf("Fetching metadata for plugin \"%s\" from repo %s\n", pluginID, pluginRepoURL))
 	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
-			return Plugin{}, errutil.Wrap(
-				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginID), err)
+			return Plugin{},
+				fmt.Errorf("failed to find plugin \"%s\" in plugin repository Please check if plugin ID is correct",
+					pluginID)
 		}
 		return Plugin{}, errutil.Wrap("Failed to send request", err)
 	}
@@ -242,7 +273,7 @@ func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL stri
 	var data Plugin
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		i.log.Info("Failed to unmarshal plugin repo response error:", err)
+		i.log.Error("Failed to unmarshal plugin repo response error", err)
 		return Plugin{}, err
 	}
 
@@ -383,7 +414,7 @@ func selectVersion(plugin *Plugin, version string) (*Version, error) {
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
-		return nil, fmt.Errorf("plugin is not supported on your architecture and OS")
+		return nil, fmt.Errorf("%s is not supported on your architecture and OS", plugin.ID)
 	}
 
 	if version == "" {
@@ -397,12 +428,13 @@ func selectVersion(plugin *Plugin, version string) (*Version, error) {
 	}
 
 	if len(ver.Version) == 0 {
-		return nil, fmt.Errorf("could not find the version you're looking for")
+		return nil, fmt.Errorf("could not find a version %s for %s. The latest suitable version is %s",
+			version, plugin.ID, latestForArch.Version)
 	}
 
 	if !supportsCurrentArch(&ver) {
 		return nil, fmt.Errorf(
-			"the version you want is not supported on your architecture and OS, latest suitable version is %s",
+			"the version you requested is not supported on your architecture and OS, latest suitable version is %s",
 			latestForArch.Version)
 	}
 
@@ -447,12 +479,11 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dstDir str
 
 	existingInstallDir := filepath.Join(dstDir, pluginID)
 	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
+		i.log.Debug(fmt.Sprintf("Removing existing installation of plugin %s\n\n", existingInstallDir))
 		err = os.RemoveAll(existingInstallDir)
 		if err != nil {
 			return err
 		}
-
-		i.log.Info(fmt.Sprintf("Removed existing installation of %s\n\n", pluginID))
 	}
 
 	r, err := zip.OpenReader(archiveFile)
@@ -495,7 +526,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dstDir str
 				continue
 			}
 			if err := extractSymlink(zf, dstPath); err != nil {
-				i.log.Info(fmt.Sprintf("Failed to extract symlink: %v \n", err))
+				i.log.Warn("failed to extract symlink", "err", err)
 				continue
 			}
 			continue

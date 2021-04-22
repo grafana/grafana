@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -65,8 +64,6 @@ type PluginManager struct {
 	panels       map[string]*plugins.PanelPlugin
 	apps         map[string]*plugins.AppPlugin
 	staticRoutes []*plugins.PluginStaticRoute
-
-	installer plugins.PluginInstaller
 }
 
 func init() {
@@ -87,16 +84,9 @@ func newManager(cfg *setting.Cfg) *PluginManager {
 	}
 }
 
-func NewManagerInstaller(skipTLSVerify bool, grafanaVersion string, logger log.Logger) *PluginManager {
-	return &PluginManager{
-		installer: installer.New(skipTLSVerify, grafanaVersion, logger),
-	}
-}
-
 func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
-	pm.installer = installer.New(true, pm.Cfg.BuildVersion, pm.log.New("installer"))
 
 	pm.log.Info("Starting plugin search")
 
@@ -690,23 +680,4 @@ func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	return pm.staticRoutes
-}
-
-// InstallPlugin downloads the plugin code as a zip file from specified URL
-// and then extracts the zip into the provided plugins directory.
-func (pm *PluginManager) InstallPlugin(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
-	return pm.installer.Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL)
-}
-
-// UninstallPlugin removes the specified plugin from the provided plugins directory.
-func (pm *PluginManager) UninstallPlugin(pluginID, pluginPath string) error {
-	pm.log.Info(fmt.Sprintf("Removing plugin: %v\n", pluginID))
-	pluginDir := filepath.Join(pluginPath, pluginID)
-
-	_, err := os.Stat(pluginDir)
-	if err != nil {
-		return err
-	}
-
-	return os.RemoveAll(pluginDir)
 }
