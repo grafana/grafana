@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -103,7 +103,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiring",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -741,7 +740,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						"annotations": {
 							"annotation1": "val42",
 							"foo": "bar"
-					   },	
+					   },
 		               "expr":"",
 					   "for": "30s",
 					   "labels": {

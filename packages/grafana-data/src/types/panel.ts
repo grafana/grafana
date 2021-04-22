@@ -182,3 +182,8 @@ export enum VizOrientation {
   Vertical = 'vertical',
   Horizontal = 'horizontal',
 }
+
+export interface PanelPluginDataSupport {
+  annotations: boolean;
+  alertStates: boolean;
+}
