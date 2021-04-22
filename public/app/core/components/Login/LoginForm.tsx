@@ -31,20 +31,18 @@ export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, password
           <>
             <Field label="Email or username" invalid={!!errors.user} error={errors.user?.message}>
               <Input
+                {...register('user', { required: 'Email or username is required' })}
                 autoFocus
-                name="user"
                 autoCapitalize="none"
-                ref={register({ required: 'Email or username is required' })}
                 placeholder={loginHint}
                 aria-label={selectors.pages.Login.username}
               />
             </Field>
             <Field label="Password" invalid={!!errors.password} error={errors.password?.message}>
               <Input
-                name="password"
+                {...register('password', { required: 'Password is required' })}
                 type="password"
                 placeholder={passwordHint}
-                ref={register({ required: 'Password is required' })}
                 aria-label={selectors.pages.Login.password}
               />
             </Field>
