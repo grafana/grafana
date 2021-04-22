@@ -1,101 +1,61 @@
-import React from 'react';
-import { CustomPicker, ColorResult } from 'react-color';
+import React, { useMemo } from 'react';
 
-import { Saturation, Hue, Alpha } from 'react-color/lib/components/common';
+import { RgbaStringColorPicker } from 'react-colorful';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
-import { Themeable } from '../../types';
-import SpectrumPalettePointer, { SpectrumPalettePointerProps } from './SpectrumPalettePointer';
 import { GrafanaTheme, getColorForTheme } from '@grafana/data';
+import { css, cx } from '@emotion/css';
+import { useStyles, useTheme } from '../../themes';
 
-export interface SpectrumPaletteProps extends Themeable {
+export interface SpectrumPaletteProps {
   color: string;
   onChange: (color: string) => void;
 }
 
-// eslint-disable-next-line react/display-name
-const renderPointer = (theme: GrafanaTheme) => (props: SpectrumPalettePointerProps) => (
-  <SpectrumPalettePointer {...props} theme={theme} />
-);
+const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange }) => {
+  const theme = useTheme();
+  const styles = useStyles(getStyles);
 
-// @ts-ignore
-const SpectrumPicker = CustomPicker<Themeable>(({ rgb, hsl, onChange, theme }) => {
+  const rgbaString = useMemo(() => {
+    return color.startsWith('rgba') ? color : tinycolor(getColorForTheme(color, theme)).toRgbString();
+  }, [color, theme]);
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        width: '100%',
-        flexDirection: 'column',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexGrow: 1,
-            flexDirection: 'column',
-          }}
-        >
-          <div
-            style={{
-              position: 'relative',
-              height: '100px',
-              width: '100%',
-            }}
-          >
-            {/*
-      // @ts-ignore */}
-            <Saturation onChange={onChange} hsl={hsl} hsv={tinycolor(hsl).toHsv()} />
-          </div>
-          <div
-            style={{
-              width: '100%',
-              height: '16px',
-              marginTop: '16px',
-              position: 'relative',
-              background: 'white',
-            }}
-          >
-            {/*
-      // @ts-ignore */}
-            <Alpha rgb={rgb} hsl={hsl} a={rgb.a} onChange={onChange} pointer={renderPointer(theme)} />
-          </div>
-        </div>
+    <>
+      <RgbaStringColorPicker className={cx(styles.root)} color={rgbaString} onChange={onChange} />
 
-        <div
-          style={{
-            position: 'relative',
-            width: '16px',
-            height: '100px',
-            marginLeft: '16px',
-          }}
-        >
-          {/*
-        // @ts-ignore */}
-          <Hue onChange={onChange} hsl={hsl} direction="vertical" pointer={renderPointer(theme)} />
-        </div>
-      </div>
-    </div>
-  );
-});
-
-const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange, theme }) => {
-  return (
-    <div>
-      <SpectrumPicker
-        color={tinycolor(getColorForTheme(color, theme)).toRgb()}
-        onChange={(a: ColorResult) => {
-          onChange(tinycolor(a.rgb).toString());
-        }}
-        theme={theme}
-      />
-      <ColorInput theme={theme} color={color} onChange={onChange} style={{ marginTop: '16px' }} />
-    </div>
+      <ColorInput theme={theme} color={color} onChange={onChange} className={styles.colorInput} />
+    </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  root: css`
+    &.react-colorful {
+      width: auto;
+    }
+
+    .react-colorful {
+      &__saturation {
+        border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
+      }
+      &__alpha {
+        border-radius: 0 0 ${theme.border.radius.sm} ${theme.border.radius.sm};
+      }
+      &__alpha,
+      &__hue {
+        height: ${theme.spacing.md};
+        position: relative;
+      }
+      &__pointer {
+        height: ${theme.spacing.md};
+        width: ${theme.spacing.md};
+      }
+    }
+  `,
+  colorInput: css`
+    margin-top: ${theme.spacing.md};
+  `,
+});
 
 export default SpectrumPalette;
