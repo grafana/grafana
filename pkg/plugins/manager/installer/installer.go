@@ -460,15 +460,15 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (i *Installer) extractFiles(archiveFile string, pluginID string, dstDir string, allowSymlinks bool) error {
+func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
 	var err error
-	dstDir, err = filepath.Abs(dstDir)
+	dest, err = filepath.Abs(dest)
 	if err != nil {
 		return err
 	}
-	i.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archiveFile, dstDir))
+	i.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archiveFile, dest))
 
-	existingInstallDir := filepath.Join(dstDir, pluginID)
+	existingInstallDir := filepath.Join(dest, pluginID)
 	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
 		i.log.Debugf("Removing existing installation of plugin %s", existingInstallDir)
 		err = os.RemoveAll(existingInstallDir)
@@ -478,17 +478,25 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dstDir str
 	}
 
 	r, err := zip.OpenReader(archiveFile)
+	defer func() {
+		if err := r.Close(); err != nil {
+			i.log.Warn("failed to close zip file", "err", err)
+		}
+	}()
 	if err != nil {
 		return err
 	}
 	for _, zf := range r.File {
-		if filepath.IsAbs(zf.Name) || strings.HasPrefix(zf.Name, ".."+string(filepath.Separator)) {
+		fullPath := filepath.Join(dest, zf.Name)
+
+		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
+		if filepath.IsAbs(zf.Name) || !strings.HasPrefix(fullPath, filepath.Clean(dest)+string(os.PathSeparator)) {
 			return fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, dstDir)
+				zf.Name, dest)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(zf.Name, pluginID)))
+		dstPath := filepath.Clean(filepath.Join(dest, removeGitBuildFromName(zf.Name, pluginID)))
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
