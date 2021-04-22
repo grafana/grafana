@@ -298,12 +298,10 @@ export const saveRuleFormAction = createAsyncThunk(
           throw new Error('Unexpected rule form type');
         }
         if (exitOnSave) {
-          locationService.push(`${config.appSubUrl ?? ''}/alerting/list`);
+          locationService.push('/alerting/list');
         } else {
           // redirect to edit page
-          const newLocation = `${config.appSubUrl ?? ''}/alerting/${encodeURIComponent(
-            stringifyRuleIdentifier(identifier)
-          )}/edit`;
+          const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
           if (locationService.getLocation().pathname !== newLocation) {
             locationService.replace(newLocation);
           }
