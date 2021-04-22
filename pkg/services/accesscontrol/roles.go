@@ -29,6 +29,16 @@ var PredefinedRoles = map[string]RoleDTO{
 				Action: ActionUsersQuotasList,
 				Scope:  ScopeUsersAll,
 			},
+			{
+				Action: ActionOrgUsersRead,
+				Scope:  ScopeOrgAllUsersAll,
+			},
+			{
+				Action: ActionLDAPUsersRead,
+			},
+			{
+				Action: ActionLDAPStatusRead,
+			},
 		},
 	},
 	usersAdminEdit: {
@@ -93,6 +103,26 @@ var PredefinedRoles = map[string]RoleDTO{
 			{
 				Action: ActionUsersQuotasUpdate,
 				Scope:  ScopeUsersAll,
+			},
+			{
+				// Inherited from grafana:roles:users:admin:read
+				Action: ActionOrgUsersRead,
+				Scope:  ScopeOrgAllUsersAll,
+			},
+			{
+				Action: ActionOrgUsersAdd,
+				Scope:  ScopeOrgAllUsersAll,
+			},
+			{
+				Action: ActionOrgUsersRemove,
+				Scope:  ScopeOrgAllUsersAll,
+			},
+			{
+				Action: ActionOrgUsersRoleUpdate,
+				Scope:  ScopeOrgAllUsersAll,
+			},
+			{
+				Action: ActionLDAPUsersSync,
 			},
 		},
 	},

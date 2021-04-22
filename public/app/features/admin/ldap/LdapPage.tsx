@@ -10,7 +10,15 @@ import Page from 'app/core/components/Page/Page';
 import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserInfo } from './LdapUserInfo';
-import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
+import {
+  AppNotificationSeverity,
+  LdapError,
+  LdapUser,
+  StoreState,
+  SyncInfo,
+  LdapConnectionInfo,
+  AccessControlAction,
+} from 'app/types';
 import {
   loadLdapState,
   loadLdapSyncStatus,
@@ -19,6 +27,7 @@ import {
   clearUserMappingInfo,
 } from '../state/actions';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/core';
 
 interface Props extends GrafanaRouteComponentProps<{}, { username: string }> {
   navModel: NavModel;
@@ -81,6 +90,7 @@ export class LdapPage extends PureComponent<Props, State> {
   render() {
     const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, navModel, queryParams } = this.props;
     const { isLoading } = this.state;
+    const canReadLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersRead);
 
     return (
       <Page navModel={navModel}>
@@ -98,35 +108,39 @@ export class LdapPage extends PureComponent<Props, State> {
 
             {config.licenseInfo.hasLicense && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
-            <h3 className="page-heading">Test user mapping</h3>
-            <div className="gf-form-group">
-              <form onSubmit={this.search} className="gf-form-inline">
-                <FormField
-                  label="Username"
-                  labelWidth={8}
-                  inputWidth={30}
-                  type="text"
-                  id="username"
-                  name="username"
-                  defaultValue={queryParams.username}
-                />
-                <button type="submit" className="btn btn-primary">
-                  Run
-                </button>
-              </form>
-            </div>
-            {userError && userError.title && (
-              <div className="gf-form-group">
-                <Alert
-                  title={userError.title}
-                  severity={AppNotificationSeverity.Error}
-                  onRemove={this.onClearUserError}
-                >
-                  {userError.body}
-                </Alert>
-              </div>
+            {canReadLDAPUser && (
+              <>
+                <h3 className="page-heading">Test user mapping</h3>
+                <div className="gf-form-group">
+                  <form onSubmit={this.search} className="gf-form-inline">
+                    <FormField
+                      label="Username"
+                      labelWidth={8}
+                      inputWidth={30}
+                      type="text"
+                      id="username"
+                      name="username"
+                      defaultValue={queryParams.username}
+                    />
+                    <button type="submit" className="btn btn-primary">
+                      Run
+                    </button>
+                  </form>
+                </div>
+                {userError && userError.title && (
+                  <div className="gf-form-group">
+                    <Alert
+                      title={userError.title}
+                      severity={AppNotificationSeverity.Error}
+                      onRemove={this.onClearUserError}
+                    >
+                      {userError.body}
+                    </Alert>
+                  </div>
+                )}
+                {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}
+              </>
             )}
-            {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}
           </>
         </Page.Contents>
       </Page>

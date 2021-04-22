@@ -4,6 +4,7 @@ import { Select } from '@grafana/ui';
 
 interface Props {
   value: OrgRole;
+  disabled?: boolean;
   onChange: (role: OrgRole) => void;
 }
 
