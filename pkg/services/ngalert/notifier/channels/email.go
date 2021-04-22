@@ -71,7 +71,6 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			Subject: title,
 			Data: map[string]interface{}{
 				"Title":             title,
-				"Receiver":          data.Receiver,
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,
 				"GroupLabels":       data.GroupLabels,
