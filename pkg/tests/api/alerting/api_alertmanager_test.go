@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -29,8 +30,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
-		AdminUser:            "grafana",
-		AdminPassword:        "password",
 	})
 
 	store := testinfra.SetUpDatabase(t, dir)
@@ -52,6 +51,25 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 		require.JSONEq(t, `{"message": "Unauthorized"}`, string(b))
+	}
+
+	err := createUser(t, store, models.ROLE_EDITOR, "grafana", "password")
+	require.NoError(t, err)
+
+	// invalid credentials request to get the alerts should fail
+	{
+		alertsURL := fmt.Sprintf("http://grafana:invalid@%s/api/alertmanager/grafana/api/v2/alerts", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(alertsURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+		require.JSONEq(t, `{"error": "invalid username or password","message": "invalid username or password"}`, string(b))
 	}
 
 	// When there are no alerts available, it returns an empty list.
@@ -174,13 +192,15 @@ func TestAlertRuleCRUD(t *testing.T) {
 		EnableFeatureToggles: []string{"ngalert"},
 		EnableQuota:          true,
 		DisableAnonymous:     true,
-		AdminUser:            "grafana",
-		AdminPassword:        "password",
 	})
+
 	store := testinfra.SetUpDatabase(t, dir)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	err := createUser(t, store, models.ROLE_EDITOR, "grafana", "password")
+	require.NoError(t, err)
 
 	// Create the namespace we'll save our alerts to.
 	require.NoError(t, createFolder(t, store, 0, "default"))
@@ -1198,7 +1218,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "One more alert rule",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -1286,6 +1305,18 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	json, err := json.Marshal(&r)
 	require.NoError(t, err)
 	return string(json), m
+}
+
+func createUser(t *testing.T, store *sqlstore.SQLStore, role models.RoleType, username, password string) error {
+	t.Helper()
+
+	cmd := models.CreateUserCommand{
+		Login:          username,
+		Password:       password,
+		DefaultOrgRole: string(role),
+	}
+	_, err := store.CreateUser(context.Background(), cmd)
+	return err
 }
 
 func getLongString(t *testing.T, n int) string {
