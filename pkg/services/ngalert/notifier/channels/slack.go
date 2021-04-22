@@ -261,6 +261,9 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			},
 		},
 	}
+	if tmplErr != nil {
+		return nil, fmt.Errorf("failed to template Slack message: %w", tmplErr)
+	}
 
 	mentionsBuilder := strings.Builder{}
 	appendSpace := func() {
@@ -297,11 +300,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 		}
 	}
 
-	if tmplErr != nil {
-		tmplErr = errors.Wrap(tmplErr, "failed to template Slack message")
-	}
-
-	return req, tmplErr
+	return req, nil
 }
 
 func (sn *SlackNotifier) SendResolved() bool {

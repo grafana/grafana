@@ -36,7 +36,43 @@ func TestSlackNotifier(t *testing.T) {
 		{
 			name: "Correct config with one alert",
 			settings: `{
-				"url": "https://test.slack.com",
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "TODO: rule URL",
+						Text:       "",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v",
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+			expInitError: nil,
+			expMsgError:  nil,
+		},
+		{
+			name: "Correct config with webhook",
+			settings: `{
+				"url": "https://webhook.com",
 				"recipient": "#testchannel",
 				"icon_emoji": ":emoji:"
 			}`,
@@ -72,7 +108,7 @@ func TestSlackNotifier(t *testing.T) {
 		{
 			name: "Correct config with multiple alerts and template",
 			settings: `{
-				"url": "https://test.slack.com",
+				"token": "1234",
 				"recipient": "#testchannel",
 				"icon_emoji": ":emoji:",
 				"title": "{{ .Alerts.Firing | len }} firing, {{ .Alerts.Resolved | len }} resolved"
@@ -112,7 +148,7 @@ func TestSlackNotifier(t *testing.T) {
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name:         "Error in initing",
+			name:         "Missing token",
 			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "token must be specified when using the Slack chat API"},
 		}, {
@@ -165,8 +201,8 @@ func TestSlackNotifier(t *testing.T) {
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
-				require.False(t, ok)
 				require.Error(t, err)
+				require.False(t, ok)
 				require.Equal(t, c.expMsgError.Error(), err.Error())
 				return
 			}
