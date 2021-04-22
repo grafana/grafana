@@ -74,7 +74,7 @@ type DataRequestHandler interface {
 
 type PluginInstaller interface {
 	// Install finds the plugin given the provided information
-	// and installs in the provided  plugins directory.
+	// and installs in the provided plugins directory.
 	Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
 	Uninstall(pluginID, pluginPath string) error
