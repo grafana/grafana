@@ -155,13 +155,20 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 
 // Uninstall removes the specified plugin from the provided plugins directory.
 func (i *Installer) Uninstall(pluginID, pluginPath string) error {
-	i.log.Info(fmt.Sprintf("Removing plugin: %v\n", pluginID))
 	pluginDir := filepath.Join(pluginPath, pluginID)
 
-	_, err := os.Stat(pluginDir)
-	if err != nil {
-		return err
+	// verify it's a plugin directory
+	if _, err := os.Stat(filepath.Join(pluginDir, "plugin.json")); err != nil {
+		if os.IsNotExist(err) {
+			if _, err := os.Stat(filepath.Join(pluginDir, "dist", "plugin.json")); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("tried to remove %s, but it doesn't seem to be a plugin", pluginPath)
+				}
+			}
+		}
 	}
+
+	i.log.Info(fmt.Sprintf("Uninstalling plugin %v\n", pluginID))
 
 	return os.RemoveAll(pluginDir)
 }
