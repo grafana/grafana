@@ -1,5 +1,5 @@
 import React, { memo, useState, useEffect } from 'react';
-import classNames from 'classNames';
+import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { css } from 'emotion';
 import {
