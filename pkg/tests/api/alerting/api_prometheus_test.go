@@ -9,12 +9,11 @@ import (
 	"testing"
 	"time"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,6 +29,9 @@ func TestPrometheusRules(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	require.NoError(t, createFolder(t, store, 0, "default"))
 
+	interval, err := model.ParseDuration("10s")
+	require.NoError(t, err)
+
 	// When we have no alerting rules, it returns an empty list.
 	{
 		promRulesURL := fmt.Sprintf("http://%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
@@ -42,22 +44,12 @@ func TestPrometheusRules(t *testing.T) {
 		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-		fmt.Println(string(b))
-		require.JSONEq(t, `
-{
-	"status": "success",
-	"data": {
-		"groups": []
-	}
-}
-`, string(b))
+		assert.Equal(t, 200, resp.StatusCode)
+		require.JSONEq(t, `{"status": "success", "data": {"groups": []}}`, string(b))
 	}
 
 	// Now, let's create some rules
 	{
-		interval, err := model.ParseDuration("10s")
-		require.NoError(t, err)
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
@@ -114,7 +106,7 @@ func TestPrometheusRules(t *testing.T) {
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
-		err = enc.Encode(&rules)
+		err := enc.Encode(&rules)
 		require.NoError(t, err)
 
 		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -145,7 +137,6 @@ func TestPrometheusRules(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
-		fmt.Println(string(b))
 		require.JSONEq(t, `
 {
 	"status": "success",
@@ -187,23 +178,21 @@ func TestPrometheusRules(t *testing.T) {
 	}
 }`, string(b))
 	}
-
-	time.Sleep(15 * time.Second) //TODO: Remove me in favour of using eventually.
 
 	{
 		promRulesURL := fmt.Sprintf("http://%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
-		resp, err := http.Get(promRulesURL)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
+		require.Eventually(t, func() bool {
+			resp, err := http.Get(promRulesURL)
 			require.NoError(t, err)
-		})
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-		fmt.Println(string(b))
-		require.JSONEq(t, `
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.StatusCode)
+			require.JSONEq(t, `
 {
 	"status": "success",
 	"data": {
@@ -243,5 +232,7 @@ func TestPrometheusRules(t *testing.T) {
 		}]
 	}
 }`, string(b))
+			return true
+		}, 18*time.Second, 2*time.Second)
 	}
 }
