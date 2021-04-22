@@ -51,7 +51,7 @@ func NewGateway() *Gateway {
 
 // Init Gateway.
 func (g *Gateway) Init() error {
-	logger.Info("Live Push Gateway initialization")
+	logger.Debug("Live Push Gateway initialization")
 
 	if !g.IsEnabled() {
 		logger.Debug("Live Push Gateway not enabled, skipping initialization")
