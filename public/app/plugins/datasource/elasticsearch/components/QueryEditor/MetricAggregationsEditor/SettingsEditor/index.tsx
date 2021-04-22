@@ -34,7 +34,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
   const query = useQuery();
 
   const rateAggUnitOptions = [
-    { value: 'seconds', label: 'Seconds' },
+    { value: 'second', label: 'Seconds' },
     { value: 'minute', label: 'Minute' },
     { value: 'hour', label: 'Hour' },
     { value: 'day', label: 'Day' },
