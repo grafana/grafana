@@ -147,7 +147,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 			return nil
 		case <-time.After(pollInterval):
 			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-				am.logger.Error(fmt.Sprintf("unable to sync configuration: %s", err))
+				am.logger.Error("unable to sync configuration", "err", err)
 			}
 		}
 	}
