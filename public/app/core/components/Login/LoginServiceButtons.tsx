@@ -1,13 +1,12 @@
 import React from 'react';
 import config from 'app/core/config';
 import { css, cx } from '@emotion/css';
-import { Icon, IconName, LinkButton, useStyles, VerticalGroup } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { Icon, IconName, LinkButton, useStyles, useTheme2, VerticalGroup } from '@grafana/ui';
+import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
 import { pickBy } from 'lodash';
 
 export interface LoginService {
   bgColor: string;
-  borderColor: string;
   enabled: boolean;
   name: string;
   hrefName?: string;
@@ -24,42 +23,36 @@ const loginServices: () => LoginServices = () => {
   return {
     saml: {
       bgColor: '#464646',
-      borderColor: '#393939',
       enabled: config.samlEnabled,
       name: 'SAML',
       icon: 'key-skeleton-alt',
     },
     google: {
       bgColor: '#e84d3c',
-      borderColor: '#b83e31',
       enabled: oauthEnabled && config.oauth.google,
       name: 'Google',
       icon: 'google',
     },
     azuread: {
       bgColor: '#2f2f2f',
-      borderColor: '#2f2f2f',
       enabled: oauthEnabled && config.oauth.azuread,
       name: 'Microsoft',
       icon: 'microsoft',
     },
     github: {
       bgColor: '#464646',
-      borderColor: '#393939',
       enabled: oauthEnabled && config.oauth.github,
       name: 'GitHub',
       icon: 'github',
     },
     gitlab: {
       bgColor: '#fc6d26',
-      borderColor: '#e24329',
       enabled: oauthEnabled && config.oauth.gitlab,
       name: 'GitLab',
       icon: 'gitlab',
     },
     grafanacom: {
       bgColor: '#262628',
-      borderColor: '#393939',
       enabled: oauthEnabled && config.oauth.grafana_com,
       name: 'Grafana.com',
       hrefName: 'grafana_com',
@@ -67,14 +60,12 @@ const loginServices: () => LoginServices = () => {
     },
     okta: {
       bgColor: '#2f2f2f',
-      borderColor: '#393939',
       enabled: oauthEnabled && config.oauth.okta,
       name: 'Okta',
       icon: 'okta',
     },
     oauth: {
       bgColor: '#262628',
-      borderColor: '#393939',
       enabled: oauthEnabled && config.oauth.generic_oauth,
       name: oauthEnabled && config.oauth.generic_oauth ? config.oauth.generic_oauth.name : 'OAuth',
       icon: 'signin',
@@ -133,9 +124,25 @@ const LoginDivider = () => {
   );
 };
 
+function getButtonStyleFor(service: LoginService, styles: ReturnType<typeof getServiceStyles>, theme: GrafanaThemeV2) {
+  return cx(
+    styles.button,
+    css`
+      background-color: ${service.bgColor};
+      color: ${theme.palette.getContrastText(service.bgColor)};
+
+      &:hover {
+        background-color: ${theme.palette.emphasize(service.bgColor, 0.15)};
+        box-shadow: ${theme.shadows.z1};
+      }
+    `
+  );
+}
+
 export const LoginServiceButtons = () => {
   const enabledServices = pickBy(loginServices(), (service) => service.enabled);
   const hasServices = Object.keys(enabledServices).length > 0;
+  const theme = useTheme2();
   const styles = useStyles(getServiceStyles);
 
   if (hasServices) {
@@ -145,29 +152,12 @@ export const LoginServiceButtons = () => {
         {Object.entries(enabledServices).map(([key, service]) => (
           <LinkButton
             key={key}
-            className={cx(
-              styles.button,
-              css`
-                background-color: ${service.bgColor};
-                border-color: ${service.borderColor};
-                &:hover {
-                  background-color: ${service.bgColor};
-                }
-              `
-            )}
+            className={getButtonStyleFor(service, styles, theme)}
             href={`login/${service.hrefName ? service.hrefName : key}`}
             target="_self"
             fullWidth
           >
-            <Icon
-              className={cx(
-                styles.buttonIcon,
-                css`
-                  border-color: ${service.borderColor};
-                `
-              )}
-              name={service.icon}
-            />
+            <Icon className={styles.buttonIcon} name={service.icon} />
             Sign in with {service.name}
           </LinkButton>
         ))}
