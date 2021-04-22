@@ -123,7 +123,7 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: ${theme.components.panel.background};
-$panel-border: ${theme.components.panel.border};
+$panel-border: 1px solid ${theme.components.panel.borderColor};
 $panel-header-hover-bg: ${theme.colors.action.hover};
 $panel-box-shadow: ${theme.components.panel.boxShadow};
 $panel-corner: $panel-bg;
@@ -256,7 +256,7 @@ $side-menu-header-color: ${theme.v1.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.colors.background.secondary};
+$menu-dropdown-bg: ${theme.colors.background.primary};
 $menu-dropdown-hover-bg: ${theme.colors.action.hover};
 $menu-dropdown-shadow: ${theme.shadows.z3};
 
@@ -282,11 +282,11 @@ $tooltipArrowColor: ${theme.colors.background.secondary};
 $tooltipBackgroundError: ${theme.colors.error.main};
 $tooltipShadow: ${theme.shadows.z2};
 
-$popover-bg: ${theme.colors.background.secondary};
+$popover-bg: ${theme.colors.background.primary};
 $popover-color: ${theme.colors.text.primary};
-$popover-border-color: ${theme.colors.border.medium};
+$popover-border-color: ${theme.colors.border.weak};
 $popover-header-bg: ${theme.colors.background.secondary};
-$popover-shadow: ${theme.shadows.z4};
+$popover-shadow: ${theme.shadows.z3};
 
 $graph-tooltip-bg: $gray-5;
 

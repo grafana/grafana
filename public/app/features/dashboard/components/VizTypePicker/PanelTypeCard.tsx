@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       cursor: pointer;
       background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius()};
-      box-shadow: ${theme.shadows.z0};
+      box-shadow: ${theme.shadows.z1};
       align-items: center;
       padding: 8px;
       width: 100%;
