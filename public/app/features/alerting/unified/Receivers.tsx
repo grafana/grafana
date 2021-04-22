@@ -7,7 +7,7 @@ import { ReceiversTable } from './components/receivers/ReceiversTable';
 import { TemplatesTable } from './components/receivers/TemplatesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction, fetchGrafanaReceiverTypesAction } from './state/actions';
+import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -16,7 +16,7 @@ const Receivers: FC = () => {
   const dispatch = useDispatch();
 
   const config = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaReceiverTypes);
+  const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   useEffect(() => {
     dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
@@ -24,7 +24,7 @@ const Receivers: FC = () => {
 
   useEffect(() => {
     if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && !(receiverTypes.result || receiverTypes.loading)) {
-      dispatch(fetchGrafanaReceiverTypesAction());
+      dispatch(fetchGrafanaNotifiersAction());
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 

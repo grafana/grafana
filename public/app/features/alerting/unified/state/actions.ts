@@ -12,7 +12,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
-import { fetchReceiverTypes } from '../api/grafana';
+import { fetchNotifiers } from '../api/grafana';
 import { fetchRules } from '../api/prometheus';
 import {
   deleteRulerRulesGroup,
@@ -314,7 +314,7 @@ export const saveRuleFormAction = createAsyncThunk(
     )
 );
 
-export const fetchGrafanaReceiverTypesAction = createAsyncThunk(
-  'unifiedalerting/fetchGrafanaReceiverTypes',
-  (): Promise<NotifierDTO[]> => withSerializedError(fetchReceiverTypes())
+export const fetchGrafanaNotifiersAction = createAsyncThunk(
+  'unifiedalerting/fetchGrafanaNotifiers',
+  (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
 );
