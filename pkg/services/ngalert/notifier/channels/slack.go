@@ -15,7 +15,6 @@ import (
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -153,12 +152,12 @@ type attachment struct {
 func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	msg, err := sn.buildSlackMessage(ctx, as)
 	if err != nil {
-		return false, errors.Wrap(err, "build slack message")
+		return false, fmt.Errorf("build slack message: %w", err)
 	}
 
 	b, err := json.Marshal(msg)
 	if err != nil {
-		return false, errors.Wrap(err, "marshal json")
+		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
 	sn.log.Debug("Sending Slack API request", "url", sn.URL.String(), "data", string(b))
