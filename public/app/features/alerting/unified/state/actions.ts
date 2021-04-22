@@ -1,5 +1,5 @@
 import { AppEvents } from '@grafana/data';
-import { locationService, config } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
 import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
