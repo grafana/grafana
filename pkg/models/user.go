@@ -241,6 +241,13 @@ type UserSearchHitDTO struct {
 	AuthModule    AuthModuleConversion `json:"-"`
 }
 
+type SimpleUserInfoDTO struct {
+	Id    int64  `json:"id,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Login string `json:"login,omitempty"`
+	Email string `json:"email,omitempty"`
+}
+
 type UserIdDTO struct {
 	Id      int64  `json:"id"`
 	Message string `json:"message"`

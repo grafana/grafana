@@ -11,10 +11,13 @@ import (
 
 // DashboardEvent events related to dashboards
 type dashboardEvent struct {
-	UID       string `json:"uid"`
-	Action    string `json:"action"` // saved, editing
-	UserID    int64  `json:"userId,omitempty"`
-	SessionID string `json:"sessionId,omitempty"`
+	UID       string                    `json:"uid"`
+	Action    string                    `json:"action"` // saved, editing, deleted
+	User      *models.SimpleUserInfoDTO `json:"user,omitempty"`
+	SessionID string                    `json:"sessionId,omitempty"`
+	Message   string                    `json:"message,omitempty"`
+	Dashboard *models.Dashboard         `json:"dashboard,omitempty"`
+	Error     string                    `json:"error,omitempty"`
 }
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
@@ -54,19 +57,32 @@ func (h *DashboardHandler) publish(event dashboardEvent) error {
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(uid string, userID int64) error {
-	return h.publish(dashboardEvent{
-		UID:    uid,
-		Action: "saved",
-		UserID: userID,
-	})
+func (h *DashboardHandler) DashboardSaved(user *models.SimpleUserInfoDTO, message string, dashboard *models.Dashboard, err error) error {
+	if err != nil && !h.HasGitOpsObserver() {
+		return nil // only broadcast if it was OK
+	}
+
+	msg := dashboardEvent{
+		UID:       dashboard.Uid,
+		Action:    "saved",
+		User:      user,
+		Message:   message,
+		Dashboard: dashboard,
+	}
+
+	return h.publish(msg)
 }
 
 // DashboardDeleted will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardDeleted(uid string, userID int64) error {
+func (h *DashboardHandler) DashboardDeleted(user *models.SimpleUserInfoDTO, uid string) error {
 	return h.publish(dashboardEvent{
 		UID:    uid,
 		Action: "deleted",
-		UserID: userID,
+		User:   user,
 	})
+}
+
+// HasGitOpsObserver indicats if anyone is listening to the `gitops` channel
+func (h *DashboardHandler) HasGitOpsObserver() bool {
+	return false // TODO: check presense
 }

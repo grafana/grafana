@@ -440,7 +440,16 @@ func (g *GrafanaLive) IsEnabled() bool {
 	return g.Cfg.IsLiveEnabled()
 }
 
-func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
+func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext) response.Response {
+	body, err := ctx.Req.Body().Bytes()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "error reading body", nil)
+	}
+	cmd := dtos.LivePublishCmd{
+		Channel: ctx.Params("*"),
+		Data:    body, // assume JSON
+	}
+
 	addr := live.ParseChannel(cmd.Channel)
 	if !addr.IsValid() {
 		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
@@ -502,4 +511,17 @@ func (g *GrafanaLive) HandleListHTTP(_ *models.ReqContext) response.Response {
 
 	info["channels"] = channels
 	return response.JSONStreaming(200, info)
+}
+
+// HandleInfoHTTP special http response for
+func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
+	path := ctx.Params("*")
+	if path == "grafana/dashboards/gitops" {
+		return response.JSON(200, util.DynMap{
+			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(),
+		})
+	}
+	return response.JSONStreaming(404, util.DynMap{
+		"message": "Info is not supported for this channel",
+	})
 }

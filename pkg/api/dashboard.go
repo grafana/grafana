@@ -292,6 +292,32 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	dashSvc := dashboards.NewService(hs.SQLStore)
 	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
+
+	// Tell everyone listening that the dashboard changed
+	if hs.Live.IsEnabled() {
+		if dashboard == nil {
+			dashboard = dash // the original request
+		}
+		channel := hs.Live.GrafanaScope.Dashboards
+		liveerr := channel.DashboardSaved(&models.SimpleUserInfoDTO{
+			Id:    c.SignedInUser.UserId,
+			Login: c.SignedInUser.Login,
+			Email: c.SignedInUser.Email,
+			Name:  c.SignedInUser.Name,
+		}, cmd.Message, dashboard, err)
+
+		// When an error exists, but the value broadcast to a gitops listener return 202
+		if liveerr == nil && err != nil && channel.HasGitOpsObserver() {
+			return response.JSON(202, util.DynMap{
+				"status":  "pending",
+				"message": "changes were broadcast to the gitops listener",
+			})
+		}
+
+		if liveerr != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}
@@ -306,13 +332,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	// Tell everyone listening that the dashboard changed
 	if hs.Live.IsEnabled() {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
-			dashboard.Uid,
-			c.UserId,
-		)
-		if err != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
-		}
 	}
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
