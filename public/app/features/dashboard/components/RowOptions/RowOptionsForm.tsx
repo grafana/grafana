@@ -26,7 +26,7 @@ export const RowOptionsForm: FC<Props> = ({ repeat, title, onUpdate, onCancel })
       {({ register }) => (
         <>
           <Field label="Title">
-            <Input name="title" ref={register} type="text" />
+            <Input {...register('title')} type="text" />
           </Field>
 
           <Field label="Repeat for">
