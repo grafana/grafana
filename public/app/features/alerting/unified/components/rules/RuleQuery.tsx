@@ -12,7 +12,7 @@ interface Props {
 
 export const RuleQuery: FC<Props> = ({ rule, rulesSource }) => {
   const { rulerRule } = rule;
-  const theme =useTheme2();
+  const theme = useTheme2();
 
   const [isHidden, setIsHidden] = useState(true);
 
@@ -22,7 +22,11 @@ export const RuleQuery: FC<Props> = ({ rule, rulesSource }) => {
   if (rulerRule && isGrafanaRulerRule(rulerRule)) {
     // @TODO: better grafana queries vizualization read-only
     if (isHidden) {
-      return <a style={{ color: theme.colors.text.link }} onClick={() => setIsHidden(false)}>Show raw query JSON</a>
+      return (
+        <a style={{ color: theme.colors.text.link }} onClick={() => setIsHidden(false)}>
+          Show raw query JSON
+        </a>
+      );
     }
     return <pre>{JSON.stringify(rulerRule.grafana_alert.data, null, 2)}</pre>;
   }
