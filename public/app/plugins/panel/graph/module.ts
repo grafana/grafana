@@ -22,11 +22,11 @@ import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
-import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
 import { appEvents } from '../../../core/core';
 import { ZoomOutEvent } from '../../../types/events';
 import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 import { loadSnapshotData } from '../../../features/dashboard/utils/loadSnapshotData';
+import { annotationsFromDataFrames } from '../../../features/query/state/DashboardQueryRunner/utils';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -207,19 +207,16 @@ export class GraphCtrl extends MetricsPanelCtrl {
 
     this.dataWarning = this.getDataWarning();
 
+    this.alertState = undefined;
+    (this.seriesList as any).alertState = undefined;
     if (this.panelData!.alertState) {
       this.alertState = this.panelData!.alertState;
       (this.seriesList as any).alertState = this.alertState.state;
     }
 
+    this.annotations = [];
     if (this.panelData!.annotations?.length) {
-      getAnnotationsFromData(this.panelData!.annotations!)
-        .toPromise()
-        .then((annotations) => {
-          this.loading = false;
-          this.annotations = annotations;
-          this.render(this.seriesList);
-        });
+      this.annotations = annotationsFromDataFrames(this.panelData!.annotations);
     }
 
     this.loading = false;
