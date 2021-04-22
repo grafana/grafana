@@ -3,41 +3,43 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import {
-  AnnotationEvent,
   DataQueryRequest,
   DataSourceInstanceSettings,
   ScopedVars,
   DataQueryResponse,
   MetricFindValue,
 } from '@grafana/data';
+import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 import ResponseParser from './response_parser';
-import { MySqlQueryForInterpolation, MySqlOptions, MySqlQuery } from './types';
+import { MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { quoteLiteral, buildQuery } from './sql';
 
-export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOptions> {
+export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  queryModel: MysqlQuery;
   interval: string;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<MySqlOptions>,
+    instanceSettings: DataSourceInstanceSettings<MySQLOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
-    const settingsData = instanceSettings.jsonData || ({} as MySqlOptions);
+    this.queryModel = new MysqlQuery({});
+    const settingsData = instanceSettings.jsonData || ({} as MySQLOptions);
     this.interval = settingsData.timeInterval || '1m';
   }
 
   interpolateVariable = (value: string | string[] | number, variable: any) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return quoteLiteral(value);
+        const result = this.queryModel.quoteLiteral(value);
+        return result;
       } else {
         return value;
       }
@@ -48,15 +50,15 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     }
 
     const quotedValues = _map(value, (v: any) => {
-      return quoteLiteral(v);
+      return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
   };
 
   interpolateVariablesInQueries(
-    queries: MySqlQueryForInterpolation[],
+    queries: MysqlQueryForInterpolation[],
     scopedVars: ScopedVars
-  ): MySqlQueryForInterpolation[] {
+  ): MysqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map((query) => {
@@ -72,36 +74,32 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     return expandedQueries;
   }
 
-  filterQuery(query: MySqlQuery): boolean {
-    return !query.hide;
+  filterQuery(query: MySQLQuery): boolean {
+    if (query.hide) {
+      return false;
+    }
+    return true;
   }
 
-  applyTemplateVariables(target: MySqlQuery, scopedVars: ScopedVars): Record<string, any> {
-    // new query with no table set yet
-    let rawSql = target.rawSql || '';
-    if (rawSql.length === 0) {
-      if ('table' in target) {
-        rawSql = buildQuery(target);
-      }
-    } else if (this.interpolateVariable != null) {
-      rawSql = this.templateSrv.replace(rawSql, scopedVars, interpolateQueryStr);
-    }
-
+  applyTemplateVariables(target: MySQLQuery, scopedVars: ScopedVars): Record<string, any> {
+    const queryModel = new MysqlQuery(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
       datasourceId: this.id,
-      rawSql: rawSql,
+      rawSql: queryModel.render(this.interpolateVariable as any),
       format: target.format,
     };
   }
 
-  query(request: DataQueryRequest<MySqlQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<MySQLQuery>): Observable<DataQueryResponse> {
     return super.query(request);
   }
 
-  annotationQuery(options: any): Promise<AnnotationEvent[]> {
+  annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
-      throw new Error('Query missing in annotation definition');
+      return Promise.reject({
+        message: 'Query missing in annotation definition',
+      });
     }
 
     const query = {
@@ -125,7 +123,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
       .toPromise();
   }
 
-  async metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
+  metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
@@ -144,20 +142,22 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
       format: 'table',
     };
 
-    const rsp = await super
+    return super
       .query({
         ...optionalOptions, // includes 'range'
         targets: [interpolatedQuery],
       } as DataQueryRequest)
-      .toPromise();
-    if (rsp.data?.length) {
-      return frameToMetricFindValue(rsp.data[0]);
-    }
-    return [];
+      .toPromise()
+      .then((rsp) => {
+        if (rsp.data?.length) {
+          return frameToMetricFindValue(rsp.data[0]);
+        }
+        return [];
+      });
   }
 
-  async testDatasource() {
-    await getBackendSrv()
+  testDatasource() {
+    return getBackendSrv()
       .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -193,10 +193,11 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
   targetContainsTemplate(target: any) {
     let rawSql = '';
 
-    if ((target.rawSql || '').length > 0) {
+    if (target.rawQuery) {
       rawSql = target.rawSql;
     } else {
-      rawSql = buildQuery(target);
+      const query = new MysqlQuery(target);
+      rawSql = query.buildQuery();
     }
 
     rawSql = rawSql.replace('$__', '');
@@ -204,21 +205,3 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     return this.templateSrv.variableExists(rawSql);
   }
 }
-
-const interpolateQueryStr = (
-  value: string,
-  variable: { multi: any; includeAll: any },
-  defaultFormatFn: any
-): string => {
-  // if no multi or include all do not regexEscape
-  if (!variable.multi && !variable.includeAll) {
-    return quoteLiteral(value);
-  }
-
-  if (typeof value === 'string') {
-    return quoteLiteral(value);
-  }
-
-  const escapedValues = _map(value, quoteLiteral);
-  return escapedValues.join(',');
-};

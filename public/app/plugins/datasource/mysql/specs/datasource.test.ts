@@ -1,12 +1,12 @@
 import { of } from 'rxjs';
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 
-import { MySqlDatasource } from '../datasource';
+import { MysqlDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { FetchResponse, setBackendSrv } from '@grafana/runtime';
-import { MySqlOptions } from './../types';
+import { MySQLOptions } from './../types';
 
 describe('MySQLDatasource', () => {
   const setupTextContext = (response: any) => {
@@ -17,13 +17,13 @@ describe('MySQLDatasource', () => {
       jsonData: {
         defaultProject: 'testproject',
       },
-    } as unknown) as DataSourceInstanceSettings<MySqlOptions>;
+    } as unknown) as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
 
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MySqlDatasource(instanceSettings, templateSrv);
+    const ds = new MysqlDatasource(instanceSettings, templateSrv);
 
     return { ds, variable, templateSrv, fetchMock };
   };
@@ -60,7 +60,7 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    it('should return an annotation list', async () => {
+    it('should return annotation list', async () => {
       const { ds } = setupTextContext(response);
       const results = await ds.annotationQuery(options);
 

@@ -11,12 +11,12 @@ interface SeriesResponse extends Record<string, any> {
   datapoints: [any[]];
 }
 
-export interface MySqlResponse {
+export interface MysqlResponse {
   data: Array<TableResponse | SeriesResponse>;
 }
 
 export default class ResponseParser {
-  processQueryResult(res: any): MySqlResponse {
+  processQueryResult(res: any): MysqlResponse {
     const data: any[] = [];
 
     if (!res.data.results) {

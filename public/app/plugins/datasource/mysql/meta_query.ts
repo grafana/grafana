@@ -1,8 +1,5 @@
-import { DataQuery } from '@grafana/data';
-import { quoteLiteral, unquoteIdentifier } from './sql';
-
-export class MySqlMetaQuery {
-  constructor(private target: DataQuery) {}
+export class MysqlMetaQuery {
+  constructor(private target: any, private queryModel: any) {}
 
   getOperators(datatype: string) {
     switch (datatype) {
@@ -26,7 +23,7 @@ export class MySqlMetaQuery {
 
   // quote identifier as literal to use in metadata queries
   quoteIdentAsLiteral(value: string) {
-    return quoteLiteral(unquoteIdentifier(value));
+    return this.queryModel.quoteLiteral(this.queryModel.unquoteIdentifier(value));
   }
 
   findMetricTable() {
@@ -76,8 +73,7 @@ export class MySqlMetaQuery {
     return query;
   }
 
-  buildTableConstraint() {
-    const table = (this.target as any).table;
+  buildTableConstraint(table: string) {
     let query = '';
 
     // check for schema qualified table
@@ -98,9 +94,8 @@ export class MySqlMetaQuery {
   }
 
   buildColumnQuery(type?: string) {
-    const timeColumn = (this.target as any).timeColumn;
     let query = 'SELECT column_name FROM information_schema.columns WHERE ';
-    query += this.buildTableConstraint();
+    query += this.buildTableConstraint(this.target.table);
 
     switch (type) {
       case 'time': {
@@ -113,7 +108,7 @@ export class MySqlMetaQuery {
       }
       case 'value': {
         query += " AND data_type IN ('bigint','int','smallint','mediumint','tinyint','double','decimal','float')";
-        query += ' AND column_name <> ' + this.quoteIdentAsLiteral(timeColumn);
+        query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
         break;
       }
       case 'group': {
@@ -128,10 +123,9 @@ export class MySqlMetaQuery {
   }
 
   buildValueQuery(column: string) {
-    const timeColumn = (this.target as any).timeColumn;
     let query = 'SELECT DISTINCT QUOTE(' + column + ')';
-    query += ' FROM ' + (this.target as any).table;
-    query += ' WHERE $__timeFilter(' + timeColumn + ')';
+    query += ' FROM ' + this.target.table;
+    query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
     query += ' ORDER BY 1 LIMIT 100';
     return query;
   }
@@ -141,7 +135,7 @@ export class MySqlMetaQuery {
 SELECT data_type
 FROM information_schema.columns
 WHERE `;
-    query += ' table_name = ' + this.quoteIdentAsLiteral((this.target as any).table);
+    query += ' table_name = ' + this.quoteIdentAsLiteral(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
     return query;
   }

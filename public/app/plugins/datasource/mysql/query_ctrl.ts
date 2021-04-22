@@ -1,15 +1,15 @@
 import { clone, filter, find, findIndex, indexOf, map } from 'lodash';
 import appEvents from 'app/core/app_events';
-import { MySqlMetaQuery } from './meta_query';
+import { MysqlMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { SqlPart } from 'app/core/components/sql_part/sql_part';
+import MysqlQuery from './mysql_query';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { TemplateSrv } from '@grafana/runtime';
 import { ShowConfirmModalEvent } from '../../../types/events';
-import { buildQuery, quoteLiteral, findTimeGroup, hasUnixEpochTimeColumn } from './sql';
 
 const defaultQuery = `SELECT
   UNIX_TIMESTAMP(<time_column>) as time_sec,
@@ -20,14 +20,15 @@ WHERE $__timeFilter(time_column)
 ORDER BY <time_column> ASC
 `;
 
-export class MySqlQueryCtrl extends QueryCtrl {
+export class MysqlQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
   lastQueryError?: string;
   showHelp!: boolean;
 
-  metaBuilder: MySqlMetaQuery;
+  queryModel: MysqlQuery;
+  metaBuilder: MysqlMetaQuery;
   lastQueryMeta?: QueryResultMeta;
   tableSegment: any;
   whereAdd: any;
@@ -49,7 +50,8 @@ export class MySqlQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.target = this.target;
-    this.metaBuilder = new MySqlMetaQuery(this.target);
+    this.queryModel = new MysqlQuery(this.target, templateSrv, this.panel.scopedVars);
+    this.metaBuilder = new MysqlMetaQuery(this.target, this.queryModel);
     this.updateProjection();
 
     this.formats = [
@@ -105,7 +107,7 @@ export class MySqlQueryCtrl extends QueryCtrl {
 
   updateRawSqlAndRefresh() {
     if (!this.target.rawQuery) {
-      this.target.rawSql = buildQuery(this.target);
+      this.target.rawSql = this.queryModel.buildQuery();
     }
 
     this.panelCtrl.refresh();
@@ -197,8 +199,7 @@ export class MySqlQueryCtrl extends QueryCtrl {
 
     const task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then((result: any) => {
       // check if time column is still valid
-      const timeColumn = (this.target as any).timeColumn;
-      if (result.length > 0 && !find(result, (r: any) => r.text === timeColumn)) {
+      if (result.length > 0 && !find(result, (r: any) => r.text === this.target.timeColumn)) {
         const segment = this.uiSegmentSrv.newSegment(result[0].text);
         this.timeColumnSegment.html = segment.html;
         this.timeColumnSegment.value = segment.value;
@@ -234,7 +235,7 @@ export class MySqlQueryCtrl extends QueryCtrl {
             this.target.timeColumnType = result[0].text;
           }
           let partModel;
-          if (hasUnixEpochTimeColumn(this.target)) {
+          if (this.queryModel.hasUnixEpochTimecolumn()) {
             partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
           } else {
             partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
@@ -533,7 +534,7 @@ export class MySqlQueryCtrl extends QueryCtrl {
                   this.transformToSegments({
                     addTemplateVars: true,
                     templateQuoter: (v: string) => {
-                      return quoteLiteral(v);
+                      return this.queryModel.quoteLiteral(v);
                     },
                   })
                 )
@@ -570,7 +571,7 @@ export class MySqlQueryCtrl extends QueryCtrl {
 
   getWhereOptions() {
     const options = [];
-    if (hasUnixEpochTimeColumn(this.target)) {
+    if (this.queryModel.hasUnixEpochTimecolumn()) {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__unixEpochFilter' }));
     } else {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__timeFilter' }));
@@ -606,7 +607,7 @@ export class MySqlQueryCtrl extends QueryCtrl {
       .metricFindQuery(this.metaBuilder.buildColumnQuery('group'))
       .then((tags: any) => {
         const options = [];
-        if (findTimeGroup(this.target) == null) {
+        if (!this.queryModel.hasTimeGroup()) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time($__interval,none)' }));
         }
         for (const tag of tags) {
