@@ -15,7 +15,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed, hideQuickRan
   return {
     container: css`
       background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z4};
+      box-shadow: ${theme.shadows.z3};
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       width: 546px;

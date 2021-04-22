@@ -123,7 +123,7 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: ${theme.components.panel.background};
-$panel-border: ${theme.components.panel.border};
+$panel-border: 1px solid ${theme.components.panel.borderColor};
 $panel-header-hover-bg: ${theme.colors.action.hover};
 $panel-box-shadow: ${theme.components.panel.boxShadow};
 $panel-corner: $panel-bg;
