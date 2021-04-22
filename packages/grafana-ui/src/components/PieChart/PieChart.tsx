@@ -2,7 +2,6 @@ import React, { FC, ReactNode, useState } from 'react';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
-  EventBusWithSourceContext,
   FALLBACK_COLOR,
   FieldDisplay,
   formattedValueToString,
@@ -33,6 +32,7 @@ import {
 } from './types';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
+import { PanelContext } from '../PanelChrome';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -59,7 +59,7 @@ export const PieChart: FC<PieChartProps> = ({
 }) => {
   const theme = useTheme();
   const [highlightedTitle, setHighlightedTitle] = useState<string>();
-  const eventBus = React.useContext(EventBusWithSourceContext);
+  const { eventBus } = React.useContext(PanelContext);
 
   if (eventBus) {
     const setHighlightedSlice = (event: DataHoverEvent) => {

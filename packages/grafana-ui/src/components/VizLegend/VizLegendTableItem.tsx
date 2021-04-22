@@ -4,13 +4,8 @@ import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { useStyles } from '../../themes/ThemeContext';
 import { styleMixins } from '../../themes';
-import {
-  GrafanaTheme,
-  formattedValueToString,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  EventBusWithSourceContext,
-} from '@grafana/data';
+import { GrafanaTheme, formattedValueToString, DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
+import { PanelContext } from '..';
 
 export interface Props {
   key?: React.Key;
@@ -30,7 +25,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   className,
 }) => {
   const styles = useStyles(getStyles);
-  const eventBus = useContext(EventBusWithSourceContext);
+  const { eventBus } = useContext(PanelContext);
 
   const onMouseEnter = useCallback(
     (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {

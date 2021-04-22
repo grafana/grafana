@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary } from '@grafana/ui';
+import { ErrorBoundary, PanelContext } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -16,7 +16,6 @@ import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
   EventBusWithSource,
-  EventBusWithSourceContext,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -290,7 +289,7 @@ export class PanelChrome extends Component<Props, State> {
     return (
       <>
         <div className={panelContentClassNames}>
-          <EventBusWithSourceContext.Provider value={this.state.eventBus}>
+          <PanelContext.Provider value={{ eventBus: this.state.eventBus }}>
             <PanelComponent
               id={panel.id}
               data={data}
@@ -309,7 +308,7 @@ export class PanelChrome extends Component<Props, State> {
               onChangeTimeRange={this.onChangeTimeRange}
               eventBus={dashboard.events}
             />
-          </EventBusWithSourceContext.Provider>
+          </PanelContext.Provider>
         </div>
       </>
     );

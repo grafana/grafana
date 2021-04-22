@@ -4,7 +4,8 @@ import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
-import { DataHoverClearEvent, DataHoverEvent, EventBusWithSourceContext, GrafanaTheme } from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, GrafanaTheme } from '@grafana/data';
+import { PanelContext } from '../PanelChrome';
 
 export interface Props {
   item: VizLegendItem;
@@ -18,7 +19,7 @@ export interface Props {
  */
 export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
   const styles = useStyles(getStyles);
-  const eventBus = useContext(EventBusWithSourceContext);
+  const { eventBus } = useContext(PanelContext);
 
   const onMouseEnter = useCallback(
     (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
