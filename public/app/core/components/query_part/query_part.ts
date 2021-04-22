@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { clone, each, map } from 'lodash';
 
 export class QueryPartDef {
   type: string;
@@ -31,7 +31,7 @@ export class QueryPart {
       throw { message: 'Could not find query part ' + part.type };
     }
 
-    part.params = part.params || _.clone(this.def.defaultParams);
+    part.params = part.params || clone(this.def.defaultParams);
     this.params = part.params;
     this.text = '';
     this.updateText();
@@ -53,7 +53,7 @@ export class QueryPart {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this.hasMultipleParamsInString(strValue, index)) {
-      _.each(strValue.split(','), (partVal, idx) => {
+      each(strValue.split(','), (partVal, idx) => {
         this.updateParam(partVal.trim(), idx);
       });
       return;
@@ -84,7 +84,7 @@ export class QueryPart {
 
 export function functionRenderer(part: any, innerExpr: string) {
   const str = part.def.type + '(';
-  const parameters = _.map(part.params, (value, index) => {
+  const parameters = map(part.params, (value, index) => {
     const paramType = part.def.params[index];
     if (paramType.type === 'time') {
       if (value === 'auto') {

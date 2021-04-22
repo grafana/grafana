@@ -16,7 +16,7 @@ import { DropdownIndicator } from './DropdownIndicator';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
@@ -135,7 +135,7 @@ export function SelectBase<T>({
   value,
   width,
 }: SelectBaseProps<T>) {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
     (value: SelectValue<T>) => {
@@ -245,7 +245,7 @@ export function SelectBase<T>({
                   css(props.getStyles('placeholder', props)),
                   css`
                     display: inline-block;
-                    color: ${theme.colors.formInputPlaceholderText};
+                    color: ${theme.colors.text.disabled};
                     position: absolute;
                     top: 50%;
                     transform: translateY(-50%);

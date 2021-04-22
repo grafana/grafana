@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { useStyles2 } from '../../themes';
 import { MenuItemProps } from './MenuItem';
 
 /** @internal */
@@ -21,7 +21,7 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
 
 /** @internal */
 export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children, ariaLabel }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div>
@@ -37,12 +37,12 @@ export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children, ariaLabel
 MenuGroup.displayName = 'MenuGroup';
 
 /** @internal */
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     groupLabel: css`
-      color: ${theme.v2.palette.text.secondary};
-      font-size: ${theme.v2.typography.size.sm};
-      padding: ${theme.v2.spacing(0.5, 1)};
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.size.sm};
+      padding: ${theme.spacing(0.5, 1)};
     `,
   };
 };

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 
-import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
+import { SelectableValue, GrafanaThemeV2 } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../themes';
 import { IconName, TabsBar, Tab, IconButton, CustomScrollbar, TabContent } from '../..';
 
 export interface TabConfig {
@@ -19,14 +19,14 @@ export interface TabbedContainerProps {
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     container: css`
       height: 100%;
     `,
     tabContent: css`
-      padding: ${theme.spacing.md};
-      background-color: ${theme.colors.bodyBg};
+      padding: ${theme.spacing(2)};
+      background-color: ${theme.colors.background.primary};
       height: 100%;
     `,
     close: css`
@@ -37,15 +37,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.size.lg};
     `,
     tabs: css`
-      padding-top: ${theme.spacing.sm};
-      border-color: ${theme.colors.formInputBorder};
+      padding-top: ${theme.spacing(1)};
+      border-color: ${theme.colors.border.weak};
       ul {
-        margin-left: ${theme.spacing.md};
+        margin-left: ${theme.spacing(2)};
       }
-    `,
-    scrollbar: css`
-      min-height: 100% !important;
-      background-color: ${theme.colors.panelBg};
     `,
   };
 });
@@ -60,7 +56,7 @@ export function TabbedContainer(props: TabbedContainerProps) {
   };
 
   const { tabs, onClose, closeIconTooltip } = props;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
 
   return (
@@ -77,7 +73,7 @@ export function TabbedContainer(props: TabbedContainerProps) {
         ))}
         <IconButton className={styles.close} onClick={onClose} name="times" title={closeIconTooltip ?? 'Close'} />
       </TabsBar>
-      <CustomScrollbar className={styles.scrollbar}>
+      <CustomScrollbar autoHeightMin="100%">
         <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>
       </CustomScrollbar>
     </div>
