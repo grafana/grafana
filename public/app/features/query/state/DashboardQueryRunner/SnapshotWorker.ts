@@ -7,8 +7,7 @@ import { emptyResult } from './utils';
 
 export class SnapshotWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
-    const snapshots = dashboard.annotations.list.find((a) => a.enable && Boolean(a.snapshotData));
-    return Boolean(snapshots);
+    return dashboard.annotations.list.some((a) => a.enable && Boolean(a.snapshotData));
   }
 
   work(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerWorkerResult> {
