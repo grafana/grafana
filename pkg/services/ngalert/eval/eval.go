@@ -103,12 +103,9 @@ type AlertExecCtx struct {
 }
 
 // GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
-func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*backend.QueryDataRequest, error) {
-	queryDataReq := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			OrgID: ctx.OrgID,
-		},
-		Queries: []backend.DataQuery{},
+func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
+	req := &expr.Request{
+		OrgId: ctx.OrgID,
 	}
 
 	for i := range data {
@@ -127,16 +124,19 @@ func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Ti
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
 
-		queryDataReq.Queries = append(queryDataReq.Queries, backend.DataQuery{
+		req.Queries = append(req.Queries, expr.Query{
+			TimeRange: expr.TimeRange{
+				From: q.RelativeTimeRange.ToTimeRange(now).From,
+				To:   q.RelativeTimeRange.ToTimeRange(now).To,
+			},
 			JSON:          model,
 			Interval:      interval,
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
 	}
-	return queryDataReq, nil
+	return req, nil
 }
 
 func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {

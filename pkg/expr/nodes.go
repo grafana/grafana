@@ -24,7 +24,7 @@ type rawNode struct {
 	RefID     string `json:"refId"`
 	Query     map[string]interface{}
 	QueryType string
-	TimeRange backend.TimeRange
+	TimeRange TimeRange
 }
 
 func (rn *rawNode) GetDatasourceName() (string, error) {
@@ -144,7 +144,7 @@ type DSNode struct {
 
 	orgID      int64
 	queryType  string
-	timeRange  backend.TimeRange
+	timeRange  TimeRange
 	intervalMS int64
 	maxDP      int64
 }
@@ -230,8 +230,11 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			MaxDataPoints: dn.maxDP,
 			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
 			JSON:          dn.query,
-			TimeRange:     dn.timeRange,
-			QueryType:     dn.queryType,
+			TimeRange: backend.TimeRange{
+				From: dn.timeRange.From,
+				To:   dn.timeRange.To,
+			},
+			QueryType: dn.queryType,
 		},
 	}
 
