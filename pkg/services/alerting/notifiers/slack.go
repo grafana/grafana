@@ -36,9 +36,8 @@ func init() {
 				Label:        "Recipient",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
-				Description:  "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID",
+				Description:  "Specify channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID - required unless you provide a webhook",
 				PropertyName: "recipient",
-				Required:     true,
 			},
 			// Logically, this field should be required when not using a webhook, since the Slack API needs a token.
 			// However, since the UI doesn't allow to say that a field is required or not depending on another field,
@@ -135,8 +134,14 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient != "" && !reRecipient.MatchString(recipient) {
-		return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
+	if recipient != "" {
+		if !reRecipient.MatchString(recipient) {
+			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
+		}
+	} else if apiURL.String() == slackAPIEndpoint {
+		return nil, alerting.ValidationError{
+			Reason: "recipient must be specified when using the Slack chat API",
+		}
 	}
 	username := model.Settings.Get("username").MustString()
 	iconEmoji := model.Settings.Get("icon_emoji").MustString()

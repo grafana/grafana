@@ -23,7 +23,7 @@ func TestSlackNotifier(t *testing.T) {
 		}
 
 		_, err = NewSlackNotifier(model)
-		assert.EqualError(t, err, "alert validation error: token must be specified when using the Slack chat API")
+		assert.EqualError(t, err, "alert validation error: recipient must be specified when using the Slack chat API")
 	})
 
 	t.Run("from settings", func(t *testing.T) {

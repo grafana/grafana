@@ -69,8 +69,14 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template, ext
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient != "" && !reRecipient.MatchString(recipient) {
-		return nil, alerting.ValidationError{Reason: fmt.Sprintf("Recipient on invalid format: %q", recipient)}
+	if recipient != "" {
+		if !reRecipient.MatchString(recipient) {
+			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
+		}
+	} else if apiURL.String() == slackAPIEndpoint {
+		return nil, alerting.ValidationError{
+			Reason: "recipient must be specified when using the Slack chat API",
+		}
 	}
 
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()

@@ -148,9 +148,17 @@ func TestSlackNotifier(t *testing.T) {
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name:         "Missing token",
-			settings:     `{}`,
+			name: "Missing token",
+			settings: `{
+				"recipient": "#testchannel"
+			}`,
 			expInitError: alerting.ValidationError{Reason: "token must be specified when using the Slack chat API"},
+		}, {
+			name: "Missing recipient",
+			settings: `{
+				"token": "1234"
+			}`,
+			expInitError: alerting.ValidationError{Reason: "recipient must be specified when using the Slack chat API"},
 		}, {
 			name: "Error in building message",
 			settings: `{
