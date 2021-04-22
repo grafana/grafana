@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map as _map } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
@@ -48,7 +48,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
       return value;
     }
 
-    const quotedValues = _.map(value, (v: any) => {
+    const quotedValues = _map(value, (v: any) => {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
