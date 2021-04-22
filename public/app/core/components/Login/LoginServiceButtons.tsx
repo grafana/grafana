@@ -129,10 +129,10 @@ function getButtonStyleFor(service: LoginService, styles: ReturnType<typeof getS
     styles.button,
     css`
       background-color: ${service.bgColor};
-      color: ${theme.palette.getContrastText(service.bgColor)};
+      color: ${theme.colors.getContrastText(service.bgColor)};
 
       &:hover {
-        background-color: ${theme.palette.emphasize(service.bgColor, 0.15)};
+        background-color: ${theme.colors.emphasize(service.bgColor, 0.15)};
         box-shadow: ${theme.shadows.z1};
       }
     `
