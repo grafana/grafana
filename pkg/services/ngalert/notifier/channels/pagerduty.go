@@ -3,11 +3,11 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"os"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -97,12 +97,12 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	msg, eventType, err := pn.buildPagerdutyMessage(ctx, alerts, as)
 	if err != nil {
-		return false, errors.Wrap(err, "build pagerduty message")
+		return false, fmt.Errorf("build pagerduty message: %w", err)
 	}
 
 	body, err := json.Marshal(msg)
 	if err != nil {
-		return false, errors.Wrap(err, "marshal json")
+		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
@@ -115,7 +115,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		},
 	}
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
-		return false, errors.Wrap(err, "send notification to Pagerduty")
+		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
 	return true, nil
@@ -140,7 +140,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	for k, v := range pn.CustomDetails {
 		detail, err := pn.tmpl.ExecuteTextString(v, data)
 		if err != nil {
-			return nil, "", errors.Wrapf(err, "%q: failed to template %q", k, v)
+			return nil, "", fmt.Errorf("%q: failed to template %q: %w", k, v, err)
 		}
 		details[k] = detail
 	}
@@ -172,7 +172,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		return nil, "", errors.Wrap(tmplErr, "failed to template PagerDuty message")
+		return nil, "", fmt.Errorf("failed to template PagerDuty message: %w", tmplErr)
 	}
 
 	return msg, eventType, nil

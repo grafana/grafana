@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isNumber } from 'lodash';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from '../../state/DashboardModel';
 import { getBackendSrv } from '@grafana/runtime';
@@ -39,7 +39,7 @@ export class HistorySrv {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
     const url = `api/dashboards/id/${id}/restore`;
 
-    return id && _.isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
+    return id && isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
   }
 }
 

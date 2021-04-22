@@ -1,5 +1,5 @@
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import _ from 'lodash';
+import { defaultsDeep, includes, keys, map, reduce, min as _min, max as _max } from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import TimeSeries from 'app/core/time_series2';
 import { axesEditor } from './axes_editor';
@@ -132,7 +132,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     this.selectionActivated = false;
 
-    _.defaultsDeep(this.panel, panelDefaults);
+    defaultsDeep(this.panel, panelDefaults);
     this.opacityScales = opacityScales;
     this.colorModes = colorModes;
     this.colorSchemes = colorSchemes;
@@ -239,7 +239,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
 
     // Try to sort series by bucket bound, if datasource doesn't do it.
-    if (!_.includes(dsSupportHistogramSort, panelDatasource)) {
+    if (!includes(dsSupportHistogramSort, panelDatasource)) {
       this.series.sort(sortSeriesByLabel);
     }
 
@@ -251,7 +251,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as Y axis labels.
     bucketsData = histogramToHeatmap(this.series);
 
-    tsBuckets = _.map(this.series, 'label');
+    tsBuckets = map(this.series, 'label');
     const yBucketBound = this.panel.yBucketBound;
     if (
       (panelDatasource === 'prometheus' && yBucketBound !== 'lower' && yBucketBound !== 'middle') ||
@@ -266,7 +266,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     }
 
     // Calculate bucket size based on heatmap data
-    const xBucketBoundSet = _.map(_.keys(bucketsData), (key) => Number(key));
+    const xBucketBoundSet = map(keys(bucketsData), (key) => Number(key));
     xBucketSize = calculateBucketSize(xBucketBoundSet);
     // Always let yBucketSize=1 in 'tsbuckets' mode
     yBucketSize = 1;
@@ -305,7 +305,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     });
 
     this.dataWarning = null;
-    const datapointsCount = _.reduce(
+    const datapointsCount = reduce(
       this.series,
       (sum, series) => {
         return sum + series.datapoints.length;
@@ -344,9 +344,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseSeries(series: TimeSeries[]) {
-    const min = _.min(_.map(series, (s) => s.stats.min));
-    const minLog = _.min(_.map(series, (s) => s.stats.logmin));
-    const max = _.max(_.map(series, (s) => s.stats.max));
+    const min = _min(map(series, (s) => s.stats.min));
+    const minLog = _min(map(series, (s) => s.stats.logmin));
+    const max = _max(map(series, (s) => s.stats.max));
 
     return {
       max,
@@ -356,10 +356,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseHistogramSeries(series: TimeSeries[]) {
-    const bounds = _.map(series, (s) => Number(s.alias));
-    const min = _.min(bounds);
-    const minLog = _.min(bounds);
-    const max = _.max(bounds);
+    const bounds = map(series, (s) => Number(s.alias));
+    const min = _min(bounds);
+    const minLog = _min(bounds);
+    const max = _max(bounds);
 
     return {
       max: max,

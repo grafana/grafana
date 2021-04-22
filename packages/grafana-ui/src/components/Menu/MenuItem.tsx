@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme, LinkTarget } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { GrafanaThemeV2, LinkTarget } from '@grafana/data';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
@@ -28,7 +28,7 @@ export interface MenuItemProps {
 /** @internal */
 export const MenuItem: React.FC<MenuItemProps> = React.memo(
   ({ url, icon, label, ariaLabel, target, onClick, className, active }) => {
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
     const itemStyle = cx(
       {
         [styles.item]: true,
@@ -55,16 +55,16 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
 MenuItem.displayName = 'MenuItem';
 
 /** @internal */
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     link: css`
-      color: ${theme.v2.palette.text.primary};
+      color: ${theme.colors.text.primary};
       display: flex;
       cursor: pointer;
       padding: 5px 12px 5px 10px;
 
       &:hover {
-        color: ${theme.v2.palette.text.primary};
+        color: ${theme.colors.text.primary};
         text-decoration: none;
       }
     `,
@@ -74,16 +74,16 @@ const getStyles = (theme: GrafanaTheme) => {
       white-space: nowrap;
 
       &:hover {
-        background: ${theme.v2.palette.action.hover};
+        background: ${theme.colors.action.hover};
       }
     `,
     activeItem: css`
-      background: ${theme.v2.palette.action.selected};
+      background: ${theme.colors.action.selected};
     `,
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
-      color: ${theme.v2.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
     `,
   };
 };
