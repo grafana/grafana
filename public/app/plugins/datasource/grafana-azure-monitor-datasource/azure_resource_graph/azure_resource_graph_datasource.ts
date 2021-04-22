@@ -1,3 +1,4 @@
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from '../azure_log_analytics/response_parser';
