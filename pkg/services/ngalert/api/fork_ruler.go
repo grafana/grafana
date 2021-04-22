@@ -27,7 +27,7 @@ type ForkedRuler struct {
 
 // NewForkedRuler implements a set of routes that proxy to various Cortex Ruler-compatible backends.
 func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana RulerApiService, reg prometheus.Registerer) *ForkedRuler {
-	return &ForkedRuler{
+	r := &ForkedRuler{
 		LotexRuler:      lotex,
 		GrafanaRuler:    grafana,
 		DatasourceCache: datasourceCache,
@@ -38,6 +38,12 @@ func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana Rul
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"backend", "status"}),
 	}
+	if reg != nil {
+		reg.MustRegister(
+			r.duration,
+		)
+	}
+	return r
 }
 
 func (r *ForkedRuler) instrument(backend string, fn func() response.Response) response.Response {
