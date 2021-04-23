@@ -1,4 +1,5 @@
 import { throwError } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { AlertState, AlertStateInfo } from '@grafana/data';
 
@@ -173,6 +174,61 @@ describe('DashboardQueryRunnerImpl', () => {
 
         runner.run(options);
       });
+    });
+  });
+
+  describe('when calling run twice', () => {
+    it('then it should cancel previous run', (done) => {
+      const { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
+      executeAnnotationQueryMock.mockReturnValueOnce(
+        toAsyncOfResult({ events: [{ id: 'NextGen' }] }).pipe(delay(10000))
+      );
+
+      expectOnResults({
+        runner,
+        panelId: 1,
+        done,
+        expect: (results) => {
+          // should have one alert state, one snapshot, one legacy and one next gen result
+          // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
+          const { alertState, annotations } = getExpectedForAllResult();
+          const expected = { alertState, annotations };
+          expect(results).toEqual(expected);
+          expect(annotationQueryMock).toHaveBeenCalledTimes(2);
+          expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(2);
+          expect(getMock).toHaveBeenCalledTimes(2);
+        },
+      });
+
+      runner.run(options);
+      runner.run(options);
+    });
+  });
+
+  describe('when calling cancel', () => {
+    it('then it should cancel previous run', (done) => {
+      const { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
+      executeAnnotationQueryMock.mockReturnValueOnce(
+        toAsyncOfResult({ events: [{ id: 'NextGen' }] }).pipe(delay(10000))
+      );
+
+      expectOnResults({
+        runner,
+        panelId: 1,
+        done,
+        expect: (results) => {
+          // should have one alert state, one snapshot, one legacy and one next gen result
+          // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
+          const expected = { alertState: undefined, annotations: [] };
+          expect(results).toEqual(expected);
+          expect(annotationQueryMock).toHaveBeenCalledTimes(0);
+          expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(0);
+          expect(getMock).toHaveBeenCalledTimes(1);
+        },
+      });
+
+      runner.run(options);
+      runner.cancel();
     });
   });
 });
