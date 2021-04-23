@@ -3,33 +3,32 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"net/url"
 
 	gokit_log "github.com/go-kit/kit/log"
+	"github.com/pkg/errors"
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/pkg/errors"
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
 )
 
 // TeamsNotifier is responsible for sending
 // alert notifications to Microsoft teams.
 type TeamsNotifier struct {
 	old_notifiers.NotifierBase
-	URL         string
-	Message     string
-	tmpl        *template.Template
-	log         log.Logger
-	externalUrl *url.URL
+	URL     string
+	Message string
+	tmpl    *template.Template
+	log     log.Logger
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*TeamsNotifier, error) {
+func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*TeamsNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -44,14 +43,13 @@ func NewTeamsNotifier(model *models.AlertNotification, t *template.Template, ext
 		URL:          u,
 		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		log:          log.New("alerting.notifier.teams"),
-		externalUrl:  externalUrl,
 		tmpl:         t,
 	}, nil
 }
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.externalUrl}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 
