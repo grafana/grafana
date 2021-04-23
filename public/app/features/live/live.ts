@@ -315,8 +315,8 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   }
 }
 
-// incremet the stream ids
-let streamCounter = 10;
+// This is used to give a unique key for each stream.  The actual value does not matter
+let streamCounter = 0;
 
 export function getGrafanaLiveCentrifugeSrv() {
   return getGrafanaLiveSrv() as CentrifugeSrv;
