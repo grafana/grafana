@@ -31,7 +31,7 @@ import {
 } from 'app/core/constants';
 import { isConstant, isMulti, isQuery } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableHide, VariableTag } from '../../variables/types';
+import { VariableHide } from '../../variables/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -542,21 +542,21 @@ export class DashboardMigrator {
           continue;
         }
 
-        const { tags, current } = variable;
+        const { tags, current }: any = variable;
         if (!Array.isArray(tags)) {
-          variable.tags = [];
+          (variable as any).tags = [];
           continue;
         }
 
         const currentTags = current?.tags ?? [];
-        const currents = currentTags.reduce((all, tag) => {
+        const currents = currentTags.reduce((all: Record<string, any>, tag: any) => {
           if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
             all[tag.text] = tag;
           }
           return all;
-        }, {} as Record<string, VariableTag>);
+        }, {} as Record<string, any>);
 
-        const newTags: VariableTag[] = [];
+        const newTags: any[] = [];
 
         for (const tag of tags) {
           if (typeof tag === 'object') {
@@ -572,7 +572,7 @@ export class DashboardMigrator {
 
           newTags.push(defaults(currents[tag], { text: tag, selected: false }));
         }
-        variable.tags = newTags;
+        (variable as any).tags = newTags;
       }
     }
 
