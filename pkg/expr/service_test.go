@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// nolint:staticcheck // plugins.DataPlugin deprecated
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []*time.Time{utp(1)}),
@@ -102,6 +103,7 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	return plugins.DataResponse{
