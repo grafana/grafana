@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -81,7 +81,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiring",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -91,8 +90,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -209,8 +208,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -239,8 +238,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -269,8 +268,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -300,8 +299,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -369,8 +368,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -389,8 +388,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -475,8 +474,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
+								"datasourceUid":"-100",
 								"model":{
-								   "datasourceUid":"-100",
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":100,
@@ -510,8 +509,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
+								"datasourceUid":"-100",
 								"model":{
-								   "datasourceUid":"-100",
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":100,
@@ -568,8 +567,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-											"datasourceUid": "-100",
 											"type": "math",
 											"expression": "2 + 3 < 1"
 											}`),
@@ -652,8 +651,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-											"datasourceUid": "-100",
 											"type": "math",
 											"expression": "2 + 3 < 1"
 											}`),
@@ -714,7 +713,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						"annotations": {
 							"annotation1": "val42",
 							"foo": "bar"
-					   },	
+					   },
 		               "expr":"",
 					   "for": "30s",
 					   "labels": {
@@ -734,8 +733,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 		                           "from":18000,
 		                           "to":10800
 		                        },
-		                        "model":{
-		                           "datasourceUid":"-100",
+		                        "datasourceUid":"-100",
+								"model":{
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
 		                           "maxDataPoints":100,
@@ -818,8 +817,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid":"-100",
 						"model": {
-							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"1 < 2"
 						}
@@ -869,8 +868,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid": "-100",
 						"model": {
-							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"1 > 2"
 						}
@@ -920,8 +919,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid": "-100",
 						"model": {
-							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"1 > 2"
 						}
@@ -947,8 +946,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid": "unknown",
 						"model": {
-							"datasourceUid": "unknown"
 						}
 					}
 				],
@@ -998,8 +997,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
+							"datasourceUid": "-100",
 							"model": {
-								"datasourceUid": "-100",
 								"type":"math",
 								"expression":"1 < 2"
 							}
@@ -1051,8 +1050,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
+							"datasourceUid": "-100",
 							"model": {
-								"datasourceUid": "-100",
 								"type":"math",
 								"expression":"1 > 2"
 							}
@@ -1104,8 +1103,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
+							"datasourceUid": "unknown",
 							"model": {
-								"datasourceUid": "unknown"
 							}
 						}
 					],

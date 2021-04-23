@@ -60,7 +60,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeOrgCurrentUsersAll), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
-	r.Get("/org/users/invite", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), hs.Index)
+	r.Get("/org/users/invite", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), hs.Index)
 	r.Get("/org/teams", reqCanAccessTeams, hs.Index)
 	r.Get("/org/teams/*", reqCanAccessTeams, hs.Index)
 	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
@@ -210,9 +210,9 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRemove, orgScope), routing.Wrap(RemoveOrgUserForCurrentOrg))
 
 			// invites
-			orgRoute.Get("/invites", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), routing.Wrap(GetPendingOrgInvites))
-			orgRoute.Post("/invites", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), quota("user"), bind(dtos.AddInviteForm{}), routing.Wrap(AddOrgInvite))
-			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), routing.Wrap(RevokeInvite))
+			orgRoute.Get("/invites", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), routing.Wrap(GetPendingOrgInvites))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), quota("user"), bind(dtos.AddInviteForm{}), routing.Wrap(AddOrgInvite))
+			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), routing.Wrap(RevokeInvite))
 
 			// prefs
 			orgRoute.Get("/preferences", reqOrgAdmin, routing.Wrap(GetOrgPreferences))
