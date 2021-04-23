@@ -4,10 +4,11 @@ import { LokiQuery } from './types';
  */
 export class LokiAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
-  annotation: any;
+  declare annotation: any;
 
   /** @ngInject */
-  constructor() {
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation;
     this.annotation.target = this.annotation.target || {};
     this.onQueryChange = this.onQueryChange.bind(this);
   }
