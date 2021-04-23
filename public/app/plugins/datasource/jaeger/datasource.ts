@@ -38,7 +38,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       return of({ data: [emptyTraceDataFrame] });
     }
 
-    if (target.traceID) {
+    if (target.queryType === 'traceID' && target.traceID) {
       return this._request(`/api/traces/${encodeURIComponent(target.traceID)}`).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
@@ -53,6 +53,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     }
 
     let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
+    // remove empty properties
     jaegerQuery = pickBy(jaegerQuery, identity);
     if (jaegerQuery.tags) {
       jaegerQuery = { ...jaegerQuery, tags: convertTagsLogfmt(jaegerQuery.tags) };
@@ -64,7 +65,6 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces`, {
-      // remove empty values
       ...jaegerQuery,
       ...this.getTimeRange(),
       lookback: 'custom',

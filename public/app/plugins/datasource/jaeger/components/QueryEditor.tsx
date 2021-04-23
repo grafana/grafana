@@ -1,7 +1,7 @@
 import { QueryEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input, RadioButtonGroup } from '@grafana/ui';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery, JaegerQueryType } from '../types';
 import { SearchForm } from './SearchForm';
@@ -9,22 +9,13 @@ import { SearchForm } from './SearchForm';
 type Props = QueryEditorProps<JaegerDatasource, JaegerQuery>;
 
 export function QueryEditor({ datasource, query, onChange }: Props) {
-  useEffect(() => {
-    if (!query.queryType) {
-      onChange({
-        ...query,
-        queryType: 'search',
-      });
-    }
-  }, [onChange, query]);
-
   return (
     <div>
       <InlineFieldRow>
         <InlineField label="Query type">
           <RadioButtonGroup<JaegerQueryType>
             options={[
-              { value: 'search', label: 'Search' },
+              { value: undefined, label: 'Search' },
               { value: 'traceID', label: 'TraceID' },
             ]}
             value={query.queryType}

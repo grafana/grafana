@@ -54,7 +54,8 @@ export function SearchForm({ datasource, query, onChange }: Props) {
       <InlineField label="Service">
         <Select
           options={serviceOptions}
-          value={{ label: query.service, value: query.service }}
+          value={serviceOptions?.find((v) => v.value === query.service) || null}
+          width={12}
           onChange={(v) => {
             onChange({
               ...query,
@@ -69,7 +70,8 @@ export function SearchForm({ datasource, query, onChange }: Props) {
       <InlineField label="Operation">
         <Select
           options={operationOptions}
-          value={operationOptions?.find((v) => v.value === query.operation)}
+          value={operationOptions?.find((v) => v.value === query.operation) || null}
+          width={12}
           onChange={(v) =>
             onChange({
               ...query,
@@ -94,7 +96,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
 
       <InlineField label="Min Duration">
         <Input
-          value={query.minDuration}
+          value={query.minDuration || ''}
           placeholder={durationPlaceholder}
           onChange={(v) =>
             onChange({
@@ -107,7 +109,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
 
       <InlineField label="Max Duration">
         <Input
-          value={query.maxDuration}
+          value={query.maxDuration || ''}
           placeholder={durationPlaceholder}
           onChange={(v) =>
             onChange({
@@ -120,7 +122,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
 
       <InlineField label="Limit">
         <Input
-          value={query.limit}
+          value={query.limit || ''}
           type="number"
           onChange={(v) =>
             onChange({
