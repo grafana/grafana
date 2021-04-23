@@ -192,17 +192,28 @@ export class GrafanaApp {
   initEchoSrv() {
     setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
-    ttiPolyfill.getFirstConsistentlyInteractive().then((tti: any) => {
-      // Collecting paint metrics first
-      const paintMetrics = performance && performance.getEntriesByType ? performance.getEntriesByType('paint') : [];
+    window.addEventListener('load', (e) => {
+      const loadMetricName = 'frontend_boot_load_time_seconds';
 
-      for (const metric of paintMetrics) {
-        reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
+      if (performance && performance.getEntriesByType) {
+        performance.mark(loadMetricName);
+
+        const paintMetrics = performance.getEntriesByType('paint');
+
+        for (const metric of paintMetrics) {
+          reportPerformance(
+            `frontend_boot_${metric.name}_time_seconds`,
+            Math.round(metric.startTime + metric.duration) / 1000
+          );
+        }
+
+        const loadMetric = performance.getEntriesByName(loadMetricName)[0];
+        reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration) / 1000);
       }
-      reportPerformance('tti', tti);
     });
 
     registerEchoBackend(new PerformanceBackend({}));
+
     if (config.sentry.enabled) {
       registerEchoBackend(
         new SentryEchoBackend({
