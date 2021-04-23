@@ -58,7 +58,7 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 		}
 	}()
 	t.Cleanup(func() {
-		go server.Shutdown("test cleanup")
+		server.Shutdown("test cleanup")
 	})
 
 	// Wait for Grafana to be ready
