@@ -1,49 +1,71 @@
 import {
-  ArrayVector,
-  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceApi,
   DataSourceInstanceSettings,
-  Field,
-  FieldType,
-  MutableDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { Observable } from 'rxjs';
+import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createGraphFrames } from './graphTransform';
+import { LokiOptions } from '../loki/types';
+import { transformTrace, transformTraceList } from './resultTransformer';
+
+export type TempoQueryType = 'search' | undefined;
 
 export type TempoQuery = {
   query: string;
+  // Query to find list of traces, e.g., via Loki
+  linkedQuery?: DataQuery;
+  queryType: TempoQueryType;
 } & DataQuery;
 
-export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLogsData> {
+  tracesToLogs: TraceToLogsOptions;
+  linkedDatasource: DataSourceApi;
+  constructor(instanceSettings: DataSourceInstanceSettings<TraceToLogsData>) {
     super(instanceSettings);
+    this.tracesToLogs = instanceSettings.jsonData.tracesToLogs || {};
+    if (this.tracesToLogs.datasourceUid) {
+      this.linkDatasource();
+    }
+  }
+
+  async linkDatasource() {
+    const dsSrv = getDatasourceSrv();
+    this.linkedDatasource = await dsSrv.get(this.tracesToLogs.datasourceUid);
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
+    // If there is a linked query, run that instead. This is used to provide a list of traces.
+    if (options.targets.some((t) => t.linkedQuery) && this.linkedDatasource) {
+      // Wrap linked query into a data request based on original request
+      const linkedQuery = options.targets.find((t) => t.linkedQuery)?.linkedQuery;
+      const linkedRequest: DataQueryRequest = { ...options, targets: [linkedQuery!] };
+      // Find trace matcher in derived fields of the linked datasource that's identical to this datasource
+      const settings: DataSourceInstanceSettings<LokiOptions> = ((this.linkedDatasource as unknown) as any)
+        .instanceSettings;
+      const traceLinkField = settings.jsonData.derivedFields?.find((field) => field.datasourceUid === this.uid);
+      if (!traceLinkField || !traceLinkField.matcherRegex) {
+        return throwError(
+          'No Loki datasource configured for search. Set up Derived Field for traces in a Loki datasource settings and link it to this Tempo datasource.'
+        );
+      }
+      return (this.linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
+        map((response) =>
+          response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkField.matcherRegex)
+        )
+      );
+    }
+
     return super.query(options).pipe(
       map((response) => {
         if (response.error) {
           return response;
         }
-        // We need to parse some of the fields which contain stringified json.
-        // Seems like we can't just map the values as the frame we got from backend has some default processing
-        // and will stringify the json back when we try to set it. So we create a new field and swap it instead.
-        const frame: DataFrame = response.data[0];
-
-        if (!frame) {
-          return emptyDataQueryResponse;
-        }
-
-        parseJsonFields(frame);
-
-        return {
-          ...response,
-          data: [...response.data, ...createGraphFrames(frame)],
-        };
+        return transformTrace(response);
       })
     );
   }
@@ -62,44 +84,3 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
     return query.query;
   }
 }
-
-/**
- * Change fields which are json string into JS objects. Modifies the frame in place.
- */
-function parseJsonFields(frame: DataFrame) {
-  for (const fieldName of ['serviceTags', 'logs', 'tags']) {
-    const field = frame.fields.find((f) => f.name === fieldName);
-    if (field) {
-      const fieldIndex = frame.fields.indexOf(field);
-      const values = new ArrayVector();
-      const newField: Field = {
-        ...field,
-        values,
-        type: FieldType.other,
-      };
-
-      for (let i = 0; i < field.values.length; i++) {
-        const value = field.values.get(i);
-        values.set(i, value === '' ? undefined : JSON.parse(value));
-      }
-      frame.fields[fieldIndex] = newField;
-    }
-  }
-}
-
-const emptyDataQueryResponse = {
-  data: [
-    new MutableDataFrame({
-      fields: [
-        {
-          name: 'trace',
-          type: FieldType.trace,
-          values: [],
-        },
-      ],
-      meta: {
-        preferredVisualisationType: 'trace',
-      },
-    }),
-  ],
-};
