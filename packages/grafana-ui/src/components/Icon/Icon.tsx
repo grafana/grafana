@@ -6,7 +6,10 @@ import { useTheme } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
 import SVG from '@leeoniya/react-inlinesvg';
 
-const iconRoot = '/public/img/icons/';
+declare let __webpack_public_path__: string;
+
+// Lazy load the root url
+let iconRoot: string | undefined = undefined;
 const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -54,6 +57,19 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
     if (name === 'panel-add') {
       size = 'xl';
+    }
+
+    // Lazy load -- this will give time the the CDN path to be injected on app init
+    if (!iconRoot) {
+      if (__webpack_public_path__) {
+        const publicpath = // __webpack_public_path__ includes the 'build/' suffix
+          __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) ||
+          __webpack_public_path__;
+
+        iconRoot = publicpath + 'img/icons/';
+      } else {
+        iconRoot = '/public/img/icons/'; // will only happen for non-grafana builds
+      }
     }
 
     const styles = getIconStyles(theme);

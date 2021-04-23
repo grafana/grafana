@@ -1,8 +1,6 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
 import {
-  compareArrayValues,
-  compareDataFrameStructures,
   DataFrame,
   DataFrameFieldIndex,
   FieldMatcherID,
@@ -20,7 +18,7 @@ import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 
 /**
@@ -32,6 +30,7 @@ export interface GraphNGProps extends Themeable {
   width: number;
   height: number;
   data: DataFrame[];
+  structureRev?: number; // a number that will change when the data[] structure changes
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
@@ -96,7 +95,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     return {
       ...state,
-      data: preparePlotData(frame, [FieldType.string]),
+      data: preparePlotData(frame, [FieldType.number]),
       alignedDataFrame: frame,
       seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
       dimFields,
@@ -119,7 +118,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { data, theme } = this.props;
+    const { data, theme, structureRev } = this.props;
     const { alignedDataFrame } = this.state;
     let shouldConfigUpdate = false;
     let stateUpdate = {} as GraphNGState;
@@ -133,8 +132,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         return;
       }
 
-      const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
-
+      const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
       if (shouldConfigUpdate || hasStructureChanged) {
         const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone);
         stateUpdate = { ...stateUpdate, config: builder };

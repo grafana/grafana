@@ -17,6 +17,8 @@ export default function createMockDatasource() {
       getSubscriptions: jest.fn().mockResolvedValueOnce([]),
     },
 
+    getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
+
     getResourceGroups: jest.fn().mockResolvedValueOnce([]),
     getMetricDefinitions: jest.fn().mockResolvedValueOnce([]),
     getResourceNames: jest.fn().mockResolvedValueOnce([]),

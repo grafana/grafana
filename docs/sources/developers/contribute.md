@@ -21,7 +21,7 @@ These resources are useful for all developers.
 
 - [Create a pull request](https://github.com/grafana/grafana/blob/master/contribute/create-pull-request.md): A guide for new contributors about how to create your first Grafana pull request.
 
-- [REST APIs](https://grafana.com/docs/grafana/latest/http_api/) allow you to interact programmatically with the Grafana backend.
+- [REST APIs](https://grafana.com/docs/grafana/next/http_api/) allow you to interact programmatically with the Grafana backend.
 
 ## Best practices and style
 

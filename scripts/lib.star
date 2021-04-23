@@ -1,4 +1,4 @@
-grabpl_version = '0.5.48'
+grabpl_version = '0.5.53'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -509,7 +509,7 @@ def codespell_step():
         ],
         'commands': [
             # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt',
+            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
         ],
     }
@@ -526,18 +526,6 @@ def shellcheck_step():
         ],
     }
 
-def dashboard_schemas_check():
-    return {
-        'name': 'check-dashboard-schemas',
-        'image': build_image,
-        'depends_on': [
-            'initialize',
-        ],
-        'commands': [
-            'cue export --out openapi -o - ./dashboard-schemas/...',
-        ],
-    }
-
 def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
     deps = [
         'build-backend',
@@ -547,7 +535,6 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
         'test-frontend',
         'codespell',
         'shellcheck',
-        'check-dashboard-schemas',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -816,6 +803,23 @@ def redis_integration_tests_step():
         ],
     }
 
+def memcached_integration_tests_step():
+    return {
+        'name': 'memcached-integration-tests',
+        'image': build_image,
+        'depends_on': [
+            'test-backend',
+            'test-frontend',
+        ],
+        'environment': {
+            'MEMCACHED_HOSTS': 'memcached:11211',
+        },
+        'commands': [
+            './bin/dockerize -wait tcp://memcached:11211 -timeout 120s',
+            './bin/grabpl integration-tests',
+        ],
+    }
+
 def release_canary_npm_packages_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
@@ -882,6 +886,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     if edition in ('enterprise', 'enterprise2'):
       dependencies.append('redis-integration-tests')
+      dependencies.append('memcached-integration-tests')
 
     return {
         'name': 'upload-packages' + enterprise2_sfx(edition),
@@ -1093,10 +1098,14 @@ def integration_test_services(edition):
     ]
 
     if edition in ('enterprise', 'enterprise2'):
-        services.append({
+        services.extend([{
             'name': 'redis',
             'image': 'redis:6.2.1-alpine',
             'environment': {},
-        })
+        }, {
+            'name': 'memcached',
+            'image': 'memcached:1.6.9-alpine',
+            'environment': {},
+        }])
 
     return services

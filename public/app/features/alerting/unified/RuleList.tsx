@@ -1,34 +1,46 @@
-import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
-import { Icon, InfoBox, useStyles, Button } from '@grafana/ui';
+import { DataSourceInstanceSettings, GrafanaTheme, urlUtil } from '@grafana/data';
+import { Icon, InfoBox, useStyles, Button, ButtonGroup, ToolbarButton } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
-import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRules } from './state/actions';
-import {
-  getAllRulesSourceNames,
-  getRulesDataSources,
-  GRAFANA_RULES_SOURCE_NAME,
-  isCloudRulesSource,
-} from './utils/datasource';
+import { useFilteredRules } from './hooks/useFilteredRules';
+import { fetchAllPromAndRulerRulesAction } from './state/actions';
+import { getAllRulesSourceNames, getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { css } from '@emotion/css';
-import { ThresholdRules } from './components/rules/ThresholdRules';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { isRulerNotSupportedResponse } from './utils/rules';
+import RulesFilter from './components/rules/RulesFilter';
+import { RuleListGroupView } from './components/rules/RuleListGroupView';
+import { RuleListStateView } from './components/rules/RuleListStateView';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { config } from '@grafana/runtime';
+
+const VIEWS = {
+  groups: RuleListGroupView,
+  state: RuleListStateView,
+};
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
+  const [queryParams] = useQueryParams();
+
+  const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
+    ? (queryParams['view'] as keyof typeof VIEWS)
+    : 'groups';
+
+  const ViewComponent = VIEWS[view];
+
   // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {
-    dispatch(fetchAllPromAndRulerRules());
-    const interval = setInterval(() => dispatch(fetchAllPromAndRulerRules()), RULE_LIST_POLL_INTERVAL_MS);
+    dispatch(fetchAllPromAndRulerRulesAction());
+    const interval = setInterval(() => dispatch(fetchAllPromAndRulerRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
     return () => {
       clearInterval(interval);
     };
@@ -69,20 +81,10 @@ export const RuleList: FC = () => {
   const grafanaPromError = promRuleRequests[GRAFANA_RULES_SOURCE_NAME]?.error;
   const grafanaRulerError = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME]?.error;
 
-  const combinedNamespaces = useCombinedRuleNamespaces();
-  const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
-    const sorted = combinedNamespaces
-      .map((namespace) => ({
-        ...namespace,
-        groups: namespace.groups.sort((a, b) => a.name.localeCompare(b.name)),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    return [
-      sorted.filter((ns) => ns.rulesSource === GRAFANA_RULES_SOURCE_NAME),
-      sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),
-    ];
-  }, [combinedNamespaces]);
+  const showNewAlertSplash = dispatched && !loading && !haveResults;
 
+  const combinedNamespaces = useCombinedRuleNamespaces();
+  const filteredNamespaces = useFilteredRules(combinedNamespaces);
   return (
     <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
       {(promReqeustErrors.length || rulerRequestErrors.length || grafanaPromError) && (
@@ -104,32 +106,57 @@ export const RuleList: FC = () => {
           )}
           {promReqeustErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules state from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              Failed to load rules state from{' '}
+              <a href={`${config.appSubUrl ?? ''}/datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
           {rulerRequestErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules config from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              Failed to load rules config from{' '}
+              <a href={`${config.appSubUrl ?? ''}/datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
         </InfoBox>
       )}
-      <div className={styles.buttonsContainer}>
-        <div />
-        <a href="/alerting/new">
-          <Button icon="plus">New alert rule</Button>
-        </a>
-      </div>
-      {dispatched && !loading && !haveResults && <NoRulesSplash />}
-      {haveResults && <ThresholdRules namespaces={thresholdNamespaces} />}
-      {haveResults && <SystemOrApplicationRules namespaces={systemNamespaces} />}
+      {!showNewAlertSplash && (
+        <>
+          <RulesFilter />
+          <div className={styles.break} />
+          <div className={styles.buttonsContainer}>
+            <ButtonGroup>
+              <a href={urlUtil.renderUrl(`${config.appSubUrl ?? ''}/alerting/list`, { ...queryParams, view: 'group' })}>
+                <ToolbarButton variant={view === 'groups' ? 'active' : 'default'} icon="folder">
+                  Groups
+                </ToolbarButton>
+              </a>
+              <a href={urlUtil.renderUrl(`${config.appSubUrl ?? ''}/alerting/list`, { ...queryParams, view: 'state' })}>
+                <ToolbarButton variant={view === 'state' ? 'active' : 'default'} icon="heart-rate">
+                  State
+                </ToolbarButton>
+              </a>
+            </ButtonGroup>
+            <div />
+            <a href={`${config.appSubUrl ?? ''}/alerting/new`}>
+              <Button icon="plus">New alert rule</Button>
+            </a>
+          </div>
+        </>
+      )}
+      {showNewAlertSplash && <NoRulesSplash />}
+      {haveResults && <ViewComponent namespaces={filteredNamespaces} />}
     </AlertingPageWrapper>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  break: css`
+    width: 100%;
+    height: 0;
+    margin-bottom: ${theme.spacing.md};
+    border-bottom: solid 1px ${theme.colors.border2};
+  `,
   iconError: css`
     color: ${theme.palette.red};
     margin-right: ${theme.spacing.md};

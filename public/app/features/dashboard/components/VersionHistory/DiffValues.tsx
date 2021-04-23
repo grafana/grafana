@@ -1,7 +1,7 @@
 import React from 'react';
-import _ from 'lodash';
-import { useStyles, Icon } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { isArray, isObject, isUndefined } from 'lodash';
+import { useStyles2, Icon } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Diff } from './utils';
 
@@ -10,10 +10,10 @@ type DiffProps = {
 };
 
 export const DiffValues: React.FC<DiffProps> = ({ diff }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const hasLeftValue =
-    !_.isUndefined(diff.originalValue) && !_.isArray(diff.originalValue) && !_.isObject(diff.originalValue);
-  const hasRightValue = !_.isUndefined(diff.value) && !_.isArray(diff.value) && !_.isObject(diff.value);
+    !isUndefined(diff.originalValue) && !isArray(diff.originalValue) && !isObject(diff.originalValue);
+  const hasRightValue = !isUndefined(diff.value) && !isArray(diff.value) && !isObject(diff.value);
 
   return (
     <>
@@ -24,11 +24,11 @@ export const DiffValues: React.FC<DiffProps> = ({ diff }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => css`
-  background-color: ${theme.colors.bg3};
-  border-radius: ${theme.border.radius.md};
-  color: ${theme.colors.textHeading};
-  font-size: ${theme.typography.size.base};
-  margin: 0 ${theme.spacing.xs};
-  padding: ${theme.spacing.xs} ${theme.spacing.sm};
+const getStyles = (theme: GrafanaThemeV2) => css`
+  background-color: ${theme.colors.action.hover};
+  border-radius: ${theme.shape.borderRadius()};
+  color: ${theme.colors.text.primary};
+  font-size: ${theme.typography.body.fontSize};
+  margin: 0 ${theme.spacing(0.5)};
+  padding: ${theme.spacing(0.5, 1)};
 `;

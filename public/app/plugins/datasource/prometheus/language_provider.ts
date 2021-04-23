@@ -1,18 +1,18 @@
-import _ from 'lodash';
+import { once, chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 
 import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
-import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import {
+  addLimitInfo,
   fixSummariesMetadata,
+  limitSuggestions,
   parseSelector,
   processHistogramLabels,
   processLabels,
   roundSecToMin,
-  addLimitInfo,
-  limitSuggestions,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
@@ -201,10 +201,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getEmptyCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
     const { history } = context;
-    const suggestions = [];
+    const suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length) {
-      const historyItems = _.chain(history)
+      const historyItems = chain(history)
         .map((h) => h.query.expr)
         .filter()
         .uniq()
@@ -214,7 +214,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         .value();
 
       suggestions.push({
-        prefixMatch: true,
+        searchFunctionType: SearchFunctionType.Prefix,
         skipSort: true,
         label: 'History',
         items: historyItems,
@@ -226,10 +226,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getTermCompletionItems = (): TypeaheadOutput => {
     const { metrics, metricsMetadata } = this;
-    const suggestions = [];
+    const suggestions: CompletionItemGroup[] = [];
 
     suggestions.push({
-      prefixMatch: true,
+      searchFunctionType: SearchFunctionType.Prefix,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
@@ -239,6 +239,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Metrics${limitInfo}`,
         items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
+        searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
 
@@ -313,6 +314,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Labels${limitInfo}`,
         items: Object.keys(labelValues).map(wrapLabel),
+        searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
     return result;
@@ -379,6 +381,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         suggestions.push({
           label: `Label values for "${labelKey}"${limitInfo}`,
           items: labelValues[labelKey].map(wrapLabel),
+          searchFunctionType: SearchFunctionType.Fuzzy,
         });
       }
     } else {
@@ -386,12 +389,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const labelKeys = labelValues ? Object.keys(labelValues) : containsMetric ? null : DEFAULT_KEYS;
 
       if (labelKeys) {
-        const possibleKeys = _.difference(labelKeys, existingKeys);
+        const possibleKeys = difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
           context = 'context-labels';
           const newItems = possibleKeys.map((key) => ({ label: key }));
           const limitInfo = addLimitInfo(newItems);
-          const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}`, items: newItems };
+          const newSuggestion: CompletionItemGroup = {
+            label: `Labels${limitInfo}`,
+            items: newItems,
+            searchFunctionType: SearchFunctionType.Fuzzy,
+          };
           suggestions.push(newSuggestion);
         }
       }
@@ -465,7 +472,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * because we can cache more aggressively here and also we do not want to invalidate this cache the same way as in
    * fetchSeriesLabels.
    */
-  fetchDefaultLabels = _.once(async () => {
+  fetchDefaultLabels = once(async () => {
     const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
     return values.reduce((acc, value) => ({ ...acc, ...value }), {});
   });

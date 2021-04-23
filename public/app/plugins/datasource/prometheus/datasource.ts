@@ -17,8 +17,7 @@ import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import cloneDeep from 'lodash/cloneDeep';
-import defaults from 'lodash/defaults';
+import { defaults, cloneDeep } from 'lodash';
 import LRU from 'lru-cache';
 import { forkJoin, merge, Observable, of, pipe, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -284,7 +283,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
-    const mixedQueries = activeTargets.some((t) => t.range) && activeTargets.some((t) => t.instant);
 
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
@@ -299,7 +297,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             query,
             target,
             responseListLength: queries.length,
-            mixedQueries,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
           return {

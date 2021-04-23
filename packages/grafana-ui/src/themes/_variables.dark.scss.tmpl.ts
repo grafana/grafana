@@ -1,10 +1,9 @@
 /* eslint-disable max-len */
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
-import { styleMixins } from '.';
 
-export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>
+export const darkThemeVarsTemplate = (theme: GrafanaThemeV2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
 // Global values
 // --------------------------------------------------
@@ -13,88 +12,96 @@ $theme-name: dark;
 
 // New Colors
 // -------------------------
-$blue-light: ${theme.palette.blue95};
-$blue-base: ${theme.palette.blue80};
-$blue-shade: ${theme.palette.blue77};
-$red-base: ${theme.palette.redBase};
-$red-shade: ${theme.palette.redShade};
-$green-base: ${theme.palette.greenBase};
-$green-shade: ${theme.palette.greenShade};
-$orange-dark: ${theme.palette.orangeDark};
+$blue-light: ${theme.colors.primary.text};
+$blue-base: ${theme.colors.primary.main};
+$blue-shade: ${theme.colors.primary.shade};
+$red-base: ${theme.colors.error.main};
+$red-shade: ${theme.colors.error.shade};
+$green-base: ${theme.colors.success.main};
+$green-shade: ${theme.colors.success.shade};
+$orange-dark: ${theme.v1.palette.orangeDark};
 
-$gray98: ${theme.palette.gray98};
-$gray95: ${theme.palette.gray95};
-$gray85: ${theme.palette.gray85};
-$gray70: ${theme.palette.gray70};
-$gray60: ${theme.palette.gray60};
-$gray33: ${theme.palette.gray33};
-$gray25: ${theme.palette.gray25};
-$gray15: ${theme.palette.gray15};
-$gray10: ${theme.palette.gray10};
-$gray05: ${theme.palette.gray05};
+$gray98: ${theme.v1.palette.gray98};
+$gray95: ${theme.v1.palette.gray95};
+$gray85: ${theme.v1.palette.gray85};
+$gray70: ${theme.v1.palette.gray70};
+$gray60: ${theme.v1.palette.gray60};
+$gray33: ${theme.v1.palette.gray33};
+$gray25: ${theme.v1.palette.gray25};
+$gray15: ${theme.v1.palette.gray15};
+$gray10: ${theme.v1.palette.gray10};
+$gray05: ${theme.v1.palette.gray05};
 
 // Grays
 // -------------------------
-$black: ${theme.palette.black};
-$dark-1: ${theme.palette.dark1};
-$dark-2: ${theme.palette.dark2};
-$dark-3: ${theme.palette.dark3};
-$dark-4: ${theme.palette.dark4};
-$dark-5: ${theme.palette.dark5};
-$dark-6: ${theme.palette.dark6};
-$dark-7: ${theme.palette.dark7};
-$dark-8: ${theme.palette.dark8};
-$dark-9: ${theme.palette.dark9};
-$dark-10: ${theme.palette.dark10};
-$gray-1: ${theme.palette.gray1};
-$gray-2: ${theme.palette.gray2};
-$gray-3: ${theme.palette.gray3};
-$gray-4: ${theme.palette.gray4};
-$gray-5: ${theme.palette.gray5};
-$gray-6: ${theme.palette.gray6};
+$black: ${theme.v1.palette.black};
+$dark-1: ${theme.v1.palette.dark1};
+$dark-2: ${theme.v1.palette.dark2};
+$dark-3: ${theme.v1.palette.dark3};
+$dark-4: ${theme.v1.palette.dark4};
+$dark-5: ${theme.v1.palette.dark5};
+$dark-6: ${theme.v1.palette.dark6};
+$dark-7: ${theme.v1.palette.dark7};
+$dark-8: ${theme.v1.palette.dark8};
+$dark-9: ${theme.v1.palette.dark9};
+$dark-10: ${theme.v1.palette.dark10};
+$gray-1: ${theme.v1.palette.gray1};
+$gray-2: ${theme.v1.palette.gray2};
+$gray-3: ${theme.v1.palette.gray3};
+$gray-4: ${theme.v1.palette.gray4};
+$gray-5: ${theme.v1.palette.gray5};
+$gray-6: ${theme.v1.palette.gray6};
 
-$input-black: ${theme.colors.formInputBg};
+$input-black: ${theme.v1.colors.formInputBg};
+$white: ${theme.v1.palette.white};
 
-$white: ${theme.palette.white};
+$layer0: ${theme.colors.background.canvas};
+$layer1: ${theme.colors.background.primary};
+$layer2: ${theme.colors.background.secondary};
+
+$divider: ${theme.colors.border.weak};
+
+$border0: ${theme.colors.border.weak};
+$border1: ${theme.colors.border.medium};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.palette.blue85};
+$blue: ${theme.v1.palette.blue85};
 $red: $red-base;
-$yellow: ${theme.palette.yellow};
-$orange: ${theme.palette.orange};
-$purple: ${theme.palette.purple};
-$variable: ${theme.colors.textBlue};
+$yellow: ${theme.v1.palette.yellow};
+$orange: ${theme.v1.palette.orange};
+$purple: ${theme.v1.palette.purple};
+$variable: ${theme.v1.colors.textBlue};
 
-$brand-primary: ${theme.palette.brandPrimary};
-$brand-success: ${theme.palette.brandSuccess};
-$brand-warning: ${theme.palette.brandWarning};
-$brand-danger: ${theme.palette.brandDanger};
+$brand-primary: ${theme.v1.palette.brandPrimary};
+$brand-success: ${theme.v1.palette.brandSuccess};
+$brand-warning: ${theme.v1.palette.brandWarning};
+$brand-danger: ${theme.v1.palette.brandDanger};
 
-$query-red: ${theme.palette.queryRed};
-$query-green: ${theme.palette.queryGreen};
-$query-purple: ${theme.palette.queryPurple};
-$query-orange: ${theme.palette.orange};
+$query-red: ${theme.v1.palette.queryRed};
+$query-green: ${theme.v1.palette.queryGreen};
+$query-purple: ${theme.v1.palette.queryPurple};
+$query-orange: ${theme.v1.palette.orange};
 
 // Status colors
 // -------------------------¨
-$online: ${theme.palette.online};
-$warn: ${theme.palette.warn};
-$critical: ${theme.palette.critical};
+$online: ${theme.v1.palette.online};
+$warn: ${theme.v1.palette.warn};
+$critical: ${theme.v1.palette.critical};
 
 // Scaffolding
 // -------------------------
-$body-bg: ${theme.colors.bodyBg};
-$page-bg: ${theme.colors.bodyBg};
-$dashboard-bg: ${theme.colors.dashboardBg};
+$body-bg: ${theme.v1.colors.bodyBg};
+$page-bg: ${theme.v1.colors.bodyBg};
+$dashboard-bg: ${theme.v1.colors.dashboardBg};
 
-$text-color-strong: ${theme.colors.textStrong};
-$text-color: ${theme.colors.text};
-$text-color-semi-weak: ${theme.colors.textSemiWeak};
-$text-color-weak: ${theme.colors.textWeak};
-$text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textStrong};
-$text-blue: ${theme.colors.textBlue};
+$text-color-strong: ${theme.v1.colors.textStrong};
+$text-color: ${theme.v1.colors.text};
+$text-color-semi-weak: ${theme.v1.colors.textSemiWeak};
+$text-color-weak: ${theme.v1.colors.textWeak};
+$text-color-faint: ${theme.v1.colors.textFaint};
+$text-color-emphasis: ${theme.v1.colors.textStrong};
+$text-blue: ${theme.v1.colors.textBlue};
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -105,14 +112,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: ${theme.colors.link};
-$link-color-disabled: ${theme.colors.linkDisabled};
-$link-hover-color: ${theme.colors.linkHover};
-$external-link-color: ${theme.colors.linkExternal};
+$link-color: ${theme.v1.colors.link};
+$link-color-disabled: ${theme.v1.colors.linkDisabled};
+$link-hover-color: ${theme.v1.colors.linkHover};
+$external-link-color: ${theme.v1.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.textHeading};
+$headings-color: ${theme.v1.colors.textHeading};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -120,29 +127,30 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.colors.panelBg};
-$panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.bg2};
+$panel-bg: ${theme.components.panel.background};
+$panel-border: 1px solid ${theme.components.panel.borderColor};
+$panel-header-hover-bg: ${theme.colors.action.hover};
+$panel-box-shadow: ${theme.components.panel.boxShadow};
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: ${theme.colors.pageHeaderBg};
+$page-header-bg: ${theme.v1.colors.pageHeaderBg};
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: ${theme.colors.pageHeaderBorder};
+$page-header-border-color: ${theme.v1.colors.pageHeaderBorder};
 
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: ${theme.colors.bg2};
-$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$tight-form-func-bg: ${theme.colors.background.secondary};
+$tight-form-func-highlight-bg: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
 
-$modal-backdrop-bg: ${theme.colors.bg3};
+$modal-backdrop-bg: ${theme.v1.colors.bg3};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: ${theme.colors.bg2};
-$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-background: ${theme.colors.background.secondary};
+$card-background-hover: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
 $card-shadow: none;
 
 // Lists
@@ -150,7 +158,7 @@ $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
 $list-item-shadow: $card-shadow;
 
-$empty-list-cta-bg: ${theme.colors.bg2};
+$empty-list-cta-bg: ${theme.v1.colors.bg2};
 
 // Scrollbars
 $scrollbarBackground: #404357;
@@ -159,11 +167,10 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)}; // for striping
-$table-border: $dark-6; // table and cell border
-
-$table-bg-odd: $dark-3;
-$table-bg-hover: $dark-6;
+$table-bg-accent: ${theme.colors.background.secondary};
+$table-border: ${theme.colors.border.medium};
+$table-bg-odd: ${theme.colors.emphasize(theme.colors.background.primary, 0.02)};
+$table-bg-hover: ${theme.colors.emphasize(theme.colors.background.primary, 0.05)};
 
 // Buttons
 // -------------------------
@@ -202,13 +209,13 @@ $btn-active-box-shadow: 0px 0px 4px rgba(255, 120, 10, 0.5);
 $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
-$input-color: ${theme.colors.formInputText};
-$input-border-color: ${theme.colors.formInputBorder};
+$input-color: ${theme.v1.colors.formInputText};
+$input-border-color: ${theme.v1.colors.formInputBorder};
 $input-box-shadow: none;
-$input-border-focus: ${theme.palette.blue95};
+$input-border-focus: ${theme.v1.palette.blue95};
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.colors.bg2};
+$input-color-placeholder: ${theme.v1.colors.formInputPlaceholderText};
+$input-label-bg: ${theme.v1.colors.bg2};
 $input-color-select-arrow: $white;
 
 // Search
@@ -221,10 +228,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $panel-bg;
-$dropdownBorder: ${theme.colors.panelBorder};
-$dropdownDividerTop: transparent;
-$dropdownDividerBottom: ${theme.palette.gray25};
+$dropdownBackground: ${theme.colors.background.secondary};
+$dropdownBorder: ${theme.colors.border.weak};
+$dropdownDividerTop: ${theme.colors.border.weak};
+$dropdownDividerBottom: ${theme.colors.border.weak};
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -245,23 +252,20 @@ $navbarBorder: 1px solid $dark-6;
 $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
-$side-menu-item-hover-bg: ${theme.colors.bg2};
-$side-menu-shadow: 0 0 20px black;
-$side-menu-icon-color: ${theme.palette.gray70};
-$side-menu-header-color: ${theme.colors.text};
+$side-menu-item-hover-bg: ${theme.v1.colors.bg2};
+$side-menu-shadow: 0 0 30px #111;
+$side-menu-icon-color: ${theme.v1.palette.gray70};
+$side-menu-header-color: ${theme.v1.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.colors.bg1};
-$menu-dropdown-hover-bg: ${theme.colors.bg2};
-$menu-dropdown-shadow: 5px 5px 20px -5px $black;
+$menu-dropdown-bg: ${theme.colors.background.primary};
+$menu-dropdown-hover-bg: ${theme.colors.action.hover};
+$menu-dropdown-shadow: ${theme.shadows.z3};
 
 // Tabs
 // -------------------------
 $tab-border-color: $dark-9;
-
-// Toolbar
-$toolbar-bg: $input-black;
 
 // Form states and alerts
 // -------------------------
@@ -276,22 +280,21 @@ $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor: $text-color;
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
-$tooltipShadow: 0 0 10px black;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: $gray15;
-$tooltipColor: $text-color;
-$tooltipArrowColor: $tooltipBackground;
-$tooltipBackgroundError: $brand-danger;
+$tooltipBackground: ${theme.colors.background.secondary};
+$tooltipColor: ${theme.colors.text.primary};
+$tooltipArrowColor: ${theme.colors.background.secondary};
+$tooltipBackgroundError: ${theme.colors.error.main};
+$tooltipShadow: ${theme.shadows.z2};
 
-$popover-bg: $dark-2;
-$popover-color: $text-color;
-$popover-border-color: $dark-9;
-$popover-header-bg: $dark-9;
-$popover-shadow: 0 0 20px black;
+$popover-bg: ${theme.colors.background.primary};
+$popover-color: ${theme.colors.text.primary};
+$popover-border-color: ${theme.colors.border.weak};
+$popover-header-bg: ${theme.colors.background.secondary};
+$popover-shadow: ${theme.shadows.z3};
 
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;
@@ -326,14 +329,14 @@ $json-explorer-url-color: #027bff;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: ${theme.colors.bg3};
+$diff-label-bg: ${theme.v1.colors.bg3};
 $diff-label-fg: $white;
 
-$diff-group-bg: ${theme.colors.bg2};
+$diff-group-bg: ${theme.v1.colors.bg2};
 $diff-arrow-color: $white;
 
-$diff-json-bg: ${theme.colors.bg2};
-$diff-json-fg: ${theme.colors.text};
+$diff-json-bg: ${theme.v1.colors.bg2};
+$diff-json-fg: ${theme.v1.colors.text};
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;
@@ -354,7 +357,7 @@ $variable-option-bg: $dropdownLinkBackgroundHover;
 $switch-bg: $input-bg;
 $switch-slider-color: $dark-3;
 $switch-slider-off-bg: $gray-1;
-$switch-slider-on-bg: ${theme.palette.blue95};
+$switch-slider-on-bg: ${theme.v1.palette.blue95};
 $switch-slider-shadow: 0 0 3px black;
 
 //Checkbox
@@ -377,11 +380,8 @@ $panel-editor-tabs-line-color: #e3e3e3;
 
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
-$panel-options-group-border: none;
-$panel-options-group-header-bg: ${theme.colors.bg2};
-
-$panel-grid-placeholder-bg: darken(${theme.palette.blue77}, 30%);
-$panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue80};
+$panel-grid-placeholder-bg: darken(${theme.v1.palette.blue77}, 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${theme.v1.palette.blue80};
 
 // logs
 $logs-color-unknown: $gray-2;

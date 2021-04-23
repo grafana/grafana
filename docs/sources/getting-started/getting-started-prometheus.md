@@ -1,6 +1,6 @@
 +++
 title = "With Grafana and Prometheus"
-description = "Guide for getting started with Grafana"
+description = "Guide for getting started with Grafana and Prometheus"
 keywords = ["grafana", "intro", "guide", "started"]
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
 weight = 300
@@ -12,16 +12,12 @@ Prometheus is an open source systems monitoring system for which Grafana provide
 
 You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself.
 
-## Step 1. Install Grafana and build your first dashboard
-
-Use the instructions in [Getting started with Grafana]({{< relref "getting-started.md" >}}) to:
-- Install Grafana.
-- Log in to Grafana.
-- Create your first dashboard.
+{{< docs/shared "getting-started/first-step.md" >}}
 
 ## Step 2. Download Prometheus and node_exporter
 
 Prometheus, like Grafana, can be installed on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/), which lists all stable versions of Prometheus components. Download the following components:
+
  - [Prometheus](https://prometheus.io/download/#prometheus)
  - [node_exporter](https://prometheus.io/download/#node_exporter)
 
