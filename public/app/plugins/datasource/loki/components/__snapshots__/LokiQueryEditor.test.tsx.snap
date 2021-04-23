@@ -3,29 +3,51 @@
 exports[`Render LokiQueryEditor with legend should render 1`] = `
 <LokiQueryField
   ExtraFieldElement={
-    <div
-      className="gf-form-inline"
-    >
+    <React.Fragment>
+      <LokiOptionFields
+        lineLimitValue=""
+        onChange={[MockFunction]}
+        onRunQuery={[MockFunction]}
+        query={
+          Object {
+            "expr": "",
+            "legendFormat": "My Legend",
+            "refId": "A",
+          }
+        }
+        queryType="range"
+        runOnBlur={true}
+      />
       <div
-        className="gf-form"
+        className="gf-form-inline"
       >
-        <FormLabel
-          tooltip="Controls the name of the time series, using name or pattern. For example
-        {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
-          width={6}
+        <div
+          className="gf-form"
         >
-          Legend
-        </FormLabel>
-        <input
-          className="gf-form-input"
-          onBlur={[MockFunction]}
-          onChange={[Function]}
-          placeholder="legend format"
-          type="text"
-          value="My Legend"
-        />
+          <FormLabel
+            tooltip="Controls the name of the time series, using name or pattern. For example
+        {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
+            width={6}
+          >
+            Legend
+          </FormLabel>
+          <input
+            className="gf-form-input"
+            onBlur={[MockFunction]}
+            onChange={[Function]}
+            placeholder="legend format"
+            type="text"
+            value="My Legend"
+          />
+        </div>
       </div>
-    </div>
+    </React.Fragment>
+  }
+  absoluteRange={
+    Object {
+      "from": 1577836800000,
+      "to": 1577923200000,
+    }
   }
   datasource={Object {}}
   history={Array []}
@@ -39,42 +61,57 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
       "refId": "A",
     }
   }
-  range={
-    Object {
-      "from": "2020-01-01T00:00:00.000Z",
-      "to": "2020-01-02T00:00:00.000Z",
-    }
-  }
-  runOnBlur={true}
 />
 `;
 
 exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
 <LokiQueryField
   ExtraFieldElement={
-    <div
-      className="gf-form-inline"
-    >
+    <React.Fragment>
+      <LokiOptionFields
+        lineLimitValue=""
+        onChange={[MockFunction]}
+        onRunQuery={[MockFunction]}
+        query={
+          Object {
+            "expr": "",
+            "legendFormat": "My Legend",
+            "refId": "A",
+          }
+        }
+        queryType="range"
+        runOnBlur={true}
+      />
       <div
-        className="gf-form"
+        className="gf-form-inline"
       >
-        <FormLabel
-          tooltip="Controls the name of the time series, using name or pattern. For example
-        {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
-          width={6}
+        <div
+          className="gf-form"
         >
-          Legend
-        </FormLabel>
-        <input
-          className="gf-form-input"
-          onBlur={[MockFunction]}
-          onChange={[Function]}
-          placeholder="legend format"
-          type="text"
-          value="My Legend"
-        />
+          <FormLabel
+            tooltip="Controls the name of the time series, using name or pattern. For example
+        {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
+            width={6}
+          >
+            Legend
+          </FormLabel>
+          <input
+            className="gf-form-input"
+            onBlur={[MockFunction]}
+            onChange={[Function]}
+            placeholder="legend format"
+            type="text"
+            value="My Legend"
+          />
+        </div>
       </div>
-    </div>
+    </React.Fragment>
+  }
+  absoluteRange={
+    Object {
+      "from": 1546300800000,
+      "to": 1577923200000,
+    }
   }
   datasource={Object {}}
   history={Array []}
@@ -88,12 +125,5 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
       "refId": "A",
     }
   }
-  range={
-    Object {
-      "from": "2019-01-01T00:00:00.000Z",
-      "to": "2020-01-02T00:00:00.000Z",
-    }
-  }
-  runOnBlur={true}
 />
 `;

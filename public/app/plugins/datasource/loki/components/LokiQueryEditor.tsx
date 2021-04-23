@@ -7,11 +7,13 @@ import { InlineFormLabel } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
+import { LokiOptionFields } from './LokiOptionFields';
 
 type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions>;
 
 export function LokiQueryEditor(props: Props) {
   const { range, query, data, datasource, onChange, onRunQuery } = props;
+  const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
 
   const onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const nextQuery = { ...query, legendFormat: e.currentTarget.value };
@@ -49,9 +51,20 @@ export function LokiQueryEditor(props: Props) {
       onBlur={onRunQuery}
       history={[]}
       data={data}
-      range={range}
-      runOnBlur={true}
-      ExtraFieldElement={legendField}
+      absoluteRange={absoluteTimeRange}
+      ExtraFieldElement={
+        <>
+          <LokiOptionFields
+            queryType={query.instant ? 'instant' : 'range'}
+            lineLimitValue={query?.maxLines?.toString() || ''}
+            query={query}
+            onRunQuery={onRunQuery}
+            onChange={onChange}
+            runOnBlur={true}
+          />
+          {legendField}
+        </>
+      }
     />
   );
 }
