@@ -71,7 +71,7 @@
 
   &.active {
     @include left-brand-border-gradient();
-    background: $page-bg;
+    background: $panel-bg;
   }
 
   .gicon {

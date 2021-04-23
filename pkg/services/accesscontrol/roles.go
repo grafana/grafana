@@ -82,10 +82,6 @@ var orgsCurrentEditRole = RoleDTO{
 			Action: ActionOrgUsersRemove,
 			Scope:  ScopeOrgCurrentUsersAll,
 		},
-		{
-			Action: ActionOrgUsersAdd,
-			Scope:  ScopeOrgCurrentUsersAll,
-		},
 	}),
 }
 

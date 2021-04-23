@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -35,7 +34,6 @@ type PagerdutyNotifier struct {
 	old_notifiers.NotifierBase
 	Key           string
 	Severity      string
-	AutoResolve   bool
 	CustomDetails map[string]string
 	Class         string
 	Component     string
@@ -43,11 +41,10 @@ type PagerdutyNotifier struct {
 	Summary       string
 	tmpl          *template.Template
 	log           log.Logger
-	externalUrl   *url.URL
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -76,13 +73,11 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 		Key:           key,
 		CustomDetails: details,
 		Severity:      model.Settings.Get("severity").MustString("critical"),
-		AutoResolve:   model.Settings.Get("autoResolve").MustBool(true),
 		Class:         model.Settings.Get("class").MustString("todo_class"), // TODO
 		Component:     model.Settings.Get("component").MustString("Grafana"),
 		Group:         model.Settings.Get("group").MustString("todo_group"), // TODO
 		Summary:       model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
 		tmpl:          t,
-		externalUrl:   externalUrl,
 		log:           log.New("alerting.notifier." + model.Name),
 	}, nil
 }
@@ -90,8 +85,8 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved && !pn.AutoResolve {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.AutoResolve)
+	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
+		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
@@ -132,7 +127,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: pn.externalUrl}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
@@ -147,12 +142,12 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
-		ClientURL:   pn.externalUrl.String(),
+		ClientURL:   pn.tmpl.ExternalURL.String(),
 		RoutingKey:  pn.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
 		Links: []pagerDutyLink{{
-			HRef: pn.externalUrl.String(),
+			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
 		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
@@ -179,7 +174,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 }
 
 func (pn *PagerdutyNotifier) SendResolved() bool {
-	return pn.AutoResolve
+	return !pn.GetDisableResolveMessage()
 }
 
 type pagerDutyMessage struct {

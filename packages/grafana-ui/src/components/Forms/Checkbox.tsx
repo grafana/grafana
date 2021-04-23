@@ -1,9 +1,9 @@
 import React, { HTMLProps, useCallback } from 'react';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { getLabelStyles } from './Label';
-import { useTheme, stylesFactory } from '../../themes';
+import { useTheme2, stylesFactory } from '../../themes';
 import { css, cx } from '@emotion/css';
-import { focusCss } from '../../themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   label?: string;
@@ -11,29 +11,30 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   value?: boolean;
 }
 
-export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getCheckboxStyles = stylesFactory((theme: GrafanaThemeV2) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = '16px';
   return {
     label: cx(
       labelStyles.label,
       css`
-        padding-left: ${theme.spacing.formSpacingBase}px;
+        padding-left: ${theme.spacing(1)};
         white-space: nowrap;
+        cursor: pointer;
       `
     ),
     description: cx(
       labelStyles.description,
       css`
-        line-height: ${theme.typography.lineHeight.sm};
-        padding-left: ${theme.spacing.formSpacingBase}px;
+        line-height: ${theme.typography.bodySmall.lineHeight};
+        padding-left: ${theme.spacing(1)};
       `
     ),
     wrapper: css`
       position: relative;
       padding-left: ${checkboxSize};
       vertical-align: middle;
-      height: ${theme.spacing.lg};
+      height: ${theme.spacing(3)};
     `,
     input: css`
       position: absolute;
@@ -42,8 +43,14 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
       height: 100%;
       opacity: 0;
-      &:focus + span {
-        ${focusCss(theme)}
+
+      &:focus + span,
+      &:focus-visible + span {
+        ${getFocusStyles(theme)}
+      }
+
+      &:focus:not(:focus-visible) + span {
+        ${getMouseFocusStyles(theme)}
       }
 
       /**
@@ -53,11 +60,11 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
        * */
       &:checked + span {
         background: blue;
-        background: ${theme.colors.formCheckboxBgChecked};
+        background: ${theme.colors.primary.main};
         border: none;
 
         &:hover {
-          background: ${theme.colors.formCheckboxBgCheckedHover};
+          background: ${theme.colors.primary.shade};
         }
 
         &:after {
@@ -67,7 +74,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
           top: 1px;
           width: 6px;
           height: 12px;
-          border: solid ${theme.colors.formCheckboxCheckmark};
+          border: solid ${theme.colors.primary.contrastText};
           border-width: 0 3px 3px 0;
           transform: rotate(45deg);
         }
@@ -77,17 +84,17 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       display: inline-block;
       width: ${checkboxSize};
       height: ${checkboxSize};
-      border-radius: ${theme.border.radius.sm};
-      margin-right: ${theme.spacing.formSpacingBase}px;
-      background: ${theme.colors.formInputBg};
-      border: 1px solid ${theme.colors.formInputBorder};
+      border-radius: ${theme.shape.borderRadius()};
+      margin-right: ${theme.spacing(1)};
+      background: ${theme.components.input.background};
+      border: 1px solid ${theme.components.input.borderColor};
       position: absolute;
       top: 2px;
       left: 0;
 
       &:hover {
         cursor: pointer;
-        border-color: ${theme.colors.formInputBorderHover};
+        border-color: ${theme.components.input.borderHover};
       }
     `,
   };
@@ -95,7 +102,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ label, description, value, onChange, disabled, className, ...inputProps }, ref) => {
-    const theme = useTheme();
+    const theme = useTheme2();
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
