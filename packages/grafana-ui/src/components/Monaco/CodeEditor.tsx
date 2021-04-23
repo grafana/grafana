@@ -49,16 +49,19 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   componentDidUpdate(oldProps: Props) {
     const { getSuggestions, language } = this.props;
 
-    if (language !== oldProps.language && getSuggestions) {
+    if (language !== oldProps.language) {
       if (this.completionCancel) {
         this.completionCancel.dispose();
       }
 
       if (!this.monaco) {
-        throw new Error('Monaco instance not loaded yet');
+        console.warn('Monaco instance not loaded yet');
+        return;
       }
 
-      this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
+      if (getSuggestions) {
+        this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
+      }
     }
   }
 
@@ -104,14 +107,15 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
     const options: MonacoOptions = {
       wordWrap: 'off',
-
-      // TODO: this true anymore?
-      codeLens: false, // not included in the bundle
+      tabSize: 2,
+      codeLens: false,
+      contextmenu: false,
 
       minimap: {
         enabled: longText && showMiniMap,
         renderCharacters: false,
       },
+
       readOnly,
       lineNumbersMinChars: 4,
       lineDecorationsWidth: 0,
