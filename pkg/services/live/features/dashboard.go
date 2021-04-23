@@ -57,7 +57,6 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 		return models.SubscribeReply{
 			Presence: true,
 		}, backend.SubscribeStreamStatusOK, nil
-
 	}
 
 	// make sure can view this dashboard
@@ -145,11 +144,16 @@ func (h *DashboardHandler) publish(event dashboardEvent) error {
 	if err != nil {
 		return err
 	}
-	err = h.Publisher("grafana/dashboard/uid/"+event.UID, msg)
-	if err != nil {
-		return err
+
+	// Only broadcast non-error events
+	if event.Error == "" {
+		err = h.Publisher("grafana/dashboard/uid/"+event.UID, msg)
+		if err != nil {
+			return err
+		}
 	}
 
+	// Send everything to the gitops channel
 	return h.Publisher(GITOPS_CHANNEL, msg)
 }
 
@@ -165,6 +169,10 @@ func (h *DashboardHandler) DashboardSaved(user *models.UserDisplayDTO, message s
 		User:      user,
 		Message:   message,
 		Dashboard: dashboard,
+	}
+
+	if err != nil {
+		msg.Error = err.Error()
 	}
 
 	return h.publish(msg)
