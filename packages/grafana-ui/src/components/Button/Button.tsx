@@ -10,10 +10,13 @@ import { Icon } from '../Icon/Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
+export type ButtonStyle = 'solid' | 'outline' | 'text';
+export const allButtonStyles: ButtonStyle[] = ['solid', 'outline', 'text'];
 
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
+  buttonStyle?: ButtonStyle;
   icon?: IconName;
   className?: string;
   children?: React.ReactNode;
@@ -23,12 +26,16 @@ type CommonProps = {
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, ...otherProps }, ref) => {
+  (
+    { variant = 'primary', size = 'md', buttonStyle = 'solid', icon, fullWidth, children, className, ...otherProps },
+    ref
+  ) => {
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
       size,
       variant,
+      buttonStyle,
       fullWidth,
       iconOnly: !children,
     });
@@ -51,6 +58,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     {
       variant = 'primary',
       size = 'md',
+      buttonStyle = 'solid',
       icon,
       fullWidth,
       children,
@@ -68,6 +76,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       fullWidth,
       size,
       variant,
+      buttonStyle,
       iconOnly: !children,
     });
 
@@ -87,6 +96,7 @@ LinkButton.displayName = 'LinkButton';
 export interface StyleProps {
   size: ComponentSize;
   variant: ButtonVariant;
+  buttonStyle?: ButtonStyle;
   iconOnly?: boolean;
   theme: GrafanaThemeV2;
   fullWidth?: boolean;
@@ -94,24 +104,10 @@ export interface StyleProps {
 }
 
 export const getButtonStyles = (props: StyleProps) => {
-  const { theme, variant, size, iconOnly, fullWidth } = props;
+  const { theme, variant, buttonStyle = 'solid', size, iconOnly, fullWidth } = props;
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
-  const variantStyles = getPropertiesForVariant(theme, variant);
-
-  const disabledStyles: CSSObject = {
-    cursor: 'not-allowed',
-    boxShadow: 'none',
-    background: theme.colors.action.disabledBackground,
-    border: `1px solid transparent`,
-    color: theme.colors.text.disabled,
-    pointerEvents: 'none',
-
-    '&:hover': {
-      background: theme.colors.action.disabledBackground,
-      color: theme.colors.text.disabled,
-      boxShadow: 'none',
-    },
-  };
+  const variantStyles = getPropertiesForVariant(theme, variant, buttonStyle);
+  const disabledStyles = getPropertiesForDisabled(theme, buttonStyle);
 
   const focusStyle = getFocusStyles(theme);
 
@@ -160,7 +156,45 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor): CSSObject {
+function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, style: ButtonStyle): CSSObject {
+  if (style === 'outline') {
+    return {
+      background: 'transparent',
+      color: color.text,
+      border: `1px solid ${color.main}`,
+      transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+        duration: theme.transitions.duration.short,
+      }),
+
+      '&:hover': {
+        background: colorManipulator.alpha(color.shade, theme.colors.action.hoverOpacity),
+        borderColor: color.shade,
+        color: color.text,
+      },
+    };
+  }
+
+  if (style === 'text') {
+    return {
+      background: 'transparent',
+      color: color.text,
+      border: '1px solid transparent',
+      transition: theme.transitions.create(['background-color', 'color'], {
+        duration: theme.transitions.duration.short,
+      }),
+
+      '&:focus': {
+        outline: 'none',
+        textDecoration: 'underline',
+      },
+
+      '&:hover': {
+        background: colorManipulator.alpha(color.shade, theme.colors.action.hoverOpacity),
+        textDecoration: 'underline',
+      },
+    };
+  }
+
   return {
     background: color.main,
     color: color.contrastText,
@@ -177,32 +211,50 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor): C
   };
 }
 
-export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant) {
-  switch (variant) {
+function getPropertiesForDisabled(theme: GrafanaThemeV2, style: ButtonStyle) {
+  const disabledStyles: CSSObject = {
+    cursor: 'not-allowed',
+    boxShadow: 'none',
+    pointerEvents: 'none',
+    color: theme.colors.text.disabled,
+    transition: 'none',
+  };
+
+  if (style === 'outline') {
+    return {
+      ...disabledStyles,
+      background: 'transparent',
+      border: `1px solid ${theme.colors.action.disabledText}`,
+    };
+  }
+
+  if (style === 'text') {
+    return {
+      ...disabledStyles,
+      background: 'transparent',
+    };
+  }
+
+  return {
+    ...disabledStyles,
+    background: theme.colors.action.disabledBackground,
+    border: `1px solid transparent`,
+  };
+}
+
+export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant, style: ButtonStyle) {
+  const buttonVariant = variant === 'link' ? 'primary' : variant;
+  const buttonStyle = variant === 'link' ? 'text' : style;
+
+  switch (buttonVariant) {
     case 'secondary':
-      return getButtonVariantStyles(theme, theme.colors.secondary);
+      return getButtonVariantStyles(theme, theme.colors.secondary, buttonStyle);
 
     case 'destructive':
-      return getButtonVariantStyles(theme, theme.colors.error);
-
-    case 'link':
-      return {
-        background: 'transparent',
-        color: theme.colors.text.link,
-        border: '1px solid transparent',
-        '&:focus': {
-          outline: 'none',
-          textDecoration: 'underline',
-        },
-
-        '&:hover': {
-          background: colorManipulator.alpha(theme.colors.text.link, theme.colors.action.hoverOpacity),
-          textDecoration: 'underline',
-        },
-      };
+      return getButtonVariantStyles(theme, theme.colors.error, buttonStyle);
 
     case 'primary':
     default:
-      return getButtonVariantStyles(theme, theme.colors.primary);
+      return getButtonVariantStyles(theme, theme.colors.primary, buttonStyle);
   }
 }
