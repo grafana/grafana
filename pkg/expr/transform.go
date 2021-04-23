@@ -70,7 +70,7 @@ type Request struct {
 }
 
 // Query is like plugins.DataSubQuery, but with a a time range, and only the UID
-// for the data source.
+// for the data source. Also interval is a time.Duration.
 type Query struct {
 	RefID         string
 	TimeRange     TimeRange
