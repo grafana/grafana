@@ -11,8 +11,19 @@
 {{ end }}Source: {{ .GeneratorURL }}
 {{ end }}{{ end }}
 
+{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "default.message" }}{{ if gt (len .Alerts.Firing) 0 }}
+**Firing**
+{{ template "__text_alert_list" .Alerts.Firing }}
 
-{{ define "slack.default.title" }}{{ template "__subject" . }}{{ end }}
+{{ end }}
+{{ if gt (len .Alerts.Resolved) 0 }}
+**Resolved**
+{{ template "__text_alert_list" .Alerts.Resolved }}
+{{ end }}
+{{ end }}
+
+{{ define "slack.default.title" }}{{ template "default.title" . }}{{ end }}
 {{ define "slack.default.username" }}{{ template "__alertmanager" . }}{{ end }}
 {{ define "slack.default.fallback" }}{{ template "slack.default.title" . }} | {{ template "slack.default.titlelink" . }}{{ end }}
 {{ define "slack.default.callbackid" }}{{ end }}
@@ -24,7 +35,7 @@
 {{ define "slack.default.footer" }}{{ end }}
 
 
-{{ define "pagerduty.default.description" }}{{ template "__subject" . }}{{ end }}
+{{ define "pagerduty.default.description" }}{{ template "default.title" . }}{{ end }}
 {{ define "pagerduty.default.client" }}{{ template "__alertmanager" . }}{{ end }}
 {{ define "pagerduty.default.clientURL" }}{{ template "__alertmanagerURL" . }}{{ end }}
 {{ define "pagerduty.default.instances" }}{{ template "__text_alert_list" . }}{{ end }}
