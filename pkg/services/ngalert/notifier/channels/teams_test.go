@@ -23,6 +23,10 @@ func TestTeamsNotifier(t *testing.T) {
 	tmpl, err := template.FromGlobs("templates/default.tmpl")
 	require.NoError(t, err)
 
+	externalURL, err := url.Parse("http://localhost")
+	require.NoError(t, err)
+	tmpl.ExternalURL = externalURL
+
 	cases := []struct {
 		name         string
 		settings     string
@@ -132,9 +136,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			externalURL, err := url.Parse("http://localhost")
-			require.NoError(t, err)
-			pn, err := NewTeamsNotifier(m, tmpl, externalURL)
+			pn, err := NewTeamsNotifier(m, tmpl)
 			if c.expInitError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError.Error(), err.Error())
