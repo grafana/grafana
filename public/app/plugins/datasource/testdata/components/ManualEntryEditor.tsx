@@ -64,14 +64,8 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
               <InputControl
                 name={'selectedPoint' as any}
                 control={control}
-                render={({ field: { onChange }, field }) => (
-                  <Select
-                    {...field}
-                    onChange={(value) => onChange(value[0])}
-                    options={pointOptions}
-                    width={32}
-                    placeholder="Select point"
-                  />
+                render={({ field: { ref, ...field } }) => (
+                  <Select {...field} options={pointOptions} width={32} placeholder="Select point" />
                 )}
               />
             </InlineField>
