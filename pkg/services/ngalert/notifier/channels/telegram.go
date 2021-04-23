@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
-	"net/url"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
@@ -27,16 +26,15 @@ const (
 // alert notifications to Telegram.
 type TelegramNotifier struct {
 	old_notifiers.NotifierBase
-	BotToken    string
-	ChatID      string
-	Message     string
-	log         log.Logger
-	tmpl        *template.Template
-	externalUrl *url.URL
+	BotToken string
+	ChatID   string
+	Message  string
+	log      log.Logger
+	tmpl     *template.Template
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -60,7 +58,6 @@ func NewTelegramNotifier(model *models.AlertNotification, t *template.Template, 
 		Message:      message,
 		tmpl:         t,
 		log:          log.New("alerting.notifier.telegram"),
-		externalUrl:  externalUrl,
 	}, nil
 }
 
@@ -114,7 +111,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	msg["chat_id"] = tn.ChatID
 	msg["parse_mode"] = "html"
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.externalUrl}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewNopLogger())
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 

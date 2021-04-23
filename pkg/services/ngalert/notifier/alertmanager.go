@@ -274,6 +274,11 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) error {
 	if err != nil {
 		return err
 	}
+	externalURL, err := url.Parse(am.Settings.AppURL)
+	if err != nil {
+		return err
+	}
+	tmpl.ExternalURL = externalURL
 
 	// Finally, build the integrations map using the receiver configuration and templates.
 	integrationsMap, err := am.buildIntegrationsMap(cfg.AlertmanagerConfig.Receivers, tmpl)
@@ -355,23 +360,21 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n   NotificationChannel
 			err error
 		)
-		externalURL, err := url.Parse(am.Settings.AppURL)
-		if err != nil {
-			return nil, err
-		}
 		switch r.Type {
 		case "email":
-			n, err = channels.NewEmailNotifier(cfg, externalURL, am.Settings.AppURL)
+			n, err = channels.NewEmailNotifier(cfg, tmpl.ExternalURL) // Email notifier already has a default template.
 		case "pagerduty":
-			n, err = channels.NewPagerdutyNotifier(cfg, tmpl, externalURL)
+			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
 		case "slack":
-			n, err = channels.NewSlackNotifier(cfg, tmpl, externalURL)
+			n, err = channels.NewSlackNotifier(cfg, tmpl)
 		case "telegram":
-			n, err = channels.NewTelegramNotifier(cfg, tmpl, externalURL)
+			n, err = channels.NewTelegramNotifier(cfg, tmpl)
 		case "teams":
-			n, err = channels.NewTeamsNotifier(cfg, tmpl, externalURL)
+			n, err = channels.NewTeamsNotifier(cfg, tmpl)
 		case "dingding":
-			n, err = channels.NewDingDingNotifier(cfg, tmpl, externalURL)
+			n, err = channels.NewDingDingNotifier(cfg, tmpl)
+		case "webhook":
+			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		}
 		if err != nil {
 			return nil, err

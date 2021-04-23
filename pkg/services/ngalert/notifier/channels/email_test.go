@@ -29,7 +29,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewEmailNotifier(model, externalURL, "")
+		_, err := NewEmailNotifier(model, externalURL)
 		require.Error(t, err)
 	})
 
@@ -43,7 +43,7 @@ func TestEmailNotifier(t *testing.T) {
 			Type: "email",
 
 			Settings: settingsJSON,
-		}, externalURL, "")
+		}, externalURL)
 
 		require.NoError(t, err)
 
@@ -91,8 +91,8 @@ func TestEmailNotifier(t *testing.T) {
 				"CommonLabels":      template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
 				"CommonAnnotations": template.KV{"runbook_url": "http://fix.me"},
 				"ExternalURL":       "http://localhost",
-				"RuleUrl":           "/alerting/list",
-				"AlertPageUrl":      "/alerting/list?alertState=firing&view=state",
+				"RuleUrl":           "http:/localhost/alerting/list",
+				"AlertPageUrl":      "http:/localhost/alerting/list?alertState=firing&view=state",
 			},
 		}, expected)
 	})
