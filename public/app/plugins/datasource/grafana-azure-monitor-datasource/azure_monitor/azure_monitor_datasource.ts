@@ -125,7 +125,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   buildAzurePortalUrl(metricQuery: AzureMetricQuery, subscriptionId: string, timeRange: TimeRange) {
-    const aggregationType = aggregationTypeMap[metricQuery.aggregation ?? 'Todo'] ?? aggregationTypeMap.Average;
+    const aggregationType =
+      (metricQuery.aggregation && aggregationTypeMap[metricQuery.aggregation]) ?? aggregationTypeMap.Average;
 
     const chartDef = this.stringifyAzurePortalUrlParam({
       v2charts: [
