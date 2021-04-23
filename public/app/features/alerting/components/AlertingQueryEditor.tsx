@@ -25,13 +25,17 @@ interface State {
   defaultDataSource?: DataSourceApi;
 }
 export class AlertingQueryEditor extends PureComponent<Props, State> {
+  private runner: AlertingQueryRunner;
+
   constructor(props: Props) {
     super(props);
     this.state = {};
+    this.runner = new AlertingQueryRunner();
   }
 
   async componentDidMount() {
     try {
+      this.runner.get().subscribe((data) => console.log('data', data));
       const defaultDataSource = await getDataSourceSrv().get();
       this.setState({ defaultDataSource });
     } catch (error) {
@@ -40,12 +44,10 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   onRunQueries = () => {
-    const runner = new AlertingQueryRunner();
-
     if (!this.props.value) {
       return;
     }
-    runner.run(this.props.value);
+    this.runner.run(this.props.value);
   };
 
   onDuplicateQuery = (query: GrafanaQuery) => {
