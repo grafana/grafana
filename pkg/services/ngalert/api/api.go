@@ -50,7 +50,7 @@ type API struct {
 	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
-	StateTracker    *state.StateTracker
+	StateManager    *state.Manager
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -69,7 +69,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusSrv{log: logger, stateTracker: api.StateTracker, store: api.RuleStore},
+		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
 	))
 	// Register endpoints for proxing to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
