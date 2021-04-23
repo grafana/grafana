@@ -4,7 +4,7 @@ import { LokiQuery } from './types';
  */
 export class LokiAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
-  annotation: any;
+  declare annotation: any;
 
   /** @ngInject */
   constructor($scope: any) {
