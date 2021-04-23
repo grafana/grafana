@@ -36,14 +36,13 @@ class DashboardWatcher {
   }
 
   private sendEditingState() {
-    if (this.channel) {
+    if (this.channel && this.uid) {
       getBackendSrv().post(`api/live/publish`, {
         channel: this.channel,
         data: {
           sessionId,
-          uid: this.uid!,
+          uid: this.uid,
           action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-          message: (window as any).grafanaBootData?.user?.name,
           timestamp: Date.now(),
         },
       });
@@ -63,9 +62,10 @@ class DashboardWatcher {
         namespace: 'dashboard',
         path: `uid/${uid}`,
       };
-
       this.leave();
-      this.subscription = live.getStream(addr).subscribe(this.observer);
+      if (uid) {
+        this.subscription = live.getStream(addr).subscribe(this.observer);
+      }
       this.uid = uid;
       this.channel = toLiveChannelId(addr);
     }
@@ -120,7 +120,7 @@ class DashboardWatcher {
               return;
             }
 
-            const showPopup = this.editing; // or has unsaved changes
+            const showPopup = this.editing; // || changeTracker.hasChanges();
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {
