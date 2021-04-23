@@ -32,7 +32,6 @@ export const defaultConfig: Config = {
 /**
  * This will return copy of the nods and edges with x,y positions filled in. Also the layout changes source/target props
  * in edges from string ids to actual nodes.
- * TODO: the typing could probably be done better so it's clear that props are filled in after the layout
  */
 export function useLayout(
   rawNodes: NodeDatum[],
@@ -47,8 +46,10 @@ export function useLayout(
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
 
-  // TODO the use effect is probably not needed here right now, but may make sense later if we decide to move the layout
+  // The use effect is probably not needed here right now, but may make sense later if we decide to move the layout
   // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
+  // Also we compute both layouts here. Grid layout should not add much time and we can more easily just cache both
+  // so this should happen only once for a given response data.
   useEffect(() => {
     if (rawNodes.length === 0) {
       return;

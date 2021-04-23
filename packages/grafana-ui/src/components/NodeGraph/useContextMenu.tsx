@@ -18,8 +18,8 @@ export function useContextMenu(
   nodes: DataFrame,
   edges: DataFrame,
   extraItems?: {
-    nodes?: LinkData<NodeDatum>[];
-    edges?: LinkData<EdgeDatum>[];
+    nodes?: Array<LinkData<NodeDatum>>;
+    edges?: Array<LinkData<EdgeDatum>>;
   }
 ): {
   onEdgeOpen: (event: MouseEvent<SVGElement>, edge: EdgeDatum) => void;
@@ -38,7 +38,7 @@ export function useContextMenu(
 
   const renderer = openedNode
     ? getItemsRenderer(getLinks(nodes, openedNode.node.dataFrameRowIndex), extraItems?.nodes, openedNode.node)
-    : getItemsRenderer(getLinks(edges, openedEdge!.edge.dataFrameRowIndex), extraItems?.edges, openedEdge!.edge)
+    : getItemsRenderer(getLinks(edges, openedEdge!.edge.dataFrameRowIndex), extraItems?.edges, openedEdge!.edge);
 
   let MenuComponent = null;
   if (renderer) {
@@ -69,7 +69,11 @@ export function useContextMenu(
   return { onEdgeOpen, onNodeOpen, MenuComponent };
 }
 
-function getItemsRenderer<T extends NodeDatum | EdgeDatum>(links: LinkModel[], extraItems: LinkData<T>[] | undefined, item: T) {
+function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
+  links: LinkModel[],
+  extraItems: Array<LinkData<T>> | undefined,
+  item: T
+) {
   if (!(links.length || extraItems?.length)) {
     return undefined;
   }
@@ -89,14 +93,14 @@ function getItemsRenderer<T extends NodeDatum | EdgeDatum>(links: LinkModel[], e
 }
 
 function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
-  return (link: LinkData<T>) => {
+  return function NodeGraphMenuItem(link: LinkData<T>) {
     return (
       <MenuItem
         key={link.label}
         url={link.url}
         label={link.label}
         ariaLabel={link.ariaLabel || link.label}
-        onClick={link.onClick ? (() => link.onClick?.(item)) : undefined}
+        onClick={link.onClick ? () => link.onClick?.(item) : undefined}
       />
     );
   };

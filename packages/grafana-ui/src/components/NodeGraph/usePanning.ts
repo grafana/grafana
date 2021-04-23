@@ -161,7 +161,6 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
     position = focus;
   }
 
-  console.log({ position, focus, previousFocus });
   return {
     state: {
       ...state,

@@ -8,8 +8,6 @@ type EdgesMap = Record<string, EdgeDatumLayout[]>;
 
 /**
  * Limits the number of nodes by going from the roots breadth first until we have desired number of nodes.
- * TODO: there is some possible perf gains as some of the processing is the same as in layout and so we do double
- *  the work.
  */
 export function useNodeLimit(
   nodes: NodeDatum[],
@@ -18,6 +16,8 @@ export function useNodeLimit(
   config: Config,
   rootId?: string
 ): { nodes: NodeDatum[]; edges: EdgeDatumLayout[]; markers?: NodesMarker[] } {
+  // This is pretty expensive also this happens once in the layout code when initializing position but it's a bit
+  // tricky to do it only once and reuse the results because layout directly modifies the nodes.
   const [edgesMap, nodesMap] = useMemo(() => {
     const edgesMap = edges.reduce<EdgesMap>((acc, e) => {
       return {
