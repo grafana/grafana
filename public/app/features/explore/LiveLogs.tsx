@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
-import { LogMessageAnsi, Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
+import { LogMessageAnsi, Themeable, withTheme, getLogRowStyles, Icon, Button } from '@grafana/ui';
 import { GrafanaTheme, LogRowModel, TimeZone, dateTimeFormat } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
@@ -142,16 +142,16 @@ class LiveLogs extends PureComponent<Props, State> {
             />
           </tbody>
         </table>
-        <div className={cx([styles.logsRowsIndicator])}>
-          <button onClick={isPaused ? onResume : onPause} className={cx('btn btn-secondary', styles.button)}>
+        <div className={styles.logsRowsIndicator}>
+          <Button variant="secondary" onClick={isPaused ? onResume : onPause} className={styles.button}>
             <Icon name={isPaused ? 'play' : 'pause'} />
             &nbsp;
             {isPaused ? 'Resume' : 'Pause'}
-          </button>
-          <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
+          </Button>
+          <Button variant="secondary" onClick={this.props.stopLive} className={styles.button}>
             <Icon name="square-shape" size="lg" type="mono" />
             &nbsp; Exit live mode
-          </button>
+          </Button>
           {isPaused || (
             <span>
               Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
