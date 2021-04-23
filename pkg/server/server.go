@@ -227,11 +227,13 @@ func (s *Server) Shutdown(reason string) {
 		s.log.Info("Shutdown started", "reason", reason)
 		// Call cancel func to stop services.
 		s.shutdownFn()
-		// Can introduce termination timeout here if needed over incoming Context,
-		// but this will require changing Shutdown method signature to accept context
-		// and return an error - caller can exit with code > 0 then.
-		// I.e. sth like server.Shutdown(context.WithTimeout(...), reason).
-		<-s.shutdownFinished
+		// Wait for server to shut down
+		select {
+		case <-s.shutdownFinished:
+			s.log.Debug("Finished waiting for server to shut down")
+		case <-time.After(3 * time.Second):
+			s.log.Warn("Timed out while waiting for server to shut down")
+		}
 	})
 }
 
