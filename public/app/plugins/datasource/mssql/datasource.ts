@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map as _map, filter } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 import { getBackendSrv } from '@grafana/runtime';
@@ -39,7 +39,7 @@ export class MssqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, (val) => {
+    const quotedValues = _map(value, (val) => {
       if (typeof value === 'number') {
         return value;
       }
@@ -69,7 +69,7 @@ export class MssqlDatasource {
   }
 
   query(options: any): Observable<MssqlResponse> {
-    const queries = _.filter(options.targets, (item) => {
+    const queries = filter(options.targets, (item) => {
       return item.hide !== true;
     }).map((item) => {
       return {

@@ -1,7 +1,8 @@
-import { ThunkResult } from '../../../types';
+import { AccessControlAction, ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
 import { OrgUser } from 'app/types';
 import { inviteesLoaded, usersLoaded } from './reducers';
+import { contextSrv } from 'app/core/core';
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch) => {
@@ -12,6 +13,10 @@ export function loadUsers(): ThunkResult<void> {
 
 export function loadInvitees(): ThunkResult<void> {
   return async (dispatch) => {
+    if (!contextSrv.hasPermission(AccessControlAction.OrgUsersAdd)) {
+      return;
+    }
+
     const invitees = await getBackendSrv().get('/api/org/invites');
     dispatch(inviteesLoaded(invitees));
   };

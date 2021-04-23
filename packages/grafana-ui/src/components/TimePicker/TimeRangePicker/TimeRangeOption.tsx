@@ -1,9 +1,9 @@
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme, TimeOption } from '@grafana/data';
-import { useTheme, stylesFactory } from '../../../themes';
+import { GrafanaThemeV2, TimeOption } from '@grafana/data';
+import { useStyles2 } from '../../../themes/ThemeContext';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
       display: flex;
@@ -12,16 +12,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 7px 9px 7px 9px;
 
       &:hover {
-        background: ${theme.v2.palette.action.hover};
+        background: ${theme.colors.action.hover};
         cursor: pointer;
       }
     `,
     selected: css`    
-      background: ${theme.v2.palette.action.selected};    
+      background: ${theme.colors.action.selected};    
     }
   `,
   };
-});
+};
 
 interface Props {
   value: TimeOption;
@@ -30,8 +30,7 @@ interface Props {
 }
 
 export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(styles.container, selected && styles.selected)} onClick={() => onSelect(value)} tabIndex={-1}>

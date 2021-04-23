@@ -18,6 +18,7 @@ import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { rulerRuleToFormValues, defaultFormValues } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
+import { config } from '@grafana/runtime';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -56,6 +57,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     dispatch(
       saveRuleFormAction({
         values: {
+          ...defaultValues,
           ...values,
           annotations: values.annotations?.filter(({ key }) => !!key) ?? [],
           labels: values.labels?.filter(({ key }) => !!key) ?? [],
@@ -70,7 +72,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     <FormContext {...formAPI}>
       <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <Link to="/alerting/list">
+          <Link to={`${config.appSubUrl ?? ''}/alerting/list`}>
             <ToolbarButton variant="default" disabled={submitState.loading} type="button">
               Cancel
             </ToolbarButton>
@@ -81,7 +83,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
             onClick={handleSubmit((values) => submit(values, false))}
             disabled={submitState.loading}
           >
-            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save
           </ToolbarButton>
           <ToolbarButton
@@ -90,11 +92,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
             onClick={handleSubmit((values) => submit(values, true))}
             disabled={submitState.loading}
           >
-            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save and exit
           </ToolbarButton>
         </PageToolbar>
-        <div className={styles.contentOutter}>
+        <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               {hasErrors && (
@@ -125,7 +127,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    buttonSpiner: css`
+    buttonSpinner: css`
       margin-right: ${theme.spacing.sm};
     `,
     toolbar: css`
@@ -143,7 +145,7 @@ const getStyles = (theme: GrafanaTheme) => {
       flex: 1;
       padding: ${theme.spacing.md};
     `,
-    contentOutter: css`
+    contentOuter: css`
       background: ${theme.colors.panelBg};
       overflow: hidden;
       flex: 1;

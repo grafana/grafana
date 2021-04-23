@@ -1,3 +1,4 @@
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';

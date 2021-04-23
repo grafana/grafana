@@ -2,13 +2,14 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { LegacyForms, Tooltip, Icon } from '@grafana/ui';
+import { LegacyForms, Tooltip, Icon, Button } from '@grafana/ui';
 const { Input } = LegacyForms;
 
 import { TeamGroup } from '../../types';
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 export interface Props {
   groups: TeamGroup[];
@@ -65,9 +66,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
-            <Icon name="times" style={{ marginBottom: 0 }} />
-          </a>
+          <Button size="sm" variant="destructive" onClick={() => this.onRemoveGroup(group)}>
+            <Icon name="times" />
+          </Button>
         </td>
       </tr>
     );
@@ -86,17 +87,15 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <button className="btn btn-primary pull-right" onClick={this.onToggleAdding}>
+            <Button className="pull-right" onClick={this.onToggleAdding}>
               <Icon name="plus" /> Add group
-            </button>
+            </Button>
           )}
         </div>
 
         <SlideDown in={isAdding}>
           <div className="cta-form">
-            <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <Icon name="times" />
-            </button>
+            <CloseButton onClick={this.onToggleAdding} />
             <h5>Add External Group</h5>
             <form className="gf-form-inline" onSubmit={this.onAddGroup}>
               <div className="gf-form">
@@ -110,9 +109,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               </div>
 
               <div className="gf-form">
-                <button className="btn btn-primary gf-form-btn" type="submit" disabled={!this.isNewGroupValid()}>
+                <Button type="submit" disabled={!this.isNewGroupValid()}>
                   Add group
-                </button>
+                </Button>
               </div>
             </form>
           </div>

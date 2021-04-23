@@ -294,7 +294,7 @@ type NotifierFactory func(notification *models.AlertNotification) (Notifier, err
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 
-// RegisterNotifier register an notifier
+// RegisterNotifier registers a notifier.
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }
