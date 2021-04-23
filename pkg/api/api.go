@@ -413,13 +413,19 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/frontend-metrics", bind(metrics.PostFrontendMetricsCommand{}), routing.Wrap(hs.PostFrontendMetrics))
 
 		if hs.Live.IsEnabled() {
-			apiRoute.Post("/live/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
+			apiRoute.Group("/live", func(liveRoute routing.RouteRegister) {
+				// the channel path is in the name
+				liveRoute.Post("/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 
-			// POST influx line protocol
-			apiRoute.Post("/live/push/:streamId", hs.LivePushGateway.Handle)
+				// POST influx line protocol
+				liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
 
-			// List available streams and fields
-			apiRoute.Get("/live/list", routing.Wrap(hs.Live.HandleListHTTP))
+				// List available streams and fields
+				liveRoute.Get("/list", routing.Wrap(hs.Live.HandleListHTTP))
+
+				// Some channels may have info
+				liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
+			})
 		}
 
 		// short urls
