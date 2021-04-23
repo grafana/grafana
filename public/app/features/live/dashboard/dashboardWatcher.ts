@@ -37,11 +37,14 @@ class DashboardWatcher {
 
   private sendEditingState() {
     if (this.channel && this.uid) {
-      getBackendSrv().post(`api/live/publish/${this.channel.id}`, {
-        sessionId,
-        uid: this.uid,
-        action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-        timestamp: Date.now(),
+      getBackendSrv().post(`api/live/publish`, {
+        channel: this.channel.id,
+        data: {
+          sessionId,
+          uid: this.uid,
+          action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
+          timestamp: Date.now(),
+        },
       });
     }
   }

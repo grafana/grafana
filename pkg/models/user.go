@@ -200,7 +200,6 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 		Id:    u.UserId,
 		Login: u.Login,
 		Name:  u.Name,
-		Email: u.Email,
 	}
 }
 

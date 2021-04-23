@@ -415,7 +415,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Live.IsEnabled() {
 			apiRoute.Group("/live", func(liveRoute routing.RouteRegister) {
 				// the channel path is in the name
-				liveRoute.Post("/publish/*", routing.Wrap(hs.Live.HandleHTTPPublish))
+				liveRoute.Post("/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 
 				// POST influx line protocol
 				liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
