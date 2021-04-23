@@ -21,6 +21,7 @@ import (
 
 var logger = log.New("tsdb.mssql")
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {

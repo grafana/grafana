@@ -10,9 +10,12 @@ import (
 
 type (
 	cloudMonitoringQueryExecutor interface {
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		run(ctx context.Context, tsdbQuery plugins.DataQuery, e *Executor) (
 			plugins.DataQueryResult, cloudMonitoringResponse, string, error)
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		parseResponse(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, executedQueryString string) error
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		parseToAnnotations(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
 		buildDeepLink() string
 		getRefID() string

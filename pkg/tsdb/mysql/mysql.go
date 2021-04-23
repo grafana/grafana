@@ -24,6 +24,7 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	logger := log.New("tsdb.mysql")
 

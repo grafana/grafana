@@ -18,7 +18,8 @@ type tempoExecutor struct {
 	httpClient *http.Client
 }
 
-// NewExecutor returns a tempoExecutor.
+// NewExecutor returns a tempoExecutor.DataQueryResult
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -34,6 +35,7 @@ var (
 	tlog = log.New("tsdb.tempo")
 )
 
+//nolint: staticcheck // plugins.DataQuery deprecated
 func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	refID := queryContext.Queries[0].RefID

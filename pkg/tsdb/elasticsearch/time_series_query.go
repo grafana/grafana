@@ -26,6 +26,7 @@ var newTimeSeriesQuery = func(client es.Client, dataQuery plugins.DataQuery,
 	}
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 	tsQueryParser := newTimeSeriesQueryParser()
 	queries, err := tsQueryParser.parse(e.tsdbQuery)
@@ -60,6 +61,7 @@ func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 	return rp.getTimeSeries()
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
 	result plugins.DataResponse) error {
 	minInterval, err := e.client.GetMinInterval(q.Interval)

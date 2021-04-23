@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 )
 
+// nolint:staticcheck // plugins.DataPlugin deprecated
 func newQueryEndpointAdapter(pluginID string, logger log.Logger, handler backend.QueryDataHandler) plugins.DataPlugin {
 	return &queryEndpointAdapter{
 		pluginID: pluginID,
@@ -45,6 +46,7 @@ func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstance
 	}, nil
 }
 
+// nolint:staticcheck // plugins.DataQuery deprecated
 func (a *queryEndpointAdapter) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	instanceSettings, err := modelToInstanceSettings(ds)

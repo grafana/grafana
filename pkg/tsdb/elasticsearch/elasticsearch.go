@@ -16,6 +16,7 @@ type Executor struct {
 }
 
 // NewExecutor creates a new Executor.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &Executor{
 		intervalCalculator: interval.NewCalculator(),
@@ -23,6 +24,7 @@ func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 }
 
 // Query handles an elasticsearch datasource request
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	if len(tsdbQuery.Queries) == 0 {

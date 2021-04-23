@@ -41,6 +41,7 @@ const azureMonitorAPIVersion = "2018-01-01"
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -172,6 +173,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, ti
 	return azureMonitorQueries, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataQueryResult, AzureMonitorResponse, error) {
 	queryResult := plugins.DataQueryResult{RefID: query.RefID}

@@ -88,6 +88,7 @@ type Executor struct {
 }
 
 // NewExecutor returns an Executor.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -108,6 +109,7 @@ func init() {
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into
 // the time series or table format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	var result plugins.DataResponse
@@ -128,11 +130,14 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, err
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 	refID := tsdbQuery.Queries[0].RefID
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: refID}
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
@@ -147,9 +152,11 @@ func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.D
 	return result, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	result := plugins.DataResponse{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 

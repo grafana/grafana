@@ -22,6 +22,7 @@ type Executor struct {
 	ResponseParser *ResponseParser
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &Executor{
 		QueryParser:    &InfluxdbQueryParser{},
@@ -39,6 +40,7 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	glog.Debug("Received a query request", "numQueries", len(tsdbQuery.Queries))

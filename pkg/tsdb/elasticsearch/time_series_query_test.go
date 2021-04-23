@@ -912,6 +912,7 @@ func newDataQuery(body string) (plugins.DataQuery, error) {
 	}, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
 	plugins.DataResponse, error) {
 	json, err := simplejson.NewJson([]byte(body))

@@ -61,13 +61,16 @@ func TestHandleRequest(t *testing.T) {
 	})
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 type resultsFn func(context plugins.DataQuery) plugins.DataQueryResult
 
 type fakeExecutor struct {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	results   map[string]plugins.DataQueryResult
 	resultsFn map[string]resultsFn
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *fakeExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource, context plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	result := plugins.DataResponse{Results: make(map[string]plugins.DataQueryResult)}
@@ -84,6 +87,7 @@ func (e *fakeExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (e *fakeExecutor) Return(refID string, series plugins.DataTimeSeriesSlice) {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	e.results[refID] = plugins.DataQueryResult{
 		RefID: refID, Series: series,
 	}
@@ -107,9 +111,11 @@ func createService() (Service, *fakeExecutor) {
 		BackendPluginManager: fakeBackendPM{},
 	}
 	e := &fakeExecutor{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
 		resultsFn: make(map[string]resultsFn),
 	}
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	s.registry["test"] = func(*models.DataSource) (plugins.DataPlugin, error) {
 		return e, nil
 	}

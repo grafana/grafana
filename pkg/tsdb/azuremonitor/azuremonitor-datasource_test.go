@@ -433,6 +433,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			azData := loadTestFile(t, "azuremonitor/"+tt.responseFile)
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			require.NotNil(t, res)
 			dframes, err := datasource.parseResponse(azData, tt.mockQuery)
