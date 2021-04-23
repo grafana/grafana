@@ -190,12 +190,11 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       mergeMap((response: TSDBResponse) => {
         const dataQueryResponse = toDataQueryResponse({ data: response }, options.targets);
         const channelName: string = dataQueryResponse.data[0].meta.custom.channelName;
-        const channel = getGrafanaLiveSrv().getChannel({
+        return getGrafanaLiveSrv().getStream({
           scope: LiveChannelScope.Plugin,
           namespace: 'cloudwatch',
           path: channelName,
         });
-        return channel.getStream();
       }),
       filter((e: LiveChannelEvent<any>) => e.type === 'message'),
       map(({ message }: LiveChannelMessageEvent<TSDBResponse>) => {
