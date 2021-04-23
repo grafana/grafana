@@ -24,6 +24,7 @@ type LokiExecutor struct {
 	intervalCalculator interval.Calculator
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	return newExecutor(), nil
 }
@@ -40,6 +41,7 @@ var (
 )
 
 // DataQuery executes a Loki query.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -153,6 +155,7 @@ func (e *LokiExecutor) parseQuery(dsInfo *models.DataSource, queryContext plugin
 	return qs, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (plugins.DataQueryResult, error) {
 	var queryRes plugins.DataQueryResult
 	frames := data.Frames{}

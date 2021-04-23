@@ -116,6 +116,7 @@ func (m *Manager) getAWSEnvironmentVariables() []string {
 	return variables
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (m *Manager) GetDataPlugin(pluginID string) interface{} {
 	plugin := m.plugins[pluginID]
 	if plugin == nil {

@@ -661,6 +661,7 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 }
 
 // GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 	if p, exists := pm.dataSources[id]; exists && p.CanHandleDataQueries() {
 		return p
