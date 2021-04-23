@@ -53,6 +53,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       background: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.border.weak};
       box-shadow: ${theme.shadows.z2};
+      padding: 1px;
       opacity: 0;
       transition: ${theme.transitions.create('opacity', {
         duration: theme.transitions.duration.standard,
@@ -66,7 +67,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       padding: ${theme.spacing(1)};
 
       &:hover {
-        background: ${theme.colors.background.secondary};
+        background: ${theme.colors.action.hover};
 
         .panel-chrome-bubble-menu-icon {
           color: ${theme.colors.text.primary};

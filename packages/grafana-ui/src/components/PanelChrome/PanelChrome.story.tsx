@@ -19,7 +19,7 @@ export default {
 function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
   const props: PanelChromeProps = {
     width: 400,
-    height: 230,
+    height: 130,
     title: 'Default title',
     children: () => undefined,
   };
@@ -27,7 +27,7 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
   merge(props, overrides);
 
   const contentStyle: CSSProperties = {
-    //background: 'rgb(100,100,100,0.2)',
+    background: 'rgb(100,100,100,0.1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -52,10 +52,10 @@ export const Examples = () => {
       <HorizontalGroup spacing="md">
         <VerticalGroup spacing="md">
           {renderPanel('Default panel', {})}
-          {renderPanel('Default panel', {})}
+          {renderPanel('No padding', { padding: 'none' })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
-          {renderPanel('Default panel', {})}
+          {renderPanel('No title', { title: '' })}
           {renderPanel('Very long title', {
             title: 'Very long title that should get ellipsis when there is no more space',
           })}
