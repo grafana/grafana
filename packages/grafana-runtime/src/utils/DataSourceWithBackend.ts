@@ -45,6 +45,7 @@ export enum HealthStatus {
  * plugin.
  *
  * If the 'message' key exists, this will be displayed in the error message in DataSourceSettingsPage
+ * If the 'verboseMessage' key exists, this will be displayed in the expandable details in the error message in DataSourceSettingsPage
  *
  * @public
  */
