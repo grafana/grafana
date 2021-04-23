@@ -24,11 +24,7 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { locationService } from '@grafana/runtime';
 import { ChangeTracker } from '../services/ChangeTracker';
-import {
-  DashboardQueryRunnerImpl,
-  getDashboardQueryRunner,
-  setDashboardQueryRunner,
-} from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -181,8 +177,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const changeTracker = new ChangeTracker();
 
     timeSrv.init(dashboard);
-    setDashboardQueryRunner(new DashboardQueryRunnerImpl(dashboard, timeSrv));
-    getDashboardQueryRunner().run({ dashboard, range: timeSrv.timeRange() });
+    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
+    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (storeState.dashboard.modifiedQueries) {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;

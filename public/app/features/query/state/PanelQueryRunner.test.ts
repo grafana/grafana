@@ -6,7 +6,10 @@ import { DashboardModel } from '../../dashboard/state/index';
 import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 import { emptyResult } from './DashboardQueryRunner/utils';
-import { setDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
+import {
+  createDashboardQueryRunner,
+  setDashboardQueryRunnerFactory,
+} from './DashboardQueryRunner/DashboardQueryRunner';
 import { PanelQueryRunner } from './PanelQueryRunner';
 
 jest.mock('@grafana/data', () => ({
@@ -88,12 +91,13 @@ function describeQueryRunnerScenario(
     };
 
     setDataSourceSrv({} as any);
-    setDashboardQueryRunner({
+    setDashboardQueryRunnerFactory(() => ({
       getResult: emptyResult,
       run: () => undefined,
       cancel: () => undefined,
       destroy: () => undefined,
-    });
+    }));
+    createDashboardQueryRunner({} as any);
 
     beforeEach(async () => {
       setEchoSrv(new Echo());

@@ -17,10 +17,9 @@ import { DashboardModel } from '../../../dashboard/state';
 import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
 import { RefreshEvent } from '../../../../types/events';
 
-export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
+class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly results: Subject<DashboardQueryRunnerWorkerResult>;
   private readonly cancellations: Subject<{}>;
-  private readonly subscription: Unsubscribable;
   private readonly eventsSubscription: Unsubscribable;
 
   constructor(
@@ -82,14 +81,13 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   destroy(): void {
     this.results.complete();
     this.cancellations.complete();
-    this.subscription.unsubscribe();
     this.eventsSubscription.unsubscribe();
   }
 }
 
 let dashboardQueryRunner: DashboardQueryRunner | undefined;
 
-export function setDashboardQueryRunner(runner: DashboardQueryRunner): void {
+function setDashboardQueryRunner(runner: DashboardQueryRunner): void {
   if (dashboardQueryRunner) {
     dashboardQueryRunner.destroy();
   }
@@ -101,4 +99,29 @@ export function getDashboardQueryRunner(): DashboardQueryRunner {
     throw new Error('getDashboardQueryRunner can only be used after Grafana instance has started.');
   }
   return dashboardQueryRunner;
+}
+
+export interface DashboardQueryRunnerFactoryArgs {
+  dashboard: DashboardModel;
+  timeSrv?: TimeSrv;
+  workers?: DashboardQueryRunnerWorker[];
+}
+
+export type DashboardQueryRunnerFactory = (args: DashboardQueryRunnerFactoryArgs) => DashboardQueryRunner;
+
+let factory: DashboardQueryRunnerFactory | undefined;
+
+export function setDashboardQueryRunnerFactory(instance: DashboardQueryRunnerFactory) {
+  factory = instance;
+}
+
+export function createDashboardQueryRunner(args: DashboardQueryRunnerFactoryArgs): DashboardQueryRunner {
+  if (!factory) {
+    factory = ({ dashboard, timeSrv, workers }: DashboardQueryRunnerFactoryArgs) =>
+      new DashboardQueryRunnerImpl(dashboard, timeSrv, workers);
+  }
+
+  const runner = factory(args);
+  setDashboardQueryRunner(runner);
+  return runner;
 }

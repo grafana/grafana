@@ -16,7 +16,7 @@ import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/Dashboard
 import { getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
 import {
   getDashboardQueryRunner,
-  setDashboardQueryRunner,
+  setDashboardQueryRunnerFactory,
 } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
 
@@ -86,12 +86,12 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     };
 
     setDashboardLoaderSrv((loaderSrv as unknown) as DashboardLoaderSrv);
-    setDashboardQueryRunner({
+    setDashboardQueryRunnerFactory(() => ({
       getResult: emptyResult,
       run: jest.fn(),
       cancel: () => undefined,
       destroy: () => undefined,
-    });
+    }));
 
     let setupFn = () => {};
 

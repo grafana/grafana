@@ -5,9 +5,9 @@ import { AlertState, AlertStateInfo } from '@grafana/data';
 import * as annotationsSrv from '../../../annotations/annotations_srv';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { DashboardQueryRunnerImpl } from './DashboardQueryRunner';
 import { DashboardQueryRunner, DashboardQueryRunnerResult } from './types';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
+import { createDashboardQueryRunner } from './DashboardQueryRunner';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -19,7 +19,7 @@ function getTestContext() {
   const timeSrvMock: any = { timeRange: jest.fn() };
   const options = getDefaultOptions();
   // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
-  const runner = new DashboardQueryRunnerImpl(options.dashboard, timeSrvMock);
+  const runner = createDashboardQueryRunner({ dashboard: options.dashboard, timeSrv: timeSrvMock });
 
   const getResults: AlertStateInfo[] = [
     { id: 1, state: AlertState.Alerting, newStateDate: '2021-01-01', dashboardId: 1, panelId: 1 },
