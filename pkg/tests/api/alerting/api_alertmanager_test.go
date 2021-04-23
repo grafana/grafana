@@ -53,8 +53,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		require.JSONEq(t, `{"message": "Unauthorized"}`, string(b))
 	}
 
-	err := createUser(t, store, models.ROLE_EDITOR, "grafana", "password")
-	require.NoError(t, err)
+	// Create a user to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
 
 	// invalid credentials request to get the alerts should fail
 	{
@@ -843,6 +843,124 @@ func TestAlertRuleCRUD(t *testing.T) {
 			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
 		})
 	}
+}
+
+func TestQuota(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		EnableQuota:          true,
+		DisableAnonymous:     true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create the namespace we'll save our alerts to.
+	require.NoError(t, createFolder(t, store, 0, "default"))
+
+	// Create a user to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+
+	interval, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+
+	// check quota limits
+	t.Run("when quota limit exceed", func(t *testing.T) {
+		// get existing org quota
+		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
+		err = sqlstore.GetOrgQuotaByTarget(&query)
+		require.NoError(t, err)
+		used := query.Result.Used
+		limit := query.Result.Limit
+
+		// set org quota limit to equal used
+		orgCmd := models.UpdateOrgQuotaCmd{
+			OrgId:  1,
+			Target: "alert_rule",
+			Limit:  used,
+		}
+		err := sqlstore.UpdateOrgQuota(&orgCmd)
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			// reset org quota to original value
+			orgCmd := models.UpdateOrgQuotaCmd{
+				OrgId:  1,
+				Target: "alert_rule",
+				Limit:  limit,
+			}
+			err := sqlstore.UpdateOrgQuota(&orgCmd)
+			require.NoError(t, err)
+		})
+
+		// try to create an alert rule
+		rules := apimodels.PostableRuleGroupConfig{
+			Name:     "arulegroup",
+			Interval: interval,
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "One more alert rule",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+									"datasourceUid": "-100",
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err = enc.Encode(&rules)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", &buf)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		require.JSONEq(t, `{"message":"quota reached"}`, string(b))
+	})
+}
+
+func TestEval(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		EnableQuota:          true,
+		DisableAnonymous:     true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+
+	// Create the namespace we'll save our alerts to.
+	require.NoError(t, createFolder(t, store, 0, "default"))
 
 	// test eval conditions
 	testCases := []struct {
@@ -1182,81 +1300,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 		})
 	}
 
-	// check quota limits
-	t.Run("when quota limit exceed", func(t *testing.T) {
-		// get existing org quota
-		query := models.GetOrgQuotaByTargetQuery{OrgId: 1, Target: "alert_rule"}
-		err = sqlstore.GetOrgQuotaByTarget(&query)
-		require.NoError(t, err)
-		used := query.Result.Used
-		limit := query.Result.Limit
-
-		// set org quota limit to equal used
-		orgCmd := models.UpdateOrgQuotaCmd{
-			OrgId:  1,
-			Target: "alert_rule",
-			Limit:  used,
-		}
-		err := sqlstore.UpdateOrgQuota(&orgCmd)
-		require.NoError(t, err)
-
-		t.Cleanup(func() {
-			// reset org quota to original value
-			orgCmd := models.UpdateOrgQuotaCmd{
-				OrgId:  1,
-				Target: "alert_rule",
-				Limit:  limit,
-			}
-			err := sqlstore.UpdateOrgQuota(&orgCmd)
-			require.NoError(t, err)
-		})
-
-		// try to create an alert rule
-		rules := apimodels.PostableRuleGroupConfig{
-			Name:     "arulegroup",
-			Interval: interval,
-			Rules: []apimodels.PostableExtendedRuleNode{
-				{
-					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title:     "One more alert rule",
-						Condition: "A",
-						Data: []ngmodels.AlertQuery{
-							{
-								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-								},
-								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
-									"type": "math",
-									"expression": "2 + 3 > 1"
-									}`),
-							},
-						},
-					},
-				},
-			},
-		}
-		buf := bytes.Buffer{}
-		enc := json.NewEncoder(&buf)
-		err = enc.Encode(&rules)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Post(u, "application/json", &buf)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := ioutil.ReadAll(resp.Body)
-		require.NoError(t, err)
-
-		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-		require.JSONEq(t, `{"message":"quota reached"}`, string(b))
-	})
 }
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
