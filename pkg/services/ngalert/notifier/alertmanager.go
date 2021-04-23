@@ -83,16 +83,22 @@ type Alertmanager struct {
 
 	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
-	// silences keeps the track of which notifications we should not fire due to user configuration.
+	marker          types.Marker
+	alerts          provider.Alerts
+	route           *dispatch.Route
 
-	silencer   *silence.Silencer
-	silences   *silence.Silences
-	marker     types.Marker
-	alerts     provider.Alerts
-	route      *dispatch.Route
 	dispatcher *dispatch.Dispatcher
 	inhibitor  *inhibit.Inhibitor
-	wg         sync.WaitGroup
+	// wg is for dispatcher and inhibitor.
+	// This is separate because it is used on every config reload.
+	wg sync.WaitGroup
+
+	// silences keeps the track of which notifications we should not fire due to user configuration.
+	silencer *silence.Silencer
+	silences *silence.Silences
+	stopc    chan struct{}
+	// silencesWg is for the silences maintenance.
+	silencesWg sync.WaitGroup
 
 	stageMetrics      *notify.Metrics
 	dispatcherMetrics *dispatch.DispatcherMetrics
@@ -113,6 +119,14 @@ func (am *Alertmanager) IsDisabled() bool {
 }
 
 func (am *Alertmanager) Init() (err error) {
+	// During unit testing some old objects might be hanging around. Hence reset it.
+	*am = Alertmanager{
+		Settings: am.Settings,
+		SQLStore: am.SQLStore,
+		Store:    am.Store,
+	}
+
+	am.stopc = make(chan struct{})
 	am.logger = log.New("alertmanager")
 	r := prometheus.NewRegistry()
 	am.marker = types.NewMarker(r)
@@ -149,10 +163,18 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 		am.logger.Error("unable to sync configuration", "err", err)
 	}
 
+	am.silencesWg.Add(1)
+	go func() {
+		am.silences.Maintenance(15*time.Minute, filepath.Join(am.WorkingDirPath(), "silences"), am.stopc)
+		am.silencesWg.Done()
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			am.StopAndWait()
+			close(am.stopc)
+			am.silencesWg.Wait()
 			return nil
 		case <-time.After(pollInterval):
 			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
@@ -171,7 +193,6 @@ func (am *Alertmanager) StopAndWait() {
 	if am.dispatcher != nil {
 		am.dispatcher.Stop()
 	}
-
 	if am.inhibitor != nil {
 		am.inhibitor.Stop()
 	}

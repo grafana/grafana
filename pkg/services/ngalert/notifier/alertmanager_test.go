@@ -20,10 +20,9 @@ import (
 )
 
 func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := &Alertmanager{
-		Settings: &setting.Cfg{},
-		SQLStore: sqlstore.InitTestDB(t),
-	}
+	am := NewAlertmanager()
+	am.Settings = &setting.Cfg{}
+	am.SQLStore = sqlstore.InitTestDB(t)
 	require.NoError(t, am.Init())
 	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
 	require.NotNil(t, am.config)
@@ -36,11 +35,11 @@ func TestPutAlert(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	})
 
-	am := &Alertmanager{
-		Settings: &setting.Cfg{
-			DataPath: dir,
-		},
+	am := NewAlertmanager()
+	am.Settings = &setting.Cfg{
+		DataPath: dir,
 	}
+
 	require.NoError(t, am.Init())
 
 	startTime := time.Now()
