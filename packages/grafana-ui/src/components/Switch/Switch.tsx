@@ -69,21 +69,21 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
         position: absolute;
 
         &:disabled + label {
-          background: ${theme.palette.action.disabledBackground};
+          background: ${theme.colors.action.disabledBackground};
           cursor: not-allowed;
         }
 
         &:checked + label {
-          background: ${theme.palette.primary.main};
-          border-color: ${theme.palette.primary.main};
+          background: ${theme.colors.primary.main};
+          border-color: ${theme.colors.primary.main};
 
           &:hover {
-            background: ${theme.palette.primary.shade};
+            background: ${theme.colors.primary.shade};
           }
 
           &::after {
             transform: translate3d(18px, -50%, 0);
-            background: ${theme.palette.primary.contrastText};
+            background: ${theme.colors.primary.contrastText};
           }
         }
 
@@ -104,7 +104,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
         border: none;
         border-radius: 50px;
         background: ${theme.components.input.background};
-        border: 1px solid ${theme.components.input.border};
+        border: 1px solid ${theme.components.input.borderColor};
         transition: all 0.3s ease;
 
         &:hover {
@@ -118,7 +118,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
           width: 12px;
           height: 12px;
           border-radius: 6px;
-          background: ${theme.palette.text.secondary};
+          background: ${theme.colors.text.secondary};
           box-shadow: ${theme.shadows.z1};
           top: 50%;
           transform: translate3d(2px, -50%, 0);
@@ -132,7 +132,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
       display: flex;
       align-items: center;
       background: ${transparent ? 'transparent' : theme.components.input.background};
-      border: 1px solid ${transparent ? 'transparent' : theme.components.input.border};
+      border: 1px solid ${transparent ? 'transparent' : theme.components.input.borderColor};
       border-radius: ${theme.shape.borderRadius()};
     `,
   };

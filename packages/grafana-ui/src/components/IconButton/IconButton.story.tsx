@@ -40,7 +40,7 @@ const RenderScenario = ({ background }: ScenarioProps) => {
     <div
       className={css`
         padding: 30px;
-        background: ${theme.palette.background[background]};
+        background: ${theme.colors.background[background]};
         button {
           margin-right: 8px;
           margin-left: 8px;

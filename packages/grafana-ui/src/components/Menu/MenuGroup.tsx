@@ -40,7 +40,7 @@ MenuGroup.displayName = 'MenuGroup';
 const getStyles = (theme: GrafanaThemeV2) => {
   return {
     groupLabel: css`
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.size.sm};
       padding: ${theme.spacing(0.5, 1)};
     `,

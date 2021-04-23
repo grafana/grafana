@@ -3,16 +3,14 @@ import { GrafanaThemeV2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
-  // rgba(1,4,9,0.8)
-  const backdropBackground = 'rgba(0, 0, 0, 0.5)';
   const borderRadius = theme.shape.borderRadius(2);
 
   return {
     modal: css`
       position: fixed;
       z-index: ${theme.zIndex.modal};
-      background: ${theme.palette.background.primary};
-      box-shadow: ${theme.shadows.z4};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
       border-radius: ${borderRadius};
       background-clip: padding-box;
       outline: none;
@@ -31,12 +29,12 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       bottom: 0;
       left: 0;
       z-index: ${theme.zIndex.modalBackdrop};
-      background-color: ${backdropBackground};
+      background-color: ${theme.components.overlay.background};
+      backdrop-filter: blur(1px);
     `,
     modalHeader: css`
       label: modalHeader;
-      background: ${theme.palette.background.secondary};
-      border-bottom: 1px solid ${theme.palette.border.weak};
+      background: ${theme.colors.background.secondary};
       border-radius: ${borderRadius} ${borderRadius} 0 0;
       display: flex;
       height: 42px;
@@ -64,10 +62,10 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       padding-right: ${theme.spacing(1)};
     `,
     modalContent: css`
-      padding: calc(${theme.spacing.gridSize} * 2);
+      padding: ${theme.spacing(2)};
       overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing.gridSize} * 2);
+      max-height: calc(90vh - ${theme.spacing(2)});
     `,
   };
 });

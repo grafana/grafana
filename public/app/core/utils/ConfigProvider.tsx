@@ -32,7 +32,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
 function getCurrentUserTheme() {
   return createTheme({
-    palette: {
+    colors: {
       mode: config.bootData.user.lightTheme ? 'light' : 'dark',
     },
   });
