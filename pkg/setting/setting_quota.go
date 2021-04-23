@@ -66,13 +66,17 @@ func (cfg *Cfg) readQuotaSettings() {
 	quota := cfg.Raw.Section("quota")
 	Quota.Enabled = quota.Key("enabled").MustBool(false)
 
+	var alertOrgQuota int64
+	if cfg.IsNgAlertEnabled() {
+		alertOrgQuota = quota.Key("org_alert_rule").MustInt64(100)
+	}
 	// per ORG Limits
 	Quota.Org = &OrgQuota{
 		User:       quota.Key("org_user").MustInt64(10),
 		DataSource: quota.Key("org_data_source").MustInt64(10),
 		Dashboard:  quota.Key("org_dashboard").MustInt64(10),
 		ApiKey:     quota.Key("org_api_key").MustInt64(10),
-		AlertRule:  quota.Key("org_alert_rule").MustInt64(10),
+		AlertRule:  alertOrgQuota,
 	}
 
 	// per User limits

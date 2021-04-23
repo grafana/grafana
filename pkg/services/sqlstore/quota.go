@@ -251,6 +251,7 @@ func GetGlobalQuotaByTarget(query *models.GetGlobalQuotaByTargetQuery) error {
 	var used int64
 	if query.Target != ALERT_RULE_TARGET || query.IsNgAlertEnabled {
 		// get quota used.
+
 		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
 		resp := make([]*targetCount, 0)
 		if err := x.SQL(rawSQL).Find(&resp); err != nil {
