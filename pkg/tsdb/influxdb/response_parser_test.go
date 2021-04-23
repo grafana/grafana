@@ -17,12 +17,14 @@ func prepare(text string) io.ReadCloser {
 	return ioutil.NopCloser(strings.NewReader(text))
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func decodedFrames(t *testing.T, result plugins.DataQueryResult) data.Frames {
 	decoded, err := result.Dataframes.Decoded()
 	require.NoError(t, err)
 	return decoded
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func assertSeriesName(t *testing.T, result plugins.DataQueryResult, index int, name string) {
 	decoded := decodedFrames(t, result)
 

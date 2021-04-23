@@ -370,6 +370,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewTelegramNotifier(cfg, tmpl, externalURL)
 		case "teams":
 			n, err = channels.NewTeamsNotifier(cfg, tmpl, externalURL)
+		case "dingding":
+			n, err = channels.NewDingDingNotifier(cfg, tmpl, externalURL)
 		}
 		if err != nil {
 			return nil, err
