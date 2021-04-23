@@ -1,4 +1,4 @@
-package live
+package managedstream
 
 import (
 	"testing"

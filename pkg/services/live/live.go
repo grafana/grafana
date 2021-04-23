@@ -8,9 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/convert"
-	"github.com/grafana/grafana/pkg/services/live/pushurl"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -20,14 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/live/demultiplexer"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/services/live/livecontext"
+	"github.com/grafana/grafana/pkg/services/live/managedstream"
+	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
@@ -67,10 +67,9 @@ type GrafanaLive struct {
 
 	node *centrifuge.Node
 
-	// The websocket handler
-	WebsocketHandler interface{}
-
-	PushWebsocketHandler interface{}
+	// Websocket handlers
+	websocketHandler     interface{}
+	pushWebsocketHandler interface{}
 
 	// Full channel handler
 	channels   map[string]models.ChannelHandler
@@ -79,7 +78,7 @@ type GrafanaLive struct {
 	// The core internal features
 	GrafanaScope CoreGrafanaScope
 
-	ManagedStreamRunner *ManagedStreamRunner
+	ManagedStreamRunner *managedstream.Runner
 
 	contextGetter    *pluginContextGetter
 	runStreamManager *runstream.Manager
@@ -145,7 +144,7 @@ func (g *GrafanaLive) Init() error {
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
 
-	g.ManagedStreamRunner = NewManagedStreamRunner(g.Publish)
+	g.ManagedStreamRunner = managedstream.NewRunner(g.Publish)
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -157,7 +156,7 @@ func (g *GrafanaLive) Init() error {
 
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
 			logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			user, ok := getContextSignedUser(client.Context())
+			user, ok := livecontext.GetContextSignedUser(client.Context())
 			if !ok {
 				logger.Error("Unauthenticated live connection")
 				cb(centrifuge.SubscribeReply{}, centrifuge.ErrorInternal)
@@ -201,7 +200,7 @@ func (g *GrafanaLive) Init() error {
 		// allows some simple prototypes to work quickly.
 		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
 			logger.Debug("Client wants to publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			user, ok := getContextSignedUser(client.Context())
+			user, ok := livecontext.GetContextSignedUser(client.Context())
 			if !ok {
 				logger.Error("Unauthenticated live connection")
 				cb(centrifuge.PublishReply{}, centrifuge.ErrorInternal)
@@ -265,12 +264,12 @@ func (g *GrafanaLive) Init() error {
 		WriteBufferSize: 1024,
 	})
 
-	pushWSHandler := NewPushWebsocketHandler(g, WebsocketConfig{
+	pushWSHandler := pushws.NewHandler(g.ManagedStreamRunner, pushws.Config{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	})
 
-	g.WebsocketHandler = func(ctx *models.ReqContext) {
+	g.websocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		if user == nil {
 			ctx.Resp.WriteHeader(401)
@@ -282,8 +281,8 @@ func (g *GrafanaLive) Init() error {
 			UserID: fmt.Sprintf("%d", user.UserId),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
-		newCtx = setContextSignedUser(newCtx, user)
-		newCtx = setContextValues(newCtx, ctx.Req.URL.Query())
+		newCtx = livecontext.SetContextSignedUser(newCtx, user)
+		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID.
@@ -291,7 +290,7 @@ func (g *GrafanaLive) Init() error {
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.PushWebsocketHandler = func(ctx *models.ReqContext) {
+	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		if user == nil {
 			ctx.Resp.WriteHeader(401)
@@ -303,8 +302,8 @@ func (g *GrafanaLive) Init() error {
 			UserID: fmt.Sprintf("%d", user.UserId),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
-		newCtx = setContextSignedUser(newCtx, user)
-		newCtx = setContextValues(newCtx, ctx.Req.URL.Query())
+		newCtx = livecontext.SetContextSignedUser(newCtx, user)
+		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID.
@@ -312,177 +311,9 @@ func (g *GrafanaLive) Init() error {
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.RouteRegister.Get("/live/ws", g.WebsocketHandler)
-	g.RouteRegister.Get("/live/push", g.PushWebsocketHandler)
-
+	g.RouteRegister.Get("/live/ws", g.websocketHandler)
+	g.RouteRegister.Get("/live/push", g.pushWebsocketHandler)
 	return nil
-}
-
-// WebsocketHandler handles WebSocket client connections. WebSocket protocol
-// is a bidirectional connection between a client an a server for low-latency
-// communication.
-type PushWebsocketHandler struct {
-	GrafanaLive *GrafanaLive
-	config      WebsocketConfig
-	upgrade     *websocket.Upgrader
-	converter   *convert.Converter
-}
-
-// WebsocketConfig represents config for WebsocketHandler.
-type WebsocketConfig struct {
-	// CompressionLevel sets a level for websocket compression.
-	// See possible value description at https://golang.org/pkg/compress/flate/#NewWriter
-	CompressionLevel int
-
-	// CompressionMinSize allows to set minimal limit in bytes for
-	// message to use compression when writing it into client connection.
-	// By default it's 0 - i.e. all messages will be compressed when
-	// WebsocketCompression enabled and compression negotiated with client.
-	CompressionMinSize int
-
-	// ReadBufferSize is a parameter that is used for raw websocket Upgrader.
-	// If set to zero reasonable default value will be used.
-	ReadBufferSize int
-
-	// WriteBufferSize is a parameter that is used for raw websocket Upgrader.
-	// If set to zero reasonable default value will be used.
-	WriteBufferSize int
-
-	// MessageSizeLimit sets the maximum size in bytes of allowed message from client.
-	// By default DefaultWebsocketMaxMessageSize will be used.
-	MessageSizeLimit int
-
-	// CheckOrigin func to provide custom origin check logic.
-	// nil means allow all origins.
-	CheckOrigin func(r *http.Request) bool
-
-	// PingInterval sets interval server will send ping messages to clients.
-	// By default DefaultPingInterval will be used.
-	PingInterval time.Duration
-
-	// WriteTimeout is maximum time of write message operation.
-	// Slow client will be disconnected.
-	// By default DefaultWebsocketWriteTimeout will be used.
-	WriteTimeout time.Duration
-
-	// Compression allows to enable websocket permessage-deflate
-	// compression support for raw websocket connections. It does
-	// not guarantee that compression will be used - i.e. it only
-	// says that server will try to negotiate it with client.
-	Compression bool
-}
-
-// NewPushWebsocketHandler creates new PushWebsocketHandler.
-func NewPushWebsocketHandler(g *GrafanaLive, c WebsocketConfig) *PushWebsocketHandler {
-	upgrade := &websocket.Upgrader{
-		ReadBufferSize:    c.ReadBufferSize,
-		EnableCompression: c.Compression,
-		WriteBufferSize:   c.WriteBufferSize,
-		CheckOrigin:       c.CheckOrigin,
-	}
-	return &PushWebsocketHandler{
-		GrafanaLive: g,
-		config:      c,
-		upgrade:     upgrade,
-		converter:   convert.NewConverter(),
-	}
-}
-
-// Defaults.
-const (
-	DefaultWebsocketPingInterval     = 25 * time.Second
-	DefaultWebsocketWriteTimeout     = 1 * time.Second
-	DefaultWebsocketMessageSizeLimit = 1024 * 1024 // 1MB
-)
-
-func (s *PushWebsocketHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	conn, err := s.upgrade.Upgrade(rw, r, nil)
-	if err != nil {
-		return
-	}
-
-	pingInterval := s.config.PingInterval
-	if pingInterval == 0 {
-		pingInterval = DefaultWebsocketPingInterval
-	}
-	writeTimeout := s.config.WriteTimeout
-	if writeTimeout == 0 {
-		writeTimeout = DefaultWebsocketWriteTimeout
-	}
-	messageSizeLimit := s.config.MessageSizeLimit
-	if messageSizeLimit == 0 {
-		messageSizeLimit = DefaultWebsocketMessageSizeLimit
-	}
-
-	if messageSizeLimit > 0 {
-		conn.SetReadLimit(int64(messageSizeLimit))
-	}
-	if pingInterval > 0 {
-		pongWait := pingInterval * 10 / 9
-		_ = conn.SetReadDeadline(time.Now().Add(pongWait))
-		conn.SetPongHandler(func(string) error {
-			_ = conn.SetReadDeadline(time.Now().Add(pongWait))
-			return nil
-		})
-	}
-
-	streamID := r.URL.Query().Get("stream")
-
-	go func() {
-		ticker := time.NewTicker(25 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-r.Context().Done():
-				return
-			case <-ticker.C:
-				deadline := time.Now().Add(pingInterval / 2)
-				err := conn.WriteControl(websocket.PingMessage, nil, deadline)
-				if err != nil {
-					return
-				}
-			}
-		}
-	}()
-
-	for {
-		_, body, err := conn.ReadMessage()
-		if err != nil {
-			break
-		}
-
-		stream, err := s.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(streamID)
-		if err != nil {
-			logger.Error("Error getting stream", "error", err)
-			continue
-		}
-
-		// TODO Grafana 8: decide which formats to use or keep all.
-		urlValues := r.URL.Query()
-		frameFormat := pushurl.FrameFormatFromValues(urlValues)
-		stableSchema := pushurl.StableSchemaFromValues(urlValues)
-
-		logger.Debug("Live Push request",
-			"protocol", "http",
-			"streamId", streamID,
-			"bodyLength", len(body),
-			"stableSchema", stableSchema,
-			"frameFormat", frameFormat,
-		)
-
-		metricFrames, err := s.converter.Convert(body, frameFormat)
-		if err != nil {
-			logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
-			continue
-		}
-
-		for _, mf := range metricFrames {
-			err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
-			if err != nil {
-				return
-			}
-		}
-	}
 }
 
 func subscribeStatusToHTTPError(status backend.SubscribeStreamStatus) (int, string) {
@@ -601,7 +432,7 @@ func (g *GrafanaLive) handleStreamScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return NewDemultiplexer(namespace, g.ManagedStreamRunner), nil
+	return demultiplexer.New(namespace, g.ManagedStreamRunner), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
