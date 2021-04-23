@@ -4,7 +4,7 @@ import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { isAlertingRule } from '../../utils/rules';
-import { isCloudRulesSource } from '../../utils/datasource';
+import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { Annotation } from '../Annotation';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
@@ -50,7 +50,11 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
-          <DetailsField label="Expression" className={cx({ [styles.exprRow]: !!annotations.length })} horizontal={true}>
+          <DetailsField
+            label={isGrafanaRulesSource(rulesSource) ? 'Query' : 'Expression'}
+            className={cx({ [styles.exprRow]: !!annotations.length })}
+            horizontal={true}
+          >
             <RuleQuery rule={rule} rulesSource={rulesSource} />
           </DetailsField>
           {annotations.map(([key, value]) => (
