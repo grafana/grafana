@@ -16,10 +16,11 @@ import {
   StreamingDataFrame,
   LiveChannelAddress,
   LiveChannelConfig,
+  toLiveChannelId,
 } from '@grafana/data';
 import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
-import { config, getGrafanaLiveSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 
@@ -151,19 +152,23 @@ export class LivePanel extends PureComponent<Props, State> {
   };
 
   onPublishClicked = async () => {
-    // const { channel } = this.state;
-    // if (!channel?.publish) {
-    //   console.log('channel does not support publishing');
-    //   return;
-    // }
-    // const json = this.props.options?.json;
-    // if (json) {
-    //   const rsp = await channel.publish(json);
-    //   console.log('onPublishClicked (response from publish)', rsp);
-    // } else {
-    //   console.log('nothing to publish');
-    // }
-    alert('TODO, publish!!!');
+    const { addr, info } = this.state;
+    if (!info?.canPublish || !addr) {
+      console.log('channel does not support publishing');
+      return;
+    }
+
+    const data = this.props.options?.json;
+    if (!data) {
+      console.log('nothing to publish');
+      return;
+    }
+
+    const rsp = await getBackendSrv().post(`api/live/publish`, {
+      channel: toLiveChannelId(addr),
+      data,
+    });
+    console.log('onPublishClicked (response from publish)', rsp);
   };
 
   renderMessage(height: number) {
