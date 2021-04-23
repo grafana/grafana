@@ -200,11 +200,11 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: $white;
-$input-bg-disabled: $gray-5;
+$input-bg: ${theme.components.input.background};
+$input-bg-disabled: ${theme.colors.action.disabledBackground};
 
-$input-color: ${theme.v1.colors.formInputText};
-$input-border-color: ${theme.v1.colors.formInputBorder};
+$input-color: ${theme.components.input.text};
+$input-border-color: ${theme.components.input.borderColor};
 $input-box-shadow: none;
 $input-border-focus: ${theme.v1.palette.blue95};
 $input-box-shadow-focus: ${theme.v1.palette.blue95};

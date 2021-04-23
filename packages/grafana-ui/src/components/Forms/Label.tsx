@@ -1,9 +1,8 @@
 import React from 'react';
-import { useTheme, stylesFactory } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useTheme2, stylesFactory } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { Icon } from '../Icon/Icon';
-import tinycolor from 'tinycolor2';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: React.ReactNode;
@@ -11,16 +10,15 @@ export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> 
   category?: string[];
 }
 
-export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getLabelStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     label: css`
       label: Label;
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
       line-height: 1.25;
-      margin: ${theme.spacing.formLabelMargin};
-      padding: ${theme.spacing.formLabelPadding};
-      color: ${theme.colors.formLabel};
+      margin-bottom: ${theme.spacing(0.5)};
+      color: ${theme.colors.text.primary};
       max-width: 480px;
     `,
     labelContent: css`
@@ -29,28 +27,25 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     description: css`
       label: Label-description;
-      color: ${theme.colors.formDescription};
+      color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.regular};
-      margin-top: ${theme.spacing.xxs};
+      font-weight: ${theme.typography.fontWeightRegular};
+      margin-top: ${theme.spacing(0.25)};
       display: block;
     `,
     categories: css`
       label: Label-categories;
-      color: ${theme.isLight
-        ? tinycolor(theme.colors.formLabel).lighten(10).toHexString()
-        : tinycolor(theme.colors.formLabel).darken(10).toHexString()};
       display: inline-flex;
       align-items: center;
     `,
     chevron: css`
-      margin: 0 ${theme.spacing.xxs};
+      margin: 0 ${theme.spacing(0.25)};
     `,
   };
 });
 
 export const Label: React.FC<LabelProps> = ({ children, description, className, category, ...labelProps }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getLabelStyles(theme);
   const categories = category?.map((c, i) => {
     return (

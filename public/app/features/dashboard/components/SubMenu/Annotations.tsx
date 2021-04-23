@@ -1,7 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { LegacyForms } from '@grafana/ui';
 import { AnnotationQuery } from '@grafana/data';
-const { Switch } = LegacyForms;
+import { InlineField, InlineSwitch } from '@grafana/ui';
 
 interface Props {
   annotations: AnnotationQuery[];
@@ -22,16 +21,10 @@ export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotatio
     <>
       {visibleAnnotations.map((annotation: any) => {
         return (
-          <div
-            key={annotation.name}
-            className={annotation.enable ? 'submenu-item' : 'submenu-item annotation-disabled'}
-          >
-            <Switch
-              label={annotation.name}
-              className="gf-form"
-              checked={annotation.enable}
-              onChange={() => onAnnotationChanged(annotation)}
-            />
+          <div key={annotation.name} className={'submenu-item'}>
+            <InlineField label={annotation.name}>
+              <InlineSwitch checked={annotation.enable} onChange={() => onAnnotationChanged(annotation)} />
+            </InlineField>
           </div>
         );
       })}
