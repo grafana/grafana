@@ -14,12 +14,3 @@ export const PlotContext = React.createContext<PlotContextType>({} as PlotContex
 export const usePlotContext = (): PlotContextType => {
   return useContext<PlotContextType>(PlotContext);
 };
-
-/**
- * @alpha
- */
-export const buildPlotContext = (plot: uPlot | undefined): PlotContextType => {
-  return {
-    plot,
-  };
-};
