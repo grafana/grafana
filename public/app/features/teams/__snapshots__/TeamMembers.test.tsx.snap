@@ -17,13 +17,13 @@ exports[`Render should render component 1`] = `
     <div
       className="page-action-bar__spacer"
     />
-    <button
-      className="btn btn-primary pull-right"
+    <Button
+      className="pull-right"
       disabled={false}
       onClick={[Function]}
     >
       Add member
-    </button>
+    </Button>
   </div>
   <SlideDown
     in={false}
@@ -31,14 +31,9 @@ exports[`Render should render component 1`] = `
     <div
       className="cta-form"
     >
-      <button
-        className="cta-form__close btn btn-transparent"
+      <CloseButton
         onClick={[Function]}
-      >
-        <Icon
-          name="times"
-        />
-      </button>
+      />
       <h5>
         Add team member
       </h5>
@@ -109,13 +104,13 @@ exports[`Render should render team members 1`] = `
     <div
       className="page-action-bar__spacer"
     />
-    <button
-      className="btn btn-primary pull-right"
+    <Button
+      className="pull-right"
       disabled={false}
       onClick={[Function]}
     >
       Add member
-    </button>
+    </Button>
   </div>
   <SlideDown
     in={false}
@@ -123,14 +118,9 @@ exports[`Render should render team members 1`] = `
     <div
       className="cta-form"
     >
-      <button
-        className="cta-form__close btn btn-transparent"
+      <CloseButton
         onClick={[Function]}
-      >
-        <Icon
-          name="times"
-        />
-      </button>
+      />
       <h5>
         Add team member
       </h5>

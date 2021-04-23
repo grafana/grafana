@@ -44,7 +44,9 @@ export class UserOrganizations extends PureComponent<Props> {
                         <td>{org.role}</td>
                         <td className="text-right">
                           {org.orgId === user.orgId ? (
-                            <span className="btn btn-primary btn-small">Current</span>
+                            <Button variant="secondary" size="sm" disabled>
+                              Current
+                            </Button>
                           ) : (
                             <Button
                               variant="secondary"

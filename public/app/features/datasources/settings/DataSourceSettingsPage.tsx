@@ -21,7 +21,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 // Types
 import { StoreState } from 'app/types/';
 import { DataSourceSettings } from '@grafana/data';
-import { Alert, InfoBox } from '@grafana/ui';
+import { Alert, Button, InfoBox, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
@@ -170,13 +170,13 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           <div>
             <div className="gf-form-button-row">
               {showDelete && (
-                <button type="submit" className="btn btn-danger" onClick={this.onDelete}>
+                <Button type="submit" variant="destructive" onClick={this.onDelete}>
                   Delete
-                </button>
+                </Button>
               )}
-              <a className="btn btn-inverse" href="datasources">
+              <LinkButton variant="link" href="datasources">
                 Back
-              </a>
+              </LinkButton>
             </div>
           </div>
         </Page.Contents>

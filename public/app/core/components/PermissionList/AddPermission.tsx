@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import config from 'app/core/config';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { Button, Form, HorizontalGroup, Icon, Select, stylesFactory } from '@grafana/ui';
+import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { User } from 'app/types';
 import {
@@ -14,6 +14,7 @@ import {
   NewDashboardAclItem,
   OrgRole,
 } from 'app/types/acl';
+import { CloseButton } from '../CloseButton/CloseButton';
 
 export interface Props {
   onAddPermission: (item: NewDashboardAclItem) => void;
@@ -93,9 +94,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
 
     return (
       <div className="cta-form">
-        <button className="cta-form__close btn btn-transparent" onClick={onCancel}>
-          <Icon name="times" />
-        </button>
+        <CloseButton onClick={onCancel} />
         <h5>Add Permission For</h5>
         <Form maxWidth="none" onSubmit={this.onSubmit}>
           {() => (
