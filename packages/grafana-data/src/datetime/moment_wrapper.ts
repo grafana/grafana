@@ -48,7 +48,6 @@ export interface DateTimeDuration {
   minutes: () => number;
   seconds: () => number;
   asSeconds: () => number;
-  humanize: () => string;
 }
 
 export interface DateTime extends Object {

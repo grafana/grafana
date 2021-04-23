@@ -28,7 +28,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
   const dateDisplayFormat = 'YYYY-MM-DD HH:mm';
   const startsAtDate = dateMath.parse(startsAt);
   const endsAtDate = dateMath.parse(endsAt);
-  const duration = toDuration(endsAtDate?.diff(startsAtDate || '')).humanize();
+  const duration = toDuration(endsAtDate?.diff(startsAtDate || '')).asSeconds();
 
   const handleExpireSilenceClick = () => {
     dispatch(expireSilenceAction(alertManagerSourceName, silence.id));
@@ -82,7 +82,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
           <tr className={className}>
             <td />
             <td>Duration</td>
-            <td colSpan={4}>{duration}</td>
+            <td colSpan={4}>{duration} seconds</td>
           </tr>
           <tr className={className}>
             <td />

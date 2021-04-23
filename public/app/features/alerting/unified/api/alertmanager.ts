@@ -79,7 +79,7 @@ export async function createOrUpdateSilence(
 
 export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
   await getBackendSrv().delete(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences/${encodeURIComponent(silenceID)}`
+    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silence/${encodeURIComponent(silenceID)}`
   );
 }
 
