@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,7 +27,7 @@ func TestProcessEvalResults(t *testing.T) {
 		desc           string
 		alertRule      *models.AlertRule
 		evalResults    []eval.Results
-		expectedStates map[string]state.AlertState
+		expectedStates map[string]*state.State
 	}{
 		{
 			desc: "a cache entry is correctly created",
@@ -41,13 +43,14 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
@@ -60,7 +63,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Normal,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -86,18 +89,20 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label_1": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label_1": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 					eval.Result{
-						Instance:    data.Labels{"instance_label_2": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label_2": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_1:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
@@ -110,7 +115,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label_1":             "test",
 					},
 					State: eval.Normal,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -132,7 +137,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label_2":             "test",
 					},
 					State: eval.Alerting,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Alerting,
@@ -160,20 +165,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime.Add(1 * time.Minute),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_1 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_1",
 					OrgID:        1,
@@ -186,7 +193,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Normal,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -216,20 +223,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(1 * time.Minute),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -242,7 +251,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Alerting,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -256,7 +265,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:00 +0000 UTC"},
 				},
 			},
 		},
@@ -275,27 +284,30 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(80 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(80 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -308,7 +320,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Alerting,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -326,7 +338,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:20 +0000 UTC"},
 				},
 			},
 		},
@@ -345,20 +357,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Alerting,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -371,7 +385,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Pending,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -404,20 +418,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -430,7 +446,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Alerting,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -444,7 +460,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
 		},
@@ -463,20 +479,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -489,7 +507,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.NoData,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -503,7 +521,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
 		},
@@ -522,20 +540,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -548,7 +568,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Normal,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -562,7 +582,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
 		},
@@ -582,20 +602,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -608,7 +630,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Alerting,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -622,7 +644,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
 		},
@@ -642,20 +664,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -668,7 +692,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Normal,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -682,7 +706,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
 		},
@@ -702,20 +726,22 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: []eval.Results{
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.Normal,
-						EvaluatedAt: evaluationTime,
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 				{
 					eval.Result{
-						Instance:    data.Labels{"instance_label": "test"},
-						State:       eval.NoData,
-						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.NoData,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
 					},
 				},
 			},
-			expectedStates: map[string]state.AlertState{
+			expectedStates: map[string]*state.State{
 				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
@@ -728,7 +754,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"instance_label":               "test",
 					},
 					State: eval.Normal,
-					Results: []state.StateEvaluation{
+					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
@@ -742,20 +768,22 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
+					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
 				},
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		st := state.NewStateTracker(log.New("test_state_tracker"))
+		st := state.NewManager(log.New("test_state_manager"))
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(tc.alertRule, res, evaluationDuration)
+				_ = st.ProcessEvalResults(tc.alertRule, res)
 			}
 			for id, s := range tc.expectedStates {
-				assert.Equal(t, s, st.Get(id))
+				cachedState, err := st.Get(id)
+				require.NoError(t, err)
+				assert.Equal(t, s, cachedState)
 			}
 		})
 	}
