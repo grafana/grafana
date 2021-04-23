@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const ALERT_RULE_TARGET = "alert_rule"
+
 func init() {
 	bus.AddHandler("sql", GetOrgQuotaByTarget)
 	bus.AddHandler("sql", GetOrgQuotas)
@@ -36,7 +38,7 @@ func GetOrgQuotaByTarget(query *models.GetOrgQuotaByTargetQuery) error {
 	}
 
 	var used int64
-	if query.Target != "alert_rule" || query.IsNgAlertEnabled {
+	if query.Target != ALERT_RULE_TARGET || query.IsNgAlertEnabled {
 		// get quota used.
 		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
 		resp := make([]*targetCount, 0)
@@ -147,7 +149,7 @@ func GetUserQuotaByTarget(query *models.GetUserQuotaByTargetQuery) error {
 	}
 
 	var used int64
-	if query.Target != "alert_rule" || query.IsNgAlertEnabled {
+	if query.Target != ALERT_RULE_TARGET || query.IsNgAlertEnabled {
 		// get quota used.
 		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
 		resp := make([]*targetCount, 0)
@@ -247,7 +249,7 @@ func UpdateUserQuota(cmd *models.UpdateUserQuotaCmd) error {
 
 func GetGlobalQuotaByTarget(query *models.GetGlobalQuotaByTargetQuery) error {
 	var used int64
-	if query.Target != "alert_rule" || query.IsNgAlertEnabled {
+	if query.Target != ALERT_RULE_TARGET || query.IsNgAlertEnabled {
 		// get quota used.
 		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
 		resp := make([]*targetCount, 0)
