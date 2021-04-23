@@ -1050,8 +1050,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
+							"datasourceUid": "-100",
 							"model": {
-								"datasourceUid": "-100",
 								"type":"math",
 								"expression":"1 > 2"
 							}
@@ -1103,7 +1103,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
-							"datasourceUid": "unknown"
+							"datasourceUid": "unknown",
 							"model": {
 							}
 						}
