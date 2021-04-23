@@ -27,6 +27,7 @@ export const ReceiversSection: FC<Props> = ({ title, description, addButtonLabel
 
 const getStyles = (theme: GrafanaTheme) => ({
   heading: css`
+    margin-top: ${theme.spacing.xl};
     display: flex;
     justify-content: space-between;
   `,

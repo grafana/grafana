@@ -29,7 +29,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
       requestId: action.meta.requestId,
     };
   } else if (asyncThunk.fulfilled.match(action)) {
-    if (state.requestId === action.meta.requestId) {
+    if (state.requestId === undefined || state.requestId === action.meta.requestId) {
       return {
         ...state,
         result: action.payload as Draft<T>,
