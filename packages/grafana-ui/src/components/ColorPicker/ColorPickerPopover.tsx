@@ -72,7 +72,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
 
     switch (activePicker) {
       case 'spectrum':
-        return <SpectrumPalette color={color} onChange={this.handleChange} theme={theme} />;
+        return <SpectrumPalette color={color} onChange={this.handleChange} />;
       case 'palette':
         return <NamedColorsPalette color={color} onChange={this.handleChange} theme={theme} />;
       default:
