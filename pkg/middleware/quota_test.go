@@ -209,19 +209,6 @@ func TestMiddlewareQuota(t *testing.T) {
 			cfg.Quota.Enabled = false
 		})
 
-		middlewareScenario(t, "org alert quota reached but ngalert disabled", func(t *testing.T, sc *scenarioContext) {
-			setUp(sc)
-
-			quotaHandler := getQuotaHandler(sc, "alert_rule")
-			sc.m.Get("/alert_rule", quotaHandler, sc.defaultHandler)
-			sc.fakeReq("GET", "/alert_rule").exec()
-			assert.Equal(t, 200, sc.resp.Code)
-		}, func(cfg *setting.Cfg) {
-			configure(cfg)
-
-			cfg.Quota.Org.AlertRule = quotaUsed
-		})
-
 		middlewareScenario(t, "org alert quota reached and ngalert enabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
@@ -236,7 +223,35 @@ func TestMiddlewareQuota(t *testing.T) {
 			cfg.Quota.Org.AlertRule = quotaUsed
 		})
 
-		middlewareScenario(t, "org dashboard quota not reached", func(t *testing.T, sc *scenarioContext) {
+		middlewareScenario(t, "org alert quota not reached and ngalert enabled", func(t *testing.T, sc *scenarioContext) {
+			setUp(sc)
+
+			quotaHandler := getQuotaHandler(sc, "alert_rule")
+			sc.m.Get("/alert_rule", quotaHandler, sc.defaultHandler)
+			sc.fakeReq("GET", "/alert_rule").exec()
+			assert.Equal(t, 200, sc.resp.Code)
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+
+			cfg.FeatureToggles = map[string]bool{"ngalert": true}
+			cfg.Quota.Org.AlertRule = quotaUsed + 1
+		})
+
+		middlewareScenario(t, "org alert quota reached but ngalert disabled", func(t *testing.T, sc *scenarioContext) {
+			// this schenario can only happen if the feature was enabled and later disabled
+			setUp(sc)
+
+			quotaHandler := getQuotaHandler(sc, "alert_rule")
+			sc.m.Get("/alert_rule", quotaHandler, sc.defaultHandler)
+			sc.fakeReq("GET", "/alert_rule").exec()
+			assert.Equal(t, 403, sc.resp.Code)
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+
+			cfg.Quota.Org.AlertRule = quotaUsed
+		})
+
+		middlewareScenario(t, "org alert quota not reached but ngalert disabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
 			quotaHandler := getQuotaHandler(sc, "alert_rule")
