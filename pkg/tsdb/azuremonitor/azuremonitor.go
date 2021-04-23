@@ -41,6 +41,7 @@ type AzureMonitorExecutor struct {
 }
 
 // NewAzureMonitorExecutor initializes a http client
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -58,6 +59,7 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 // expected by chosen Azure Monitor service (Azure Monitor, App Insights etc.)
 // executes the queries against the API and parses the response into
 // the right format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	var err error
