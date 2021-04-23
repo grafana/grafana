@@ -1,4 +1,4 @@
-import merge from 'lodash/merge';
+import { merge } from 'lodash';
 import { getTheme } from '@grafana/ui';
 import {
   BuildInfo,
@@ -6,7 +6,6 @@ import {
   FeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
-  GrafanaThemeType,
   LicenseInfo,
   PanelPluginMeta,
   systemDateFormats,
@@ -76,7 +75,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   awsAssumeRoleEnabled = false;
 
   constructor(options: GrafanaBootConfig) {
-    this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
+    this.theme = getTheme(options.bootData.user.lightTheme ? 'light' : 'dark');
 
     const defaults = {
       datasources: {},

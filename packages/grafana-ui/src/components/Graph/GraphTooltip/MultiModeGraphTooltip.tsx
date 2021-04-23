@@ -1,5 +1,5 @@
 import React from 'react';
-import { SeriesTable } from './SeriesTable';
+import { SeriesTable } from '../../VizTooltip';
 import { GraphTooltipContentProps } from './types';
 import { getMultiSeriesGraphHoverInfo } from '../utils';
 import { FlotPosition } from '../types';
