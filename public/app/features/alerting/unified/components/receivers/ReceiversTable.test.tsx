@@ -32,9 +32,8 @@ const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierD
 
 const mockGrafanaReceiver = (type: string): GrafanaManagedReceiverConfig => ({
   type,
-  frequency: '15m',
   disableResolveMessage: false,
-  secureSettings: {},
+  secureFields: {},
   settings: {},
   sendReminder: false,
   uid: '2',

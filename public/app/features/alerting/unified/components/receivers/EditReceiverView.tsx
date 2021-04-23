@@ -1,6 +1,8 @@
 import { InfoBox } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC } from 'react';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GrafanaReceiverForm } from './form/GrafanaReceiverForm';
 
 interface Props {
   receiverName: string;
@@ -17,9 +19,10 @@ export const EditReceiverView: FC<Props> = ({ config, receiverName, alertManager
       </InfoBox>
     );
   }
-  return (
-    <pre>
-      {alertManagerSourceName} {JSON.stringify(receiver, null, 2)}
-    </pre>
-  );
+
+  if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return <GrafanaReceiverForm alertManagerSourceName={alertManagerSourceName} existing={receiver} />;
+  } else {
+    return <p>@TODO cloud receiver editing not implemented yet</p>;
+  }
 };

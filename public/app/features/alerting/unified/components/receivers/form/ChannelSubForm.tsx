@@ -3,25 +3,31 @@ import { NotifierDTO } from 'app/types';
 import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Button, Field, InputControl, Select, useStyles } from '@grafana/ui';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
+import { ChannelValues } from '../../../types/receiver-form';
+import { ChannelOptions } from './ChannelOptions';
+import { OptionalChannelOptions } from './OptionalChannelOptions';
 
 interface Props<R> {
-  subPath: string;
+  pathPrefix: string;
   notifiers: NotifierDTO[];
-  onDelete: () => void;
   onDuplicate: () => void;
   defaults: R;
+
+  errors?: NestDataObject<R, FieldError>;
+  onDelete?: () => void;
 }
 
-export function ContactPointTypeSubform<R extends { type: string }>({
-  subPath,
+export function ChannelSubForm<R extends ChannelValues>({
+  pathPrefix,
   onDuplicate,
   onDelete,
   notifiers,
   defaults,
+  errors,
 }: Props<R>): JSX.Element {
   const styles = useStyles(getStyles);
-  const name = (fieldName: string) => `${subPath}${fieldName}`;
+  const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
   const { control, watch } = useFormContext();
 
   const typeOptions = useMemo(
@@ -33,7 +39,15 @@ export function ContactPointTypeSubform<R extends { type: string }>({
     [notifiers]
   );
 
+  const values = watch();
+
+  console.log(pathPrefix, defaults, values);
+
   const selectedType = watch(name('type')) ?? defaults.type;
+
+  const notifier = notifiers.find(({ type }) => type === selectedType);
+
+  console.log('errors', errors);
 
   return (
     <div className={styles.wrapper}>
@@ -56,12 +70,38 @@ export function ContactPointTypeSubform<R extends { type: string }>({
           <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
             Duplicate
           </Button>
-          <Button size="xs" variant="secondary" type="button" onClick={() => onDelete()} icon="trash-alt">
-            Delete
-          </Button>
+          {onDelete && (
+            <Button size="xs" variant="secondary" type="button" onClick={() => onDelete()} icon="trash-alt">
+              Delete
+            </Button>
+          )}
         </div>
       </div>
-      <div>{selectedType}</div>
+      {notifier && (
+        <div className={styles.innerContent}>
+          <ChannelOptions<R>
+            selectedChannelOptions={notifier.options.filter((o) => o.required)}
+            secureFields={{}}
+            errors={errors}
+            onResetSecureField={() => {}}
+            pathPrefix={pathPrefix}
+            defaults={defaults as any}
+          />
+          {notifier.options.filter((o) => !o.required).length > 0 && (
+            <div>
+              <OptionalChannelOptions
+                selectedChannelOptions={notifier.options.filter((o) => !o.required)}
+                notifier={notifier}
+                secureFields={{}}
+                onResetSecureField={() => {}}
+                errors={errors}
+                pathPrefix={pathPrefix}
+                defaults={defaults as any}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -71,6 +111,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     & > * + * {
       margin-left: ${theme.v2.spacing(1)};
     }
+  `,
+  innerContent: css`
+    max-width: 536px;
   `,
   wrapper: css`
     margin: ${theme.v2.spacing(2, 0)};

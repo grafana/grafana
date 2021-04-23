@@ -69,9 +69,8 @@ export type WebhookConfig = {
 
 export type GrafanaManagedReceiverConfig = {
   uid?: string;
-  frequency: string;
   disableResolveMessage: boolean;
-  secureSettings: Record<string, unknown>;
+  secureFields: Record<string, boolean>;
   settings: Record<string, unknown>;
   sendReminder: boolean;
   type: string;
