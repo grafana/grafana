@@ -238,6 +238,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   rate: {
     label: 'Rate',
+    // TODO: add xpack flag
     requiresField: true,
     isPipelineAgg: false,
     supportsMissing: false,
