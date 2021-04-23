@@ -50,21 +50,6 @@ export interface LiveChannelConfig {
   canPublish?: boolean;
 }
 
-/**
- * @alpha -- experimental
- */
-export interface LiveChannelInfo {
-  /**
-   * How to connect
-   */
-  addr: LiveChannelAddress;
-
-  /**
-   * What can the channel do
-   */
-  config: LiveChannelConfig;
-}
-
 export enum LiveChannelConnectionState {
   /** The connection is not yet established */
   Pending = 'pending',
@@ -230,9 +215,4 @@ export interface LiveChannelSupport {
    * Get the channel handler for the path, or throw an error if invalid
    */
   getChannelConfig(path: string): LiveChannelConfig | undefined;
-
-  /**
-   * Return a list of supported channels
-   */
-  getSupportedPaths(): Promise<LiveChannelInfo[]>;
 }

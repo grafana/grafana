@@ -170,7 +170,6 @@ export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
         description: 'Dashboard change events',
         hasPresence: true,
       }),
-      getSupportedPaths: () => Promise.resolve([]),
     },
     description: 'Dashboard listener',
   };
