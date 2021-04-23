@@ -63,7 +63,7 @@ type ChannelHandlerFactory interface {
 
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
-	// Called when a dashbaord is saved -- this includes the error case so
+	// Called when a dashboard is saved -- this includes the error case so
 	DashboardSaved(user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
 
 	// Called when a dashboard is deleted

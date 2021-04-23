@@ -93,7 +93,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 		}
 
 		// Eventually this could broadcast a message back to the dashboard saying a pull request exists
-		return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("Not implemented yet")
+		return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("not implemented yet")
 	}
 
 	// make sure can view this dashboard
@@ -179,5 +179,5 @@ func (h *DashboardHandler) DashboardDeleted(user *models.UserDisplayDTO, uid str
 
 // HasGitOpsObserver indicats if anyone is listening to the `gitops` channel
 func (h *DashboardHandler) HasGitOpsObserver() bool {
-	return false // TODO: check presense
+	return false // TODO: check presence
 }
