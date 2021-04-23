@@ -7,7 +7,8 @@ export class LokiAnnotationsQueryCtrl {
   annotation: any;
 
   /** @ngInject */
-  constructor() {
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation;
     this.annotation.target = this.annotation.target || {};
     this.onQueryChange = this.onQueryChange.bind(this);
   }

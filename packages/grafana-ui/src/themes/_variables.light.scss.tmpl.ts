@@ -56,7 +56,6 @@ $layer1: ${theme.colors.background.primary};
 $layer2: ${theme.colors.background.secondary};
 
 $divider: ${theme.colors.border.weak};
-
 $border0: ${theme.colors.border.weak};
 $border1: ${theme.colors.border.medium};
 
@@ -201,17 +200,17 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: ${theme.components.input.background};
-$input-bg-disabled: ${theme.colors.action.disabledBackground};
+$input-bg: $white;
+$input-bg-disabled: $gray-5;
 
-$input-color: ${theme.components.input.text};
-$input-border-color: ${theme.components.input.borderColor};
+$input-color: ${theme.v1.colors.formInputText};
+$input-border-color: ${theme.v1.colors.formInputBorder};
 $input-box-shadow: none;
-$input-border-focus: ${theme.colors.primary.border};
-$input-box-shadow-focus: ${theme.colors.primary.border} !default;
-$input-color-placeholder: ${theme.colors.text.disabled};
-$input-label-bg: ${theme.colors.background.secondary};
-$input-color-select-arrow: ${theme.colors.text.primary};
+$input-border-focus: ${theme.v1.palette.blue95};
+$input-box-shadow-focus: ${theme.v1.palette.blue95};
+$input-color-placeholder: ${theme.v1.colors.formInputPlaceholderText};
+$input-label-bg: ${theme.v1.colors.bg2};
+$input-color-select-arrow: ${theme.v1.palette.gray60};
 
 // search
 $search-shadow: 0 1px 5px 0 $gray-5;
@@ -372,7 +371,7 @@ $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
-$panel-editor-viz-item-bg: $card-background;
+$panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
@@ -395,4 +394,5 @@ $vertical-resize-handle-dots-hover: $gray-2;
 // Calendar
 $calendar-bg-days: $white;
 $calendar-bg-now: $gray-6;
+
 `;
