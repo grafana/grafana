@@ -183,19 +183,16 @@ func (a AlertState) resultAlerting(alertRule *ngModels.AlertRule, result eval.Re
 			a.State = eval.Alerting
 			a.StartsAt = result.EvaluatedAt
 			a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
-			a.Annotations["alerting_at"] = result.EvaluatedAt.String()
 		}
 	default:
 		a.StartsAt = result.EvaluatedAt
 		if !(alertRule.For > 0) {
 			a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
 			a.State = eval.Alerting
-			a.Annotations["alerting_at"] = result.EvaluatedAt.String()
 		} else {
 			a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
 			if result.EvaluatedAt.Sub(a.StartsAt) > alertRule.For {
 				a.State = eval.Alerting
-				a.Annotations["alerting_at"] = result.EvaluatedAt.String()
 			} else {
 				a.State = eval.Pending
 			}
@@ -212,9 +209,6 @@ func (a AlertState) resultError(alertRule *ngModels.AlertRule, result eval.Resul
 		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
 	} else {
 		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
-	}
-	if a.State != eval.Error {
-		a.Annotations["last_error"] = result.EvaluatedAt.String()
 	}
 
 	switch alertRule.ExecErrState {
@@ -233,9 +227,6 @@ func (a AlertState) resultNoData(alertRule *ngModels.AlertRule, result eval.Resu
 		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
 	} else {
 		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
-	}
-	if a.State != eval.NoData {
-		a.Annotations["no_data"] = result.EvaluatedAt.String()
 	}
 
 	switch alertRule.NoDataState {
