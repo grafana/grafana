@@ -38,15 +38,15 @@ type Config struct {
 	WriteBufferSize int
 
 	// MessageSizeLimit sets the maximum size in bytes of allowed message from client.
-	// By default DefaultWebsocketMaxMessageSize will be used.
+	// By default DefaultWebsocketMessageSizeLimit will be used.
 	MessageSizeLimit int
 
-	// CheckOrigin func to provide custom origin check logic.
-	// nil means allow all origins.
+	// CheckOrigin func to provide custom origin check logic,
+	// zero value means same host check.
 	CheckOrigin func(r *http.Request) bool
 
 	// PingInterval sets interval server will send ping messages to clients.
-	// By default DefaultPingInterval will be used.
+	// By default DefaultWebsocketPingInterval will be used.
 	PingInterval time.Duration
 }
 
