@@ -946,7 +946,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
-						"datasourceUid": "unknown"
+						"datasourceUid": "unknown",
 						"model": {
 						}
 					}
