@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cuelang.org/go/cue"
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -85,11 +84,7 @@ func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (sim
 	if err != nil {
 		return input, err
 	}
-	b, err := result.Value.(cue.Value).MarshalJSON()
-	if err != nil {
-		return input, err
-	}
-	output, err := simplejson.NewJson(b)
+	output, err := simplejson.NewJson([]byte(result.Value.(string)))
 	if err != nil {
 		return input, err
 	}
