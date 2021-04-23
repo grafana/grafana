@@ -36,6 +36,7 @@ type dashboardEvent struct {
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
 	Publisher models.ChannelPublisher
+	Presense  models.ChannelPresense
 }
 
 // GetHandlerForPath called on init
@@ -177,7 +178,12 @@ func (h *DashboardHandler) DashboardDeleted(user *models.UserDisplayDTO, uid str
 	})
 }
 
-// HasGitOpsObserver indicats if anyone is listening to the `gitops` channel
+// HasGitOpsObserver will return true if anyone is listening to the `gitops` channel
 func (h *DashboardHandler) HasGitOpsObserver() bool {
-	return false // TODO: check presence
+	presence, err := h.Presense("grafana")
+	if err != nil {
+		logger.Error("error getting presense for gitops", "error", err)
+		return false
+	}
+	return len(presence) > 0
 }

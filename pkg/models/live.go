@@ -5,11 +5,15 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // ChannelPublisher writes data into a channel. Note that permissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
+
+// ChannelPresense gets the list of clients connected to a channel
+type ChannelPresense func(channel string) (map[string]*centrifuge.ClientInfo, error)
 
 // SubscribeEvent contains subscription data.
 type SubscribeEvent struct {
