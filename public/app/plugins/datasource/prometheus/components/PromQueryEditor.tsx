@@ -110,92 +110,91 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
 
     return (
-      <div>
-        <PromQueryField
-          datasource={datasource}
-          query={query}
-          range={range}
-          onRunQuery={this.onRunQuery}
-          onChange={this.onFieldChange}
-          history={[]}
-          data={data}
-        />
-
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel
-              width={7}
-              tooltip="Controls the name of the time series, using name or pattern. For example
+      <PromQueryField
+        datasource={datasource}
+        query={query}
+        range={range}
+        onRunQuery={this.onRunQuery}
+        onChange={this.onFieldChange}
+        history={[]}
+        data={data}
+        ExtraFieldElement={
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel
+                width={7}
+                tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname."
-            >
-              Legend
-            </InlineFormLabel>
-            <input
-              type="text"
-              className="gf-form-input"
-              placeholder="legend format"
-              value={legendFormat}
-              onChange={this.onLegendChange}
-              onBlur={this.onRunQuery}
-            />
-          </div>
-
-          <div className="gf-form">
-            <InlineFormLabel
-              width={7}
-              tooltip={
-                <>
-                  An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-                  <code>$__interval</code> and <code>$__rate_interval</code> variables. The limit is absolute and not
-                  modified by the &quot;Resolution&quot; setting.
-                </>
-              }
-            >
-              Min step
-            </InlineFormLabel>
-            <input
-              type="text"
-              className="gf-form-input width-8"
-              placeholder={interval}
-              onChange={this.onIntervalChange}
-              onBlur={this.onRunQuery}
-              value={interval}
-            />
-          </div>
-
-          <div className="gf-form">
-            <div className="gf-form-label">Resolution</div>
-            <Select
-              isSearchable={false}
-              options={INTERVAL_FACTOR_OPTIONS}
-              onChange={this.onIntervalFactorChange}
-              value={intervalFactorOption}
-            />
-          </div>
-
-          <div className="gf-form">
-            <div className="gf-form-label width-7">Format</div>
-            <Select
-              width={16}
-              isSearchable={false}
-              options={FORMAT_OPTIONS}
-              onChange={this.onFormatChange}
-              value={formatOption}
-            />
-            <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
-
-            <InlineFormLabel width={10} tooltip="Link to Graph in Prometheus">
-              <PromLink
-                datasource={datasource}
-                query={this.query} // Use modified query
-                panelData={data}
+              >
+                Legend
+              </InlineFormLabel>
+              <input
+                type="text"
+                className="gf-form-input"
+                placeholder="legend format"
+                value={legendFormat}
+                onChange={this.onLegendChange}
+                onBlur={this.onRunQuery}
               />
-            </InlineFormLabel>
-          </div>
+            </div>
 
-          <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
-        </div>
-      </div>
+            <div className="gf-form">
+              <InlineFormLabel
+                width={7}
+                tooltip={
+                  <>
+                    An additional lower limit for the step parameter of the Prometheus query and for the{' '}
+                    <code>$__interval</code> and <code>$__rate_interval</code> variables. The limit is absolute and not
+                    modified by the &quot;Resolution&quot; setting.
+                  </>
+                }
+              >
+                Min step
+              </InlineFormLabel>
+              <input
+                type="text"
+                className="gf-form-input width-8"
+                placeholder={interval}
+                onChange={this.onIntervalChange}
+                onBlur={this.onRunQuery}
+                value={interval}
+              />
+            </div>
+
+            <div className="gf-form">
+              <div className="gf-form-label">Resolution</div>
+              <Select
+                isSearchable={false}
+                options={INTERVAL_FACTOR_OPTIONS}
+                onChange={this.onIntervalFactorChange}
+                value={intervalFactorOption}
+              />
+            </div>
+
+            <div className="gf-form">
+              <div className="gf-form-label width-7">Format</div>
+              <Select
+                width={16}
+                isSearchable={false}
+                options={FORMAT_OPTIONS}
+                onChange={this.onFormatChange}
+                value={formatOption}
+              />
+              <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
+
+              <InlineFormLabel width={10} tooltip="Link to Graph in Prometheus">
+                <PromLink
+                  datasource={datasource}
+                  query={this.query} // Use modified query
+                  panelData={data}
+                />
+              </InlineFormLabel>
+            </div>
+
+            <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
+          </div>
+        }
+      />
     );
   }
 }

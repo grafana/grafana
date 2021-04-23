@@ -8,7 +8,7 @@ export const UserSignup: FC<{}> = () => {
   return (
     <VerticalGroup
       className={css`
-        margin-top: 8px;
+        margin-top: 16px;
       `}
     >
       <span>New to Grafana?</span>
