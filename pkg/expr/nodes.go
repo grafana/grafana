@@ -40,10 +40,6 @@ func (rn *rawNode) GetDatasourceName() (string, error) {
 	return dsName, nil
 }
 
-func (rn *rawNode) GetDatasourceUid() string {
-	return rn.DatasourceUID
-}
-
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
 	rawType, ok := rn.Query["type"]
 	if !ok {

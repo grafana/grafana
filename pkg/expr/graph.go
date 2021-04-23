@@ -139,10 +139,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			return nil, err
 		}
 
-		dsUID := rn.GetDatasourceUid()
-		if err != nil {
-			return nil, err
-		}
+		dsUID := rn.DatasourceUID
 
 		var node graph.Node
 		switch {
