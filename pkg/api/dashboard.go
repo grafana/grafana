@@ -239,6 +239,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
+	if hs.Live.IsEnabled() {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
+		if err != nil {
+			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
+		}
+	}
+
 	return response.JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
@@ -299,12 +306,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 			dashboard = dash // the original request
 		}
 		channel := hs.Live.GrafanaScope.Dashboards
-		liveerr := channel.DashboardSaved(&models.SimpleUserInfoDTO{
-			Id:    c.SignedInUser.UserId,
-			Login: c.SignedInUser.Login,
-			Email: c.SignedInUser.Email,
-			Name:  c.SignedInUser.Name,
-		}, cmd.Message, dashboard, err)
+		liveerr := channel.DashboardSaved(c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
 
 		// When an error exists, but the value broadcast to a gitops listener return 202
 		if liveerr == nil && err != nil && channel.HasGitOpsObserver() {
@@ -328,10 +330,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
-	}
-
-	// Tell everyone listening that the dashboard changed
-	if hs.Live.IsEnabled() {
 	}
 
 	if hs.Cfg.IsPanelLibraryEnabled() {

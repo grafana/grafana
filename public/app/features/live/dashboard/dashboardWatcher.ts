@@ -1,4 +1,4 @@
-import { getGrafanaLiveSrv, getLegacyAngularInjector, locationService } from '@grafana/runtime';
+import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { appEvents } from 'app/core/core';
 import {
@@ -37,14 +37,11 @@ class DashboardWatcher {
 
   private sendEditingState() {
     if (this.channel && this.uid) {
-      getBackendSrv().post(`api/live/publish`, {
-        channel: this.channel.id,
-        data: {
-          sessionId,
-          uid: this.uid,
-          action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-          timestamp: Date.now(),
-        },
+      getBackendSrv().post(`api/live/publish/${this.channel.id}`, {
+        sessionId,
+        uid: this.uid,
+        action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
+        timestamp: Date.now(),
       });
     }
   }
@@ -118,8 +115,7 @@ class DashboardWatcher {
               return;
             }
 
-            const changeTracker = getLegacyAngularInjector().get<any>('unsavedChangesSrv').tracker;
-            const showPopup = this.editing || changeTracker.hasChanges();
+            const showPopup = this.editing; // || changeTracker.hasChanges();
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {

@@ -195,6 +195,15 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
+func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
+	return &UserDisplayDTO{
+		Id:    u.UserId,
+		Login: u.Login,
+		Name:  u.Name,
+		Email: u.Email,
+	}
+}
+
 type UpdateUserLastSeenAtCommand struct {
 	UserId int64
 }
@@ -241,7 +250,7 @@ type UserSearchHitDTO struct {
 	AuthModule    AuthModuleConversion `json:"-"`
 }
 
-type SimpleUserInfoDTO struct {
+type UserDisplayDTO struct {
 	Id    int64  `json:"id,omitempty"`
 	Name  string `json:"name,omitempty"`
 	Login string `json:"login,omitempty"`

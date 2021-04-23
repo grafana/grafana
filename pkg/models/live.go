@@ -64,10 +64,10 @@ type ChannelHandlerFactory interface {
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
 	// Called when a dashbaord is saved -- this includes the error case so
-	DashboardSaved(user *SimpleUserInfoDTO, message string, dashboard *Dashboard, err error) error
+	DashboardSaved(user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
 
 	// Called when a dashboard is deleted
-	DashboardDeleted(user *SimpleUserInfoDTO, uid string) error
+	DashboardDeleted(user *UserDisplayDTO, uid string) error
 
 	// Experimental! Indicate is GitOps is active.  This really means
 	// someone is subscribed to the `grafana/dashboards/gitops` channel
