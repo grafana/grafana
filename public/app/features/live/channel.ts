@@ -64,7 +64,6 @@ export class CentrifugeLiveChannel<T = any> {
           if (ctx.data) {
             if (ctx.data.schema) {
               this.lastMessageWithSchema = ctx.data as DataFrameJSON;
-              console.log('PUBLISH (SCHEMA)', ctx.data);
             }
 
             this.stream.next({
@@ -98,7 +97,6 @@ export class CentrifugeLiveChannel<T = any> {
 
         if (ctx.data?.schema) {
           this.lastMessageWithSchema = ctx.data as DataFrameJSON;
-          console.log('subscribe (SCHEMA)', ctx.data);
         }
 
         this.sendStatus(ctx.data);
@@ -132,7 +130,6 @@ export class CentrifugeLiveChannel<T = any> {
   disconnectIfNoListeners = () => {
     const count = this.stream.observers.length;
     if (count === 0) {
-      console.log('DISCONNECT no listeners...', this.addr);
       this.disconnect();
     }
   };
@@ -150,7 +147,6 @@ export class CentrifugeLiveChannel<T = any> {
 
         // Wait 1/4 second to fully disconnect
         if (count === 0) {
-          console.log('CHANNEL no listeners... wait to shtudown', this.addr);
           setTimeout(this.disconnectIfNoListeners, 250);
         }
       };
