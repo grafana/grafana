@@ -59,7 +59,7 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const givenRootReducer = (rootReducer: Reducer<State>): ReduxTesterWhen<State> => {
     store = configureStore<State>({
       reducer: rootReducer,
-      middleware: [...defaultMiddleware, logActionsMiddleWare, thunk] as [ThunkMiddleware<State>],
+      middleware: ([...defaultMiddleware, logActionsMiddleWare, thunk] as unknown) as [ThunkMiddleware<State>],
       preloadedState,
     });
 
