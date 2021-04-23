@@ -183,7 +183,7 @@ func (h *DashboardHandler) DashboardDeleted(user *models.UserDisplayDTO, uid str
 func (h *DashboardHandler) HasGitOpsObserver() bool {
 	count, err := h.ClientCount(GITOPS_CHANNEL)
 	if err != nil {
-		logger.Error("error getting presense for gitops", "error", err)
+		logger.Error("error getting client count", "error", err)
 		return false
 	}
 	return count > 0
