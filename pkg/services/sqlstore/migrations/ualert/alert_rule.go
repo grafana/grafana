@@ -95,7 +95,7 @@ type alertQuery struct {
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange relativeTimeRange `json:"relativeTimeRange"`
 
-	DatasourceUID string `json:"-"`
+	DatasourceUID string `json:"datasourceUid"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`

@@ -120,7 +120,6 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2
 
 			// one could have an alert saved but datasource deleted, so can not require match.
 			dsInfo := dsIDMap[[2]int64{orgID, set.Conditions[condIdx].Query.DatasourceID}]
-			queryObj["datasourceUid"] = dsInfo[0]
 			queryObj["datasource"] = dsInfo[1] // name is needed for UI to load query editor
 			queryObj["refId"] = refID
 
@@ -171,15 +170,13 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2
 	newCond.OrgID = orgID
 
 	exprModel := struct {
-		Type          string                 `json:"type"`
-		RefID         string                 `json:"refId"`
-		DatasourceUid string                 `json:"datasourceUid"`
-		Datasource    string                 `json:"datasource"`
-		Conditions    []classicConditionJSON `json:"conditions"`
+		Type       string                 `json:"type"`
+		RefID      string                 `json:"refId"`
+		Datasource string                 `json:"datasource"`
+		Conditions []classicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		"-100",
 		"__expr__",
 		conditions,
 	}
@@ -190,8 +187,9 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2
 	}
 
 	ccAlertQuery := alertQuery{
-		RefID: ccRefID,
-		Model: exprModelJSON,
+		RefID:         ccRefID,
+		Model:         exprModelJSON,
+		DatasourceUID: "-100",
 	}
 
 	newCond.Data = append(newCond.Data, ccAlertQuery)
