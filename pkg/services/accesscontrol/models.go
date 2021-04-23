@@ -75,12 +75,33 @@ const (
 	ActionLDAPUsersSync  = "ldap.user:sync"
 	ActionLDAPStatusRead = "ldap.status:read"
 
+	// Access control actions
+	ActionAccessControlRolesList   = "accesscontrol.roles:list"
+	ActionAccessControlRolesRead   = "accesscontrol.roles:read"
+	ActionAccessControlRolesCreate = "accesscontrol.roles:create"
+	ActionAccessControlRolesUpdate = "accesscontrol.roles:update"
+	ActionAccessControlRolesDelete = "accesscontrol.roles:delete"
+
+	ActionAccessControlTeamGrantList   = "accesscontrol.team.grants:list"
+	ActionAccessControlTeamGrantCreate = "accesscontrol.team.grants:create"
+	ActionAccessControlTeamGrantDelete = "accesscontrol.team.grants:delete"
+
+	ActionAccessControlUserGrantList   = "accesscontrol.user.grants:list"
+	ActionAccessControlUserGrantCreate = "accesscontrol.user.grants:create"
+	ActionAccessControlUserGrantDelete = "accesscontrol.user.grants:delete"
+
+	ActionAccessControlBuiltInRolesList   = "accesscontrol.builtin.grants:list"
+	ActionAccessControlBuiltInRolesCreate = "accesscontrol.builtin.grants:create"
+	ActionAccessControlBuiltInRolesDelete = "accesscontrol.builtin.grants:delete"
+
 	// Global Scopes
 	ScopeUsersAll  = "users:*"
 	ScopeUsersSelf = "users:self"
 
 	ScopeOrgAllUsersAll     = "org:*/users:*"
 	ScopeOrgCurrentUsersAll = "org:current/users:*"
+
+	ScopeOrgAllRolesAll = "org:*/roles:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

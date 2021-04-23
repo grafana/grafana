@@ -154,6 +154,32 @@ var usersAdminEditRole = RoleDTO{
 	}),
 }
 
+var accessControlRolesReadRole = RoleDTO{
+	Name:    accessControlAdminRolesRead,
+	Version: 1,
+	Permissions: []Permission{
+		{
+			Action: ActionAccessControlRolesRead,
+			Scope:  ScopeOrgAllRolesAll,
+		},
+		{
+			Action: ActionAccessControlRolesList,
+			Scope:  ScopeOrgAllRolesAll,
+		},
+	},
+}
+
+var accessControlRolesEditRole = RoleDTO{
+	Name:    accessControlAdminRolesEdit,
+	Version: 1,
+	Permissions: concat(accessControlRolesReadRole.Permissions, []Permission{
+		{
+			Action: ActionAccessControlRolesCreate,
+			Scope:  ScopeOrgAllRolesAll,
+		},
+	}),
+}
+
 // PredefinedRoles provides a map of permission sets/roles which can be
 // assigned to a set of users. When adding a new resource protected by
 // Grafana access control the default permissions should be added to a
@@ -161,6 +187,9 @@ var usersAdminEditRole = RoleDTO{
 // resource. PredefinedRoleGrants lists which organization roles are
 // assigned which predefined roles in this list.
 var PredefinedRoles = map[string]RoleDTO{
+	accessControlAdminRolesRead: accessControlRolesReadRole,
+	accessControlAdminRolesEdit: accessControlRolesEditRole,
+
 	usersAdminRead: usersAdminReadRole,
 	usersAdminEdit: usersAdminEditRole,
 
@@ -186,12 +215,17 @@ const (
 
 	ldapAdminEdit = "grafana:roles:ldap:admin:edit"
 	ldapAdminRead = "grafana:roles:ldap:admin:read"
+
+	accessControlAdminRolesEdit = "grafana:roles:accesscontrol:admin:edit"
+	accessControlAdminRolesRead = "grafana:roles:accesscontrol:admin:read"
 )
 
 // PredefinedRoleGrants specifies which organization roles are assigned
 // to which set of PredefinedRoles by default. Alphabetically sorted.
 var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
+		accessControlAdminRolesEdit,
+		accessControlAdminRolesRead,
 		ldapAdminEdit,
 		ldapAdminRead,
 		orgsAdminEdit,
