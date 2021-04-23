@@ -1023,7 +1023,7 @@ Limit the number of API keys that can be entered per organization. Default is 10
 
 ### org_alert_rule
 
-Limit the number of alert rules that can be entered per organization. Default is 10.
+Limit the number of alert rules that can be entered per organization. Default is 100.
 
 ### user_org
 
