@@ -1,7 +1,7 @@
 import React from 'react';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { useStyles } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { GrafanaThemeV2 } from '@grafana/data';
 
 export interface CallToActionCardProps {
   message?: string | JSX.Element;
@@ -16,7 +16,7 @@ export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = 
   footer,
   className,
 }) => {
-  const css = useStyles(getStyles);
+  const css = useStyles2(getStyles);
 
   return (
     <div className={cx([css.wrapper, className])}>
@@ -27,12 +27,12 @@ export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = 
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   wrapper: css`
     label: call-to-action-card;
-    padding: ${theme.spacing.lg};
-    background: ${theme.colors.bg2};
-    border-radius: ${theme.border.radius.md};
+    padding: ${theme.spacing(3)};
+    background: ${theme.colors.background.secondary};
+    border-radius: ${theme.shape.borderRadius(2)};
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -40,10 +40,10 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-grow: 1;
   `,
   message: css`
-    margin-bottom: ${theme.spacing.lg};
+    margin-bottom: ${theme.spacing(3)};
     font-style: italic;
   `,
   footer: css`
-    margin-top: ${theme.spacing.lg};
+    margin-top: ${theme.spacing(3)}};
   `,
 });
