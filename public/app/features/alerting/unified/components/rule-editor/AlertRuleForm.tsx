@@ -57,7 +57,6 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
 
   const submit = (values: RuleFormValues, exitOnSave: boolean) => {
-    console.log('submit', values);
     dispatch(
       saveRuleFormAction({
         values: {

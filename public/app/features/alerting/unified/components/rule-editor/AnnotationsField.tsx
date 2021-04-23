@@ -37,7 +37,7 @@ const AnnotationsField: FC = () => {
                   >
                     <InputControl
                       name={`annotations[${index}].key`}
-                      render={({ field }) => (
+                      render={({ field: { ref, ...field } }) => (
                         <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={15} />
                       )}
                       control={control}

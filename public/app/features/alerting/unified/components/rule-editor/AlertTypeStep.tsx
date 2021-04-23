@@ -37,7 +37,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
     watch,
     formState: { errors },
     setValue,
-  } = useFormContext<RuleFormValues>();
+  } = useFormContext<RuleFormValues & { location?: string }>();
 
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
@@ -80,12 +80,12 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           invalid={!!errors.type?.message}
         >
           <InputControl
-            render={({ field: { onChange }, field }) => (
+            render={({ field: { onChange, ref, ...field } }) => (
               <Select
                 {...field}
                 options={alertTypeOptions}
-                onChange={(values: SelectableValue[]) => {
-                  const value = values[0]?.value;
+                onChange={(v: SelectableValue) => {
+                  const value = v?.value;
                   // when switching to system alerts, null out data source selection if it's not a rules source with ruler
                   if (
                     value === RuleFormType.system &&
@@ -113,16 +113,14 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             invalid={!!errors.dataSourceName?.message}
           >
             <InputControl
-              render={({ field: { onChange }, field }) => (
+              render={({ field: { onChange, ref, ...field } }) => (
                 <DataSourcePicker
                   {...field}
                   filter={dataSourceFilter}
                   noDefault
                   alerting
                   onChange={(ds: DataSourceInstanceSettings) => {
-                    console.log('ds', ds);
                     // reset location if switching data sources, as different rules source will have different groups and namespaces
-                    //@ts-expect-error TODO FIX
                     setValue('location', undefined);
                     onChange(ds?.name ?? null);
                   }}
@@ -148,7 +146,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           invalid={!!errors.folder?.message}
         >
           <InputControl
-            render={({ field }) => <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />}
+            render={({ field: { ref, ...field } }) => (
+              <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
+            )}
             name="folder"
             rules={{
               required: { value: true, message: 'Please select a folder' },

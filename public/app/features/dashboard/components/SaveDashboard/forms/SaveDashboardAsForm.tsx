@@ -101,7 +101,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           </Field>
           <Field label="Folder">
             <InputControl
-              render={({ field }) => (
+              render={({ field: { ref, ...field } }) => (
                 <FolderPicker
                   {...field}
                   dashboardId={dashboard.id}

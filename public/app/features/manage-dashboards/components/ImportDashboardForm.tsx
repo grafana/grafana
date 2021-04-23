@@ -65,7 +65,9 @@ export const ImportDashboardForm: FC<Props> = ({
       </Field>
       <Field label="Folder">
         <InputControl
-          render={({ field }) => <FolderPicker {...field} enableCreateNew initialFolderId={initialFolderId} />}
+          render={({ field: { ref, ...field } }) => (
+            <FolderPicker {...field} enableCreateNew initialFolderId={initialFolderId} />
+          )}
           name="folder"
           control={control}
         />
@@ -103,7 +105,7 @@ export const ImportDashboardForm: FC<Props> = ({
             >
               <InputControl
                 name={dataSourceOption as any}
-                render={({ field }) => (
+                render={({ field: { ref, ...field } }) => (
                   <DataSourcePicker
                     {...field}
                     noDefault={true}

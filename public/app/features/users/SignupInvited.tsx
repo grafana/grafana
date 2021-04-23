@@ -83,7 +83,7 @@ export const SignupInvitedPage: FC<Props> = ({ match }) => {
                 />
               </Field>
               <Field invalid={!!errors.name} error={errors.name && errors.name.message} label="Name">
-                <Input placeholder="Name (optional)" name="name" {...register} />
+                <Input placeholder="Name (optional)" {...register('name')} />
               </Field>
               <Field invalid={!!errors.username} error={errors.username && errors.username.message} label="Username">
                 <Input {...register('username', { required: 'Username is required' })} placeholder="Username" />

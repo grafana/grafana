@@ -66,7 +66,7 @@ export const UserInviteForm: FC<Props> = ({}) => {
             </Field>
             <Field invalid={!!errors.role} label="Role">
               <InputControl
-                render={({ field }) => <RadioButtonGroup {...field} options={roles} />}
+                render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
                 control={control}
                 name="role"
               />

@@ -49,13 +49,13 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
     <>
       <Field label="Namespace" error={errors.namespace?.message} invalid={!!errors.namespace?.message}>
         <InputControl
-          render={({ field: { onChange }, field }) => (
+          render={({ field: { onChange, ref, ...field } }) => (
             <SelectWithAdd
               {...field}
               className={inputStyle}
-              onChange={(values) => {
+              onChange={(value) => {
                 setValue('group', ''); //reset if namespace changes
-                onChange(values[0]);
+                onChange(value);
               }}
               onCustomChange={(custom: boolean) => {
                 custom && setCustomGroup(true);
@@ -73,7 +73,7 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
       </Field>
       <Field label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
-          render={({ field }) => (
+          render={({ field: { ref, ...field } }) => (
             <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={inputStyle} />
           )}
           name="group"

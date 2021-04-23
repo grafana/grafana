@@ -28,7 +28,9 @@ export const OptionElement: FC<Props> = ({ control, option, register, invalid })
         <InputControl
           control={control}
           name={`${modelValue}`}
-          render={({ field }) => <Select {...field} options={option.selectOptions} invalid={invalid} />}
+          render={({ field: { ref, ...field } }) => (
+            <Select {...field} options={option.selectOptions} invalid={invalid} />
+          )}
         />
       );
 

@@ -20,7 +20,7 @@ export const QueryStep: FC = () => {
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <InputControl
             name="expression"
-            render={({ field }) => <ExpressionEditor {...field} dataSourceName={dataSourceName} />}
+            render={({ field: { ref, ...field } }) => <ExpressionEditor {...field} dataSourceName={dataSourceName} />}
             control={control}
             rules={{
               required: { value: true, message: 'A valid expression is required' },
@@ -35,7 +35,7 @@ export const QueryStep: FC = () => {
         >
           <InputControl
             name="queries"
-            render={({ field }) => <AlertingQueryEditor {...field} />}
+            render={({ field: { ref, ...field } }) => <AlertingQueryEditor {...field} />}
             control={control}
             rules={{
               validate: (queries) => Array.isArray(queries) && !!queries.length,

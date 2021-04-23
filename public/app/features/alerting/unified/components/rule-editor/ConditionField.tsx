@@ -41,12 +41,12 @@ export const ConditionField: FC = () => {
     >
       <InputControl
         name="condition"
-        render={({ field: { onChange }, field }) => (
+        render={({ field: { onChange, ref, ...field } }) => (
           <Select
             {...field}
             width={42}
             options={options}
-            onChange={(values: SelectableValue[]) => onChange(values[0]?.value ?? null)}
+            onChange={(v: SelectableValue) => onChange(v?.value ?? null)}
             noOptionsMessage="No queries defined"
           />
         )}
