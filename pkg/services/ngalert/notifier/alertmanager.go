@@ -4,13 +4,12 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
 	"sync"
 	"time"
-
-	"errors"
 
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -367,6 +366,12 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewPagerdutyNotifier(cfg, tmpl, externalURL)
 		case "slack":
 			n, err = channels.NewSlackNotifier(cfg, tmpl, externalURL)
+		case "telegram":
+			n, err = channels.NewTelegramNotifier(cfg, tmpl, externalURL)
+		case "teams":
+			n, err = channels.NewTeamsNotifier(cfg, tmpl, externalURL)
+		case "dingding":
+			n, err = channels.NewDingDingNotifier(cfg, tmpl, externalURL)
 		}
 		if err != nil {
 			return nil, err
