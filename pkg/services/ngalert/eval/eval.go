@@ -76,6 +76,11 @@ const (
 	// that evaluated to true (Alerting).
 	Alerting
 
+	// Pending is the eval state for an alert instance condition
+	// that evaluated to true (Alerting) but has not yet met
+	// the For duration defined in AlertRule
+	Pending
+
 	// NoData is the eval state for an alert rule condition
 	// that evaluated to NoData.
 	NoData
@@ -86,7 +91,7 @@ const (
 )
 
 func (s State) String() string {
-	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
+	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
 // AlertExecCtx is the context provided for executing an alert condition.
@@ -97,22 +102,14 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
-func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (*backend.QueryDataRequest, error) {
-	if !c.IsValid() {
-		return nil, fmt.Errorf("invalid conditions")
-		// TODO: Things probably
+// GetExprRequest validates the condition and creates a expr.Request from it.
+func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
+	req := &expr.Request{
+		OrgId: ctx.OrgID,
 	}
 
-	queryDataReq := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			OrgID: ctx.OrgID,
-		},
-		Queries: []backend.DataQuery{},
-	}
-
-	for i := range c.Data {
-		q := c.Data[i]
+	for i := range data {
+		q := data[i]
 		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
@@ -127,37 +124,32 @@ func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
 
-		queryDataReq.Queries = append(queryDataReq.Queries, backend.DataQuery{
+		req.Queries = append(req.Queries, expr.Query{
+			TimeRange: expr.TimeRange{
+				From: q.RelativeTimeRange.ToTimeRange(now).From,
+				To:   q.RelativeTimeRange.ToTimeRange(now).To,
+			},
+			DatasourceUID: q.DatasourceUID,
 			JSON:          model,
 			Interval:      interval,
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
 	}
-	return queryDataReq, nil
+	return req, nil
 }
 
-// execute runs the Condition's expressions or queries.
-func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
+func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 
-	queryDataReq, err := GetQueryDataRequest(ctx, c, now)
+	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, dataService)
+
 	if err != nil {
 		return &result, err
 	}
 
-	exprService := expr.Service{
-		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
-		DataService: dataService,
-	}
-	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
-	if err != nil {
-		return &result, err
-	}
-
-	for refID, res := range pbRes.Responses {
+	for refID, res := range execResp.Responses {
 		if refID != c.Condition {
 			continue
 		}
@@ -171,6 +163,19 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 	}
 
 	return &result, nil
+}
+
+func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+	queryDataReq, err := GetExprRequest(ctx, data, now)
+	if err != nil {
+		return nil, err
+	}
+
+	exprService := expr.Service{
+		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
+		DataService: dataService,
+	}
+	return exprService.TransformData(ctx.Ctx, queryDataReq)
 }
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
@@ -270,7 +275,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
-	execResult, err := execute(alertExecCtx, condition, now, dataService)
+	execResult, err := executeCondition(alertExecCtx, condition, now, dataService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
@@ -280,4 +285,19 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 		return nil, fmt.Errorf("failed to evaluate results: %w", err)
 	}
 	return evalResults, nil
+}
+
+// QueriesAndExpressionsEval executes queries and expressions and returns the result.
+func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
+	defer cancelFn()
+
+	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, dataService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute conditions: %w", err)
+	}
+
+	return execResult, nil
 }

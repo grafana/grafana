@@ -18,9 +18,8 @@ import {
   setIsDefault,
 } from './reducers';
 import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
-import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { DataSourceSettingsState, DataSourcesState } from 'app/types';
-import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const mockPlugin = () =>
