@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
@@ -12,7 +12,7 @@ import usePrevious from 'react-use/lib/usePrevious';
  * Exposes contexts for plugins registration and uPlot instance access
  */
 export const UPlotChart: React.FC<PlotProps> = (props) => {
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const plotCntnr = useRef<HTMLDivElement>(null);
   const plotInstance = useRef<uPlot>();
   const prevProps = usePrevious(props);
 
@@ -26,17 +26,13 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
     } as uPlot.Options;
   }, [props.config]);
 
-  const getPlotInstance = useCallback(() => {
-    return plotInstance.current;
-  }, []);
-
   useLayoutEffect(() => {
     if (!plotInstance.current || props.width === 0 || props.height === 0) {
       return;
     }
 
     pluginLog('uPlot core', false, 'updating size');
-    plotInstance.current!.setSize({
+    plotInstance.current.setSize({
       width: props.width,
       height: props.height,
     });
@@ -45,13 +41,13 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   // Effect responsible for uPlot updates/initialization logic. It's performed whenever component's props have changed
   useLayoutEffect(() => {
     // 0. Exit early if the component is not ready to initialize uPlot
-    if (!canvasRef.current || props.width === 0 || props.height === 0) {
+    if (!plotCntnr.current || props.width === 0 || props.height === 0) {
       return;
     }
 
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (!plotInstance.current || !prevProps) {
-      plotInstance.current = initializePlot(props.data, config, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, config, plotCntnr.current);
       return;
     }
 
@@ -61,7 +57,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
         pluginLog('uPlot core', false, 'destroying instance');
         plotInstance.current.destroy();
       }
-      plotInstance.current = initializePlot(props.data, config, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, config, plotCntnr.current);
       return;
     }
 
@@ -77,13 +73,13 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(canvasRef, props.data, getPlotInstance);
-  }, [plotInstance, canvasRef, props.data, getPlotInstance]);
+    return buildPlotContext(plotInstance.current);
+  }, [plotInstance, props.data]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
       <div style={{ position: 'relative' }}>
-        <div ref={plotCtx.canvasRef} data-testid="uplot-main-div" />
+        <div ref={plotCntnr} data-testid="uplot-main-div" />
         {props.children}
       </div>
     </PlotContext.Provider>
