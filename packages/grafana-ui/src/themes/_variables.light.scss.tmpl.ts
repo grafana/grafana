@@ -201,17 +201,17 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: $white;
-$input-bg-disabled: $gray-5;
+$input-bg: ${theme.components.input.background};
+$input-bg-disabled: ${theme.colors.action.disabledBackground};
 
-$input-color: ${theme.v1.colors.formInputText};
-$input-border-color: ${theme.v1.colors.formInputBorder};
+$input-color: ${theme.components.input.text};
+$input-border-color: ${theme.components.input.borderColor};
 $input-box-shadow: none;
-$input-border-focus: ${theme.v1.palette.blue95};
-$input-box-shadow-focus: ${theme.v1.palette.blue95};
-$input-color-placeholder: ${theme.v1.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.v1.colors.bg2};
-$input-color-select-arrow: ${theme.v1.palette.gray60};
+$input-border-focus: ${theme.colors.primary.border};
+$input-box-shadow-focus: ${theme.colors.primary.border} !default;
+$input-color-placeholder: ${theme.colors.text.disabled};
+$input-label-bg: ${theme.colors.background.secondary};
+$input-color-select-arrow: ${theme.colors.text.primary};
 
 // search
 $search-shadow: 0 1px 5px 0 $gray-5;
@@ -266,14 +266,14 @@ $tab-border-color: $gray-5;
 
 // Form states and alerts
 // -------------------------
-$warning-text-color: lighten($orange, 10%);
-$error-text-color: $red-shade;
-$success-text-color: lighten($green-base, 10%);
+$warning-text-color: ${theme.colors.warning.text};
+$error-text-color: ${theme.colors.error.text};
+$success-text-color: ${theme.colors.success.text};
 
-$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
+$alert-error-bg: ${theme.colors.error.main};
+$alert-success-bg: ${theme.colors.success.main};
+$alert-warning-bg: ${theme.colors.warning.main};
+$alert-info-bg: ${theme.colors.warning.main};
 
 // Tooltips and popovers
 $tooltipBackground: ${theme.colors.background.secondary};
@@ -372,7 +372,7 @@ $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
-$panel-editor-viz-item-bg: $white;
+$panel-editor-viz-item-bg: $card-background;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);

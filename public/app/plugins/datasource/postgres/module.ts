@@ -15,10 +15,11 @@ WHERE
 class PostgresAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 
-  annotation: any;
+  declare annotation: any;
 
   /** @ngInject */
-  constructor() {
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation;
     this.annotation.rawQuery = this.annotation.rawQuery || defaultQuery;
   }
 }
