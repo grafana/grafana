@@ -106,18 +106,10 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
 
       &:hover {
         background: ${theme.colors.action.hover};
-
-        // span.${offsetClassName} {
-        //   background: ${theme.colors.action.hover};
-        // }
       }
     `,
     containerFocused: css`
       background: ${theme.colors.action.hover};
-
-      // span.${offsetClassName} {
-      //   background: ${theme.colors.action.hover};
-      // }
     `,
     body: css`
       display: flex;
