@@ -241,6 +241,9 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
               aria-label={selectors.pages.DataSource.alert}
             >
               {testingStatus.details?.message ?? null}
+              {testingStatus.details?.verboseMessage ? (
+                <details style={{ whiteSpace: 'pre-wrap' }}>{testingStatus.details?.verboseMessage}</details>
+              ) : null}
             </Alert>
           )}
         </div>

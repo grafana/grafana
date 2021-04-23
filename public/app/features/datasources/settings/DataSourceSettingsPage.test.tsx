@@ -139,4 +139,19 @@ describe('Render', () => {
 
     expect(screen.getByText(mockProps.testingStatus.message)).toBeInTheDocument();
   });
+
+  it('should render verbose error message with detailed verbose error message', () => {
+    const mockProps = {
+      ...getProps(),
+      testingStatus: {
+        message: 'message',
+        status: 'error',
+        details: { message: 'detailed message', verboseMessage: 'verbose message' },
+      },
+    };
+
+    render(<DataSourceSettingsPage {...mockProps} />);
+
+    expect(screen.getByText(mockProps.testingStatus.details.verboseMessage)).toBeInTheDocument();
+  });
 });
