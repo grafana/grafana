@@ -13,21 +13,34 @@ import { AlertStatesWorker } from './AlertStatesWorker';
 import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { getAnnotationsByPanelId } from './utils';
+import { DashboardModel } from '../../../dashboard/state';
+import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
+import { RefreshEvent } from '../../../../types/events';
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly results: Subject<DashboardQueryRunnerWorkerResult>;
   private readonly cancellations: Subject<{}>;
   private readonly subscription: Unsubscribable;
+  private readonly eventsSubscription: Unsubscribable;
 
   constructor(
+    private readonly dashboard: DashboardModel,
+    private readonly timeSrv: TimeSrv = getTimeSrv(),
     private readonly workers: DashboardQueryRunnerWorker[] = [
       new AlertStatesWorker(),
       new SnapshotWorker(),
       new AnnotationsWorker(),
     ]
   ) {
+    this.run = this.run.bind(this);
+    this.getResult = this.getResult.bind(this);
+    this.cancel = this.cancel.bind(this);
+    this.destroy = this.destroy.bind(this);
     this.results = new Subject<DashboardQueryRunnerWorkerResult>();
     this.cancellations = new Subject<{}>();
+    this.eventsSubscription = dashboard.events.subscribe(RefreshEvent, (event) => {
+      this.run({ dashboard: this.dashboard, range: this.timeSrv.timeRange() });
+    });
   }
 
   run(options: DashboardQueryRunnerOptions): void {
@@ -70,12 +83,16 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.results.complete();
     this.cancellations.complete();
     this.subscription.unsubscribe();
+    this.eventsSubscription.unsubscribe();
   }
 }
 
 let dashboardQueryRunner: DashboardQueryRunner | undefined;
 
 export function setDashboardQueryRunner(runner: DashboardQueryRunner): void {
+  if (dashboardQueryRunner) {
+    dashboardQueryRunner.destroy();
+  }
   dashboardQueryRunner = runner;
 }
 

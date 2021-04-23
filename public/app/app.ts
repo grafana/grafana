@@ -44,10 +44,6 @@ import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
-import {
-  DashboardQueryRunnerImpl,
-  setDashboardQueryRunner,
-} from './features/query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -87,7 +83,6 @@ export class GrafanaApp {
 
     setQueryRunnerFactory(() => new QueryRunner());
     setVariableQueryRunner(new VariableQueryRunner());
-    setDashboardQueryRunner(new DashboardQueryRunnerImpl());
 
     locationUtil.initialize({
       config,

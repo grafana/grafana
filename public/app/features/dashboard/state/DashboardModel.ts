@@ -1,6 +1,7 @@
 // Libaries
 import {
   cloneDeep,
+  defaults as _defaults,
   each,
   filter,
   find,
@@ -11,7 +12,6 @@ import {
   maxBy,
   pull,
   some,
-  defaults as _defaults,
 } from 'lodash';
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
@@ -41,8 +41,6 @@ import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
-import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { getTimeSrv } from '../services/TimeSrv';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -321,7 +319,6 @@ export class DashboardModel {
 
   startRefresh() {
     this.events.publish(new RefreshEvent());
-    getDashboardQueryRunner().run({ dashboard: this, range: getTimeSrv().timeRange() }); // how can we avoid calling getTimeSrv().timeRange()
 
     if (this.panelInEdit) {
       this.panelInEdit.refresh();

@@ -48,6 +48,7 @@ export function getDefaultOptions(): DashboardQueryRunnerOptions {
         getAnnotation({ enable: false, useSnapshotData: true }),
       ],
     },
+    events: { subscribe: jest.fn() },
   };
   const range = getDefaultTimeRange();
 

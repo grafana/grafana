@@ -15,10 +15,12 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getTestContext() {
-  // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
-  const runner = new DashboardQueryRunnerImpl();
-
   jest.clearAllMocks();
+  const timeSrvMock: any = { timeRange: jest.fn() };
+  const options = getDefaultOptions();
+  // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
+  const runner = new DashboardQueryRunnerImpl(options.dashboard, timeSrvMock);
+
   const getResults: AlertStateInfo[] = [
     { id: 1, state: AlertState.Alerting, newStateDate: '2021-01-01', dashboardId: 1, panelId: 1 },
     { id: 2, state: AlertState.Alerting, newStateDate: '2021-02-01', dashboardId: 1, panelId: 2 },
@@ -46,7 +48,6 @@ function getTestContext() {
     },
   };
   setDataSourceSrv(dataSourceSrvMock);
-  const options = getDefaultOptions();
 
   return { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock };
 }
