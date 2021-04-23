@@ -1299,7 +1299,6 @@ func TestEval(t *testing.T) {
 			require.JSONEq(t, tc.expectedResponse, string(b))
 		})
 	}
-
 }
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
