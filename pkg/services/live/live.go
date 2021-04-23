@@ -133,8 +133,8 @@ func (g *GrafanaLive) Init() error {
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
-		Publisher: g.Publish,
-		Presense:  g.Presence,
+		Publisher:   g.Publish,
+		ClientCount: g.ClientCount,
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
@@ -436,13 +436,13 @@ func (g *GrafanaLive) Publish(channel string, data []byte) error {
 	return err
 }
 
-// Presence gets the list of clients from a channel
-func (g *GrafanaLive) Presence(channel string) (map[string]*centrifuge.ClientInfo, error) {
+// ClientCount returns the number of clients
+func (g *GrafanaLive) ClientCount(channel string) (int, error) {
 	p, err := g.node.Presence(channel)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return p.Presence, nil
+	return len(p.Presence), nil
 }
 
 // IsEnabled returns true if the Grafana Live feature is enabled.

@@ -20,6 +20,8 @@ const (
 	ACTION_DELETED   actionType = "deleted"
 	EDITING_STARTED  actionType = "editing-started"
 	EDITING_FINISHED actionType = "editing-finished"
+
+	GITOPS_CHANNEL = "grafana/dashboard/gitops"
 )
 
 // DashboardEvent events related to dashboards
@@ -35,8 +37,8 @@ type dashboardEvent struct {
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
-	Publisher models.ChannelPublisher
-	Presense  models.ChannelPresense
+	Publisher   models.ChannelPublisher
+	ClientCount models.ChannelClientCount
 }
 
 // GetHandlerForPath called on init
@@ -53,8 +55,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
 		return models.SubscribeReply{
-			Presence:  true,
-			JoinLeave: true, // ?? likely not necessary
+			Presence: true,
 		}, backend.SubscribeStreamStatusOK, nil
 
 	}
@@ -149,7 +150,7 @@ func (h *DashboardHandler) publish(event dashboardEvent) error {
 		return err
 	}
 
-	return h.Publisher("grafana/dashboard/gitops", msg)
+	return h.Publisher(GITOPS_CHANNEL, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
@@ -180,10 +181,10 @@ func (h *DashboardHandler) DashboardDeleted(user *models.UserDisplayDTO, uid str
 
 // HasGitOpsObserver will return true if anyone is listening to the `gitops` channel
 func (h *DashboardHandler) HasGitOpsObserver() bool {
-	presence, err := h.Presense("grafana")
+	count, err := h.ClientCount(GITOPS_CHANNEL)
 	if err != nil {
 		logger.Error("error getting presense for gitops", "error", err)
 		return false
 	}
-	return len(presence) > 0
+	return count > 0
 }

@@ -251,10 +251,10 @@ type UserSearchHitDTO struct {
 }
 
 type UserDisplayDTO struct {
-	Id    int64  `json:"id,omitempty"`
-	Name  string `json:"name,omitempty"`
-	Login string `json:"login,omitempty"`
-	Email string `json:"email,omitempty"`
+	Id        int64  `json:"id,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Login     string `json:"login,omitempty"`
+	AvatarUrl string `json:"avatarUrl"`
 }
 
 type UserIdDTO struct {

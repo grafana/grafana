@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // ChannelPublisher writes data into a channel. Note that permissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
 
-// ChannelPresense gets the list of clients connected to a channel
-type ChannelPresense func(channel string) (map[string]*centrifuge.ClientInfo, error)
+// ChannelClientCount will return the number of clients for a channel
+type ChannelClientCount func(channel string) (int, error)
 
 // SubscribeEvent contains subscription data.
 type SubscribeEvent struct {
@@ -67,7 +66,10 @@ type ChannelHandlerFactory interface {
 
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
-	// Called when a dashboard is saved -- this includes the error case so
+	// Called when a dashboard is saved -- this includes the error so we can support a
+	// gitops workflow that knows if the value was saved to the local database or not
+	// in many cases all direct save requests will fail, but the request should be forwarded
+	// to any gitops observers
 	DashboardSaved(user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
 
 	// Called when a dashboard is deleted
