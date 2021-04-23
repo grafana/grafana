@@ -1,5 +1,5 @@
 /**
- * TBD
+ * @internal -- might be replaced by next generation Alerting
  */
 export enum AlertState {
   NoData = 'no_data',
@@ -11,7 +11,7 @@ export enum AlertState {
 }
 
 /**
- * TBD
+ * @internal -- might be replaced by next generation Alerting
  */
 export interface AlertStateInfo {
   id: number;
