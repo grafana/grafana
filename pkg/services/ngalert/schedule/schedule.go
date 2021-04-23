@@ -307,6 +307,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
 			sch.saveAlertStates(stateTracker.GetAll())
+			stateTracker.Close()
 			return err
 		}
 	}

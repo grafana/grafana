@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -16,276 +15,748 @@ import (
 )
 
 func TestProcessEvalResults(t *testing.T) {
-	t.Skip()
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
-	cacheId := "map[__alert_rule_namespace_uid__:test_namespace __alert_rule_uid__:test_uid alertname:test_title label1:value1 label2:value2 rule_label:rule_value]"
+	evaluationDuration := 10 * time.Millisecond
 
-	ruleLabels := map[string]string{
-		"rule_label": "rule_value",
-	}
-	alertRule := models.AlertRule{
-		ID:           1,
-		OrgID:        123,
-		Title:        "test_title",
-		Condition:    "A",
-		UID:          "test_uid",
-		NamespaceUID: "test_namespace",
-		For:          10 * time.Second,
-		Labels:       ruleLabels,
-	}
-	processingTime := 10 * time.Millisecond
-	expectedLabels := data.Labels{
-		"label1":                       "value1",
-		"label2":                       "value2",
-		"rule_label":                   "rule_value",
-		"__alert_rule_uid__":           "test_uid",
-		"__alert_rule_namespace_uid__": "test_namespace",
-		"alertname":                    "test_title",
-	}
 	testCases := []struct {
-		desc                       string
-		uid                        string
-		evalResults                eval.Results
-		expectedState              eval.State
-		expectedReturnedStateCount int
-		expectedResultCount        int
-		expectedCacheEntries       []state.AlertState
+		desc           string
+		alertRule      *models.AlertRule
+		evalResults    []eval.Results
+		expectedStates map[string]state.AlertState
 	}{
 		{
-			desc: "given a single evaluation result",
-			uid:  "test_uid",
-			evalResults: eval.Results{
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Normal,
-					EvaluatedAt: evaluationTime,
+			desc: "a cache entry is correctly created",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
 				},
 			},
-			expectedState:              eval.Normal,
-			expectedReturnedStateCount: 0,
-			expectedResultCount:        1,
-			expectedCacheEntries: []state.AlertState{
-				{
-					AlertRuleUID: "test_uid",
-					OrgID:        123,
-					CacheId:      cacheId,
-					Labels:       expectedLabels,
-					State:        eval.Normal,
-					Results: []state.StateEvaluation{
-						{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
 					},
-					StartsAt:           time.Time{},
-					EndsAt:             time.Time{},
+					State: eval.Normal,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+					},
 					LastEvaluationTime: evaluationTime,
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
 		{
-			desc: "given a state change from normal to alerting for a single entity",
-			uid:  "test_uid",
-			evalResults: eval.Results{
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Normal,
-					EvaluatedAt: evaluationTime,
-				},
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Alerting,
-					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+			desc: "two results create two correct cache entries",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label_1": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+					eval.Result{
+						Instance:    data.Labels{"instance_label_2": "test"},
+						State:       eval.Alerting,
+						EvaluatedAt: evaluationTime,
+					},
 				},
 			},
-			expectedState:              eval.Alerting,
-			expectedReturnedStateCount: 1,
-			expectedResultCount:        2,
-			expectedCacheEntries: []state.AlertState{
-				{
-					AlertRuleUID: "test_uid",
-					OrgID:        123,
-					CacheId:      cacheId,
-					Labels:       expectedLabels,
-					State:        eval.Alerting,
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_1:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_1:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label_1":             "test",
+					},
+					State: eval.Normal,
 					Results: []state.StateEvaluation{
-						{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
-						{EvaluationTime: evaluationTime.Add(1 * time.Minute), EvaluationState: eval.Alerting},
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+					},
+					LastEvaluationTime: evaluationTime,
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_2:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_2:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label_2":             "test",
+					},
+					State: eval.Alerting,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Alerting,
+						},
+					},
+					StartsAt:           evaluationTime,
+					EndsAt:             evaluationTime.Add(20 * time.Second),
+					LastEvaluationTime: evaluationTime,
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "state is maintained",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_1",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+					},
+				},
+			},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_1 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_1",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_1 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_1",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.Normal,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(1 * time.Minute),
+							EvaluationState: eval.Normal,
+						},
+					},
+					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "normal -> alerting transition when For is unset",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Alerting,
+						EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+					},
+				},
+			},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.Alerting,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(1 * time.Minute),
+							EvaluationState: eval.Alerting,
+						},
 					},
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
-					EndsAt:             evaluationTime.Add(alertRule.For * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
 		{
-			desc: "given a state change from alerting to normal for a single entity",
-			uid:  "test_uid",
-			evalResults: eval.Results{
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Alerting,
-					EvaluatedAt: evaluationTime,
+			desc: "normal -> alerting when For is set",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
 				},
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Normal,
-					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Alerting,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Alerting,
+						EvaluatedAt: evaluationTime.Add(80 * time.Second),
+					},
 				},
 			},
-			expectedState:              eval.Normal,
-			expectedReturnedStateCount: 1,
-			expectedResultCount:        2,
-			expectedCacheEntries: []state.AlertState{
-				{
-					AlertRuleUID: "test_uid",
-					OrgID:        123,
-					CacheId:      cacheId,
-					Labels:       expectedLabels,
-					State:        eval.Normal,
-					Results: []state.StateEvaluation{
-						{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
-						{EvaluationTime: evaluationTime.Add(1 * time.Minute), EvaluationState: eval.Normal},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
 					},
-					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(1 * time.Minute),
-					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
+					State: eval.Alerting,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.Alerting,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(80 * time.Second),
+							EvaluationState: eval.Alerting,
+						},
+					},
+					StartsAt:           evaluationTime.Add(80 * time.Second),
+					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
+					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
 		{
-			desc: "given a constant alerting state for a single entity",
-			uid:  "test_uid",
-			evalResults: eval.Results{
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Alerting,
-					EvaluatedAt: evaluationTime,
+			desc: "normal -> pending when For is set but not exceeded",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
 				},
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Alerting,
-					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Alerting,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
 				},
 			},
-			expectedState:              eval.Alerting,
-			expectedReturnedStateCount: 0,
-			expectedResultCount:        2,
-			expectedCacheEntries: []state.AlertState{
-				{
-					AlertRuleUID: "test_uid",
-					OrgID:        123,
-					CacheId:      cacheId,
-					Labels:       expectedLabels,
-					State:        eval.Alerting,
-					Results: []state.StateEvaluation{
-						{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
-						{EvaluationTime: evaluationTime.Add(1 * time.Minute), EvaluationState: eval.Alerting},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
 					},
-					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(alertRule.For * time.Second).Add(1 * time.Minute),
-					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
+					State: eval.Pending,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.Alerting,
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
 		{
-			desc: "given a constant normal state for a single entity",
-			uid:  "test_uid",
-			evalResults: eval.Results{
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Normal,
-					EvaluatedAt: evaluationTime,
+			desc: "normal -> alerting when result is NoData and NoDataState is alerting",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				NoDataState:     models.Alerting,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
 				},
-				eval.Result{
-					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
-					State:       eval.Normal,
-					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.NoData,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
 				},
 			},
-			expectedState:              eval.Normal,
-			expectedReturnedStateCount: 0,
-			expectedResultCount:        2,
-			expectedCacheEntries: []state.AlertState{
-				{
-					AlertRuleUID: "test_uid",
-					OrgID:        123,
-					CacheId:      cacheId,
-					Labels:       expectedLabels,
-					State:        eval.Normal,
-					Results: []state.StateEvaluation{
-						{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
-						{EvaluationTime: evaluationTime.Add(1 * time.Minute), EvaluationState: eval.Normal},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
 					},
-					StartsAt:           time.Time{},
-					EndsAt:             time.Time{},
-					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
+					State: eval.Alerting,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.NoData,
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "normal -> nodata when result is NoData and NoDataState is nodata",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				NoDataState:     models.NoData,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.NoData,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
+				},
+			},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.NoData,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.NoData,
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "normal -> normal when result is NoData and NoDataState is ok",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				NoDataState:     models.OK,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.NoData,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
+				},
+			},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.Normal,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.NoData,
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "EndsAt set correctly. normal -> alerting when result is NoData and NoDataState is alerting and For is set and For is breached",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+				NoDataState:     models.Alerting,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.NoData,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
+				},
+			},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.Alerting,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.NoData,
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "normal -> normal when result is NoData and NoDataState is KeepLastState",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+				NoDataState:     models.KeepLastState,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.NoData,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
+				},
+			},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.Normal,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.NoData,
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "normal -> normal when result is NoData and NoDataState is KeepLastState",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+				NoDataState:     models.KeepLastState,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime,
+					},
+				},
+				{
+					eval.Result{
+						Instance:    data.Labels{"instance_label": "test"},
+						State:       eval.NoData,
+						EvaluatedAt: evaluationTime.Add(10 * time.Second),
+					},
+				},
+			},
+			expectedStates: map[string]state.AlertState{
+				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.Normal,
+					Results: []state.StateEvaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.NoData,
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run("all fields for a cache entry are set correctly", func(t *testing.T) {
-			st := state.NewStateTracker(log.New("test_state_tracker"))
-			_ = st.ProcessEvalResults(&alertRule, tc.evalResults, processingTime)
-			for _, entry := range tc.expectedCacheEntries {
-				if !entry.Equals(st.Get(entry.CacheId)) {
-					t.Log(tc.desc)
-					printEntryDiff(entry, st.Get(entry.CacheId), t)
-				}
-				assert.True(t, entry.Equals(st.Get(entry.CacheId)))
+		st := state.NewStateTracker(log.New("test_state_tracker"))
+		t.Run(tc.desc, func(t *testing.T) {
+			for _, res := range tc.evalResults {
+				_ = st.ProcessEvalResults(tc.alertRule, res, evaluationDuration)
+			}
+			for id, s := range tc.expectedStates {
+				assert.Equal(t, s, st.Get(id))
 			}
 		})
-
-		t.Run("the expected number of entries are added to the cache", func(t *testing.T) {
-			st := state.NewStateTracker(log.New("test_state_tracker"))
-			st.ProcessEvalResults(&alertRule, tc.evalResults, processingTime)
-			assert.Equal(t, len(tc.expectedCacheEntries), len(st.GetAll()))
-		})
-
-		//This test, as configured, does not quite represent the behavior of the system.
-		//It is expected that each batch of evaluation results will have only one result
-		//for a unique set of labels.
-		t.Run("the expected number of states are returned to the caller", func(t *testing.T) {
-			st := state.NewStateTracker(log.New("test_state_tracker"))
-			results := st.ProcessEvalResults(&alertRule, tc.evalResults, processingTime)
-			assert.Equal(t, len(tc.evalResults), len(results))
-		})
-	}
-}
-
-func printEntryDiff(a, b state.AlertState, t *testing.T) {
-	if a.AlertRuleUID != b.AlertRuleUID {
-		t.Log(fmt.Sprintf("%v \t %v\n", a.AlertRuleUID, b.AlertRuleUID))
-	}
-	if a.OrgID != b.OrgID {
-		t.Log(fmt.Sprintf("%v \t %v\n", a.OrgID, b.OrgID))
-	}
-	if a.CacheId != b.CacheId {
-		t.Log(fmt.Sprintf("%v \t %v\n", a.CacheId, b.CacheId))
-	}
-	if !a.Labels.Equals(b.Labels) {
-		t.Log(fmt.Sprintf("%v \t %v\n", a.Labels, b.Labels))
-	}
-	if a.StartsAt != b.StartsAt {
-		t.Log(fmt.Sprintf("%v \t %v\n", a.StartsAt, b.StartsAt))
-	}
-	if a.EndsAt != b.EndsAt {
-		t.Log(fmt.Sprintf("%v \t %v\n", a.EndsAt, b.EndsAt))
-	}
-	if a.LastEvaluationTime != b.LastEvaluationTime {
-		t.Log(fmt.Sprintf("%v \t %v\n", a.LastEvaluationTime, b.LastEvaluationTime))
-	}
-	if len(a.Results) != len(b.Results) {
-		t.Log(fmt.Sprintf("a: %d b: %d", len(a.Results), len(b.Results)))
-		t.Log("a")
-		for i := 0; i < len(a.Results); i++ {
-			t.Log(fmt.Sprintf("%v\n", a.Results[i]))
-		}
-		t.Log("b")
-		for i := 0; i < len(b.Results); i++ {
-			t.Log(fmt.Sprintf("%v\n", b.Results[i]))
-		}
 	}
 }

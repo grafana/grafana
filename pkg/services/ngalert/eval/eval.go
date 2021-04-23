@@ -78,7 +78,7 @@ const (
 
 	// Pending is the eval state for an alert instance condition
 	// that evaluated to true (Alerting) but has not yet met
-	// the For duration defined in AlertRule
+	// the For duration defined in AlertRule.
 	Pending
 
 	// NoData is the eval state for an alert rule condition
