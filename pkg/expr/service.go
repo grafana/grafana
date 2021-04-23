@@ -34,7 +34,7 @@ func (s *Service) isDisabled() bool {
 }
 
 // BuildPipeline builds a pipeline from a request.
-func (s *Service) BuildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
+func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 	return s.buildPipeline(req)
 }
 

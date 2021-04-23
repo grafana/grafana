@@ -34,7 +34,7 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condi
 		return nil, err
 	}
 
-	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond.Data, time.Unix(500, 0))
+	backendReq, err := eval.GetExprRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond.Data, time.Unix(500, 0))
 
 	if err != nil {
 		return nil, err
@@ -191,7 +191,6 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 			}
 
 			queryObj["datasource"] = getDsInfo.Result.Name
-			queryObj["datasourceUid"] = getDsInfo.Result.Uid
 			queryObj["refId"] = refID
 
 			encodedObj, err := json.Marshal(queryObj)
@@ -211,7 +210,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     getDsInfo.Uid,
+				DatasourceUID:     getDsInfo.Result.Uid,
 			}
 			ngCond.Data = append(ngCond.Data, alertQuery)
 		}
@@ -240,14 +239,12 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	ngCond.OrgID = orgID
 
 	exprModel := struct {
-		Type          string                         `json:"type"`
-		RefID         string                         `json:"refId"`
-		DatasourceUID string                         `json:"datasourceUid"`
-		Conditions    []classic.ClassicConditionJSON `json:"conditions"`
+		Type       string                         `json:"type"`
+		RefID      string                         `json:"refId"`
+		Conditions []classic.ClassicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		expr.DatasourceUID,
 		conditions,
 	}
 
@@ -257,8 +254,9 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	}
 
 	ccAlertQuery := ngmodels.AlertQuery{
-		RefID: ccRefID,
-		Model: exprModelJSON,
+		RefID:         ccRefID,
+		Model:         exprModelJSON,
+		DatasourceUID: expr.DatasourceUID,
 	}
 
 	ngCond.Data = append(ngCond.Data, ccAlertQuery)
