@@ -65,14 +65,14 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       },
     };
 
+    let hardMinOnly = softMin == null && hardMin != null;
+    let hardMaxOnly = softMax == null && hardMax != null;
+
     // uPlot range function
     const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
       const scale = u.scales[scaleKey];
 
       let minMax = [dataMin, dataMax];
-
-      let hardMinOnly = softMin == null && hardMin != null;
-      let hardMaxOnly = softMax == null && hardMax != null;
 
       if (scale.distr === 1 || scale.distr === 2) {
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
@@ -96,7 +96,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     return {
       [scaleKey]: {
         time: isTime,
-        auto: !isTime,
+        auto: !isTime && !(hardMinOnly && hardMaxOnly),
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,
