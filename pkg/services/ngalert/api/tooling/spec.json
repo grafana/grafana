@@ -988,6 +988,11 @@
         },
         "relativeTimeRange": {
           "$ref": "#/definitions/RelativeTimeRange"
+        },
+        "datasourceUid": {
+          "description": "Grafana data source unique identifer '-100' for a Server Side Expression operation.",
+          "type": "string",
+          "x-go-name": "DatasourceUID"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
