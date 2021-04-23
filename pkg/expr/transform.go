@@ -61,6 +61,7 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 	return s.TransformData(ctx, &req)
 }
 
+// Request is similar to plugins.DataQuery but with the Time Ranges is per Query.
 type Request struct {
 	Headers map[string]string
 	Debug   bool
@@ -68,6 +69,8 @@ type Request struct {
 	Queries []Query
 }
 
+// Query is like plugins.DataSubQuery, but with a a time range, and only the UID
+// for the data source.
 type Query struct {
 	RefID         string
 	TimeRange     TimeRange
@@ -78,6 +81,7 @@ type Query struct {
 	MaxDataPoints int64
 }
 
+// TimeRange is a time.Time based TimeRange.
 type TimeRange struct {
 	From time.Time
 	To   time.Time
