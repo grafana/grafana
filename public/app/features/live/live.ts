@@ -1,4 +1,3 @@
-import Centrifuge from 'centrifuge/dist/centrifuge';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
 import { LiveChannel, LiveChannelScope, LiveChannelAddress, LiveChannelConnectionState } from '@grafana/data';
@@ -11,6 +10,7 @@ import {
   GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
+import CentrifugeWorkerProxy from './CentrifugeWorkerProxy';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -21,22 +21,17 @@ export const sessionId =
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
+  readonly centrifuge: CentrifugeWorkerProxy;
 
-  readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
 
   constructor() {
-    // build live url replacing scheme in appUrl.
-    const liveUrl = `${config.appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
-    this.centrifuge = new Centrifuge(liveUrl, {
-      debug: true,
-    });
-    this.centrifuge.setConnectData({
-      sessionId,
-    });
-    this.centrifuge.connect(); // do connection
+    this.centrifuge = new CentrifugeWorkerProxy(config.appUrl, sessionId);
+
+    this.centrifuge.connect();
+
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
     this.connectionBlocker = new Promise<void>((resolve) => {
       if (this.centrifuge.isConnected()) {
