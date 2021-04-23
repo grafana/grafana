@@ -109,7 +109,7 @@ If that is the case, then use the following format for headings:
 ### Images
 
 - Preferred format is .png
-- File extension is all lowercase.
+- File extension should be all lowercase.
 - Preferred DPI is 72.
 - Assume all graphics will be exclusively viewed on the web.
 - Maximum image size is 3840px X 2160px.
