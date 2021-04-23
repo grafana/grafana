@@ -161,16 +161,16 @@ export default class PrometheusMetricFindQuery {
   metricNameAndLabelsQuery(query: string): Promise<MetricFindValue[]> {
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
-    const params = new URLSearchParams({
+    const params = {
       'match[]': query,
       start: start.toString(),
       end: end.toString(),
-    });
+    };
 
-    const url = `/api/v1/series?${params.toString()}`;
+    const url = `/api/v1/series`;
     const self = this;
 
-    return this.datasource.metadataRequest(url).then((result: any) => {
+    return this.datasource.metadataRequest(url, params).then((result: any) => {
       return _map(result.data.data, (metric: { [key: string]: string }) => {
         return {
           text: self.datasource.getOriginalMetricName(metric),
