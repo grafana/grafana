@@ -89,6 +89,13 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result.Used, ShouldEqual, 0)
 			})
+			Convey("Should be able to get used zero used org alert quota when table does not exist (ngalert is not enabled - default case)", func() {
+				query := models.GetOrgQuotaByTargetQuery{OrgId: 2, Target: "alert", Default: 11}
+				err = GetOrgQuotaByTarget(&query)
+
+				So(err, ShouldBeNil)
+				So(query.Result.Used, ShouldEqual, 0)
+			})
 			Convey("Should be able to quota list for org", func() {
 				query := models.GetOrgQuotasQuery{OrgId: orgId}
 				err = GetOrgQuotas(&query)
@@ -170,6 +177,14 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 			So(query.Result.Limit, ShouldEqual, 5)
 			So(query.Result.Used, ShouldEqual, 1)
+		})
+		Convey("Should be able to get zero used global alert quota when table does not exist (ngalert is not enabled - default case)", func() {
+			query := models.GetGlobalQuotaByTargetQuery{Target: "alert_rule", Default: 5}
+			err = GetGlobalQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+
+			So(query.Result.Limit, ShouldEqual, 5)
+			So(query.Result.Used, ShouldEqual, 0)
 		})
 
 		// related: https://github.com/grafana/grafana/issues/14342

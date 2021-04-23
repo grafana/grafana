@@ -35,18 +35,22 @@ func GetOrgQuotaByTarget(query *models.GetOrgQuotaByTargetQuery) error {
 		quota.Limit = query.Default
 	}
 
-	// get quota used.
-	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
-	resp := make([]*targetCount, 0)
-	if err := x.SQL(rawSQL, query.OrgId).Find(&resp); err != nil {
-		return err
+	var used int64
+	if query.Target != "alert_rule" || query.IsNgAlertEnabled {
+		// get quota used.
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
+		resp := make([]*targetCount, 0)
+		if err := x.SQL(rawSQL, query.OrgId).Find(&resp); err != nil {
+			return err
+		}
+		used = resp[0].Count
 	}
 
 	query.Result = &models.OrgQuotaDTO{
 		Target: query.Target,
 		Limit:  quota.Limit,
 		OrgId:  query.OrgId,
-		Used:   resp[0].Count,
+		Used:   used,
 	}
 
 	return nil
@@ -78,17 +82,21 @@ func GetOrgQuotas(query *models.GetOrgQuotasQuery) error {
 
 	result := make([]*models.OrgQuotaDTO, len(quotas))
 	for i, q := range quotas {
-		// get quota used.
-		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
-		resp := make([]*targetCount, 0)
-		if err := x.SQL(rawSQL, q.OrgId).Find(&resp); err != nil {
-			return err
+		var used int64
+		if q.Target != "alert_rule" || query.IsNgAlertEnabled {
+			// get quota used.
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
+			resp := make([]*targetCount, 0)
+			if err := x.SQL(rawSQL, q.OrgId).Find(&resp); err != nil {
+				return err
+			}
+			used = resp[0].Count
 		}
 		result[i] = &models.OrgQuotaDTO{
 			Target: q.Target,
 			Limit:  q.Limit,
 			OrgId:  q.OrgId,
-			Used:   resp[0].Count,
+			Used:   used,
 		}
 	}
 	query.Result = result
@@ -138,18 +146,22 @@ func GetUserQuotaByTarget(query *models.GetUserQuotaByTargetQuery) error {
 		quota.Limit = query.Default
 	}
 
-	// get quota used.
-	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
-	resp := make([]*targetCount, 0)
-	if err := x.SQL(rawSQL, query.UserId).Find(&resp); err != nil {
-		return err
+	var used int64
+	if query.Target != "alert_rule" || query.IsNgAlertEnabled {
+		// get quota used.
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
+		resp := make([]*targetCount, 0)
+		if err := x.SQL(rawSQL, query.UserId).Find(&resp); err != nil {
+			return err
+		}
+		used = resp[0].Count
 	}
 
 	query.Result = &models.UserQuotaDTO{
 		Target: query.Target,
 		Limit:  quota.Limit,
 		UserId: query.UserId,
-		Used:   resp[0].Count,
+		Used:   used,
 	}
 
 	return nil
@@ -181,17 +193,21 @@ func GetUserQuotas(query *models.GetUserQuotasQuery) error {
 
 	result := make([]*models.UserQuotaDTO, len(quotas))
 	for i, q := range quotas {
-		// get quota used.
-		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
-		resp := make([]*targetCount, 0)
-		if err := x.SQL(rawSQL, q.UserId).Find(&resp); err != nil {
-			return err
+		var used int64
+		if q.Target != "alert_rule" || query.IsNgAlertEnabled {
+			// get quota used.
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
+			resp := make([]*targetCount, 0)
+			if err := x.SQL(rawSQL, q.UserId).Find(&resp); err != nil {
+				return err
+			}
+			used = resp[0].Count
 		}
 		result[i] = &models.UserQuotaDTO{
 			Target: q.Target,
 			Limit:  q.Limit,
 			UserId: q.UserId,
-			Used:   resp[0].Count,
+			Used:   used,
 		}
 	}
 	query.Result = result
@@ -230,17 +246,21 @@ func UpdateUserQuota(cmd *models.UpdateUserQuotaCmd) error {
 }
 
 func GetGlobalQuotaByTarget(query *models.GetGlobalQuotaByTargetQuery) error {
-	// get quota used.
-	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
-	resp := make([]*targetCount, 0)
-	if err := x.SQL(rawSQL).Find(&resp); err != nil {
-		return err
+	var used int64
+	if query.Target != "alert_rule" || query.IsNgAlertEnabled {
+		// get quota used.
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
+		resp := make([]*targetCount, 0)
+		if err := x.SQL(rawSQL).Find(&resp); err != nil {
+			return err
+		}
+		used = resp[0].Count
 	}
 
 	query.Result = &models.GlobalQuotaDTO{
 		Target: query.Target,
 		Limit:  query.Default,
-		Used:   resp[0].Count,
+		Used:   used,
 	}
 
 	return nil
