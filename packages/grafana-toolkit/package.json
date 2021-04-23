@@ -104,7 +104,7 @@
     "ts-loader": "6.2.1",
     "ts-node": "9.0.0",
     "tslib": "2.1.0",
-    "typescript": "4.1.2",
+    "typescript": "4.2.4",
     "url-loader": "^2.0.1",
     "webpack": "4.41.5"
   },
