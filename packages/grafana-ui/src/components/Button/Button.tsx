@@ -161,14 +161,14 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, st
     return {
       background: 'transparent',
       color: color.text,
-      border: `1px solid ${color.main}`,
+      border: `1px solid ${color.border}`,
       transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
       }),
 
       '&:hover': {
-        background: colorManipulator.alpha(color.shade, theme.colors.action.hoverOpacity),
-        borderColor: color.shade,
+        background: colorManipulator.alpha(color.main, theme.colors.action.hoverOpacity),
+        borderColor: theme.colors.emphasize(color.border, 0.25),
         color: color.text,
       },
     };
@@ -185,12 +185,12 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, st
 
       '&:focus': {
         outline: 'none',
-        textDecoration: 'underline',
+        textDecoration: 'none',
       },
 
       '&:hover': {
         background: colorManipulator.alpha(color.shade, theme.colors.action.hoverOpacity),
-        textDecoration: 'underline',
+        textDecoration: 'none',
       },
     };
   }
