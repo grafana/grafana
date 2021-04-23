@@ -47,7 +47,7 @@ func (st *Manager) ResetCache() {
 }
 
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
-	st.Log.Info("state tracker processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
+	st.Log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
 	for _, result := range results {
 		s := st.setNextState(alertRule, result)
@@ -57,8 +57,7 @@ func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eva
 	return states
 }
 
-//TODO: When calculating if an alert should not be firing anymore, we should take three things into account:
-// 1. The re-send the delay if any, we don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
+//TODO: When calculating if an alert should not be firing anymore, we should take into account the re-send delay if any. We don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
 //Set the current state based on evaluation results
 func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(alertRule, result)
