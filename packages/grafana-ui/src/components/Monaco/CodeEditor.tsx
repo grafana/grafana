@@ -6,15 +6,30 @@ import { registerSuggestions } from './suggestions';
 import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
 
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+declare let __webpack_public_path__: string;
 
 type Props = CodeEditorProps & Themeable;
 
-monacoEditorLoader.config({
-  paths: {
-    // TODO: use public path, or something? for when grafana is hosted under a subpath or CDN
-    vs: '/public/build/monaco/min/vs',
-  },
-});
+let initalized = false;
+function initMonoco() {
+  if (initalized) {
+    return;
+  }
+
+  let root = '/public/lib/';
+  if (__webpack_public_path__) {
+    const publicpath = // __webpack_public_path__ includes the 'build/' suffix
+      __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
+    root = publicpath + 'lib/';
+  }
+
+  monacoEditorLoader.config({
+    paths: {
+      vs: root + 'monaco/min/vs',
+    },
+  });
+  initalized = true;
+}
 
 class UnthemedCodeEditor extends React.PureComponent<Props> {
   completionCancel?: monacoType.IDisposable;
@@ -22,6 +37,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
+    initMonoco();
   }
 
   componentWillUnmount() {

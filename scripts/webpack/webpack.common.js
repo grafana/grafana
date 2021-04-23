@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const CopyPlugin = require('copy-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const getBabelConfig = require('./babel.config');
 
 class CopyUniconsPlugin {
@@ -75,9 +75,19 @@ module.exports = {
   },
   plugins: [
     new CopyUniconsPlugin(),
-    new CopyPlugin({
+    new CopyWebpackPlugin({
       patterns: [
-        { from: './node_modules/monaco-editor/dev/vs/', to: 'monaco/min/vs/' },
+        {
+          context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
+          from: 'min/vs/**',
+          to: '../lib/monaco/', // inside the public/build folder
+          globOptions: {
+            ignore: [
+              '**/language/typescript/**', // 10mb
+              '**/*.map', // debug files
+            ],
+          },
+        },
         // {
         //   from: './node_modules/@kusto/monaco-kusto/release/min/',
         //   to: 'monaco/min/vs/language/kusto/',
