@@ -202,10 +202,10 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: $white;
-$input-bg-disabled: $gray-5;
+$input-bg: #fff;
+$input-bg-disabled: rgba(36, 41, 46, 0.07);
 
-$input-color: #c7d0d9;
+$input-color: rgba(36, 41, 46, 1);
 $input-border-color: rgba(36, 41, 46, 0.30);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
