@@ -68,6 +68,7 @@ type webhookMessage struct {
 
 // Notify implements the Notifier interface.
 func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
+	as = RemoveSystemLabels(as)
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
 		return false, err

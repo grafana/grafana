@@ -202,6 +202,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = anonSect.NewKey("enabled", "true")
 	require.NoError(t, err)
 
+	alertingSect, err := cfg.NewSection("alerting")
+	require.NoError(t, err)
+	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
+	require.NoError(t, err)
+
 	for _, o := range opts {
 		if o.EnableCSP {
 			securitySect, err := cfg.NewSection("security")

@@ -56,6 +56,7 @@ func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*E
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
+	as = RemoveSystemLabels(as)
 	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
 	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.externalUrl}, as, gokit_log.NewNopLogger())
 

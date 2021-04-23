@@ -57,6 +57,7 @@ type DingDingNotifier struct {
 // Notify sends the alert notification to dingding.
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	dd.log.Info("Sending dingding")
+	as = RemoveSystemLabels(as)
 
 	q := url.Values{
 		"pc_slide": {"false"},

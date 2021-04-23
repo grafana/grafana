@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
+	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
 // PagerdutyNotifier is responsible for sending
@@ -75,6 +75,7 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
+	as = RemoveSystemLabels(as)
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
 		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
@@ -93,7 +94,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
-		Url:        pagerdutyEventAPIURL,
+		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
