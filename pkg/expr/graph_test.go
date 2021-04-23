@@ -36,6 +36,62 @@ func TestServicebuildPipeLine(t *testing.T) {
 			expectedOrder: []string{"B", "A"},
 		},
 		{
+			name: "cycle will error",
+			req: &Request{
+				Queries: []Query{
+					{
+						RefID:         "A",
+						DatasourceUID: DatasourceUID,
+						JSON: json.RawMessage(`{
+								"expression": "$B",
+								"type": "math"
+							}`),
+					},
+					{
+						RefID:         "B",
+						DatasourceUID: DatasourceUID,
+						JSON: json.RawMessage(`{
+								"expression": "$A",
+								"type": "math"
+							}`),
+					},
+				},
+			},
+			expectErrContains: "cyclic components",
+		},
+		{
+			name: "self reference will error",
+			req: &Request{
+				Queries: []Query{
+					{
+						RefID:         "A",
+						DatasourceUID: DatasourceUID,
+						JSON: json.RawMessage(`{
+								"expression": "$A",
+								"type": "math"
+							}`),
+					},
+				},
+			},
+			expectErrContains: "self referencing node",
+		},
+		{
+			name: "missing dependency will error",
+			req: &Request{
+				Queries: []Query{
+					{
+						RefID:         "A",
+						DatasourceUID: DatasourceUID,
+						JSON: json.RawMessage(`{
+								"expression": "$B",
+								"type": "math"
+							}`),
+					},
+				},
+			},
+			expectErrContains: "find dependent",
+		},
+		{
 			name: "classic can not take input from another expression",
 			req: &Request{
 				Queries: []Query{
