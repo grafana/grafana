@@ -1,16 +1,19 @@
 package notifier
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
 
+	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/provider"
+	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -20,27 +23,26 @@ import (
 )
 
 func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := &Alertmanager{
-		Settings: &setting.Cfg{},
-		SQLStore: sqlstore.InitTestDB(t),
-	}
+	am := &Alertmanager{}
+	am.Settings = &setting.Cfg{}
+	am.SQLStore = sqlstore.InitTestDB(t)
 	require.NoError(t, am.Init())
 	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
 	require.NotNil(t, am.config)
 }
 
 func TestPutAlert(t *testing.T) {
+	am := &Alertmanager{}
 	dir, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, os.RemoveAll(dir))
 	})
 
-	am := &Alertmanager{
-		Settings: &setting.Cfg{
-			DataPath: dir,
-		},
+	am.Settings = &setting.Cfg{
+		DataPath: dir,
 	}
+
 	require.NoError(t, am.Init())
 
 	startTime := time.Now()
@@ -259,34 +261,30 @@ func TestPutAlert(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.title, func(t *testing.T) {
-			alertProvider := &mockAlertProvider{}
-			am.alerts = alertProvider
+			r := prometheus.NewRegistry()
+			am.marker = types.NewMarker(r)
+			am.alerts, err = mem.NewAlerts(context.Background(), am.marker, 15*time.Minute, gokit_log.NewNopLogger())
+			require.NoError(t, err)
 
+			alerts := []*types.Alert{}
 			err := am.PutAlerts(c.postableAlerts)
 			if c.expError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expError, err)
-				require.Equal(t, 0, len(alertProvider.alerts))
+				require.Equal(t, 0, len(alerts))
 				return
 			}
 			require.NoError(t, err)
 
+			iter := am.alerts.GetPending()
+			defer iter.Close()
+			for a := range iter.Next() {
+				alerts = append(alerts, a)
+			}
+
 			// We take the "now" time from one of the UpdatedAt.
-			now := alertProvider.alerts[0].UpdatedAt
-			require.Equal(t, c.expAlerts(now), alertProvider.alerts)
+			now := alerts[0].UpdatedAt
+			require.Equal(t, c.expAlerts(now), alerts)
 		})
 	}
-}
-
-type mockAlertProvider struct {
-	alerts []*types.Alert
-}
-
-func (a *mockAlertProvider) Subscribe() provider.AlertIterator           { return nil }
-func (a *mockAlertProvider) GetPending() provider.AlertIterator          { return nil }
-func (a *mockAlertProvider) Get(model.Fingerprint) (*types.Alert, error) { return nil, nil }
-
-func (a *mockAlertProvider) Put(alerts ...*types.Alert) error {
-	a.alerts = append(a.alerts, alerts...)
-	return nil
 }
