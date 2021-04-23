@@ -8,9 +8,9 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const NewReceiverView: FC<Props> = ({ alertManagerSourceName }) => {
+export const NewReceiverView: FC<Props> = ({ alertManagerSourceName, config }) => {
   if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return <GrafanaReceiverForm alertManagerSourceName={alertManagerSourceName} />;
+    return <GrafanaReceiverForm alertManagerSourceName={alertManagerSourceName} config={config} />;
   } else {
     return <p>@TODO cloud receiver editing not implemented yet</p>;
   }

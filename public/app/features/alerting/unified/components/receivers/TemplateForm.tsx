@@ -64,7 +64,15 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         templates,
       },
     };
-    dispatch(updateAlertManagerConfigAction({ alertManagerSourceName, newConfig, oldConfig: config }));
+    dispatch(
+      updateAlertManagerConfigAction({
+        alertManagerSourceName,
+        newConfig,
+        oldConfig: config,
+        successMessage: 'Tempalte saved.',
+        redirectPath: '/alerting/notifications',
+      })
+    );
   };
 
   const { handleSubmit, register, errors } = useForm<Values>({

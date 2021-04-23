@@ -1,8 +1,8 @@
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
 import { NotifierDTO } from 'app/types';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { Button, Field, InputControl, Select, useStyles } from '@grafana/ui';
+import { Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
 import { ChannelValues } from '../../../types/receiver-form';
 import { ChannelOptions } from './ChannelOptions';
@@ -26,9 +26,27 @@ export function ChannelSubForm<R extends ChannelValues>({
   defaults,
   errors,
 }: Props<R>): JSX.Element {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch } = useFormContext();
+  const { control, watch, register, unregister } = useFormContext();
+
+  // keep the __id field registered so it's always passed to submit
+  useEffect(() => {
+    register({ name: `${pathPrefix}__id`, value: defaults.__id });
+    return () => {
+      unregister(`${pathPrefix}__id`);
+    };
+  });
+
+  const [secureFields, setSecureFields] = useState(defaults.secureFields);
+
+  const onResetSecureField = (key: string) => {
+    if (secureFields[key]) {
+      const updatedSecureFields = { ...secureFields };
+      delete updatedSecureFields[key];
+      setSecureFields(updatedSecureFields);
+    }
+  };
 
   const typeOptions = useMemo(
     (): SelectableValue[] =>
@@ -39,15 +57,13 @@ export function ChannelSubForm<R extends ChannelValues>({
     [notifiers]
   );
 
-  const values = watch();
-
-  console.log(pathPrefix, defaults, values);
-
   const selectedType = watch(name('type')) ?? defaults.type;
 
   const notifier = notifiers.find(({ type }) => type === selectedType);
-
-  console.log('errors', errors);
+  // if there are mandatory options defined, optional options will be hidden by a collapse
+  // if there aren't mandatory options, all options will be shown without collapse
+  const mandatoryOptions = notifier?.options.filter((o) => o.required);
+  const optionalOptions = notifier?.options.filter((o) => !o.required);
 
   return (
     <div className={styles.wrapper}>
@@ -80,20 +96,20 @@ export function ChannelSubForm<R extends ChannelValues>({
       {notifier && (
         <div className={styles.innerContent}>
           <ChannelOptions<R>
-            selectedChannelOptions={notifier.options.filter((o) => o.required)}
-            secureFields={{}}
+            selectedChannelOptions={mandatoryOptions?.length ? mandatoryOptions! : optionalOptions!}
+            secureFields={secureFields}
             errors={errors}
-            onResetSecureField={() => {}}
+            onResetSecureField={onResetSecureField}
             pathPrefix={pathPrefix}
             defaults={defaults as any}
           />
-          {notifier.options.filter((o) => !o.required).length > 0 && (
+          {!!(mandatoryOptions?.length && optionalOptions?.length) && (
             <div>
               <OptionalChannelOptions
-                selectedChannelOptions={notifier.options.filter((o) => !o.required)}
+                selectedChannelOptions={optionalOptions!}
                 notifier={notifier}
-                secureFields={{}}
-                onResetSecureField={() => {}}
+                secureFields={secureFields}
+                onResetSecureField={onResetSecureField}
                 errors={errors}
                 pathPrefix={pathPrefix}
                 defaults={defaults as any}
@@ -106,20 +122,20 @@ export function ChannelSubForm<R extends ChannelValues>({
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   buttons: css`
     & > * + * {
-      margin-left: ${theme.v2.spacing(1)};
+      margin-left: ${theme.spacing(1)};
     }
   `,
   innerContent: css`
     max-width: 536px;
   `,
   wrapper: css`
-    margin: ${theme.v2.spacing(2, 0)};
-    padding: ${theme.v2.spacing(1)};
-    border: solid 1px ${theme.colors.border2};
-    border-radius: ${theme.border.radius.sm};
+    margin: ${theme.spacing(2, 0)};
+    padding: ${theme.spacing(1)};
+    border: solid 1px ${theme.colors.border.medium};
+    border-radius: ${theme.shape.borderRadius(1)};
   `,
   topRow: css`
     display: flex;

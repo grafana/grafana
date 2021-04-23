@@ -21,7 +21,7 @@ export const EditReceiverView: FC<Props> = ({ config, receiverName, alertManager
   }
 
   if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return <GrafanaReceiverForm alertManagerSourceName={alertManagerSourceName} existing={receiver} />;
+    return <GrafanaReceiverForm config={config} alertManagerSourceName={alertManagerSourceName} existing={receiver} />;
   } else {
     return <p>@TODO cloud receiver editing not implemented yet</p>;
   }
