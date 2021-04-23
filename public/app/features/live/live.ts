@@ -219,8 +219,8 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
         data = new StreamingDataFrame(msg, options.buffer);
         state = LoadingState.Streaming;
       }
-      if (channel.lastMessageWithSchema) {
-        console.log('TODO, incorporate', channel.lastMessageWithSchema);
+      if (channel.lastMessageWithSchema && !data) {
+        data = new StreamingDataFrame(channel.lastMessageWithSchema, options.buffer);
       }
 
       if (!key) {
@@ -292,6 +292,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
               if (evt.message) {
                 process(evt.message);
               }
+              return;
             }
             console.log('ignore state', evt);
           }

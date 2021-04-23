@@ -238,7 +238,6 @@ export class PanelQueryRunner {
 
   private pipeToSubject(observable: Observable<PanelData>) {
     if (this.subscription) {
-      console.log('UNSUBSCRIBE!');
       this.subscription.unsubscribe();
     }
 
