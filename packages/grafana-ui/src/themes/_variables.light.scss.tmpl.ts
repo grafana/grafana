@@ -56,7 +56,6 @@ $layer1: ${theme.colors.background.primary};
 $layer2: ${theme.colors.background.secondary};
 
 $divider: ${theme.colors.border.weak};
-
 $border0: ${theme.colors.border.weak};
 $border1: ${theme.colors.border.medium};
 
@@ -266,14 +265,14 @@ $tab-border-color: $gray-5;
 
 // Form states and alerts
 // -------------------------
-$warning-text-color: lighten($orange, 10%);
-$error-text-color: $red-shade;
-$success-text-color: lighten($green-base, 10%);
+$warning-text-color: ${theme.colors.warning.text};
+$error-text-color: ${theme.colors.error.text};
+$success-text-color: ${theme.colors.success.text};
 
-$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
+$alert-error-bg: ${theme.colors.error.main};
+$alert-success-bg: ${theme.colors.success.main};
+$alert-warning-bg: ${theme.colors.warning.main};
+$alert-info-bg: ${theme.colors.warning.main};
 
 // Tooltips and popovers
 $tooltipBackground: ${theme.colors.background.secondary};
@@ -395,4 +394,5 @@ $vertical-resize-handle-dots-hover: $gray-2;
 // Calendar
 $calendar-bg-days: $white;
 $calendar-bg-now: $gray-6;
+
 `;
