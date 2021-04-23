@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 )
 
+const timeSeries = "time_series"
+
 var (
 	azlog           = log.New("tsdb.azuremonitor")
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)

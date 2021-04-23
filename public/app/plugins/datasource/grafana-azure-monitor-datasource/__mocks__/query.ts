@@ -12,9 +12,8 @@ export default function createMockQuery(): AzureMonitorQuery {
     },
 
     azureResourceGraph: {
-      subscriptions: ['abc-123'],
-      query:
-        '//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc',
+      subscriptions: ['99999999-cccc-bbbb-aaaa-9106972f9572'],
+      query: 'Resources | summarize count()',
       resultFormat: 'time_series',
     },
 
@@ -42,7 +41,7 @@ export default function createMockQuery(): AzureMonitorQuery {
 
     queryType: AzureQueryType.AzureMonitor,
     refId: 'A',
-    subscription: 'abc-123',
+    subscription: '99999999-cccc-bbbb-aaaa-9106972f9572',
 
     format: 'dunno lol', // unsure what this value should be. It's not there at runtime, but it's in the ts interface
   };

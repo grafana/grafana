@@ -165,7 +165,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 		return queryResultError(err)
 	}
 
-	if query.ResultFormat == "time_series" {
+	if query.ResultFormat == timeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)

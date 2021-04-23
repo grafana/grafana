@@ -86,11 +86,12 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 
 		resultFormat := azureResourceGraphTarget.ResultFormat
 		if resultFormat == "" {
-			resultFormat = "time_series"
+			resultFormat = timeSeries
 		}
 
 		params := url.Values{}
 		rawQuery, err := KqlInterpolate(query, timeRange, azureResourceGraphTarget.Query, "TimeGenerated")
+
 		if err != nil {
 			return nil, err
 		}
@@ -173,7 +174,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return queryResultErrorWithExecuted(err)
 	}
 
-	if query.ResultFormat == "time_series" {
+	if query.ResultFormat == timeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
@@ -224,7 +225,7 @@ func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSource
 	*plugins.AppPluginRoute, string, error) {
 	pluginRouteName := "azureresourcegraph"
 
-	// TODO figure out how is cloud soverign supported in ARG
+	// TODO figure out how is cloud sovereign supported in ARG
 	// switch cloudName {
 	// case "chinaazuremonitor":
 	// 	pluginRouteName = "chinaloganalyticsazure"

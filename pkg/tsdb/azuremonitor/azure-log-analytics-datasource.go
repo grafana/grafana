@@ -84,7 +84,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 
 		resultFormat := azureLogAnalyticsTarget.ResultFormat
 		if resultFormat == "" {
-			resultFormat = "time_series"
+			resultFormat = timeSeries
 		}
 
 		urlComponents := map[string]string{}
@@ -184,7 +184,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		azlog.Warn("failed to add custom metadata to azure log analytics response", err)
 	}
 
-	if query.ResultFormat == "time_series" {
+	if query.ResultFormat == timeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
