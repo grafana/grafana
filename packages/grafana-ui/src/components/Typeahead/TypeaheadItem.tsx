@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
+import React from 'react';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { CompletionItem, CompletionItemKind } from '../../types/completion';
-import { ThemeContext } from '../../themes/ThemeContext';
 import { PartialHighlighter } from './PartialHighlighter';
+import { useStyles } from '../../themes/ThemeContext';
 
 interface Props {
   isSelected: boolean;
@@ -59,8 +59,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 export const TypeaheadItem: React.FC<Props> = (props: Props) => {
-  const theme = useContext(ThemeContext);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const { isSelected, item, prefix, style, onMouseEnter, onMouseLeave, onClickItem } = props;
   const className = isSelected ? cx([styles.typeaheadItem, styles.typeaheadItemSelected]) : cx([styles.typeaheadItem]);

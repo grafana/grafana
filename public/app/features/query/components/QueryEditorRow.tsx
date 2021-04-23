@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { has, cloneDeep } from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularComponent, getAngularLoader, getTemplateSrv } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
 import {
@@ -36,6 +36,8 @@ interface Props {
   dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
+  timeRange?: TimeRange;
+  onChangeTimeRange?: (timeRange: TimeRange) => void;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
@@ -301,17 +303,18 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderTitle = (props: QueryOperationRowRenderProps) => {
-    const { query, dsSettings, onChange, queries } = this.props;
-    const dataSourceName = dsSettings.meta.mixed
-      ? getTemplateSrv().replace(this.getQueryDataSourceIdentifier() ?? '')
-      : undefined;
+    const { query, dsSettings, onChange, queries, onChangeTimeRange, timeRange } = this.props;
+    const { datasource } = this.state;
     const isDisabled = query.hide;
 
     return (
       <QueryEditorRowTitle
         query={query}
         queries={queries}
-        dataSourceName={dataSourceName}
+        onTimeRangeChange={onChangeTimeRange}
+        timeRange={timeRange}
+        inMixedMode={dsSettings.meta.mixed}
+        dataSourceName={datasource!.name}
         disabled={isDisabled}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}

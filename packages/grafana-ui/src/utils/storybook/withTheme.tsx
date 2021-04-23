@@ -1,21 +1,18 @@
 import React from 'react';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { getTheme, GlobalStyles } from '../../themes/index';
-import { GrafanaThemeType } from '@grafana/data';
+import { createTheme, GrafanaThemeV2 } from '@grafana/data';
 import { RenderFunction } from '../../types';
 import { useDarkMode } from 'storybook-dark-mode';
+import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
 
-type SassThemeChangeHandler = (theme: GrafanaThemeType) => void;
-
+type SassThemeChangeHandler = (theme: GrafanaThemeV2) => void;
 const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassThemeChangeHandler }> = ({
   children,
   handleSassThemeChange,
 }) => {
-  const themeType = useDarkMode() ? GrafanaThemeType.Dark : GrafanaThemeType.Light;
+  const theme = createTheme({ colors: { mode: useDarkMode() ? 'dark' : 'light' } });
 
-  handleSassThemeChange(themeType);
-
-  const theme = getTheme(themeType);
+  handleSassThemeChange(theme);
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -25,7 +22,7 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
           padding: '20px',
           display: 'flex',
           minHeight: '80vh',
-          background: `${theme.v2.palette.background.primary}`,
+          background: `${theme.colors.background.primary}`,
         }}
       >
         <GlobalStyles />
