@@ -32,7 +32,7 @@ import {
 } from './types';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
-import { PanelContext } from '../PanelChrome';
+import { usePanelContext } from '../PanelChrome';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -59,17 +59,17 @@ export const PieChart: FC<PieChartProps> = ({
 }) => {
   const theme = useTheme();
   const [highlightedTitle, setHighlightedTitle] = useState<string>();
-  const { eventBus } = React.useContext(PanelContext);
+  const { eventBus } = usePanelContext();
 
   if (eventBus) {
     const setHighlightedSlice = (event: DataHoverEvent) => {
-      if (event.payload.source && eventBus.source === event.payload.source) {
+      if (eventBus.isOwnEvent(event)) {
         setHighlightedTitle(event.payload.dataId);
       }
     };
 
     const resetHighlightedSlice = (event: DataHoverClearEvent) => {
-      if (event.payload.source && eventBus.source === event.payload.source) {
+      if (eventBus.isOwnEvent(event)) {
         setHighlightedTitle(undefined);
       }
     };

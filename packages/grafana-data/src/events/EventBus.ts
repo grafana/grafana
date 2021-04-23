@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
+import { PayloadWithSource } from './common';
 import {
   EventBus,
   LegacyEmitter,
@@ -8,6 +9,7 @@ import {
   LegacyEventHandler,
   BusEvent,
   AppEvent,
+  BusEventWithPayload,
 } from './types';
 
 /**
@@ -123,5 +125,9 @@ export class EventBusWithSource implements EventBus {
 
   removeAllListeners(): void {
     this.eventBus.removeAllListeners();
+  }
+
+  isOwnEvent(event: BusEventWithPayload<PayloadWithSource>): boolean {
+    return event.payload.source === this.source;
   }
 }

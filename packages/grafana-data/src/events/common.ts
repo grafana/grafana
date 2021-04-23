@@ -2,7 +2,12 @@ import { DataFrame } from '../types';
 import { BusEventWithPayload } from './types';
 
 /** @alpha */
-export interface DataHoverPayload {
+export interface PayloadWithSource {
+  source?: string; // source from where the event originates
+}
+
+/** @alpha */
+export interface DataHoverPayload extends PayloadWithSource {
   raw: any; // Original mouse event (includes pageX etc)
 
   x: Record<string, any>; // { time: 5678 },
@@ -12,7 +17,6 @@ export interface DataHoverPayload {
   rowIndex?: number; // the hover row
   columnIndex?: number; // the hover column
   dataId?: string; // identifying string to correlate data between publishers and subscribers
-  source?: string; // source from where the event originates
 
   // When dragging, this will capture the original state
   down?: Omit<DataHoverPayload, 'down'>;

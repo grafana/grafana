@@ -1,11 +1,10 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { useStyles } from '../../themes/ThemeContext';
 import { styleMixins } from '../../themes';
-import { GrafanaTheme, formattedValueToString, DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
-import { PanelContext } from '..';
+import { GrafanaTheme, formattedValueToString } from '@grafana/data';
 
 export interface Props {
   key?: React.Key;
@@ -13,6 +12,8 @@ export interface Props {
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange?: SeriesColorChangeHandler;
+  onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 /**
@@ -22,43 +23,28 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
   onSeriesColorChange,
   onLabelClick,
+  onLabelMouseEnter,
+  onLabelMouseOut,
   className,
 }) => {
   const styles = useStyles(getStyles);
-  const { eventBus } = useContext(PanelContext);
 
   const onMouseEnter = useCallback(
     (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      if (eventBus) {
-        eventBus.publish({
-          type: DataHoverEvent.type,
-          payload: {
-            raw: event,
-            x: 0,
-            y: 0,
-            dataId: item.label,
-          },
-        });
+      if (onLabelMouseEnter) {
+        onLabelMouseEnter(item, event);
       }
     },
-    [eventBus, item]
+    [item, onLabelMouseEnter]
   );
 
   const onMouseOut = useCallback(
     (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-      if (eventBus) {
-        eventBus.publish({
-          type: DataHoverClearEvent.type,
-          payload: {
-            raw: event,
-            x: 0,
-            y: 0,
-            dataId: item.label,
-          },
-        });
+      if (onLabelMouseOut) {
+        onLabelMouseOut(item, event);
       }
     },
-    [eventBus, item]
+    [item, onLabelMouseOut]
   );
 
   const onClick = useCallback(

@@ -1,8 +1,18 @@
 import { EventBusWithSource } from '@grafana/data';
 import React from 'react';
 
-export interface PanelContextObject {
+interface PanelContext {
   eventBus?: EventBusWithSource;
 }
 
-export const PanelContext = React.createContext<PanelContextObject>({});
+const PanelContextRoot = React.createContext<PanelContext>({});
+
+/**
+ * @alpha
+ */
+export const PanelContextProvider = PanelContextRoot.Provider;
+
+/**
+ * @alpha
+ */
+export const usePanelContext = () => React.useContext(PanelContextRoot);
