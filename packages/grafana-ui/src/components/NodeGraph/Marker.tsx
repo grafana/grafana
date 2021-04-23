@@ -42,7 +42,8 @@ export const Marker = memo(function Marker(props: {
       <g>
         <foreignObject x={node.x - 25} y={node.y - 25} width="50" height="50">
           <div style={{ width: 50, height: 50, textAlign: 'center', display: 'flex', alignItems: 'center' }}>
-            <span>{marker.count} more nodes</span>
+            {/* we limit the count to 101 so if we have more than 100 nodes we don't have exact count */}
+            <span>{marker.count > 100 ? '>100' : marker.count} nodes</span>
           </div>
         </foreignObject>
       </g>

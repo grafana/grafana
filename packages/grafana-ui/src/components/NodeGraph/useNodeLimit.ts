@@ -187,8 +187,9 @@ function collectMarkerStats(
 ): NodesMarker[] {
   return markers.map((marker) => {
     const nodesToCount: Record<string, NodeDatum> = {};
+    let count = 0;
     let stack = [marker];
-    while (stack.length > 0) {
+    while (stack.length > 0 && count <= 101) {
       let current = stack.shift()!;
 
       // We are showing this node so not going to count it as hidden.
@@ -196,6 +197,9 @@ function collectMarkerStats(
         continue;
       }
 
+      if (!nodesToCount[current.id]) {
+        count++;
+      }
       nodesToCount[current.id] = current;
 
       const edges = edgesMap[current.id] || [];
@@ -209,7 +213,7 @@ function collectMarkerStats(
 
     return {
       node: marker,
-      count: Object.keys(nodesToCount).length,
+      count: count,
     };
   });
 }
