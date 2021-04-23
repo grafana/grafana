@@ -75,12 +75,18 @@ const (
 	ActionLDAPUsersSync  = "ldap.user:sync"
 	ActionLDAPStatusRead = "ldap.status:read"
 
+	// Provisioning actions
+	ActionProvisioningReload = "provisioning:reload"
+
 	// Global Scopes
 	ScopeUsersAll  = "users:*"
 	ScopeUsersSelf = "users:self"
 
 	ScopeOrgAllUsersAll     = "org:*/users:*"
 	ScopeOrgCurrentUsersAll = "org:current/users:*"
+
+	// Services Scopes
+	ScopeServiceAccessControl = "service:access-control"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
