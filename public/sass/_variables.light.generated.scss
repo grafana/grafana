@@ -58,7 +58,6 @@ $layer1: #fff;
 $layer2: #F4F5F5;
 
 $divider: rgba(36, 41, 46, 0.12);
-
 $border0: rgba(36, 41, 46, 0.12);
 $border1: rgba(36, 41, 46, 0.30);
 
@@ -203,10 +202,10 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: $white;
-$input-bg-disabled: $gray-5;
+$input-bg: #fff;
+$input-bg-disabled: rgba(36, 41, 46, 0.07);
 
-$input-color: #c7d0d9;
+$input-color: rgba(36, 41, 46, 1);
 $input-border-color: rgba(36, 41, 46, 0.30);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
@@ -268,14 +267,14 @@ $tab-border-color: $gray-5;
 
 // Form states and alerts
 // -------------------------
-$warning-text-color: lighten($orange, 10%);
-$error-text-color: $red-shade;
-$success-text-color: lighten($green-base, 10%);
+$warning-text-color: #BD4B00;
+$error-text-color: #CF0E5B;
+$success-text-color: #1A7F4B;
 
-$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
+$alert-error-bg: #E0226E;
+$alert-success-bg: #1A7F4B;
+$alert-warning-bg: #E56F00;
+$alert-info-bg: #E56F00;
 
 // Tooltips and popovers
 $tooltipBackground: #F4F5F5;
@@ -397,3 +396,4 @@ $vertical-resize-handle-dots-hover: $gray-2;
 // Calendar
 $calendar-bg-days: $white;
 $calendar-bg-now: $gray-6;
+
