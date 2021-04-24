@@ -154,28 +154,32 @@ var usersAdminEditRole = RoleDTO{
 	}),
 }
 
-var accessControlRolesReadRole = RoleDTO{
-	Name:    accessControlAdminRolesRead,
+var permissionsAdminReadRole = RoleDTO{
+	Name:    permissionsAdminRead,
 	Version: 1,
 	Permissions: []Permission{
 		{
-			Action: ActionAccessControlRolesRead,
+			Action: ActionAccessControlPermissionsRead,
 			Scope:  ScopeOrgAllRolesAll,
 		},
 		{
-			Action: ActionAccessControlRolesList,
+			Action: ActionAccessControlPermissionsList,
 			Scope:  ScopeOrgAllRolesAll,
 		},
 	},
 }
 
-var accessControlRolesEditRole = RoleDTO{
-	Name:    accessControlAdminRolesEdit,
+var permissionsAdminEditRole = RoleDTO{
+	Name:    permissionsAdminEdit,
 	Version: 1,
-	Permissions: concat(accessControlRolesReadRole.Permissions, []Permission{
+	Permissions: concat(permissionsAdminReadRole.Permissions, []Permission{
 		{
-			Action: ActionAccessControlRolesCreate,
-			Scope:  ScopeOrgAllRolesAll,
+			Action: ActionAccessControlPermissionsWrite,
+			Scope:  ScopeGlobal,
+		},
+		{
+			Action: ActionAccessControlPermissionsDelete,
+			Scope:  ScopeGlobal,
 		},
 	}),
 }
@@ -187,8 +191,8 @@ var accessControlRolesEditRole = RoleDTO{
 // resource. PredefinedRoleGrants lists which organization roles are
 // assigned which predefined roles in this list.
 var PredefinedRoles = map[string]RoleDTO{
-	accessControlAdminRolesRead: accessControlRolesReadRole,
-	accessControlAdminRolesEdit: accessControlRolesEditRole,
+	permissionsAdminRead: permissionsAdminReadRole,
+	permissionsAdminEdit: permissionsAdminEditRole,
 
 	usersAdminRead: usersAdminReadRole,
 	usersAdminEdit: usersAdminEditRole,
@@ -216,16 +220,16 @@ const (
 	ldapAdminEdit = "grafana:roles:ldap:admin:edit"
 	ldapAdminRead = "grafana:roles:ldap:admin:read"
 
-	accessControlAdminRolesEdit = "grafana:roles:accesscontrol:admin:edit"
-	accessControlAdminRolesRead = "grafana:roles:accesscontrol:admin:read"
+	permissionsAdminEdit = "grafana:roles:permissions:admin:edit"
+	permissionsAdminRead = "grafana:roles:permissions:admin:read"
 )
 
 // PredefinedRoleGrants specifies which organization roles are assigned
 // to which set of PredefinedRoles by default. Alphabetically sorted.
 var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
-		accessControlAdminRolesEdit,
-		accessControlAdminRolesRead,
+		permissionsAdminEdit,
+		permissionsAdminRead,
 		ldapAdminEdit,
 		ldapAdminRead,
 		orgsAdminEdit,
