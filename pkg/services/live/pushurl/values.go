@@ -5,9 +5,10 @@ import (
 	"strings"
 )
 
+// StableSchemaFromValues assumes stable
 func StableSchemaFromValues(values url.Values) bool {
 	key := "gf_live_stable_schema"
-	return strings.ToLower(values.Get(key)) == "true" || values.Get(key) == "1"
+	return !(strings.ToLower(values.Get(key)) == "false" || values.Get(key) == "0")
 }
 
 func FrameFormatFromValues(values url.Values) string {
