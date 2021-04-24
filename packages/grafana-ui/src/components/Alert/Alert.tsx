@@ -55,7 +55,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         </div>
         <div className={styles.body}>
           <div className={styles.title}>{title}</div>
-          {children && <div>{children}</div>}
+          {children && <div className={styles.content}>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
@@ -114,7 +114,6 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
     title: css`
       font-weight: ${theme.typography.fontWeightMedium};
       color: ${theme.colors.text.primary};
-      margin-bottom: ${theme.spacing(0.5)};
     `,
     body: css`
       color: ${theme.colors.text.secondary};
@@ -125,6 +124,10 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
       justify-content: center;
       overflow-wrap: break-word;
       word-break: break-word;
+    `,
+    content: css`
+      color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};
