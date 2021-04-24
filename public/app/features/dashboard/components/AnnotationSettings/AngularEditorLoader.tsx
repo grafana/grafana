@@ -8,9 +8,18 @@ export interface Props {
   onChange: (annotation: AnnotationQuery) => void;
 }
 
+interface ScopeProps {
+  ctrl: {
+    currentDatasource: DataSourceApi;
+    currentAnnotation: AnnotationQuery;
+    ignoreNextWatcherFiring: boolean;
+  };
+}
+
 export class AngularEditorLoader extends React.PureComponent<Props> {
   ref: HTMLDivElement | null = null;
   angularComponent?: AngularComponent;
+  scopeProps?: ScopeProps;
 
   componentWillUnmount() {
     if (this.angularComponent) {
@@ -29,14 +38,17 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
       this.loadAngular();
     }
 
-    if (this.angularComponent && prevProps.annotation !== this.props.annotation) {
-      this.angularComponent.getScope().ctrl.currentAnnotation = this.props.annotation;
+    if (this.scopeProps && this.scopeProps.ctrl.currentAnnotation !== this.props.annotation) {
+      this.scopeProps.ctrl.ignoreNextWatcherFiring = true;
+      this.scopeProps.ctrl.currentAnnotation = this.props.annotation;
+      this.angularComponent?.digest();
     }
   }
 
   loadAngular() {
     if (this.angularComponent) {
       this.angularComponent.destroy();
+      this.scopeProps = undefined;
     }
 
     const loader = getAngularLoader();
@@ -45,16 +57,23 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
       ctrl: {
         currentDatasource: this.props.datasource,
         currentAnnotation: this.props.annotation,
+        ignoreNextWatcherFiring: false,
       },
     };
 
     this.angularComponent = loader.load(this.ref, scopeProps, template);
     this.angularComponent.digest();
     this.angularComponent.getScope().$watch(() => {
-      this.props.onChange({
-        ...scopeProps.ctrl.currentAnnotation,
-      });
+      // To avoid recursive loop when the annotation is updated from outside angular in componentDidUpdate
+      if (scopeProps.ctrl.ignoreNextWatcherFiring) {
+        scopeProps.ctrl.ignoreNextWatcherFiring = false;
+        return;
+      }
+
+      this.props.onChange(scopeProps.ctrl.currentAnnotation);
     });
+
+    this.scopeProps = scopeProps;
   }
 
   render() {

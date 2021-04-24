@@ -319,6 +319,8 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.macaron
 
+	m.Use(middleware.RequestTracing())
+
 	m.Use(middleware.Logger(hs.Cfg))
 
 	if hs.Cfg.EnableGzip {
@@ -326,12 +328,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-
-	for _, route := range hs.PluginManager.StaticRoutes() {
-		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(m, route.Directory, "", pluginRoute)
-	}
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")

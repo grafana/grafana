@@ -2,7 +2,7 @@ import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Button } from '../../Button/Button';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { Modal } from '../../Modal/Modal';
 import { stylesFactory, useTheme } from '../../../themes';
 import { DataLinksListItem } from './DataLinksListItem';

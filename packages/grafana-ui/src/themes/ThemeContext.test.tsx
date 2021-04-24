@@ -2,8 +2,8 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { renderHook } from '@testing-library/react-hooks';
 import { css } from '@emotion/css';
-import { mount } from 'enzyme';
-import { memoizedStyleCreators, mockThemeContext, useStyles } from './ThemeContext';
+import { mockThemeContext, useStyles } from './ThemeContext';
+import { render } from '@testing-library/react';
 
 describe('useStyles', () => {
   it('memoizes the passed in function correctly', () => {
@@ -33,23 +33,6 @@ describe('useStyles', () => {
     restoreThemeContext();
   });
 
-  it('cleans up memoized functions whenever a new one comes along or the component unmounts', () => {
-    const styleCreators: Function[] = [];
-    const { rerender, unmount } = renderHook(() => {
-      const styleCreator = () => ({});
-      styleCreators.push(styleCreator);
-      return useStyles(styleCreator);
-    });
-
-    expect(typeof memoizedStyleCreators.get(styleCreators[0])).toBe('function');
-    rerender();
-    expect(memoizedStyleCreators.get(styleCreators[0])).toBeUndefined();
-    expect(typeof memoizedStyleCreators.get(styleCreators[1])).toBe('function');
-    unmount();
-    expect(memoizedStyleCreators.get(styleCreators[0])).toBeUndefined();
-    expect(memoizedStyleCreators.get(styleCreators[1])).toBeUndefined();
-  });
-
   it('passes in theme and returns style object', (done) => {
     const Dummy: React.FC = function () {
       const styles = useStyles((theme) => {
@@ -68,6 +51,6 @@ describe('useStyles', () => {
       return <div>dummy</div>;
     };
 
-    mount(<Dummy />);
+    render(<Dummy />);
   });
 });

@@ -7,12 +7,12 @@ import (
 
 	"github.com/go-macaron/binding"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -50,7 +50,7 @@ type API struct {
 	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
-	StateTracker    *state.StateTracker
+	StateManager    *state.Manager
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -69,7 +69,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusSrv{log: logger, stateTracker: api.StateTracker, store: api.RuleStore},
+		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
 	))
 	// Register endpoints for proxing to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(

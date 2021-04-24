@@ -8,13 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/runstream"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -25,9 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -134,7 +133,8 @@ func (g *GrafanaLive) Init() error {
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
-		Publisher: g.Publish,
+		Publisher:   g.Publish,
+		ClientCount: g.ClientCount,
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
@@ -273,6 +273,7 @@ func (g *GrafanaLive) Init() error {
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = setContextSignedUser(newCtx, user)
+		newCtx = setContextValues(newCtx, ctx.Req.URL.Query())
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID.
@@ -435,9 +436,18 @@ func (g *GrafanaLive) Publish(channel string, data []byte) error {
 	return err
 }
 
+// ClientCount returns the number of clients
+func (g *GrafanaLive) ClientCount(channel string) (int, error) {
+	p, err := g.node.Presence(channel)
+	if err != nil {
+		return 0, err
+	}
+	return len(p.Presence), nil
+}
+
 // IsEnabled returns true if the Grafana Live feature is enabled.
 func (g *GrafanaLive) IsEnabled() bool {
-	return g.Cfg.IsLiveEnabled()
+	return g != nil && g.Cfg.IsLiveEnabled()
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
@@ -446,7 +456,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
 	}
 
-	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "cmd", cmd)
+	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)
 
 	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
 	if err != nil {
@@ -502,4 +512,17 @@ func (g *GrafanaLive) HandleListHTTP(_ *models.ReqContext) response.Response {
 
 	info["channels"] = channels
 	return response.JSONStreaming(200, info)
+}
+
+// HandleInfoHTTP special http response for
+func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
+	path := ctx.Params("*")
+	if path == "grafana/dashboards/gitops" {
+		return response.JSON(200, util.DynMap{
+			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(),
+		})
+	}
+	return response.JSONStreaming(404, util.DynMap{
+		"message": "Info is not supported for this channel",
+	})
 }

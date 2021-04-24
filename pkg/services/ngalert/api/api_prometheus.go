@@ -5,22 +5,23 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
 type PrometheusSrv struct {
-	log          log.Logger
-	stateTracker *state.StateTracker
-	store        store.RuleStore
+	log     log.Logger
+	manager *state.Manager
+	store   store.RuleStore
 }
 
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
@@ -32,7 +33,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			Alerts: []*apimodels.Alert{},
 		},
 	}
-	for _, alertState := range srv.stateTracker.GetAll() {
+	for _, alertState := range srv.manager.GetAll() {
 		startsAt := alertState.StartsAt
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
@@ -50,7 +51,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
 		},
-		Data: apimodels.RuleDiscovery{},
+		Data: apimodels.RuleDiscovery{
+			RuleGroups: []*apimodels.RuleGroup{},
+		},
 	}
 
 	ruleGroupQuery := ngmodels.ListOrgRuleGroupsQuery{
@@ -84,18 +87,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
-		for _, rule := range alertRuleQuery.Result {
-			instanceQuery := ngmodels.ListAlertInstancesQuery{
-				DefinitionOrgID: c.SignedInUser.OrgId,
-				DefinitionUID:   rule.UID,
-			}
-			if err := srv.store.ListAlertInstances(&instanceQuery); err != nil {
-				ruleResponse.DiscoveryBase.Status = "error"
-				ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting alerts for rule %s: %s", rule.UID, err.Error())
-				ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
-				return response.JSON(http.StatusInternalServerError, ruleResponse)
-			}
 
+		stateMap := srv.manager.GetStatesByRuleUID()
+		for _, rule := range alertRuleQuery.Result {
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
@@ -106,36 +100,46 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 			newRule := apimodels.Rule{
 				Name:           rule.Title,
-				Labels:         nil,  // TODO: NG AlertRule does not have labels but does have annotations
-				Health:         "ok", // TODO: update this in the future when error and noData states are being evaluated and set
+				Labels:         rule.Labels,
+				Health:         "ok",
 				Type:           apiv1.RuleTypeAlerting,
-				LastEvaluation: time.Time{}, // TODO: set this to be rule evaluation time once it is being set
-				EvaluationTime: 0,           // TODO: set this once we are saving it or adding it to evaluation results
+				LastEvaluation: time.Time{},
 			}
-			for _, instance := range instanceQuery.Result {
-				activeAt := instance.CurrentStateSince
+
+			for _, alertState := range stateMap[rule.UID] {
+				activeAt := alertState.StartsAt
 				alert := &apimodels.Alert{
-					Labels:      map[string]string(instance.Labels),
-					Annotations: nil, // TODO: set these once they are added to evaluation results
-					State:       translateInstanceState(instance.CurrentState),
+					Labels:      map[string]string(alertState.Labels),
+					Annotations: alertState.Annotations,
+					State:       alertState.State.String(),
 					ActiveAt:    &activeAt,
 					Value:       "", // TODO: set this once it is added to the evaluation results
 				}
-				if instance.LastEvalTime.After(newRule.LastEvaluation) {
-					newRule.LastEvaluation = instance.LastEvalTime
-					newGroup.LastEvaluation = instance.LastEvalTime
+
+				if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
+					newRule.LastEvaluation = alertState.LastEvaluationTime
+					newGroup.LastEvaluation = alertState.LastEvaluationTime
 				}
-				switch alert.State {
-				case "pending":
+
+				alertingRule.Duration = alertState.EvaluationDuration.Seconds()
+				newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
+
+				switch alertState.State {
+				case eval.Normal:
+				case eval.Pending:
 					if alertingRule.State == "inactive" {
 						alertingRule.State = "pending"
 					}
-				case "firing":
+				case eval.Alerting:
 					alertingRule.State = "firing"
+				case eval.Error:
+					newRule.Health = "error"
+				case eval.NoData:
+					newRule.Health = "nodata"
 				}
-
 				alertingRule.Alerts = append(alertingRule.Alerts, alert)
 			}
+
 			alertingRule.Rule = newRule
 			newGroup.Rules = append(newGroup.Rules, alertingRule)
 			newGroup.Interval = float64(rule.IntervalSeconds)
@@ -143,17 +147,4 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
 	}
 	return response.JSON(http.StatusOK, ruleResponse)
-}
-
-func translateInstanceState(state ngmodels.InstanceStateType) string {
-	switch {
-	case state == ngmodels.InstanceStateFiring:
-		return "firing"
-	case state == ngmodels.InstanceStateNormal:
-		return "inactive"
-	case state == ngmodels.InstanceStatePending:
-		return "pending"
-	default:
-		return "inactive"
-	}
 }
