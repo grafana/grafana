@@ -1,6 +1,6 @@
 import { createTheme, GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
 import hoistNonReactStatics from 'hoist-non-react-statics';
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { Themeable } from '../types/theme';
 import { stylesFactory } from './stylesFactory';
 
@@ -86,12 +86,6 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
     memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
   }
 
-  useEffect(() => {
-    return () => {
-      memoizedStyleCreators.delete(getStyles);
-    };
-  }, [getStyles]);
-
   return memoizedStyleCreator(theme);
 }
 
@@ -110,12 +104,6 @@ export function useStyles2<T>(getStyles: (theme: GrafanaThemeV2) => T) {
     memoizedStyleCreator = stylesFactory(getStyles);
     memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
   }
-
-  useEffect(() => {
-    return () => {
-      memoizedStyleCreators.delete(getStyles);
-    };
-  }, [getStyles]);
 
   return memoizedStyleCreator(theme);
 }
