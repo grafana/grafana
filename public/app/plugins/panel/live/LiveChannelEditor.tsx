@@ -51,18 +51,11 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
     const srv = getGrafanaLiveCentrifugeSrv();
     const namespaces = await srv.scopes[scope].listNamespaces();
     const support = namespace ? await srv.scopes[scope].getChannelSupport(namespace) : undefined;
-    const paths = support ? await support.getSupportedPaths() : undefined;
 
     this.setState({
       namespaces,
       support,
-      paths: paths
-        ? paths.map((p) => ({
-            label: p.path,
-            value: p.path,
-            description: p.description,
-          }))
-        : [],
+      paths: [],
     });
   }
 
