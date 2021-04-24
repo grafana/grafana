@@ -171,9 +171,9 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
     }
 
     // clean up angular component (scope / ctrl state)
-    const angularComponent = store.dashboard.panels[panel.id].angularComponent;
-    if (angularComponent) {
-      angularComponent.destroy();
+    const panelState = store.dashboard.panels[panel.id];
+    if (panelState?.angularComponent) {
+      panelState?.angularComponent.destroy();
       dispatch(setPanelAngularComponent({ panelId: panel.id, angularComponent: null }));
     }
 

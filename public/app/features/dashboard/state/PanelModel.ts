@@ -114,6 +114,10 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  fieldConfig: {
+    defaults: {},
+    overrides: [],
+  },
   datasource: null,
   title: '',
 };
