@@ -33,14 +33,14 @@ type evalAppliedInfo struct {
 func TestWarmStateCache(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
 
-	expectedEntries := []state.AlertState{
+	expectedEntries := []*state.State{
 		{
 			AlertRuleUID: "test_uid",
 			OrgID:        123,
 			CacheId:      "test_uid map[test1:testValue1]",
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
-			Results: []state.StateEvaluation{
+			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
 			},
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
@@ -52,7 +52,7 @@ func TestWarmStateCache(t *testing.T) {
 			CacheId:      "test_uid map[test2:testValue2]",
 			Labels:       data.Labels{"test2": "testValue2"},
 			State:        eval.Alerting,
-			Results: []state.StateEvaluation{
+			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
 			},
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
@@ -94,12 +94,13 @@ func TestWarmStateCache(t *testing.T) {
 		Store:        dbstore,
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
-	st := state.NewStateTracker(schedCfg.Logger)
+	st := state.NewManager(schedCfg.Logger)
 	sched.WarmStateCache(st)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry := st.Get(entry.CacheId)
+			cacheEntry, err := st.Get(entry.CacheId)
+			require.NoError(t, err)
 			assert.True(t, entry.Equals(cacheEntry))
 		}
 	})
@@ -139,7 +140,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	ctx := context.Background()
 
-	st := state.NewStateTracker(schedCfg.Logger)
+	st := state.NewManager(schedCfg.Logger)
 	go func() {
 		err := sched.Ticker(ctx, st)
 		require.NoError(t, err)

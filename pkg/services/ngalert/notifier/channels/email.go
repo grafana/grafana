@@ -26,12 +26,11 @@ type EmailNotifier struct {
 	SingleEmail bool
 	log         log.Logger
 	externalUrl *url.URL
-	appURL      string
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL, appURL string) (*EmailNotifier, error) {
+func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*EmailNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -50,7 +49,6 @@ func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL, app
 		NotifierBase: old_notifiers.NewNotifierBase(model),
 		Addresses:    addresses,
 		SingleEmail:  singleEmail,
-		appURL:       appURL,
 		log:          log.New("alerting.notifier.email"),
 		externalUrl:  externalUrl,
 	}, nil
@@ -74,8 +72,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"CommonLabels":      data.CommonLabels,
 				"CommonAnnotations": data.CommonAnnotations,
 				"ExternalURL":       data.ExternalURL,
-				"RuleUrl":           path.Join(en.appURL, "/alerting/list"),
-				"AlertPageUrl":      path.Join(en.appURL, "/alerting/list?alertState=firing&view=state"),
+				"RuleUrl":           path.Join(en.externalUrl.String(), "/alerting/list"),
+				"AlertPageUrl":      path.Join(en.externalUrl.String(), "/alerting/list?alertState=firing&view=state"),
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,

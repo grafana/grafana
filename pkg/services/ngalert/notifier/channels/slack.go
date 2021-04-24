@@ -31,9 +31,8 @@ import (
 // alert notification to Slack.
 type SlackNotifier struct {
 	old_notifiers.NotifierBase
-	log         log.Logger
-	tmpl        *template.Template
-	externalUrl *url.URL
+	log  log.Logger
+	tmpl *template.Template
 
 	URL            *url.URL
 	Username       string
@@ -54,7 +53,7 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*SlackNotifier, error) {
+func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*SlackNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -127,7 +126,6 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template, ext
 		Fallback:       model.Settings.Get("fallback").MustString(`{{ template "slack.default.title" . }}`),
 		log:            log.New("alerting.notifier.slack"),
 		tmpl:           t,
-		externalUrl:    externalUrl,
 	}, nil
 }
 
@@ -242,7 +240,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 }
 
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: sn.externalUrl}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewNopLogger())
 	alerts := types.Alerts(as...)
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
