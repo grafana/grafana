@@ -239,6 +239,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
+	if hs.Live.IsEnabled() {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
+		if err != nil {
+			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
+		}
+	}
+
 	return response.JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
@@ -292,6 +299,30 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	dashSvc := dashboards.NewService(hs.SQLStore)
 	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
+
+	// Tell everyone listening that the dashboard changed
+	if hs.Live.IsEnabled() {
+		if dashboard == nil {
+			dashboard = dash // the original request
+		}
+
+		// This will broadcast all save requets only if a `gitops` observer exists.
+		// gitops is useful when trying to save dashboards in an environment where the user can not save
+		channel := hs.Live.GrafanaScope.Dashboards
+		liveerr := channel.DashboardSaved(c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
+
+		// When an error exists, but the value broadcast to a gitops listener return 202
+		if liveerr == nil && err != nil && channel.HasGitOpsObserver() {
+			return response.JSON(202, util.DynMap{
+				"status":  "pending",
+				"message": "changes were broadcast to the gitops listener",
+			})
+		}
+
+		if liveerr != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}
@@ -301,17 +332,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
-		}
-	}
-
-	// Tell everyone listening that the dashboard changed
-	if hs.Live.IsEnabled() {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
-			dashboard.Uid,
-			c.UserId,
-		)
-		if err != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
 		}
 	}
 
