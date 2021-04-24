@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
-import { Button, Field, FieldArray, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { NotifierDTO } from 'app/types';
-import { merge } from 'lodash';
 import React from 'react';
 import { useForm, FormContext, NestDataObject, FieldError } from 'react-hook-form';
+import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
@@ -14,11 +14,11 @@ interface Props<R extends ChannelValues> {
   defaultItem: R;
   alertManagerSourceName: string;
   onSubmit: (values: ReceiverFormValues<R>) => void;
-  existing?: ReceiverFormValues<R>;
+  initialValues?: ReceiverFormValues<R>;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
-  existing,
+  initialValues,
   defaultItem,
   notifiers,
   alertManagerSourceName,
@@ -26,54 +26,51 @@ export function ReceiverForm<R extends ChannelValues>({
 }: Props<ChannelValues>): JSX.Element {
   const styles = useStyles2(getStyles);
 
+  const defaultValues = initialValues || {
+    name: '',
+    items: [
+      {
+        ...defaultItem,
+        __id: String(Math.random()),
+      } as any,
+    ],
+  };
+
   const formAPI = useForm<ReceiverFormValues<R>>({
-    defaultValues: existing || {
-      name: '',
-      items: [defaultItem as any],
-    },
+    defaultValues,
   });
 
-  const { handleSubmit, register, errors, control, getValues } = formAPI;
+  const { handleSubmit, register, errors, getValues } = formAPI;
+
+  const { items, append, remove } = useControlledFieldArray<R>('items', formAPI);
 
   return (
     <FormContext {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <h4 className={styles.heading}>{existing ? 'Update contact point' : 'Create contact point'}</h4>
+        <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
           <Input width={39} name="name" ref={register({ required: 'Name is required' })} />
         </Field>
-        <FieldArray name="items" control={control}>
-          {({ fields, append, remove }) => {
-            return (
-              <>
-                {fields.map((field, index) => {
-                  console.log('defaults', field);
-                  return (
-                    <ChannelSubForm<R>
-                      key={field.id}
-                      onDuplicate={() => {
-                        const currentValues = getValues({ nest: true }).items[index];
-                        append(merge({}, field, currentValues, { __id: String(Math.random()) }));
-                      }}
-                      onDelete={() => remove(index)}
-                      pathPrefix={`items.${index}.`}
-                      notifiers={notifiers}
-                      defaults={field as R}
-                      errors={errors?.items?.[index] as NestDataObject<R, FieldError>}
-                    />
-                  );
-                })}
-                <Button
-                  type="button"
-                  icon="plus"
-                  onClick={() => append({ ...defaultItem, __id: String(Math.random()) })}
-                >
-                  New contact point type
-                </Button>
-              </>
-            );
-          }}
-        </FieldArray>
+        {items.map((item, index) => {
+          const initialItem = initialValues?.items.find(({ __id }) => __id === item.__id);
+          return (
+            <ChannelSubForm<R>
+              key={item.__id}
+              onDuplicate={() => {
+                const currentValues = getValues({ nest: true }).items[index];
+                append({ ...currentValues, __id: String(Math.random()) });
+              }}
+              onDelete={() => remove(index)}
+              pathPrefix={`items.${index}.`}
+              notifiers={notifiers}
+              secureFields={initialItem?.secureFields}
+              errors={errors?.items?.[index] as NestDataObject<R, FieldError>}
+            />
+          );
+        })}
+        <Button type="button" icon="plus" onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}>
+          New contact point type
+        </Button>
         <div className={styles.buttons}>
           <Button type="submit">Save contact point</Button>
           <LinkButton variant="secondary" href={makeAMLink('/alerting/notifications', alertManagerSourceName)}>

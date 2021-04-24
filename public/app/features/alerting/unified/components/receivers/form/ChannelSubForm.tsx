@@ -12,8 +12,8 @@ interface Props<R> {
   pathPrefix: string;
   notifiers: NotifierDTO[];
   onDuplicate: () => void;
-  defaults: R;
 
+  secureFields?: Record<string, boolean>;
   errors?: NestDataObject<R, FieldError>;
   onDelete?: () => void;
 }
@@ -23,25 +23,26 @@ export function ChannelSubForm<R extends ChannelValues>({
   onDuplicate,
   onDelete,
   notifiers,
-  defaults,
   errors,
+  secureFields,
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
   const { control, watch, register, unregister } = useFormContext();
+  const selectedType = watch(name('type'));
 
   // keep the __id field registered so it's always passed to submit
   useEffect(() => {
-    register({ name: `${pathPrefix}__id`, value: defaults.__id });
+    register({ name: `${pathPrefix}__id` });
     return () => {
       unregister(`${pathPrefix}__id`);
     };
   });
 
-  const [secureFields, setSecureFields] = useState(defaults.secureFields);
+  const [_secureFields, setSecureFields] = useState(secureFields ?? {});
 
   const onResetSecureField = (key: string) => {
-    if (secureFields[key]) {
+    if (_secureFields[key]) {
       const updatedSecureFields = { ...secureFields };
       delete updatedSecureFields[key];
       setSecureFields(updatedSecureFields);
@@ -56,8 +57,6 @@ export function ChannelSubForm<R extends ChannelValues>({
       })),
     [notifiers]
   );
-
-  const selectedType = watch(name('type')) ?? defaults.type;
 
   const notifier = notifiers.find(({ type }) => type === selectedType);
   // if there are mandatory options defined, optional options will be hidden by a collapse
@@ -76,7 +75,6 @@ export function ChannelSubForm<R extends ChannelValues>({
               width={37}
               options={typeOptions}
               control={control}
-              defaultValue={defaults.type}
               rules={{ required: true }}
               onChange={(values) => values[0]?.value}
             />
@@ -97,22 +95,20 @@ export function ChannelSubForm<R extends ChannelValues>({
         <div className={styles.innerContent}>
           <ChannelOptions<R>
             selectedChannelOptions={mandatoryOptions?.length ? mandatoryOptions! : optionalOptions!}
-            secureFields={secureFields}
+            secureFields={_secureFields}
             errors={errors}
             onResetSecureField={onResetSecureField}
             pathPrefix={pathPrefix}
-            defaults={defaults as any}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
             <div>
               <OptionalChannelOptions
                 selectedChannelOptions={optionalOptions!}
                 notifier={notifier}
-                secureFields={secureFields}
+                secureFields={_secureFields}
                 onResetSecureField={onResetSecureField}
                 errors={errors}
                 pathPrefix={pathPrefix}
-                defaults={defaults as any}
               />
             </div>
           )}

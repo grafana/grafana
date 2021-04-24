@@ -12,14 +12,12 @@ export interface Props<R extends ChannelValues> {
   onResetSecureField: (key: string) => void;
   errors?: NestDataObject<R, FieldError>;
   pathPrefix?: string;
-  defaults?: R;
 }
 
 export function ChannelOptions<R extends ChannelValues>({
   selectedChannelOptions,
   onResetSecureField,
   secureFields,
-  defaults,
   errors,
   pathPrefix = '',
 }: Props<R>): JSX.Element {
@@ -34,10 +32,6 @@ export function ChannelOptions<R extends ChannelValues>({
         const selectedOptionValue =
           currentFormValues[`${pathPrefix}settings.${option.showWhen.field}`] &&
           currentFormValues[`${pathPrefix}settings.${option.showWhen.field}`];
-
-        const defaultValue = option.secure
-          ? defaults?.secureSettings?.[option.propertyName]
-          : defaults?.settings?.[option.propertyName];
 
         if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
           return null;
@@ -88,7 +82,7 @@ export function ChannelOptions<R extends ChannelValues>({
                 }
               />
             ) : (
-              <OptionElement defaultValue={defaultValue} pathPrefix={pathPrefix} option={option} />
+              <OptionElement pathPrefix={pathPrefix} option={option} />
             )}
           </Field>
         );

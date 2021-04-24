@@ -7,10 +7,9 @@ interface Props {
   option: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix?: string;
-  defaultValue?: string | number | string[];
 }
 
-export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '', defaultValue }) => {
+export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
   const { control, register } = useFormContext();
   const modelValue = option.secure
     ? `${pathPrefix}secureSettings.${option.propertyName}`
@@ -27,7 +26,6 @@ export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '', def
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
           placeholder={option.placeholder}
-          defaultValue={defaultValue}
         />
       );
 
@@ -39,7 +37,6 @@ export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '', def
           control={control}
           name={`${modelValue}`}
           invalid={invalid}
-          defaultValue={defaultValue}
           onChange={(values) => values[0].value}
         />
       );
@@ -49,7 +46,6 @@ export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '', def
         <TextArea
           invalid={invalid}
           name={`${modelValue}`}
-          defaultValue={defaultValue}
           ref={register({
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),

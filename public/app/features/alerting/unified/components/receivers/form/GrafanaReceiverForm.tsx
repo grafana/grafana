@@ -49,7 +49,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
       return [undefined, {}];
     }
     const id2original: Record<string, GrafanaManagedReceiverConfig> = {};
-    let idCounter = 1;
+    let idCounter = 1; // @TODO use uid once backend is fixed to return it
     const values = {
       name: existing.name,
       items:
@@ -63,6 +63,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
     return [values, id2original];
   }, [existing, grafanaNotifiers.result]);
 
+  // @TODO refactor a lot of this messy code into smaller well named util functions
   const onSubmit = (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver: Receiver = {
       name: values.name,
@@ -114,7 +115,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
     return (
       <ReceiverForm<GrafanaChannelValues>
         onSubmit={onSubmit}
-        existing={existingValue}
+        initialValues={existingValue}
         notifiers={grafanaNotifiers.result}
         alertManagerSourceName={alertManagerSourceName}
         defaultItem={defaultChannelValues}
