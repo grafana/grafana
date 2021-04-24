@@ -15,7 +15,7 @@ import config from 'app/core/config';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
-import { DEPRECATED_PANELS, LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
@@ -189,5 +189,20 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
 }
 
 export function isDeprecatedPanel(panelType: string) {
-  return !!DEPRECATED_PANELS[panelType];
+  return !!deprecatedPanels[panelType];
 }
+
+export const deprecatedPanels: Record<string, (panel: PanelModel) => string> = {
+  singlestat: (panel: PanelModel) => {
+    // If 'grafana-singlestat-panel' exists, move to that
+    if (config.panels['grafana-singlestat-panel']) {
+      return 'grafana-singlestat-panel';
+    }
+
+    // Otheriwse use gauge or stat panel
+    if ((panel as any).gauge && (panel as any).gauge.show) {
+      return 'gauge';
+    }
+    return 'stat';
+  },
+};
