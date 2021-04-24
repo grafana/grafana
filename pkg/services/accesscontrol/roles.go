@@ -166,6 +166,18 @@ var permissionsAdminReadRole = RoleDTO{
 			Action: ActionAccessControlPermissionsList,
 			Scope:  ScopeOrgAllRolesAll,
 		},
+		{
+			Action: ActionAccessControlBuiltInList,
+			Scope:  ScopeOrgAllRolesAll,
+		},
+		{
+			Action: ActionAccessControlTeamPermissionsList,
+			Scope:  ScopeOrgAllTeamsAllRolesAll,
+		},
+		{
+			Action: ActionAccessControlUserPermissionsList,
+			Scope:  ScopeOrgAllUsersAllRolesAll,
+		},
 	},
 }
 
@@ -179,6 +191,30 @@ var permissionsAdminEditRole = RoleDTO{
 		},
 		{
 			Action: ActionAccessControlPermissionsDelete,
+			Scope:  ScopeGlobal,
+		},
+		{
+			Action: ActionAccessControlBuiltInWrite,
+			Scope:  ScopeGlobal,
+		},
+		{
+			Action: ActionAccessControlBuiltInDelete,
+			Scope:  ScopeGlobal,
+		},
+		{
+			Action: ActionAccessControlTeamPermissionsAdd,
+			Scope:  ScopeGlobal,
+		},
+		{
+			Action: ActionAccessControlTeamPermissionsRemove,
+			Scope:  ScopeGlobal,
+		},
+		{
+			Action: ActionAccessControlUserPermissionsAdd,
+			Scope:  ScopeGlobal,
+		},
+		{
+			Action: ActionAccessControlUserPermissionsRemove,
 			Scope:  ScopeGlobal,
 		},
 	}),

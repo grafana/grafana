@@ -81,12 +81,26 @@ const (
 	ActionAccessControlPermissionsWrite  = "permissions:write"
 	ActionAccessControlPermissionsDelete = "permissions:delete"
 
+	ActionAccessControlBuiltInList   = "permissions.builtin:list"
+	ActionAccessControlBuiltInWrite  = "permissions.builtin:write"
+	ActionAccessControlBuiltInDelete = "permissions.builtin:delete"
+
+	ActionAccessControlTeamPermissionsList   = "permissions.teams:list"
+	ActionAccessControlTeamPermissionsAdd    = "permissions.teams:add"
+	ActionAccessControlTeamPermissionsRemove = "permissions.teams:remove"
+
+	ActionAccessControlUserPermissionsList   = "permissions.users:list"
+	ActionAccessControlUserPermissionsAdd    = "permissions.users:add"
+	ActionAccessControlUserPermissionsRemove = "permissions.users:remove"
+
 	// Global Scopes
-	ScopeGlobal             = "global"
-	ScopeUsersAll           = "users:*"
-	ScopeOrgAllUsersAll     = "org:*/users:*"
-	ScopeOrgCurrentUsersAll = "org:current/users:*"
-	ScopeOrgAllRolesAll     = "org:*/roles:*"
+	ScopeGlobal                 = "global"
+	ScopeUsersAll               = "users:*"
+	ScopeOrgAllUsersAll         = "org:*/users:*"
+	ScopeOrgCurrentUsersAll     = "org:current/users:*"
+	ScopeOrgAllRolesAll         = "org:*/roles:*"
+	ScopeOrgAllTeamsAllRolesAll = "org:*/teams:*/roles:*"
+	ScopeOrgAllUsersAllRolesAll = "org:*/users:*/roles:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
