@@ -15,15 +15,11 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
+export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export {
-  PieChart,
-  PieChartType,
-  PieChartLabels,
-  PieChartLegendOptions,
-  PieChartLegendValues,
-} from './PieChart/PieChart';
+export { PieChart } from './PieChart/PieChart';
+export { PieChartType, PieChartLabels, PieChartLegendOptions, PieChartLegendValues } from './PieChart/types';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -37,12 +33,12 @@ export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
-export { ConfirmModal } from './ConfirmModal/ConfirmModal';
+export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
 export { CodeEditor } from './Monaco/CodeEditorLazy';
-export { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { MonacoEditor, CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
@@ -78,12 +74,30 @@ export { Graph } from './Graph/Graph';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
-export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
+export {
+  VizTooltip,
+  VizTooltipContainer,
+  SeriesTable,
+  VizTooltipOptions,
+  TooltipDisplayMode,
+  SeriesTableProps,
+  SeriesTableRowProps,
+} from './VizTooltip';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
-export { PanelChrome, PanelChromeProps, PanelPadding, PanelChromeType } from './PanelChrome';
+export {
+  PanelChrome,
+  PanelChromeProps,
+  PanelPadding,
+  PanelChromeType,
+  PanelChromeLoadingIndicator,
+  PanelChromeLoadingIndicatorProps,
+  PanelChromeErrorIndicator,
+  PanelChromeErrorIndicatorProps,
+} from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
+export { VizLegendItem } from './VizLegend/types';
+export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
@@ -96,7 +110,6 @@ export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
 export { FieldLinkList } from './DataLinks/FieldLinkList';
-export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
@@ -126,8 +139,6 @@ export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
-export { default as Chart } from './Chart';
-export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
@@ -222,7 +233,8 @@ export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
-export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
+export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';
+export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

@@ -1,8 +1,7 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import _ from 'lodash';
-import { GrafanaTheme } from '@grafana/data';
-import { Counter, Icon, useStyles } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,7 +24,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: isOpenDefault !== false,
     });
     const [isExpanded, setIsExpanded] = useState(savedState.isExpanded);
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
 
     useEffect(() => {
       if (!isExpanded && forceOpen && forceOpen > 0) {
@@ -87,10 +86,10 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   }
 );
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       &:last-child {
         border-bottom: none;
       }
@@ -99,11 +98,11 @@ const getStyles = (theme: GrafanaTheme) => {
       border-bottom: 0;
     `,
     boxNestedExpanded: css`
-      margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+      margin-bottom: ${theme.spacing(2)};
     `,
     toggle: css`
-      color: ${theme.colors.textWeak};
-      margin-right: ${theme.spacing.sm};
+      color: ${theme.colors.text.secondary};
+      margin-right: ${theme.spacing(1)};
     `,
     title: css`
       flex-grow: 1;
@@ -113,27 +112,22 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       cursor: pointer;
       align-items: baseline;
-      padding: ${theme.spacing.sm};
-      color: ${theme.colors.formLabel};
-      font-weight: ${theme.typography.weight.semibold};
+      padding: ${theme.spacing(1)};
+      color: ${theme.colors.text.primary};
+      font-weight: ${theme.typography.fontWeightMedium};
 
       &:hover {
-        color: ${theme.colors.text};
-
-        .editor-options-group-toggle {
-          color: ${theme.colors.text};
-        }
+        background: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
       }
     `,
     headerExpanded: css`
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
     `,
     headerNested: css`
-      padding-left: 0;
-      padding-right: 0;
+      padding: ${theme.spacing(0.5, 0, 0.5, 0)};
     `,
     body: css`
-      padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.xl};
+      padding: ${theme.spacing(1, 2, 1, 4)};
     `,
     bodyNested: css`
       position: relative;
@@ -145,7 +139,7 @@ const getStyles = (theme: GrafanaTheme) => {
         left: 8px;
         width: 1px;
         height: 100%;
-        background: ${theme.colors.pageHeaderBorder};
+        background: ${theme.colors.border.weak};
       }
     `,
   };

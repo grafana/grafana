@@ -1,4 +1,4 @@
-import flatten from 'lodash/flatten';
+import { flatten } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 

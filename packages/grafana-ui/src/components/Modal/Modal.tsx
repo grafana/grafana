@@ -1,7 +1,7 @@
 import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from '@emotion/css';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
@@ -34,7 +34,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     onDismiss: propsOnDismiss,
     onClickBackdrop,
   } = props;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getModalStyles(theme);
   const onDismiss = useCallback(() => {
     if (propsOnDismiss) {

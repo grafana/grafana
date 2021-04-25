@@ -92,6 +92,7 @@ export type Receiver = {
   victorops_configs?: unknown[];
   wechat_configs?: unknown[];
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
+  [key: string]: unknown;
 };
 
 export type Route = {
@@ -140,4 +141,71 @@ export type AlertmanagerConfig = {
   route?: Route;
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
+};
+
+export type SilenceMatcher = {
+  name: string;
+  value: string;
+  isRegex: boolean;
+};
+
+export enum SilenceState {
+  Active = 'active',
+  Expired = 'expired',
+  Pending = 'pending',
+}
+
+export enum AlertState {
+  Unprocessed = 'unprocessed',
+  Active = 'active',
+  Suppressed = 'suppressed',
+}
+
+export type Silence = {
+  id: string;
+  matchers?: SilenceMatcher[];
+  startsAt: string;
+  endsAt: string;
+  updatedAt: string;
+  createdBy: string;
+  comment: string;
+  status: {
+    state: SilenceState;
+  };
+};
+
+export type SilenceCreatePayload = {
+  id?: string;
+  matchers?: SilenceMatcher[];
+  startsAt: string;
+  endsAt: string;
+  createdBy: string;
+  comment: string;
+};
+
+export type AlertmanagerAlert = {
+  startsAt: string;
+  updatedAt: string;
+  endsAt: string;
+  generatorURL?: string;
+  labels: { [key: string]: string };
+  annotations: { [key: string]: string };
+  receivers: [
+    {
+      name: string;
+    }
+  ];
+  fingerprint: string;
+  status: {
+    state: AlertState;
+    silencedBy: string[];
+    inhibitedBy: string[];
+  };
+};
+
+export type AlertmanagerGroup = {
+  labels: { [key: string]: string };
+  receiver: { name: string };
+  alerts: AlertmanagerAlert[];
+  id: string;
 };

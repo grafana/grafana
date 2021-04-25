@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import debounce from 'lodash/debounce';
-import has from 'lodash/has';
+import { debounce, has } from 'lodash';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';

@@ -160,8 +160,8 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).
+For more information, refer to [Data frames]({{< relref "data-frames.md">}}).
 
 ## Troubleshoot plugin migration
 
-With Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana will ignore unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).

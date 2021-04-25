@@ -1,31 +1,19 @@
-import { createBreakpoints, ThemeBreakpoints } from './breakpoints';
-import { ThemeComponents, createComponents } from './createComponents';
-import { createPalette, ThemePalette, ThemePaletteInput } from './createPalette';
-import { createShadows, ThemeShadows } from './createShadows';
-import { createShape, ThemeShape, ThemeShapeInput } from './createShape';
-import { createSpacing, ThemeSpacingOptions, ThemeSpacing } from './createSpacing';
-import { createTypography, ThemeTypography, ThemeTypographyInput } from './createTypography';
-import { ThemeZIndices, zIndex } from './zIndex';
-
-/** @beta */
-export interface GrafanaThemeV2 {
-  name: string;
-  isDark: boolean;
-  isLight: boolean;
-  palette: ThemePalette;
-  breakpoints: ThemeBreakpoints;
-  spacing: ThemeSpacing;
-  shape: ThemeShape;
-  components: ThemeComponents;
-  typography: ThemeTypography;
-  zIndex: ThemeZIndices;
-  shadows: ThemeShadows;
-}
+import { createBreakpoints } from './breakpoints';
+import { createComponents } from './createComponents';
+import { createColors, ThemeColorsInput } from './createColors';
+import { createShadows } from './createShadows';
+import { createShape, ThemeShapeInput } from './createShape';
+import { createSpacing, ThemeSpacingOptions } from './createSpacing';
+import { createTransitions } from './createTransitions';
+import { createTypography, ThemeTypographyInput } from './createTypography';
+import { createV1Theme } from './createV1Theme';
+import { GrafanaThemeV2 } from './types';
+import { zIndex } from './zIndex';
 
 /** @internal */
 export interface NewThemeOptions {
   name?: string;
-  palette?: ThemePaletteInput;
+  colors?: ThemeColorsInput;
   spacing?: ThemeSpacingOptions;
   shape?: ThemeShapeInput;
   typography?: ThemeTypographyInput;
@@ -35,33 +23,40 @@ export interface NewThemeOptions {
 export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
   const {
     name = 'Dark',
-    palette: paletteInput = {},
+    colors: colorsInput = {},
     spacing: spacingInput = {},
     shape: shapeInput = {},
     typography: typographyInput = {},
   } = options;
 
-  const palette = createPalette(paletteInput);
+  const colors = createColors(colorsInput);
   const breakpoints = createBreakpoints();
   const spacing = createSpacing(spacingInput);
   const shape = createShape(shapeInput);
-  const components = createComponents();
-  const typography = createTypography(palette, typographyInput);
-  const shadows = createShadows(palette);
+  const typography = createTypography(colors, typographyInput);
+  const shadows = createShadows(colors);
+  const transitions = createTransitions();
+  const components = createComponents(colors, shadows);
 
-  return {
+  const theme = {
     name,
-    isDark: palette.mode === 'dark',
-    isLight: palette.mode === 'light',
-    palette,
+    isDark: colors.mode === 'dark',
+    isLight: colors.mode === 'light',
+    colors,
     breakpoints,
     spacing,
     shape,
     components,
     typography,
     shadows,
+    transitions,
     zIndex: {
       ...zIndex,
     },
+  };
+
+  return {
+    ...theme,
+    v1: createV1Theme(theme),
   };
 }

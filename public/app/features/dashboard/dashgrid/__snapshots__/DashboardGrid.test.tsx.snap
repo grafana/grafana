@@ -103,6 +103,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -117,7 +118,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 0,
               },
               "id": 1,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -131,6 +134,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -145,7 +149,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 10,
               },
               "id": 2,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -159,6 +165,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -173,7 +180,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 20,
               },
               "id": 3,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -187,6 +196,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -201,7 +211,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 120,
               },
               "id": 4,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -234,10 +246,13 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "version": 0,
         }
       }
+      isEditing={false}
       isInView={false}
+      isViewing={false}
       panel={
         PanelModel {
           "cachedPluginOptions": Object {},
+          "configRev": 0,
           "datasource": null,
           "events": EventBusSrv {
             "emitter": EventEmitter {
@@ -252,7 +267,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "y": 0,
           },
           "id": 1,
+          "isEditing": false,
           "isInView": false,
+          "isViewing": false,
           "options": Object {},
           "replaceVariables": [Function],
           "targets": Array [
@@ -327,6 +344,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -341,7 +359,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 0,
               },
               "id": 1,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -355,6 +375,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -369,7 +390,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 10,
               },
               "id": 2,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -383,6 +406,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -397,7 +421,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 20,
               },
               "id": 3,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -411,6 +437,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -425,7 +452,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 120,
               },
               "id": 4,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -458,10 +487,13 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "version": 0,
         }
       }
+      isEditing={false}
       isInView={false}
+      isViewing={false}
       panel={
         PanelModel {
           "cachedPluginOptions": Object {},
+          "configRev": 0,
           "datasource": null,
           "events": EventBusSrv {
             "emitter": EventEmitter {
@@ -476,7 +508,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "y": 10,
           },
           "id": 2,
+          "isEditing": false,
           "isInView": false,
+          "isViewing": false,
           "options": Object {},
           "replaceVariables": [Function],
           "targets": Array [
@@ -551,6 +585,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -565,7 +600,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 0,
               },
               "id": 1,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -579,6 +616,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -593,7 +631,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 10,
               },
               "id": 2,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -607,6 +647,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -621,7 +662,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 20,
               },
               "id": 3,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -635,6 +678,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -649,7 +693,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 120,
               },
               "id": 4,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -682,10 +728,13 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "version": 0,
         }
       }
+      isEditing={false}
       isInView={false}
+      isViewing={false}
       panel={
         PanelModel {
           "cachedPluginOptions": Object {},
+          "configRev": 0,
           "datasource": null,
           "events": EventBusSrv {
             "emitter": EventEmitter {
@@ -700,7 +749,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "y": 20,
           },
           "id": 3,
+          "isEditing": false,
           "isInView": false,
+          "isViewing": false,
           "options": Object {},
           "replaceVariables": [Function],
           "targets": Array [
@@ -775,6 +826,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -789,7 +841,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 0,
               },
               "id": 1,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -803,6 +857,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -817,7 +872,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 10,
               },
               "id": 2,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -831,6 +888,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -845,7 +903,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 20,
               },
               "id": 3,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -859,6 +919,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -873,7 +934,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 "y": 120,
               },
               "id": 4,
+              "isEditing": false,
               "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -906,10 +969,13 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "version": 0,
         }
       }
+      isEditing={false}
       isInView={false}
+      isViewing={false}
       panel={
         PanelModel {
           "cachedPluginOptions": Object {},
+          "configRev": 0,
           "datasource": null,
           "events": EventBusSrv {
             "emitter": EventEmitter {
@@ -924,7 +990,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "y": 120,
           },
           "id": 4,
+          "isEditing": false,
           "isInView": false,
+          "isViewing": false,
           "options": Object {},
           "replaceVariables": [Function],
           "targets": Array [

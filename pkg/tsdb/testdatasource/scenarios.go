@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -329,6 +328,47 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 	return resp, nil
 }
 
+func csvToFieldValues(stringInput string) (*data.Field, error) {
+	parts := strings.Split(strings.ReplaceAll(stringInput, " ", ""), ",")
+	if len(parts) < 1 {
+		return nil, fmt.Errorf("csv must have at least one value")
+	}
+
+	first := parts[0]
+	if first == "T" || first == "F" {
+		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
+		for idx, strVal := range parts {
+			if strVal == "null" || strVal == "" {
+				continue
+			}
+			field.SetConcrete(idx, strVal == "T")
+		}
+		return field, nil
+	}
+
+	// If we can not parse the first value as a number, assume strings
+	_, err := strconv.ParseFloat(first, 64)
+	if err != nil {
+		field := data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
+		for idx, strVal := range parts {
+			if strVal == "null" || strVal == "" {
+				continue
+			}
+			field.SetConcrete(idx, strVal)
+		}
+		return field, nil
+	}
+
+	// Set any valid numbers
+	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
+	for idx, strVal := range parts {
+		if val, err := strconv.ParseFloat(strVal, 64); err == nil {
+			field.SetConcrete(idx, val)
+		}
+	}
+	return field, nil
+}
+
 func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -339,37 +379,31 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 		}
 
 		stringInput := model.Get("stringInput").MustString()
-		stringInput = strings.ReplaceAll(stringInput, " ", "")
 
-		var values []*float64
-		for _, strVal := range strings.Split(stringInput, ",") {
-			if strVal == "null" {
-				values = append(values, nil)
-			}
-			if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-				values = append(values, &val)
-			}
+		valueField, err := csvToFieldValues(stringInput)
+		if err != nil {
+			return nil, err
 		}
+		valueField.Name = frameNameForQuery(q, model, 0)
 
-		if len(values) == 0 {
-			return resp, nil
-		}
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, valueField.Len())
+		timeField.Name = "time"
 
-		frame := data.NewFrame("",
-			data.NewField("time", nil, []*time.Time{}),
-			data.NewField(frameNameForQuery(q, model, 0), nil, []*float64{}))
 		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+		count := valueField.Len()
 		var step int64 = 0
-		if len(values) > 1 {
-			step = (endTime - startTime) / int64(len(values)-1)
+		if count > 1 {
+			step = (endTime - startTime) / int64(count-1)
 		}
 
-		for _, val := range values {
+		for i := 0; i < count; i++ {
 			t := time.Unix(startTime/int64(1e+3), (startTime%int64(1e+3))*int64(1e+6))
-			frame.AppendRow(&t, val)
+			timeField.Set(i, t)
 			startTime += step
 		}
+
+		frame := data.NewFrame("", timeField, valueField)
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
@@ -763,25 +797,38 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) (*data.
 	rawValues := options.Get("valuesCSV").MustString()
 	rawValues = strings.TrimRight(strings.TrimSpace(rawValues), ",") // Strip Trailing Comma
 	rawValesCSV := strings.Split(rawValues, ",")
-	values := make([]null.Float, len(rawValesCSV))
+	values := make([]*float64, len(rawValesCSV))
+
 	for i, rawValue := range rawValesCSV {
-		val, err := null.FloatFromString(strings.TrimSpace(rawValue), "null")
-		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+		var val *float64
+		rawValue = strings.TrimSpace(rawValue)
+
+		switch rawValue {
+		case "null":
+			// val stays nil
+		case "nan":
+			f := math.NaN()
+			val = &f
+		default:
+			f, err := strconv.ParseFloat(rawValue, 64)
+			if err != nil {
+				return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+			}
+			val = &f
 		}
 		values[i] = val
 	}
 
 	timeStep *= 1000 // Seconds to Milliseconds
 	valuesLen := int64(len(values))
-	getValue := func(mod int64) (null.Float, error) {
+	getValue := func(mod int64) (*float64, error) {
 		var i int64
 		for i = 0; i < valuesLen; i++ {
 			if mod == i*timeStep {
 				return values[i], nil
 			}
 		}
-		return null.Float{}, fmt.Errorf("did not get value at point in waveform - should not be here")
+		return nil, fmt.Errorf("did not get value at point in waveform - should not be here")
 	}
 	fields, err := predictableSeries(query.TimeRange, timeStep, valuesLen, getValue)
 	if err != nil {
@@ -795,7 +842,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) (*data.
 	return frame, nil
 }
 
-func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getValue func(mod int64) (null.Float, error)) (data.Fields, error) {
+func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getValue func(mod int64) (*float64, error)) (data.Fields, error) {
 	from := timeRange.From.UnixNano() / int64(time.Millisecond)
 	to := timeRange.To.UnixNano() / int64(time.Millisecond)
 
@@ -814,7 +861,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 
 		t := time.Unix(timeCursor/int64(1e+3), (timeCursor%int64(1e+3))*int64(1e+6))
 		timeVec = append(timeVec, &t)
-		floatVec = append(floatVec, &val.Float64)
+		floatVec = append(floatVec, val)
 
 		timeCursor += timeStep
 	}
@@ -830,8 +877,8 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 	var timeStep int64
 	var onCount int64
 	var offCount int64
-	var onValue null.Float
-	var offValue null.Float
+	var onValue *float64
+	var offValue *float64
 
 	options := model.Get("pulseWave")
 
@@ -855,8 +902,8 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 		return nil, fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
 	}
 
-	timeStep *= 1000                               // Seconds to Milliseconds
-	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
+	timeStep *= 1000                             // Seconds to Milliseconds
+	onFor := func(mod int64) (*float64, error) { // How many items in the cycle should get the on value
 		var i int64
 		for i = 0; i < onCount; i++ {
 			if mod == i*timeStep {
@@ -989,18 +1036,26 @@ func frameNameForQuery(query backend.DataQuery, model *simplejson.Json, index in
 	return name
 }
 
-func fromStringOrNumber(val *simplejson.Json) (null.Float, error) {
+func fromStringOrNumber(val *simplejson.Json) (*float64, error) {
 	switch v := val.Interface().(type) {
 	case json.Number:
 		fV, err := v.Float64()
 		if err != nil {
-			return null.Float{}, err
+			return nil, err
 		}
-		return null.FloatFrom(fV), nil
+		return &fV, nil
 	case string:
-		return null.FloatFromString(v, "null")
+		switch v {
+		case "null":
+			return nil, nil
+		case "nan":
+			v := math.NaN()
+			return &v, nil
+		default:
+			return nil, fmt.Errorf("failed to extract value from %v", v)
+		}
 	default:
-		return null.Float{}, fmt.Errorf("failed to extract value")
+		return nil, fmt.Errorf("failed to extract value")
 	}
 }
 

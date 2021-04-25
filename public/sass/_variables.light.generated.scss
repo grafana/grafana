@@ -15,14 +15,14 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-light: #5794f2;
-$blue-base: #3274d9;
-$blue-shade: #1f60c4;
-$red-base: #e02f44;
-$red-shade: #c4162a;
-$green-base: #3eb15b;
-$green-shade: #369b4f;
-$orange-dark: #ed5700;
+$blue-light: #0465d7;
+$blue-base: #3871DC;
+$blue-shade: rgb(44, 90, 176);
+$red-base: #E0226E;
+$red-shade: rgb(179, 27, 88);
+$green-base: #1A7F4B;
+$green-shade: rgb(20, 101, 60);
+$orange-dark: #ff780a;
 
 $gray98: #f7f8fa;
 $gray95: #e9edf2;
@@ -39,58 +39,66 @@ $gray05: #0b0c0e;
 // -------------------------
 $black: #000000;
 
-$dark-1: #1e2028;
-$dark-2: #41444b;
-$dark-4: #35373f;
+$dark-1: #141414;
+$dark-2: #161719;
+$dark-4: #212124;
 $dark-10: #424345;
-$gray-1: #52545c;
-$gray-2: #767980;
-$gray-3: #acb6bf;
-$gray-4: #c7d0d9;
-$gray-5: #dde4ed;
-$gray-6: #e9edf2;
-$gray-7: #f7f8fa;
+$gray-1: #555555;
+$gray-2: #8e8e8e;
+$gray-3: #b3b3b3;
+$gray-4: #d8d9da;
+$gray-5: #ececec;
+$gray-6: #f4f5f8;
+$gray-7: #fbfbfb;
 
 $white: #ffffff;
 
+$layer0: #F4F5F5;
+$layer1: #fff;
+$layer2: #F4F5F5;
+
+$divider: rgba(36, 41, 46, 0.12);
+$border0: rgba(36, 41, 46, 0.12);
+$border1: rgba(36, 41, 46, 0.30);
+
 // Accent colors
 // -------------------------
-$blue: #33a2e5;
+$blue: #0465d7;
 $red: $red-base;
-$yellow: #ff851b;
-$orange: #ff7941;
-$purple: #9954bb;
-$variable: #33a2e5;
+$yellow: #ecbb13;
+$orange: #eb7b18;
+$purple: #9933cc;
+$variable: #0465d7;
 
-$brand-primary: #ff7941;
-$brand-success: #3eb15b;
-$brand-warning: #ff7941;
+$brand-primary: #eb7b18;
+$brand-success: #299c46;
+$brand-warning: #eb7b18;
 $brand-danger: #e02f44;
 
 $query-red: #e02f44;
-$query-green: #3eb15b;
-$query-purple: #9954bb;
-$query-orange: #ff7941;
+$query-green: #74e680;
+$query-purple: #fe85fc;
+$query-orange: #eb7b18;
 
 // Status colors
 // -------------------------
-$online: #369b4f;
+$online: #299c46;
 $warn: #f79520;
-$critical: #c4162a;
+$critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #ffffff;
-$page-bg: #ffffff;
-$dashboard-bg: #f7f8fa;
+$body-bg: #F4F5F5;
+$page-bg: #F4F5F5;
+$dashboard-bg: #F4F5F5;
 
-$text-color: #464c54;
-$text-color-strong: #202226;
-$text-color-semi-weak: #464c54;
-$text-color-weak: #7b8087;
-$text-color-faint: #9fa7b3;
-$text-color-emphasis: #202226;
-$text-blue: #33a2e5;
+$text-color: rgba(36, 41, 46, 1);
+$text-color-strong: #000;
+$text-color-semi-weak: rgba(36, 41, 46, 0.75);
+$text-color-weak: rgba(36, 41, 46, 0.75);
+$text-color-faint: rgba(36, 41, 46, 0.50);
+$text-color-emphasis: #000;
+$text-blue: #0465d7;
 
 $text-shadow-faint: none;
 
@@ -100,14 +108,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: #464c54;
-$link-color-disabled: #7b8087;
-$link-hover-color: #202226;
-$external-link-color: #33a2e5;
+$link-color: rgba(36, 41, 46, 1);
+$link-color-disabled: rgba(36, 41, 46, 0.50);
+$link-hover-color: #000;
+$external-link-color: #0465d7;
 
 // Typography
 // -------------------------
-$headings-color: #2c3235;
+$headings-color: rgba(36, 41, 46, 1);
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -115,29 +123,30 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: #ffffff;
-$panel-border: 1px solid #dce1e6;
-$panel-header-hover-bg: #f1f5f9;
-$panel-corner: $gray-4;
+$panel-bg: #fff;
+$panel-border: 1px solid #fff;
+$panel-header-hover-bg: rgba(36, 41, 46, 0.04);
+$panel-box-shadow: 0px 1px 2px rgba(24, 26, 27, 0.2);
+$panel-corner: $panel-bg;
 
 // Page header
-$page-header-bg: #f1f5f9;
+$page-header-bg: #F4F5F5;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #dce1e6;
+$page-header-border-color: #F4F5F5;
 
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: #f1f5f9;
-$tight-form-func-highlight-bg: #eaf0f6;
+$tight-form-func-bg: #F4F5F5;
+$tight-form-func-highlight-bg: #eff0f0;
 
-$modal-backdrop-bg: #ffffff;
+$modal-backdrop-bg: #fff;
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: #f1f5f9;
-$card-background-hover: #eaf0f6;
+$card-background: #F4F5F5;
+$card-background-hover: #F4F5F5;
 $card-shadow: none;
 
 // Lists
@@ -154,11 +163,10 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: #fafafa;
-$table-border: $gray-3; // table and cell border
-
-$table-bg-odd: $gray-6;
-$table-bg-hover: $gray-5;
+$table-bg-accent: #F4F5F5;
+$table-border: rgba(36, 41, 46, 0.30);
+$table-bg-odd: rgb(249, 249, 249);
+$table-bg-hover: rgb(242, 242, 242);
 
 // Buttons
 // -------------------------
@@ -194,16 +202,16 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: $white;
-$input-bg-disabled: $gray-5;
+$input-bg: #fff;
+$input-bg-disabled: rgba(36, 41, 46, 0.07);
 
-$input-color: #464c54;
-$input-border-color: #c7d0d9;
+$input-color: rgba(36, 41, 46, 1);
+$input-border-color: rgba(36, 41, 46, 0.30);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
-$input-color-placeholder: #9fa7b3;
-$input-label-bg: #f1f5f9;
+$input-color-placeholder: rgba(36, 41, 46, 0.50);
+$input-label-bg: #F4F5F5;
 $input-color-select-arrow: #7b8087;
 
 // search
@@ -216,10 +224,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $white;
-$dropdownBorder: $gray-4;
-$dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $gray-4;
+$dropdownBackground: #F4F5F5;
+$dropdownBorder: rgba(36, 41, 46, 0.12);
+$dropdownDividerTop: rgba(36, 41, 46, 0.12);
+$dropdownDividerBottom: rgba(36, 41, 46, 0.12);
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -249,50 +257,48 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+$menu-dropdown-bg: #fff;
+$menu-dropdown-hover-bg: rgba(36, 41, 46, 0.04);
+$menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 // Tabs
 // -------------------------
 $tab-border-color: $gray-5;
 
-// Toolbar
-$toolbar-bg: white;
-
 // Form states and alerts
 // -------------------------
-$warning-text-color: lighten($orange, 10%);
-$error-text-color: $red-shade;
-$success-text-color: lighten($green-base, 10%);
+$warning-text-color: #BD4B00;
+$error-text-color: #CF0E5B;
+$success-text-color: #1A7F4B;
 
-$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
+$alert-error-bg: #E0226E;
+$alert-success-bg: #1A7F4B;
+$alert-warning-bg: #E56F00;
+$alert-info-bg: #E56F00;
 
 // Tooltips and popovers
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
-$tooltipShadow: 0 0 5px $gray60;
+$tooltipBackground: #F4F5F5;
+$tooltipColor: rgba(36, 41, 46, 1);
+$tooltipArrowColor: #F4F5F5;
+$tooltipBackgroundError: #E0226E;
+$tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.2);
+
+$popover-bg: #fff;
+$popover-color: rgba(36, 41, 46, 1);
+$popover-border-color: rgba(36, 41, 46, 0.12);
+$popover-header-bg: #F4F5F5;
+$popover-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
+
 $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($tooltipColor, 5%);
 
-$popover-bg: $page-bg;
-$popover-color: $text-color;
-$popover-border-color: $gray-5;
-$popover-header-bg: $gray-5;
-$popover-shadow: 0 0 20px $white;
-
 $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: #ffffff;
+$popover-code-bg: #fff;
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
@@ -321,14 +327,14 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: #dce1e6;
+$diff-label-bg: rgba(36, 41, 46, 0.04);
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: #f1f5f9;
+$diff-group-bg: #F4F5F5;
 
-$diff-json-bg: #f1f5f9;
-$diff-json-fg: #464c54;
+$diff-json-bg: #F4F5F5;
+$diff-json-fg: rgba(36, 41, 46, 1);
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;
@@ -372,9 +378,6 @@ $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
 
-$panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-5;
-
 $panel-grid-placeholder-bg: lighten(#5794f2, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px #5794f2;
 
@@ -393,3 +396,4 @@ $vertical-resize-handle-dots-hover: $gray-2;
 // Calendar
 $calendar-bg-days: $white;
 $calendar-bg-now: $gray-6;
+

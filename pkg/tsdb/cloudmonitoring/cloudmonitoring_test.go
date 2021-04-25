@@ -595,6 +595,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 			err = query.parseResponse(res, data, "")
@@ -619,7 +620,7 @@ func TestCloudMonitoring(t *testing.T) {
 			data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
-
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 			err = query.parseResponse(res, data, "")
@@ -657,7 +658,7 @@ func TestCloudMonitoring(t *testing.T) {
 			data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
-
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, GroupBys: []string{
 				"metric.label.instance_name", "resource.label.zone",
@@ -677,7 +678,7 @@ func TestCloudMonitoring(t *testing.T) {
 			data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
-
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 
 			t.Run("and the alias pattern is for metric type, a metric label and a resource label", func(t *testing.T) {
@@ -711,7 +712,7 @@ func TestCloudMonitoring(t *testing.T) {
 			data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
-
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
@@ -753,7 +754,7 @@ func TestCloudMonitoring(t *testing.T) {
 			data, err := loadTestFile("./test-data/4-series-response-distribution-explicit.json")
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
-
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
@@ -788,7 +789,7 @@ func TestCloudMonitoring(t *testing.T) {
 			data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
-
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
@@ -824,6 +825,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 3, len(data.TimeSeries))
 
 			t.Run("and systemlabel contains key with array of string", func(t *testing.T) {
+				//nolint: staticcheck // plugins.DataPlugin deprecated
 				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test}}"}
 				err = query.parseResponse(res, data, "")
@@ -838,6 +840,7 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 
 			t.Run("and systemlabel contains key with array of string2", func(t *testing.T) {
+				//nolint: staticcheck // plugins.DataPlugin deprecated
 				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test2}}"}
 				err = query.parseResponse(res, data, "")
@@ -855,6 +858,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
+				//nolint: staticcheck // plugins.DataPlugin deprecated
 				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{
 					Params:      url.Values{},
@@ -878,6 +882,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
+				//nolint: staticcheck // plugins.DataPlugin deprecated
 				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{
 					Params:      url.Values{},
@@ -893,77 +898,34 @@ func TestCloudMonitoring(t *testing.T) {
 				assert.Equal(t, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")", frames[0].Fields[1].Name)
 			})
 		})
-	})
 
-	t.Run("Parse cloud monitoring unit", func(t *testing.T) {
-		t.Run("when there is only one query", func(t *testing.T) {
-			t.Run("and cloud monitoring unit does not have a corresponding grafana unit", func(t *testing.T) {
-				executors := []cloudMonitoringQueryExecutor{
-					&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
-						Slo: "test-slo", Unit: "megaseconds"},
-				}
-				unit := executor.resolvePanelUnitFromQueries(executors)
-				assert.Equal(t, "", unit)
+		t.Run("Parse cloud monitoring unit", func(t *testing.T) {
+			t.Run("when mapping is found a unit should be specified on the field config", func(t *testing.T) {
+				data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
+				require.NoError(t, err)
+				assert.Equal(t, 1, len(data.TimeSeries))
+				//nolint: staticcheck // plugins.DataPlugin deprecated
+				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
+				err = query.parseResponse(res, data, "")
+				require.NoError(t, err)
+				frames, err := res.Dataframes.Decoded()
+				require.NoError(t, err)
+				assert.Equal(t, "Bps", frames[0].Fields[1].Config.Unit)
 			})
 
-			t.Run("and cloud monitoring unit has a corresponding grafana unit", func(t *testing.T) {
-				for key, element := range cloudMonitoringUnitMappings {
-					queries := []cloudMonitoringQueryExecutor{
-						&cloudMonitoringTimeSeriesFilter{Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
-							Slo: "test-slo", Unit: key},
-					}
-					unit := executor.resolvePanelUnitFromQueries(queries)
-					assert.Equal(t, element, unit)
-				}
-			})
-		})
-
-		t.Run("when there are more than one query", func(t *testing.T) {
-			t.Run("and all target units are the same", func(t *testing.T) {
-				for key, element := range cloudMonitoringUnitMappings {
-					queries := []cloudMonitoringQueryExecutor{
-						&cloudMonitoringTimeSeriesFilter{
-							Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance",
-							Service: "test-service1", Slo: "test-slo", Unit: key,
-						},
-						&cloudMonitoringTimeSeriesFilter{
-							Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance",
-							Service: "test-service2", Slo: "test-slo", Unit: key,
-						},
-					}
-					unit := executor.resolvePanelUnitFromQueries(queries)
-					assert.Equal(t, element, unit)
-				}
-			})
-
-			t.Run("and all target units are the same but does not have grafana mappings", func(t *testing.T) {
-				queries := []cloudMonitoringQueryExecutor{
-					&cloudMonitoringTimeSeriesFilter{
-						Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance",
-						Service: "test-service1", Slo: "test-slo", Unit: "megaseconds",
-					},
-					&cloudMonitoringTimeSeriesFilter{
-						Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance",
-						Service: "test-service2", Slo: "test-slo", Unit: "megaseconds",
-					},
-				}
-				unit := executor.resolvePanelUnitFromQueries(queries)
-				assert.Equal(t, "", unit)
-			})
-
-			t.Run("and all target units are not the same", func(t *testing.T) {
-				queries := []cloudMonitoringQueryExecutor{
-					&cloudMonitoringTimeSeriesFilter{
-						Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance",
-						Service: "test-service1", Slo: "test-slo", Unit: "bit",
-					},
-					&cloudMonitoringTimeSeriesFilter{
-						Params: url.Values{}, ProjectName: "test-proj", Selector: "select_slo_compliance",
-						Service: "test-service2", Slo: "test-slo", Unit: "min",
-					},
-				}
-				unit := executor.resolvePanelUnitFromQueries(queries)
-				assert.Equal(t, "", unit)
+			t.Run("when mapping is found a unit should be specified on the field config", func(t *testing.T) {
+				data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
+				require.NoError(t, err)
+				assert.Equal(t, 3, len(data.TimeSeries))
+				//nolint: staticcheck // plugins.DataPlugin deprecated
+				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
+				err = query.parseResponse(res, data, "")
+				require.NoError(t, err)
+				frames, err := res.Dataframes.Decoded()
+				require.NoError(t, err)
+				assert.Equal(t, "", frames[0].Fields[1].Config.Unit)
 			})
 		})
 
@@ -975,6 +937,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
 				fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+				//nolint: staticcheck // plugins.DataPlugin deprecated
 				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesQuery{
 					ProjectName: "test-proj",
