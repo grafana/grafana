@@ -20,7 +20,30 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
+
+var (
+	emailsSentTotal  prometheus.Counter
+	emailsSentFailed prometheus.Counter
+)
+
+func init() {
+	emailsSentTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_total",
+		Help:      "Number of emails sent by Grafana",
+		Namespace: "grafana",
+	})
+
+	emailsSentFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_failed",
+		Help:      "Number of emails Grafana failed to send",
+		Namespace: "grafana",
+	})
+
+	prometheus.MustRegister(emailsSentTotal, emailsSentFailed)
+}
 
 func (ns *NotificationService) Send(msg *Message) (int, error) {
 	messages := []*Message{}
@@ -58,8 +81,11 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err e
 
 		m.SetBody("text/html", msg.Body)
 
-		if e := dialer.DialAndSend(m); e != nil {
-			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
+		innerError := dialer.DialAndSend(m)
+		emailsSentTotal.Inc()
+		if innerError != nil {
+			emailsSentFailed.Inc()
+			err = errutil.Wrapf(innerError, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
 			continue
 		}
 
