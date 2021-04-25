@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
-import { ChannelValues } from '../../../types/receiver-form';
+import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
 import { ChannelOptions } from './ChannelOptions';
 import { OptionalChannelOptions } from './OptionalChannelOptions';
 
@@ -12,6 +12,7 @@ interface Props<R> {
   pathPrefix: string;
   notifiers: NotifierDTO[];
   onDuplicate: () => void;
+  commonSettingsComponent: CommonSettingsComponentType;
 
   secureFields?: Record<string, boolean>;
   errors?: NestDataObject<R, FieldError>;
@@ -25,6 +26,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   notifiers,
   errors,
   secureFields,
+  commonSettingsComponent: CommonSettingsComponent,
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
@@ -112,6 +114,7 @@ export function ChannelSubForm<R extends ChannelValues>({
               />
             </div>
           )}
+          <CommonSettingsComponent pathPrefix={pathPrefix} />
         </div>
       )}
     </div>

@@ -46,7 +46,7 @@ export function ChannelOptions<R extends ChannelValues>({
                     ? `${pathPrefix}secureSettings.${option.propertyName}`
                     : `${pathPrefix}settings.${option.propertyName}`
                 }
-                ref={register}
+                ref={register()}
                 label={option.label}
                 description={option.description}
               />

@@ -1,4 +1,5 @@
 import { NotifierType } from 'app/types';
+import React from 'react';
 
 export interface ChannelValues {
   __id: string; // used to correllate form values to original DTOs
@@ -24,3 +25,8 @@ export interface GrafanaChannelValues extends ChannelValues {
   sendReminder: boolean;
   disableResolveMessage: boolean;
 }
+
+export interface CommonSettingsComponentProps {
+  pathPrefix: string;
+}
+export type CommonSettingsComponentType = React.ComponentType<CommonSettingsComponentProps>;

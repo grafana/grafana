@@ -15,6 +15,7 @@ import {
   grafanaReceiverToFormValues,
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
+import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 
 interface Props {
@@ -82,6 +83,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
         alertManagerSourceName={alertManagerSourceName}
         defaultItem={defaultChannelValues}
         takenReceiverNames={takenReceiverNames}
+        commonSettingsComponent={GrafanaCommonChannelSettings}
       />
     );
   } else {

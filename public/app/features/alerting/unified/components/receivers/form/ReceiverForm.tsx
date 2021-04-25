@@ -5,7 +5,7 @@ import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
 import { useForm, FormContext, NestDataObject, FieldError, Validate } from 'react-hook-form';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
-import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
 
@@ -15,6 +15,7 @@ interface Props<R extends ChannelValues> {
   alertManagerSourceName: string;
   onSubmit: (values: ReceiverFormValues<R>) => void;
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
+  commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
 }
 
@@ -25,6 +26,7 @@ export function ReceiverForm<R extends ChannelValues>({
   alertManagerSourceName,
   onSubmit,
   takenReceiverNames,
+  commonSettingsComponent,
 }: Props<ChannelValues>): JSX.Element {
   const styles = useStyles2(getStyles);
 
@@ -79,6 +81,7 @@ export function ReceiverForm<R extends ChannelValues>({
               notifiers={notifiers}
               secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as NestDataObject<R, FieldError>}
+              commonSettingsComponent={commonSettingsComponent}
             />
           );
         })}
