@@ -2,409 +2,293 @@
 // https://github.com/grafana/icons
 
 import { cacheStore } from '@leeoniya/react-inlinesvg';
-const iconRoot = 'public/img/icons/';
+
+export let cacheInitialized = false;
+export let iconRoot = 'public/img/icons';
 
 import u1001 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-double-down.svg';
-cacheStore[iconRoot + 'unicons/angle-double-down.svg'] = { content: u1001, status: 'loaded', queue: [] };
-
 import u1002 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-double-right.svg';
-cacheStore[iconRoot + 'unicons/angle-double-right.svg'] = { content: u1002, status: 'loaded', queue: [] };
-
 import u1003 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-down.svg';
-cacheStore[iconRoot + 'unicons/angle-down.svg'] = { content: u1003, status: 'loaded', queue: [] };
-
 import u1004 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-left.svg';
-cacheStore[iconRoot + 'unicons/angle-left.svg'] = { content: u1004, status: 'loaded', queue: [] };
-
 import u1005 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-right.svg';
-cacheStore[iconRoot + 'unicons/angle-right.svg'] = { content: u1005, status: 'loaded', queue: [] };
-
 import u1006 from '!!raw-loader!../../../../../public/img/icons/unicons/angle-up.svg';
-cacheStore[iconRoot + 'unicons/angle-up.svg'] = { content: u1006, status: 'loaded', queue: [] };
-
 import u1007 from '!!raw-loader!../../../../../public/img/icons/unicons/apps.svg';
-cacheStore[iconRoot + 'unicons/apps.svg'] = { content: u1007, status: 'loaded', queue: [] };
-
 import u1008 from '!!raw-loader!../../../../../public/img/icons/unicons/arrow.svg';
-cacheStore[iconRoot + 'unicons/arrow.svg'] = { content: u1008, status: 'loaded', queue: [] };
-
 import u1009 from '!!raw-loader!../../../../../public/img/icons/unicons/arrow-down.svg';
-cacheStore[iconRoot + 'unicons/arrow-down.svg'] = { content: u1009, status: 'loaded', queue: [] };
-
 import u1010 from '!!raw-loader!../../../../../public/img/icons/unicons/arrow-from-right.svg';
-cacheStore[iconRoot + 'unicons/arrow-from-right.svg'] = { content: u1010, status: 'loaded', queue: [] };
-
 import u1011 from '!!raw-loader!../../../../../public/img/icons/unicons/arrow-left.svg';
-cacheStore[iconRoot + 'unicons/arrow-left.svg'] = { content: u1011, status: 'loaded', queue: [] };
-
 import u1012 from '!!raw-loader!../../../../../public/img/icons/unicons/arrow-random.svg';
-cacheStore[iconRoot + 'unicons/arrow-random.svg'] = { content: u1012, status: 'loaded', queue: [] };
-
 import u1013 from '!!raw-loader!../../../../../public/img/icons/unicons/arrow-right.svg';
-cacheStore[iconRoot + 'unicons/arrow-right.svg'] = { content: u1013, status: 'loaded', queue: [] };
-
 import u1014 from '!!raw-loader!../../../../../public/img/icons/unicons/arrow-up.svg';
-cacheStore[iconRoot + 'unicons/arrow-up.svg'] = { content: u1014, status: 'loaded', queue: [] };
-
 import u1015 from '!!raw-loader!../../../../../public/img/icons/unicons/arrows-h.svg';
-cacheStore[iconRoot + 'unicons/arrows-h.svg'] = { content: u1015, status: 'loaded', queue: [] };
-
 import u1016 from '!!raw-loader!../../../../../public/img/icons/unicons/backward.svg';
-cacheStore[iconRoot + 'unicons/backward.svg'] = { content: u1016, status: 'loaded', queue: [] };
-
 import u1017 from '!!raw-loader!../../../../../public/img/icons/unicons/bars.svg';
-cacheStore[iconRoot + 'unicons/bars.svg'] = { content: u1017, status: 'loaded', queue: [] };
-
 import u1018 from '!!raw-loader!../../../../../public/img/icons/unicons/bell.svg';
-cacheStore[iconRoot + 'unicons/bell.svg'] = { content: u1018, status: 'loaded', queue: [] };
-
 import u1019 from '!!raw-loader!../../../../../public/img/icons/unicons/bell-slash.svg';
-cacheStore[iconRoot + 'unicons/bell-slash.svg'] = { content: u1019, status: 'loaded', queue: [] };
-
 import u1020 from '!!raw-loader!../../../../../public/img/icons/unicons/bolt.svg';
-cacheStore[iconRoot + 'unicons/bolt.svg'] = { content: u1020, status: 'loaded', queue: [] };
-
 import u1021 from '!!raw-loader!../../../../../public/img/icons/unicons/book.svg';
-cacheStore[iconRoot + 'unicons/book.svg'] = { content: u1021, status: 'loaded', queue: [] };
-
 import u1022 from '!!raw-loader!../../../../../public/img/icons/unicons/book-open.svg';
-cacheStore[iconRoot + 'unicons/book-open.svg'] = { content: u1022, status: 'loaded', queue: [] };
-
 import u1023 from '!!raw-loader!../../../../../public/img/icons/unicons/brackets-curly.svg';
-cacheStore[iconRoot + 'unicons/brackets-curly.svg'] = { content: u1023, status: 'loaded', queue: [] };
-
 import u1024 from '!!raw-loader!../../../../../public/img/icons/unicons/bug.svg';
-cacheStore[iconRoot + 'unicons/bug.svg'] = { content: u1024, status: 'loaded', queue: [] };
-
 import u1025 from '!!raw-loader!../../../../../public/img/icons/unicons/building.svg';
-cacheStore[iconRoot + 'unicons/building.svg'] = { content: u1025, status: 'loaded', queue: [] };
-
 import u1026 from '!!raw-loader!../../../../../public/img/icons/unicons/calculator-alt.svg';
-cacheStore[iconRoot + 'unicons/calculator-alt.svg'] = { content: u1026, status: 'loaded', queue: [] };
-
 import u1027 from '!!raw-loader!../../../../../public/img/icons/unicons/calendar-alt.svg';
-cacheStore[iconRoot + 'unicons/calendar-alt.svg'] = { content: u1027, status: 'loaded', queue: [] };
-
 import u1028 from '!!raw-loader!../../../../../public/img/icons/unicons/camera.svg';
-cacheStore[iconRoot + 'unicons/camera.svg'] = { content: u1028, status: 'loaded', queue: [] };
-
 import u1029 from '!!raw-loader!../../../../../public/img/icons/unicons/channel-add.svg';
-cacheStore[iconRoot + 'unicons/channel-add.svg'] = { content: u1029, status: 'loaded', queue: [] };
-
 import u1030 from '!!raw-loader!../../../../../public/img/icons/unicons/chart-line.svg';
-cacheStore[iconRoot + 'unicons/chart-line.svg'] = { content: u1030, status: 'loaded', queue: [] };
-
 import u1031 from '!!raw-loader!../../../../../public/img/icons/unicons/check.svg';
-cacheStore[iconRoot + 'unicons/check.svg'] = { content: u1031, status: 'loaded', queue: [] };
-
 import u1032 from '!!raw-loader!../../../../../public/img/icons/unicons/check-circle.svg';
-cacheStore[iconRoot + 'unicons/check-circle.svg'] = { content: u1032, status: 'loaded', queue: [] };
-
 import u1033 from '!!raw-loader!../../../../../public/img/icons/unicons/circle.svg';
-cacheStore[iconRoot + 'unicons/circle.svg'] = { content: u1033, status: 'loaded', queue: [] };
-
 import u1034 from '!!raw-loader!../../../../../public/img/icons/unicons/clipboard-alt.svg';
-cacheStore[iconRoot + 'unicons/clipboard-alt.svg'] = { content: u1034, status: 'loaded', queue: [] };
-
 import u1035 from '!!raw-loader!../../../../../public/img/icons/unicons/clock-nine.svg';
-cacheStore[iconRoot + 'unicons/clock-nine.svg'] = { content: u1035, status: 'loaded', queue: [] };
-
 import u1036 from '!!raw-loader!../../../../../public/img/icons/unicons/cloud.svg';
-cacheStore[iconRoot + 'unicons/cloud.svg'] = { content: u1036, status: 'loaded', queue: [] };
-
 import u1037 from '!!raw-loader!../../../../../public/img/icons/unicons/cloud-download.svg';
-cacheStore[iconRoot + 'unicons/cloud-download.svg'] = { content: u1037, status: 'loaded', queue: [] };
-
 import u1038 from '!!raw-loader!../../../../../public/img/icons/unicons/code-branch.svg';
-cacheStore[iconRoot + 'unicons/code-branch.svg'] = { content: u1038, status: 'loaded', queue: [] };
-
 import u1039 from '!!raw-loader!../../../../../public/img/icons/unicons/cog.svg';
-cacheStore[iconRoot + 'unicons/cog.svg'] = { content: u1039, status: 'loaded', queue: [] };
-
 import u1040 from '!!raw-loader!../../../../../public/img/icons/unicons/columns.svg';
-cacheStore[iconRoot + 'unicons/columns.svg'] = { content: u1040, status: 'loaded', queue: [] };
-
 import u1041 from '!!raw-loader!../../../../../public/img/icons/unicons/comment-alt.svg';
-cacheStore[iconRoot + 'unicons/comment-alt.svg'] = { content: u1041, status: 'loaded', queue: [] };
-
 import u1042 from '!!raw-loader!../../../../../public/img/icons/unicons/comment-alt-share.svg';
-cacheStore[iconRoot + 'unicons/comment-alt-share.svg'] = { content: u1042, status: 'loaded', queue: [] };
-
 import u1043 from '!!raw-loader!../../../../../public/img/icons/unicons/comments-alt.svg';
-cacheStore[iconRoot + 'unicons/comments-alt.svg'] = { content: u1043, status: 'loaded', queue: [] };
-
 import u1044 from '!!raw-loader!../../../../../public/img/icons/unicons/compass.svg';
-cacheStore[iconRoot + 'unicons/compass.svg'] = { content: u1044, status: 'loaded', queue: [] };
-
 import u1045 from '!!raw-loader!../../../../../public/img/icons/unicons/copy.svg';
-cacheStore[iconRoot + 'unicons/copy.svg'] = { content: u1045, status: 'loaded', queue: [] };
-
 import u1046 from '!!raw-loader!../../../../../public/img/icons/unicons/cube.svg';
-cacheStore[iconRoot + 'unicons/cube.svg'] = { content: u1046, status: 'loaded', queue: [] };
-
 import u1047 from '!!raw-loader!../../../../../public/img/icons/unicons/dashboard.svg';
-cacheStore[iconRoot + 'unicons/dashboard.svg'] = { content: u1047, status: 'loaded', queue: [] };
-
 import u1048 from '!!raw-loader!../../../../../public/img/icons/unicons/database.svg';
-cacheStore[iconRoot + 'unicons/database.svg'] = { content: u1048, status: 'loaded', queue: [] };
-
 import u1049 from '!!raw-loader!../../../../../public/img/icons/unicons/document-info.svg';
-cacheStore[iconRoot + 'unicons/document-info.svg'] = { content: u1049, status: 'loaded', queue: [] };
-
 import u1050 from '!!raw-loader!../../../../../public/img/icons/unicons/download-alt.svg';
-cacheStore[iconRoot + 'unicons/download-alt.svg'] = { content: u1050, status: 'loaded', queue: [] };
-
 import u1051 from '!!raw-loader!../../../../../public/img/icons/unicons/draggabledots.svg';
-cacheStore[iconRoot + 'unicons/draggabledots.svg'] = { content: u1051, status: 'loaded', queue: [] };
-
 import u1052 from '!!raw-loader!../../../../../public/img/icons/unicons/edit.svg';
-cacheStore[iconRoot + 'unicons/edit.svg'] = { content: u1052, status: 'loaded', queue: [] };
-
 import u1053 from '!!raw-loader!../../../../../public/img/icons/unicons/ellipsis-v.svg';
-cacheStore[iconRoot + 'unicons/ellipsis-v.svg'] = { content: u1053, status: 'loaded', queue: [] };
-
 import u1054 from '!!raw-loader!../../../../../public/img/icons/unicons/envelope.svg';
-cacheStore[iconRoot + 'unicons/envelope.svg'] = { content: u1054, status: 'loaded', queue: [] };
-
 import u1055 from '!!raw-loader!../../../../../public/img/icons/unicons/exchange-alt.svg';
-cacheStore[iconRoot + 'unicons/exchange-alt.svg'] = { content: u1055, status: 'loaded', queue: [] };
-
 import u1056 from '!!raw-loader!../../../../../public/img/icons/unicons/exclamation-triangle.svg';
-cacheStore[iconRoot + 'unicons/exclamation-triangle.svg'] = { content: u1056, status: 'loaded', queue: [] };
-
 import u1057 from '!!raw-loader!../../../../../public/img/icons/unicons/external-link-alt.svg';
-cacheStore[iconRoot + 'unicons/external-link-alt.svg'] = { content: u1057, status: 'loaded', queue: [] };
-
 import u1058 from '!!raw-loader!../../../../../public/img/icons/unicons/eye.svg';
-cacheStore[iconRoot + 'unicons/eye.svg'] = { content: u1058, status: 'loaded', queue: [] };
-
 import u1059 from '!!raw-loader!../../../../../public/img/icons/unicons/eye-slash.svg';
-cacheStore[iconRoot + 'unicons/eye-slash.svg'] = { content: u1059, status: 'loaded', queue: [] };
-
 import u1060 from '!!raw-loader!../../../../../public/img/icons/unicons/file-alt.svg';
-cacheStore[iconRoot + 'unicons/file-alt.svg'] = { content: u1060, status: 'loaded', queue: [] };
-
 import u1061 from '!!raw-loader!../../../../../public/img/icons/unicons/file-blank.svg';
-cacheStore[iconRoot + 'unicons/file-blank.svg'] = { content: u1061, status: 'loaded', queue: [] };
-
 import u1062 from '!!raw-loader!../../../../../public/img/icons/unicons/filter.svg';
-cacheStore[iconRoot + 'unicons/filter.svg'] = { content: u1062, status: 'loaded', queue: [] };
-
 import u1063 from '!!raw-loader!../../../../../public/img/icons/unicons/folder.svg';
-cacheStore[iconRoot + 'unicons/folder.svg'] = { content: u1063, status: 'loaded', queue: [] };
-
 import u1064 from '!!raw-loader!../../../../../public/img/icons/unicons/folder-open.svg';
-cacheStore[iconRoot + 'unicons/folder-open.svg'] = { content: u1064, status: 'loaded', queue: [] };
-
 import u1065 from '!!raw-loader!../../../../../public/img/icons/unicons/folder-plus.svg';
-cacheStore[iconRoot + 'unicons/folder-plus.svg'] = { content: u1065, status: 'loaded', queue: [] };
-
 import u1066 from '!!raw-loader!../../../../../public/img/icons/unicons/folder-upload.svg';
-cacheStore[iconRoot + 'unicons/folder-upload.svg'] = { content: u1066, status: 'loaded', queue: [] };
-
 import u1067 from '!!raw-loader!../../../../../public/img/icons/unicons/forward.svg';
-cacheStore[iconRoot + 'unicons/forward.svg'] = { content: u1067, status: 'loaded', queue: [] };
-
 import u1068 from '!!raw-loader!../../../../../public/img/icons/unicons/graph-bar.svg';
-cacheStore[iconRoot + 'unicons/graph-bar.svg'] = { content: u1068, status: 'loaded', queue: [] };
-
 import u1069 from '!!raw-loader!../../../../../public/img/icons/unicons/history.svg';
-cacheStore[iconRoot + 'unicons/history.svg'] = { content: u1069, status: 'loaded', queue: [] };
-
 import u1070 from '!!raw-loader!../../../../../public/img/icons/unicons/home-alt.svg';
-cacheStore[iconRoot + 'unicons/home-alt.svg'] = { content: u1070, status: 'loaded', queue: [] };
-
 import u1071 from '!!raw-loader!../../../../../public/img/icons/unicons/import.svg';
-cacheStore[iconRoot + 'unicons/import.svg'] = { content: u1071, status: 'loaded', queue: [] };
-
 import u1072 from '!!raw-loader!../../../../../public/img/icons/unicons/info.svg';
-cacheStore[iconRoot + 'unicons/info.svg'] = { content: u1072, status: 'loaded', queue: [] };
-
 import u1073 from '!!raw-loader!../../../../../public/img/icons/unicons/info-circle.svg';
-cacheStore[iconRoot + 'unicons/info-circle.svg'] = { content: u1073, status: 'loaded', queue: [] };
-
 import u1074 from '!!raw-loader!../../../../../public/img/icons/unicons/key-skeleton-alt.svg';
-cacheStore[iconRoot + 'unicons/key-skeleton-alt.svg'] = { content: u1074, status: 'loaded', queue: [] };
-
 import u1075 from '!!raw-loader!../../../../../public/img/icons/unicons/keyboard.svg';
-cacheStore[iconRoot + 'unicons/keyboard.svg'] = { content: u1075, status: 'loaded', queue: [] };
-
 import u1076 from '!!raw-loader!../../../../../public/img/icons/unicons/link.svg';
-cacheStore[iconRoot + 'unicons/link.svg'] = { content: u1076, status: 'loaded', queue: [] };
-
 import u1077 from '!!raw-loader!../../../../../public/img/icons/unicons/list-ul.svg';
-cacheStore[iconRoot + 'unicons/list-ul.svg'] = { content: u1077, status: 'loaded', queue: [] };
-
 import u1078 from '!!raw-loader!../../../../../public/img/icons/unicons/lock.svg';
-cacheStore[iconRoot + 'unicons/lock.svg'] = { content: u1078, status: 'loaded', queue: [] };
-
 import u1079 from '!!raw-loader!../../../../../public/img/icons/unicons/minus.svg';
-cacheStore[iconRoot + 'unicons/minus.svg'] = { content: u1079, status: 'loaded', queue: [] };
-
 import u1080 from '!!raw-loader!../../../../../public/img/icons/unicons/minus-circle.svg';
-cacheStore[iconRoot + 'unicons/minus-circle.svg'] = { content: u1080, status: 'loaded', queue: [] };
-
 import u1081 from '!!raw-loader!../../../../../public/img/icons/unicons/mobile-android.svg';
-cacheStore[iconRoot + 'unicons/mobile-android.svg'] = { content: u1081, status: 'loaded', queue: [] };
-
 import u1082 from '!!raw-loader!../../../../../public/img/icons/unicons/monitor.svg';
-cacheStore[iconRoot + 'unicons/monitor.svg'] = { content: u1082, status: 'loaded', queue: [] };
-
 import u1083 from '!!raw-loader!../../../../../public/img/icons/unicons/pause.svg';
-cacheStore[iconRoot + 'unicons/pause.svg'] = { content: u1083, status: 'loaded', queue: [] };
-
 import u1084 from '!!raw-loader!../../../../../public/img/icons/unicons/pen.svg';
-cacheStore[iconRoot + 'unicons/pen.svg'] = { content: u1084, status: 'loaded', queue: [] };
-
 import u1085 from '!!raw-loader!../../../../../public/img/icons/unicons/play.svg';
-cacheStore[iconRoot + 'unicons/play.svg'] = { content: u1085, status: 'loaded', queue: [] };
-
 import u1086 from '!!raw-loader!../../../../../public/img/icons/unicons/plug.svg';
-cacheStore[iconRoot + 'unicons/plug.svg'] = { content: u1086, status: 'loaded', queue: [] };
-
 import u1087 from '!!raw-loader!../../../../../public/img/icons/unicons/plus.svg';
-cacheStore[iconRoot + 'unicons/plus.svg'] = { content: u1087, status: 'loaded', queue: [] };
-
 import u1088 from '!!raw-loader!../../../../../public/img/icons/unicons/plus-circle.svg';
-cacheStore[iconRoot + 'unicons/plus-circle.svg'] = { content: u1088, status: 'loaded', queue: [] };
-
 import u1089 from '!!raw-loader!../../../../../public/img/icons/unicons/power.svg';
-cacheStore[iconRoot + 'unicons/power.svg'] = { content: u1089, status: 'loaded', queue: [] };
-
 import u1090 from '!!raw-loader!../../../../../public/img/icons/unicons/presentation-play.svg';
-cacheStore[iconRoot + 'unicons/presentation-play.svg'] = { content: u1090, status: 'loaded', queue: [] };
-
 import u1091 from '!!raw-loader!../../../../../public/img/icons/unicons/process.svg';
-cacheStore[iconRoot + 'unicons/process.svg'] = { content: u1091, status: 'loaded', queue: [] };
-
 import u1092 from '!!raw-loader!../../../../../public/img/icons/unicons/question-circle.svg';
-cacheStore[iconRoot + 'unicons/question-circle.svg'] = { content: u1092, status: 'loaded', queue: [] };
-
 import u1093 from '!!raw-loader!../../../../../public/img/icons/unicons/repeat.svg';
-cacheStore[iconRoot + 'unicons/repeat.svg'] = { content: u1093, status: 'loaded', queue: [] };
-
 import u1094 from '!!raw-loader!../../../../../public/img/icons/unicons/rocket.svg';
-cacheStore[iconRoot + 'unicons/rocket.svg'] = { content: u1094, status: 'loaded', queue: [] };
-
 import u1095 from '!!raw-loader!../../../../../public/img/icons/unicons/save.svg';
-cacheStore[iconRoot + 'unicons/save.svg'] = { content: u1095, status: 'loaded', queue: [] };
-
 import u1096 from '!!raw-loader!../../../../../public/img/icons/unicons/search.svg';
-cacheStore[iconRoot + 'unicons/search.svg'] = { content: u1096, status: 'loaded', queue: [] };
-
 import u1097 from '!!raw-loader!../../../../../public/img/icons/unicons/search-minus.svg';
-cacheStore[iconRoot + 'unicons/search-minus.svg'] = { content: u1097, status: 'loaded', queue: [] };
-
 import u1098 from '!!raw-loader!../../../../../public/img/icons/unicons/search-plus.svg';
-cacheStore[iconRoot + 'unicons/search-plus.svg'] = { content: u1098, status: 'loaded', queue: [] };
-
 import u1099 from '!!raw-loader!../../../../../public/img/icons/unicons/share-alt.svg';
-cacheStore[iconRoot + 'unicons/share-alt.svg'] = { content: u1099, status: 'loaded', queue: [] };
-
 import u1100 from '!!raw-loader!../../../../../public/img/icons/unicons/shield.svg';
-cacheStore[iconRoot + 'unicons/shield.svg'] = { content: u1100, status: 'loaded', queue: [] };
-
 import u1101 from '!!raw-loader!../../../../../public/img/icons/unicons/signal.svg';
-cacheStore[iconRoot + 'unicons/signal.svg'] = { content: u1101, status: 'loaded', queue: [] };
-
 import u1102 from '!!raw-loader!../../../../../public/img/icons/unicons/signin.svg';
-cacheStore[iconRoot + 'unicons/signin.svg'] = { content: u1102, status: 'loaded', queue: [] };
-
 import u1103 from '!!raw-loader!../../../../../public/img/icons/unicons/signout.svg';
-cacheStore[iconRoot + 'unicons/signout.svg'] = { content: u1103, status: 'loaded', queue: [] };
-
 import u1104 from '!!raw-loader!../../../../../public/img/icons/unicons/sitemap.svg';
-cacheStore[iconRoot + 'unicons/sitemap.svg'] = { content: u1104, status: 'loaded', queue: [] };
-
 import u1105 from '!!raw-loader!../../../../../public/img/icons/unicons/slack.svg';
-cacheStore[iconRoot + 'unicons/slack.svg'] = { content: u1105, status: 'loaded', queue: [] };
-
 import u1106 from '!!raw-loader!../../../../../public/img/icons/unicons/sliders-v-alt.svg';
-cacheStore[iconRoot + 'unicons/sliders-v-alt.svg'] = { content: u1106, status: 'loaded', queue: [] };
-
 import u1107 from '!!raw-loader!../../../../../public/img/icons/unicons/sort-amount-down.svg';
-cacheStore[iconRoot + 'unicons/sort-amount-down.svg'] = { content: u1107, status: 'loaded', queue: [] };
-
 import u1108 from '!!raw-loader!../../../../../public/img/icons/unicons/sort-amount-up.svg';
-cacheStore[iconRoot + 'unicons/sort-amount-up.svg'] = { content: u1108, status: 'loaded', queue: [] };
-
 import u1109 from '!!raw-loader!../../../../../public/img/icons/unicons/square-shape.svg';
-cacheStore[iconRoot + 'unicons/square-shape.svg'] = { content: u1109, status: 'loaded', queue: [] };
-
 import u1110 from '!!raw-loader!../../../../../public/img/icons/unicons/star.svg';
-cacheStore[iconRoot + 'unicons/star.svg'] = { content: u1110, status: 'loaded', queue: [] };
-
 import u1111 from '!!raw-loader!../../../../../public/img/icons/unicons/step-backward.svg';
-cacheStore[iconRoot + 'unicons/step-backward.svg'] = { content: u1111, status: 'loaded', queue: [] };
-
 import u1112 from '!!raw-loader!../../../../../public/img/icons/unicons/sync.svg';
-cacheStore[iconRoot + 'unicons/sync.svg'] = { content: u1112, status: 'loaded', queue: [] };
-
 import u1113 from '!!raw-loader!../../../../../public/img/icons/unicons/table.svg';
-cacheStore[iconRoot + 'unicons/table.svg'] = { content: u1113, status: 'loaded', queue: [] };
-
 import u1114 from '!!raw-loader!../../../../../public/img/icons/unicons/tag-alt.svg';
-cacheStore[iconRoot + 'unicons/tag-alt.svg'] = { content: u1114, status: 'loaded', queue: [] };
-
 import u1115 from '!!raw-loader!../../../../../public/img/icons/unicons/times.svg';
-cacheStore[iconRoot + 'unicons/times.svg'] = { content: u1115, status: 'loaded', queue: [] };
-
 import u1116 from '!!raw-loader!../../../../../public/img/icons/unicons/trash-alt.svg';
-cacheStore[iconRoot + 'unicons/trash-alt.svg'] = { content: u1116, status: 'loaded', queue: [] };
-
 import u1117 from '!!raw-loader!../../../../../public/img/icons/unicons/unlock.svg';
-cacheStore[iconRoot + 'unicons/unlock.svg'] = { content: u1117, status: 'loaded', queue: [] };
-
 import u1118 from '!!raw-loader!../../../../../public/img/icons/unicons/upload.svg';
-cacheStore[iconRoot + 'unicons/upload.svg'] = { content: u1118, status: 'loaded', queue: [] };
-
 import u1119 from '!!raw-loader!../../../../../public/img/icons/unicons/user.svg';
-cacheStore[iconRoot + 'unicons/user.svg'] = { content: u1119, status: 'loaded', queue: [] };
-
 import u1120 from '!!raw-loader!../../../../../public/img/icons/unicons/users-alt.svg';
-cacheStore[iconRoot + 'unicons/users-alt.svg'] = { content: u1120, status: 'loaded', queue: [] };
-
 import u1121 from '!!raw-loader!../../../../../public/img/icons/unicons/wrap-text.svg';
-cacheStore[iconRoot + 'unicons/wrap-text.svg'] = { content: u1121, status: 'loaded', queue: [] };
-
 import u1122 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-after.svg';
-cacheStore[iconRoot + 'custom/gf-bar-alignment-after.svg'] = { content: u1122, status: 'loaded', queue: [] };
-
 import u1123 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-before.svg';
-cacheStore[iconRoot + 'custom/gf-bar-alignment-before.svg'] = { content: u1123, status: 'loaded', queue: [] };
-
 import u1124 from '!!raw-loader!../../../../../public/img/icons/custom/gf-bar-alignment-center.svg';
-cacheStore[iconRoot + 'custom/gf-bar-alignment-center.svg'] = { content: u1124, status: 'loaded', queue: [] };
-
 import u1125 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-linear.svg';
-cacheStore[iconRoot + 'custom/gf-interpolation-linear.svg'] = { content: u1125, status: 'loaded', queue: [] };
-
 import u1126 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-smooth.svg';
-cacheStore[iconRoot + 'custom/gf-interpolation-smooth.svg'] = { content: u1126, status: 'loaded', queue: [] };
-
 import u1127 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-step-after.svg';
-cacheStore[iconRoot + 'custom/gf-interpolation-step-after.svg'] = { content: u1127, status: 'loaded', queue: [] };
-
 import u1128 from '!!raw-loader!../../../../../public/img/icons/custom/gf-interpolation-step-before.svg';
-cacheStore[iconRoot + 'custom/gf-interpolation-step-before.svg'] = { content: u1128, status: 'loaded', queue: [] };
-
 import u1129 from '!!raw-loader!../../../../../public/img/icons/custom/gf-logs.svg';
-cacheStore[iconRoot + 'custom/gf-logs.svg'] = { content: u1129, status: 'loaded', queue: [] };
-
 import u1130 from '!!raw-loader!../../../../../public/img/icons/mono/favorite.svg';
-cacheStore[iconRoot + 'mono/favorite.svg'] = { content: u1130, status: 'loaded', queue: [] };
-
 import u1131 from '!!raw-loader!../../../../../public/img/icons/mono/grafana.svg';
-cacheStore[iconRoot + 'mono/grafana.svg'] = { content: u1131, status: 'loaded', queue: [] };
-
 import u1132 from '!!raw-loader!../../../../../public/img/icons/mono/heart.svg';
-cacheStore[iconRoot + 'mono/heart.svg'] = { content: u1132, status: 'loaded', queue: [] };
-
 import u1133 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break.svg';
-cacheStore[iconRoot + 'mono/heart-break.svg'] = { content: u1133, status: 'loaded', queue: [] };
-
 import u1134 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
-cacheStore[iconRoot + 'mono/panel-add.svg'] = { content: u1134, status: 'loaded', queue: [] };
-
 import u1135 from '!!raw-loader!../../../../../public/img/icons/mono/reusable-panel.svg';
-cacheStore[iconRoot + 'mono/reusable-panel.svg'] = { content: u1135, status: 'loaded', queue: [] };
+
+function cacheItem(content: string, path: string) {
+  cacheStore[iconRoot + path] = { content, status: 'loaded', queue: [] };
+}
+
+export function initIconCache() {
+  cacheInitialized = true;
+
+  // This function needs to be called after index.js loads to give the
+  // application time to modify __webpack_public_path__ with a CDN path
+  const grafanaPublicPath = (window as any).__grafana_public_path__;
+  if (grafanaPublicPath) {
+    iconRoot = grafanaPublicPath + 'img/icons/';
+  }
+
+  cacheItem(u1001, 'unicons/angle-double-down.svg');
+  cacheItem(u1002, 'unicons/angle-double-right.svg');
+  cacheItem(u1003, 'unicons/angle-down.svg');
+  cacheItem(u1004, 'unicons/angle-left.svg');
+  cacheItem(u1005, 'unicons/angle-right.svg');
+  cacheItem(u1006, 'unicons/angle-up.svg');
+  cacheItem(u1007, 'unicons/apps.svg');
+  cacheItem(u1008, 'unicons/arrow.svg');
+  cacheItem(u1009, 'unicons/arrow-down.svg');
+  cacheItem(u1010, 'unicons/arrow-from-right.svg');
+  cacheItem(u1011, 'unicons/arrow-left.svg');
+  cacheItem(u1012, 'unicons/arrow-random.svg');
+  cacheItem(u1013, 'unicons/arrow-right.svg');
+  cacheItem(u1014, 'unicons/arrow-up.svg');
+  cacheItem(u1015, 'unicons/arrows-h.svg');
+  cacheItem(u1016, 'unicons/backward.svg');
+  cacheItem(u1017, 'unicons/bars.svg');
+  cacheItem(u1018, 'unicons/bell.svg');
+  cacheItem(u1019, 'unicons/bell-slash.svg');
+  cacheItem(u1020, 'unicons/bolt.svg');
+  cacheItem(u1021, 'unicons/book.svg');
+  cacheItem(u1022, 'unicons/book-open.svg');
+  cacheItem(u1023, 'unicons/brackets-curly.svg');
+  cacheItem(u1024, 'unicons/bug.svg');
+  cacheItem(u1025, 'unicons/building.svg');
+  cacheItem(u1026, 'unicons/calculator-alt.svg');
+  cacheItem(u1027, 'unicons/calendar-alt.svg');
+  cacheItem(u1028, 'unicons/camera.svg');
+  cacheItem(u1029, 'unicons/channel-add.svg');
+  cacheItem(u1030, 'unicons/chart-line.svg');
+  cacheItem(u1031, 'unicons/check.svg');
+  cacheItem(u1032, 'unicons/check-circle.svg');
+  cacheItem(u1033, 'unicons/circle.svg');
+  cacheItem(u1034, 'unicons/clipboard-alt.svg');
+  cacheItem(u1035, 'unicons/clock-nine.svg');
+  cacheItem(u1036, 'unicons/cloud.svg');
+  cacheItem(u1037, 'unicons/cloud-download.svg');
+  cacheItem(u1038, 'unicons/code-branch.svg');
+  cacheItem(u1039, 'unicons/cog.svg');
+  cacheItem(u1040, 'unicons/columns.svg');
+  cacheItem(u1041, 'unicons/comment-alt.svg');
+  cacheItem(u1042, 'unicons/comment-alt-share.svg');
+  cacheItem(u1043, 'unicons/comments-alt.svg');
+  cacheItem(u1044, 'unicons/compass.svg');
+  cacheItem(u1045, 'unicons/copy.svg');
+  cacheItem(u1046, 'unicons/cube.svg');
+  cacheItem(u1047, 'unicons/dashboard.svg');
+  cacheItem(u1048, 'unicons/database.svg');
+  cacheItem(u1049, 'unicons/document-info.svg');
+  cacheItem(u1050, 'unicons/download-alt.svg');
+  cacheItem(u1051, 'unicons/draggabledots.svg');
+  cacheItem(u1052, 'unicons/edit.svg');
+  cacheItem(u1053, 'unicons/ellipsis-v.svg');
+  cacheItem(u1054, 'unicons/envelope.svg');
+  cacheItem(u1055, 'unicons/exchange-alt.svg');
+  cacheItem(u1056, 'unicons/exclamation-triangle.svg');
+  cacheItem(u1057, 'unicons/external-link-alt.svg');
+  cacheItem(u1058, 'unicons/eye.svg');
+  cacheItem(u1059, 'unicons/eye-slash.svg');
+  cacheItem(u1060, 'unicons/file-alt.svg');
+  cacheItem(u1061, 'unicons/file-blank.svg');
+  cacheItem(u1062, 'unicons/filter.svg');
+  cacheItem(u1063, 'unicons/folder.svg');
+  cacheItem(u1064, 'unicons/folder-open.svg');
+  cacheItem(u1065, 'unicons/folder-plus.svg');
+  cacheItem(u1066, 'unicons/folder-upload.svg');
+  cacheItem(u1067, 'unicons/forward.svg');
+  cacheItem(u1068, 'unicons/graph-bar.svg');
+  cacheItem(u1069, 'unicons/history.svg');
+  cacheItem(u1070, 'unicons/home-alt.svg');
+  cacheItem(u1071, 'unicons/import.svg');
+  cacheItem(u1072, 'unicons/info.svg');
+  cacheItem(u1073, 'unicons/info-circle.svg');
+  cacheItem(u1074, 'unicons/key-skeleton-alt.svg');
+  cacheItem(u1075, 'unicons/keyboard.svg');
+  cacheItem(u1076, 'unicons/link.svg');
+  cacheItem(u1077, 'unicons/list-ul.svg');
+  cacheItem(u1078, 'unicons/lock.svg');
+  cacheItem(u1079, 'unicons/minus.svg');
+  cacheItem(u1080, 'unicons/minus-circle.svg');
+  cacheItem(u1081, 'unicons/mobile-android.svg');
+  cacheItem(u1082, 'unicons/monitor.svg');
+  cacheItem(u1083, 'unicons/pause.svg');
+  cacheItem(u1084, 'unicons/pen.svg');
+  cacheItem(u1085, 'unicons/play.svg');
+  cacheItem(u1086, 'unicons/plug.svg');
+  cacheItem(u1087, 'unicons/plus.svg');
+  cacheItem(u1088, 'unicons/plus-circle.svg');
+  cacheItem(u1089, 'unicons/power.svg');
+  cacheItem(u1090, 'unicons/presentation-play.svg');
+  cacheItem(u1091, 'unicons/process.svg');
+  cacheItem(u1092, 'unicons/question-circle.svg');
+  cacheItem(u1093, 'unicons/repeat.svg');
+  cacheItem(u1094, 'unicons/rocket.svg');
+  cacheItem(u1095, 'unicons/save.svg');
+  cacheItem(u1096, 'unicons/search.svg');
+  cacheItem(u1097, 'unicons/search-minus.svg');
+  cacheItem(u1098, 'unicons/search-plus.svg');
+  cacheItem(u1099, 'unicons/share-alt.svg');
+  cacheItem(u1100, 'unicons/shield.svg');
+  cacheItem(u1101, 'unicons/signal.svg');
+  cacheItem(u1102, 'unicons/signin.svg');
+  cacheItem(u1103, 'unicons/signout.svg');
+  cacheItem(u1104, 'unicons/sitemap.svg');
+  cacheItem(u1105, 'unicons/slack.svg');
+  cacheItem(u1106, 'unicons/sliders-v-alt.svg');
+  cacheItem(u1107, 'unicons/sort-amount-down.svg');
+  cacheItem(u1108, 'unicons/sort-amount-up.svg');
+  cacheItem(u1109, 'unicons/square-shape.svg');
+  cacheItem(u1110, 'unicons/star.svg');
+  cacheItem(u1111, 'unicons/step-backward.svg');
+  cacheItem(u1112, 'unicons/sync.svg');
+  cacheItem(u1113, 'unicons/table.svg');
+  cacheItem(u1114, 'unicons/tag-alt.svg');
+  cacheItem(u1115, 'unicons/times.svg');
+  cacheItem(u1116, 'unicons/trash-alt.svg');
+  cacheItem(u1117, 'unicons/unlock.svg');
+  cacheItem(u1118, 'unicons/upload.svg');
+  cacheItem(u1119, 'unicons/user.svg');
+  cacheItem(u1120, 'unicons/users-alt.svg');
+  cacheItem(u1121, 'unicons/wrap-text.svg');
+  cacheItem(u1122, 'custom/gf-bar-alignment-after.svg');
+  cacheItem(u1123, 'custom/gf-bar-alignment-before.svg');
+  cacheItem(u1124, 'custom/gf-bar-alignment-center.svg');
+  cacheItem(u1125, 'custom/gf-interpolation-linear.svg');
+  cacheItem(u1126, 'custom/gf-interpolation-smooth.svg');
+  cacheItem(u1127, 'custom/gf-interpolation-step-after.svg');
+  cacheItem(u1128, 'custom/gf-interpolation-step-before.svg');
+  cacheItem(u1129, 'custom/gf-logs.svg');
+  cacheItem(u1130, 'mono/favorite.svg');
+  cacheItem(u1131, 'mono/grafana.svg');
+  cacheItem(u1132, 'mono/heart.svg');
+  cacheItem(u1133, 'mono/heart-break.svg');
+  cacheItem(u1134, 'mono/panel-add.svg');
+  cacheItem(u1135, 'mono/reusable-panel.svg');
+}
