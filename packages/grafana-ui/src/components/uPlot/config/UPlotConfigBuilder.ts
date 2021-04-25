@@ -7,6 +7,7 @@ import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
 import { defaultsDeep } from 'lodash';
 import { DefaultTimeZone, getTimeZoneInfo } from '@grafana/data';
 import { pluginLog } from '../utils';
+import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -21,6 +22,8 @@ export class UPlotConfigBuilder {
   private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
+  // to prevent more than one threshold per scale
+  private thresholds: Record<string, UPlotThresholdOptions> = {};
 
   constructor(getTimeZone = () => DefaultTimeZone) {
     this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
@@ -34,6 +37,13 @@ export class UPlotConfigBuilder {
     }
 
     this.hooks[type]!.push(hook as any);
+  }
+
+  addThresholds(options: UPlotThresholdOptions) {
+    if (!this.thresholds[options.scaleKey]) {
+      this.thresholds[options.scaleKey] = options;
+      this.addHook('draw', getThresholdsDrawHook(options));
+    }
   }
 
   addAxis(props: AxisProps) {

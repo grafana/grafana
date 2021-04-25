@@ -190,6 +190,16 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       addStackingConfig(builder, cfg.stacking);
       addAxisConfig(builder, cfg);
       addHideFrom(builder);
+
+      builder.addRadio({
+        path: 'thresholds.mode',
+        name: 'Show thresholds',
+        category: categoryStyles,
+        defaultValue: graphFieldOptions.thresholdsMode[0].value,
+        settings: {
+          options: graphFieldOptions.thresholdsMode,
+        },
+      });
     },
   };
 }

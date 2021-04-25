@@ -195,6 +195,22 @@ export interface StackingConfig {
 /**
  * @alpha
  */
+export enum GraphTresholdsDisplayMode {
+  None = 'none',
+  Line = 'line',
+  Area = 'area',
+}
+
+/**
+ * @alpha
+ */
+export interface GraphThresholdsConfig {
+  mode: GraphTresholdsDisplayMode;
+}
+
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig
   extends LineConfig,
     FillConfig,
@@ -205,6 +221,7 @@ export interface GraphFieldConfig
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
   stacking?: StackingConfig;
+  thresholds?: GraphThresholdsConfig;
 }
 
 /**
@@ -254,4 +271,10 @@ export const graphFieldOptions = {
     { label: 'Off', value: StackingMode.None },
     { label: 'Normal', value: StackingMode.Normal },
   ] as Array<SelectableValue<StackingMode>>,
+
+  thresholdsMode: [
+    { label: 'Off', value: GraphTresholdsDisplayMode.None },
+    { label: 'Line', value: GraphTresholdsDisplayMode.Line },
+    { label: 'Area', value: GraphTresholdsDisplayMode.Area },
+  ] as Array<SelectableValue<GraphTresholdsDisplayMode>>,
 };

@@ -22,6 +22,7 @@ import {
   AxisPlacement,
   DrawStyle,
   GraphFieldConfig,
+  GraphTresholdsDisplayMode,
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
@@ -223,6 +224,19 @@ export function preparePlotConfigBuilder(
       fieldName: getFieldDisplayName(field, frame),
       hideInLegend: customConfig.hideFrom?.legend,
     });
+
+    // Render thresholds in graph
+    if (customConfig.thresholds && config.thresholds) {
+      const mode = customConfig.thresholds.mode ?? GraphTresholdsDisplayMode.None;
+      if (mode !== GraphTresholdsDisplayMode.None) {
+        builder.addThresholds({
+          config: customConfig.thresholds,
+          thresholds: config.thresholds,
+          scaleKey,
+          theme,
+        });
+      }
+    }
 
     collectStackingGroups(field, stackingGroups, seriesIndex);
   }
