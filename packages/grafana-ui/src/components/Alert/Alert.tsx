@@ -79,12 +79,13 @@ Alert.displayName = 'Alert';
 
 const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
   const color = theme.colors[severity];
+  const borderRadius = theme.shape.borderRadius();
 
   return {
     alert: css`
       flex-grow: 1;
       position: relative;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${borderRadius};
       display: flex;
       flex-direction: row;
       align-items: stretch;
@@ -106,6 +107,7 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
     icon: css`
       padding: ${theme.spacing(2, 3)};
       background: ${color.main};
+      border-radius: ${borderRadius} 0 0 ${borderRadius};
       color: ${color.contrastText};
       display: flex;
       align-items: center;
