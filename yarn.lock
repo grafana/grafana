@@ -14117,9 +14117,9 @@ hyphenate-style-name@^1.0.2:
   resolved "https://registry.yarnpkg.com/hyphenate-style-name/-/hyphenate-style-name-1.0.3.tgz#097bb7fa0b8f1a9cf0bd5c734cf95899981a9b48"
   integrity sha512-EcuixamT82oplpoJ2XU4pDtKGWQ7b00CD9f1ug9IaQ3p1bkHMiKCZ9ut9QDI6qsa6cpUuB+A/I+zLtdNK4n2DQ==
 
-"iconscout-unicons-tarball@https://github.com/grafana/icons/tarball/14e6856f7ce5a44d3e722b40c225482663cbfd66":
+"iconscout-unicons-tarball@https://github.com/grafana/icons/tarball/9728be621a4e7d891611149c9cd179e793f790a7":
   version "0.0.0"
-  resolved "https://github.com/grafana/icons/tarball/14e6856f7ce5a44d3e722b40c225482663cbfd66#416ef13f075fc9c7f5c4b722586fc9b69140c30d"
+  resolved "https://github.com/grafana/icons/tarball/9728be621a4e7d891611149c9cd179e793f790a7#5fbd1aa2b6a3d2510d400afd722bc833711a56d5"
 
 iconv-lite@0.4, iconv-lite@0.4.24, iconv-lite@^0.4.24, iconv-lite@^0.4.4, iconv-lite@^0.4.8, iconv-lite@~0.4.13:
   version "0.4.24"
