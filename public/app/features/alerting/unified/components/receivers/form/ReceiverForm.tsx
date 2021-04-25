@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { NotifierDTO } from 'app/types';
-import React from 'react';
-import { useForm, FormContext, NestDataObject, FieldError } from 'react-hook-form';
+import React, { useCallback } from 'react';
+import { useForm, FormContext, NestDataObject, FieldError, Validate } from 'react-hook-form';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
@@ -14,6 +14,7 @@ interface Props<R extends ChannelValues> {
   defaultItem: R;
   alertManagerSourceName: string;
   onSubmit: (values: ReceiverFormValues<R>) => void;
+  takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   initialValues?: ReceiverFormValues<R>;
 }
 
@@ -23,6 +24,7 @@ export function ReceiverForm<R extends ChannelValues>({
   notifiers,
   alertManagerSourceName,
   onSubmit,
+  takenReceiverNames,
 }: Props<ChannelValues>): JSX.Element {
   const styles = useStyles2(getStyles);
 
@@ -44,12 +46,24 @@ export function ReceiverForm<R extends ChannelValues>({
 
   const { items, append, remove } = useControlledFieldArray<R>('items', formAPI);
 
+  const validateNameIsAvailable: Validate = useCallback(
+    (name: string) =>
+      takenReceiverNames.map((name) => name.trim().toLowerCase()).includes(name.trim().toLowerCase())
+        ? 'Another receiver with this name already exists.'
+        : true,
+    [takenReceiverNames]
+  );
+
   return (
     <FormContext {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
-          <Input width={39} name="name" ref={register({ required: 'Name is required' })} />
+          <Input
+            width={39}
+            name="name"
+            ref={register({ required: 'Name is required', validate: { nameIsAvailable: validateNameIsAvailable } })}
+          />
         </Field>
         {items.map((item, index) => {
           const initialItem = initialValues?.items.find(({ __id }) => __id === item.__id);

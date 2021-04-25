@@ -4,13 +4,17 @@ import {
   GrafanaManagedReceiverConfig,
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, NotifierType } from 'app/types';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { fetchGrafanaNotifiersAction, updateAlertManagerConfigAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import {
+  formValuesToGrafanaReceiver,
+  grafanaReceiverToFormValues,
+  updateConfigWithReceiver,
+} from '../../../utils/receiver-form';
 import { ReceiverForm } from './ReceiverForm';
 
 interface Props {
@@ -45,64 +49,17 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
     ReceiverFormValues<GrafanaChannelValues> | undefined,
     Record<string, GrafanaManagedReceiverConfig>
   ] => {
-    if (!existing) {
+    if (!existing || !grafanaNotifiers.result) {
       return [undefined, {}];
     }
-    const id2original: Record<string, GrafanaManagedReceiverConfig> = {};
-    let idCounter = 1; // @TODO use uid once backend is fixed to return it
-    const values = {
-      name: existing.name,
-      items:
-        existing.grafana_managed_receiver_configs?.map((channel) => {
-          const id = String(idCounter++);
-          id2original[id] = channel;
-          const notifier = grafanaNotifiers?.result?.find(({ type }) => type === channel.type);
-          return receiverConfigToFormValues(id, channel, notifier);
-        }) ?? [],
-    };
-    return [values, id2original];
+    return grafanaReceiverToFormValues(existing, grafanaNotifiers.result!);
   }, [existing, grafanaNotifiers.result]);
 
-  // @TODO refactor a lot of this messy code into smaller well named util functions
   const onSubmit = (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    const newReceiver: Receiver = {
-      name: values.name,
-      grafana_managed_receiver_configs: (values.items ?? []).map((newChannelValues) => {
-        const old: GrafanaManagedReceiverConfig | undefined = id2original[newChannelValues.__id];
-        const channel: GrafanaManagedReceiverConfig = {
-          settings: {
-            ...(old?.settings ?? {}),
-            ...(newChannelValues.settings ?? {}),
-          },
-          secureSettings: newChannelValues.secureSettings ?? {},
-          type: newChannelValues.type,
-          sendReminder: newChannelValues.sendReminder ?? old?.sendReminder ?? defaultChannelValues.sendReminder,
-          name: values.name,
-          disableResolveMessage:
-            newChannelValues.disableResolveMessage ??
-            old?.disableResolveMessage ??
-            defaultChannelValues.disableResolveMessage,
-        };
-        if (old) {
-          channel.uid = old.uid;
-        }
-        return channel;
-      }),
-    };
-    const oldReceivers = config.alertmanager_config.receivers ?? [];
-    const newConfig: AlertManagerCortexConfig = {
-      ...config,
-      alertmanager_config: {
-        // @todo rename receiver on routes as necessary
-        ...config.alertmanager_config,
-        receivers: existing
-          ? oldReceivers.map((recv) => (recv.name === existing.name ? newReceiver : recv))
-          : [...oldReceivers, newReceiver],
-      },
-    };
+    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
     dispatch(
       updateAlertManagerConfigAction({
-        newConfig,
+        newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
         oldConfig: config,
         alertManagerSourceName: GRAFANA_RULES_SOURCE_NAME,
         successMessage: existing ? 'Receiver updated.' : 'Receiver created',
@@ -110,6 +67,11 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
       })
     );
   };
+
+  const takenReceiverNames = useMemo(
+    () => config.alertmanager_config.receivers?.map(({ name }) => name).filter((name) => name !== existing?.name) ?? [],
+    [config, existing]
+  );
 
   if (grafanaNotifiers.result) {
     return (
@@ -119,36 +81,10 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
         notifiers={grafanaNotifiers.result}
         alertManagerSourceName={alertManagerSourceName}
         defaultItem={defaultChannelValues}
+        takenReceiverNames={takenReceiverNames}
       />
     );
   } else {
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 };
-
-function receiverConfigToFormValues(
-  id: string,
-  channel: GrafanaManagedReceiverConfig,
-  notifier?: NotifierDTO
-): GrafanaChannelValues {
-  const values: GrafanaChannelValues = {
-    __id: id,
-    type: channel.type as NotifierType,
-    uid: channel.uid,
-    secureSettings: {},
-    settings: { ...channel.settings },
-    sendReminder: channel.sendReminder,
-    secureFields: { ...channel.secureFields },
-    disableResolveMessage: channel.disableResolveMessage,
-  };
-
-  // work around https://github.com/grafana/alerting-squad/issues/100
-  notifier?.options.forEach((option) => {
-    if (option.secure && values.settings[option.propertyName]) {
-      delete values.settings[option.propertyName];
-      values.secureFields[option.propertyName] = true;
-    }
-  });
-
-  return values;
-}

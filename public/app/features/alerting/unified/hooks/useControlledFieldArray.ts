@@ -17,17 +17,20 @@ export function useControlledFieldArray<R>(name: string, formAPI: FormContextVal
     items,
     append: useCallback(
       (values: R) => {
+        const existingValues = getValues({ nest: true });
         reset({
-          [name]: [...(getValues({ nest: true })[name] ?? []), values],
+          ...existingValues,
+          [name]: [...(existingValues[name] ?? []), values],
         });
       },
       [getValues, reset, name]
     ),
     remove: useCallback(
       (index: number) => {
-        const items = getValues({ nest: true })[name] ?? [];
+        const values = getValues({ nest: true });
+        const items = values[name] ?? [];
         items.splice(index, 1);
-        reset({ [name]: items });
+        reset({ ...values, [name]: items });
       },
       [getValues, reset, name]
     ),
