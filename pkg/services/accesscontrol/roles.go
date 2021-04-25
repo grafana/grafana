@@ -264,12 +264,12 @@ const (
 // to which set of PredefinedRoles by default. Alphabetically sorted.
 var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
-		permissionsAdminEdit,
-		permissionsAdminRead,
 		ldapAdminEdit,
 		ldapAdminRead,
 		orgsAdminEdit,
 		orgsAdminRead,
+		permissionsAdminEdit,
+		permissionsAdminRead,
 		usersAdminEdit,
 		usersAdminRead,
 	},
