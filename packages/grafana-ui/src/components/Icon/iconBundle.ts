@@ -163,10 +163,8 @@ const unicons = 'unicons/';
 const custom = 'custom/';
 const mono = 'mono/';
 
-declare let __webpack_public_path__: string;
-
-export let iconRoot = 'public/img/icons';
 export let cacheInitialized = false;
+export let iconRoot = 'public/img/icons';
 
 function cacheItem(content: string, subdir: string, name: string) {
   cacheStore[iconRoot + subdir + name + '.svg'] = { content, status: 'loaded', queue: [] };
@@ -175,13 +173,11 @@ function cacheItem(content: string, subdir: string, name: string) {
 export function initIconCache() {
   cacheInitialized = true;
 
-  // This function needs to be called on first icon render to give
-  // The app time to set __webpack_public_path__ to a CDN path
-  if (__webpack_public_path__) {
-    const publicpath = // __webpack_public_path__ includes the 'build/' suffix
-      __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
-
-    iconRoot = publicpath + 'img/icons/';
+  // This function needs to be called after index.js loads to give the
+  // application time to modify __webpack_public_path__ with a CDN path
+  const grafanaPublicPath = (window as any).__grafana_public_path__;
+  if (grafanaPublicPath) {
+    iconRoot = grafanaPublicPath + 'img/icons/';
   }
 
   cacheItem(u001, unicons, 'angle-double-down');

@@ -7,8 +7,6 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 import SVG from '@leeoniya/react-inlinesvg';
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 
-declare let __webpack_public_path__: string;
-
 const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
