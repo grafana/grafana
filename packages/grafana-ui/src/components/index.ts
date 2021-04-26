@@ -224,13 +224,14 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
+export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { useRefreshAfterGraphRendered } from './uPlot/hooks';
-export { usePlotContext, usePlotPluginContext } from './uPlot/context';
+export { usePlotContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
+export { preparePlotFrame } from './GraphNG/utils';
 export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
