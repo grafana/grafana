@@ -3,6 +3,8 @@ package commands
 import (
 	"strings"
 
+	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -57,7 +59,7 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 			return err
 		}
 
-		logger.Info("\nRestart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n\n\n")
+		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
 	}
 }
