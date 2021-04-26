@@ -100,7 +100,7 @@ export const Card: CardInterface = ({
   const disableHover = disabled || (!onClick && !href);
   const disableEvents = disabled && !actions;
 
-  const containerStyles = getContainerStyles(theme, disableEvents, disableHover);
+  const containerStyles = getCardContainerStyles(theme, disableEvents, disableHover);
   const onCardClick = useCallback(() => (disableHover ? () => {} : onClick?.()), [disableHover, onClick]);
 
   return (
@@ -136,7 +136,10 @@ export const Card: CardInterface = ({
   );
 };
 
-const getContainerStyles = stylesFactory((theme: GrafanaThemeV2, disabled = false, disableHover = false) => {
+/**
+ * @public
+ */
+export const getCardContainerStyles = stylesFactory((theme: GrafanaThemeV2, disabled = false, disableHover = false) => {
   return css({
     display: 'flex',
     width: '100%',
