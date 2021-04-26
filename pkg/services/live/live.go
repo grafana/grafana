@@ -497,7 +497,10 @@ func (g *GrafanaLive) ClientCount(channel string) (int, error) {
 
 // IsEnabled returns true if the Grafana Live feature is enabled.
 func (g *GrafanaLive) IsEnabled() bool {
-	return g != nil && g.Cfg.IsLiveEnabled()
+	if g == nil || g.Cfg == nil {
+		return false
+	}
+	return g.Cfg.IsLiveEnabled()
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
