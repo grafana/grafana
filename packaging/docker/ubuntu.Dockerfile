@@ -9,6 +9,9 @@ RUN mkdir /tmp/grafana && tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /t
 
 FROM ${BASE_IMAGE}
 
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl --fail http://localhost:3000/api/health || exit 1
+
 EXPOSE 3000
 
 # Set DEBIAN_FRONTEND=noninteractive in environment at build-time
