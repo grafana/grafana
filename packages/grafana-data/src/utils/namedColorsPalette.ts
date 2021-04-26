@@ -1,5 +1,6 @@
 import { flatten } from 'lodash';
 import tinycolor from 'tinycolor2';
+import { GrafanaThemeV2 } from '../themes';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
@@ -52,6 +53,7 @@ export type ColorDefinition = {
 let colorsPaletteInstance: Map<Hue, ColorDefinition[]>;
 let colorsMap: Record<Color, string> | undefined;
 let colorsMapTheme: GrafanaTheme | undefined;
+let colorsMapTheme2: GrafanaThemeV2 | undefined;
 
 const buildColorDefinition = (
   hue: Hue,
@@ -88,6 +90,22 @@ export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, strin
   return colorsMap;
 }
 
+export function buildColorsMapForTheme2(theme: GrafanaThemeV2): Record<Color, string> {
+  theme = theme ?? GrafanaThemeType.Dark;
+
+  colorsMap = {} as Record<Color, string>;
+
+  for (const def of getNamedColorPalette().values()) {
+    for (const c of def) {
+      colorsMap[c.name] = c.variants[theme.colors.mode];
+    }
+  }
+
+  colorsMap['panel-bg'] = theme.colors.background.primary;
+
+  return colorsMap;
+}
+
 export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   if (!color) {
     return 'gray';
@@ -97,6 +115,33 @@ export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   if (!colorsMap || colorsMapTheme !== theme) {
     colorsMap = buildColorsMapForTheme(theme);
     colorsMapTheme = theme;
+  }
+
+  let realColor = colorsMap[color as Color];
+  if (realColor) {
+    return realColor;
+  }
+
+  if (color[0] === '#') {
+    return (colorsMap[color as Color] = color);
+  }
+
+  if (color.indexOf('rgb') > -1) {
+    return (colorsMap[color as Color] = color);
+  }
+
+  return (colorsMap[color as Color] = tinycolor(color).toHexString());
+}
+
+export function getColorForTheme2(color: string, theme: GrafanaThemeV2): string {
+  if (!color) {
+    return 'gray';
+  }
+
+  // check if we need to rebuild cache
+  if (!colorsMap || colorsMapTheme2 !== theme) {
+    colorsMap = buildColorsMapForTheme2(theme);
+    colorsMapTheme2 = theme;
   }
 
   let realColor = colorsMap[color as Color];

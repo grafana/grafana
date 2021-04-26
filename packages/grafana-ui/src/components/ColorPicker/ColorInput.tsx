@@ -2,7 +2,7 @@ import React from 'react';
 import tinycolor from 'tinycolor2';
 import { debounce } from 'lodash';
 
-import { ColorPickerProps } from './ColorPickerPopover';
+import { ColorPickerProps2 } from './ColorPickerPopover';
 import { Input } from '../Input/Input';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
@@ -13,7 +13,7 @@ interface ColorInputState {
   value: string;
 }
 
-interface ColorInputProps extends ColorPickerProps {
+interface ColorInputProps extends ColorPickerProps2 {
   style?: React.CSSProperties;
   className?: string;
 }
@@ -29,7 +29,7 @@ class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
     this.updateColor = debounce(this.updateColor, 100);
   }
 
-  static getDerivedStateFromProps(props: ColorPickerProps, state: ColorInputState) {
+  static getDerivedStateFromProps(props: ColorPickerProps2, state: ColorInputState) {
     const newColor = tinycolor(props.color);
     if (newColor.isValid() && props.color !== state.previousColor) {
       return {

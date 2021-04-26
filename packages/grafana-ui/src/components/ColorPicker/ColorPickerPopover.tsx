@@ -2,7 +2,7 @@ import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
-import { Themeable } from '../../types/theme';
+import { Themeable, Themeable2 } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme, GrafanaThemeType, getColorForTheme } from '@grafana/data';
@@ -11,6 +11,17 @@ import { stylesFactory, withTheme } from '../../themes';
 export type ColorPickerChangeHandler = (color: string) => void;
 
 export interface ColorPickerProps extends Themeable {
+  color: string;
+  onChange: ColorPickerChangeHandler;
+
+  /**
+   * @deprecated Use onChange instead
+   */
+  onColorChange?: ColorPickerChangeHandler;
+  enableNamedColors?: boolean;
+}
+
+export interface ColorPickerProps2 extends Themeable2 {
   color: string;
   onChange: ColorPickerChangeHandler;
 
