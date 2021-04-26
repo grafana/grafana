@@ -6,7 +6,6 @@ import { registerSuggestions } from './suggestions';
 import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
 
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-declare let __webpack_public_path__: string;
 
 type Props = CodeEditorProps & Themeable;
 
@@ -16,16 +15,9 @@ function initMonoco() {
     return;
   }
 
-  let root = '/public/lib/';
-  if (__webpack_public_path__) {
-    const publicpath = // __webpack_public_path__ includes the 'build/' suffix
-      __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
-    root = publicpath + 'lib/';
-  }
-
   monacoEditorLoader.config({
     paths: {
-      vs: root + 'monaco/min/vs',
+      vs: ((window as any).__grafana_public_path__ ?? 'public/') + 'lib/monaco/min/vs',
     },
   });
   initalized = true;
