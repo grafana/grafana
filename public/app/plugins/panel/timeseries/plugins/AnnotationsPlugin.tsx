@@ -17,7 +17,7 @@ interface AnnotationsDataFrameViewDTO {
 
 export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone, config }) => {
   const theme = useTheme();
-  const { getPlotInstance } = usePlotContext();
+  const plotCtx = usePlotContext();
 
   const annotationsRef = useRef<Array<DataFrameView<AnnotationsDataFrameViewDTO>>>();
 
@@ -84,7 +84,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     (frame: DataFrame, index: number) => {
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(index);
-      const plotInstance = getPlotInstance();
+      const plotInstance = plotCtx.plot;
       if (!annotation.time || !plotInstance) {
         return undefined;
       }
@@ -94,7 +94,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
         y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },
-    [getPlotInstance]
+    [plotCtx.plot]
   );
 
   const renderMarker = useCallback(
