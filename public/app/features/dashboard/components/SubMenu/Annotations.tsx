@@ -23,7 +23,7 @@ export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotatio
         return (
           <div key={annotation.name} className={'submenu-item'}>
             <InlineField label={annotation.name}>
-              <InlineSwitch checked={annotation.enable} onChange={() => onAnnotationChanged(annotation)} />
+              <InlineSwitch value={annotation.enable} onChange={() => onAnnotationChanged(annotation)} />
             </InlineField>
           </div>
         );
