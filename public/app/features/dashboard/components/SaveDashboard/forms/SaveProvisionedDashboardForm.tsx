@@ -58,13 +58,13 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           className={styles.json}
         />
         <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
           <CopyToClipboard text={() => dashboardJSON} elType={Button} onSuccess={onCopyToClipboardSuccess}>
             Copy JSON to clipboard
           </CopyToClipboard>
           <Button onClick={saveToFile}>Save JSON to file</Button>
-          <Button variant="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
         </Modal.ButtonRow>
       </div>
     </>

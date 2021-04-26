@@ -9,7 +9,9 @@ import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 
 export interface Props {
+  /** @deprecated no longer used */
   icon?: IconName;
+  /** @deprecated no longer used */
   iconTooltip?: string;
   /** Title for the modal or custom header element */
   title: string | JSX.Element;
@@ -88,7 +90,9 @@ function ModalButtonRow({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={styles.modalButtonRow}>
-      <HorizontalGroup spacing="md">{children}</HorizontalGroup>
+      <HorizontalGroup justify="flex-end" spacing="md">
+        {children}
+      </HorizontalGroup>
     </div>
   );
 }

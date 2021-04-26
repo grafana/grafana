@@ -3,7 +3,7 @@ import { GrafanaThemeV2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
-  const borderRadius = theme.shape.borderRadius(2);
+  const borderRadius = theme.shape.borderRadius(1);
 
   return {
     modal: css`
@@ -13,6 +13,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       box-shadow: ${theme.shadows.z3};
       padding: ${theme.spacing(2)};
       border-radius: ${borderRadius};
+      border: 1px solid ${theme.colors.border.weak};
       background-clip: padding-box;
       outline: none;
       width: 750px;

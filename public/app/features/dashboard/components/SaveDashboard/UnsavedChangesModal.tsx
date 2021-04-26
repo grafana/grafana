@@ -29,7 +29,9 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
     >
       <h5>Do you want to save your changes?</h5>
       <Modal.ButtonRow>
-        <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onSaveSuccess} />
+        <Button variant="secondary" onClick={onDismiss}>
+          Cancel
+        </Button>
         <Button
           variant="destructive"
           onClick={() => {
@@ -39,9 +41,7 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
         >
           Discard
         </Button>
-        <Button variant="secondary" onClick={onDismiss}>
-          Cancel
-        </Button>
+        <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onSaveSuccess} />
       </Modal.ButtonRow>
     </Modal>
   );

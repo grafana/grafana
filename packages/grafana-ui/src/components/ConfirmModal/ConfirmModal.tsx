@@ -69,11 +69,9 @@ export const ConfirmModal = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        {onAlternative ? (
-          <Button variant="primary" onClick={onAlternative}>
-            {alternativeText}
-          </Button>
-        ) : null}
+        <Button variant="secondary" onClick={onDismiss}>
+          {dismissText}
+        </Button>
         <Button
           variant="destructive"
           onClick={onConfirm}
@@ -82,9 +80,11 @@ export const ConfirmModal = ({
         >
           {confirmText}
         </Button>
-        <Button variant="secondary" onClick={onDismiss}>
-          {dismissText}
-        </Button>
+        {onAlternative ? (
+          <Button variant="primary" onClick={onAlternative}>
+            {alternativeText}
+          </Button>
+        ) : null}
       </Modal.ButtonRow>
     </Modal>
   );
