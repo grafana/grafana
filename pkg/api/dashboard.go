@@ -176,6 +176,25 @@ func (hs *HTTPServer) GetTrimedDashboard(c *models.ReqContext) response.Response
 	return response.JSON(200, dto)
 }
 
+func (hs *HTTPServer) GetTrimedDashboardWithInput(c *models.ReqContext, cmd models.TrimDashboardCommand) response.Response {
+	var err error
+	dash := cmd.Dashboard
+	meta := cmd.Meta
+
+	trimedJson, err := hs.LoadSchemaService.DashboardTrimDefaults(*dash)
+	if err != nil {
+		return response.Error(500, "Error while trim default value from dashboard json", err)
+	}
+
+	dto := dtos.TrimDashboardFullWithMeta{
+		Dashboard: &trimedJson,
+		Meta:      meta,
+	}
+
+	c.TimeRequest(metrics.MApiDashboardGet)
+	return response.JSON(200, dto)
+}
+
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")

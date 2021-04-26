@@ -321,6 +321,8 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Get("/trim/uid/:uid", routing.Wrap(hs.GetTrimedDashboard))
+			dashboardRoute.Post("/trim/db-input", bind(models.TrimDashboardCommand{}), routing.Wrap(hs.GetTrimedDashboardWithInput))
+
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
 			dashboardRoute.Get("/db/:slug", routing.Wrap(hs.GetDashboard))
