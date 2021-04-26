@@ -6,7 +6,6 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
-import '@grafana/ui/src/components/Icon/iconBundle';
 
 // eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';

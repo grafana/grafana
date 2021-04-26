@@ -1,8 +1,8 @@
 import { defaults } from 'lodash';
 
 import React, { PureComponent } from 'react';
-import { InlineField, Select, FeatureInfoBox, Input } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, FeatureState, dataFrameFromJSON, rangeUtil } from '@grafana/data';
+import { InlineField, Select, Alert, Input } from '@grafana/ui';
+import { QueryEditorProps, SelectableValue, dataFrameFromJSON, rangeUtil } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -232,12 +232,10 @@ export class QueryEditor extends PureComponent<Props, State> {
           </div>
         )}
 
-        <FeatureInfoBox title="Grafana Live - Measurements" featureState={FeatureState.alpha}>
-          <p>
-            This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
-            interfaces and structures to change as this becomes more production ready.
-          </p>
-        </FeatureInfoBox>
+        <Alert title="Grafana Live - Measurements" severity="info">
+          This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
+          interfaces and structures to change as this becomes more production ready.
+        </Alert>
       </>
     );
   }

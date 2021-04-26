@@ -59,9 +59,10 @@ type Results []Result
 // Result contains the evaluated State of an alert instance
 // identified by its labels.
 type Result struct {
-	Instance    data.Labels
-	State       State // Enum
-	EvaluatedAt time.Time
+	Instance           data.Labels
+	State              State // Enum
+	EvaluatedAt        time.Time
+	EvaluationDuration time.Duration
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -78,7 +79,7 @@ const (
 
 	// Pending is the eval state for an alert instance condition
 	// that evaluated to true (Alerting) but has not yet met
-	// the For duration defined in AlertRule
+	// the For duration defined in AlertRule.
 	Pending
 
 	// NoData is the eval state for an alert rule condition
@@ -213,8 +214,9 @@ func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, 
 		}
 
 		r := Result{
-			Instance:    f.Fields[0].Labels,
-			EvaluatedAt: ts,
+			Instance:           f.Fields[0].Labels,
+			EvaluatedAt:        ts,
+			EvaluationDuration: time.Since(ts),
 		}
 
 		switch {

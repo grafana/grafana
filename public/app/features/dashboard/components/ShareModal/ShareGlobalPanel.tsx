@@ -14,13 +14,9 @@ export const ShareGlobalPanel = ({ panel, initialFolderId, onDismiss }: Props) =
   }
 
   return (
-    <div className="share-modal-body">
-      <div className="share-modal-header">
-        <div className="share-modal-content">
-          <p className="share-modal-info-text">Add this panel to the panel library.</p>
-          <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={onDismiss!} />
-        </div>
-      </div>
-    </div>
+    <>
+      <p className="share-modal-info-text">Add this panel to the panel library.</p>
+      <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={onDismiss!} />
+    </>
   );
 };
