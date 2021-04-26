@@ -69,7 +69,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         alertManagerSourceName,
         newConfig,
         oldConfig: config,
-        successMessage: 'Tempalte saved.',
+        successMessage: 'Template saved.',
         redirectPath: '/alerting/notifications',
       })
     );
