@@ -21,7 +21,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 // Types
 import { StoreState } from 'app/types/';
 import { DataSourceSettings } from '@grafana/data';
-import { Alert, Button, InfoBox, LinkButton } from '@grafana/ui';
+import { Alert, Button, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
@@ -127,10 +127,10 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderIsReadOnlyMessage() {
     return (
-      <InfoBox aria-label={selectors.pages.DataSource.readOnly} severity="info">
+      <Alert aria-label={selectors.pages.DataSource.readOnly} severity="info" title="Provisioned data source">
         This data source was added by config and cannot be modified using the UI. Please contact your server admin to
         update this data source.
-      </InfoBox>
+      </Alert>
     );
   }
 
@@ -241,6 +241,9 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
               aria-label={selectors.pages.DataSource.alert}
             >
               {testingStatus.details?.message ?? null}
+              {testingStatus.details?.verboseMessage ? (
+                <details style={{ whiteSpace: 'pre-wrap' }}>{testingStatus.details?.verboseMessage}</details>
+              ) : null}
             </Alert>
           )}
         </div>

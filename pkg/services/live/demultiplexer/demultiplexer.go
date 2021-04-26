@@ -1,23 +1,30 @@
-package live
+package demultiplexer
 
 import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/convert"
+	"github.com/grafana/grafana/pkg/services/live/livecontext"
+	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
+var (
+	logger = log.New("live.push_ws")
+)
+
 type Demultiplexer struct {
 	streamID            string
-	managedStreamRunner *ManagedStreamRunner
+	managedStreamRunner *managedstream.Runner
 	converter           *convert.Converter
 }
 
-func NewDemultiplexer(streamID string, managedStreamRunner *ManagedStreamRunner) *Demultiplexer {
+func New(streamID string, managedStreamRunner *managedstream.Runner) *Demultiplexer {
 	return &Demultiplexer{
 		streamID:            streamID,
 		managedStreamRunner: managedStreamRunner,
@@ -34,7 +41,7 @@ func (s *Demultiplexer) OnSubscribe(_ context.Context, _ *models.SignedInUser, _
 }
 
 func (s *Demultiplexer) OnPublish(ctx context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	urlValues, ok := getContextValues(ctx)
+	urlValues, ok := livecontext.GetContextValues(ctx)
 	if !ok {
 		return models.PublishReply{}, 0, errors.New("error extracting context url values")
 	}

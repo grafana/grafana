@@ -43,6 +43,11 @@ const (
 	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
 )
 
+const (
+	UIDLabel          = "__alert_rule_uid__"
+	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
+)
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`

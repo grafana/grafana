@@ -21,7 +21,7 @@ import (
 const defaultDingdingMsgType = "link"
 
 // NewDingDingNotifier is the constructor for the Dingding notifier
-func NewDingDingNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*DingDingNotifier, error) {
+func NewDingDingNotifier(model *models.AlertNotification, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -40,19 +40,17 @@ func NewDingDingNotifier(model *models.AlertNotification, t *template.Template, 
 		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		log:          log.New("alerting.notifier.dingding"),
 		tmpl:         t,
-		externalUrl:  externalUrl,
 	}, nil
 }
 
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
 	old_notifiers.NotifierBase
-	MsgType     string
-	URL         string
-	Message     string
-	tmpl        *template.Template
-	log         log.Logger
-	externalUrl *url.URL
+	MsgType string
+	URL     string
+	Message string
+	tmpl    *template.Template
+	log     log.Logger
 }
 
 // Notify sends the alert notification to dingding.
@@ -61,14 +59,14 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 	q := url.Values{
 		"pc_slide": {"false"},
-		"url":      {dd.externalUrl.String()}, // TODO: should this be rule URL according to original?
+		"url":      {dd.tmpl.ExternalURL.String()}, // TODO: should this be rule URL according to original?
 	}
 
 	// Use special link to auto open the message url outside of Dingding
 	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
 	messageURL := "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: dd.externalUrl}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, dd.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
 	tmpl := notify.TmplText(dd.tmpl, data, &tmplErr)
 
