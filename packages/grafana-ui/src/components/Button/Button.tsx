@@ -9,7 +9,7 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
+export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
 export type ButtonStyle = 'solid' | 'outline' | 'text';
 export const allButtonStyles: ButtonStyle[] = ['solid', 'outline', 'text'];
 

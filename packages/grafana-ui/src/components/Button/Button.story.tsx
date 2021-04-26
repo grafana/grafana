@@ -31,18 +31,10 @@ export default {
 
 export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
   const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
-  /**
-   * Contained Buttons
-   * Text Buttons
-   * Outlined Buttons
-   * Sizes
-   *
-   */
   return (
     <VerticalGroup>
       {allButtonStyles.map((buttonStyle) => (
         <VerticalGroup key={buttonStyle}>
-          <h1>{buttonStyle}</h1>
           <HorizontalGroup spacing="lg">
             {allButtonVariants.map((variant) => (
               <VerticalGroup spacing="lg" key={`${buttonStyle}-${variant}`}>
@@ -57,7 +49,7 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
               </VerticalGroup>
             ))}
           </HorizontalGroup>
-          <div style={{ borderBottom: '1px solid', margin: '20px 0', padding: '20px 0', width: '100%' }} />
+          <div style={{ padding: '20px 0', width: '100%' }} />
         </VerticalGroup>
       ))}
       <HorizontalGroup spacing="lg">
