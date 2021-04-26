@@ -36,7 +36,7 @@ export interface AlertRule {
   evalData?: { noData?: boolean; evalMatches?: any };
 }
 
-export type NotifierType =
+export type GrafanaNotifierType =
   | 'discord'
   | 'hipchat'
   | 'email'
@@ -57,6 +57,17 @@ export type NotifierType =
   | 'LINE'
   | 'kafka';
 
+export type CloudNotifierType =
+  | 'email'
+  | 'pagerduty'
+  | 'pushover'
+  | 'slack'
+  | 'opsgenie'
+  | 'victorops'
+  | 'webhook'
+  | 'wechat';
+
+export type NotifierType = GrafanaNotifierType | CloudNotifierType;
 export interface NotifierDTO {
   name: string;
   description: string;
