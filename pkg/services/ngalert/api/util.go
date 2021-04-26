@@ -166,8 +166,13 @@ func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCach
 	if err != nil {
 		return err
 	}
+
+	t := make([]string, 0, len(refIDs))
+	for refID := range refIDs {
+		t = append(t, refID)
+	}
 	if _, ok := refIDs[c.Condition]; !ok {
-		return fmt.Errorf("condition %s not found in any query or expression", c.Condition)
+		return fmt.Errorf("condition %s not found in any query or expression: it should be one of: [%s]", c.Condition, strings.Join(t, ","))
 	}
 	return nil
 }
@@ -195,7 +200,7 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 
 		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get datasource: %s: %w", datasourceUID, err)
+			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
 		}
 		refIDs[query.RefID] = struct{}{}
 	}

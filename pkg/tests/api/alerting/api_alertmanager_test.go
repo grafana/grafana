@@ -338,7 +338,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"failed to get datasource: unknown: data source not found", "message":"failed to validate alert rule queries and expressions"}`,
+				expectedResponse: `{"error":"invalid query A: data source not found: unknown", "message":"failed to validate alert rule queries and expressions"}`,
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -368,7 +368,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"condition B not found in any query or expression", "message":"failed to validate alert rule queries and expressions"}`,
+				expectedResponse: `{"error":"condition B not found in any query or expression: it should be one of: [A]", "message":"failed to validate alert rule queries and expressions"}`,
 			},
 		}
 
@@ -991,7 +991,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
+			expectedResponse:   `{"error":"condition B not found in any query or expression: it should be one of: [A]","message":"invalid condition"}`,
 		},
 		{
 			desc: "unknown query datasource",
@@ -1016,7 +1016,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
+			expectedResponse:   `{"error":"invalid query A: data source not found: unknown","message":"invalid condition"}`,
 		},
 	}
 
@@ -1172,7 +1172,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid queries or expressions"}`,
+			expectedResponse:   `{"error":"invalid query A: data source not found: unknown","message":"invalid queries or expressions"}`,
 		},
 	}
 
