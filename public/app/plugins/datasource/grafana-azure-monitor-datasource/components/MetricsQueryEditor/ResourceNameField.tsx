@@ -45,7 +45,7 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
 
           metricNamespace: undefined,
           metricName: undefined,
-          aggregation: 'None',
+          aggregation: undefined,
           timeGrain: '',
           dimensionFilters: [],
         },

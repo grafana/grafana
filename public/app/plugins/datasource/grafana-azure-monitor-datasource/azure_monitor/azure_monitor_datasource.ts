@@ -75,7 +75,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       item.azureMonitor.metricDefinition &&
       item.azureMonitor.metricDefinition !== defaultDropdownValue &&
       item.azureMonitor.metricName &&
-      item.azureMonitor.metricName !== defaultDropdownValue
+      item.azureMonitor.metricName !== defaultDropdownValue &&
+      item.azureMonitor.aggregation &&
+      item.azureMonitor.aggregation !== defaultDropdownValue
     );
   }
 
@@ -123,7 +125,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   buildAzurePortalUrl(metricQuery: AzureMetricQuery, subscriptionId: string, timeRange: TimeRange) {
-    const aggregationType = aggregationTypeMap[metricQuery.aggregation] ?? aggregationTypeMap.Average;
+    const aggregationType =
+      (metricQuery.aggregation && aggregationTypeMap[metricQuery.aggregation]) ?? aggregationTypeMap.Average;
 
     const chartDef = this.stringifyAzurePortalUrlParam({
       v2charts: [
