@@ -1,4 +1,4 @@
-import { GrafanaTheme, locationUtil } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { ConfirmModal, useStyles } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
@@ -138,25 +138,18 @@ export const RulesTable: FC<Props> = ({
                           icon="chart-line"
                           tooltip="view in explore"
                           target="__blank"
-                          href={locationUtil.assureBaseUrl(createExploreLink(rulesSource.name, rule.query))}
+                          href={createExploreLink(rulesSource.name, rule.query)}
                         />
                       )}
                       {!!rulerRule && (
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          href={locationUtil.assureBaseUrl(
-                            `/alerting/${encodeURIComponent(
-                              stringifyRuleIdentifier(
-                                getRuleIdentifier(
-                                  getRulesSourceName(rulesSource),
-                                  namespace.name,
-                                  group.name,
-                                  rulerRule
-                                )
-                              )
-                            )}/edit`
-                          )}
+                          href={`alerting/${encodeURIComponent(
+                            stringifyRuleIdentifier(
+                              getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
+                            )
+                          )}/edit`}
                         />
                       )}
                       {!!rulerRule && (

@@ -3,7 +3,7 @@ import { RuleFilterState } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 
 export function createExploreLink(dataSourceName: string, query: string) {
-  return urlUtil.renderUrl('/explore', {
+  return urlUtil.renderUrl('explore', {
     left: JSON.stringify([
       'now-1h',
       'now',

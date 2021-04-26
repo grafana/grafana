@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme, locationUtil } from '@grafana/data';
-import { Alert, Button, Field, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { Alert, Button, Field, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC } from 'react';
@@ -28,7 +28,7 @@ interface Props {
 }
 
 export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, config }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
@@ -130,7 +130,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         {!loading && <Button variant="primary">Save template</Button>}
         <LinkButton
           disabled={loading}
-          href={locationUtil.assureBaseUrl(makeAMLink('/alerting/notifications', alertManagerSourceName))}
+          href={makeAMLink('alerting/notifications', alertManagerSourceName)}
           variant="secondary"
           type="button"
         >
@@ -141,10 +141,10 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   buttons: css`
     & > * + * {
-      margin-left: ${theme.v2.spacing(1)};
+      margin-left: ${theme.spacing(1)};
     }
   `,
   textarea: css`

@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, GrafanaTheme, locationUtil, urlUtil } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme, urlUtil } from '@grafana/data';
 import { useStyles, Button, ButtonGroup, ToolbarButton, Alert } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, useEffect, useMemo } from 'react';
@@ -96,15 +96,13 @@ export const RuleList: FC = () => {
           )}
           {promReqeustErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules state from{' '}
-              <a href={locationUtil.assureBaseUrl(`/datasources/edit/${dataSource.id}`)}>{dataSource.name}</a>:{' '}
+              Failed to load rules state from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
           {rulerRequestErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules config from{' '}
-              <a href={locationUtil.assureBaseUrl('/datasources/edit/${dataSource.id}')}>{dataSource.name}</a>:{' '}
+              Failed to load rules config from <a href={'datasources/edit/${dataSource.id}'}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
@@ -116,25 +114,19 @@ export const RuleList: FC = () => {
           <div className={styles.break} />
           <div className={styles.buttonsContainer}>
             <ButtonGroup>
-              <a
-                href={locationUtil.assureBaseUrl(urlUtil.renderUrl('alerting/list', { ...queryParams, view: 'group' }))}
-              >
+              <a href={urlUtil.renderUrl('alerting/list', { ...queryParams, view: 'group' })}>
                 <ToolbarButton variant={view === 'groups' ? 'active' : 'default'} icon="folder">
                   Groups
                 </ToolbarButton>
               </a>
-              <a
-                href={locationUtil.assureBaseUrl(
-                  urlUtil.renderUrl('/alerting/list', { ...queryParams, view: 'state' })
-                )}
-              >
+              <a href={urlUtil.renderUrl('alerting/list', { ...queryParams, view: 'state' })}>
                 <ToolbarButton variant={view === 'state' ? 'active' : 'default'} icon="heart-rate">
                   State
                 </ToolbarButton>
               </a>
             </ButtonGroup>
             <div />
-            <a href={locationUtil.assureBaseUrl('/alerting/new')}>
+            <a href={'alerting/new'}>
               <Button icon="plus">New alert rule</Button>
             </a>
           </div>
