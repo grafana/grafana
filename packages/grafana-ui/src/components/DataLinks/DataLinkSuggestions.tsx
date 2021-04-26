@@ -1,10 +1,10 @@
-import { GrafanaTheme, VariableSuggestion } from '@grafana/data';
+import { VariableSuggestion, GrafanaThemeV2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { groupBy, capitalize } from 'lodash';
 import React, { useRef, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
-import { styleMixins, useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 interface DataLinkSuggestionsProps {
   suggestions: VariableSuggestion[];
@@ -13,13 +13,13 @@ interface DataLinkSuggestionsProps {
   onClose?: () => void;
 }
 
-const getStyles = (theme: GrafanaTheme) => {
-  const wrapperBg = theme.colors.bg1;
-  const wrapperShadow = theme.colors.dropdownShadow;
-  const itemColor = theme.colors.text;
-  const itemBgHover = styleMixins.hoverColor(theme.colors.bg1, theme);
-  const itemBgActive = theme.colors.bg2;
-  const separatorColor = theme.colors.border2;
+const getStyles = (theme: GrafanaThemeV2) => {
+  const wrapperBg = theme.colors.background.primary;
+  const wrapperShadow = theme.shadows.z1;
+  const itemColor = theme.colors.text.primary;
+  const itemBgHover = theme.colors.emphasize(theme.colors.background.primary, 0.05);
+  const itemBgActive = theme.colors.background.secondary;
+  const separatorColor = theme.colors.border.weak;
 
   return {
     list: css`
@@ -44,7 +44,7 @@ const getStyles = (theme: GrafanaTheme) => {
       }
     `,
     label: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
     activeItem: css`
       background: ${itemBgActive};
@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme) => {
       }
     `,
     itemValue: css`
-      font-family: ${theme.typography.fontFamily.monospace};
+      font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.size.sm};
     `,
   };
@@ -72,7 +72,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
     return groupBy(suggestions, (s) => s.origin);
   }, [suggestions]);
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div ref={ref} className={styles.wrapper}>
@@ -111,7 +111,7 @@ interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
 
 const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
   ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
 
     return (
       <>
