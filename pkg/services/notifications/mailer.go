@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	emailsSentTotal = prometheus.NewCounter(prometheus.CounterOpts{
+	emailsSentTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Name:      "emails_sent_total",
 		Help:      "Number of emails sent by Grafana",
 		Namespace: "grafana",
@@ -41,8 +41,6 @@ func init() {
 		Help:      "Number of emails Grafana failed to send",
 		Namespace: "grafana",
 	})
-
-	prometheus.MustRegister(emailsSentTotal, emailsSentFailed)
 }
 
 func (ns *NotificationService) Send(msg *Message) (int, error) {
