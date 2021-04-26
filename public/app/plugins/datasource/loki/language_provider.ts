@@ -19,7 +19,7 @@ import { PromQuery } from '../prometheus/types';
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import { Grammar } from 'prismjs';
-import importGraphiteQueries from './importGraphiteQuery';
+import fromGraphite from './importing/fromGraphite';
 import { GraphiteDatasource } from '../graphite/datasource';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
@@ -348,7 +348,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       );
     }
     if (datasourceType === 'graphite') {
-      return importGraphiteQueries(queries, originDataSource as GraphiteDatasource);
+      return fromGraphite(queries, originDataSource as GraphiteDatasource);
     }
     // Return a cleaned LokiQuery
     return queries.map((query) => ({

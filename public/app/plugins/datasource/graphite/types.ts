@@ -1,5 +1,4 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
-import { GraphiteQueryImportConfiguration } from './datasource';
 
 export interface GraphiteQuery extends DataQuery {
   target?: string;
@@ -37,3 +36,20 @@ export interface MetricTankMeta {
   request: MetricTankRequestMeta;
   info: MetricTankSeriesMeta[];
 }
+
+export type GraphiteQueryImportConfiguration = {
+  loki: GraphiteToLokiQueryImportConfiguration;
+};
+
+export type GraphiteToLokiQueryImportConfiguration = {
+  mappings: GraphiteLokiMapping[];
+};
+
+export type GraphiteLokiMapping = {
+  matchers: GraphiteMetricLokiMatcher[];
+};
+
+export type GraphiteMetricLokiMatcher = {
+  value: string;
+  labelName?: string;
+};

@@ -212,7 +212,7 @@ abstract class DataSourceApi<
   async importQueries?(queries: DataQuery[], originDataSource: DataSourceApi): Promise<TQuery[]>;
 
   /**
-   * Returns configuration for importing queries from other datasources
+   * Returns configuration for importing queries from other data sources
    */
   getImportQueryConfiguration?(): TQueryImportConfiguration;
 

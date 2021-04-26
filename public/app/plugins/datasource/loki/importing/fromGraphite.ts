@@ -1,10 +1,9 @@
-import { default as GraphiteQueryModel } from '../graphite/graphite_query';
+import { default as GraphiteQueryModel } from '../../graphite/graphite_query';
 import { map } from 'lodash';
-import { MetricNodeMatcher } from '../graphite/configuration/parseLokiLabelMappings';
-import { LokiQuery } from './types';
-import { GraphiteDatasource, GraphiteToLokiQueryImportConfiguration } from '../graphite/datasource';
-import { getTemplateSrv } from '../../../features/templating/template_srv';
-import { GraphiteQuery } from '../graphite/types';
+import { LokiQuery } from '../types';
+import { GraphiteDatasource } from '../../graphite/datasource';
+import { getTemplateSrv } from '../../../../features/templating/template_srv';
+import { GraphiteMetricLokiMatcher, GraphiteQuery, GraphiteToLokiQueryImportConfiguration } from '../../graphite/types';
 
 const GRAPHITE_TO_LOKI_OPERATOR = {
   '=': '=',
@@ -13,7 +12,7 @@ const GRAPHITE_TO_LOKI_OPERATOR = {
   '!=~': '!~',
 };
 
-export default function importGraphiteQueries(
+export default function fromGraphiteQueries(
   graphiteQueries: GraphiteQuery[],
   graphiteDataSource: GraphiteDatasource
 ): LokiQuery[] {
@@ -31,15 +30,12 @@ export default function importGraphiteQueries(
 
     return {
       refId: query.refId,
-      expr: importGraphiteQuery(model, graphiteDataSource.getImportQueryConfiguration().loki),
+      expr: fromGraphite(model, graphiteDataSource.getImportQueryConfiguration().loki),
     };
   });
 }
 
-function importGraphiteQuery(
-  graphiteQuery: GraphiteQueryModel,
-  config: GraphiteToLokiQueryImportConfiguration
-): string {
+function fromGraphite(graphiteQuery: GraphiteQueryModel, config: GraphiteToLokiQueryImportConfiguration): string {
   let matchingFound = false;
   let labels: any = {};
 
@@ -58,12 +54,15 @@ function importGraphiteQuery(
     for (let mapping of mappings) {
       const matchers = mapping.matchers.concat();
 
-      matchingFound = matchers.every((matcher: MetricNodeMatcher, index: number) => {
+      matchingFound = matchers.every((matcher: GraphiteMetricLokiMatcher, index: number) => {
         if (matcher.labelName) {
           let value = (targetNodes[index] as string)!;
+
           if (value === '*') {
-            //
-          } else if (value.includes('{')) {
+            return true;
+          }
+
+          if (value.includes('{')) {
             labels[matcher.labelName] = {
               value: value.replace(/\*/g, '.*').replace(/\{/g, '(').replace(/}/g, ')').replace(/,/g, '|'),
               operator: '=~',
@@ -81,13 +80,9 @@ function importGraphiteQuery(
     }
   }
 
-  if (matchingFound) {
-    let pairs = map(labels, (value, key) => `${key}${value.operator}"${value.value}"`);
-    if (pairs.length) {
-      return `{${pairs.join(', ')}}`;
-    } else {
-      return '';
-    }
+  let pairs = map(labels, (value, key) => `${key}${value.operator}"${value.value}"`);
+  if (matchingFound && pairs.length) {
+    return `{${pairs.join(', ')}}`;
   } else {
     return '';
   }

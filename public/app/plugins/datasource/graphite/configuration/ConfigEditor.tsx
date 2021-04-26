@@ -104,6 +104,7 @@ export class ConfigEditor extends PureComponent<Props> {
               jsonData: {
                 ...options.jsonData,
                 importConfiguration: {
+                  ...options.jsonData.importConfiguration,
                   loki: {
                     mappings: mappings.map(fromString),
                   },

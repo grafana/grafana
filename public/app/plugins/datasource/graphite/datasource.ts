@@ -16,22 +16,20 @@ import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 // Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
+import {
+  GraphiteOptions,
+  GraphiteQuery,
+  GraphiteQueryImportConfiguration,
+  GraphiteType,
+  GraphiteLokiMapping,
+  MetricTankRequestMeta,
+} from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
-import { MetricMapping } from './configuration/parseLokiLabelMappings';
-
-export type GraphiteToLokiQueryImportConfiguration = {
-  mappings: MetricMapping[];
-};
-
-export type GraphiteQueryImportConfiguration = {
-  loki: GraphiteToLokiQueryImportConfiguration;
-};
 
 export class GraphiteDatasource extends DataSourceApi<
   GraphiteQuery,
@@ -50,7 +48,7 @@ export class GraphiteDatasource extends DataSourceApi<
   funcDefs: any = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
-  private readonly metricMappings: MetricMapping[];
+  private readonly metricMappings: GraphiteLokiMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
@@ -60,7 +58,7 @@ export class GraphiteDatasource extends DataSourceApi<
     // graphiteVersion is set when a datasource is created but it hadn't been set in the past so we're
     // still falling back to the default behavior here for backwards compatibility (see also #17429)
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
-    this.metricMappings = instanceSettings.jsonData.lokiLabelsMappings || [];
+    this.metricMappings = instanceSettings.jsonData.importConfiguration?.loki?.mappings || [];
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
