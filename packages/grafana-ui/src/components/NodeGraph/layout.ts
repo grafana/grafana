@@ -19,6 +19,9 @@ export interface Config {
   };
 }
 
+// Config mainly for the layout but also some other parts like current layout. The layout variables can be changed only
+// if you programmatically enable the config editor (for development only) see ViewControls. These could be moved to
+// panel configuration at some point (apart from gridLayout as that can be switched be user right now.).
 export const defaultConfig: Config = {
   linkDistance: 150,
   linkStrength: 0.5,
@@ -50,6 +53,14 @@ export function useLayout(
   // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
   // Also we compute both layouts here. Grid layout should not add much time and we can more easily just cache both
   // so this should happen only once for a given response data.
+  //
+  // Also important note is that right now this works on all the nodes even if they are not visible. This means that
+  // the node position is stable even when expanding different parts of graph. It seams like a reasonable thing but
+  // implications are that limiting visible nodes count does not have a positive perf effect, graphs with high node
+  // count can seem weird (very sparse or spread out) when we show only some nodes but layout is done for thousands of
+  // nodes but we also do this only once in the graph lifecycle. We could re-layout this on visible nodes change but
+  // this ma need smaller visible node limit to keep the perf and also would be very weird without any animation to
+  // understand what is happening.
   useEffect(() => {
     if (rawNodes.length === 0) {
       return;
@@ -72,6 +83,8 @@ export function useLayout(
     setEdgesGrid(rawEdgesCopy as EdgeDatumLayout[]);
   }, [config.sort, rawNodes, rawEdges]);
 
+  // Limit the nodes so we don't show all for performance reasons. Here we don't compute both at the same time so
+  // changing the layout can trash internal memoization at the moment.
   const { nodes: nodesWithLimit, edges: edgesWithLimit, markers } = useNodeLimit(
     config.gridLayout ? nodesGrid : nodesGraph,
     config.gridLayout ? edgesGrid : edgesGraph,
@@ -80,6 +93,7 @@ export function useLayout(
     rootNodeId
   );
 
+  // Get bounds based on current limited number of nodes.
   const bounds = useMemo(() => graphBounds([...nodesWithLimit, ...(markers || []).map((m) => m.node)]), [
     nodesWithLimit,
     markers,
@@ -131,16 +145,19 @@ function defaultLayout(nodes: NodeDatum[], edges: EdgeDatum[], config: Config = 
   centerNodes(nodes);
 }
 
+/**
+ * Set the nodes in simple grid layout sorted by some stat.
+ */
 function gridLayout(
   nodes: NodeDatum[],
   sort?: {
     field: Field;
     ascending: boolean;
   }
-  /* TODO for selecting the sort */
 ) {
   const spacingVertical = 140;
   const spacingHorizontal = 120;
+  // TODO probably make this based on the width of the screen
   const perRow = 4;
 
   if (sort) {

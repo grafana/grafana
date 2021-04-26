@@ -8,6 +8,7 @@ import { getEdgeFields, getNodeFields } from './utils';
 import { css } from '@emotion/css';
 import { MenuGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
+import { Config } from './layout';
 
 /**
  * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
@@ -17,10 +18,9 @@ export function useContextMenu(
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[],
   nodes: DataFrame,
   edges: DataFrame,
-  extraItems?: {
-    nodes?: Array<LinkData<NodeDatum>>;
-    edges?: Array<LinkData<EdgeDatum>>;
-  }
+  config: Config,
+  setConfig: (config: Config) => void,
+  setFocusedNodeId: (id: string) => void
 ): {
   onEdgeOpen: (event: MouseEvent<SVGElement>, edge: EdgeDatum) => void;
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
@@ -36,9 +36,22 @@ export function useContextMenu(
     return { onEdgeOpen, onNodeOpen, MenuComponent: null };
   }
 
+  // In grid view, we want to add extra link to show the node back in graph view.
+  const extraNodeItem = config.gridLayout
+    ? [
+        {
+          label: 'Show in Graph layout',
+          onClick: (node: NodeDatum) => {
+            setFocusedNodeId(node.id);
+            setConfig({ ...config, gridLayout: false });
+          },
+        },
+      ]
+    : undefined;
+
   const renderer = openedNode
-    ? getItemsRenderer(getLinks(nodes, openedNode.node.dataFrameRowIndex), extraItems?.nodes, openedNode.node)
-    : getItemsRenderer(getLinks(edges, openedEdge!.edge.dataFrameRowIndex), extraItems?.edges, openedEdge!.edge);
+    ? getItemsRenderer(getLinks(nodes, openedNode.node.dataFrameRowIndex), openedNode.node, extraNodeItem)
+    : getItemsRenderer(getLinks(edges, openedEdge!.edge.dataFrameRowIndex), openedEdge!.edge);
 
   let MenuComponent = null;
   if (renderer) {
@@ -71,8 +84,8 @@ export function useContextMenu(
 
 function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
   links: LinkModel[],
-  extraItems: Array<LinkData<T>> | undefined,
-  item: T
+  item: T,
+  extraItems?: Array<LinkData<T>> | undefined
 ) {
   if (!(links.length || extraItems?.length)) {
     return undefined;

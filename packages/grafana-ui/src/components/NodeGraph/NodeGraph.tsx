@@ -20,7 +20,7 @@ import { Icon } from '..';
 import { Marker } from './Marker';
 import { Legend } from './Legend';
 import { useHighlight } from './useHighlight';
-import { usePrevious } from 'react-use';
+import { useFocusPositiononLayout } from './useFocusPositionOnLayout';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -74,8 +74,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-// This is mainly for performance reasons.
-const defaultNodeCountLimit = 7;
+// Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible be expanding
+// parts of the graph. The specific number is arbitrary but should be a number of nodes where panning, zooming and other
+// interactions will be without any lag for most users.
+const defaultNodeCountLimit = 200;
 
 interface Props {
   dataFrames: DataFrame[];
@@ -106,6 +108,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     theme,
   ]);
 
+  // This is used for navigation from grid to graph view. This node will be centered and briefly highlighted.
   const [focusedNodeId, setFocusedNodeId] = useState<string>();
 
   // May seem weird that we do layout first and then limit the nodes shown but the problem is we want to keep the node
@@ -119,17 +122,9 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     focusedNodeId
   );
 
-  const prevLayoutGrid = usePrevious(config.gridLayout);
-  let focusPosition;
-  if (prevLayoutGrid === true && !config.gridLayout && focusedNodeId) {
-    const node = nodes.find((n) => n.id === focusedNodeId);
-    if (node) {
-      focusPosition = {
-        x: -node.x!,
-        y: -node.y!,
-      };
-    }
-  }
+  // If we move from grid to graph layout and we have focused node lets get it's position to center there. We want do
+  // do it specifically only in that case.
+  const focusPosition = useFocusPositiononLayout(config, nodes, focusedNodeId);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
     bounds,
     focusPosition
@@ -139,19 +134,9 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     getLinks,
     nodesDataFrames[0],
     edgesDataFrames[0],
-    config.gridLayout
-      ? {
-          nodes: [
-            {
-              label: 'Show in Graph layout',
-              onClick: (node) => {
-                setFocusedNodeId(node.id);
-                setConfig({ ...config, gridLayout: false });
-              },
-            },
-          ],
-        }
-      : undefined
+    config,
+    setConfig,
+    setFocusedNodeId
   );
   const styles = getStyles(theme);
 
