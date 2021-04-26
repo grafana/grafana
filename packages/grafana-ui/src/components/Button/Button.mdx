@@ -1,4 +1,4 @@
-import { Meta, Story, Canvas, PRIMARY_STORY } from '@storybook/addon-docs/blocks';
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
 import { Button } from './Button';
 
 <Meta title="MDX|Button" component={Button} />
@@ -11,7 +11,7 @@ Used for "call to action", i.e. triggering the main action. There should never b
 
 If there is no primary action, all `Button` components should be secondary.
 
-<Canvas>
+<Preview>
   <div>
     <Button variant="primary" size="sm" style={{ margin: '5px' }}>
       Small
@@ -23,7 +23,7 @@ If there is no primary action, all `Button` components should be secondary.
       Large
     </Button>
   </div>
-</Canvas>
+</Preview>
 
 ## Secondary
 
@@ -32,7 +32,7 @@ The secondary `Button` is the default button style and can trigger various actio
 1. When next to the primary `Button`, the Secondary style can for example be used for "Cancel" or "Abort" actions.
 2. When there is no main important action on a given page, all `Button` components should use the secondary style.
 
-<Canvas>
+<Preview>
   <div>
     <Button variant="secondary" size="sm" style={{ margin: '5px' }}>
       Small
@@ -44,13 +44,13 @@ The secondary `Button` is the default button style and can trigger various actio
       Large
     </Button>
   </div>
-</Canvas>
+</Preview>
 
 ## Destructive
 
 Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm.
 
-<Canvas>
+<Preview>
   <div>
     <Button variant="destructive" size="sm" style={{ margin: '5px' }}>
       Small
@@ -62,13 +62,13 @@ Used for triggering a removing or deleting action. Because of its dominant color
       Large
     </Button>
   </div>
-</Canvas>
+</Preview>
 
 ## Link
 
 Used for hyperlinks.
 
-<Canvas>
+<Preview>
   <div>
     <Button href="/" variant="link" size="sm" style={{ margin: '5px' }}>
       Small
@@ -80,6 +80,6 @@ Used for hyperlinks.
       Large
     </Button>
   </div>
-</Canvas>
+</Preview>
 
-<ArgsTable story={PRIMARY_STORY} />
+<Props of={Button} />
