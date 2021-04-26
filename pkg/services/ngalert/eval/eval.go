@@ -59,9 +59,10 @@ type Results []Result
 // Result contains the evaluated State of an alert instance
 // identified by its labels.
 type Result struct {
-	Instance    data.Labels
-	State       State // Enum
-	EvaluatedAt time.Time
+	Instance           data.Labels
+	State              State // Enum
+	EvaluatedAt        time.Time
+	EvaluationDuration time.Duration
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -78,7 +79,7 @@ const (
 
 	// Pending is the eval state for an alert instance condition
 	// that evaluated to true (Alerting) but has not yet met
-	// the For duration defined in AlertRule
+	// the For duration defined in AlertRule.
 	Pending
 
 	// NoData is the eval state for an alert rule condition
@@ -102,13 +103,10 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
-func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*backend.QueryDataRequest, error) {
-	queryDataReq := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			OrgID: ctx.OrgID,
-		},
-		Queries: []backend.DataQuery{},
+// GetExprRequest validates the condition and creates a expr.Request from it.
+func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
+	req := &expr.Request{
+		OrgId: ctx.OrgID,
 	}
 
 	for i := range data {
@@ -127,16 +125,20 @@ func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Ti
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
 
-		queryDataReq.Queries = append(queryDataReq.Queries, backend.DataQuery{
+		req.Queries = append(req.Queries, expr.Query{
+			TimeRange: expr.TimeRange{
+				From: q.RelativeTimeRange.ToTimeRange(now).From,
+				To:   q.RelativeTimeRange.ToTimeRange(now).To,
+			},
+			DatasourceUID: q.DatasourceUID,
 			JSON:          model,
 			Interval:      interval,
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
 	}
-	return queryDataReq, nil
+	return req, nil
 }
 
 func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
@@ -165,7 +167,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 }
 
 func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
-	queryDataReq, err := GetQueryDataRequest(ctx, data, now)
+	queryDataReq, err := GetExprRequest(ctx, data, now)
 	if err != nil {
 		return nil, err
 	}
@@ -212,8 +214,9 @@ func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, 
 		}
 
 		r := Result{
-			Instance:    f.Fields[0].Labels,
-			EvaluatedAt: ts,
+			Instance:           f.Fields[0].Labels,
+			EvaluatedAt:        ts,
+			EvaluationDuration: time.Since(ts),
 		}
 
 		switch {
