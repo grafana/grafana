@@ -23,11 +23,16 @@ export const SettingsPanel: FC = () => {
   const { metrics, advanced, ssh, alertManager, perconaPlatform, communication } = Messages.tabs;
   const [settings, setSettings] = useState<Settings>();
 
-  const updateSettings = async (body: SettingsAPIChangePayload, callback: LoadingCallback, refresh?: boolean) => {
+  const updateSettings = async (
+    body: SettingsAPIChangePayload,
+    callback: LoadingCallback,
+    refresh?: boolean,
+    onError = () => {}
+  ) => {
     const response = await SettingsService.setSettings(body, callback, generateToken(SET_SETTINGS_CANCEL_TOKEN));
     const { email_alerting_settings: { password = '' } = {} } = body;
 
-    if (refresh) {
+    if (refresh && response) {
       window.location.reload();
 
       return;
@@ -40,6 +45,8 @@ export const SettingsPanel: FC = () => {
         alertingSettings: { ...response.alertingSettings, email: { ...response.alertingSettings.email, password } },
       };
       setSettings(newSettings);
+    } else {
+      onError();
     }
   };
 

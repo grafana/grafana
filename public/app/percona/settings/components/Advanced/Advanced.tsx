@@ -1,5 +1,6 @@
 import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
+import { FormApi } from 'final-form';
 import { cx } from 'emotion';
 import { Button, Spinner, useTheme, Icon } from '@grafana/ui';
 import { TextInputField, NumberInputField } from '@percona/platform-core';
@@ -18,12 +19,12 @@ import {
   STT_CHECK_INTERVAL_STEP,
   STT_CHECK_INTERVALS,
   TECHNICAL_PREVIEW_DOC_URL,
+  REFRESH_FEATURE_KEYS,
+  FEATURE_KEYS,
 } from './Advanced.constants';
 import { AdvancedProps, AdvancedFormProps } from './Advanced.types';
 import { SwitchRow } from './SwitchRow';
 import { AdvancedChangePayload } from '../../Settings.types';
-
-const refreshingFeatureKeys: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'stt'];
 
 const {
   advanced: { sttCheckIntervalsLabel, sttCheckIntervalTooltip, sttCheckIntervalUnit },
@@ -63,6 +64,7 @@ export const Advanced: FC<AdvancedProps> = ({
       sttTooltip,
       dbaasLabel,
       dbaasTooltip,
+      dbaasLink,
       publicAddressLabel,
       publicAddressTooltip,
       publicAddressButton,
@@ -95,12 +97,13 @@ export const Advanced: FC<AdvancedProps> = ({
   };
   const [loading, setLoading] = useState(false);
   // @ts-ignore
-  const applyChanges = (values: AdvancedFormProps) => {
+  const applyChanges = (values: AdvancedFormProps, form: FormApi<AdvancedFormProps>) => {
     const {
       retention,
       telemetry,
       stt,
       publicAddress,
+      dbaas,
       alerting,
       backup,
       azureDiscover,
@@ -113,7 +116,7 @@ export const Advanced: FC<AdvancedProps> = ({
       standard_interval: `${convertHoursStringToSeconds(standardInterval)}s`,
       frequent_interval: `${convertHoursStringToSeconds(frequentInterval)}s`,
     };
-    const refresh = !!refreshingFeatureKeys.find(feature => !!values[feature] !== initialValues[feature]);
+    const refresh = !!REFRESH_FEATURE_KEYS.find(feature => !!values[feature] !== initialValues[feature]);
     const body: AdvancedChangePayload = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
       disable_telemetry: !telemetry,
@@ -129,9 +132,12 @@ export const Advanced: FC<AdvancedProps> = ({
       stt_check_intervals: !!stt ? sttCheckIntervals : undefined,
       enable_backup_management: backup,
       disable_backup_management: !backup,
+      enable_dbaas: dbaas,
+      disable_dbaas: !dbaas,
     };
+    const onError = () => FEATURE_KEYS.forEach(key => form.change(key, initialValues[key]));
 
-    updateSettings(body, setLoading, refresh);
+    updateSettings(body, setLoading, refresh, onError);
   };
   const { Form } = withTypes<AdvancedFormProps>();
 
@@ -186,18 +192,6 @@ export const Advanced: FC<AdvancedProps> = ({
               dataQa="advanced-updates"
               component={SwitchRow}
             />
-            {dbaasEnabled && (
-              <Field
-                name="dbaas"
-                type="checkbox"
-                label={dbaasLabel}
-                tooltip={dbaasTooltip}
-                className={styles.switchDisabled}
-                disabled
-                dataQa="advanced-dbaas"
-                component={SwitchRow}
-              />
-            )}
             <Field
               name="stt"
               type="checkbox"
@@ -272,7 +266,7 @@ export const Advanced: FC<AdvancedProps> = ({
             </div>
             <fieldset className={styles.technicalPreview}>
               <legend>{technicalPreviewLegend}</legend>
-              <p className={styles.technicalPreviewDoc}>
+              <div className={styles.technicalPreviewDoc}>
                 <Icon name="info-circle" size={'xl'} className={styles.technicalPreviewIcon} />
                 <p>
                   {technicalPreviewDescription}{' '}
@@ -280,19 +274,17 @@ export const Advanced: FC<AdvancedProps> = ({
                     {technicalPreviewLinkText}
                   </a>
                 </p>
-              </p>
-              {dbaasEnabled && (
-                <Field
-                  name="dbaas"
-                  type="checkbox"
-                  label={dbaasLabel}
-                  tooltip={dbaasTooltip}
-                  className={styles.switchDisabled}
-                  disabled
-                  dataQa="advanced-dbaas"
-                  component={SwitchRow}
-                />
-              )}
+              </div>
+              <Field
+                name="dbaas"
+                type="checkbox"
+                label={dbaasLabel}
+                tooltip={dbaasTooltip}
+                tooltipLinkText={tooltipLinkText}
+                link={dbaasLink}
+                dataQa="advanced-dbaas"
+                component={SwitchRow}
+              />
               <Field
                 name="alerting"
                 type="checkbox"

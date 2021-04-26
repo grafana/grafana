@@ -4,7 +4,7 @@ import { Kubernetes, KubernetesListAPI, NewKubernetesCluster, NewKubernetesClust
 
 export const KubernetesService = {
   getKubernetes(token?: CancelToken) {
-    return apiManagement.post<KubernetesListAPI, any>('/DBaaS/Kubernetes/List', {}, false, token);
+    return apiManagement.post<KubernetesListAPI, any>('/DBaaS/Kubernetes/List', {}, true, token);
   },
   deleteKubernetes(kubernetes: Kubernetes, force?: boolean, token?: CancelToken) {
     return apiManagement.post<any, any>('/DBaaS/Kubernetes/Unregister', toAPI(kubernetes, force), false, token);

@@ -102,6 +102,7 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       border-radius: ${border.radius.sm};
       color: ${colors.textWeak};
       padding: ${spacing.sm};
+      margin-bottom: ${spacing.lg};
 
       p {
         margin: 0;

@@ -1,5 +1,6 @@
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { SttCheckIntervals } from 'app/percona/settings/Settings.types';
+import { AdvancedFormProps } from './Advanced.types';
 
 export const SECONDS = 60;
 export const MINUTES = 60;
@@ -31,3 +32,9 @@ export const STT_CHECK_INTERVALS = [
 ];
 
 export const TECHNICAL_PREVIEW_DOC_URL = 'https://per.co.na/pmm-feature-status';
+
+// features that need refresh after update
+export const REFRESH_FEATURE_KEYS: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'dbaas', 'stt'];
+
+// all feature flags
+export const FEATURE_KEYS: Array<keyof AdvancedFormProps> = [...REFRESH_FEATURE_KEYS, 'azureDiscover'];
