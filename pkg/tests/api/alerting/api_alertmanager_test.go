@@ -183,8 +183,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title:     "AlwaysFiring",
-						Condition: "A",
+						Title: "AlwaysFiring",
+						Data:  []ngmodels.AlertQuery{},
 					},
 				},
 				expectedResponse: `{"error":"invalid alert rule: no queries or expressions are found", "message":"failed to update rule group"}`,
@@ -309,6 +309,66 @@ func TestAlertRuleCRUD(t *testing.T) {
 					},
 				},
 				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
+			},
+			{
+				desc:      "alert rule with unknown datasource",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "unknown",
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"failed to get datasource: unknown: data source not found", "message":"failed to validate alert rule queries and expressions"}`,
+			},
+			{
+				desc:      "alert rule with invalid condition",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						Condition: "B",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"condition B not found in any query or expression", "message":"failed to validate alert rule queries and expressions"}`,
 			},
 		}
 

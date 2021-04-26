@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	coreapi "github.com/grafana/grafana/pkg/api"
@@ -18,8 +19,9 @@ import (
 )
 
 type RulerSrv struct {
-	store store.RuleStore
-	log   log.Logger
+	store           store.RuleStore
+	DatasourceCache datasources.CacheService
+	log             log.Logger
 }
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
@@ -194,6 +196,17 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	//TODO: Should this belong in alerting-api?
 	if ruleGroupConfig.Name == "" {
 		return response.Error(http.StatusBadRequest, "rule group name is not valid", nil)
+	}
+
+	for _, r := range ruleGroupConfig.Rules {
+		cond := ngmodels.Condition{
+			Condition: r.GrafanaManagedAlert.Condition,
+			OrgID:     c.SignedInUser.OrgId,
+			Data:      r.GrafanaManagedAlert.Data,
+		}
+		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+			return response.Error(http.StatusBadRequest, "failed to validate alert rule queries and expressions", err)
+		}
 	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
