@@ -95,11 +95,11 @@ const getStyles = (theme: GrafanaThemeV2) => ({
     width: 500px;
   `,
   modalText: css({
-    fontSize: theme.typography.h4.fontSize,
+    fontSize: theme.typography.h5.fontSize,
     color: theme.colors.text.primary,
   }),
   modalDescription: css({
-    fontSize: theme.typography.h6.fontSize,
+    fontSize: theme.typography.body.fontSize,
   }),
   modalConfirmationInput: css({
     paddingTop: theme.spacing(1),

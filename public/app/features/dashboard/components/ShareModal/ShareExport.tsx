@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { saveAs } from 'file-saver';
-import { Button, Field, Switch } from '@grafana/ui';
+import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { appEvents } from 'app/core/core';
@@ -95,7 +95,7 @@ export class ShareExport extends PureComponent<Props, State> {
         <Field label="Export for sharing externally">
           <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
         </Field>
-        <div className="gf-form-button-row">
+        <Modal.ButtonRow>
           <Button variant="primary" onClick={this.onSaveAsFile}>
             Save to file
           </Button>
@@ -105,7 +105,7 @@ export class ShareExport extends PureComponent<Props, State> {
           <Button variant="secondary" onClick={onDismiss}>
             Cancel
           </Button>
-        </div>
+        </Modal.ButtonRow>
       </>
     );
   }

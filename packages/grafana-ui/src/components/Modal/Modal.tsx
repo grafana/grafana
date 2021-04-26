@@ -63,10 +63,12 @@ export function Modal(props: PropsWithChildren<Props>) {
     return null;
   }
 
+  const headerClass = cx(styles.modalHeader, typeof title !== 'string' && styles.modalHeaderWithTabs);
+
   return (
     <Portal>
       <div className={cx(styles.modal, className)}>
-        <div className={styles.modalHeader}>
+        <div className={headerClass}>
           {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
           {typeof title !== 'string' && title}
           <div className={styles.modalHeaderClose}>

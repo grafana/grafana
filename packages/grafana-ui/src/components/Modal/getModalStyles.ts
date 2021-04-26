@@ -35,10 +35,12 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
     `,
     modalHeader: css`
       label: modalHeader;
-      border-bottom: 1px solid ${theme.colors.border.weak};
       display: flex;
       align-items: center;
       min-height: 42px;
+    `,
+    modalHeaderWithTabs: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.size.lg};
