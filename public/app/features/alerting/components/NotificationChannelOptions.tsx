@@ -62,7 +62,7 @@ export const NotificationChannelOptions: FC<Props> = ({
                 suffix={
                   <Button
                     onClick={() => onResetSecureField(option.propertyName)}
-                    variant="link"
+                    buttonStyle="text"
                     type="button"
                     size="sm"
                   >

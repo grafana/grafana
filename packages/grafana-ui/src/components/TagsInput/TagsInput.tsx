@@ -53,7 +53,7 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
           onKeyUp={onKeyboardAdd}
           suffix={
             newTagName.length > 0 && (
-              <Button variant="link" className={styles.addButtonStyle} onClick={onAdd} size="md">
+              <Button buttonStyle="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
                 Add
               </Button>
             )

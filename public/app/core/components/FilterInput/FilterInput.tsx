@@ -13,7 +13,7 @@ export interface Props {
 export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, autoFocus }) => {
   const suffix =
     value !== '' ? (
-      <Button icon="times" variant="link" size="sm" onClick={() => onChange('')}>
+      <Button icon="times" buttonStyle="text" size="sm" onClick={() => onChange('')}>
         Clear
       </Button>
     ) : null;

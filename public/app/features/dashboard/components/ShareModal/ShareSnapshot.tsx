@@ -269,7 +269,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
         <div className="pull-right" style={{ padding: '5px' }}>
           Did you make a mistake?{' '}
-          <LinkButton variant="link" target="_blank" onClick={this.deleteSnapshot}>
+          <LinkButton buttonStyle="text" target="_blank" onClick={this.deleteSnapshot}>
             Delete snapshot.
           </LinkButton>
         </div>

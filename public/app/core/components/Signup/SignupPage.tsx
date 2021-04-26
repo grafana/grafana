@@ -112,7 +112,7 @@ export const SignupPage: FC<Props> = (props) => {
 
               <HorizontalGroup>
                 <Button type="submit">Submit</Button>
-                <LinkButton variant="link" href={getConfig().appSubUrl + '/login'}>
+                <LinkButton buttonStyle="text" href={getConfig().appSubUrl + '/login'}>
                   Back to login
                 </LinkButton>
               </HorizontalGroup>

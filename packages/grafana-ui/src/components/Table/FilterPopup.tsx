@@ -64,7 +64,7 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
             </HorizontalGroup>
             {clearFilterVisible && (
               <HorizontalGroup>
-                <Button variant="link" size="sm" onClick={onClearFilter}>
+                <Button buttonStyle="text" size="sm" onClick={onClearFilter}>
                   Clear filter
                 </Button>
               </HorizontalGroup>

@@ -50,7 +50,7 @@ export const LoginPage: FC = () => {
                       <HorizontalGroup justify="flex-end">
                         <LinkButton
                           className={forgottenPasswordStyles}
-                          variant="link"
+                          buttonStyle="text"
                           href={`${config.appSubUrl}/user/password/send-reset-email`}
                         >
                           Forgot your password?

@@ -63,7 +63,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const suffix =
     searchQuery !== '' ? (
-      <Button icon="times" variant="link" size="sm" onClick={() => setSearchQuery('')}>
+      <Button icon="times" buttonStyle="text" size="sm" onClick={() => setSearchQuery('')}>
         Clear
       </Button>
     ) : null;

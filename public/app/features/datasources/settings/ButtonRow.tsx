@@ -39,7 +39,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
       >
         Delete
       </Button>
-      <LinkButton variant="link" href={`${config.appSubUrl}/datasources`}>
+      <LinkButton buttonStyle="text" href={`${config.appSubUrl}/datasources`}>
         Back
       </LinkButton>
     </div>
