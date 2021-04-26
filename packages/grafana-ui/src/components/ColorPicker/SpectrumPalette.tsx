@@ -3,9 +3,9 @@ import React, { useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
-import { GrafanaTheme, getColorForTheme } from '@grafana/data';
+import { GrafanaThemeV2, getColorForTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { useStyles, useTheme } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { useThrottleFn } from 'react-use';
 
 export interface SpectrumPaletteProps {
@@ -17,8 +17,8 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
   const [currentColor, setColor] = useState(color);
   useThrottleFn(onChange, 500, [currentColor]);
 
-  const theme = useTheme();
-  const styles = useStyles(getStyles);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   const rgbaString = useMemo(() => {
     return currentColor.startsWith('rgba')
@@ -35,7 +35,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   root: css`
     &.react-colorful {
       width: auto;
@@ -43,24 +43,24 @@ const getStyles = (theme: GrafanaTheme) => ({
 
     .react-colorful {
       &__saturation {
-        border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
+        border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
       }
       &__alpha {
-        border-radius: 0 0 ${theme.border.radius.sm} ${theme.border.radius.sm};
+        border-radius: 0 0 ${theme.shape.borderRadius()} ${theme.shape.borderRadius()};
       }
       &__alpha,
       &__hue {
-        height: ${theme.spacing.md};
+        height: ${theme.spacing(2)};
         position: relative;
       }
       &__pointer {
-        height: ${theme.spacing.md};
-        width: ${theme.spacing.md};
+        height: ${theme.spacing(2)};
+        width: ${theme.spacing(2)};
       }
     }
   `,
   colorInput: css`
-    margin-top: ${theme.spacing.md};
+    margin-top: ${theme.spacing(2)};
   `,
 });
 
