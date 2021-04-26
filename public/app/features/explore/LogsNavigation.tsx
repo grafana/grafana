@@ -211,13 +211,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
     `,
     pagesContainer: css`
       display: flex;
-      width: 100%;
       padding: 0;
       flex-direction: column;
     `,
     page: css`
       display: flex;
-      width: 100%;
       margin: ${theme.spacing.md} 0;
       cursor: ${loading ? 'auto' : 'pointer'};
       white-space: normal;
@@ -236,8 +234,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
     `,
     time: css`
       width: 60px;
+      min-height: 80px;
       font-size: ${theme.typography.size.sm};
-      padding: ${theme.spacing.md} 0 ${theme.spacing.md} ${theme.spacing.xs}; ;
+      padding-left: ${theme.spacing.xs};
+      display: flex;
+      align-items: center;
     `,
     filler: css`
       height: inherit;
