@@ -1,5 +1,5 @@
-import React, { FC, HTMLAttributes, ReactNode } from 'react';
-import { css } from '@emotion/css';
+import React, { HTMLAttributes, ReactNode } from 'react';
+import { css, cx } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes';
@@ -18,6 +18,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
+  bottomSpacing?: number;
 }
 
 function getIconFromSeverity(severity: AlertVariant): string {
@@ -34,19 +35,27 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
-  ({ title, onRemove, children, buttonContent, elevated, severity = 'error', ...restProps }, ref) => {
+export const Alert = React.forwardRef<HTMLDivElement, Props>(
+  (
+    { title, onRemove, children, buttonContent, elevated, bottomSpacing, className, severity = 'error', ...restProps },
+    ref
+  ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, severity, elevated);
+    const styles = getStyles(theme, severity, elevated, bottomSpacing);
 
     return (
-      <div ref={ref} className={styles.alert} aria-label={selectors.components.Alert.alert(severity)} {...restProps}>
+      <div
+        ref={ref}
+        className={cx(styles.alert, className)}
+        aria-label={selectors.components.Alert.alert(severity)}
+        {...restProps}
+      >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
         <div className={styles.body}>
           <div className={styles.title}>{title}</div>
-          {children && <div>{children}</div>}
+          {children && <div className={styles.content}>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
@@ -68,19 +77,21 @@ export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boolean) => {
+const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
   const color = theme.colors[severity];
+  const borderRadius = theme.shape.borderRadius();
 
   return {
     alert: css`
       flex-grow: 1;
       position: relative;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${borderRadius};
       display: flex;
       flex-direction: row;
       align-items: stretch;
       background: ${theme.colors.background.secondary};
       box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
+      margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
 
       &:before {
         content: '';
@@ -96,6 +107,7 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
     icon: css`
       padding: ${theme.spacing(2, 3)};
       background: ${color.main};
+      border-radius: ${borderRadius} 0 0 ${borderRadius};
       color: ${color.contrastText};
       display: flex;
       align-items: center;
@@ -115,6 +127,10 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
       overflow-wrap: break-word;
       word-break: break-word;
     `,
+    content: css`
+      color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
+    `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};
       background: none;
@@ -122,9 +138,8 @@ const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boo
       align-items: center;
     `,
     close: css`
-      padding: ${theme.spacing(1)};
+      padding: ${theme.spacing(2, 1)};
       background: none;
-      align-items: center;
       display: flex;
     `,
   };
