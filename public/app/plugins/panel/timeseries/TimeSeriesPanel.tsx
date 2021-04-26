@@ -61,13 +61,37 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <ZoomPlugin onZoom={onChangeTimeRange} />
-      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode} timeZone={timeZone} />
-      <ContextMenuPlugin data={data.series} timeZone={timeZone} replaceVariables={replaceVariables} />
-      {data.annotations && (
-        <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
-      )}
-      {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
+      {(config, alignedDataFrame) => {
+        return (
+          <>
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            <TooltipPlugin
+              data={alignedDataFrame}
+              config={config}
+              mode={options.tooltipOptions.mode}
+              timeZone={timeZone}
+            />
+            <ContextMenuPlugin
+              data={alignedDataFrame}
+              config={config}
+              timeZone={timeZone}
+              replaceVariables={replaceVariables}
+            />
+            {data.annotations && (
+              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
+            )}
+
+            {data.annotations && (
+              <ExemplarsPlugin
+                config={config}
+                exemplars={data.annotations}
+                timeZone={timeZone}
+                getFieldLinks={getFieldLinks}
+              />
+            )}
+          </>
+        );
+      }}
     </GraphNG>
   );
 };
