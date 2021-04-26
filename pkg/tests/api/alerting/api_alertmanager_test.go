@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -81,7 +81,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     2,
 						Title:     "AlwaysFiring",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -91,8 +90,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -209,8 +208,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -239,8 +238,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -269,8 +268,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -300,8 +299,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -369,8 +368,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -389,8 +388,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -475,8 +474,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
+								"datasourceUid":"-100",
 								"model":{
-								   "datasourceUid":"-100",
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":100,
@@ -510,8 +509,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
+								"datasourceUid":"-100",
 								"model":{
-								   "datasourceUid":"-100",
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":100,
@@ -568,8 +567,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-											"datasourceUid": "-100",
 											"type": "math",
 											"expression": "2 + 3 < 1"
 											}`),
@@ -652,8 +651,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-											"datasourceUid": "-100",
 											"type": "math",
 											"expression": "2 + 3 < 1"
 											}`),
@@ -714,7 +713,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						"annotations": {
 							"annotation1": "val42",
 							"foo": "bar"
-					   },	
+					   },
 		               "expr":"",
 					   "for": "30s",
 					   "labels": {
@@ -734,8 +733,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 		                           "from":18000,
 		                           "to":10800
 		                        },
-		                        "model":{
-		                           "datasourceUid":"-100",
+		                        "datasourceUid":"-100",
+								"model":{
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
 		                           "maxDataPoints":100,
@@ -795,6 +794,344 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
+		})
+	}
+
+	// test eval conditions
+	testCases := []struct {
+		desc               string
+		payload            string
+		expectedStatusCode int
+		expectedResponse   string
+	}{
+		{
+			desc: "alerting condition",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"datasourceUid":"-100",
+						"model": {
+							"type":"math",
+							"expression":"1 < 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+			"instances": [
+			  {
+				"schema": {
+				  "name": "evaluation results",
+				  "fields": [
+					{
+					  "name": "State",
+					  "type": "string",
+					  "typeInfo": {
+						"frame": "string"
+					  }
+					}
+				  ]
+				},
+				"data": {
+				  "values": [
+					[
+					  "Alerting"
+					]
+				  ]
+				}
+			  }
+			]
+		  }`,
+		},
+		{
+			desc: "normal condition",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"datasourceUid": "-100",
+						"model": {
+							"type":"math",
+							"expression":"1 > 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+			"instances": [
+			  {
+				"schema": {
+				  "name": "evaluation results",
+				  "fields": [
+					{
+					  "name": "State",
+					  "type": "string",
+					  "typeInfo": {
+						"frame": "string"
+					  }
+					}
+				  ]
+				},
+				"data": {
+				  "values": [
+					[
+					  "Normal"
+					]
+				  ]
+				}
+			  }
+			]
+		  }`,
+		},
+		{
+			desc: "condition not found in any query or expression",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "B",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"datasourceUid": "-100",
+						"model": {
+							"type":"math",
+							"expression":"1 > 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
+		},
+		{
+			desc: "unknown query datasource",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"datasourceUid": "unknown",
+						"model": {
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			u := fmt.Sprintf("http://%s/api/v1/rule/test/grafana", grafanaListedAddr)
+			r := strings.NewReader(tc.payload)
+			// nolint:gosec
+			resp, err := http.Post(u, "application/json", r)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			require.JSONEq(t, tc.expectedResponse, string(b))
+		})
+	}
+
+	// test eval queries and expressions
+	testCases = []struct {
+		desc               string
+		payload            string
+		expectedStatusCode int
+		expectedResponse   string
+	}{
+		{
+			desc: "alerting condition",
+			payload: `
+			{
+				"data": [
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"datasourceUid": "-100",
+							"model": {
+								"type":"math",
+								"expression":"1 < 2"
+							}
+						}
+					],
+				"now": "2021-04-11T14:38:14Z"
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+				"results": {
+				  "A": {
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
+						},
+						"data": {
+						  "values": [
+							[
+							  1
+							]
+						  ]
+						}
+					  }
+					]
+				  }
+				}
+			}`,
+		},
+		{
+			desc: "normal condition",
+			payload: `
+			{
+				"data": [
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"datasourceUid": "-100",
+							"model": {
+								"type":"math",
+								"expression":"1 > 2"
+							}
+						}
+					],
+				"now": "2021-04-11T14:38:14Z"
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+				"results": {
+				  "A": {
+					"frames": [
+					  {
+						"schema": {
+						  "refId": "A",
+						  "fields": [
+							{
+							  "name": "A",
+							  "type": "number",
+							  "typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							  }
+							}
+						  ]
+						},
+						"data": {
+						  "values": [
+							[
+							  0
+							]
+						  ]
+						}
+					  }
+					]
+				  }
+				}
+			}`,
+		},
+		{
+			desc: "unknown query datasource",
+			payload: `
+			{
+				"data": [
+						{
+							"refId": "A",
+							"relativeTimeRange": {
+								"from": 18000,
+								"to": 10800
+							},
+							"datasourceUid": "unknown",
+							"model": {
+							}
+						}
+					],
+				"now": "2021-04-11T14:38:14Z"
+			}
+			`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid queries or expressions"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			u := fmt.Sprintf("http://%s/api/v1/eval", grafanaListedAddr)
+			r := strings.NewReader(tc.payload)
+			// nolint:gosec
+			resp, err := http.Post(u, "application/json", r)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			require.JSONEq(t, tc.expectedResponse, string(b))
 		})
 	}
 }

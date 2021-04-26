@@ -151,7 +151,8 @@ func (g *GrafanaLive) Init() error {
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
-		Publisher: g.Publish,
+		Publisher:   g.Publish,
+		ClientCount: g.ClientCount,
 	}
 	g.storage = database.NewStorage(g.SQLStore)
 	g.GrafanaScope.Dashboards = dash
@@ -454,9 +455,18 @@ func (g *GrafanaLive) Publish(channel string, data []byte) error {
 	return err
 }
 
+// ClientCount returns the number of clients
+func (g *GrafanaLive) ClientCount(channel string) (int, error) {
+	p, err := g.node.Presence(channel)
+	if err != nil {
+		return 0, err
+	}
+	return len(p.Presence), nil
+}
+
 // IsEnabled returns true if the Grafana Live feature is enabled.
 func (g *GrafanaLive) IsEnabled() bool {
-	if g.Cfg == nil {
+	if g == nil || g.Cfg == nil {
 		return false
 	}
 	return g.Cfg.IsLiveEnabled()
@@ -468,7 +478,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
 	}
 
-	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "cmd", cmd)
+	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)
 
 	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
 	if err != nil {
@@ -524,4 +534,17 @@ func (g *GrafanaLive) HandleListHTTP(_ *models.ReqContext) response.Response {
 
 	info["channels"] = channels
 	return response.JSONStreaming(200, info)
+}
+
+// HandleInfoHTTP special http response for
+func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
+	path := ctx.Params("*")
+	if path == "grafana/dashboards/gitops" {
+		return response.JSON(200, util.DynMap{
+			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(),
+		})
+	}
+	return response.JSONStreaming(404, util.DynMap{
+		"message": "Info is not supported for this channel",
+	})
 }

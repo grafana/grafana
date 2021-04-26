@@ -1,29 +1,30 @@
-import { getGrafanaLiveSrv, getLegacyAngularInjector, locationService } from '@grafana/runtime';
+import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { appEvents } from 'app/core/core';
 import {
   AppEvents,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
-  LiveChannel,
-  LiveChannelConfig,
   LiveChannelConnectionState,
   LiveChannelEvent,
   LiveChannelScope,
+  toLiveChannelId,
 } from '@grafana/data';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
 import { CoreGrafanaLiveFeature } from '../scopes';
 import { sessionId } from '../live';
 import { ShowModalReactEvent } from '../../../types/events';
+import { Unsubscribable } from 'rxjs';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 class DashboardWatcher {
-  channel?: LiveChannel<DashboardEvent>;
-
+  channel?: string; // path to the channel
   uid?: string;
   ignoreSave?: boolean;
   editing = false;
   lastEditing?: DashboardEvent;
+  subscription?: Unsubscribable;
 
   setEditingState(state: boolean) {
     const changed = (this.editing = state);
@@ -35,18 +36,17 @@ class DashboardWatcher {
   }
 
   private sendEditingState() {
-    if (!this.channel?.publish) {
-      return;
+    if (this.channel && this.uid) {
+      getBackendSrv().post(`api/live/publish`, {
+        channel: this.channel,
+        data: {
+          sessionId,
+          uid: this.uid,
+          action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
+          timestamp: Date.now(),
+        },
+      });
     }
-
-    const msg: DashboardEvent = {
-      sessionId,
-      uid: this.uid!,
-      action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-      message: (window as any).grafanaBootData?.user?.name,
-      timestamp: Date.now(),
-    };
-    this.channel!.publish!(msg);
   }
 
   watch(uid: string) {
@@ -57,21 +57,25 @@ class DashboardWatcher {
 
     // Check for changes
     if (uid !== this.uid) {
-      this.leave();
-      this.channel = live.getChannel({
+      const addr = {
         scope: LiveChannelScope.Grafana,
         namespace: 'dashboard',
         path: `uid/${uid}`,
-      });
-      this.channel.getStream().subscribe(this.observer);
+      };
+      this.leave();
+      if (uid) {
+        this.subscription = live.getStream(addr).subscribe(this.observer);
+      }
       this.uid = uid;
+      this.channel = toLiveChannelId(addr);
     }
   }
 
   leave() {
-    if (this.channel) {
-      this.channel.disconnect();
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
+    this.subscription = undefined;
     this.uid = undefined;
   }
 
@@ -116,8 +120,7 @@ class DashboardWatcher {
               return;
             }
 
-            const changeTracker = getLegacyAngularInjector().get<any>('unsavedChangesSrv').tracker;
-            const showPopup = this.editing || changeTracker.hasChanges();
+            const showPopup = this.editing; // || changeTracker.hasChanges();
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {
@@ -160,23 +163,13 @@ class DashboardWatcher {
 export const dashboardWatcher = new DashboardWatcher();
 
 export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
-  const dashboardConfig: LiveChannelConfig = {
-    path: '${uid}',
-    description: 'Dashboard change events',
-    hasPresence: true,
-    canPublish: () => true,
-  };
-
   return {
     name: 'dashboard',
     support: {
-      getChannelConfig: (path: string) => {
-        return {
-          ...dashboardConfig,
-          path, // set the real path
-        };
-      },
-      getSupportedPaths: () => [dashboardConfig],
+      getChannelConfig: (path: string) => ({
+        description: 'Dashboard change events',
+        hasPresence: true,
+      }),
     },
     description: 'Dashboard listener',
   };

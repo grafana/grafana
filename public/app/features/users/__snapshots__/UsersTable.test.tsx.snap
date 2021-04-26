@@ -115,6 +115,7 @@ exports[`Render should render users table 1`] = `
         className="width-8"
       >
         <OrgRolePicker
+          disabled={false}
           onChange={[Function]}
           value="Admin"
         />
@@ -184,6 +185,7 @@ exports[`Render should render users table 1`] = `
         className="width-8"
       >
         <OrgRolePicker
+          disabled={false}
           onChange={[Function]}
           value="Admin"
         />
@@ -253,6 +255,7 @@ exports[`Render should render users table 1`] = `
         className="width-8"
       >
         <OrgRolePicker
+          disabled={false}
           onChange={[Function]}
           value="Admin"
         />
@@ -322,6 +325,7 @@ exports[`Render should render users table 1`] = `
         className="width-8"
       >
         <OrgRolePicker
+          disabled={false}
           onChange={[Function]}
           value="Admin"
         />
@@ -391,6 +395,7 @@ exports[`Render should render users table 1`] = `
         className="width-8"
       >
         <OrgRolePicker
+          disabled={false}
           onChange={[Function]}
           value="Admin"
         />
@@ -460,6 +465,7 @@ exports[`Render should render users table 1`] = `
         className="width-8"
       >
         <OrgRolePicker
+          disabled={false}
           onChange={[Function]}
           value="Admin"
         />
