@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Alert, LegacyForms } from '@grafana/ui';
+import { Alert, Button, LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 import { getNavModel } from 'app/core/selectors/navModel';
 import config from 'app/core/config';
@@ -122,9 +122,7 @@ export class LdapPage extends PureComponent<Props, State> {
                       name="username"
                       defaultValue={queryParams.username}
                     />
-                    <button type="submit" className="btn btn-primary">
-                      Run
-                    </button>
+                    <Button type="submit">Run</Button>
                   </form>
                 </div>
                 {userError && userError.title && (

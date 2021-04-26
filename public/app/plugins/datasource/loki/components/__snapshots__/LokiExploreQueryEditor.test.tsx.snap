@@ -2,6 +2,27 @@
 
 exports[`LokiExploreQueryEditor should render component 1`] = `
 <LokiQueryField
+  ExtraFieldElement={
+    <LokiOptionFields
+      lineLimitValue="0"
+      onChange={[MockFunction]}
+      onRunQuery={[MockFunction]}
+      query={
+        Object {
+          "expr": "",
+          "maxLines": 0,
+          "refId": "A",
+        }
+      }
+      queryType="range"
+    />
+  }
+  absoluteRange={
+    Object {
+      "from": 1577836800000,
+      "to": 1577923200000,
+    }
+  }
   data={
     Object {
       "request": Object {
@@ -96,16 +117,6 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "expr": "",
       "maxLines": 0,
       "refId": "A",
-    }
-  }
-  range={
-    Object {
-      "from": "2020-01-01T00:00:00.000Z",
-      "raw": Object {
-        "from": "2020-01-01T00:00:00.000Z",
-        "to": "2020-01-02T00:00:00.000Z",
-      },
-      "to": "2020-01-02T00:00:00.000Z",
     }
   }
 />

@@ -71,13 +71,15 @@ function getJoinMatcher(options: JoinOptions): FieldMatcher {
  */
 export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
-    return undefined;
+    return;
   }
 
   if (options.frames.length === 1) {
     let frame = options.frames[0];
+    let frameCopy = frame;
+
     if (options.keepOriginIndices) {
-      frame = {
+      frameCopy = {
         ...frame,
         fields: frame.fields.map((f, fieldIndex) => {
           const copy = { ...f };
@@ -94,16 +96,35 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }),
       };
     }
+
+    const joinFieldMatcher = getJoinMatcher(options);
+    const joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
+
     if (options.enforceSort) {
-      const joinFieldMatcher = getJoinMatcher(options);
-      const joinIndex = frame.fields.findIndex((f) => joinFieldMatcher(f, frame, options.frames));
       if (joinIndex >= 0) {
-        if (!isLikelyAscendingVector(frame.fields[joinIndex].values)) {
-          return sortDataFrame(frame, joinIndex);
+        if (!isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
+          frameCopy = sortDataFrame(frameCopy, joinIndex);
         }
       }
     }
-    return frame;
+
+    if (options.keep) {
+      let fields = frameCopy.fields.filter(
+        (f, fieldIdx) => fieldIdx === joinIndex || options.keep!(f, frameCopy, options.frames)
+      );
+
+      // mutate already copied frame
+      if (frame !== frameCopy) {
+        frameCopy.fields = fields;
+      } else {
+        frameCopy = {
+          ...frame,
+          fields,
+        };
+      }
+    }
+
+    return frameCopy;
   }
 
   const nullModes: JoinNullMode[][] = [];
