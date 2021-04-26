@@ -132,7 +132,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       timeRange={
-                        !isExpressionQuery(query.model)
+                        !isExpressionQuery(query.model) && query.relativeTimeRange
                           ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
                           : undefined
                       }

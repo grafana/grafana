@@ -1,9 +1,18 @@
 import { GrafanaQuery } from '../../../types/unified-alerting-dto';
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { BackendSrvRequest, FetchResponse } from '../../../../../packages/grafana-runtime';
-import { dataFrameFromJSON, DataFrameJSON, dateMath, LoadingState, PanelData } from '@grafana/data';
+import { BackendSrvRequest, FetchResponse, toDataQueryError } from '@grafana/runtime';
+import {
+  compareArrayValues,
+  compareDataFrameStructures,
+  dataFrameFromJSON,
+  DataFrameJSON,
+  LoadingState,
+  PanelData,
+  rangeUtil,
+} from '@grafana/data';
 import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
 import { merge, Observable, of, ReplaySubject, timer, Unsubscribable } from 'rxjs';
+import { preProcessPanelData } from 'app/features/query/state/runRequest';
 
 interface AlertingQueryResult {
   frames: DataFrameJSON[];
@@ -15,10 +24,11 @@ interface AlertingQueryResponse {
 export class AlertingQueryRunner {
   private subject: ReplaySubject<Record<string, PanelData>>;
   private subscription?: Unsubscribable;
-  private lastResult?: PanelData;
+  private lastResult: Record<string, PanelData>;
 
   constructor() {
     this.subject = new ReplaySubject(1);
+    this.lastResult = {};
   }
 
   get(): Observable<Record<string, PanelData>> {
@@ -27,41 +37,28 @@ export class AlertingQueryRunner {
 
   async run(queries: GrafanaQuery[]) {
     if (queries.length === 0) {
-      // emit empty data.
+      const empty = initialState(queries, LoadingState.Done);
+      return this.subject.next(empty);
     }
+
     this.subscription = runRequest(queries).subscribe({
-      next: (data) => {
-        this.subject.next(data);
-
-        // const results = preProcessPanelData(data, this.lastResult);
-        // // Indicate if the structure has changed since the last query
-        // let structureRev = 1;
-        // if (this.lastResult?.structureRev && this.lastResult.series) {
-        //   structureRev = this.lastResult.structureRev;
-        //   const sameStructure = compareArrayValues(results.series, this.lastResult.series, compareDataFrameStructures);
-        //   if (!sameStructure) {
-        //     structureRev++;
-        //   }
-        // }
-        // results.structureRev = structureRev;
-        // this.lastResult = results;
-
-        // // Store preprocessed query results for applying overrides later on in the pipeline
-        // this.subject.next(this.lastResult);
+      next: (dataPerQuery) => {
+        for (const [refId, data] of Object.entries(dataPerQuery)) {
+          const previous = this.lastResult[refId];
+          this.lastResult[refId] = setStructureRevision(data, previous);
+        }
+        this.subject.next(this.lastResult);
       },
       error: (error) => console.error('PanelQueryRunner Error', error),
     });
   }
-
   cancel() {}
 }
 
 const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelData>> => {
-  const loading = loadingState(queries);
+  const initial = initialState(queries, LoadingState.Loading);
   const request = {
-    data: {
-      data: queries,
-    },
+    data: { data: queries },
     url: '/api/v1/eval',
     method: 'POST',
   };
@@ -69,80 +66,90 @@ const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelDat
   const runningRequest = getBackendSrv()
     .fetch<AlertingQueryResponse>(request)
     .pipe(
-      map(mapResponseToPanelData),
-      catchError((error) => of(errorState(queries, error))),
+      map(mapToPanelData(initial)),
+      catchError(mapToError(initial)),
       finalize(cancelNetworkRequestsOnUnsubscribe(request)),
-      // this makes it possible to share this observable in takeUntil
       share()
     );
 
-  return merge(timer(200).pipe(mapTo(loading), takeUntil(runningRequest)), runningRequest);
+  return merge(timer(200).pipe(mapTo(initial), takeUntil(runningRequest)), runningRequest);
 };
 
-const errorState = (queries: GrafanaQuery[], error: Error): Record<string, PanelData> => {
-  return queries.reduce((state, query) => {
-    state[query.refId] = {
-      state: LoadingState.Error,
+const initialState = (queries: GrafanaQuery[], state: LoadingState): Record<string, PanelData> => {
+  // 1. query with time range
+  // 2. expression without time range
+  // 2.1 classic/math condition reference multiple queries.
+  // 2.2 other condition reference single query.
+
+  return queries.reduce((dataByQuery: Record<string, PanelData>, query) => {
+    dataByQuery[query.refId] = {
+      state,
       series: [],
-      timeRange: {
-        from: dateMath.parse('now-6h')!,
-        to: dateMath.parse('now')!,
-        raw: {
-          from: 'now-6h',
-          to: 'now',
-        },
-      },
+      timeRange: rangeUtil.relativeToTimeRange(query.relativeTimeRange!),
     };
 
-    return state;
-  }, {} as Record<string, PanelData>);
+    return dataByQuery;
+  }, {});
 };
 
-const loadingState = (queries: GrafanaQuery[]): Record<string, PanelData> => {
-  return queries.reduce((state, query) => {
-    state[query.refId] = {
-      state: LoadingState.Loading,
-      series: [],
-      timeRange: {
-        from: dateMath.parse('now-6h')!,
-        to: dateMath.parse('now')!,
-        raw: {
-          from: 'now-6h',
-          to: 'now',
-        },
-      },
-    };
+const mapToPanelData = (
+  dataByQuery: Record<string, PanelData>
+): ((response: FetchResponse<AlertingQueryResponse>) => Record<string, PanelData>) => {
+  return (response) => {
+    const { data } = response;
+    const results: Record<string, PanelData> = {};
 
-    return state;
-  }, {} as Record<string, PanelData>);
+    for (const [refId, result] of Object.entries(data.results)) {
+      results[refId] = {
+        timeRange: dataByQuery[refId].timeRange,
+        state: LoadingState.Done,
+        series: result.frames.map(dataFrameFromJSON),
+      };
+    }
+
+    return results;
+  };
 };
 
-const mapResponseToPanelData = (response: FetchResponse<AlertingQueryResponse>): Record<string, PanelData> => {
-  const { results } = response.data;
-  const dataByRefId: Record<string, PanelData> = {};
+const mapToError = (
+  dataByQuery: Record<string, PanelData>
+): ((err: Error) => Observable<Record<string, PanelData>>) => {
+  return (error) => {
+    const results: Record<string, PanelData> = {};
+    const queryError = toDataQueryError(error);
 
-  for (const [refId, result] of Object.entries(results)) {
-    dataByRefId[refId] = {
-      timeRange: {
-        from: dateMath.parse('now-6h')!,
-        to: dateMath.parse('now')!,
-        raw: {
-          from: 'now-6h',
-          to: 'now',
-        },
-      },
-      state: LoadingState.Done,
-      series: result.frames.map(dataFrameFromJSON),
-    };
-  }
+    for (const [refId, data] of Object.entries(dataByQuery)) {
+      results[refId] = {
+        ...data,
+        state: LoadingState.Error,
+        error: queryError,
+      };
+    }
 
-  return dataByRefId;
+    return of(results);
+  };
 };
 
-function cancelNetworkRequestsOnUnsubscribe(request: BackendSrvRequest) {
+const cancelNetworkRequestsOnUnsubscribe = (request: BackendSrvRequest): (() => void) => {
   return () => {
     if (request.requestId) {
       getBackendSrv().resolveCancelerIfExists(request.requestId);
     }
   };
-}
+};
+
+const setStructureRevision = (data: PanelData, lastResult: PanelData) => {
+  const result = preProcessPanelData(data, lastResult);
+  let structureRev = 1;
+
+  if (lastResult?.structureRev && lastResult.series) {
+    structureRev = lastResult.structureRev;
+    const sameStructure = compareArrayValues(result.series, lastResult.series, compareDataFrameStructures);
+    if (!sameStructure) {
+      structureRev++;
+    }
+  }
+
+  result.structureRev = structureRev;
+  return result;
+};

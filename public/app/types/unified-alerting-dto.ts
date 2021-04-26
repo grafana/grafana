@@ -100,7 +100,7 @@ export interface GrafanaQueryModel extends DataQuery {
 export interface GrafanaQuery {
   refId: string;
   queryType: string;
-  relativeTimeRange: RelativeTimeRange;
+  relativeTimeRange?: RelativeTimeRange;
   model: GrafanaQueryModel;
 }
 

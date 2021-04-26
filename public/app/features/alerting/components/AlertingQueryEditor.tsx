@@ -15,6 +15,7 @@ import { defaultCondition } from '../../expressions/utils/expressionTypes';
 import { ExpressionQueryType } from '../../expressions/types';
 import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 interface Props {
   value?: GrafanaQuery[];
@@ -145,10 +146,12 @@ const addQuery = (queries: GrafanaQuery[], model: GrafanaQueryModel): GrafanaQue
       hide: false,
       refId: refId,
     },
-    relativeTimeRange: {
-      from: 21600,
-      to: 0,
-    },
+    relativeTimeRange: isExpressionQuery(model)
+      ? undefined
+      : {
+          from: 21600,
+          to: 0,
+        },
   };
 
   return [...queries, query];
