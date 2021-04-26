@@ -60,7 +60,7 @@ export function updateConfigWithReceiver(
   }
 
   // sanity check that existing receiver exists
-  if (replaceReceiverName && !oldReceivers.find(({ name }) => name === receiver.name)) {
+  if (replaceReceiverName && !oldReceivers.find(({ name }) => name === replaceReceiverName)) {
     throw new Error(`Expected receiver ${replaceReceiverName} to exist, but did not find it in the config`);
   }
 
