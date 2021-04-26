@@ -206,7 +206,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     return (
       <ThemeContext.Consumer>
         {(theme) => {
-          const styles = getStyles(theme);
+          const styles = getStyles(theme.v1);
           return (
             <div className={styles.wrapper}>
               <Button

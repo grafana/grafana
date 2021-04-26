@@ -2,7 +2,6 @@ package influxdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -23,6 +22,7 @@ type Executor struct {
 	ResponseParser *ResponseParser
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &Executor{
 		QueryParser:    &InfluxdbQueryParser{},
@@ -40,6 +40,7 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	glog.Debug("Received a query request", "numQueries", len(tsdbQuery.Queries))
@@ -91,19 +92,9 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 		return plugins.DataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
 	}
 
-	var response Response
-	dec := json.NewDecoder(resp.Body)
-	dec.UseNumber()
-	if err := dec.Decode(&response); err != nil {
-		return plugins.DataResponse{}, err
-	}
-	if response.Err != nil {
-		return plugins.DataResponse{}, response.Err
-	}
-
 	result := plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{
-			"A": e.ResponseParser.Parse(&response, query),
+			"A": e.ResponseParser.Parse(resp.Body, query),
 		},
 	}
 
