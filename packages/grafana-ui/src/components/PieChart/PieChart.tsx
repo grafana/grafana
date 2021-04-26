@@ -1,5 +1,7 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 import {
+  DataHoverClearEvent,
+  DataHoverEvent,
   FALLBACK_COLOR,
   FieldDisplay,
   formattedValueToString,
@@ -30,6 +32,7 @@ import {
 } from './types';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
+import { usePanelContext } from '../PanelChrome';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -38,6 +41,9 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
+/**
+ * @beta
+ */
 export const PieChart: FC<PieChartProps> = ({
   data,
   timeZone,
@@ -52,6 +58,25 @@ export const PieChart: FC<PieChartProps> = ({
   ...restProps
 }) => {
   const theme = useTheme();
+  const [highlightedTitle, setHighlightedTitle] = useState<string>();
+  const { eventBus } = usePanelContext();
+
+  if (eventBus) {
+    const setHighlightedSlice = (event: DataHoverEvent) => {
+      if (eventBus.isOwnEvent(event)) {
+        setHighlightedTitle(event.payload.dataId);
+      }
+    };
+
+    const resetHighlightedSlice = (event: DataHoverClearEvent) => {
+      if (eventBus.isOwnEvent(event)) {
+        setHighlightedTitle(undefined);
+      }
+    };
+
+    eventBus.subscribe(DataHoverEvent, setHighlightedSlice);
+    eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice);
+  }
 
   const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
@@ -117,6 +142,7 @@ export const PieChart: FC<PieChartProps> = ({
           <PieChartSvg
             width={vizWidth}
             height={vizHeight}
+            highlightedTitle={highlightedTitle}
             fieldDisplayValues={fieldDisplayValues}
             tooltipOptions={tooltipOptions}
             {...restProps}
@@ -132,6 +158,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   pieType,
   width,
   height,
+  highlightedTitle,
   useGradients = true,
   displayLabels = [],
   tooltipOptions,
@@ -194,6 +221,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             {(pie) => {
               return pie.arcs.map((arc) => {
                 const color = arc.data.display.color ?? FALLBACK_COLOR;
+                const highlighted = highlightedTitle === arc.data.display.title;
                 const label = showLabel ? (
                   <PieLabel
                     arc={arc}
@@ -210,6 +238,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                       {(api) => (
                         <PieSlice
                           tooltip={tooltip}
+                          highlighted={highlighted}
                           arc={arc}
                           pie={pie}
                           fill={getGradientColor(color)}
@@ -225,6 +254,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                   return (
                     <PieSlice
                       key={arc.index}
+                      highlighted={highlighted}
                       tooltip={tooltip}
                       arc={arc}
                       pie={pie}
@@ -260,11 +290,12 @@ const PieSlice: FC<{
   children: ReactNode;
   arc: PieArcDatum<FieldDisplay>;
   pie: ProvidedProps<FieldDisplay>;
+  highlighted?: boolean;
   fill: string;
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
-}> = ({ arc, children, pie, openMenu, fill, tooltip, tooltipOptions }) => {
+}> = ({ arc, children, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }) => {
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
@@ -280,7 +311,7 @@ const PieSlice: FC<{
   return (
     <g
       key={arc.data.display.title}
-      className={styles.svgArg}
+      className={highlighted ? styles.svgArg.highlighted : styles.svgArg.normal}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
@@ -420,12 +451,18 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
       justify-content: center;
     `,
-    svgArg: css`
-      transition: all 200ms ease-in-out;
-      &:hover {
+    svgArg: {
+      normal: css`
+        transition: all 200ms ease-in-out;
+        &:hover {
+          transform: scale3d(1.03, 1.03, 1);
+        }
+      `,
+      highlighted: css`
+        transition: all 200ms ease-in-out;
         transform: scale3d(1.03, 1.03, 1);
-      }
-    `,
+      `,
+    },
     tooltipPortal: css`
       ${getTooltipContainerStyles(theme)}
     `,

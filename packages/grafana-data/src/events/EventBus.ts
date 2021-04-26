@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
+import { PayloadWithSource } from './common';
 import {
   EventBus,
   LegacyEmitter,
@@ -8,6 +9,7 @@ import {
   LegacyEventHandler,
   BusEvent,
   AppEvent,
+  BusEventWithPayload,
 } from './types';
 
 /**
@@ -88,5 +90,44 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
 
   removeAllListeners() {
     this.emitter.removeAllListeners();
+  }
+}
+
+/**
+ * @alpha
+ *
+ * Wraps EventBus and adds a source to help with identifying if a subscriber should react to the event or not.
+ */
+export class EventBusWithSource implements EventBus {
+  source: string;
+  eventBus: EventBus;
+
+  constructor(eventBus: EventBus, source: string) {
+    this.eventBus = eventBus;
+    this.source = source;
+  }
+
+  publish<T extends BusEvent>(event: T): void {
+    const decoratedEvent = {
+      ...event,
+      ...{ payload: { ...event.payload, ...{ source: this.source } } },
+    };
+    this.eventBus.publish(decoratedEvent);
+  }
+
+  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this.eventBus.subscribe(eventType, handler);
+  }
+
+  getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
+    return this.eventBus.getStream(eventType);
+  }
+
+  removeAllListeners(): void {
+    this.eventBus.removeAllListeners();
+  }
+
+  isOwnEvent(event: BusEventWithPayload<PayloadWithSource>): boolean {
+    return event.payload.source === this.source;
   }
 }
