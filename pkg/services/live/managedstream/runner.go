@@ -1,4 +1,4 @@
-package live
+package managedstream
 
 import (
 	"context"
@@ -9,27 +9,32 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// ManagedStreamRunner keeps ManagedStream per streamID.
-type ManagedStreamRunner struct {
+var (
+	logger = log.New("live.managed_stream")
+)
+
+// Runner keeps ManagedStream per streamID.
+type Runner struct {
 	mu        sync.RWMutex
 	streams   map[string]*ManagedStream
 	publisher models.ChannelPublisher
 }
 
-// NewManagedStreamRunner creates new ManagedStreamRunner.
-func NewManagedStreamRunner(publisher models.ChannelPublisher) *ManagedStreamRunner {
-	return &ManagedStreamRunner{
+// NewRunner creates new Runner.
+func NewRunner(publisher models.ChannelPublisher) *Runner {
+	return &Runner{
 		publisher: publisher,
 		streams:   map[string]*ManagedStream{},
 	}
 }
 
 // Streams returns a map of active managed streams (per streamID).
-func (r *ManagedStreamRunner) Streams() map[string]*ManagedStream {
+func (r *Runner) Streams() map[string]*ManagedStream {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	streams := make(map[string]*ManagedStream, len(r.streams))
@@ -41,7 +46,7 @@ func (r *ManagedStreamRunner) Streams() map[string]*ManagedStream {
 
 // GetOrCreateStream -- for now this will create new manager for each key.
 // Eventually, the stream behavior will need to be configured explicitly
-func (r *ManagedStreamRunner) GetOrCreateStream(streamID string) (*ManagedStream, error) {
+func (r *Runner) GetOrCreateStream(streamID string) (*ManagedStream, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	s, ok := r.streams[streamID]
