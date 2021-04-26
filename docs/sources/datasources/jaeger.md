@@ -39,17 +39,16 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 You can query and display traces from Jaeger via [Explore]({{< relref "../explore/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
+The Jaeger query editor allows you to query by trace ID directly or use the search form to find traces. To query by trace ID, select the TraceID from the Query type selector and insert the ID into the text input.
 
-The Jaeger query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
+For searching set the query type selector to Search. You can use the following fields for finding traces:
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
-
-Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
-
-1. The service you are interested in.
-1. Particular operation is part of the selected service.
-1. Specific trace in which the selected operation occurred, represented by the root operation name and trace duration.
+1. Service - Lists services.
+1. Operation - Populated after selecting a service. Lists operations related to the selected service. Select [All] option to query all the operation.
+1. Tags - Use values in the [logfmt](https://brandur.org/logfmt) format. For example `error=true db.statement="select * from User"`.
+1. Min Duration - Setting this field should filter traces that has higher duration than the value. Possible values are `1.2s, 100ms, 500us`.
+1. Max Duration - Setting this field should filter traces that duration are not higher than the value. Possible values are `1.2s, 100ms, 500us`.
+1. Limit - Limits the number of traces returned.
 
 ## Linking Trace ID from logs
 
@@ -57,7 +56,7 @@ You can link to Jaeger trace from logs in Loki by configuring a derived field wi
 
 ## Configure the data source with provisioning
 
-You can set up the data source via configuration files with Grafana’s provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for information on various settings and how it works.
+You can set up the data source via configuration files with Grafana's provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for information on various settings and how it works.
 
 Here is an example with basic auth and trace-to-logs field.
 
