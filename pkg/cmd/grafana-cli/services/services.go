@@ -115,5 +115,6 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 		return err
 	}
 
+	logger.Debugf("Removing directory %v\n", pluginDir)
 	return IoHelper.RemoveAll(pluginDir)
 }
