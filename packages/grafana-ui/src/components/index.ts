@@ -38,7 +38,7 @@ export { QueryField } from './QueryField/QueryField';
 
 // Code editor
 export { CodeEditor } from './Monaco/CodeEditorLazy';
-export { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { MonacoEditor, CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
@@ -110,7 +110,6 @@ export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
 export { FieldLinkList } from './DataLinks/FieldLinkList';
-export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';

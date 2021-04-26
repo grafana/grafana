@@ -34,7 +34,6 @@ export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPl
 }
 
 /** @internal */
-
 export function preparePlotData(frame: DataFrame, keepFieldTypes?: FieldType[]): AlignedData {
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
@@ -57,9 +56,11 @@ export function preparePlotData(frame: DataFrame, keepFieldTypes?: FieldType[]):
       seriesIndex++;
       continue;
     }
+
     if (keepFieldTypes && keepFieldTypes.indexOf(f.type) < 0) {
       continue;
     }
+
     collectStackingGroups(f, stackingGroups, seriesIndex);
     result.push(f.values.toArray());
     seriesIndex++;
@@ -70,18 +71,20 @@ export function preparePlotData(frame: DataFrame, keepFieldTypes?: FieldType[]):
     // array or stacking groups
     for (const [_, seriesIdxs] of stackingGroups.entries()) {
       const acc = Array(result[0].length).fill(0);
+
       for (let j = 0; j < seriesIdxs.length; j++) {
         const currentlyStacking = result[seriesIdxs[j]];
+
         for (let k = 0; k < result[0].length; k++) {
           const v = currentlyStacking[k];
-          acc[k] += v === null || v === undefined ? 0 : +v;
+          acc[k] += v == null ? 0 : +v;
         }
+
         result[seriesIdxs[j]] = acc.slice();
       }
     }
-
-    return result as AlignedData;
   }
+
   return result as AlignedData;
 }
 

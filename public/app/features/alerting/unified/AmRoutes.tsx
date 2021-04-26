@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Field, Icon, InfoBox, useStyles } from '@grafana/ui';
+import { Alert, Field, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
@@ -31,24 +31,17 @@ const AmRoutes: FC = () => {
   const receivers = mapObjectsToSelectableValue(config?.receivers, 'name');
 
   return (
-    <AlertingPageWrapper pageId="am-routes" isLoading={loading}>
+    <AlertingPageWrapper pageId="am-routes">
       <Field label="Choose alert manager">
         <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       </Field>
-      {error && (
-        <InfoBox
-          severity="error"
-          title={
-            <h4>
-              <Icon className={styles.iconError} name="exclamation-triangle" size="xl" />
-              Errors loading AlertManager config
-            </h4>
-          }
-        >
+      {error && !loading && (
+        <Alert severity="error" title="Error loading alert manager config">
           {error.message || 'Unknown error.'}
-        </InfoBox>
+        </Alert>
       )}
-      {result && (
+      {loading && <LoadingPlaceholder text="loading alert manager config..." />}
+      {result && !loading && !error && (
         <>
           <div className={styles.break} />
           <AmRootRoute routes={routes} receivers={receivers} />

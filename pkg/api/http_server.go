@@ -36,7 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/live/push"
+	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -90,7 +90,7 @@ type HTTPServer struct {
 	SearchService          *search.SearchService                   `inject:""`
 	ShortURLService        *shorturls.ShortURLService              `inject:""`
 	Live                   *live.GrafanaLive                       `inject:""`
-	LivePushGateway        *push.Gateway                           `inject:""`
+	LivePushGateway        *pushhttp.Gateway                       `inject:""`
 	ContextHandler         *contexthandler.ContextHandler          `inject:""`
 	SQLStore               *sqlstore.SQLStore                      `inject:""`
 	LibraryPanelService    *librarypanels.LibraryPanelService      `inject:""`
@@ -328,12 +328,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-
-	for _, route := range hs.PluginManager.StaticRoutes() {
-		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(m, route.Directory, "", pluginRoute)
-	}
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")

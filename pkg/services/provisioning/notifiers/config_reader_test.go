@@ -321,7 +321,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			cfgProvider := &configReader{log: log.New("test logger")}
 			_, err := cfgProvider.readConfig(incorrectSettings)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "alert validation error: Could not find url property in settings")
+			So(err.Error(), ShouldEqual, "alert validation error: token must be specified when using the Slack chat API")
 		})
 	})
 }

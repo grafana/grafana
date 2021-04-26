@@ -12,7 +12,7 @@ import {
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
-import pick from 'lodash/pick';
+import { pick } from 'lodash';
 import { locationService } from '@grafana/runtime';
 import { ShowModalReactEvent } from '../../../../../types/events';
 
@@ -135,6 +135,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
+      sourcePanel.configRev++; // force check the configs
 
       // Loaded plugin is not included in the persisted properties
       // So is not handled by restoreModel
