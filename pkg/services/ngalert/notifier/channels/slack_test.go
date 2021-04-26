@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -13,8 +15,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -22,6 +24,10 @@ import (
 func TestSlackNotifier(t *testing.T) {
 	tmpl, err := template.FromGlobs("templates/default.tmpl")
 	require.NoError(t, err)
+
+	externalURL, err := url.Parse("http://localhost")
+	require.NoError(t, err)
+	tmpl.ExternalURL = externalURL
 
 	cases := []struct {
 		name         string
@@ -34,7 +40,43 @@ func TestSlackNotifier(t *testing.T) {
 		{
 			name: "Correct config with one alert",
 			settings: `{
-				"url": "https://test.slack.com",
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "TODO: rule URL",
+						Text:       "",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v",
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+			expInitError: nil,
+			expMsgError:  nil,
+		},
+		{
+			name: "Correct config with webhook",
+			settings: `{
+				"url": "https://webhook.com",
 				"recipient": "#testchannel",
 				"icon_emoji": ":emoji:"
 			}`,
@@ -70,7 +112,7 @@ func TestSlackNotifier(t *testing.T) {
 		{
 			name: "Correct config with multiple alerts and template",
 			settings: `{
-				"url": "https://test.slack.com",
+				"token": "1234",
 				"recipient": "#testchannel",
 				"icon_emoji": ":emoji:",
 				"title": "{{ .Alerts.Firing | len }} firing, {{ .Alerts.Resolved | len }} resolved"
@@ -110,9 +152,17 @@ func TestSlackNotifier(t *testing.T) {
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name:         "Error in initing",
-			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
+			name: "Missing token",
+			settings: `{
+				"recipient": "#testchannel"
+			}`,
+			expInitError: alerting.ValidationError{Reason: "token must be specified when using the Slack chat API"},
+		}, {
+			name: "Missing recipient",
+			settings: `{
+				"token": "1234"
+			}`,
+			expInitError: alerting.ValidationError{Reason: "recipient must be specified when using the Slack chat API"},
 		}, {
 			name: "Error in building message",
 			settings: `{
@@ -134,9 +184,7 @@ func TestSlackNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			externalURL, err := url.Parse("http://localhost")
-			require.NoError(t, err)
-			pn, err := NewSlackNotifier(m, tmpl, externalURL)
+			pn, err := NewSlackNotifier(m, tmpl)
 			if c.expInitError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError.Error(), err.Error())
@@ -145,17 +193,28 @@ func TestSlackNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
+			origSendSlackRequest := sendSlackRequest
+			t.Cleanup(func() {
+				sendSlackRequest = origSendSlackRequest
 			})
+			sendSlackRequest = func(request *http.Request, log log.Logger) error {
+				t.Helper()
+				defer func() {
+					_ = request.Body.Close()
+				}()
+
+				b, err := io.ReadAll(request.Body)
+				require.NoError(t, err)
+				body = string(b)
+				return nil
+			}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
-				require.False(t, ok)
 				require.Error(t, err)
+				require.False(t, ok)
 				require.Equal(t, c.expMsgError.Error(), err.Error())
 				return
 			}
@@ -163,8 +222,8 @@ func TestSlackNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			// Getting Ts from actual since that can't be predicted.
-			obj := &slackMessage{}
-			require.NoError(t, json.Unmarshal([]byte(body), obj))
+			var obj slackMessage
+			require.NoError(t, json.Unmarshal([]byte(body), &obj))
 			c.expMsg.Attachments[0].Ts = obj.Attachments[0].Ts
 
 			expBody, err := json.Marshal(c.expMsg)

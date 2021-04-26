@@ -15,14 +15,60 @@ content-type: application/json
                 "from": 18000,
                 "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-                "datasourceUid": "-100",
                 "type":"math",
                 "expression":"1 < 2"
             }
         }
     ]
   }
+}
+
+###
+
+POST http://admin:admin@localhost:3000/api/v1/eval
+content-type: application/json
+
+{
+"data": [
+  {
+    "refId": "A",
+    "queryType": "",
+    "relativeTimeRange": {
+      "from": 18000,
+      "to": 10800
+    },
+    "datasourceUid": "000000004",
+    "model": {
+      "intervalMs": 1000,
+      "maxDataPoints": 100,
+      "orgId": 0,
+      "refId": "A",
+      "scenarioId": "csv_metric_values",
+      "stringInput": "1,20,90,30,5,0"
+    }
+  },
+  {
+    "refId": "B",
+    "queryType": "",
+    "relativeTimeRange": {
+      "from": 18000,
+      "to": 10800
+    },
+    "datasourceUid": "-100",
+    "model": {
+      "expression": "$A",
+      "intervalMs": 2000,
+      "maxDataPoints": 200,
+      "orgId": 0,
+      "reducer": "mean",
+      "refId": "B",
+      "type": "reduce"
+    }
+  }
+],
+"now": "2021-04-11T14:38:14Z"
 }
 
 ###
@@ -67,8 +113,8 @@ content-type: application/json
                 "from": 18000,
                 "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-                "datasourceUid": "-100",
                 "type":"math",
                 "expression":"1 < 2"
             }
