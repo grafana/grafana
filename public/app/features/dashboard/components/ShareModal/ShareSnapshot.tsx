@@ -234,16 +234,16 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         </Field>
 
         <Modal.ButtonRow>
-          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
-            Local Snapshot
+          <Button variant="secondary" onClick={onDismiss}>
+            Cancel
           </Button>
           {externalEnabled && (
             <Button variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
               {sharingButtonText}
             </Button>
           )}
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
+          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
+            Local Snapshot
           </Button>
         </Modal.ButtonRow>
       </>
