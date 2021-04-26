@@ -17,7 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/live/demultiplexer"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/services/live/livecontext"
+	"github.com/grafana/grafana/pkg/services/live/managedstream"
+	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -63,8 +67,9 @@ type GrafanaLive struct {
 
 	node *centrifuge.Node
 
-	// The websocket handler
-	WebsocketHandler interface{}
+	// Websocket handlers
+	websocketHandler     interface{}
+	pushWebsocketHandler interface{}
 
 	// Full channel handler
 	channels   map[string]models.ChannelHandler
@@ -73,7 +78,7 @@ type GrafanaLive struct {
 	// The core internal features
 	GrafanaScope CoreGrafanaScope
 
-	ManagedStreamRunner *ManagedStreamRunner
+	ManagedStreamRunner *managedstream.Runner
 
 	contextGetter    *pluginContextGetter
 	runStreamManager *runstream.Manager
@@ -140,7 +145,7 @@ func (g *GrafanaLive) Init() error {
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
 
-	g.ManagedStreamRunner = NewManagedStreamRunner(g.Publish)
+	g.ManagedStreamRunner = managedstream.NewRunner(g.Publish)
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -152,7 +157,7 @@ func (g *GrafanaLive) Init() error {
 
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
 			logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			user, ok := getContextSignedUser(client.Context())
+			user, ok := livecontext.GetContextSignedUser(client.Context())
 			if !ok {
 				logger.Error("Unauthenticated live connection")
 				cb(centrifuge.SubscribeReply{}, centrifuge.ErrorInternal)
@@ -196,7 +201,7 @@ func (g *GrafanaLive) Init() error {
 		// allows some simple prototypes to work quickly.
 		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
 			logger.Debug("Client wants to publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			user, ok := getContextSignedUser(client.Context())
+			user, ok := livecontext.GetContextSignedUser(client.Context())
 			if !ok {
 				logger.Error("Unauthenticated live connection")
 				cb(centrifuge.PublishReply{}, centrifuge.ErrorInternal)
@@ -260,7 +265,12 @@ func (g *GrafanaLive) Init() error {
 		WriteBufferSize: 1024,
 	})
 
-	g.WebsocketHandler = func(ctx *models.ReqContext) {
+	pushWSHandler := pushws.NewHandler(g.ManagedStreamRunner, pushws.Config{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	})
+
+	g.websocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		if user == nil {
 			ctx.Resp.WriteHeader(401)
@@ -272,8 +282,8 @@ func (g *GrafanaLive) Init() error {
 			UserID: fmt.Sprintf("%d", user.UserId),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
-		newCtx = setContextSignedUser(newCtx, user)
-		newCtx = setContextValues(newCtx, ctx.Req.URL.Query())
+		newCtx = livecontext.SetContextSignedUser(newCtx, user)
+		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID.
@@ -281,8 +291,29 @@ func (g *GrafanaLive) Init() error {
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.RouteRegister.Get("/live/ws", g.WebsocketHandler)
+	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
+		user := ctx.SignedInUser
+		if user == nil {
+			ctx.Resp.WriteHeader(401)
+			return
+		}
 
+		// Centrifuge expects Credentials in context with a current user ID.
+		cred := &centrifuge.Credentials{
+			UserID: fmt.Sprintf("%d", user.UserId),
+		}
+		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
+		newCtx = livecontext.SetContextSignedUser(newCtx, user)
+		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
+
+		r := ctx.Req.Request
+		r = r.WithContext(newCtx) // Set a user ID.
+
+		pushWSHandler.ServeHTTP(ctx.Resp, r)
+	}
+
+	g.RouteRegister.Get("/live/ws", g.websocketHandler)
+	g.RouteRegister.Get("/live/push", g.pushWebsocketHandler)
 	return nil
 }
 
@@ -402,7 +433,7 @@ func (g *GrafanaLive) handleStreamScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return NewDemultiplexer(namespace, g.ManagedStreamRunner), nil
+	return demultiplexer.New(namespace, g.ManagedStreamRunner), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
