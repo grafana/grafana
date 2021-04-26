@@ -301,7 +301,7 @@ func (g *GrafanaLive) Init() error {
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push", g.pushWebsocketHandler)
-	}, middleware.ReqSignedInNoAnonymous)
+	}, middleware.ReqOrgAdmin)
 
 	return nil
 }
