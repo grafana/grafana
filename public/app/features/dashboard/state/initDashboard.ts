@@ -4,7 +4,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp } from 'app/core/actions';
@@ -17,7 +16,7 @@ import {
   dashboardInitSlow,
 } from './reducers';
 // Types
-import { DashboardDTO, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult, DashboardInitPhase } from 'app/types';
+import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -25,9 +24,9 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { locationService } from '@grafana/runtime';
 import { ChangeTracker } from '../services/ChangeTracker';
+import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
-  $injector: any;
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
@@ -174,12 +173,12 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // init services
     const timeSrv: TimeSrv = getTimeSrv();
-    const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
     const dashboardSrv: DashboardSrv = getDashboardSrv();
     const changeTracker = new ChangeTracker();
 
     timeSrv.init(dashboard);
-    annotationsSrv.init(dashboard);
+    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
+    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (storeState.dashboard.modifiedQueries) {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;

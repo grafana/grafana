@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
@@ -856,6 +857,83 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 	})
 }
 
+func TestSettingsCasting(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+
+	t.Run("Correctly transforms moving_average settings", func(t *testing.T) {
+		c := newFakeClient(5)
+		_, err := executeTsdbQuery(c, `{
+			"timeField": "@timestamp",
+			"bucketAggs": [
+				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+			],
+			"metrics": [
+				{ "id": "1", "type": "average", "field": "@value" },
+				{
+					"id": "3",
+					"type": "moving_avg",
+					"field": "1",
+					"pipelineAgg": "1",
+					"settings": {
+						"model": "holt_winters",
+						"window": "10",
+						"predict": "5",
+						"settings": {
+							"alpha": "0.5",
+							"beta": "0.7",
+							"gamma": "SHOULD NOT CHANGE",
+							"period": "4"
+						}
+					}
+				}
+			]
+		}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		movingAvgSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+
+		assert.Equal(t, 10., movingAvgSettings["window"])
+		assert.Equal(t, 5., movingAvgSettings["predict"])
+
+		modelSettings := movingAvgSettings["settings"].(map[string]interface{})
+
+		assert.Equal(t, .5, modelSettings["alpha"])
+		assert.Equal(t, .7, modelSettings["beta"])
+		assert.Equal(t, "SHOULD NOT CHANGE", modelSettings["gamma"])
+		assert.Equal(t, 4., modelSettings["period"])
+	})
+
+	t.Run("Correctly transforms serial_diff settings", func(t *testing.T) {
+		c := newFakeClient(5)
+		_, err := executeTsdbQuery(c, `{
+			"timeField": "@timestamp",
+			"bucketAggs": [
+				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+			],
+			"metrics": [
+				{ "id": "1", "type": "average", "field": "@value" },
+				{
+					"id": "3",
+					"type": "serial_diff",
+					"field": "1",
+					"pipelineAgg": "1",
+					"settings": {
+						"lag": "1"
+					}
+				}
+			]
+		}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
+
+		serialDiffSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+
+		assert.Equal(t, 1., serialDiffSettings["lag"])
+	})
+}
+
 type fakeClient struct {
 	version             int
 	timeField           string
@@ -912,6 +990,7 @@ func newDataQuery(body string) (plugins.DataQuery, error) {
 	}, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
 	plugins.DataResponse, error) {
 	json, err := simplejson.NewJson([]byte(body))

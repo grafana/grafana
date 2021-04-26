@@ -8,6 +8,12 @@ export type UpdateCounters = {
   schemaChanged: number;
 };
 
+export enum DebugMode {
+  Render = 'render',
+  Events = 'events',
+}
+
 export interface DebugPanelOptions {
+  mode: DebugMode;
   counters?: UpdateConfig;
 }

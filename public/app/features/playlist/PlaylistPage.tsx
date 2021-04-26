@@ -132,11 +132,11 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
           onChange={(e) => setAutofit(e.currentTarget.checked)}
         />
       </VerticalGroup>
-      <div className="gf-form-button-row">
+      <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
           Start {playlist.name}
         </Button>
-      </div>
+      </Modal.ButtonRow>
     </Modal>
   );
 };

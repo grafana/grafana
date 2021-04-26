@@ -24,12 +24,15 @@ import {
   DataTransformerConfig,
   LoadingState,
   PanelData,
+  PanelPluginDataSupport,
   rangeUtil,
   ScopedVars,
   TimeRange,
   TimeZone,
   transformDataFrame,
 } from '@grafana/data';
+import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
+import { mergePanelAndDashData } from './mergePanelAndDashData';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -64,6 +67,7 @@ export class PanelQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
+  private dataSupport?: PanelPluginDataSupport;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -182,7 +186,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options));
+      this.pipeToSubject(runSharedRequest(options), panelId);
       return;
     }
 
@@ -230,18 +234,23 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.pipeToSubject(runRequest(ds, request));
+      this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>) {
+  private pipeToSubject(observable: Observable<PanelData>, panelId?: number) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
 
-    this.subscription = observable.subscribe({
+    let panelData = observable;
+    if (this.dataSupport?.alertStates || this.dataSupport?.annotations) {
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
+    }
+
+    this.subscription = panelData.subscribe({
       next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
