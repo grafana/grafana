@@ -618,7 +618,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 29) {
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (panel.type === 'singlestat') {
           migrateSinglestat(panel);
         }
@@ -880,27 +880,23 @@ function updateVariablesSyntax(text: string) {
   });
 }
 
-function migrateSinglestat(model: any) {
-  // If 'grafana-singlestat-panel' exists, move to that
+function migrateSinglestat(panel: PanelModel) {
+  // If   'grafana-singlestat-panel' exists, move to that
   if (config.panels['grafana-singlestat-panel']) {
-    model.type = 'grafana-singlestat-panel';
-    return model;
+    panel.type = 'grafana-singlestat-panel';
+    return;
   }
-
-  const panel = new PanelModel(model);
 
   // To make sure PanelModel.isAngularPlugin logic thinks the current panel is angular
   // And since this plugin no longer exist we just fake it here
   panel.plugin = { angularPanelCtrl: {} } as PanelPlugin;
 
   // Otheriwse use gauge or stat panel
-  if (model.gauge?.show) {
+  if ((panel as any).gauge?.show) {
     gaugePanelPlugin.meta = config.panels['gauge'];
     panel.changePlugin(gaugePanelPlugin);
   } else {
     statPanelPlugin.meta = config.panels['stat'];
     panel.changePlugin(statPanelPlugin);
   }
-
-  Object.assign(model, panel.getSaveModel());
 }
