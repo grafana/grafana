@@ -1,5 +1,5 @@
 import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
-import { Button } from './Button';
+import { Button, LinkButton } from './Button';
 
 <Meta title="MDX|Button" component={Button} />
 
@@ -64,22 +64,38 @@ Used for triggering a removing or deleting action. Because of its dominant color
   </div>
 </Preview>
 
-## Link
-
-Used for hyperlinks.
+## Text
 
 <Preview>
   <div>
-    <Button href="/" variant="link" size="sm" style={{ margin: '5px' }}>
+    <Button buttonStyle="text" size="sm" style={{ margin: '5px' }}>
       Small
     </Button>
-    <Button href="/" variant="link" size="md" style={{ margin: '5px' }}>
+    <Button buttonStyle="text" size="md" style={{ margin: '5px' }}>
       Medium
     </Button>
-    <Button href="/" variant="link" size="lg" style={{ margin: '5px' }}>
+    <Button buttonStyle="text" size="lg" style={{ margin: '5px' }}>
       Large
     </Button>
   </div>
 </Preview>
 
 <Props of={Button} />
+
+## Links
+
+To add an anchor that looks like a button use the `<LinkButton>` component and pass a href prop.
+
+<Preview>
+  <div>
+    <LinkButton href="/" size="sm" style={{ margin: '5px' }}>
+      Small
+    </LinkButton>
+    <LinkButton href="/" size="md" style={{ margin: '5px' }}>
+      Medium
+    </LinkButton>
+    <LinkButton href="/" size="lg" style={{ margin: '5px' }}>
+      Large
+    </LinkButton>
+  </div>
+</Preview>
