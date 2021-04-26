@@ -1,6 +1,7 @@
 import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
+import { PanelPluginDataSupport } from '.';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -168,6 +169,7 @@ export enum NullValueMode {
  */
 export interface DataConfigSource {
   configRev?: number;
+  dataSupport?: PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
 }
