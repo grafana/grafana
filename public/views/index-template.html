@@ -263,6 +263,9 @@
         [[if .ContentDeliveryURL]]
           window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
         [[end]]
+        [[if .Nonce]]
+          window.nonce = '[[.Nonce]]';
+        [[end]]
     </script>
 
     [[if .GoogleTagManagerId]]
