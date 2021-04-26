@@ -21,8 +21,8 @@ exports[`Render should render component 1`] = `
     Delete
   </Button>
   <LinkButton
+    buttonStyle="text"
     href="/datasources"
-    variant="link"
   >
     Back
   </LinkButton>
@@ -52,8 +52,8 @@ exports[`Render should render with buttons enabled 1`] = `
     Delete
   </Button>
   <LinkButton
+    buttonStyle="text"
     href="/datasources"
-    variant="link"
   >
     Back
   </LinkButton>
