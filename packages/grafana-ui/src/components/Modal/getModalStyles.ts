@@ -11,7 +11,6 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       z-index: ${theme.zIndex.modal};
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-      padding: ${theme.spacing(2)};
       border-radius: ${borderRadius};
       border: 1px solid ${theme.colors.border.weak};
       background-clip: padding-box;
@@ -39,13 +38,14 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       display: flex;
       align-items: center;
       min-height: 42px;
+      margin: ${theme.spacing(1, 2, 0, 2)};
     `,
     modalHeaderWithTabs: css`
       border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.size.lg};
-      margin: ${theme.spacing(0, 4, 0, 2)};
+      margin: ${theme.spacing(0, 4, 0, 1)};
       display: flex;
       align-items: center;
       position: relative;
@@ -65,16 +65,15 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       color: ${theme.colors.text.secondary};
       flex-grow: 1;
       justify-content: flex-end;
-      padding-right: ${theme.spacing(1)};
     `,
     modalContent: css`
-      padding: ${theme.spacing(4, 2, 2, 2)};
+      padding: ${theme.spacing(3)};
       overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing(2)});
+      max-height: calc(90vh - ${theme.spacing(4)});
     `,
     modalButtonRow: css`
-      padding-top: ${theme.spacing(4)};
+      padding-top: ${theme.spacing(3)};
     `,
   };
 });
