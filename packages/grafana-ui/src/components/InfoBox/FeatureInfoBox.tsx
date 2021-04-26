@@ -11,6 +11,7 @@ export interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'title' | 'urlTi
   urlTitle?: string;
 }
 
+/** @deprecated use Alert with severity info */
 export const FeatureInfoBox = React.memo(
   React.forwardRef<HTMLDivElement, FeatureInfoBoxProps>(({ title, featureState, urlTitle, ...otherProps }, ref) => {
     const styles = useStyles(getFeatureInfoBoxStyles);
@@ -28,6 +29,7 @@ export const FeatureInfoBox = React.memo(
     return <InfoBox branded title={titleEl} urlTitle={urlTitle ?? 'Read documentation'} ref={ref} {...otherProps} />;
   })
 );
+
 FeatureInfoBox.displayName = 'FeatureInfoBox';
 
 const getFeatureInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => {
