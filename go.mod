@@ -44,6 +44,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/go-mssqldb v0.9.1-0.20210329063951-ffa78ad82891 // indirect
 	github.com/grafana/grafana-aws-sdk v0.4.0
