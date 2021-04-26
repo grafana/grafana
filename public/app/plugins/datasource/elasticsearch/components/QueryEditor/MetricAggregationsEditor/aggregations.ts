@@ -172,8 +172,8 @@ export interface MovingAverageModelOption {
 
 export interface BaseMovingAverageModelSettings {
   model: MovingAverageModel;
-  window: number;
-  predict: number;
+  window: string;
+  predict: string;
 }
 
 export interface MovingAverageSimpleModelSettings extends BaseMovingAverageModelSettings {
@@ -186,15 +186,17 @@ export interface MovingAverageLinearModelSettings extends BaseMovingAverageModel
 
 export interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
   model: 'ewma';
-  alpha: number;
+  settings?: {
+    alpha?: string;
+  };
   minimize: boolean;
 }
 
 export interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {
   model: 'holt';
   settings: {
-    alpha?: number;
-    beta?: number;
+    alpha?: string;
+    beta?: string;
   };
   minimize: boolean;
 }
@@ -202,10 +204,10 @@ export interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSe
 export interface MovingAverageHoltWintersModelSettings extends BaseMovingAverageModelSettings {
   model: 'holt_winters';
   settings: {
-    alpha?: number;
-    beta?: number;
-    gamma?: number;
-    period?: number;
+    alpha?: string;
+    beta?: string;
+    gamma?: string;
+    period?: string;
     pad?: boolean;
   };
   minimize: boolean;
@@ -238,6 +240,11 @@ export const isHoltWintersMovingAverage = (
   metric: MovingAverage | MovingAverage<'holt_winters'>
 ): metric is MovingAverage<'holt_winters'> => metric.settings?.model === 'holt_winters';
 
+export const isMovingAverageWithModelSettings = (
+  metric: MovingAverage
+): metric is MovingAverage<'ewma'> | MovingAverage<'holt'> | MovingAverage<'holt_winters'> =>
+  ['holt', 'ewma', 'holt_winters'].includes(metric.settings?.model || '');
+
 export interface MovingFunction extends BasePipelineMetricAggregation {
   type: 'moving_fn';
   settings?: {
@@ -257,7 +264,7 @@ export interface Derivative extends BasePipelineMetricAggregation {
 export interface SerialDiff extends BasePipelineMetricAggregation {
   type: 'serial_diff';
   settings?: {
-    lag?: number;
+    lag?: string;
   };
 }
 
