@@ -101,11 +101,21 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         description={
           <>
             You can use the{' '}
-            <a href="https://pkg.go.dev/text/template?utm_source=godoc" target="__blank">
+            <a
+              href="https://pkg.go.dev/text/template?utm_source=godoc"
+              target="__blank"
+              rel="noreferrer"
+              className={styles.externalLink}
+            >
               Go templating language
             </a>
             .{' '}
-            <a href="https://prometheus.io/blog/2016/03/03/custom-alertmanager-templates/" target="__blank">
+            <a
+              href="https://prometheus.io/blog/2016/03/03/custom-alertmanager-templates/"
+              target="__blank"
+              rel="noreferrer"
+              className={styles.externalLink}
+            >
               More info about alertmanager templates
             </a>
           </>
@@ -142,6 +152,10 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
 };
 
 const getStyles = (theme: GrafanaThemeV2) => ({
+  externalLink: css`
+    color: ${theme.colors.text.secondary};
+    text-decoration: underline;
+  `,
   buttons: css`
     & > * + * {
       margin-left: ${theme.spacing(1)};
