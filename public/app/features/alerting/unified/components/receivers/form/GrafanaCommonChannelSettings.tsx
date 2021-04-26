@@ -3,10 +3,10 @@ import React, { FC } from 'react';
 import { CommonSettingsComponentProps } from '../../../types/receiver-form';
 import { useFormContext } from 'react-hook-form';
 
-export const GrafanaCommonChannelSettings: FC<CommonSettingsComponentProps> = ({ pathPrefix }) => {
+export const GrafanaCommonChannelSettings: FC<CommonSettingsComponentProps> = ({ pathPrefix, className }) => {
   const { register } = useFormContext();
   return (
-    <>
+    <div className={className}>
       <Field>
         <Checkbox
           name={`${pathPrefix}disableResolveMessage`}
@@ -23,6 +23,6 @@ export const GrafanaCommonChannelSettings: FC<CommonSettingsComponentProps> = ({
           description="Send additional notifications for triggered alerts"
         />
       </Field>
-    </>
+    </div>
   );
 };

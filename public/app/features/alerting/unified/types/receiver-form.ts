@@ -28,5 +28,6 @@ export interface GrafanaChannelValues extends ChannelValues {
 
 export interface CommonSettingsComponentProps {
   pathPrefix: string;
+  className?: string;
 }
 export type CommonSettingsComponentType = React.ComponentType<CommonSettingsComponentProps>;

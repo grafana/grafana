@@ -2,11 +2,11 @@ import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
 import { NotifierDTO } from 'app/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
 import { ChannelOptions } from './ChannelOptions';
-import { OptionalChannelOptions } from './OptionalChannelOptions';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface Props<R> {
   pathPrefix: string;
@@ -103,18 +103,24 @@ export function ChannelSubForm<R extends ChannelValues>({
             pathPrefix={pathPrefix}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
-            <div>
-              <OptionalChannelOptions
+            <CollapsibleSection label="Optional settings">
+              {notifier.info !== '' && (
+                <Alert title="" severity="info">
+                  {notifier.info}
+                </Alert>
+              )}
+              <ChannelOptions<R>
                 selectedChannelOptions={optionalOptions!}
-                notifier={notifier}
                 secureFields={_secureFields}
                 onResetSecureField={onResetSecureField}
                 errors={errors}
                 pathPrefix={pathPrefix}
               />
-            </div>
+            </CollapsibleSection>
           )}
-          <CommonSettingsComponent pathPrefix={pathPrefix} />
+          <CollapsibleSection label="Notification settings">
+            <CommonSettingsComponent pathPrefix={pathPrefix} />
+          </CollapsibleSection>
         </div>
       )}
     </div>
@@ -135,10 +141,14 @@ const getStyles = (theme: GrafanaThemeV2) => ({
     padding: ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.medium};
     border-radius: ${theme.shape.borderRadius(1)};
+    max-width: ${theme.breakpoints.values.xl}${theme.breakpoints.unit};
   `,
   topRow: css`
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+  `,
+  channelSettingsHeader: css`
+    margin-top: ${theme.spacing(2)};
   `,
 });
