@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
-import { Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { useCleanup } from 'app/core/hooks/useCleanup';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
 import { useForm, FormContext, NestDataObject, FieldError, Validate } from 'react-hook-form';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
+import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
@@ -44,6 +46,10 @@ export function ReceiverForm<R extends ChannelValues>({
     defaultValues,
   });
 
+  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+
+  const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+
   const { handleSubmit, register, errors, getValues } = formAPI;
 
   const { items, append, remove } = useControlledFieldArray<R>('items', formAPI);
@@ -60,6 +66,11 @@ export function ReceiverForm<R extends ChannelValues>({
     <FormContext {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
+        {error && (
+          <Alert severity="error" title="Error saving template">
+            {error.message || (error as any)?.data?.message || String(error)}
+          </Alert>
+        )}
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
           <Input
             width={39}
@@ -89,8 +100,17 @@ export function ReceiverForm<R extends ChannelValues>({
           New contact point type
         </Button>
         <div className={styles.buttons}>
-          <Button type="submit">Save contact point</Button>
-          <LinkButton variant="secondary" href={makeAMLink('/alerting/notifications', alertManagerSourceName)}>
+          {loading && (
+            <Button disabled={true} icon="fa fa-spinner" variant="primary">
+              Saving...
+            </Button>
+          )}
+          {!loading && <Button type="submit">Save contact point</Button>}
+          <LinkButton
+            disabled={loading}
+            variant="secondary"
+            href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
+          >
             Cancel
           </LinkButton>
         </div>

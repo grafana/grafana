@@ -103,7 +103,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             pathPrefix={pathPrefix}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
-            <CollapsibleSection label="Optional settings">
+            <CollapsibleSection label={`Optional ${notifier.name} settings`}>
               {notifier.info !== '' && (
                 <Alert title="" severity="info">
                   {notifier.info}
