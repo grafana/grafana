@@ -69,7 +69,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
           {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
           {typeof title !== 'string' && title}
           <div className={styles.modalHeaderClose}>
-            <IconButton surface="header" name="times" size="lg" onClick={onDismiss} />
+            <IconButton surface="header" name="times" size="xl" onClick={onDismiss} />
           </div>
         </div>
         <div className={cx(styles.modalContent, contentClassName)}>{children}</div>

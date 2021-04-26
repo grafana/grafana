@@ -107,9 +107,9 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   }),
   modalDescription: css({
     fontSize: theme.typography.h6.fontSize,
-    paddingTop: theme.spacing(2),
+    paddingTop: theme.spacing(1),
   }),
   modalConfirmationInput: css({
-    paddingTop: theme.spacing(2),
+    paddingTop: theme.spacing(1),
   }),
 });
