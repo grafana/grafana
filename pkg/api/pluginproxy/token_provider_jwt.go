@@ -3,12 +3,12 @@ package pluginproxy
 import (
 	"context"
 	"fmt"
-	"golang.org/x/oauth2"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jwt"
 )
 
