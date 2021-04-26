@@ -272,6 +272,6 @@ export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVa
 
 function deprecatedProp(test: boolean, message: string) {
   if (process.env.NODE_ENV === 'development' && test) {
-    console.warn(message);
+    console.warn(`@grafana/ui ${message}`);
   }
 }
