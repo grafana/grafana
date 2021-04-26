@@ -15,8 +15,8 @@ export function QueryEditor({ datasource, query, onChange }: Props) {
         <InlineField label="Query type">
           <RadioButtonGroup<JaegerQueryType>
             options={[
-              { value: undefined, label: 'Search' },
-              { value: 'traceID', label: 'TraceID' },
+              { value: 'search', label: 'Search' },
+              { value: undefined, label: 'TraceID' },
             ]}
             value={query.queryType}
             onChange={(v) =>
@@ -29,18 +29,18 @@ export function QueryEditor({ datasource, query, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      {!query.queryType || query.queryType === 'search' ? (
+      {query.queryType === 'search' ? (
         <SearchForm datasource={datasource} query={query} onChange={onChange} />
       ) : (
         <InlineFieldRow>
           <InlineField label="Trace ID">
             <Input
               aria-label={selectors.components.DataSource.Jaeger.traceIDInput}
-              value={query.traceID || ''}
+              value={query.query || ''}
               onChange={(v) =>
                 onChange({
                   ...query,
-                  traceID: v.currentTarget.value,
+                  query: v.currentTarget.value,
                 })
               }
             />

@@ -39,8 +39,7 @@ describe('JaegerDatasource', () => {
       ...defaultQuery,
       targets: [
         {
-          traceID: 'a/b',
-          queryType: 'traceID' as const,
+          query: 'a/b',
           refId: '1',
         },
       ],
@@ -172,8 +171,7 @@ const defaultQuery: DataQueryRequest<JaegerQuery> = {
   startTime: 0,
   targets: [
     {
-      traceID: '12345',
-      queryType: 'traceID' as const,
+      query: '12345',
       refId: '1',
     },
   ],

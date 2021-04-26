@@ -38,8 +38,8 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       return of({ data: [emptyTraceDataFrame] });
     }
 
-    if (target.queryType === 'traceID' && target.traceID) {
-      return this._request(`/api/traces/${encodeURIComponent(target.traceID)}`).pipe(
+    if (target.queryType !== 'search' && target.query) {
+      return this._request(`/api/traces/${encodeURIComponent(target.query)}`).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
           if (!traceData) {
@@ -124,7 +124,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   getQueryDisplayText(query: JaegerQuery) {
-    return query.traceID || '';
+    return query.query || '';
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {

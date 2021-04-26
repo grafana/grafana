@@ -69,8 +69,7 @@ export function createTableFrame(data: TraceResponse[], instanceSettings: DataSo
                 datasourceUid: instanceSettings.uid,
                 datasourceName: instanceSettings.name,
                 query: {
-                  queryType: 'traceID',
-                  traceID: '${__value.raw}',
+                  query: '${__value.raw}',
                 },
               },
             },
