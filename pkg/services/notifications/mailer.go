@@ -61,10 +61,11 @@ func (ns *NotificationService) Send(msg *Message) (int, error) {
 	return ns.dialAndSend(messages...)
 }
 
-func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err error) {
+func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
+	sentEmailsCount := 0
 	dialer, err := ns.createDialer()
 	if err != nil {
-		return
+		return sentEmailsCount, err
 	}
 
 	for _, msg := range messages {
@@ -89,10 +90,10 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err e
 			continue
 		}
 
-		num++
+		sentEmailsCount++
 	}
 
-	return
+	return sentEmailsCount, err
 }
 
 // setFiles attaches files in various forms
