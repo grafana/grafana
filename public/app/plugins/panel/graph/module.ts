@@ -10,7 +10,6 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { DataFrame, FieldConfigProperty, getColorForTheme, PanelEvents, PanelPlugin } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
@@ -18,16 +17,16 @@ import { graphPanelMigrationHandler } from './GraphMigrations';
 import { DataWarning, GraphFieldConfig, GraphPanelOptions } from './types';
 
 import { auto } from 'angular';
-import { AnnotationsSrv } from 'app/features/annotations/all';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
-import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
 import { appEvents } from '../../../core/core';
 import { ZoomOutEvent } from '../../../types/events';
 import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
+import { loadSnapshotData } from '../../../features/dashboard/utils/loadSnapshotData';
+import { annotationsFromDataFrames } from '../../../features/query/state/DashboardQueryRunner/utils';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -40,7 +39,6 @@ export class GraphCtrl extends MetricsPanelCtrl {
   annotations: any = [];
   alertState: any;
 
-  annotationsPromise: any;
   dataWarning?: DataWarning;
   colors: any = [];
   subTabIndex: number;
@@ -145,7 +143,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService, private annotationsSrv: AnnotationsSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
 
     defaults(this.panel, this.panelDefaults);
@@ -157,7 +155,6 @@ export class GraphCtrl extends MetricsPanelCtrl {
     this.useDataFrames = true;
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
-    this.annotationsPromise = Promise.resolve({ annotations: [] });
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
@@ -188,21 +185,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   issueQueries(datasource: any) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations({
-      dashboard: this.dashboard,
-      panel: this.panel,
-      range: this.range,
-    });
-
-    /* Wait for annotationSrv requests to get datasources to
-     * resolve before issuing queries. This allows the annotations
-     * service to fire annotations queries before graph queries
-     * (but not wait for completion). This resolves
-     * issue 11806.
-     */
-    return this.annotationsSrv.datasourcePromises.then((r: any) => {
-      return super.issueQueries(datasource);
-    });
+    return super.issueQueries(datasource);
   }
 
   zoomOut(evt: any) {
@@ -210,14 +193,9 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataSnapshotLoad(snapshotData: any) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations({
-      dashboard: this.dashboard,
-      panel: this.panel,
-      range: this.range,
-    });
-
-    const frames = getProcessedDataFrames(snapshotData);
-    this.onDataFramesReceived(frames);
+    const { series, annotations } = loadSnapshotData(this.panel, this.dashboard);
+    this.panelData!.annotations = annotations;
+    this.onDataFramesReceived(series);
   }
 
   onDataFramesReceived(data: DataFrame[]) {
@@ -229,29 +207,20 @@ export class GraphCtrl extends MetricsPanelCtrl {
 
     this.dataWarning = this.getDataWarning();
 
-    this.annotationsPromise.then(
-      (result: { alertState: any; annotations: any }) => {
-        this.loading = false;
-        this.alertState = result.alertState;
-        this.annotations = result.annotations;
+    this.alertState = undefined;
+    (this.seriesList as any).alertState = undefined;
+    if (this.panelData!.alertState) {
+      this.alertState = this.panelData!.alertState;
+      (this.seriesList as any).alertState = this.alertState.state;
+    }
 
-        // Temp alerting & react hack
-        // Add it to the seriesList so react can access it
-        if (this.alertState) {
-          (this.seriesList as any).alertState = this.alertState.state;
-        }
+    this.annotations = [];
+    if (this.panelData!.annotations?.length) {
+      this.annotations = annotationsFromDataFrames(this.panelData!.annotations);
+    }
 
-        if (this.panelData!.annotations?.length) {
-          this.annotations = getAnnotationsFromData(this.panelData!.annotations!);
-        }
-
-        this.render(this.seriesList);
-      },
-      () => {
-        this.loading = false;
-        this.render(this.seriesList);
-      }
-    );
+    this.loading = false;
+    this.render(this.seriesList);
   }
 
   getDataWarning(): DataWarning | undefined {
