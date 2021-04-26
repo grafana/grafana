@@ -20,7 +20,8 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import userEvent from '@testing-library/user-event';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { Router } from 'react-router-dom';
 
 jest.mock('./api/prometheus');
 jest.mock('./utils/config');
@@ -38,7 +39,9 @@ const renderRuleList = () => {
 
   return render(
     <Provider store={store}>
-      <RuleList />
+      <Router history={locationService.getHistory()}>
+        <RuleList />
+      </Router>
     </Provider>
   );
 };
