@@ -23,6 +23,8 @@ import { Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
+import { default as GraphiteQueryModel } from './graphite_query';
+import { MetricMapping } from './configuration/parseLokiLabelMappings';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -37,6 +39,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   funcDefs: any = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  private readonly metricMappings: MetricMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
@@ -46,6 +49,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     // graphiteVersion is set when a datasource is created but it hadn't been set in the past so we're
     // still falling back to the default behavior here for backwards compatibility (see also #17429)
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
+    this.metricMappings = instanceSettings.jsonData.lokiLabelsMappings || [];
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
@@ -67,6 +71,46 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         },
       ],
     };
+  }
+
+  parseQueries(queries: GraphiteQuery[]): GraphiteQueryModel[] {
+    return queries.map((query) => {
+      const model = new GraphiteQueryModel(
+        this,
+        {
+          ...query,
+          target: query.target || '',
+          textEditor: false,
+        },
+        this.templateSrv
+      );
+      model.parseTarget();
+      return model;
+    });
+  }
+
+  getImportQueryConfiguration() {
+    return this.metricMappings;
+    // return [
+    //   {
+    //     matchers: [
+    //       {
+    //         value: 'servers',
+    //       },
+    //       {
+    //         value: '*',
+    //         labelName: 'cluster',
+    //       },
+    //       {
+    //         value: '*',
+    //         labelName: 'server',
+    //       },
+    //       {
+    //         value: 'cpu',
+    //       },
+    //     ],
+    //   },
+    // ];
   }
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {

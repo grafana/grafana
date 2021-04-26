@@ -208,7 +208,11 @@ abstract class DataSourceApi<
   /**
    * Imports queries from a different datasource
    */
-  importQueries?(queries: TQuery[], originMeta: PluginMeta): Promise<TQuery[]>;
+  importQueries?(queries: DataQuery[], originMeta: PluginMeta, config: object): Promise<TQuery[]>;
+
+  getImportQueryConfiguration?(): object;
+
+  parseQueries?(queries: any): any;
 
   /**
    * Initializes a datasource after instantiation

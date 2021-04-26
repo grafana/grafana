@@ -10,6 +10,7 @@ import {
   AnnotationQueryRequest,
   DataFrame,
   DataFrameView,
+  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -292,8 +293,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return { from: timeRange.from.valueOf() * NS_IN_MS, to: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
-    return this.languageProvider.importQueries(queries, originMeta.id);
+  async importQueries(queries: DataQuery[], originMeta: PluginMeta, config: object): Promise<LokiQuery[]> {
+    return this.languageProvider.importQueries(queries, originMeta.id, config);
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {

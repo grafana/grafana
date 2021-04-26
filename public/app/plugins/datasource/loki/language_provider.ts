@@ -1,5 +1,5 @@
 // Libraries
-import { chain, difference } from 'lodash';
+import { chain, difference, map } from 'lodash';
 import LRU from 'lru-cache';
 
 // Services & Utils
@@ -13,18 +13,28 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import { Grammar } from 'prismjs';
+import { default as GraphiteQueryModel } from '../../datasource/graphite/graphite_query';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 10;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const NS_IN_MS = 1000000;
+
+type MetricMapping = {
+  matchers: MetricNodeMatcher[];
+};
+
+type MetricNodeMatcher = {
+  value: string;
+  labelName?: string;
+};
 
 // When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
 // @see public/app/plugins/datasource/prometheus/promql.ts
@@ -47,6 +57,13 @@ export type LokiHistoryItem = HistoryItem<LokiQuery>;
 type TypeaheadContext = {
   history?: LokiHistoryItem[];
   absoluteRange?: AbsoluteTimeRange;
+};
+
+const GRAPHITE_TO_LOKI_OPERATOR = {
+  '=': '=',
+  '!=': '!=',
+  '=~': '=~',
+  '!=~': '!~',
 };
 
 export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryItem[]): CompletionItem {
@@ -331,11 +348,23 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(queries: LokiQuery[], datasourceType: string): Promise<LokiQuery[]> {
+  async importQueries(queries: DataQuery[], datasourceType: string, config: object): Promise<LokiQuery[]> {
     if (datasourceType === 'prometheus') {
       return Promise.all(
         queries.map(async (query) => {
-          const expr = await this.importPrometheusQuery(query.expr);
+          const expr = await this.importPrometheusQuery((query as PromQuery).expr);
+          const { ...rest } = query as PromQuery;
+          return {
+            ...rest,
+            expr,
+          };
+        })
+      );
+    }
+    if (datasourceType === 'graphite') {
+      return Promise.all(
+        queries.map(async (query) => {
+          const expr = await this.importGraphiteQuery((query as any) as GraphiteQueryModel, config as MetricMapping[]);
           const { ...rest } = query as PromQuery;
           return {
             ...rest,
@@ -349,6 +378,60 @@ export default class LokiLanguageProvider extends LanguageProvider {
       refId: query.refId,
       expr: '',
     }));
+  }
+
+  async importGraphiteQuery(graphiteQuery: GraphiteQueryModel, mappings: MetricMapping[]): Promise<string> {
+    let matchingFound = false;
+    let labels: any = {};
+
+    if (graphiteQuery.seriesByTagUsed) {
+      matchingFound = true;
+      graphiteQuery.tags.forEach((tag) => {
+        labels[tag.key] = {
+          value: tag.value,
+          operator: GRAPHITE_TO_LOKI_OPERATOR[tag.operator],
+        };
+      });
+    } else {
+      const targetNodes = graphiteQuery.segments.map((segment) => segment.value);
+      mappings = mappings.filter((mapping) => mapping.matchers.length === targetNodes.length);
+
+      for (let mapping of mappings) {
+        const matchers = mapping.matchers.concat();
+
+        matchingFound = matchers.every((matcher: MetricNodeMatcher, index: number) => {
+          if (matcher.labelName) {
+            let value = (targetNodes[index] as string)!;
+            if (value === '*') {
+              //
+            } else if (value.includes('{')) {
+              labels[matcher.labelName] = {
+                value: value.replace(/\*/g, '.*').replace(/\{/g, '(').replace(/}/g, ')').replace(/,/g, '|'),
+                operator: '=~',
+              };
+            } else {
+              labels[matcher.labelName] = {
+                value: value,
+                operator: '=',
+              };
+            }
+            return true;
+          }
+          return targetNodes[index] === matcher.value || matcher.value === '*';
+        });
+      }
+    }
+
+    if (matchingFound) {
+      let pairs = map(labels, (value, key) => `${key}${value.operator}"${value.value}"`);
+      if (pairs.length) {
+        return `{${pairs.join(', ')}}`;
+      } else {
+        return '';
+      }
+    } else {
+      return '';
+    }
   }
 
   async importPrometheusQuery(query: string): Promise<string> {

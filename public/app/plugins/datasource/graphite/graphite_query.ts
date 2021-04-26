@@ -4,12 +4,18 @@ import { Parser } from './parser';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
 
+type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
+
 export default class GraphiteQuery {
   datasource: any;
   target: any;
   functions: any[];
   segments: any[];
-  tags: any[];
+  tags: Array<{
+    key: string;
+    operator: GraphiteTagOperator;
+    value: string;
+  }>;
   error: any;
   seriesByTagUsed: boolean;
   checkOtherSegmentsIndex: number;

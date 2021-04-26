@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { MetricMapping } from './configuration/parseLokiLabelMappings';
 
 export interface GraphiteQuery extends DataQuery {
   target?: string;
@@ -8,6 +9,7 @@ export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;
   graphiteType: GraphiteType;
   rollupIndicatorEnabled?: boolean;
+  lokiLabelsMappings: MetricMapping[];
 }
 
 export enum GraphiteType {

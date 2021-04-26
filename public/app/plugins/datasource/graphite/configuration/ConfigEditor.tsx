@@ -9,6 +9,8 @@ import {
 } from '@grafana/data';
 import { GraphiteOptions, GraphiteType } from '../types';
 import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
+import { LokiLogsMappings } from './LokiLogsMappings';
+import { fromString, toString } from './parseLokiLabelMappings';
 
 const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
 
@@ -94,6 +96,18 @@ export class ConfigEditor extends PureComponent<Props> {
             </div>
           )}
         </div>
+        <LokiLogsMappings
+          mappings={(options.jsonData.lokiLabelsMappings || []).map(toString)}
+          onChange={(mappings) => {
+            onOptionsChange({
+              ...options,
+              jsonData: {
+                ...options.jsonData,
+                lokiLabelsMappings: mappings.map(fromString),
+              },
+            });
+          }}
+        />
       </>
     );
   }

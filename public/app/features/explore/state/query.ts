@@ -255,7 +255,15 @@ export const importQueries = (
       importedQueries = [...queries];
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
-      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource.meta);
+      const importQueryConfiguration = sourceDataSource.getImportQueryConfiguration
+        ? sourceDataSource.getImportQueryConfiguration()
+        : {};
+      const parsedQueries = sourceDataSource.parseQueries ? sourceDataSource.parseQueries(queries) : queries;
+      importedQueries = await targetDataSource.importQueries(
+        parsedQueries,
+        sourceDataSource.meta,
+        importQueryConfiguration
+      );
     } else {
       // Default is blank queries
       importedQueries = ensureQueries();
