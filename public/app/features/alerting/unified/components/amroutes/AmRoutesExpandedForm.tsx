@@ -15,90 +15,67 @@ import {
   Switch,
   useStyles,
 } from '@grafana/ui';
-import { Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
-import { parseInterval, timeOptions } from '../../utils/time';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { AmRouteFormValues } from '../../types/amroutes';
+import { emptyMatcher, mapStringToSelectableValue, optionalPositiveInteger } from '../../utils/amroutes';
+import { timeOptions } from '../../utils/time';
 import { AmRoutesTable } from './AmRoutesTable';
 
-export interface AmRoutesExpandedReadProps {
+export interface AmRoutesExpandedFormProps {
   onExitEditMode: () => void;
-  route: Route;
+  routes: AmRouteFormValues;
   receivers: Array<SelectableValue<Receiver['name']>>;
 }
 
-const prepareMatches = (matches: Record<string, string> | undefined, isRegex: boolean) =>
-  Object.entries(matches ?? {}).reduce(
-    (acc, [label, value]) => [
-      ...acc,
-      {
-        label,
-        value,
-        isRegex,
-      },
-    ],
-    []
-  );
-
-export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEditMode, route, receivers }) => {
+export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onExitEditMode, receivers, routes }) => {
   const styles = useStyles(getStyles);
-  const [overrideGrouping, setOverrideGrouping] = useState(!!route.group_by);
+  const [overrideGrouping, setOverrideGrouping] = useState(!!routes.groupBy && routes.groupBy.length > 0);
   const [overrideTimings, setOverrideTimings] = useState(
-    !!route.group_wait || !!route.group_interval || !!route.repeat_interval
+    !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
   );
-
-  const [groupByOptions, setGroupByOptions] = useState(
-    (route.group_by ?? []).map((opt) => ({
-      label: opt,
-      value: opt,
-    }))
-  );
-
-  const [groupWaitValue, groupWaitValueType] = route?.group_wait
-    ? parseInterval(route?.group_wait)
-    : [undefined, undefined];
-
-  const [groupIntervalValue, groupIntervalValueType] = route?.group_interval
-    ? parseInterval(route?.group_interval)
-    : [undefined, undefined];
-
-  const [repeatIntervalValue, repeatIntervalValueType] = route?.repeat_interval
-    ? parseInterval(route?.repeat_interval)
-    : [undefined, undefined];
-
-  const defaultValues = {
-    matches: [...prepareMatches(route.match, false), ...prepareMatches(route.match_re, true)],
-    receiver: route.receiver,
-    continue: route.continue,
-    groupBy: route.group_by,
-    groupWaitValue,
-    groupWaitValueType,
-    groupIntervalValue,
-    groupIntervalValueType,
-    repeatIntervalValue,
-    repeatIntervalValueType,
-  };
+  const [groupByOptions, setGroupByOptions] = useState(routes.groupBy);
 
   return (
-    <>
-      <Form onSubmit={() => undefined} defaultValues={defaultValues}>
-        {({ control }) => (
-          <>
-            <FieldArray name="matches" control={control}>
+    <Form defaultValues={routes} onSubmit={(data) => console.log(data)} maxWidth="none">
+      {({ control, getValues, register }) => (
+        <>
+          <div className={styles.container}>
+            <div>Matchers</div>
+            <FieldArray name="matchers" control={control}>
               {({ fields, append }) => (
                 <>
-                  {fields.map((field, index) => (
-                    <HorizontalGroup key={index}>
-                      <Field label="Label">
-                        <InputControl as={Input} control={control} name={`matches[${index}].label`} />
-                      </Field>
-                      <Field label="Value">
-                        <InputControl as={Input} control={control} name={`matches[${index}].value`} />
-                      </Field>
-                      <Field label="Regex">
-                        <InputControl as={Checkbox} control={control} name={`matches[${index}].isRegex`} />
-                      </Field>
-                    </HorizontalGroup>
-                  ))}
-                  <Button className={styles.addMatchBtn} icon="plus" onClick={() => append({})} variant="secondary">
+                  {fields.map((field, index) => {
+                    const localPath = `matchers[${index}]`;
+
+                    return (
+                      <HorizontalGroup key={field.id}>
+                        <Field label="Label">
+                          <Input
+                            ref={register({ required: true })}
+                            name={`${localPath}.label`}
+                            defaultValue={field.label}
+                          />
+                        </Field>
+                        <Field label="Value">
+                          <Input
+                            ref={register({ required: true })}
+                            name={`${localPath}.value`}
+                            defaultValue={field.value}
+                          />
+                        </Field>
+                        <Field label="Regex">
+                          <Checkbox ref={register()} name={`${localPath}.isRegex`} defaultChecked={field.isRegex} />
+                        </Field>
+                      </HorizontalGroup>
+                    );
+                  })}
+                  <Button
+                    className={styles.addMatcherBtn}
+                    icon="plus"
+                    onClick={() => append(emptyMatcher)}
+                    variant="secondary"
+                    type="button"
+                  >
                     Add matcher
                   </Button>
                 </>
@@ -108,14 +85,12 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEdit
               <InputControl as={Select} control={control} name="receiver" options={receivers} />
             </Field>
             <Field label="Continue matching subsequent sibling nodes">
-              <InputControl as={Switch} control={control} name="continue" />
+              <Switch ref={register()} name="continue" />
             </Field>
             <Field label="Override grouping">
               <Switch
                 value={overrideGrouping}
-                onChange={() => {
-                  setOverrideGrouping(!overrideGrouping);
-                }}
+                onChange={() => setOverrideGrouping((overrideGrouping) => !overrideGrouping)}
               />
             </Field>
             {overrideGrouping && (
@@ -126,15 +101,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEdit
                   control={control}
                   name="groupBy"
                   onCreateOption={(opt: string) => {
-                    setGroupByOptions([
-                      ...groupByOptions,
-                      {
-                        label: opt,
-                        value: opt,
-                      },
-                    ]);
+                    const newOpt = mapStringToSelectableValue(opt);
 
-                    control.setValue('groupBy', [...(control.getValues().groupBy ?? []), opt]);
+                    setGroupByOptions((groupByOptions) => [...groupByOptions, newOpt]);
+
+                    control.setValue('groupBy', [...getValues().groupBy, newOpt]);
                   }}
                   options={groupByOptions}
                 />
@@ -143,9 +114,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEdit
             <Field label="Override general timings">
               <Switch
                 value={overrideTimings}
-                onChange={() => {
-                  setOverrideTimings(!overrideTimings);
-                }}
+                onChange={() => setOverrideTimings((overrideTimings) => !overrideTimings)}
               />
             </Field>
             {overrideTimings && (
@@ -155,7 +124,14 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEdit
                   description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
                 >
                   <div>
-                    <InputControl as={Input} control={control} name="groupWaitValue" type="number" />
+                    <InputControl
+                      as={Input}
+                      control={control}
+                      name="groupWaitValue"
+                      rules={{
+                        validate: optionalPositiveInteger,
+                      }}
+                    />
                     <InputControl as={Select} control={control} name="groupWaitValueType" options={timeOptions} />
                   </div>
                 </Field>
@@ -164,7 +140,14 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEdit
                   description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
                 >
                   <div>
-                    <InputControl as={Input} control={control} name="groupIntervalValue" type="number" />
+                    <InputControl
+                      as={Input}
+                      control={control}
+                      name="groupIntervalValue"
+                      rules={{
+                        validate: optionalPositiveInteger,
+                      }}
+                    />
                     <InputControl as={Select} control={control} name="groupIntervalValueType" options={timeOptions} />
                   </div>
                 </Field>
@@ -173,7 +156,14 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEdit
                   description="The waiting time to resend an alert after they have successfully been sent."
                 >
                   <div>
-                    <InputControl as={Input} control={control} name="repeatIntervalValue" type="number" />
+                    <InputControl
+                      as={Input}
+                      control={control}
+                      name="repeatIntervalValue"
+                      rules={{
+                        validate: optionalPositiveInteger,
+                      }}
+                    />
                     <InputControl
                       as={Select}
                       control={control}
@@ -185,24 +175,27 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedReadProps> = ({ onExitEdit
                 </Field>
               </>
             )}
-          </>
-        )}
-      </Form>
-      <div className={styles.nestedPolicies}>Nested policies</div>
-      {route.routes?.length ? <AmRoutesTable routes={route.routes} receivers={receivers} /> : '-'}
-      <div className={styles.buttonGroup}>
-        <Button type="submit">Save policy</Button>
-        <Button onClick={onExitEditMode} variant="secondary">
-          Cancel
-        </Button>
-      </div>
-    </>
+          </div>
+          <div className={styles.nestedPolicies}>Nested policies</div>
+          <AmRoutesTable routes={routes.routes} receivers={receivers} />
+          <div className={styles.buttonGroup}>
+            <Button type="submit">Save policy</Button>
+            <Button onClick={onExitEditMode} type="button" variant="secondary">
+              Cancel
+            </Button>
+          </div>
+        </>
+      )}
+    </Form>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (_theme: GrafanaTheme) => {
   return {
-    addMatchBtn: css`
+    container: css`
+      max-width: 600px;
+    `,
+    addMatcherBtn: css`
       margin-bottom: 28px;
     `,
     nestedPolicies: css`

@@ -1,7 +1,8 @@
 import { SelectableValue } from '@grafana/data';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
-import { Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { AmRouteFormValues } from '../../types/amroutes';
 import { collapseItem, expandItem, prepareItems } from '../../utils/dynamicTable';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
@@ -9,104 +10,116 @@ import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
 
 export interface AmRoutesTableProps {
-  routes: Route[];
   receivers: Array<SelectableValue<Receiver['name']>>;
+  routes: AmRouteFormValues[];
+
+  isAddMode?: boolean;
+  onRemoveRoute?: (index: number) => void;
 }
 
-export const AmRoutesTable: FC<AmRoutesTableProps> = ({ routes, receivers }) => {
-  const [items, setItems] = useState<Array<DynamicTableItemProps<Route>>>([]);
+type RouteTableColumnProps = DynamicTableColumnProps<AmRouteFormValues>;
+type RouteTableItemProps = DynamicTableItemProps<AmRouteFormValues>;
 
-  useEffect(() => {
-    setItems(prepareItems(routes));
-  }, [routes]);
+export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onRemoveRoute, routes, receivers }) => {
+  const [items, setItems] = useState<RouteTableItemProps[]>([]);
 
-  const renderMatchingCriteria = (item: DynamicTableItemProps<Route>) => (
-    <AlertLabels
-      labels={{
-        ...(item.data.match ?? {}),
-        ...(item.data.match_re ?? {}),
-      }}
-    />
+  const getRenderEditExpandedContent = useCallback(
+    // eslint-disable-next-line react/display-name
+    (item: RouteTableItemProps) => () => (
+      <AmRoutesExpandedForm
+        onExitEditMode={() => setItems((items) => expandItem(items, item))}
+        routes={item.data}
+        receivers={receivers!}
+      />
+    ),
+    [receivers]
   );
 
-  const renderGroupBy = (item: DynamicTableItemProps<Route>) => (item.data.group_by ?? []).join(', ') || '-';
-
-  const renderReceiverChannel = (item: DynamicTableItemProps<Route>) => item.data.receiver ?? '-';
-
-  const renderButtons = (item: DynamicTableItemProps<Route>) => {
-    if (item.renderExpandedContent) {
-      return null;
-    }
-
-    const removeCustomExpandedContent = () => {
-      setItems(expandItem(items, item));
-    };
-
-    const expandWithCustomContent = () => {
-      setItems(
-        expandItem(items, item, () => (
-          <AmRoutesExpandedForm onExitEditMode={removeCustomExpandedContent} route={item.data} receivers={receivers} />
-        ))
-      );
-    };
-
-    return (
-      <HorizontalGroup>
-        <Button icon="pen" onClick={expandWithCustomContent} size="sm" variant="secondary">
-          Edit
-        </Button>
-        <IconButton name="trash-alt" />
-      </HorizontalGroup>
-    );
-  };
-
-  const cols: Array<DynamicTableColumnProps<Route>> = [
+  const cols: RouteTableColumnProps[] = [
     {
       id: 'matchingCriteria',
       label: 'Matching criteria',
-      renderRow: renderMatchingCriteria,
+      // eslint-disable-next-line react/display-name
+      renderRow: (item) => (
+        <AlertLabels
+          labels={item.data.matchers.reduce(
+            (acc, matcher) => ({
+              ...acc,
+              [matcher.label]: matcher.value,
+            }),
+            {}
+          )}
+        />
+      ),
       size: 10,
     },
     {
       id: 'groupBy',
       label: 'Group by',
-      renderRow: renderGroupBy,
+      renderRow: (item) => item.data.groupBy.map((groupBy) => groupBy.label).join(', ') || '-',
       size: 5,
     },
     {
       id: 'receiverChannel',
       label: 'Receiver channel',
-      renderRow: renderReceiverChannel,
+      renderRow: (item) => item.data.receiver || '-',
       size: 5,
     },
     {
       id: 'actions',
       label: 'Actions',
-      renderRow: renderButtons,
+      // eslint-disable-next-line react/display-name
+      renderRow: (item, index) => {
+        if (item.renderExpandedContent) {
+          return null;
+        }
+
+        const expandWithCustomContent = () =>
+          setItems((items) => expandItem(items, item, getRenderEditExpandedContent(item)));
+
+        return (
+          <HorizontalGroup>
+            <Button icon="pen" onClick={expandWithCustomContent} size="sm" type="button" variant="secondary">
+              Edit
+            </Button>
+            <IconButton name="trash-alt" onClick={() => onRemoveRoute!(index)} type="button" />
+          </HorizontalGroup>
+        );
+      },
       size: '100px',
     },
   ];
 
-  const onCollapse = (item: DynamicTableItemProps<Route>) => {
-    setItems(collapseItem(items, item));
-  };
+  useEffect(() => {
+    const items = prepareItems(routes).map((item, index, arr) => {
+      if (isAddMode && index === arr.length - 1) {
+        return {
+          ...item,
+          isExpanded: true,
+          renderExpandedContent: getRenderEditExpandedContent(item),
+        };
+      }
 
-  const onExpand = (item: DynamicTableItemProps<Route>) => {
-    setItems(expandItem(items, item));
-  };
+      return {
+        ...item,
+        isExpanded: false,
+        renderExpandedContent: undefined,
+      };
+    });
 
-  const renderExpandedContent = (item: DynamicTableItemProps<Route>) => (
-    <AmRoutesExpandedRead route={item.data} receivers={receivers} />
-  );
+    setItems(items);
+  }, [routes, getRenderEditExpandedContent, isAddMode]);
 
   return (
     <DynamicTable
       cols={cols}
       isExpandable={true}
       items={items}
-      onCollapse={onCollapse}
-      onExpand={onExpand}
-      renderExpandedContent={renderExpandedContent}
+      onCollapse={(item: RouteTableItemProps) => setItems((items) => collapseItem(items, item))}
+      onExpand={(item: RouteTableItemProps) => setItems((items) => expandItem(items, item))}
+      renderExpandedContent={(item: RouteTableItemProps) => (
+        <AmRoutesExpandedRead receivers={receivers} routes={item.data} />
+      )}
     />
   );
 };

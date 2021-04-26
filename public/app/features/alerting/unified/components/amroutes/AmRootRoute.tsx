@@ -2,22 +2,19 @@ import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
-import { Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { AmRouteFormValues } from '../../types/amroutes';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
 
 export interface AmRootRouteProps {
   receivers: Array<SelectableValue<Receiver['name']>>;
-  route: Route | undefined;
+  routes: AmRouteFormValues;
 }
 
-export const AmRootRoute: FC<AmRootRouteProps> = ({ receivers, route }) => {
+export const AmRootRoute: FC<AmRootRouteProps> = ({ receivers, routes }) => {
   const styles = useStyles(getStyles);
   const [isEditMode, setIsEditMode] = useState(false);
-
-  const toggleIsEditMode = () => {
-    setIsEditMode(!isEditMode);
-  };
 
   return (
     <div className={styles.container}>
@@ -26,7 +23,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({ receivers, route }) => {
           Root policy - <i>default for all alerts</i>
         </h5>
         {!isEditMode && (
-          <Button icon="pen" onClick={toggleIsEditMode} size="sm" variant="secondary">
+          <Button icon="pen" onClick={() => setIsEditMode(true)} size="sm" type="button" variant="secondary">
             Edit
           </Button>
         )}
@@ -36,9 +33,9 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({ receivers, route }) => {
         routing area.
       </p>
       {isEditMode ? (
-        <AmRootRouteForm onCancel={toggleIsEditMode} receivers={receivers} route={route} />
+        <AmRootRouteForm onCancel={() => setIsEditMode(false)} receivers={receivers} routes={routes} />
       ) : (
-        <AmRootRouteRead route={route} />
+        <AmRootRouteRead routes={routes} />
       )}
     </div>
   );

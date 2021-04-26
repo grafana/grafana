@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Field, Icon, InfoBox, useStyles } from '@grafana/ui';
@@ -10,6 +10,7 @@ import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
+import { computeDefaultValuesRoute, mapObjectsToSelectableValue } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AmRoutes: FC = () => {
@@ -26,11 +27,8 @@ const AmRoutes: FC = () => {
   const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const rootRoute = config?.route;
-  const receivers = (config?.receivers ?? []).map((receiver) => ({
-    label: receiver['name'],
-    value: receiver['name'],
-  }));
+  const routes = useMemo(() => computeDefaultValuesRoute(config?.route), [config?.route]);
+  const receivers = mapObjectsToSelectableValue(config?.receivers, 'name');
 
   return (
     <AlertingPageWrapper pageId="am-routes" isLoading={loading}>
@@ -53,9 +51,9 @@ const AmRoutes: FC = () => {
       {result && (
         <>
           <div className={styles.break} />
-          <AmRootRoute receivers={receivers} route={rootRoute} />
+          <AmRootRoute routes={routes} receivers={receivers} />
           <div className={styles.break} />
-          <AmSpecificRouting receivers={receivers} route={rootRoute} />
+          <AmSpecificRouting routes={routes} receivers={receivers} />
         </>
       )}
     </AlertingPageWrapper>

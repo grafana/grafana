@@ -2,51 +2,25 @@ import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles } from '@grafana/ui';
-import { Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
-import { parseInterval, timeOptions } from '../../utils/time';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { AmRouteFormValues } from '../../types/amroutes';
+import { mapStringToSelectableValue, optionalPositiveInteger } from '../../utils/amroutes';
+import { timeOptions } from '../../utils/time';
 
 export interface AmRootRouteFormProps {
   onCancel: () => void;
   receivers: Array<SelectableValue<Receiver['name']>>;
-  route: Route | undefined;
+  routes: AmRouteFormValues;
 }
 
-export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers, route }) => {
+export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers, routes }) => {
   const styles = useStyles(getStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
-  const [groupByOptions, setGroupByOptions] = useState(
-    (route?.group_by ?? []).map((opt) => ({
-      label: opt,
-      value: opt,
-    }))
-  );
-
-  const [groupWaitValue, groupWaitValueType] = route?.group_wait
-    ? parseInterval(route?.group_wait)
-    : [undefined, undefined];
-
-  const [groupIntervalValue, groupIntervalValueType] = route?.group_interval
-    ? parseInterval(route?.group_interval)
-    : [undefined, undefined];
-
-  const [repeatIntervalValue, repeatIntervalValueType] = route?.repeat_interval
-    ? parseInterval(route?.repeat_interval)
-    : [undefined, undefined];
-
-  const defaultValue = {
-    receiver: route?.receiver,
-    groupBy: route?.group_by,
-    groupWaitValue,
-    groupWaitValueType,
-    groupIntervalValue,
-    groupIntervalValueType,
-    repeatIntervalValue,
-    repeatIntervalValueType,
-  };
+  const [groupByOptions, setGroupByOptions] = useState(routes.groupBy);
 
   return (
-    <Form defaultValues={defaultValue} onSubmit={() => undefined}>
-      {({ control }) => (
+    <Form defaultValues={routes} onSubmit={(data) => console.log(data)}>
+      {({ control, getValues }) => (
         <>
           <Field label="Default notification channel">
             <div className={styles.container}>
@@ -69,15 +43,11 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers,
               control={control}
               name="groupBy"
               onCreateOption={(opt: string) => {
-                setGroupByOptions([
-                  ...groupByOptions,
-                  {
-                    label: opt,
-                    value: opt,
-                  },
-                ]);
+                const newOpt = mapStringToSelectableValue(opt);
 
-                control.setValue('groupBy', [...(control.getValues().groupBy ?? []), opt]);
+                setGroupByOptions((groupByOptions) => [...groupByOptions, newOpt]);
+
+                control.setValue('groupBy', [...getValues().groupBy, newOpt]);
               }}
               options={groupByOptions}
             />
@@ -97,8 +67,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers,
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  rules={{
+                    validate: optionalPositiveInteger,
+                  }}
                   name="groupWaitValue"
-                  type="number"
                 />
                 <InputControl
                   as={Select}
@@ -118,8 +90,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers,
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  rules={{
+                    validate: optionalPositiveInteger,
+                  }}
                   name="groupIntervalValue"
-                  type="number"
                 />
                 <InputControl
                   as={Select}
@@ -139,8 +113,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers,
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  rules={{
+                    validate: optionalPositiveInteger,
+                  }}
                   name="repeatIntervalValue"
-                  type="number"
                 />
                 <InputControl
                   as={Select}
@@ -155,7 +131,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers,
           </Collapse>
           <div className={styles.container}>
             <Button type="submit">Save</Button>
-            <Button onClick={onCancel} variant="secondary">
+            <Button onClick={onCancel} type="reset" variant="secondary">
               Cancel
             </Button>
           </div>

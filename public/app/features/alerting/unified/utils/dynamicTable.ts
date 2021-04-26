@@ -1,6 +1,6 @@
 import { DynamicTableItemProps } from '../components/DynamicTable';
 
-export const prepareItems = <T = any>(
+export const prepareItems = <T = unknown>(
   items: T[],
   idCreator?: (item: T) => number | string
 ): Array<DynamicTableItemProps<T>> =>
@@ -9,7 +9,7 @@ export const prepareItems = <T = any>(
     data: item,
   }));
 
-export const collapseItem = <T = any>(
+export const collapseItem = <T = unknown>(
   items: Array<DynamicTableItemProps<T>>,
   item: DynamicTableItemProps<T>
 ): Array<DynamicTableItemProps<T>> =>
@@ -24,7 +24,7 @@ export const collapseItem = <T = any>(
     };
   });
 
-export const expandItem = <T = any>(
+export const expandItem = <T = unknown>(
   items: Array<DynamicTableItemProps<T>>,
   item: DynamicTableItemProps<T>,
   renderExpandedContent?: DynamicTableItemProps['renderExpandedContent']

@@ -4,15 +4,15 @@ import { GrafanaTheme } from '@grafana/data';
 import { IconButton, useStyles, useTheme } from '@grafana/ui';
 import { useMedia } from 'react-use';
 
-export interface DynamicTableColumnProps<T = any> {
+export interface DynamicTableColumnProps<T = unknown> {
   id: string | number;
   label: string;
 
-  renderRow?: (item: DynamicTableItemProps<T>) => ReactNode;
+  renderRow?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   size?: number | string;
 }
 
-export interface DynamicTableItemProps<T = any> {
+export interface DynamicTableItemProps<T = unknown> {
   id: string | number;
   data: T;
 
@@ -20,14 +20,14 @@ export interface DynamicTableItemProps<T = any> {
   isExpanded?: boolean;
 }
 
-export interface DynamicTableProps<T = any> {
+export interface DynamicTableProps<T = unknown> {
   cols: Array<DynamicTableColumnProps<T>>;
   items: Array<DynamicTableItemProps<T>>;
 
   isExpandable?: boolean;
   onCollapse?: (id: DynamicTableItemProps<T>) => void;
   onExpand?: (id: DynamicTableItemProps<T>) => void;
-  renderExpandedContent?: (item: DynamicTableItemProps) => ReactNode;
+  renderExpandedContent?: (item: DynamicTableItemProps, index: number) => ReactNode;
 }
 
 export const DynamicTable: FC<DynamicTableProps> = ({
@@ -53,7 +53,7 @@ export const DynamicTable: FC<DynamicTableProps> = ({
         ))}
       </div>
 
-      {items.map((item) => (
+      {items.map((item, index) => (
         <div className={styles.row} key={item.id}>
           {isExpandable && (
             <div className={cx(styles.cell, styles.expandCell)}>
@@ -62,17 +62,18 @@ export const DynamicTable: FC<DynamicTableProps> = ({
                 className={styles.expandButton}
                 name={item.isExpanded ? 'angle-down' : 'angle-right'}
                 onClick={() => (item.isExpanded ? onCollapse?.(item) : onExpand?.(item))}
+                type="button"
               />
             </div>
           )}
           {cols.map((col) => (
             <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
-              {col.renderRow?.(item)}
+              {col.renderRow?.(item, index)}
             </div>
           ))}
           {item.isExpanded && (
             <div className={styles.expandedContentRow}>
-              {item.renderExpandedContent ? item.renderExpandedContent() : renderExpandedContent?.(item)}
+              {item.renderExpandedContent ? item.renderExpandedContent() : renderExpandedContent?.(item, index)}
             </div>
           )}
         </div>
