@@ -34,7 +34,10 @@ import {
   Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
-import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import {
+  BucketAggregation,
+  isBucketAggregationWithField,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
 import { getScriptValue } from './utils';
@@ -353,26 +356,39 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
-        const expandedQuery = {
-          ...query,
-          datasource: this.name,
-          query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
+    // lucene query string and then everything else
+    const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
+      if (bucketAgg.type === 'filters') {
+        return {
+          ...bucketAgg,
+          settings: {
+            ...bucketAgg.settings,
+            filters: bucketAgg.settings?.filters?.map((filter) => ({
+              ...filter,
+              query: this.interpolateLuceneQuery(filter.query || '', scopedVars),
+            })),
+          },
         };
+      }
 
-        for (let bucketAgg of query.bucketAggs || []) {
-          if (bucketAgg.type === 'filters') {
-            for (let filter of bucketAgg.settings?.filters || []) {
-              filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
-            }
-          }
-        }
-        return expandedQuery;
-      });
-    }
-    return expandedQueries;
+      return bucketAgg;
+    };
+
+    const expandedQueries = queries.map(
+      (query): ElasticsearchQuery => ({
+        ...query,
+        datasource: this.name,
+        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
+      })
+    );
+
+    const finalQueries: ElasticsearchQuery[] = JSON.parse(
+      this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
+    );
+
+    return finalQueries;
   }
 
   testDatasource() {
