@@ -247,7 +247,7 @@ export class PanelQueryRunner {
 
     let panelData = observable;
     if (this.dataSupport?.alertStates || this.dataSupport?.annotations) {
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId), this.dataSupport);
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
     }
 
     this.subscription = panelData.subscribe({
