@@ -36,7 +36,7 @@ export function QueryEditor({ datasource, query, onChange }: Props) {
           <InlineField label="Trace ID">
             <Input
               aria-label={selectors.components.DataSource.Jaeger.traceIDInput}
-              value={query.traceID}
+              value={query.traceID || ''}
               onChange={(v) =>
                 onChange({
                   ...query,
