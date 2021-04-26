@@ -13,6 +13,7 @@ import { SideMenu } from './core/components/sidemenu/SideMenu';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
+import { LiveConnectionCorner } from './features/live/LiveConnectionCorner';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -112,6 +113,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     </div>
                   </Router>
                 </div>
+                <LiveConnectionCorner />
                 <ModalRoot />
               </ModalsProvider>
             </ThemeProvider>
