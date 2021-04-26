@@ -53,13 +53,13 @@ func (s *Demultiplexer) OnPublish(ctx context.Context, _ *models.SignedInUser, e
 	}
 
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
-	stableSchema := pushurl.StableSchemaFromValues(urlValues)
+	unstableSchema := pushurl.UnstableSchemaFromValues(urlValues)
 
 	logger.Debug("Live Push request",
 		"protocol", "ws",
 		"streamId", s.streamID,
 		"bodyLength", len(evt.Data),
-		"stableSchema", stableSchema,
+		"unstableSchema", unstableSchema,
 		"frameFormat", frameFormat,
 	)
 
@@ -69,7 +69,7 @@ func (s *Demultiplexer) OnPublish(ctx context.Context, _ *models.SignedInUser, e
 		return models.PublishReply{}, 0, err
 	}
 	for _, mf := range metricFrames {
-		err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
+		err := stream.Push(mf.Key(), mf.Frame(), unstableSchema)
 		if err != nil {
 			return models.PublishReply{}, 0, err
 		}
