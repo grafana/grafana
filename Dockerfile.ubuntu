@@ -33,6 +33,10 @@ RUN go run build.go build
 FROM ubuntu:20.04
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
+
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl --fail http://localhost:3000/api/health || exit 1
+
 EXPOSE 3000
 
 ARG GF_UID="472"
