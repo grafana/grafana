@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -36,6 +37,7 @@ func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery plugins
 	return result, err
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func transformAnnotationToTable(data []map[string]string, result *plugins.DataQueryResult) {
 	table := plugins.DataTable{
 		Columns: make([]plugins.DataTableColumn, 4),

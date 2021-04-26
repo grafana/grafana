@@ -36,3 +36,5 @@ export {
   ErrorIndicator as PanelChromeErrorIndicator,
   ErrorIndicatorProps as PanelChromeErrorIndicatorProps,
 } from './ErrorIndicator';
+
+export { usePanelContext, PanelContextProvider } from './PanelContext';

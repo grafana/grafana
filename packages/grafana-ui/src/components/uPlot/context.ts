@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
-import { PlotPlugin } from './types';
 
 /**
  * @alpha
@@ -18,15 +17,7 @@ interface PlotCanvasContextType {
   };
 }
 
-/**
- * @alpha
- */
-interface PlotPluginsContextType {
-  registerPlugin: (plugin: PlotPlugin) => () => void;
-}
-
-interface PlotContextType extends PlotPluginsContextType {
-  isPlotReady: boolean;
+interface PlotContextType {
   getPlotInstance: () => uPlot | undefined;
   getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
@@ -44,40 +35,17 @@ export const usePlotContext = (): PlotContextType => {
   return useContext<PlotContextType>(PlotContext);
 };
 
-const throwWhenNoContext = (name: string) => {
-  throw new Error(`${name} must be used within PlotContext or PlotContext is not ready yet!`);
-};
-
-/**
- * Exposes API for registering uPlot plugins
- *
- * @alpha
- */
-export const usePlotPluginContext = (): PlotPluginsContextType => {
-  const ctx = useContext(PlotContext);
-  if (Object.keys(ctx).length === 0) {
-    throwWhenNoContext('usePlotPluginContext');
-  }
-  return {
-    registerPlugin: ctx!.registerPlugin,
-  };
-};
-
 /**
  * @alpha
  */
 export const buildPlotContext = (
-  isPlotReady: boolean,
   canvasRef: any,
   data: AlignedData,
-  registerPlugin: any,
   getPlotInstance: () => uPlot | undefined
 ): PlotContextType => {
   return {
-    isPlotReady,
     canvasRef,
     data,
-    registerPlugin,
     getPlotInstance,
     getSeries: () => getPlotInstance()!.series,
     getCanvas: () => {

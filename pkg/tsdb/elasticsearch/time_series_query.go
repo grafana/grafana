@@ -26,6 +26,7 @@ var newTimeSeriesQuery = func(client es.Client, dataQuery plugins.DataQuery,
 	}
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 	tsQueryParser := newTimeSeriesQueryParser()
 	queries, err := tsQueryParser.parse(e.tsdbQuery)
@@ -60,6 +61,7 @@ func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 	return rp.getTimeSeries()
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
 	result plugins.DataResponse) error {
 	minInterval, err := e.client.GetMinInterval(q.Interval)
@@ -162,7 +164,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 						}
 
 						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
-							a.Settings = m.Settings.MustMap()
+							a.Settings = m.generateSettingsForDSL()
 						})
 					}
 				} else {
@@ -177,6 +179,31 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	}
 
 	return nil
+}
+
+// Casts values to int when required by Elastic's query DSL
+func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface{} {
+	setFloatPath := func(path ...string) {
+		if stringValue, err := metricAggregation.Settings.GetPath(path...).String(); err == nil {
+			if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
+				metricAggregation.Settings.SetPath(path, value)
+			}
+		}
+	}
+
+	switch metricAggregation.Type {
+	case "moving_avg":
+		setFloatPath("window")
+		setFloatPath("predict")
+		setFloatPath("settings", "alpha")
+		setFloatPath("settings", "beta")
+		setFloatPath("settings", "gamma")
+		setFloatPath("settings", "period")
+	case "serial_diff":
+		setFloatPath("lag")
+	}
+
+	return metricAggregation.Settings.MustMap()
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {
