@@ -16,7 +16,7 @@ import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
 import { processNodes } from './utils';
-import { Icon } from '..';
+import { Icon, Spinner } from '..';
 import { Marker } from './Marker';
 import { Legend } from './Legend';
 import { useHighlight } from './useHighlight';
@@ -24,6 +24,7 @@ import { useFocusPositiononLayout } from './useFocusPositionOnLayout';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
+    label: wrapper;
     height: 100%;
     width: 100%;
     overflow: hidden;
@@ -31,6 +32,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 
   svg: css`
+    label: svg;
     height: 100%;
     width: 100%;
     overflow: visible;
@@ -39,14 +41,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 
   svgPanning: css`
+    label: svgPanning;
     user-select: none;
   `,
 
   mainGroup: css`
+    label: mainGroup;
     will-change: transform;
   `,
 
   viewControls: css`
+    label: viewControls;
     position: absolute;
     left: 2px;
     bottom: 3px;
@@ -56,11 +61,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     justify-content: space-between;
   `,
   legend: css`
+    label: legend;
     background: ${theme.v2.palette.background.secondary};
     box-shadow: ${theme.v2.shadows.z2};
     padding-bottom: 5px;
   `,
   alert: css`
+    label: alert;
     padding: 5px 8px;
     font-size: 10px;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
@@ -71,6 +78,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     right: 0;
     background: ${theme.palette.warn};
     color: ${theme.palette.white};
+  `,
+  loadingWrapper: css`
+    label: loadingWrapper;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `,
 }));
 
@@ -132,8 +146,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(
     getLinks,
-    nodesDataFrames[0],
-    edgesDataFrames[0],
+    firstNodesDataFrame,
+    firstEdgesDataFrame,
     config,
     setConfig,
     setFocusedNodeId
@@ -153,6 +167,13 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
+      {nodes.length === 0 && firstNodesDataFrame.length > 0 ? (
+        <div className={styles.loadingWrapper}>
+          Computing layout&nbsp;
+          <Spinner />
+        </div>
+      ) : null}
+
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}

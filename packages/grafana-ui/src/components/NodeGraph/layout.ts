@@ -3,6 +3,7 @@ import { forceSimulation, forceLink, forceCollide, forceX } from 'd3-force';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 import { Field } from '@grafana/data';
 import { useNodeLimit } from './useNodeLimit';
+import useMountedState from 'react-use/lib/useMountedState';
 
 export interface Config {
   linkDistance: number;
@@ -49,8 +50,8 @@ export function useLayout(
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
 
-  // The use effect is probably not needed here right now, but may make sense later if we decide to move the layout
-  // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
+  const isMounted = useMountedState();
+
   // Also we compute both layouts here. Grid layout should not add much time and we can more easily just cache both
   // so this should happen only once for a given response data.
   //
@@ -66,22 +67,29 @@ export function useLayout(
       return;
     }
 
-    // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
-    let rawNodesCopy = rawNodes.map((n) => ({ ...n }));
-    let rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
+    // Give time to render loading state.
+    setTimeout(() => {
+      if (!isMounted) {
+        return;
+      }
 
-    defaultLayout(rawNodesCopy, rawEdgesCopy);
+      // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
+      let rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+      let rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
 
-    setNodesGraph(rawNodesCopy);
-    setEdgesGraph(rawEdgesCopy as EdgeDatumLayout[]);
+      defaultLayout(rawNodesCopy, rawEdgesCopy);
 
-    rawNodesCopy = rawNodes.map((n) => ({ ...n }));
-    rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
-    gridLayout(rawNodesCopy, config.sort);
+      setNodesGraph(rawNodesCopy);
+      setEdgesGraph(rawEdgesCopy as EdgeDatumLayout[]);
 
-    setNodesGrid(rawNodesCopy);
-    setEdgesGrid(rawEdgesCopy as EdgeDatumLayout[]);
-  }, [config.sort, rawNodes, rawEdges]);
+      rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+      rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
+      gridLayout(rawNodesCopy, config.sort);
+
+      setNodesGrid(rawNodesCopy);
+      setEdgesGrid(rawEdgesCopy as EdgeDatumLayout[]);
+    }, 50);
+  }, [config.sort, rawNodes, rawEdges, isMounted]);
 
   // Limit the nodes so we don't show all for performance reasons. Here we don't compute both at the same time so
   // changing the layout can trash internal memoization at the moment.
