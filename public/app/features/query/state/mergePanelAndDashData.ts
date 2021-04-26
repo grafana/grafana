@@ -1,34 +1,36 @@
 import { combineLatest, merge, Observable, of, timer } from 'rxjs';
-import { ArrayDataFrame, PanelData } from '@grafana/data';
+import { ArrayDataFrame, PanelData, PanelPluginDataSupport } from '@grafana/data';
 import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
-import { mergeMap, mergeMapTo, takeUntil } from 'rxjs/operators';
+import { map, mergeMap, mergeMapTo, takeUntil } from 'rxjs/operators';
 
 export function mergePanelAndDashData(
   panelObservable: Observable<PanelData>,
-  dashObservable: Observable<DashboardQueryRunnerResult>
+  dashObservable: Observable<DashboardQueryRunnerResult>,
+  dataSupport?: PanelPluginDataSupport
 ): Observable<PanelData> {
+  const desiredObservable = dashObservable.pipe(
+    map(({ annotations, alertState }) => ({
+      annotations: dataSupport?.annotations ? annotations : [],
+      alertState: dataSupport?.alertStates ? alertState : undefined,
+    }))
+  );
+
   const slowDashResult: Observable<DashboardQueryRunnerResult> = merge(
-    timer(200).pipe(mergeMapTo(of({ annotations: [], alertState: undefined })), takeUntil(dashObservable)),
-    dashObservable
+    timer(200).pipe(mergeMapTo(of({ annotations: [], alertState: undefined })), takeUntil(desiredObservable)),
+    desiredObservable
   );
 
   return combineLatest([panelObservable, slowDashResult]).pipe(
     mergeMap((combined) => {
       const [panelData, dashData] = combined;
 
-      if (Boolean(dashData.annotations?.length) || Boolean(dashData.alertState)) {
-        if (!panelData.annotations) {
-          panelData.annotations = [];
-        }
-
-        return of({
-          ...panelData,
-          annotations: panelData.annotations.concat(new ArrayDataFrame(dashData.annotations)),
-          alertState: dashData.alertState,
-        });
-      }
-
-      return of(panelData);
+      return of({
+        ...panelData,
+        alertState: dashData.alertState,
+        annotations: dashData.annotations?.length
+          ? (panelData.annotations ?? []).concat(new ArrayDataFrame(dashData.annotations))
+          : panelData.annotations,
+      });
     })
   );
 }
