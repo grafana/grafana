@@ -117,7 +117,6 @@ func (gvs *genericVersionedSchema) ApplyDefaults(r schema.Resource) (schema.Reso
 	}
 	rvUnified := rv.Value().Unify(gvs.CUE())
 	re, err := convertCUEValueToString(rvUnified)
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", string(re))
 	if err != nil {
 		return r, err
 	}
@@ -164,50 +163,63 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 		return input, false, err
 	}
 	rv := rvInstance.Value()
-	// emptyPath := []string{}
 
-	switch inputdef.Kind() {
+	fmt.Println("xxxxxxxxxxxxxxxxxxxxx", inputdef.IncompleteKind())
+	switch inputdef.IncompleteKind() {
 	case cue.StructKind:
 		// Get all fields including optional fields
-		iter, err := input.Fields(cue.All())
+		iter, err := inputdef.Fields(cue.All())
 		if err != nil {
 			return rv, false, err
 		}
 		for iter.Next() {
 			lable, _ := iter.Value().Label()
-			fmt.Println(lable)
+			Vinfo, err := input.FieldByName(lable, false)
+			if err != nil {
+				continue
+			}
+			lv := Vinfo.Value
 			fmt.Printf(">>>>> the pathhhhhhhhhhh        %+v          \n", iter.Value().Path())
-			fmt.Printf(">>>>> the pathhhhhhhhhhh        %+v          \n", iter.Value().Path().Optional())
-			lv := inputdef.LookupPath(iter.Value().Path())
 			if lv.Exists() {
-				_, isEqual, err := removeDefaultHelper(iter.Value(), lv)
-				if err != nil || isEqual {
-					continue
+				re, isEqual, err := removeDefaultHelper(iter.Value(), lv)
+				if err == nil && !isEqual {
+					fmt.Println("I am filling the path with ", iter.Value().Path())
+					rv = rv.FillPath(cue.MakePath(cue.Str(lable)), re)
 				}
-				rv = rv.FillPath(iter.Value().Path(), iter.Value())
-			} else {
-				// mylable, _ := iter.Value().Label()
-				// if mylable == "timepicker" {
-				// 	lv := inputdef.LookupPath(iter.Value().Path().Optional())
-				// 	if lv.Exists() {
-				// 		_, isEqual, err := removeDefaultHelper(iter.Value(), lv)
-				// 		if err != nil || isEqual {
-				// 			continue
-				// 		}
-				// 	}
-				// }
-				rv = rv.FillPath(iter.Value().Path(), iter.Value())
 			}
 		}
 		return rv, false, nil
 	case cue.ListKind:
+		fmt.Println("xxxxxxxxxxxxxxxxxxxxx")
 		val, _ := inputdef.Default()
 		err1 := input.Subsume(val)
 		err2 := val.Subsume(input)
 		if val.IsConcrete() && err1 == nil && err2 == nil {
 			return rv, true, nil
 		}
-		rv = rv.FillPath(cue.Path{}, input)
+
+		lable, _ := inputdef.Label()
+
+		// _, exi := inputdef.Elem()
+		// if !exi {
+		// 	return rv, true, nil
+		// }
+
+		// iter, err := input.List()
+		// if err != nil {
+		// 	return rv, true, nil
+		// }
+		// for iter.Next() {
+		// 	_, _ = iter.Value().Label()
+		// 	fmt.Println("xxxxxxxxxxxxxxxxxxxxx", iter.Value().Path())
+		// 	// re, isEqual, err := removeDefaultHelper(ele, iter.Value())
+		// 	// if err == nil && !isEqual {
+		// 	// 	fmt.Println("I am filling the path with ", iter.Value().Path())
+		// 	// 	rv = append(rv, re)
+		// 	// }
+		// }
+
+		rv = rv.FillPath(cue.Path(cue.MakePath(cue.Str(lable))), input)
 		return rv, false, nil
 	default:
 		val, _ := inputdef.Default()
@@ -217,7 +229,6 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 		err1 := input.Subsume(val)
 		err2 := val.Subsume(input)
 		if val.IsConcrete() && err1 == nil && err2 == nil {
-			// fmt.Println("<<<<<<<<<<<<<<<<< equallllllll")
 			return input, true, nil
 		}
 		return input, false, nil

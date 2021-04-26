@@ -65,6 +65,7 @@ func TestGenerate(t *testing.T) {
 				t.Fatal(err)
 			}
 			b := []byte(out.Value.(string))
+
 			if s := cmp.Diff(string(b), c.Trimed); s != "" {
 				t.Fatal(s)
 			}
