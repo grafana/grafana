@@ -10,6 +10,7 @@ import { PAGE_MODEL } from './DBaaS.constants';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
+import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 
 export const DBaaS: FC = () => {
   const styles = useStyles(getStyles);
@@ -45,7 +46,15 @@ export const DBaaS: FC = () => {
     <PageWrapper pageModel={PAGE_MODEL}>
       <TechnicalPreview />
       <div className={styles.panelContentWrapper}>
-        <TabbedContent tabs={tabs} basePath={basePath} />
+        <TabbedContent
+          tabs={tabs}
+          basePath={basePath}
+          renderTab={({ Content }) => (
+            <FeatureLoader featureName={Messages.dbaas} featureFlag="dbaasEnabled">
+              <Content />
+            </FeatureLoader>
+          )}
+        />
       </div>
     </PageWrapper>
   );

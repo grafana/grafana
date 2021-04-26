@@ -27,7 +27,7 @@ export const SettingsPanel: FC = () => {
       const response = await SettingsService.setSettings(body, callback, generateToken(SET_SETTINGS_CANCEL_TOKEN));
       const { email_alerting_settings: { password = '' } = {} } = body;
 
-      if (refresh) {
+      if (refresh && response) {
         window.location.reload();
 
         return;

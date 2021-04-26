@@ -65,6 +65,8 @@ export interface AdvancedChangePayload extends AdvancedPayload {
   disable_azurediscover?: boolean;
   enable_azurediscover?: boolean;
   stt_check_intervals?: SttCheckIntervalsPayload;
+  enable_dbaas?: boolean;
+  disable_dbaas?: boolean;
 }
 
 export interface MetricsResolutionsPayload {

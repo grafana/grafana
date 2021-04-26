@@ -153,4 +153,5 @@ export const Messages = {
   },
   successfulCopyMessage: 'Copied',
   copyToClipboard: 'Copy to clipboard',
+  dbaas: 'DBaaS',
 };
