@@ -2,6 +2,7 @@ import React, { FC, useMemo } from 'react';
 
 import { useStyles } from '@grafana/ui';
 
+import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
@@ -48,7 +49,15 @@ export const DBaaS: FC = () => {
     <PageWrapper pageModel={PAGE_MODEL}>
       <TechnicalPreview />
       <div className={styles.panelContentWrapper}>
-        <TabbedContent tabs={tabs} basePath={basePath} />
+        <TabbedContent
+          tabs={tabs}
+          basePath={basePath}
+          renderTab={({ Content }) => (
+            <FeatureLoader featureName={Messages.dbaas} featureFlag="dbaasEnabled">
+              <Content />
+            </FeatureLoader>
+          )}
+        />
       </div>
     </PageWrapper>
   );
