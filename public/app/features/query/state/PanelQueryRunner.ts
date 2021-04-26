@@ -245,11 +245,12 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
 
-    this.subscription = mergePanelAndDashData(
-      observable,
-      getDashboardQueryRunner().getResult(panelId),
-      this.dataSupport
-    ).subscribe({
+    let panelData = observable;
+    if (this.dataSupport?.alertStates || this.dataSupport?.annotations) {
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId), this.dataSupport);
+    }
+
+    this.subscription = panelData.subscribe({
       next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
