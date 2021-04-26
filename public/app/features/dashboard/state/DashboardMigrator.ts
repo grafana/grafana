@@ -524,7 +524,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 25) {
-      // tags are removed in v 28
+      // tags are removed in version 28
     }
 
     if (oldVersion < 26) {
