@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field } from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field, Modal } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -233,19 +233,19 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
         </Field>
 
-        <div className="gf-form-button-row">
-          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
-            Local Snapshot
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss}>
+            Cancel
           </Button>
           {externalEnabled && (
             <Button variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
               {sharingButtonText}
             </Button>
           )}
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
+          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
+            Local Snapshot
           </Button>
-        </div>
+        </Modal.ButtonRow>
       </>
     );
   }

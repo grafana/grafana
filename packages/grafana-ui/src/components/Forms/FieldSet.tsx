@@ -26,6 +26,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.formSpacingBase * 4}px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
     `,
   };
 });

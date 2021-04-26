@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Button, Field, Input, Modal, useStyles } from '@grafana/ui';
+import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { PanelModel } from '../../../dashboard/state';
-import { css } from '@emotion/css';
 import { usePanelSave } from '../../utils/usePanelSave';
 interface AddLibraryPanelContentsProps {
   onDismiss: () => void;
@@ -11,7 +10,6 @@ interface AddLibraryPanelContentsProps {
 }
 
 export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: AddLibraryPanelContentsProps) => {
-  const styles = useStyles(getStyles);
   const [folderId, setFolderId] = useState(initialFolderId);
   const [panelTitle, setPanelTitle] = useState(panel.title);
   const { saveLibraryPanel } = usePanelSave();
@@ -25,7 +23,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         <FolderPicker onChange={({ id }) => setFolderId(id)} initialFolderId={initialFolderId} />
       </Field>
 
-      <div className={styles.buttons}>
+      <Modal.ButtonRow>
         <Button
           onClick={() => {
             panel.title = panelTitle;
@@ -37,7 +35,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         <Button variant="secondary" onClick={onDismiss}>
           Cancel
         </Button>
-      </div>
+      </Modal.ButtonRow>
     </>
   );
 };
@@ -53,10 +51,3 @@ export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, i
     </Modal>
   );
 };
-
-const getStyles = () => ({
-  buttons: css`
-    display: flex;
-    gap: 10px;
-  `,
-});

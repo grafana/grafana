@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { oneLineTrim } from 'common-tags';
 import { Story, Meta } from '@storybook/react';
 import { getAvailableIcons } from '../../types';
-import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -54,6 +54,10 @@ export const Basic: Story = ({ body, title, ...args }) => {
   return (
     <Modal title={title} {...args}>
       {body}
+      <Modal.ButtonRow>
+        <Button>Button1</Button>
+        <Button variant="secondary">Cancel</Button>
+      </Modal.ButtonRow>
     </Modal>
   );
 };

@@ -10,7 +10,6 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 const getTabContentStyle = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     tabContent: css`
-      padding: ${theme.spacing(1)};
       background: ${theme.colors.background.primary};
     `,
   };

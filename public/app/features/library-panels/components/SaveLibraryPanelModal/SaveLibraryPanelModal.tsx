@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Button, HorizontalGroup, Icon, Input, Modal, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Modal, useStyles } from '@grafana/ui';
 import { useAsync, useDebounce } from 'react-use';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { usePanelSave } from '../../utils/usePanelSave';
@@ -98,7 +98,13 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
             </tbody>
           </table>
         )}
-        <HorizontalGroup>
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={discardAndClose}>
+            Discard
+          </Button>
           <Button
             onClick={() => {
               saveLibraryPanel(panel, folderId).then(() => {
@@ -109,13 +115,7 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
           >
             Update all
           </Button>
-          <Button variant="destructive" onClick={discardAndClose}>
-            Discard
-          </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
-          </Button>
-        </HorizontalGroup>
+        </Modal.ButtonRow>
       </div>
     </Modal>
   );
