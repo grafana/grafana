@@ -210,8 +210,7 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 		// 	return rv, true, nil
 		// }
 		// for iter.Next() {
-		// 	_, _ = iter.Value().Label()
-		// 	fmt.Println("xxxxxxxxxxxxxxxxxxxxx", iter.Value().Path())
+		// fmt.Println("xxxxxxxxxxxxxxxxxxxxx", interval.IncompleteKind())
 		// 	// re, isEqual, err := removeDefaultHelper(ele, iter.Value())
 		// 	// if err == nil && !isEqual {
 		// 	// 	fmt.Println("I am filling the path with ", iter.Value().Path())
