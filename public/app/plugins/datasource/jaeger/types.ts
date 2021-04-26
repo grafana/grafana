@@ -51,6 +51,7 @@ export type TraceResponse = {
 };
 
 export type JaegerQuery = {
+  // undefined means the old behavior, showing only trace ID input
   queryType?: JaegerQueryType;
   service?: string;
   operation?: string;
@@ -62,4 +63,4 @@ export type JaegerQuery = {
   limit?: number;
 } & DataQuery;
 
-export type JaegerQueryType = 'traceID' | 'search';
+export type JaegerQueryType = 'search';
