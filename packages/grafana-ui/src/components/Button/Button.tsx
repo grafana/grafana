@@ -107,7 +107,7 @@ export const getButtonStyles = (props: StyleProps) => {
   const { theme, variant, buttonStyle = 'solid', size, iconOnly, fullWidth } = props;
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
   const variantStyles = getPropertiesForVariant(theme, variant, buttonStyle);
-  const disabledStyles = getPropertiesForDisabled(theme, buttonStyle);
+  const disabledStyles = getPropertiesForDisabled(theme, variant, buttonStyle);
 
   const focusStyle = getFocusStyles(theme);
 
@@ -211,7 +211,7 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, st
   };
 }
 
-function getPropertiesForDisabled(theme: GrafanaThemeV2, style: ButtonStyle) {
+function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant, style: ButtonStyle) {
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
     boxShadow: 'none',
@@ -220,18 +220,19 @@ function getPropertiesForDisabled(theme: GrafanaThemeV2, style: ButtonStyle) {
     transition: 'none',
   };
 
+  if (style === 'text' || variant === 'link') {
+    return {
+      ...disabledStyles,
+      background: 'transparent',
+      border: `1px solid transparent`,
+    };
+  }
+
   if (style === 'outline') {
     return {
       ...disabledStyles,
       background: 'transparent',
       border: `1px solid ${theme.colors.action.disabledText}`,
-    };
-  }
-
-  if (style === 'text') {
-    return {
-      ...disabledStyles,
-      background: 'transparent',
     };
   }
 
