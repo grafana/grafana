@@ -18,8 +18,8 @@ type Props = {
   timeZone: TimeZone;
   queries: DataQuery[];
   loading: boolean;
-  logsSortOrder?: LogsSortOrder | null;
   visibleRange?: AbsoluteTimeRange;
+  logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
 };
 
@@ -44,44 +44,16 @@ function LogsNavigation({
   const [expectedRange, setExpectedRange] = useState<AbsoluteTimeRange>();
   const [expectedQueries, setExpectedQueries] = useState<DataQuery[]>([]);
 
-  useEffect(() => {
-    const newPage = { logsRange: visibleRange || absoluteRange, queryRange: absoluteRange };
-    // We want to start new pagination if queries change or if absolute range is different than expected
-    if (!isEqual(expectedRange, absoluteRange) || !isEqual(expectedQueries, queries)) {
-      setPages([newPage]);
-      setExpectedQueries(queries);
-    } else {
-      setPages((pages) => {
-        const pagesWithNoDuplicates = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
-
-        const newPagesArray = [...pagesWithNoDuplicates, newPage].sort((a, b) => {
-          if (logsSortOrder === LogsSortOrder.Ascending) {
-            return a.queryRange.to > b.queryRange.to ? 1 : -1;
-          }
-          return a.queryRange.to > b.queryRange.to ? -1 : 1;
-        });
-        return newPagesArray;
-      });
-    }
-    // We don't want to add expectedRange as we want to run this only is absolute and visible range changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visibleRange, absoluteRange, logsSortOrder]);
-
-  useEffect(() => {
-    const index = pages.findIndex((page) => page.queryRange.to === absoluteRange.to);
-    setCurrentPageIndex(index);
-  }, [pages, absoluteRange]);
-
-  useEffect(() => {
-    const initialRange = absoluteRange.to - absoluteRange.from;
-    setRequestRange(initialRange);
-    // We want to set requestRange only when the first query is run
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
     setExpectedRange({ from, to });
     onChangeTime({ from, to });
+  };
+
+  const sortPages = (a: LogsPage, b: LogsPage, logsSortOrder?: LogsSortOrder | null) => {
+    if (logsSortOrder === LogsSortOrder.Ascending) {
+      return a.queryRange.to > b.queryRange.to ? 1 : -1;
+    }
+    return a.queryRange.to > b.queryRange.to ? -1 : 1;
   };
 
   const formatTime = (time: number) => {
@@ -90,6 +62,50 @@ function LogsNavigation({
       timeZone: timeZone,
     })}`;
   };
+
+  const createPageContent = (page: LogsPage, index: number) => {
+    if (currentPageIndex === index && loading) {
+      return <Spinner />;
+    }
+    const topContent = formatTime(oldestLogsFirst ? page.logsRange.from : page.logsRange.to);
+    const bottomContent = formatTime(oldestLogsFirst ? page.logsRange.to : page.logsRange.from);
+    return `${topContent} — ${bottomContent}`;
+  };
+
+  // Main effect to set pages and index
+  useEffect(() => {
+    const newPage = { logsRange: visibleRange, queryRange: absoluteRange };
+    let newPages: LogsPage[] = [];
+
+    // We want to start new pagination if queries change or if absolute range is different than expected
+    if (!isEqual(expectedRange, absoluteRange) || !isEqual(expectedQueries, queries)) {
+      setPages([newPage]);
+      setExpectedQueries(queries);
+      setCurrentPageIndex(0);
+    } else {
+      setPages((pages) => {
+        // Remove duplicates with new query
+        newPages = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
+        // Sort pages based on logsOrder so they visually align with displayed logs
+        newPages = [...newPages, newPage].sort((a, b) => sortPages(a, b, logsSortOrder));
+        // Set new pages
+        return newPages;
+      });
+
+      // Set current page index
+      const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
+      setCurrentPageIndex(index);
+    }
+    // We don't want to add expectedRange as we want to run this only is absolute and visible range changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleRange, absoluteRange, logsSortOrder]);
+
+  useEffect(() => {
+    const initialRange = absoluteRange.to - absoluteRange.from;
+    setRequestRange(initialRange);
+    // We want to set requestRange only when the first query is run
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const theme = useTheme();
@@ -113,8 +129,7 @@ function LogsNavigation({
         >
           <div className={styles.navButtonContent}>
             {loading ? <Spinner /> : <Icon name="angle-up" size="lg" />}
-            <div>Older</div>
-            <div>logs</div>
+            Older logs
           </div>
         </Button>
       )}
@@ -129,9 +144,7 @@ function LogsNavigation({
               >
                 <div className={classNames(styles.line, { selectedBg: currentPageIndex === index })} />
                 <div className={classNames(styles.time, { selectedText: currentPageIndex === index })}>
-                  {`${formatTime(oldestLogsFirst ? page.logsRange.from : page.logsRange.to)} - ${formatTime(
-                    oldestLogsFirst ? page.logsRange.to : page.logsRange.from
-                  )}`}
+                  {createPageContent(page, index)}
                 </div>
               </div>
             ))}
@@ -152,8 +165,7 @@ function LogsNavigation({
           disabled={loading}
         >
           <div className={styles.navButtonContent}>
-            <div>Older</div>
-            <div>logs</div>
+            Older logs
             {loading ? <Spinner /> : <Icon name="angle-down" size="lg" />}
           </div>
         </Button>
@@ -167,11 +179,9 @@ export default memo(LogsNavigation);
 const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, loading: boolean) => {
   return {
     navContainer: css`
-      width: 70px;
       height: 95vh;
       display: flex;
       flex-direction: column;
-      padding-left: ${theme.spacing.xs};
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
     `,
     navButton: css`
@@ -190,6 +200,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       align-items: center;
       width: 100%;
       height: 100%;
+      white-space: normal;
     `,
     pagesWrapper: css`
       height: 100%;
@@ -209,6 +220,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       width: 100%;
       margin: ${theme.spacing.md} 0;
       cursor: ${loading ? 'auto' : 'pointer'};
+      white-space: normal;
       .selectedBg {
         background: ${theme.colors.bgBlue2};
       }
@@ -217,13 +229,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       }
     `,
     line: css`
-      width: 6px;
+      width: 3px;
       height: 100%;
-
       align-items: center;
       background: ${theme.colors.textWeak};
     `,
     time: css`
+      width: 60px;
       font-size: ${theme.typography.size.sm};
       padding: ${theme.spacing.md} 0 ${theme.spacing.md} ${theme.spacing.xs}; ;
     `,
