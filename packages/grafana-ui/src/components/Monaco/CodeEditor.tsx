@@ -17,7 +17,7 @@ function initMonoco() {
 
   monacoEditorLoader.config({
     paths: {
-      vs: ((window as any).__grafana_public_path__ ?? 'public/') + 'lib/monaco/min/vs',
+      vs: (window.__grafana_public_path__ ?? 'public/') + 'lib/monaco/min/vs',
     },
   });
   initalized = true;
@@ -128,9 +128,9 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
         <MonacoEditor
           width={width}
           height={height}
-          defaultLanguage={language}
+          language={language}
           theme={theme.isDark ? 'vs-dark' : 'vs-light'}
-          defaultValue={value}
+          value={value}
           options={{
             ...options,
             ...(monacoOptions ?? {}),
