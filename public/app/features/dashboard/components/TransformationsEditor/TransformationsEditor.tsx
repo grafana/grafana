@@ -5,7 +5,6 @@ import {
   Container,
   CustomScrollbar,
   Themeable,
-  FeatureInfoBox,
   VerticalGroup,
   withTheme,
   Input,
@@ -263,15 +262,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 }
 
                 return (
-                  <FeatureInfoBox
+                  <Alert
                     title="Transformations"
-                    className={css`
-                      margin-bottom: ${this.props.theme.spacing.lg};
-                    `}
-                    onDismiss={() => {
+                    onRemove={() => {
                       onDismiss(true);
                     }}
-                    url={getDocsLink(DocsId.Transformations)}
+                    severity="info"
                   >
                     <p>
                       Transformations allow you to join, calculate, re-order, hide, and rename your query results before
@@ -279,9 +275,16 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                       Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently
                       only only supports time series data. <br />
                       It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
-                      <br />
                     </p>
-                  </FeatureInfoBox>
+                    <a
+                      href={getDocsLink(DocsId.Transformations)}
+                      className="external-link"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Read more
+                    </a>
+                  </Alert>
                 );
               }}
             </LocalStorageValueProvider>

@@ -292,16 +292,12 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     const { isLoading, step } = this.state;
 
     return (
-      <div className="share-modal-body">
-        <div className="share-modal-header">
-          <div className="share-modal-content">
-            {step === 1 && this.renderStep1()}
-            {step === 2 && this.renderStep2()}
-            {step === 3 && this.renderStep3()}
-            {isLoading && <Spinner inline={true} />}
-          </div>
-        </div>
-      </div>
+      <>
+        {step === 1 && this.renderStep1()}
+        {step === 2 && this.renderStep2()}
+        {step === 3 && this.renderStep3()}
+        {isLoading && <Spinner inline={true} />}
+      </>
     );
   }
 }

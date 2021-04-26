@@ -74,36 +74,32 @@ export class ShareEmbed extends PureComponent<Props, State> {
     const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
 
     return (
-      <div className="share-modal-body">
-        <div className="share-modal-header">
-          <div className="share-modal-content">
-            <p className="share-modal-info-text">Generate HTML for embedding an iframe with this panel.</p>
-            <Field
-              label="Current time range"
-              description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
-            >
-              <Switch
-                id="share-current-time-range"
-                value={useCurrentTimeRange}
-                onChange={this.onUseCurrentTimeRangeChange}
-              />
-            </Field>
-            <Field label="Theme">
-              <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-            </Field>
-            <Field
-              label="Embed HTML"
-              description="The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, 
+      <>
+        <p className="share-modal-info-text">Generate HTML for embedding an iframe with this panel.</p>
+        <Field
+          label="Current time range"
+          description={isRelativeTime ? 'Transforms the current relative time range to an absolute time range' : ''}
+        >
+          <Switch
+            id="share-current-time-range"
+            value={useCurrentTimeRange}
+            onChange={this.onUseCurrentTimeRangeChange}
+          />
+        </Field>
+        <Field label="Theme">
+          <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+        </Field>
+        <Field
+          label="Embed HTML"
+          description="The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, 
                 the user viewing that page need to be signed into Grafana for the graph to load."
-            >
-              <TextArea rows={5} value={iframeHtml} onChange={this.onIframeHtmlChange}></TextArea>
-            </Field>
-            <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
-              Copy to clipboard
-            </ClipboardButton>
-          </div>
-        </div>
-      </div>
+        >
+          <TextArea rows={5} value={iframeHtml} onChange={this.onIframeHtmlChange}></TextArea>
+        </Field>
+        <ClipboardButton variant="primary" getText={this.getIframeHtml} onClipboardCopy={this.onIframeHtmlCopy}>
+          Copy to clipboard
+        </ClipboardButton>
+      </>
     );
   }
 }

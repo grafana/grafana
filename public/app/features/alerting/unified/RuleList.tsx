@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, GrafanaTheme, urlUtil } from '@grafana/data';
-import { Icon, InfoBox, useStyles, Button, ButtonGroup, ToolbarButton } from '@grafana/ui';
+import { useStyles, Button, ButtonGroup, ToolbarButton, Alert } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
@@ -88,16 +88,7 @@ export const RuleList: FC = () => {
   return (
     <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
       {(promReqeustErrors.length || rulerRequestErrors.length || grafanaPromError) && (
-        <InfoBox
-          data-testid="cloud-rulessource-errors"
-          title={
-            <h4>
-              <Icon className={styles.iconError} name="exclamation-triangle" size="xl" />
-              Errors loading rules
-            </h4>
-          }
-          severity="error"
-        >
+        <Alert data-testid="cloud-rulessource-errors" title="Errors loading rules" severity="error">
           {grafanaPromError && (
             <div>Failed to load Grafana threshold rules state: {grafanaPromError.message || 'Unknown error.'}</div>
           )}
@@ -118,7 +109,7 @@ export const RuleList: FC = () => {
               {error.message || 'Unknown error.'}
             </div>
           ))}
-        </InfoBox>
+        </Alert>
       )}
       {!showNewAlertSplash && (
         <>

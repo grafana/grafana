@@ -90,27 +90,23 @@ export class ShareExport extends PureComponent<Props, State> {
     const { shareExternally } = this.state;
 
     return (
-      <div className="share-modal-body">
-        <div className="share-modal-header">
-          <div className="share-modal-content">
-            <p className="share-modal-info-text">Export this dashboard.</p>
-            <Field label="Export for sharing externally">
-              <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
-            </Field>
-            <div className="gf-form-button-row">
-              <Button variant="primary" onClick={this.onSaveAsFile}>
-                Save to file
-              </Button>
-              <Button variant="secondary" onClick={this.onViewJson}>
-                View JSON
-              </Button>
-              <Button variant="secondary" onClick={onDismiss}>
-                Cancel
-              </Button>
-            </div>
-          </div>
+      <>
+        <p className="share-modal-info-text">Export this dashboard.</p>
+        <Field label="Export for sharing externally">
+          <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
+        </Field>
+        <div className="gf-form-button-row">
+          <Button variant="primary" onClick={this.onSaveAsFile}>
+            Save to file
+          </Button>
+          <Button variant="secondary" onClick={this.onViewJson}>
+            View JSON
+          </Button>
+          <Button variant="secondary" onClick={onDismiss}>
+            Cancel
+          </Button>
         </div>
-      </div>
+      </>
     );
   }
 }
