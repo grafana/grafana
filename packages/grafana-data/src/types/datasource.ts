@@ -170,7 +170,8 @@ export interface DataSourceConstructor<
  */
 abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TQueryImportConfiguration extends Record<string, object> = {}
 > {
   /**
    *  Set in constructor
@@ -208,11 +209,12 @@ abstract class DataSourceApi<
   /**
    * Imports queries from a different datasource
    */
-  importQueries?(queries: DataQuery[], originMeta: PluginMeta, config: object): Promise<TQuery[]>;
+  async importQueries?(queries: DataQuery[], originDataSource: DataSourceApi): Promise<TQuery[]>;
 
-  getImportQueryConfiguration?(): object;
-
-  parseQueries?(queries: any): any;
+  /**
+   * Returns configuration for importing queries from other datasources
+   */
+  getImportQueryConfiguration?(): TQueryImportConfiguration;
 
   /**
    * Initializes a datasource after instantiation

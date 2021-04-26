@@ -2,7 +2,7 @@ export type MetricMapping = {
   matchers: MetricNodeMatcher[];
 };
 
-type MetricNodeMatcher = {
+export type MetricNodeMatcher = {
   value: string;
   labelName?: string;
 };

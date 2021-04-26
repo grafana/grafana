@@ -13,7 +13,6 @@ import {
   getDefaultTimeRange,
   LogRowModel,
   MetricFindValue,
-  PluginMeta,
   ScopedVars,
   TimeRange,
   toUtc,
@@ -152,8 +151,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       );
   }
 
-  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
-    return this.languageProvider.importQueries(queries, originMeta.id);
+  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<ElasticsearchQuery[]> {
+    return this.languageProvider.importQueries(queries, originDataSource.meta.id);
   }
 
   /**

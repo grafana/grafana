@@ -4,18 +4,20 @@ import { Parser } from './parser';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
 
-type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
+export type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
+
+export type GraphiteTag = {
+  key: string;
+  operator: GraphiteTagOperator;
+  value: string;
+};
 
 export default class GraphiteQuery {
   datasource: any;
   target: any;
   functions: any[];
   segments: any[];
-  tags: Array<{
-    key: string;
-    operator: GraphiteTagOperator;
-    value: string;
-  }>;
+  tags: GraphiteTag[];
   error: any;
   seriesByTagUsed: boolean;
   checkOtherSegmentsIndex: number;
@@ -245,7 +247,7 @@ export default class GraphiteQuery {
           if (tag.length === 3) {
             return {
               key: tag[0],
-              operator: tag[1],
+              operator: tag[1] as GraphiteTagOperator,
               value: tag[2],
             };
           }
@@ -268,7 +270,7 @@ export default class GraphiteQuery {
     }
   }
 
-  addTag(tag: { key: any; operator: string; value: string }) {
+  addTag(tag: { key: any; operator: GraphiteTagOperator; value: string }) {
     const newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc().params.push(newTagParam);
     this.tags.push(tag);
@@ -279,7 +281,7 @@ export default class GraphiteQuery {
     this.tags.splice(index, 1);
   }
 
-  updateTag(tag: { key: string }, tagIndex: number) {
+  updateTag(tag: { key: string; operator: GraphiteTagOperator; value: string }, tagIndex: number) {
     this.error = null;
 
     if (tag.key === this.removeTagValue) {
@@ -298,6 +300,8 @@ export default class GraphiteQuery {
         // Don't render tag that we want to lookup
         if (index !== excludeIndex) {
           return tagExpr.key + tagExpr.operator + tagExpr.value;
+        } else {
+          return undefined;
         }
       })
     );

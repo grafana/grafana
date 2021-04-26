@@ -23,10 +23,21 @@ import { Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
-import { default as GraphiteQueryModel } from './graphite_query';
 import { MetricMapping } from './configuration/parseLokiLabelMappings';
 
-export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
+export type GraphiteToLokiQueryImportConfiguration = {
+  mappings: MetricMapping[];
+};
+
+export type GraphiteQueryImportConfiguration = {
+  loki: GraphiteToLokiQueryImportConfiguration;
+};
+
+export class GraphiteDatasource extends DataSourceApi<
+  GraphiteQuery,
+  GraphiteOptions,
+  GraphiteQueryImportConfiguration
+> {
   basicAuth: string;
   url: string;
   name: string;
@@ -73,44 +84,12 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     };
   }
 
-  parseQueries(queries: GraphiteQuery[]): GraphiteQueryModel[] {
-    return queries.map((query) => {
-      const model = new GraphiteQueryModel(
-        this,
-        {
-          ...query,
-          target: query.target || '',
-          textEditor: false,
-        },
-        this.templateSrv
-      );
-      model.parseTarget();
-      return model;
-    });
-  }
-
-  getImportQueryConfiguration() {
-    return this.metricMappings;
-    // return [
-    //   {
-    //     matchers: [
-    //       {
-    //         value: 'servers',
-    //       },
-    //       {
-    //         value: '*',
-    //         labelName: 'cluster',
-    //       },
-    //       {
-    //         value: '*',
-    //         labelName: 'server',
-    //       },
-    //       {
-    //         value: 'cpu',
-    //       },
-    //     ],
-    //   },
-    // ];
+  getImportQueryConfiguration(): GraphiteQueryImportConfiguration {
+    return {
+      loki: {
+        mappings: this.metricMappings,
+      },
+    };
   }
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {

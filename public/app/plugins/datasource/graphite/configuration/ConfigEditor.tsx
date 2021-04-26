@@ -97,13 +97,17 @@ export class ConfigEditor extends PureComponent<Props> {
           )}
         </div>
         <LokiLogsMappings
-          mappings={(options.jsonData.lokiLabelsMappings || []).map(toString)}
+          mappings={(options.jsonData.importConfiguration?.loki?.mappings || []).map(toString)}
           onChange={(mappings) => {
             onOptionsChange({
               ...options,
               jsonData: {
                 ...options.jsonData,
-                lokiLabelsMappings: mappings.map(fromString),
+                importConfiguration: {
+                  loki: {
+                    mappings: mappings.map(fromString),
+                  },
+                },
               },
             });
           }}

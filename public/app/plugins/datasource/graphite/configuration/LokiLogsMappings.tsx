@@ -11,7 +11,7 @@ export const LokiLogsMappings = (props: Props): JSX.Element => {
 
   return (
     <div>
-      <h3 className="page-heading">Loki lables mappings</h3>
+      <h3 className="page-heading">Loki labels mappings</h3>
       <div className="gf-form-group">
         {mappings.map((mapping, i) => (
           <div className="gf-form-inline" key={i}>
