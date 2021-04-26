@@ -151,7 +151,7 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Session},
 		)
 		return scopes, nil
-	case "alert_rule": // target need to much the respective database name
+	case "alert_rule": // target need to match the respective database name
 		scopes = append(scopes,
 			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.AlertRule},
 			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.AlertRule},

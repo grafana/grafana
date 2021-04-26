@@ -89,7 +89,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result.Used, ShouldEqual, 0)
 			})
-			Convey("Should be able to get used zero used org alert quota when table does not exist (ngalert is not enabled - default case)", func() {
+			Convey("Should be able to get zero used org alert quota when table does not exist (ngalert is not enabled - default case)", func() {
 				query := models.GetOrgQuotaByTargetQuery{OrgId: 2, Target: "alert", Default: 11}
 				err = GetOrgQuotaByTarget(&query)
 

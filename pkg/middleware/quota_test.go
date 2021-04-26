@@ -238,7 +238,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		})
 
 		middlewareScenario(t, "org alert quota reached but ngalert disabled", func(t *testing.T, sc *scenarioContext) {
-			// this schenario can only happen if the feature was enabled and later disabled
+			// this scenario can only happen if the feature was enabled and later disabled
 			setUp(sc)
 
 			quotaHandler := getQuotaHandler(sc, "alert_rule")

@@ -85,7 +85,7 @@ func GetOrgQuotas(query *models.GetOrgQuotasQuery) error {
 	result := make([]*models.OrgQuotaDTO, len(quotas))
 	for i, q := range quotas {
 		var used int64
-		if q.Target != "alert_rule" || query.IsNgAlertEnabled {
+		if q.Target != ALERT_RULE_TARGET || query.IsNgAlertEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 			resp := make([]*targetCount, 0)
@@ -196,7 +196,7 @@ func GetUserQuotas(query *models.GetUserQuotasQuery) error {
 	result := make([]*models.UserQuotaDTO, len(quotas))
 	for i, q := range quotas {
 		var used int64
-		if q.Target != "alert_rule" || query.IsNgAlertEnabled {
+		if q.Target != ALERT_RULE_TARGET || query.IsNgAlertEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 			resp := make([]*targetCount, 0)
