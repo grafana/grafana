@@ -40,7 +40,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
-    deprecatedProp(
+    deprecatedPropWarning(
       variant === 'link',
       `${Button.displayName}: Prop variant="link" is deprecated. Please use buttonStyle="text".`
     );
@@ -87,7 +87,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
     const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
 
-    deprecatedProp(
+    deprecatedPropWarning(
       variant === 'link',
       `${LinkButton.displayName}: Prop variant="link" is deprecated. Please use buttonStyle="text".`
     );
@@ -270,7 +270,7 @@ export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVa
   }
 }
 
-function deprecatedProp(test: boolean, message: string) {
+function deprecatedPropWarning(test: boolean, message: string) {
   if (process.env.NODE_ENV === 'development' && test) {
     console.warn(`@grafana/ui ${message}`);
   }
