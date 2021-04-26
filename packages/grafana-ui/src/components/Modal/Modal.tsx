@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
+import React, { PropsWithChildren, useCallback, useEffect } from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from '@emotion/css';
 import { useTheme2 } from '../../themes';
@@ -6,6 +6,7 @@ import { IconName } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
+import { HorizontalGroup } from '../Layout/Layout';
 
 export interface Props {
   icon?: IconName;
@@ -23,7 +24,7 @@ export interface Props {
   onClickBackdrop?: () => void;
 }
 
-export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
+export function Modal(props: PropsWithChildren<Props>) {
   const {
     title,
     children,
@@ -78,6 +79,19 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
     </Portal>
   );
 }
+
+function ModalButtonRow({ children }: { children: React.ReactNode }) {
+  const theme = useTheme2();
+  const styles = getModalStyles(theme);
+
+  return (
+    <div className={styles.modalButtonRow}>
+      <HorizontalGroup spacing="md">{children}</HorizontalGroup>
+    </div>
+  );
+}
+
+Modal.ButtonRow = ModalButtonRow;
 
 interface DefaultModalHeaderProps {
   title: string;
