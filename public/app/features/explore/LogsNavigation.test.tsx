@@ -39,6 +39,6 @@ describe('LogsNavigation', () => {
   });
   it('should render logs page with correct range', () => {
     setup();
-    expect(screen.getByText(/02:59:05 - 02:59:01/i)).toBeInTheDocument();
+    expect(screen.getByText(/02:59:05 — 02:59:01/i)).toBeInTheDocument();
   });
 });
