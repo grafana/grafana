@@ -1,4 +1,4 @@
-import { Field, InfoBox, LoadingPlaceholder } from '@grafana/ui';
+import { Field, Alert, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -36,9 +36,9 @@ const Receivers: FC = () => {
         <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       </Field>
       {error && !loading && (
-        <InfoBox severity="error" title={<h4>Error loading alert manager config</h4>}>
+        <Alert severity="error" title="Error loading alert manager config">
           {error.message || 'Unknown error.'}
-        </InfoBox>
+        </Alert>
       )}
       {loading && <LoadingPlaceholder text="loading receivers..." />}
       {result && !loading && !error && (

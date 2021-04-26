@@ -127,8 +127,7 @@ describe('grafanaGraph', () => {
       },
       {
         get: () => {},
-      } as any,
-      {} as any
+      } as any
     );
 
     // @ts-ignore
