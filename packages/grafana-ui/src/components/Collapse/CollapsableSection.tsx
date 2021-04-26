@@ -32,11 +32,11 @@ const collapsableSectionStyles = (theme: GrafanaThemeV2) => {
     display: 'flex',
     justifyContent: 'space-between',
     fontSize: theme.typography.size.lg,
-    padding: `${theme.spacing(4)} 0`,
+    padding: `${theme.spacing(0.5)} 0`,
     cursor: 'pointer',
   });
   const headerCollapsed = css(header, {
-    borderBottom: `1px solid ${theme.colors.border.medium}`,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
   });
   const icon = css({
     color: theme.colors.text.secondary,
