@@ -1,4 +1,4 @@
-package push
+package pushhttp
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	logger = log.New("live_push")
+	logger = log.New("live.push_http")
 )
 
 func init() {
