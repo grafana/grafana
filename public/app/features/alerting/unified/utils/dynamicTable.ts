@@ -21,6 +21,7 @@ export const collapseItem = <T = unknown>(
     return {
       ...currentItem,
       isExpanded: false,
+      renderExpandedContent: undefined,
     };
   });
 

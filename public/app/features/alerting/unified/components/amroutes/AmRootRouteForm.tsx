@@ -9,17 +9,18 @@ import { timeOptions } from '../../utils/time';
 
 export interface AmRootRouteFormProps {
   onCancel: () => void;
+  onSave: (data: AmRouteFormValues) => void;
   receivers: Array<SelectableValue<Receiver['name']>>;
   routes: AmRouteFormValues;
 }
 
-export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers, routes }) => {
+export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles(getStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(routes.groupBy);
 
   return (
-    <Form defaultValues={routes} onSubmit={(data) => console.log(data)}>
+    <Form defaultValues={routes} onSubmit={onSave}>
       {({ control, getValues }) => (
         <>
           <Field label="Default notification channel">

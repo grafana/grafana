@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+
 export interface AmRouteFormValues {
   matchers: Array<{
     label: string;
@@ -5,16 +7,16 @@ export interface AmRouteFormValues {
     isRegex: boolean;
   }>;
   continue: boolean;
-  receiver: string;
+  receiver: SelectableValue<string> | undefined;
   groupBy: Array<{
     label: string;
     value: string;
   }>;
   groupWaitValue: string;
-  groupWaitValueType: string;
+  groupWaitValueType: SelectableValue<string>;
   groupIntervalValue: string;
-  groupIntervalValueType: string;
+  groupIntervalValueType: SelectableValue<string>;
   repeatIntervalValue: string;
-  repeatIntervalValueType: string;
+  repeatIntervalValueType: SelectableValue<string>;
   routes: AmRouteFormValues[];
 }

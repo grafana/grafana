@@ -10,18 +10,15 @@ export interface AmRootRouteReadProps {
 export const AmRootRouteRead: FC<AmRootRouteReadProps> = ({ routes }) => {
   const styles = useStyles(getGridStyles);
 
-  const receiver = routes.receiver || '-';
+  const receiver = routes.receiver?.value || '-';
   const groupBy = routes.groupBy.map((groupBy) => groupBy.label).join(', ') || '-';
-  const groupWait =
-    routes.groupWaitValue && routes.groupWaitValueType ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
-  const groupInterval =
-    routes.groupIntervalValue && routes.groupIntervalValueType
-      ? `${routes.groupIntervalValue}${routes.groupIntervalValueType}`
-      : '-';
-  const repeatInterval =
-    routes.repeatIntervalValue && routes.repeatIntervalValueType
-      ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType}`
-      : '-';
+  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType.value}` : '-';
+  const groupInterval = routes.groupIntervalValue
+    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType.value}`
+    : '-';
+  const repeatInterval = routes.repeatIntervalValue
+    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType.value}`
+    : '-';
 
   return (
     <div className={styles.container}>

@@ -8,23 +8,21 @@ import { AmRoutesTable } from './AmRoutesTable';
 import { getGridStyles } from './gridStyles';
 
 export interface AmRoutesExpandedReadProps {
+  onChange: (routes: AmRouteFormValues) => void;
   receivers: Array<SelectableValue<Receiver['name']>>;
   routes: AmRouteFormValues;
 }
 
-export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ receivers, routes }) => {
+export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, receivers, routes }) => {
   const styles = useStyles(getGridStyles);
 
-  const groupWait =
-    routes.groupWaitValue && routes.groupWaitValueType ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
-  const groupInterval =
-    routes.groupIntervalValue && routes.groupIntervalValueType
-      ? `${routes.groupIntervalValue}${routes.groupIntervalValueType}`
-      : '-';
-  const repeatInterval =
-    routes.repeatIntervalValue && routes.repeatIntervalValueType
-      ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType}`
-      : '-';
+  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType.value}` : '-';
+  const groupInterval = routes.groupIntervalValue
+    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType.value}`
+    : '-';
+  const repeatInterval = routes.repeatIntervalValue
+    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType.value}`
+    : '-';
 
   const [subroutes, setSubroutes] = useState(routes.routes);
   const [isAddMode, setIsAddMode] = useState(false);
@@ -41,12 +39,15 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ receivers,
       <div className={styles.valueCell}>
         <AmRoutesTable
           isAddMode={isAddMode}
-          onRemoveRoute={(index) => {
-            setSubroutes((subroutes) => {
-              subroutes.slice(index, 1);
-
-              return subroutes;
+          onChange={(newRoutes) => {
+            onChange({
+              ...routes,
+              routes: newRoutes,
             });
+
+            if (isAddMode) {
+              setIsAddMode(false);
+            }
           }}
           receivers={receivers}
           routes={subroutes}

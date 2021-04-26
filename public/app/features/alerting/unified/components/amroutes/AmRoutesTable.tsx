@@ -10,29 +10,40 @@ import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
 
 export interface AmRoutesTableProps {
+  isAddMode: boolean;
+  onChange: (routes: AmRouteFormValues[]) => void;
   receivers: Array<SelectableValue<Receiver['name']>>;
   routes: AmRouteFormValues[];
-
-  isAddMode?: boolean;
-  onRemoveRoute?: (index: number) => void;
 }
 
 type RouteTableColumnProps = DynamicTableColumnProps<AmRouteFormValues>;
 type RouteTableItemProps = DynamicTableItemProps<AmRouteFormValues>;
 
-export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onRemoveRoute, routes, receivers }) => {
+export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, receivers, routes }) => {
   const [items, setItems] = useState<RouteTableItemProps[]>([]);
 
   const getRenderEditExpandedContent = useCallback(
     // eslint-disable-next-line react/display-name
-    (item: RouteTableItemProps) => () => (
+    (item: RouteTableItemProps, index: number) => () => (
       <AmRoutesExpandedForm
-        onExitEditMode={() => setItems((items) => expandItem(items, item))}
+        onCancel={() => setItems((items) => expandItem(items, item))}
+        onSave={(data) => {
+          const newRoutes = [...routes];
+
+          newRoutes[index] = {
+            ...newRoutes[index],
+            ...data,
+          };
+
+          setItems((items) => collapseItem(items, item));
+
+          onChange(newRoutes);
+        }}
+        receivers={receivers}
         routes={item.data}
-        receivers={receivers!}
       />
     ),
-    [receivers]
+    [onChange, receivers, routes]
   );
 
   const cols: RouteTableColumnProps[] = [
@@ -62,7 +73,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onRemoveRoute
     {
       id: 'receiverChannel',
       label: 'Receiver channel',
-      renderRow: (item) => item.data.receiver || '-',
+      renderRow: (item) => item.data.receiver?.label || '-',
       size: 5,
     },
     {
@@ -75,14 +86,24 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onRemoveRoute
         }
 
         const expandWithCustomContent = () =>
-          setItems((items) => expandItem(items, item, getRenderEditExpandedContent(item)));
+          setItems((items) => expandItem(items, item, getRenderEditExpandedContent(item, index)));
 
         return (
           <HorizontalGroup>
             <Button icon="pen" onClick={expandWithCustomContent} size="sm" type="button" variant="secondary">
               Edit
             </Button>
-            <IconButton name="trash-alt" onClick={() => onRemoveRoute!(index)} type="button" />
+            <IconButton
+              name="trash-alt"
+              onClick={() => {
+                const newRoutes = [...routes];
+
+                newRoutes.splice(index, 1);
+
+                onChange(newRoutes);
+              }}
+              type="button"
+            />
           </HorizontalGroup>
         );
       },
@@ -96,7 +117,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onRemoveRoute
         return {
           ...item,
           isExpanded: true,
-          renderExpandedContent: getRenderEditExpandedContent(item),
+          renderExpandedContent: getRenderEditExpandedContent(item, index),
         };
       }
 
@@ -117,8 +138,21 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onRemoveRoute
       items={items}
       onCollapse={(item: RouteTableItemProps) => setItems((items) => collapseItem(items, item))}
       onExpand={(item: RouteTableItemProps) => setItems((items) => expandItem(items, item))}
-      renderExpandedContent={(item: RouteTableItemProps) => (
-        <AmRoutesExpandedRead receivers={receivers} routes={item.data} />
+      renderExpandedContent={(item: RouteTableItemProps, index) => (
+        <AmRoutesExpandedRead
+          onChange={(data) => {
+            const newRoutes = [...routes];
+
+            newRoutes[index] = {
+              ...item.data,
+              ...data,
+            };
+
+            onChange(newRoutes);
+          }}
+          receivers={receivers}
+          routes={item.data}
+        />
       )}
     />
   );

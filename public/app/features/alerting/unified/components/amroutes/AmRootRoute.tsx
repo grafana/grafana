@@ -8,11 +8,12 @@ import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
 
 export interface AmRootRouteProps {
+  onSave: (data: Partial<AmRouteFormValues>) => void;
   receivers: Array<SelectableValue<Receiver['name']>>;
   routes: AmRouteFormValues;
 }
 
-export const AmRootRoute: FC<AmRootRouteProps> = ({ receivers, routes }) => {
+export const AmRootRoute: FC<AmRootRouteProps> = ({ onSave, receivers, routes }) => {
   const styles = useStyles(getStyles);
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -33,7 +34,15 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({ receivers, routes }) => {
         routing area.
       </p>
       {isEditMode ? (
-        <AmRootRouteForm onCancel={() => setIsEditMode(false)} receivers={receivers} routes={routes} />
+        <AmRootRouteForm
+          onCancel={() => setIsEditMode(false)}
+          onSave={(data: Partial<AmRouteFormValues>) => {
+            onSave(data);
+            setIsEditMode(false);
+          }}
+          receivers={receivers}
+          routes={routes}
+        />
       ) : (
         <AmRootRouteRead routes={routes} />
       )}

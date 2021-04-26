@@ -8,11 +8,12 @@ import { emptyRoute } from '../../utils/amroutes';
 import { AmRoutesTable } from './AmRoutesTable';
 
 export interface AmSpecificRoutingProps {
+  onChange: (routes: AmRouteFormValues) => void;
   receivers: Array<SelectableValue<Receiver['name']>>;
   routes: AmRouteFormValues;
 }
 
-export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ receivers, routes }) => {
+export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, receivers, routes }) => {
   const [actualRoutes, setActualRoutes] = useState(routes.routes);
   const [isAddMode, setIsAddMode] = useState(false);
 
@@ -35,15 +36,18 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ receivers, route
       </Button>
       <AmRoutesTable
         isAddMode={isAddMode}
-        onRemoveRoute={(index) => {
-          setActualRoutes((actualRoutes) => {
-            actualRoutes.slice(index, 1);
-
-            return actualRoutes;
+        onChange={(newRoutes) => {
+          onChange({
+            ...routes,
+            routes: newRoutes,
           });
+
+          if (isAddMode) {
+            setIsAddMode(false);
+          }
         }}
-        routes={actualRoutes}
         receivers={receivers}
+        routes={actualRoutes}
       />
     </div>
   );

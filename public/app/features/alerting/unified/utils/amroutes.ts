@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { Route } from 'app/plugins/datasource/alertmanager/types';
 import { AmRouteFormValues } from '../types/amroutes';
-import { parseInterval } from './time';
+import { parseInterval, timeOptions } from './time';
 
 const computeMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean) =>
   Object.entries(matchers ?? {}).reduce(
@@ -27,13 +27,28 @@ export const emptyRoute: AmRouteFormValues = {
   groupBy: [],
   routes: [],
   continue: false,
-  receiver: '',
+  receiver: undefined,
   groupWaitValue: '',
-  groupWaitValueType: 's',
+  groupWaitValueType: timeOptions[0],
   groupIntervalValue: '',
-  groupIntervalValueType: 's',
+  groupIntervalValueType: timeOptions[0],
   repeatIntervalValue: '',
-  repeatIntervalValueType: 's',
+  repeatIntervalValueType: timeOptions[0],
+};
+
+const defaultValueAndType: [string, SelectableValue<string>] = ['', timeOptions[0]];
+
+const getValueAndType = (
+  route: Route,
+  prop: 'group_wait' | 'group_interval' | 'repeat_interval'
+): [string, SelectableValue<string>] => {
+  if (!route[prop]) {
+    return defaultValueAndType;
+  }
+
+  const [value, valueType] = route[prop] ? parseInterval(route[prop]!) : [undefined, undefined];
+
+  return [String(value), timeOptions.find((opt) => opt.value === valueType)!];
 };
 
 export const computeDefaultValuesRoute = (route: Route | undefined): AmRouteFormValues => {
@@ -41,29 +56,21 @@ export const computeDefaultValuesRoute = (route: Route | undefined): AmRouteForm
     return emptyRoute;
   }
 
-  const [groupWaitValue, groupWaitValueType] = route.group_wait
-    ? parseInterval(route.group_wait)
-    : [undefined, undefined];
-
-  const [groupIntervalValue, groupIntervalValueType] = route.group_interval
-    ? parseInterval(route.group_interval)
-    : [undefined, undefined];
-
-  const [repeatIntervalValue, repeatIntervalValueType] = route.repeat_interval
-    ? parseInterval(route.repeat_interval)
-    : [undefined, undefined];
+  const [groupWaitValue, groupWaitValueType] = getValueAndType(route, 'group_wait');
+  const [groupIntervalValue, groupIntervalValueType] = getValueAndType(route, 'group_interval');
+  const [repeatIntervalValue, repeatIntervalValueType] = getValueAndType(route, 'repeat_interval');
 
   return {
     matchers: [...computeMatchers(route.match, false), ...computeMatchers(route.match_re, true)],
     continue: route.continue ?? false,
-    receiver: route.receiver ?? '',
+    receiver: route.receiver ? mapStringToSelectableValue(route.receiver) : undefined,
     groupBy: mapStringsToSelectableValue(route.group_by),
-    groupWaitValue: groupWaitValue ? String(groupWaitValue) : '',
-    groupWaitValueType: groupWaitValueType ?? 's',
-    groupIntervalValue: groupIntervalValue ? String(groupIntervalValue) : '',
-    groupIntervalValueType: groupIntervalValueType ?? 's',
-    repeatIntervalValue: repeatIntervalValue ? String(repeatIntervalValue) : '',
-    repeatIntervalValueType: repeatIntervalValueType ?? 's',
+    groupWaitValue,
+    groupWaitValueType,
+    groupIntervalValue,
+    groupIntervalValueType,
+    repeatIntervalValue,
+    repeatIntervalValueType,
     routes: (route.routes ?? []).map(computeDefaultValuesRoute),
   };
 };
@@ -90,4 +97,40 @@ export const optionalPositiveInteger = (value: string) => {
   }
 
   return !/^\d+$/.test(value) ? 'Must be a positive integer.' : undefined;
+};
+
+export const computeAlertManagerConfig = (data: AmRouteFormValues): Route => {
+  return {
+    receiver: data.receiver?.value,
+    continue: data.continue,
+    group_by: data.groupBy.map((groupBy) => groupBy.value),
+    match: Object.values(data.matchers).reduce((acc, { label, value, isRegex }) => {
+      if (!isRegex) {
+        return {
+          ...acc,
+          [label]: value,
+        };
+      }
+
+      return acc;
+    }, {}),
+    match_re: Object.values(data.matchers).reduce((acc, { label, value, isRegex }) => {
+      if (isRegex) {
+        return {
+          ...acc,
+          [label]: value,
+        };
+      }
+
+      return acc;
+    }, {}),
+    group_wait: data.groupWaitValue ? `${data.groupWaitValue}${data.groupWaitValueType.value}` : undefined,
+    group_interval: data.groupIntervalValue
+      ? `${data.groupIntervalValue}${data.groupIntervalValueType.value}`
+      : undefined,
+    repeat_interval: data.repeatIntervalValue
+      ? `${data.repeatIntervalValue}${data.repeatIntervalValueType.value}`
+      : undefined,
+    routes: data.routes.map(computeAlertManagerConfig),
+  };
 };

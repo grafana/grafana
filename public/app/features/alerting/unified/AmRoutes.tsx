@@ -10,7 +10,7 @@ import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
-import { computeDefaultValuesRoute, mapObjectsToSelectableValue } from './utils/amroutes';
+import { computeAlertManagerConfig, computeDefaultValuesRoute, mapObjectsToSelectableValue } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AmRoutes: FC = () => {
@@ -44,9 +44,31 @@ const AmRoutes: FC = () => {
       {result && !loading && !error && (
         <>
           <div className={styles.break} />
-          <AmRootRoute routes={routes} receivers={receivers} />
+          <AmRootRoute
+            onSave={(data) => {
+              const newData = computeAlertManagerConfig({
+                ...routes,
+                ...data,
+              });
+
+              console.log(newData);
+            }}
+            receivers={receivers}
+            routes={routes}
+          />
           <div className={styles.break} />
-          <AmSpecificRouting routes={routes} receivers={receivers} />
+          <AmSpecificRouting
+            onChange={(data) => {
+              const newData = computeAlertManagerConfig({
+                ...routes,
+                ...data,
+              });
+
+              console.log(newData);
+            }}
+            receivers={receivers}
+            routes={routes}
+          />
         </>
       )}
     </AlertingPageWrapper>
