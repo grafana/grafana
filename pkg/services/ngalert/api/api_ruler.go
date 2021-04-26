@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -205,7 +206,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			Data:      r.GrafanaManagedAlert.Data,
 		}
 		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-			return response.Error(http.StatusBadRequest, "failed to validate alert rule queries and expressions", err)
+			return response.Error(http.StatusBadRequest, fmt.Sprintf("failed to validate alert rule %s", r.GrafanaManagedAlert.Title), err)
 		}
 	}
 

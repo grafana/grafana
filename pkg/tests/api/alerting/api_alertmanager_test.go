@@ -338,7 +338,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid query A: data source not found: unknown", "message":"failed to validate alert rule queries and expressions"}`,
+				expectedResponse: `{"error":"invalid query A: data source not found: unknown", "message":"failed to validate alert rule AlwaysFiring"}`,
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -368,7 +368,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"condition B not found in any query or expression: it should be one of: [A]", "message":"failed to validate alert rule queries and expressions"}`,
+				expectedResponse: `{"error":"condition B not found in any query or expression: it should be one of: [A]", "message":"failed to validate alert rule AlwaysFiring"}`,
 			},
 		}
 
