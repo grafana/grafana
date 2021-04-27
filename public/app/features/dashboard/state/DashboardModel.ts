@@ -1,6 +1,7 @@
 // Libaries
 import {
   cloneDeep,
+  defaults as _defaults,
   each,
   filter,
   find,
@@ -11,7 +12,6 @@ import {
   maxBy,
   pull,
   some,
-  defaults as _defaults,
 } from 'lodash';
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';

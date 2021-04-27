@@ -44,6 +44,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   return (
     <TimelineChart
       data={data.series}
+      structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}

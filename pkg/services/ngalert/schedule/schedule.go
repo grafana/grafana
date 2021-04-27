@@ -24,10 +24,10 @@ var timeNow = time.Now
 
 // ScheduleService handles scheduling
 type ScheduleService interface {
-	Ticker(context.Context, *state.StateTracker) error
+	Ticker(context.Context, *state.Manager) error
 	Pause() error
 	Unpause() error
-	WarmStateCache(*state.StateTracker)
+	WarmStateCache(*state.Manager)
 
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertRuleKey, time.Time)
@@ -35,7 +35,7 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateTracker *state.StateTracker) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateManager *state.Manager) error {
 	sch.log.Debug("alert rule routine started", "key", key)
 
 	evalRunning := false
@@ -78,7 +78,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return err
 				}
 
-				processedStates := stateTracker.ProcessEvalResults(alertRule, results, end.Sub(start))
+				processedStates := stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
 				alerts := FromAlertStateToPostableAlerts(processedStates)
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
@@ -232,7 +232,7 @@ func (sch *schedule) Unpause() error {
 	return nil
 }
 
-func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.StateTracker) error {
+func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Manager) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
 		select {
@@ -261,7 +261,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh, stateTracker)
+						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh, stateManager)
 					})
 				}
 
@@ -306,7 +306,8 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
-			sch.saveAlertStates(stateTracker.GetAll())
+			sch.saveAlertStates(stateManager.GetAll())
+			stateManager.Close()
 			return err
 		}
 	}
@@ -316,7 +317,7 @@ func (sch *schedule) sendAlerts(alerts apimodels.PostableAlerts) error {
 	return sch.notifier.PutAlerts(alerts)
 }
 
-func (sch *schedule) saveAlertStates(states []state.AlertState) {
+func (sch *schedule) saveAlertStates(states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
@@ -335,7 +336,7 @@ func (sch *schedule) saveAlertStates(states []state.AlertState) {
 	}
 }
 
-func (sch *schedule) WarmStateCache(st *state.StateTracker) {
+func (sch *schedule) WarmStateCache(st *state.Manager) {
 	sch.log.Info("warming cache for startup")
 	st.ResetCache()
 
@@ -344,7 +345,7 @@ func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
-	var states []state.AlertState
+	var states []*state.State
 	for _, orgIdResult := range orgIdsCmd.Result {
 		cmd := models.ListAlertInstancesQuery{
 			DefinitionOrgID: orgIdResult.DefinitionOrgID,
@@ -354,13 +355,13 @@ func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 		}
 		for _, entry := range cmd.Result {
 			lbs := map[string]string(entry.Labels)
-			stateForEntry := state.AlertState{
+			stateForEntry := &state.State{
 				AlertRuleUID:       entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,
 				CacheId:            fmt.Sprintf("%s %s", entry.DefinitionUID, lbs),
 				Labels:             lbs,
 				State:              translateInstanceState(entry.CurrentState),
-				Results:            []state.StateEvaluation{},
+				Results:            []state.Evaluation{},
 				StartsAt:           entry.CurrentStateSince,
 				EndsAt:             entry.CurrentStateEnd,
 				LastEvaluationTime: entry.LastEvalTime,

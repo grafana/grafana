@@ -5,13 +5,11 @@ import { getConfig } from 'app/core/config';
 
 export const UserSignup: FC<{}> = () => {
   const href = getConfig().verifyEmailEnabled ? `${getConfig().appSubUrl}/verify` : `${getConfig().appSubUrl}/signup`;
+  const paddingTop = css({ paddingTop: '16px' });
+
   return (
-    <VerticalGroup
-      className={css`
-        margin-top: 16px;
-      `}
-    >
-      <span>New to Grafana?</span>
+    <VerticalGroup>
+      <div className={paddingTop}>New to Grafana?</div>
       <LinkButton
         className={css`
           width: 100%;

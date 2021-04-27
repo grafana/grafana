@@ -1,17 +1,23 @@
-const applyFieldOverridesMock = jest.fn();
+const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
+
+import { Subject } from 'rxjs';
+// Importing this way to be able to spy on grafana/data
+import * as grafanaData from '@grafana/data';
+import { DashboardModel } from '../../dashboard/state/index';
+import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { Echo } from '../../../core/services/echo/Echo';
+import { emptyResult } from './DashboardQueryRunner/utils';
+import {
+  createDashboardQueryRunner,
+  setDashboardQueryRunnerFactory,
+} from './DashboardQueryRunner/DashboardQueryRunner';
+import { PanelQueryRunner } from './PanelQueryRunner';
 
 jest.mock('@grafana/data', () => ({
   __esModule: true,
   ...(jest.requireActual('@grafana/data') as any),
   applyFieldOverrides: applyFieldOverridesMock,
 }));
-
-import { PanelQueryRunner } from './PanelQueryRunner';
-// Importing this way to be able to spy on grafana/data
-import * as grafanaData from '@grafana/data';
-import { DashboardModel } from '../../dashboard/state/index';
-import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
-import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/core/config', () => ({
@@ -86,6 +92,14 @@ function describeQueryRunnerScenario(
     };
 
     setDataSourceSrv({} as any);
+    setDashboardQueryRunnerFactory(() => ({
+      getResult: emptyResult,
+      run: () => undefined,
+      cancel: () => undefined,
+      cancellations: () => new Subject<any>(),
+      destroy: () => undefined,
+    }));
+    createDashboardQueryRunner({} as any);
 
     beforeEach(async () => {
       setEchoSrv(new Echo());
