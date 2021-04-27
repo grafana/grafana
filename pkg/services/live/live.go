@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -272,10 +273,6 @@ func (g *GrafanaLive) Init() error {
 
 	g.websocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
-		if user == nil {
-			ctx.Resp.WriteHeader(401)
-			return
-		}
 
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
@@ -284,36 +281,28 @@ func (g *GrafanaLive) Init() error {
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
 		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
-
 		r := ctx.Req.Request
-		r = r.WithContext(newCtx) // Set a user ID.
-
+		r = r.WithContext(newCtx)
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
 	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
-		if user == nil {
-			ctx.Resp.WriteHeader(401)
-			return
-		}
-
-		// Centrifuge expects Credentials in context with a current user ID.
-		cred := &centrifuge.Credentials{
-			UserID: fmt.Sprintf("%d", user.UserId),
-		}
-		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
-		newCtx = livecontext.SetContextSignedUser(newCtx, user)
+		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
-
 		r := ctx.Req.Request
-		r = r.WithContext(newCtx) // Set a user ID.
-
+		r = r.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.RouteRegister.Get("/live/ws", g.websocketHandler)
-	g.RouteRegister.Get("/live/push", g.pushWebsocketHandler)
+	g.RouteRegister.Group("/live", func(group routing.RouteRegister) {
+		group.Get("/ws", g.websocketHandler)
+	}, middleware.ReqSignedIn)
+
+	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
+		group.Get("/push", g.pushWebsocketHandler)
+	}, middleware.ReqOrgAdmin)
+
 	return nil
 }
 
