@@ -53,7 +53,6 @@ Content-Type: application/json
         "timeEnd": 1507266395000,
         "text": "test",
         "metric": "",
-        "type": "event",
         "tags": [
             "tag1",
             "tag2"
@@ -72,7 +71,6 @@ Content-Type: application/json
         "time": 1507265111000,
         "text": "test",
         "metric": "",
-        "type": "event",
         "tags": [
             "tag1",
             "tag2"

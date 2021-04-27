@@ -1,4 +1,4 @@
-import { Field, InfoBox, LoadingPlaceholder } from '@grafana/ui';
+import { Field, Alert, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -28,9 +28,9 @@ const Silences: FC = () => {
       <br />
       <br />
       {error && !loading && (
-        <InfoBox severity="error" title={<h4>Error loading silences</h4>}>
+        <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}
-        </InfoBox>
+        </Alert>
       )}
       {loading && <LoadingPlaceholder text="loading silences..." />}
       {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}

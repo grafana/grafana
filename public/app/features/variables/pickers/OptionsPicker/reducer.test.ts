@@ -10,13 +10,12 @@ import {
   showOptions,
   toggleAllOptions,
   toggleOption,
-  toggleTag,
   updateOptionsAndFilter,
   updateOptionsFromSearch,
   updateSearchQuery,
 } from './reducer';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { QueryVariableModel, VariableOption, VariableTag } from '../../types';
+import { QueryVariableModel, VariableOption } from '../../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../state/types';
 
 const getVariableTestContext = (extend: Partial<OptionsPickerState>) => {
@@ -354,168 +353,6 @@ describe('optionsPickerReducer', () => {
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
         .whenActionIsDispatched(hideOptions())
         .thenStateShouldEqual({ ...optionsPickerInitialState });
-    });
-  });
-
-  describe('when toggleTag is dispatched', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({
-        tags: [
-          { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] },
-          { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-          { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-        ],
-        options: [
-          { text: 'A', selected: false, value: 'A' },
-          { text: 'AA', selected: false, value: 'AA' },
-          { text: 'AAA', selected: false, value: 'AAA' },
-          { text: 'B', selected: false, value: 'B' },
-        ],
-      });
-      const payload: VariableTag = { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] };
-      reducerTester<OptionsPickerState>()
-        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(toggleTag(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          options: [
-            { text: 'A', selected: true, value: 'A' },
-            { text: 'AA', selected: true, value: 'AA' },
-            { text: 'AAA', selected: true, value: 'AAA' },
-            { text: 'B', selected: false, value: 'B' },
-          ],
-          tags: [
-            { text: 'All A:s', selected: true, values: ['A', 'AA', 'AAA'], valuesText: 'A + AA + AAA' },
-            { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-            { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-          ],
-          selectedValues: [
-            { text: 'A', selected: true, value: 'A' },
-            { text: 'AA', selected: true, value: 'AA' },
-            { text: 'AAA', selected: true, value: 'AAA' },
-          ],
-        });
-    });
-  });
-
-  describe('when toggleTag is dispatched when tag is selected', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({
-        tags: [
-          { text: 'All A:s', selected: true, values: ['A', 'AA', 'AAA'] },
-          { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-          { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-        ],
-        options: [
-          { text: 'A', selected: true, value: 'A' },
-          { text: 'AA', selected: true, value: 'AA' },
-          { text: 'AAA', selected: true, value: 'AAA' },
-          { text: 'B', selected: false, value: 'B' },
-        ],
-      });
-      const payload: VariableTag = { text: 'All A:s', selected: true, values: ['A', 'AA', 'AAA'] };
-      reducerTester<OptionsPickerState>()
-        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(toggleTag(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          options: [
-            { text: 'A', selected: false, value: 'A' },
-            { text: 'AA', selected: false, value: 'AA' },
-            { text: 'AAA', selected: false, value: 'AAA' },
-            { text: 'B', selected: false, value: 'B' },
-          ],
-          tags: [
-            { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] },
-            { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-            { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-          ],
-          selectedValues: [],
-        });
-    });
-  });
-
-  describe('when toggleTag is dispatched and ALL is previous selected', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({
-        tags: [
-          { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] },
-          { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-          { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-        ],
-        options: [
-          { text: ALL_VARIABLE_TEXT, selected: true, value: ALL_VARIABLE_VALUE },
-          { text: 'A', selected: false, value: 'A' },
-          { text: 'AA', selected: false, value: 'AA' },
-          { text: 'AAA', selected: false, value: 'AAA' },
-          { text: 'B', selected: false, value: 'B' },
-        ],
-      });
-      const payload: VariableTag = { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] };
-      reducerTester<OptionsPickerState>()
-        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(toggleTag(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          options: [
-            { text: ALL_VARIABLE_TEXT, selected: false, value: ALL_VARIABLE_VALUE },
-            { text: 'A', selected: true, value: 'A' },
-            { text: 'AA', selected: true, value: 'AA' },
-            { text: 'AAA', selected: true, value: 'AAA' },
-            { text: 'B', selected: false, value: 'B' },
-          ],
-          tags: [
-            { text: 'All A:s', selected: true, values: ['A', 'AA', 'AAA'], valuesText: 'A + AA + AAA' },
-            { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-            { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-          ],
-          selectedValues: [
-            { text: 'A', selected: true, value: 'A' },
-            { text: 'AA', selected: true, value: 'AA' },
-            { text: 'AAA', selected: true, value: 'AAA' },
-          ],
-        });
-    });
-  });
-
-  describe('when toggleTag is dispatched and only the tag is previous selected', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext({
-        tags: [
-          { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] },
-          { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-          { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-          { text: 'All D:s', selected: true, values: ['D'] },
-        ],
-        options: [
-          { text: ALL_VARIABLE_TEXT, selected: false, value: ALL_VARIABLE_VALUE },
-          { text: 'A', selected: false, value: 'A' },
-          { text: 'AA', selected: false, value: 'AA' },
-          { text: 'AAA', selected: false, value: 'AAA' },
-          { text: 'B', selected: false, value: 'B' },
-        ],
-      });
-      const payload: VariableTag = { text: 'All D:s', selected: true, values: ['D'] };
-      reducerTester<OptionsPickerState>()
-        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(toggleTag(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          options: [
-            { text: ALL_VARIABLE_TEXT, selected: true, value: ALL_VARIABLE_VALUE },
-            { text: 'A', selected: false, value: 'A' },
-            { text: 'AA', selected: false, value: 'AA' },
-            { text: 'AAA', selected: false, value: 'AAA' },
-            { text: 'B', selected: false, value: 'B' },
-          ],
-          tags: [
-            { text: 'All A:s', selected: false, values: ['A', 'AA', 'AAA'] },
-            { text: 'All B:s', selected: false, values: ['B', 'BB', 'BBB'] },
-            { text: 'All C:s', selected: false, values: ['C', 'CC', 'CCC'] },
-            { text: 'All D:s', selected: false, values: ['D'] },
-          ],
-          selectedValues: [{ text: ALL_VARIABLE_TEXT, selected: true, value: ALL_VARIABLE_VALUE }],
-        });
     });
   });
 

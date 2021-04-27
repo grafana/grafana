@@ -33,19 +33,11 @@ export enum VariableSort {
   alphabeticalCaseInsensitiveDesc,
 }
 
-export interface VariableTag {
-  selected: boolean;
-  text: string | string[];
-  values?: any[];
-  valuesText?: string;
-}
-
 export interface VariableOption {
   selected: boolean;
   text: string | string[];
   value: string | string[];
   isNone?: boolean;
-  tags?: VariableTag[];
 }
 
 export interface AdHocVariableFilter {
@@ -78,10 +70,6 @@ export interface QueryVariableModel extends DataSourceVariableModel {
   datasource: string | null;
   definition: string;
   sort: VariableSort;
-  tags: VariableTag[];
-  tagsQuery: string;
-  tagValuesQuery: string;
-  useTags: boolean;
   queryValue?: string;
   query: any;
 }
