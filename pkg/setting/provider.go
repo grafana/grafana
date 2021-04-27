@@ -72,13 +72,14 @@ type KeyValue interface {
 	MustDuration(defaultVal time.Duration) time.Duration
 }
 
-// ReloadHandler makes it possible
+// ReloadHandler defines the expected behaviour from a
+// service that have support for configuration reloads.
 type ReloadHandler interface {
-	// Reload handles reloading of configuration changes
+	// Reload handles reloading of configuration changes.
 	Reload(section Section) error
 
-	// Validate validates the configuration, if the validations
-	// fails the configuration will not be updated in the database
+	// Validate validates the configuration, if the validation
+	// fails the configuration will not be updated neither reloaded.
 	Validate(section Section) error
 }
 
