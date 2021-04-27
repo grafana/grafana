@@ -27,7 +27,7 @@ The following cache backends are available: in-memory, Redis, and Memcached.
 
 To enable and configure query caching, please refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
 
-Once caching is enabled in the Grafana instance, query caching can be enabled per-data-source in the data source settings.
+Once caching is enabled in the Grafana instance, query caching can be enabled per data source in the data source settings.
 
 ## Disable query caching
 
