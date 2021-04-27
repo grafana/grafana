@@ -25,7 +25,7 @@
     padding-left: 8px;
   }
 
-  .gf-form-inline .gf-form {
+  .gf-form {
     margin-bottom: 0;
   }
 }
@@ -54,14 +54,14 @@
 
 .variable-value-dropdown {
   position: absolute;
-  top: 47px;
+  top: $input-height;
   min-width: 150px;
   max-height: 400px;
   min-height: 150px;
   overflow-y: auto;
   overflow-x: hidden;
   background-color: $dropdownBackground;
-  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: $dropdownShadow;
   z-index: $zindex-typeahead;
   font-size: $font-size-base;
   border-radius: 3px 3px 0 0;

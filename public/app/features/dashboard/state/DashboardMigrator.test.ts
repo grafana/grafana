@@ -5,6 +5,8 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
 import { DataLinkBuiltInVars } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
+import { config } from 'app/core/config';
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -14,6 +16,12 @@ describe('DashboardModel', () => {
     let graph: any;
     let singlestat: any;
     let table: any;
+    let singlestatGauge: any;
+
+    config.panels = {
+      stat: getPanelPlugin({ id: 'stat' }).meta,
+      gauge: getPanelPlugin({ id: 'gauge' }).meta,
+    };
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -49,9 +57,21 @@ describe('DashboardModel', () => {
             type: 'singlestat',
             legend: true,
             thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
             grid: { min: 1, max: 10 },
             targets: [{ refId: 'A' }, {}],
+          },
+          {
+            type: 'singlestat',
+            thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
+            gauge: {
+              show: true,
+              thresholdMarkers: true,
+              thresholdLabels: false,
+            },
+            grid: { min: 1, max: 10 },
           },
           {
             type: 'table',
@@ -64,7 +84,8 @@ describe('DashboardModel', () => {
 
       graph = model.panels[0];
       singlestat = model.panels[1];
-      table = model.panels[2];
+      singlestatGauge = model.panels[2];
+      table = model.panels[3];
     });
 
     it('should have title', () => {
@@ -84,8 +105,16 @@ describe('DashboardModel', () => {
       expect(graph.type).toBe('graph');
     });
 
-    it('single stat panel should have two thresholds', () => {
-      expect(singlestat.thresholds).toBe('20,30');
+    it('singlestat panel should be mapped to stat panel', () => {
+      expect(singlestat.type).toBe('stat');
+      expect(singlestat.fieldConfig.defaults.thresholds.steps[2].value).toBe(30);
+      expect(singlestat.fieldConfig.defaults.thresholds.steps[0].color).toBe('#FF0000');
+    });
+
+    it('singlestat panel should be mapped to gauge panel', () => {
+      expect(singlestatGauge.type).toBe('gauge');
+      expect(singlestatGauge.options.showThresholdMarkers).toBe(true);
+      expect(singlestatGauge.options.showThresholdLabels).toBe(false);
     });
 
     it('queries without refId should get it', () => {
@@ -133,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(27);
+      expect(model.schemaVersion).toBe(28);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -628,7 +657,7 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('when migrating variables with old tags format', () => {
+  describe('when migrating variables with tags', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -638,6 +667,9 @@ describe('DashboardModel', () => {
             {
               type: 'query',
               tags: ['Africa', 'America', 'Asia', 'Europe'],
+              tagsQuery: 'select datacenter from x',
+              tagValuesQuery: 'select value from x where datacenter = xyz',
+              useTags: true,
             },
             {
               type: 'query',
@@ -660,6 +692,9 @@ describe('DashboardModel', () => {
                 value: ['server-us-east', 'server-us-central', 'server-us-west', 'server-eu-east', 'server-eu-west'],
               },
               tags: ['Africa', 'America', 'Asia', 'Europe'],
+              tagsQuery: 'select datacenter from x',
+              tagValuesQuery: 'select value from x where datacenter = xyz',
+              useTags: true,
             },
             {
               type: 'query',
@@ -669,6 +704,9 @@ describe('DashboardModel', () => {
                 { text: 'Asia', selected: false },
                 { text: 'Europe', selected: false },
               ],
+              tagsQuery: 'select datacenter from x',
+              tagValuesQuery: 'select value from x where datacenter = xyz',
+              useTags: true,
             },
           ],
         },
@@ -679,41 +717,28 @@ describe('DashboardModel', () => {
       expect(model.templating.list.length).toBe(3);
     });
 
-    it('should be migrated with defaults if being out of sync', () => {
-      expect(model.templating.list[0].tags).toEqual([
-        { text: 'Africa', selected: false },
-        { text: 'America', selected: false },
-        { text: 'Asia', selected: false },
-        { text: 'Europe', selected: false },
-      ]);
+    it('should have no tags', () => {
+      expect(model.templating.list[0].tags).toBeUndefined();
+      expect(model.templating.list[1].tags).toBeUndefined();
+      expect(model.templating.list[2].tags).toBeUndefined();
     });
 
-    it('should be migrated with current values if being out of sync', () => {
-      expect(model.templating.list[1].tags).toEqual([
-        { text: 'Africa', selected: false },
-        {
-          selected: true,
-          text: 'America',
-          values: ['server-us-east', 'server-us-central', 'server-us-west'],
-          valuesText: 'server-us-east + server-us-central + server-us-west',
-        },
-        { text: 'Asia', selected: false },
-        {
-          selected: true,
-          text: 'Europe',
-          values: ['server-eu-east', 'server-eu-west'],
-          valuesText: 'server-eu-east + server-eu-west',
-        },
-      ]);
+    it('should have no tagsQuery property', () => {
+      expect(model.templating.list[0].tagsQuery).toBeUndefined();
+      expect(model.templating.list[1].tagsQuery).toBeUndefined();
+      expect(model.templating.list[2].tagsQuery).toBeUndefined();
     });
 
-    it('should not be migrated if being in sync', () => {
-      expect(model.templating.list[2].tags).toEqual([
-        { text: 'Africa', selected: false },
-        { text: 'America', selected: true },
-        { text: 'Asia', selected: false },
-        { text: 'Europe', selected: false },
-      ]);
+    it('should have no tagValuesQuery property', () => {
+      expect(model.templating.list[0].tagValuesQuery).toBeUndefined();
+      expect(model.templating.list[1].tagValuesQuery).toBeUndefined();
+      expect(model.templating.list[2].tagValuesQuery).toBeUndefined();
+    });
+
+    it('should have no useTags property', () => {
+      expect(model.templating.list[0].useTags).toBeUndefined();
+      expect(model.templating.list[1].useTags).toBeUndefined();
+      expect(model.templating.list[2].useTags).toBeUndefined();
     });
   });
 
