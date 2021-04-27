@@ -2,20 +2,26 @@ import { getBackendSrv } from '@grafana/runtime';
 import { LibraryPanelDTO, LibraryPanelSearchResult, PanelModelWithLibraryPanel } from '../types';
 
 export interface GetLibraryPanelsOptions {
-  name?: string;
+  searchString?: string;
   perPage?: number;
   page?: number;
   excludeUid?: string;
+  sortDirection?: string;
+  panelFilter?: string[];
 }
 
 export async function getLibraryPanels({
-  name = '',
+  searchString = '',
   perPage = 100,
   page = 1,
   excludeUid = '',
+  sortDirection = '',
+  panelFilter = [],
 }: GetLibraryPanelsOptions = {}): Promise<LibraryPanelSearchResult> {
   const params = new URLSearchParams();
-  params.append('name', name);
+  params.append('searchString', searchString);
+  params.append('sortDirection', sortDirection);
+  params.append('panelFilter', panelFilter.join(','));
   params.append('excludeUid', excludeUid);
   params.append('perPage', perPage.toString(10));
   params.append('page', page.toString(10));
