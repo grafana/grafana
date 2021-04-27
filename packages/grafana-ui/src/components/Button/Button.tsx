@@ -9,11 +9,14 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
+export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
+export type ButtonFill = 'solid' | 'outline' | 'text';
+export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
+  fill?: ButtonFill;
   icon?: IconName;
   className?: string;
   children?: React.ReactNode;
@@ -23,15 +26,21 @@ type CommonProps = {
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, ...otherProps }, ref) => {
+  ({ variant = 'primary', size = 'md', fill = 'solid', icon, fullWidth, children, className, ...otherProps }, ref) => {
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
       size,
       variant,
+      fill,
       fullWidth,
       iconOnly: !children,
     });
+
+    deprecatedPropWarning(
+      variant === 'link',
+      `${Button.displayName}: Prop variant="link" is deprecated. Please use fill="text".`
+    );
 
     return (
       <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
@@ -51,6 +60,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     {
       variant = 'primary',
       size = 'md',
+      fill = 'solid',
       icon,
       fullWidth,
       children,
@@ -68,10 +78,16 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       fullWidth,
       size,
       variant,
+      fill,
       iconOnly: !children,
     });
 
     const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
+
+    deprecatedPropWarning(
+      variant === 'link',
+      `${LinkButton.displayName}: Prop variant="link" is deprecated. Please use fill="text".`
+    );
 
     return (
       <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={ref}>
@@ -87,6 +103,7 @@ LinkButton.displayName = 'LinkButton';
 export interface StyleProps {
   size: ComponentSize;
   variant: ButtonVariant;
+  fill?: ButtonFill;
   iconOnly?: boolean;
   theme: GrafanaThemeV2;
   fullWidth?: boolean;
@@ -94,24 +111,10 @@ export interface StyleProps {
 }
 
 export const getButtonStyles = (props: StyleProps) => {
-  const { theme, variant, size, iconOnly, fullWidth } = props;
+  const { theme, variant, fill = 'solid', size, iconOnly, fullWidth } = props;
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
-  const variantStyles = getPropertiesForVariant(theme, variant);
-
-  const disabledStyles: CSSObject = {
-    cursor: 'not-allowed',
-    boxShadow: 'none',
-    background: theme.colors.action.disabledBackground,
-    border: `1px solid transparent`,
-    color: theme.colors.text.disabled,
-    pointerEvents: 'none',
-
-    '&:hover': {
-      background: theme.colors.action.disabledBackground,
-      color: theme.colors.text.disabled,
-      boxShadow: 'none',
-    },
-  };
+  const variantStyles = getPropertiesForVariant(theme, variant, fill);
+  const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
 
   const focusStyle = getFocusStyles(theme);
 
@@ -160,7 +163,45 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor): CSSObject {
+function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+  if (fill === 'outline') {
+    return {
+      background: 'transparent',
+      color: color.text,
+      border: `1px solid ${color.border}`,
+      transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+        duration: theme.transitions.duration.short,
+      }),
+
+      '&:hover': {
+        background: colorManipulator.alpha(color.main, theme.colors.action.hoverOpacity),
+        borderColor: theme.colors.emphasize(color.border, 0.25),
+        color: color.text,
+      },
+    };
+  }
+
+  if (fill === 'text') {
+    return {
+      background: 'transparent',
+      color: color.text,
+      border: '1px solid transparent',
+      transition: theme.transitions.create(['background-color', 'color'], {
+        duration: theme.transitions.duration.short,
+      }),
+
+      '&:focus': {
+        outline: 'none',
+        textDecoration: 'none',
+      },
+
+      '&:hover': {
+        background: colorManipulator.alpha(color.shade, theme.colors.action.hoverOpacity),
+        textDecoration: 'none',
+      },
+    };
+  }
+
   return {
     background: color.main,
     color: color.contrastText,
@@ -177,32 +218,57 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor): C
   };
 }
 
-export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant) {
-  switch (variant) {
+function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant, fill: ButtonFill) {
+  const disabledStyles: CSSObject = {
+    cursor: 'not-allowed',
+    boxShadow: 'none',
+    pointerEvents: 'none',
+    color: theme.colors.text.disabled,
+    transition: 'none',
+  };
+
+  if (fill === 'text' || variant === 'link') {
+    return {
+      ...disabledStyles,
+      background: 'transparent',
+      border: `1px solid transparent`,
+    };
+  }
+
+  if (fill === 'outline') {
+    return {
+      ...disabledStyles,
+      background: 'transparent',
+      border: `1px solid ${theme.colors.action.disabledText}`,
+    };
+  }
+
+  return {
+    ...disabledStyles,
+    background: theme.colors.action.disabledBackground,
+    border: `1px solid transparent`,
+  };
+}
+
+export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant, fill: ButtonFill) {
+  const buttonVariant = variant === 'link' ? 'primary' : variant;
+  const buttonFill = variant === 'link' ? 'text' : fill;
+
+  switch (buttonVariant) {
     case 'secondary':
-      return getButtonVariantStyles(theme, theme.colors.secondary);
+      return getButtonVariantStyles(theme, theme.colors.secondary, buttonFill);
 
     case 'destructive':
-      return getButtonVariantStyles(theme, theme.colors.error);
-
-    case 'link':
-      return {
-        background: 'transparent',
-        color: theme.colors.text.link,
-        border: '1px solid transparent',
-        '&:focus': {
-          outline: 'none',
-          textDecoration: 'underline',
-        },
-
-        '&:hover': {
-          background: colorManipulator.alpha(theme.colors.text.link, theme.colors.action.hoverOpacity),
-          textDecoration: 'underline',
-        },
-      };
+      return getButtonVariantStyles(theme, theme.colors.error, buttonFill);
 
     case 'primary':
     default:
-      return getButtonVariantStyles(theme, theme.colors.primary);
+      return getButtonVariantStyles(theme, theme.colors.primary, buttonFill);
+  }
+}
+
+function deprecatedPropWarning(test: boolean, message: string) {
+  if (process.env.NODE_ENV === 'development' && test) {
+    console.warn(`@grafana/ui ${message}`);
   }
 }
