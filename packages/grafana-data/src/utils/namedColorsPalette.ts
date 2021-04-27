@@ -52,8 +52,7 @@ export type ColorDefinition = {
 
 let colorsPaletteInstance: Map<Hue, ColorDefinition[]>;
 let colorsMap: Record<Color, string> | undefined;
-let colorsMapTheme: GrafanaTheme | undefined;
-let colorsMapTheme2: GrafanaThemeV2 | undefined;
+let colorsMapTheme: GrafanaTheme | GrafanaThemeV2 | undefined;
 
 const buildColorDefinition = (
   hue: Hue,
@@ -74,39 +73,39 @@ export function getColorDefinitionByName(name: Color): ColorDefinition {
   return flatten(Array.from(getNamedColorPalette().values())).filter((definition) => definition.name === name)[0];
 }
 
-export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {
+// export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {
+//   theme = theme ?? GrafanaThemeType.Dark;
+
+//   colorsMap = {} as Record<Color, string>;
+
+//   for (const def of getNamedColorPalette().values()) {
+//     for (const c of def) {
+//       colorsMap[c.name] = c.variants[theme.type];
+//     }
+//   }
+
+//   colorsMap['panel-bg'] = theme.colors.panelBg;
+
+//   return colorsMap;
+// }
+
+export function buildColorsMapForTheme(theme: GrafanaTheme | GrafanaThemeV2): Record<Color, string> {
   theme = theme ?? GrafanaThemeType.Dark;
 
   colorsMap = {} as Record<Color, string>;
 
   for (const def of getNamedColorPalette().values()) {
     for (const c of def) {
-      colorsMap[c.name] = c.variants[theme.type];
+      colorsMap[c.name] = typeof theme === GrafanaTheme ? c.variants[theme.type] : c.variants[theme.colors.mode];
     }
   }
 
-  colorsMap['panel-bg'] = theme.colors.panelBg;
+  colorsMap['panel-bg'] = theme.colors.background.primary ?? theme.colors.panelBg;
 
   return colorsMap;
 }
 
-export function buildColorsMapForTheme2(theme: GrafanaThemeV2): Record<Color, string> {
-  theme = theme ?? GrafanaThemeType.Dark;
-
-  colorsMap = {} as Record<Color, string>;
-
-  for (const def of getNamedColorPalette().values()) {
-    for (const c of def) {
-      colorsMap[c.name] = c.variants[theme.colors.mode];
-    }
-  }
-
-  colorsMap['panel-bg'] = theme.colors.background.primary;
-
-  return colorsMap;
-}
-
-export function getColorForTheme(color: string, theme: GrafanaTheme): string {
+export function getColorForTheme(color: string, theme: GrafanaTheme | GrafanaThemeV2): string {
   if (!color) {
     return 'gray';
   }
@@ -115,33 +114,6 @@ export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   if (!colorsMap || colorsMapTheme !== theme) {
     colorsMap = buildColorsMapForTheme(theme);
     colorsMapTheme = theme;
-  }
-
-  let realColor = colorsMap[color as Color];
-  if (realColor) {
-    return realColor;
-  }
-
-  if (color[0] === '#') {
-    return (colorsMap[color as Color] = color);
-  }
-
-  if (color.indexOf('rgb') > -1) {
-    return (colorsMap[color as Color] = color);
-  }
-
-  return (colorsMap[color as Color] = tinycolor(color).toHexString());
-}
-
-export function getColorForTheme2(color: string, theme: GrafanaThemeV2): string {
-  if (!color) {
-    return 'gray';
-  }
-
-  // check if we need to rebuild cache
-  if (!colorsMap || colorsMapTheme2 !== theme) {
-    colorsMap = buildColorsMapForTheme2(theme);
-    colorsMapTheme2 = theme;
   }
 
   let realColor = colorsMap[color as Color];

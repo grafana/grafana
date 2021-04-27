@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
-import { GrafanaThemeV2, getColorForTheme2 } from '@grafana/data';
+import { GrafanaThemeV2, getColorForTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useStyles2, useTheme2 } from '../../themes';
 import { useThrottleFn } from 'react-use';
@@ -23,7 +23,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
   const rgbaString = useMemo(() => {
     return currentColor.startsWith('rgba')
       ? currentColor
-      : tinycolor(getColorForTheme2(currentColor, theme)).toRgbString();
+      : tinycolor(getColorForTheme(currentColor, theme)).toRgbString();
   }, [currentColor, theme]);
 
   return (
