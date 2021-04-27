@@ -12,7 +12,7 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   `,
   collapseBody: css`
     label: collapse__body;
-    padding: ${theme.spacing(theme.components.panel.padding)}px;
+    padding: ${theme.spacing(theme.components.panel.padding)};
     flex: 1;
     overflow: hidden;
     display: flex;
@@ -29,7 +29,7 @@ const getStyles = (theme: GrafanaThemeV2) => ({
     position: relative;
     overflow: hidden;
     background: none;
-    margin: ${theme.spacing(4)};
+    margin: ${theme.spacing(0.5)};
   `,
   loaderActive: css`
     label: collapse__loader_active;
@@ -73,9 +73,9 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   headerButtons: css`
     label: collapse__header-buttons;
     margin-right: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(5)};
+    margin-top: ${theme.spacing(0.25)};
     font-size: ${theme.typography.size.lg};
-    line-height: ${theme.typography.size.md};
+    line-height: ${theme.typography.h6.lineHeight};
     display: inherit;
   `,
   headerButtonsCollapsed: css`
