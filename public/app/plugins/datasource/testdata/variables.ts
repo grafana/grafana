@@ -9,7 +9,7 @@ export class TestDataVariableSupport extends StandardVariableSupport<TestDataDat
       refId: 'TestDataDataSource-QueryVariable',
       stringInput: query.query,
       scenarioId: 'variables-query',
-      csvWave: null,
+      csvWave: undefined,
       points: [],
     };
   }
