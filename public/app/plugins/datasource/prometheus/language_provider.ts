@@ -99,9 +99,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = async (url: string, defaultValue: any): Promise<any> => {
+  request = async (url: string, defaultValue: any, params = {}): Promise<any> => {
     try {
-      const res = await this.datasource.metadataRequest(url);
+      const res = await this.datasource.metadataRequest(url, params);
       return res.data.data;
     } catch (error) {
       console.error(error);
@@ -116,13 +116,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     const tRange = this.datasource.getTimeRange();
-    const params = new URLSearchParams({
+    const params = {
       start: tRange['start'].toString(),
       end: tRange['end'].toString(),
-    });
-    const url = `/api/v1/label/__name__/values?${params.toString()}`;
+    };
+    const url = `/api/v1/label/__name__/values`;
 
-    this.metrics = await this.request(url, []);
+    this.metrics = await this.request(url, [], params);
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
 
@@ -419,12 +419,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
     const tRange = this.datasource.getTimeRange();
-    const params = new URLSearchParams({
+    const params = {
       start: tRange['start'].toString(),
       end: tRange['end'].toString(),
-    });
-    const url = `/api/v1/label/${key}/values?${params.toString()}`;
-    const data = await this.request(url, []);
+    };
+    const url = `/api/v1/label/${key}/values`;
+    const data = await this.request(url, [], params);
     return { [key]: data };
   };
 
@@ -436,23 +436,27 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const tRange = this.datasource.getTimeRange();
-    const params = new URLSearchParams({
+    const urlParams = {
       'match[]': name,
       start: tRange['start'].toString(),
       end: tRange['end'].toString(),
-    });
-    const url = `/api/v1/series?${params.toString()}`;
+    };
+    const url = `/api/v1/series`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    params.set('start', roundSecToMin(tRange['start']).toString());
-    params.set('end', roundSecToMin(tRange['end']).toString());
-    params.append('withName', withName ? 'true' : 'false');
-    const cacheKey = `/api/v1/series?${params.toString()}`;
+    const cacheParams = new URLSearchParams({
+      'match[]': name,
+      start: roundSecToMin(tRange['start']).toString(),
+      end: roundSecToMin(tRange['end']).toString(),
+      withName: withName ? 'true' : 'false',
+    });
+
+    const cacheKey = `/api/v1/series?${cacheParams.toString()}`;
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
-      const data = await this.request(url, []);
+      const data = await this.request(url, [], urlParams);
       const { values } = processLabels(data, withName);
       value = values;
       this.labelsCache.set(cacheKey, value);
