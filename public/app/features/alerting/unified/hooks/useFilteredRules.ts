@@ -47,7 +47,7 @@ const reduceNamespaces = (filters: RuleFilterState) => {
 const reduceGroups = (filters: RuleFilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
-      if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && isQueryingDataSource(rule.rulerRule, filters)) {
+      if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filters)) {
         return false;
       }
       // Query strings can match alert name, label keys, and label values
@@ -93,6 +93,9 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: RuleFilter
   }
 
   return !!rulerRule.grafana_alert.data.find((query) => {
+    if (!query.datasourceUid) {
+      return false;
+    }
     const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
     return ds?.name === filter.dataSource;
   });
