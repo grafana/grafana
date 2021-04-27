@@ -56,6 +56,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -63,13 +64,16 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                   "_eventsCount": 0,
                 },
               },
+              "fieldConfig": Object {
+                "defaults": Object {},
+                "overrides": Array [],
+              },
               "gridPos": Object {
                 "h": 1,
                 "w": 1,
                 "x": 0,
                 "y": 0,
               },
-              "hasChanged": false,
               "id": 1,
               "isEditing": false,
               "isInView": false,
@@ -88,7 +92,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 27,
+          "schemaVersion": 28,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -188,6 +192,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "panels": Array [
                   PanelModel {
                     "cachedPluginOptions": Object {},
+                    "configRev": 0,
                     "datasource": null,
                     "events": EventBusSrv {
                       "emitter": EventEmitter {
@@ -195,13 +200,16 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                         "_eventsCount": 0,
                       },
                     },
+                    "fieldConfig": Object {
+                      "defaults": Object {},
+                      "overrides": Array [],
+                    },
                     "gridPos": Object {
                       "h": 1,
                       "w": 1,
                       "x": 0,
                       "y": 0,
                     },
-                    "hasChanged": false,
                     "id": 1,
                     "isEditing": false,
                     "isInView": false,
@@ -220,7 +228,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 ],
                 "refresh": undefined,
                 "revision": undefined,
-                "schemaVersion": 27,
+                "schemaVersion": 28,
                 "snapshot": undefined,
                 "style": "dark",
                 "tags": Array [],
@@ -290,6 +298,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "panels": Array [
                 PanelModel {
                   "cachedPluginOptions": Object {},
+                  "configRev": 0,
                   "datasource": null,
                   "events": EventBusSrv {
                     "emitter": EventEmitter {
@@ -297,13 +306,16 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                       "_eventsCount": 0,
                     },
                   },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
+                  },
                   "gridPos": Object {
                     "h": 1,
                     "w": 1,
                     "x": 0,
                     "y": 0,
                   },
-                  "hasChanged": false,
                   "id": 1,
                   "isEditing": false,
                   "isInView": false,
@@ -322,7 +334,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 27,
+              "schemaVersion": 28,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -414,6 +426,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -421,13 +434,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "_eventsCount": 0,
                 },
               },
+              "fieldConfig": Object {
+                "defaults": Object {},
+                "overrides": Array [],
+              },
               "gridPos": Object {
                 "h": 1,
                 "w": 1,
                 "x": 0,
                 "y": 0,
               },
-              "hasChanged": false,
               "id": 1,
               "isEditing": false,
               "isInView": false,
@@ -446,7 +462,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 27,
+          "schemaVersion": 28,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -546,6 +562,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "panels": Array [
                   PanelModel {
                     "cachedPluginOptions": Object {},
+                    "configRev": 0,
                     "datasource": null,
                     "events": EventBusSrv {
                       "emitter": EventEmitter {
@@ -553,13 +570,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                         "_eventsCount": 0,
                       },
                     },
+                    "fieldConfig": Object {
+                      "defaults": Object {},
+                      "overrides": Array [],
+                    },
                     "gridPos": Object {
                       "h": 1,
                       "w": 1,
                       "x": 0,
                       "y": 0,
                     },
-                    "hasChanged": false,
                     "id": 1,
                     "isEditing": false,
                     "isInView": false,
@@ -578,7 +598,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 ],
                 "refresh": undefined,
                 "revision": undefined,
-                "schemaVersion": 27,
+                "schemaVersion": 28,
                 "snapshot": undefined,
                 "style": "dark",
                 "tags": Array [],
@@ -648,6 +668,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "panels": Array [
                 PanelModel {
                   "cachedPluginOptions": Object {},
+                  "configRev": 0,
                   "datasource": null,
                   "events": EventBusSrv {
                     "emitter": EventEmitter {
@@ -655,13 +676,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                       "_eventsCount": 0,
                     },
                   },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
+                  },
                   "gridPos": Object {
                     "h": 1,
                     "w": 1,
                     "x": 0,
                     "y": 0,
                   },
-                  "hasChanged": false,
                   "id": 1,
                   "isEditing": false,
                   "isInView": false,
@@ -680,7 +704,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 27,
+              "schemaVersion": 28,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -754,6 +778,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "panels": Array [
           PanelModel {
             "cachedPluginOptions": Object {},
+            "configRev": 0,
             "datasource": null,
             "events": EventBusSrv {
               "emitter": EventEmitter {
@@ -761,13 +786,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "_eventsCount": 0,
               },
             },
+            "fieldConfig": Object {
+              "defaults": Object {},
+              "overrides": Array [],
+            },
             "gridPos": Object {
               "h": 1,
               "w": 1,
               "x": 0,
               "y": 0,
             },
-            "hasChanged": false,
             "id": 1,
             "isEditing": false,
             "isInView": false,
@@ -786,7 +814,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 27,
+        "schemaVersion": 28,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],

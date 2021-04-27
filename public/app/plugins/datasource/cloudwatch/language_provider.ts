@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { sortedUniq } from 'lodash';
 
 // Services & Utils
 import syntax, {
@@ -141,7 +141,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     if (
       this.fetchedFieldsCache &&
       Date.now() - this.fetchedFieldsCache.time < 30 * 1000 &&
-      _.sortedUniq(this.fetchedFieldsCache.logGroups).join('|') === _.sortedUniq(logGroups).join('|')
+      sortedUniq(this.fetchedFieldsCache.logGroups).join('|') === sortedUniq(logGroups).join('|')
     ) {
       return this.fetchedFieldsCache.fields;
     }

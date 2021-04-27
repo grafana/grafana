@@ -1,7 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes/ThemeContext';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { styleMixins } from '../../themes';
@@ -35,7 +35,7 @@ export const PageToolbar: FC<Props> = React.memo(
     isFullscreen,
     className,
   }) => {
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
 
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and
@@ -109,12 +109,12 @@ export const PageToolbar: FC<Props> = React.memo(
 
 PageToolbar.displayName = 'PageToolbar';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   const { spacing, typography } = theme;
 
   const titleStyles = `
       font-size: ${typography.size.lg};
-      padding-left: ${spacing.sm};
+      padding-left: ${spacing(1)};
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
@@ -124,7 +124,7 @@ const getStyles = (theme: GrafanaTheme) => {
       background: none;
       border: none;
 
-      @media ${styleMixins.mediaUp(theme.breakpoints.xl)} {
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.xl)} {
         max-width: unset;
       }
   `;
@@ -132,10 +132,10 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     toolbar: css`
       display: flex;
-      background: ${theme.v2.palette.background.canvas};
+      background: ${theme.colors.background.canvas};
       justify-content: flex-end;
       flex-wrap: wrap;
-      padding: ${theme.v2.spacing(0, 1, 1, 2)};
+      padding: ${theme.spacing(0, 1, 1, 2)};
     `,
     toolbarLeft: css`
       display: flex;
@@ -146,19 +146,19 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
     `,
     pageIcon: css`
-      padding-top: ${spacing.sm};
+      padding-top: ${spacing(1)};
       align-items: center;
       display: none;
 
-      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
         display: flex;
       }
     `,
     titleWrapper: css`
       display: flex;
       align-items: center;
-      padding-top: ${spacing.sm};
-      padding-right: ${spacing.sm};
+      padding-top: ${spacing(1)};
+      padding-right: ${spacing(1)};
       min-width: 0;
       overflow: hidden;
     `,
@@ -178,13 +178,13 @@ const getStyles = (theme: GrafanaTheme) => {
     parentLink: css`
       display: none;
 
-      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
         display: inline-block;
       }
     `,
     actionWrapper: css`
-      padding-left: ${spacing.sm};
-      padding-top: ${spacing.sm};
+      padding-left: ${spacing(1)};
+      padding-top: ${spacing(1)};
     `,
     leftActionItem: css`
       display: none;
@@ -192,9 +192,9 @@ const getStyles = (theme: GrafanaTheme) => {
       position: relative;
       top: 5px;
       align-items: center;
-      padding-left: ${spacing.xs};
+      padding-left: ${spacing(0.5)};
 
-      @media ${styleMixins.mediaUp(theme.breakpoints.md)} {
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
         display: flex;
       }
     `,

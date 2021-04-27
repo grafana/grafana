@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { IconButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
 import mdx from './IconButton.mdx';
 
@@ -32,7 +32,7 @@ interface ScenarioProps {
 }
 
 const RenderScenario = ({ background }: ScenarioProps) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
 
@@ -40,7 +40,7 @@ const RenderScenario = ({ background }: ScenarioProps) => {
     <div
       className={css`
         padding: 30px;
-        background: ${theme.v2.palette.background[background]};
+        background: ${theme.colors.background[background]};
         button {
           margin-right: 8px;
           margin-left: 8px;

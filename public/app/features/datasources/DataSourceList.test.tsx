@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import DataSourcesList from './DataSourcesList';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';
-import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
+import { LayoutModes } from '@grafana/data';
 
 const setup = () => {
   const props = {

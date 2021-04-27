@@ -236,7 +236,7 @@
     position: relative;
     top: -3px;
     padding: $space-xxs;
-    font-weight: bold;
+    font-weight: $font-weight-semi-bold;
     color: $text-color;
   }
 
@@ -245,7 +245,7 @@
 
     &--highlight {
       color: $text-color-emphasis;
-      font-weight: bold;
+      font-weight: $font-weight-semi-bold;
     }
   }
 
@@ -259,7 +259,7 @@
 
   .graph-tooltip-value {
     display: table-cell;
-    font-weight: bold;
+    font-weight: $font-weight-semi-bold;
     padding-left: 15px;
     text-align: right;
   }

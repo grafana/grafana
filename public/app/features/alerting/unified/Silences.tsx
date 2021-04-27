@@ -1,6 +1,7 @@
-import { InfoBox, LoadingPlaceholder } from '@grafana/ui';
+import { Field, Alert, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -15,20 +16,29 @@ const Silences: FC = () => {
   const silences = useUnifiedAlertingSelector((state) => state.silences);
 
   useEffect(() => {
-    dispatch(fetchSilencesAction(alertManagerSourceName));
+    if (alertManagerSourceName) {
+      dispatch(fetchSilencesAction(alertManagerSourceName));
+    }
   }, [alertManagerSourceName, dispatch]);
 
-  const { result, loading, error } = silences[alertManagerSourceName] || initialAsyncRequestState;
+  const { result, loading, error } =
+    (alertManagerSourceName && silences[alertManagerSourceName]) || initialAsyncRequestState;
+
+  if (!alertManagerSourceName) {
+    return <Redirect to="/alerting/silences" />;
+  }
 
   return (
     <AlertingPageWrapper pageId="silences">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <Field label="Choose alert manager">
+        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      </Field>
       <br />
       <br />
       {error && !loading && (
-        <InfoBox severity="error" title={<h4>Error loading silences</h4>}>
+        <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}
-        </InfoBox>
+        </Alert>
       )}
       {loading && <LoadingPlaceholder text="loading silences..." />}
       {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}

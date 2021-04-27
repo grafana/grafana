@@ -2,14 +2,14 @@ package schedule
 
 import (
 	"github.com/go-openapi/strfmt"
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/alertmanager/api/v2/models"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-func FromAlertStateToPostableAlerts(firingStates []state.AlertState) apimodels.PostableAlerts {
+func FromAlertStateToPostableAlerts(firingStates []*state.State) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 
 	for _, alertState := range firingStates {

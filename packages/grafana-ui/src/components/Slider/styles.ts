@@ -1,27 +1,20 @@
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { focusCss } from '../../themes/mixins';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css as cssCore } from '@emotion/react';
 import { css } from '@emotion/css';
 
-export const getFocusStyle = (theme: GrafanaTheme) => css`
-  &:focus {
-    ${focusCss(theme)}
-  }
-`;
-
-export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
+export const getStyles = stylesFactory((theme: GrafanaThemeV2, isHorizontal: boolean) => {
   const { spacing } = theme;
-  const railColor = theme.v2.palette.border.strong;
-  const trackColor = theme.v2.palette.primary.main;
-  const handleColor = theme.v2.palette.primary.main;
-  const blueOpacity = theme.v2.palette.primary.transparent;
+  const railColor = theme.colors.border.strong;
+  const trackColor = theme.colors.primary.main;
+  const handleColor = theme.colors.primary.main;
+  const blueOpacity = theme.colors.primary.transparent;
   const hoverSyle = `box-shadow: 0px 0px 0px 6px ${blueOpacity}`;
 
   return {
     container: css`
       width: 100%;
-      margin: ${isHorizontal ? 'none' : `${spacing.sm} ${spacing.lg} ${spacing.sm} ${spacing.sm}`};
+      margin: ${isHorizontal ? 'none' : `${spacing(1, 3, 1, 1)}`};
       height: ${isHorizontal ? 'auto' : '100%'};
     `,
     slider: css`
@@ -36,7 +29,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       .rc-slider-handle {
         border: none;
         background-color: ${handleColor};
-        box-shadow: ${theme.v2.shadows.z1};
+        box-shadow: ${theme.shadows.z1};
         cursor: pointer;
       }
       .rc-slider-handle:hover,
@@ -66,7 +59,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
         }
 
         .rc-slider-tooltip-inner {
-          color: ${theme.colors.text};
+          color: ${theme.colors.text.primary};
           background-color: transparent !important;
           border-radius: 0;
           box-shadow: none;
@@ -97,14 +90,14 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       }
     `,
     sliderInputField: css`
-      margin-left: ${theme.spacing.lg};
+      margin-left: ${theme.spacing(3)};
       width: 60px;
       input {
         text-align: center;
       }
     `,
     sliderInputFieldVertical: css`
-      margin: 0 0 ${theme.spacing.lg} 0;
+      margin: 0 0 ${theme.spacing(3)} 0;
       order: 1;
     `,
   };

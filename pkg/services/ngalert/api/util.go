@@ -11,12 +11,12 @@ import (
 	"strconv"
 	"strings"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -194,6 +194,33 @@ func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCach
 	return nil
 }
 
+func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	for _, query := range data {
+		datasourceUID, err := query.GetDatasource()
+		if err != nil {
+			return err
+		}
+
+		isExpression, err := query.IsExpression()
+		if err != nil {
+			return err
+		}
+		if isExpression {
+			continue
+		}
+
+		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		if err != nil {
+			return fmt.Errorf("failed to get datasource: %s: %w", datasourceUID, err)
+		}
+	}
+	return nil
+}
+
 func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService *tsdb.Service, cfg *setting.Cfg) response.Response {
 	evalCond := ngmodels.Condition{
 		Condition: cmd.Condition,
@@ -210,14 +237,14 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 	}
 
 	evaluator := eval.Evaluator{Cfg: cfg}
-	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow(), dataService)
+	evalResults, err := evaluator.ConditionEval(&evalCond, now, dataService)
 	if err != nil {
-		return response.Error(400, "Failed to evaluate conditions", err)
+		return response.Error(http.StatusBadRequest, "Failed to evaluate conditions", err)
 	}
 
 	frame := evalResults.AsDataFrame()
 
-	return response.JSONStreaming(200, util.DynMap{
+	return response.JSONStreaming(http.StatusOK, util.DynMap{
 		"instances": []*data.Frame{&frame},
 	})
 }

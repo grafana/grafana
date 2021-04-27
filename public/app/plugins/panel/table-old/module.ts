@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaults } from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import config from 'app/core/config';
@@ -65,7 +65,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       delete this.panel.fields;
     }
 
-    _.defaults(this.panel, this.panelDefaults);
+    defaults(this.panel, this.panelDefaults);
 
     this.panelHasRowColorMode = Boolean(this.panel.styles.find((style: any) => style.colorMode === 'row'));
     this.panelHasLinks = Boolean(this.panel.styles.find((style: any) => style.link));

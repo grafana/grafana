@@ -1,5 +1,5 @@
 import React from 'react';
-import isNumber from 'lodash/isNumber';
+import { isNumber } from 'lodash';
 import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
   ArrayVector,

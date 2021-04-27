@@ -8,6 +8,8 @@ import {
   QueryRunnerOptions,
   QueryRunner as QueryRunnerSrv,
   LoadingState,
+  compareArrayValues,
+  compareDataFrameStructures,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -99,7 +101,24 @@ export class QueryRunner implements QueryRunnerSrv {
 
           this.subscription = runRequest(ds, request).subscribe({
             next: (data) => {
-              this.lastResult = preProcessPanelData(data, this.lastResult);
+              const results = preProcessPanelData(data, this.lastResult);
+
+              // Indicate if the structure has changed since the last query
+              let structureRev = 1;
+              if (this.lastResult?.structureRev && this.lastResult.series) {
+                structureRev = this.lastResult.structureRev;
+                const sameStructure = compareArrayValues(
+                  results.series,
+                  this.lastResult.series,
+                  compareDataFrameStructures
+                );
+                if (!sameStructure) {
+                  structureRev++;
+                }
+              }
+              results.structureRev = structureRev;
+              this.lastResult = results;
+
               // Store preprocessed query results for applying overrides later on in the pipeline
               this.subject.next(this.lastResult);
             },

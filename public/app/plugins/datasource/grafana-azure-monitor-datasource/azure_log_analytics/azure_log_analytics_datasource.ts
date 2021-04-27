@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map } from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
@@ -92,7 +92,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const response = await this.getWorkspaceList(subscription);
 
     return (
-      _.map(response.data.value, (val: any) => {
+      map(response.data.value, (val: any) => {
         return { text: val.name, value: val.properties.customerId };
       }) || []
     );
@@ -292,7 +292,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return value;
     }
 
-    const quotedValues = _.map(value, (val) => {
+    const quotedValues = map(value, (val) => {
       if (typeof value === 'number') {
         return value;
       }
@@ -331,7 +331,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   doQueries(queries: any[]) {
-    return _.map(queries, (query) => {
+    return map(queries, (query) => {
       return this.doRequest(query.url)
         .then((result: any) => {
           return {

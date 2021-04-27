@@ -1,4 +1,12 @@
-import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
+import {
+  AnnotationQuery,
+  BusEventBase,
+  BusEventWithPayload,
+  eventFactory,
+  GrafanaThemeV2,
+  TimeRange,
+} from '@grafana/data';
+import { IconName } from '@grafana/ui';
 
 /**
  * Event Payloads
@@ -35,7 +43,7 @@ export interface ShowConfirmModalPayload {
   altActionText?: string;
   yesText?: string;
   noText?: string;
-  icon?: string;
+  icon?: IconName;
 
   onConfirm?: () => void;
   onAltAction?: () => void;
@@ -144,7 +152,7 @@ export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
 
-export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme> {
+export class ThemeChangedEvent extends BusEventWithPayload<GrafanaThemeV2> {
   static type = 'theme-changed';
 }
 
@@ -182,4 +190,12 @@ export class HideModalEvent extends BusEventBase {
 
 export class DashboardSavedEvent extends BusEventBase {
   static type = 'dashboard-saved';
+}
+
+export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery> {
+  static type = 'annotation-query-started';
+}
+
+export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery> {
+  static type = 'annotation-query-finished';
 }

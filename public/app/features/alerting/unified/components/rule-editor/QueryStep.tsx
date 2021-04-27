@@ -1,13 +1,11 @@
 import React, { FC } from 'react';
-import { Field, InputControl } from '@grafana/ui';
-import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { Field, InputControl } from '@grafana/ui';
 import { ExpressionEditor } from './ExpressionEditor';
-import { GrafanaQueryEditor } from './GrafanaQueryEditor';
-import { isArray } from 'lodash';
+import { RuleEditorSection } from './RuleEditorSection';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { AlertingQueryEditor } from '../../../components/AlertingQueryEditor';
 
-// @TODO get proper query editors in
 export const QueryStep: FC = () => {
   const { control, watch, errors } = useFormContext<RuleFormValues>();
   const type = watch('type');
@@ -34,10 +32,10 @@ export const QueryStep: FC = () => {
         >
           <InputControl
             name="queries"
-            as={GrafanaQueryEditor}
+            as={AlertingQueryEditor}
             control={control}
             rules={{
-              validate: (queries) => isArray(queries) && !!queries.length,
+              validate: (queries) => Array.isArray(queries) && !!queries.length,
             }}
           />
         </Field>
