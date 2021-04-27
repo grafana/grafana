@@ -18,7 +18,7 @@ var ldapAdminReadRole = RoleDTO{
 var ldapAdminEditRole = RoleDTO{
 	Name:    ldapAdminEdit,
 	Version: 1,
-	Permissions: concat(ldapAdminReadRole.Permissions, []Permission{
+	Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionLDAPUsersSync,
 		},
@@ -39,7 +39,7 @@ var orgsAdminReadRole = RoleDTO{
 var orgsAdminEditRole = RoleDTO{
 	Name:    orgsAdminEdit,
 	Version: 1,
-	Permissions: concat(orgsAdminReadRole.Permissions, []Permission{
+	Permissions: ConcatPermissions(orgsAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionOrgUsersAdd,
 			Scope:  ScopeOrgAllUsersAll,
@@ -69,7 +69,7 @@ var orgsCurrentReadRole = RoleDTO{
 var orgsCurrentEditRole = RoleDTO{
 	Name:    orgsCurrentEdit,
 	Version: 1,
-	Permissions: concat(orgsCurrentReadRole.Permissions, []Permission{
+	Permissions: ConcatPermissions(orgsCurrentReadRole.Permissions, []Permission{
 		{
 			Action: ActionOrgUsersAdd,
 			Scope:  ScopeOrgCurrentUsersAll,
@@ -111,7 +111,7 @@ var usersAdminReadRole = RoleDTO{
 var usersAdminEditRole = RoleDTO{
 	Name:    usersAdminEdit,
 	Version: 1,
-	Permissions: concat(usersAdminReadRole.Permissions, []Permission{
+	Permissions: ConcatPermissions(usersAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionUsersPasswordUpdate,
 			Scope:  ScopeUsersAll,
@@ -205,7 +205,7 @@ var PredefinedRoleGrants = map[string][]string{
 	},
 }
 
-func concat(permissions ...[]Permission) []Permission {
+func ConcatPermissions(permissions ...[]Permission) []Permission {
 	if permissions == nil {
 		return nil
 	}

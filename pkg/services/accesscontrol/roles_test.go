@@ -34,7 +34,7 @@ func TestPredefinedRoleGrants(t *testing.T) {
 	}
 }
 
-func TestConcat(t *testing.T) {
+func TestConcatPermissions(t *testing.T) {
 	perms1 := []Permission{
 		{
 			Action: "test",
@@ -67,6 +67,6 @@ func TestConcat(t *testing.T) {
 		},
 	}
 
-	perms := concat(perms1, perms2)
+	perms := ConcatPermissions(perms1, perms2)
 	assert.ElementsMatch(t, perms, expected)
 }
