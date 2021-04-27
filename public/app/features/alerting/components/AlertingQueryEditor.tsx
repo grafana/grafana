@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataSourceApi, GrafanaTheme } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
@@ -24,6 +24,7 @@ interface Props {
 
 interface State {
   defaultDataSource?: DataSourceApi;
+  panelDataRecord?: Record<string, PanelData>;
 }
 export class AlertingQueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
@@ -35,13 +36,18 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
+    let panelDataRecord: Record<string, PanelData> = {};
     try {
-      this.runner.get().subscribe((data) => console.log('data', data));
+      this.runner.get().subscribe((data) => (panelDataRecord = data));
       const defaultDataSource = await getDataSourceSrv().get();
-      this.setState({ defaultDataSource });
+      this.setState({ defaultDataSource, panelDataRecord });
     } catch (error) {
       console.error(error);
     }
+  }
+
+  componentWillUnmount() {
+    this.runner.destroy();
   }
 
   onRunQueries = () => {
@@ -99,7 +105,6 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
         >
           Query
         </Button>
-        <Button onClick={this.onRunQueries}>Run!</Button>
         {config.expressionsEnabled && (
           <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
             <Button
@@ -114,6 +119,9 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
             </Button>
           </Tooltip>
         )}
+        <Button type="button" onClick={this.onRunQueries}>
+          Run!
+        </Button>
       </HorizontalGroup>
     );
   }

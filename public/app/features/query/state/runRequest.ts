@@ -36,7 +36,6 @@ interface RunningQueryState {
  * This function should handle composing a PanelData from multiple responses
  */
 export function processResponsePacket(packet: DataQueryResponse, state: RunningQueryState): RunningQueryState {
-  console.log('packet', packet);
   const request = state.panelData.request!;
   const packets: MapOfResponsePackets = {
     ...state.packets,
