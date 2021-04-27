@@ -64,7 +64,9 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
-		server.Shutdown(ctx, "test cleanup")
+		if err := server.Shutdown(ctx, "test cleanup"); err != nil {
+			t.Error("Timed out waiting on server to shut down")
+		}
 	})
 
 	// Wait for Grafana to be ready

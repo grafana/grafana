@@ -222,7 +222,8 @@ func (s *Server) Run() error {
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
 // running background services. Since Run blocks Shutdown supposed to
 // be run from a separate goroutine.
-func (s *Server) Shutdown(ctx context.Context, reason string) {
+func (s *Server) Shutdown(ctx context.Context, reason string) error {
+	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
 		// Call cancel func to stop services.
@@ -233,8 +234,11 @@ func (s *Server) Shutdown(ctx context.Context, reason string) {
 			s.log.Debug("Finished waiting for server to shut down")
 		case <-ctx.Done():
 			s.log.Warn("Timed out while waiting for server to shut down")
+			err = fmt.Errorf("timeout waiting for shutdown")
 		}
 	})
+
+	return err
 }
 
 // ExitCode returns an exit code for a given error.

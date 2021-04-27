@@ -198,7 +198,9 @@ func listenToSystemSignals(ctx context.Context, s *server.Server) {
 		case sig := <-signalChan:
 			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
-			s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig))
+			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
+				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
+			}
 			return
 		}
 	}
