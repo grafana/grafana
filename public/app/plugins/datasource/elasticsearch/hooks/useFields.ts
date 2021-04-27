@@ -12,7 +12,6 @@ import {
 type AggregationType = BucketAggregationType | MetricAggregationType;
 
 const getFilter = (type: AggregationType | string[]) => {
-  // For all metric types we want only numbers, except for cardinality
   // TODO: To have a more configuration-driven editor, it would be nice to move this logic in
   // metricAggregationConfig and bucketAggregationConfig so that each aggregation type can specify on
   // which kind of data it operates.
@@ -21,11 +20,14 @@ const getFilter = (type: AggregationType | string[]) => {
   }
 
   if (isMetricAggregationType(type)) {
-    if (!['cardinality', 'top_metrics'].includes(type)) {
-      return ['number'];
+    switch (type) {
+      case 'cardinality':
+        return void 0;
+      case 'top_metrics':
+        return ['number', 'ip'];
+      default:
+        return ['number'];
     }
-
-    return void 0;
   }
 
   if (isBucketAggregationType(type)) {
