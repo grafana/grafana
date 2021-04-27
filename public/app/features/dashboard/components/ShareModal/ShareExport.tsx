@@ -96,7 +96,7 @@ export class ShareExport extends PureComponent<Props, State> {
           <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
         </Field>
         <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
             Cancel
           </Button>
           <Button variant="secondary" onClick={this.onViewJson}>

@@ -24,6 +24,9 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
       </Field>
 
       <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          Cancel
+        </Button>
         <Button
           onClick={() => {
             panel.title = panelTitle;
@@ -31,9 +34,6 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
           }}
         >
           Add panel to the panel library
-        </Button>
-        <Button variant="secondary" onClick={onDismiss}>
-          Cancel
         </Button>
       </Modal.ButtonRow>
     </>
