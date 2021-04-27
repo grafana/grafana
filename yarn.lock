@@ -6123,7 +6123,7 @@
     "@types/slate" "*"
     immutable "^3.8.2"
 
-"@types/slate@*":
+"@types/slate@*", "@types/slate@0.47.2":
   version "0.47.2"
   resolved "https://registry.yarnpkg.com/@types/slate/-/slate-0.47.2.tgz#54c57c223919bb70b3047600ab6b0ccf800bff77"
   integrity sha512-1qwuAtuJ2Tnhewr2tz3OsDeM9xIC1ttTkBuSuf2P4Dy7K9I/I8HVeVowpo8k2vzVX7UMkc3OHo0RpC7V6pWCBw==
