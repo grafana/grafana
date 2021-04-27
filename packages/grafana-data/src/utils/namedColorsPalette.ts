@@ -73,22 +73,6 @@ export function getColorDefinitionByName(name: Color): ColorDefinition {
   return flatten(Array.from(getNamedColorPalette().values())).filter((definition) => definition.name === name)[0];
 }
 
-// export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {
-//   theme = theme ?? GrafanaThemeType.Dark;
-
-//   colorsMap = {} as Record<Color, string>;
-
-//   for (const def of getNamedColorPalette().values()) {
-//     for (const c of def) {
-//       colorsMap[c.name] = c.variants[theme.type];
-//     }
-//   }
-
-//   colorsMap['panel-bg'] = theme.colors.panelBg;
-
-//   return colorsMap;
-// }
-
 export function buildColorsMapForTheme(theme: GrafanaTheme | GrafanaThemeV2): Record<Color, string> {
   theme = theme ?? GrafanaThemeType.Dark;
 
