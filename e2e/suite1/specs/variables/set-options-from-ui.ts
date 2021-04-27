@@ -28,7 +28,7 @@ describe('Variables - Set options from ui', () => {
       .should('be.visible')
       .click();
 
-    e2e().wait(1000);
+    e2e().wait(2000);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
@@ -43,7 +43,7 @@ describe('Variables - Set options from ui', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
 
-    e2e().wait(1000);
+    e2e().wait(2000);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
