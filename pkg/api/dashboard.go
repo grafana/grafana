@@ -53,130 +53,7 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(403, "Access denied to this dashboard", nil)
 }
 
-func (hs *HTTPServer) GetTrimedDashboard(c *models.ReqContext) response.Response {
-	slug := c.Params(":slug")
-	uid := c.Params(":uid")
-	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
-	if rsp != nil {
-		return rsp
-	}
-
-	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
-	if dash.Data != nil {
-		isEmptyData := true
-		for k := range dash.Data.MustMap() {
-			if k != "id" && k != "uid" {
-				isEmptyData = false
-				break
-			}
-		}
-		if isEmptyData {
-			return response.Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
-		}
-	}
-
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
-	if canView, err := guardian.CanView(); err != nil || !canView {
-		return dashboardGuardianResponse(err)
-	}
-
-	canEdit, _ := guardian.CanEdit()
-	canSave, _ := guardian.CanSave()
-	canAdmin, _ := guardian.CanAdmin()
-
-	isStarred, err := isDashboardStarredByUser(c, dash.Id)
-	if err != nil {
-		return response.Error(500, "Error while checking if dashboard was starred by user", err)
-	}
-
-	// Finding creator and last updater of the dashboard
-	updater, creator := anonString, anonString
-	if dash.UpdatedBy > 0 {
-		updater = getUserLogin(dash.UpdatedBy)
-	}
-	if dash.CreatedBy > 0 {
-		creator = getUserLogin(dash.CreatedBy)
-	}
-
-	meta := dtos.DashboardMeta{
-		IsStarred:   isStarred,
-		Slug:        dash.Slug,
-		Type:        models.DashTypeDB,
-		CanStar:     c.IsSignedIn,
-		CanSave:     canSave,
-		CanEdit:     canEdit,
-		CanAdmin:    canAdmin,
-		Created:     dash.Created,
-		Updated:     dash.Updated,
-		UpdatedBy:   updater,
-		CreatedBy:   creator,
-		Version:     dash.Version,
-		HasAcl:      dash.HasAcl,
-		IsFolder:    dash.IsFolder,
-		FolderId:    dash.FolderId,
-		Url:         dash.GetUrl(),
-		FolderTitle: "General",
-	}
-
-	// lookup folder title
-	if dash.FolderId > 0 {
-		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
-			return response.Error(500, "Dashboard folder could not be read", err)
-		}
-		meta.FolderTitle = query.Result.Title
-		meta.FolderUrl = query.Result.GetUrl()
-	}
-
-	svc := dashboards.NewProvisioningService(hs.SQLStore)
-	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
-	if err != nil {
-		return response.Error(500, "Error while checking if dashboard is provisioned", err)
-	}
-
-	if provisioningData != nil {
-		allowUIUpdate := hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
-		if !allowUIUpdate {
-			meta.Provisioned = true
-		}
-
-		meta.ProvisionedExternalId, err = filepath.Rel(
-			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
-			provisioningData.ExternalId,
-		)
-		if err != nil {
-			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
-			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
-			hs.log.Warn("Failed to create ProvisionedExternalId", "err", err)
-		}
-	}
-
-	// make sure db version is in sync with json model version
-	dash.Data.Set("version", dash.Version)
-
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// load library panels JSON for this dashboard
-		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
-		if err != nil {
-			return response.Error(500, "Error while loading library panels", err)
-		}
-	}
-
-	trimedJson, err := hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
-	if err != nil {
-		return response.Error(500, "Error while trim default value from dashboard json", err)
-	}
-
-	dto := dtos.DashboardFullWithMeta{
-		Dashboard: &trimedJson,
-		Meta:      meta,
-	}
-
-	c.TimeRequest(metrics.MApiDashboardGet)
-	return response.JSON(200, dto)
-}
-
-func (hs *HTTPServer) GetTrimedDashboardWithInput(c *models.ReqContext, cmd models.TrimDashboardCommand) response.Response {
+func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboardCommand) response.Response {
 	var err error
 	dash := cmd.Dashboard
 	meta := cmd.Meta
@@ -198,6 +75,7 @@ func (hs *HTTPServer) GetTrimedDashboardWithInput(c *models.ReqContext, cmd mode
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
+	isTrimed := c.QueryBoolWithDefault("istrimed", false)
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -302,6 +180,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		if err != nil {
 			return response.Error(500, "Error while loading library panels", err)
 		}
+	}
+	var trimedJson simplejson.Json
+	if isTrimed {
+		trimedJson, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
+		if err != nil {
+			return response.Error(500, "Error while trim default value from dashboard json", err)
+		}
+		dash.Data = &trimedJson
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -396,102 +282,16 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
-	cmd.OrgId = c.OrgId
-	cmd.UserId = c.UserId
-
-	dash := cmd.GetDashboardModel()
-
-	newDashboard := dash.Id == 0 && dash.Uid == ""
-	if newDashboard {
-		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
-		if err != nil {
-			return response.Error(500, "failed to get quota", err)
-		}
-		if limitReached {
-			return response.Error(403, "Quota reached", nil)
-		}
-	}
-
-	svc := dashboards.NewProvisioningService(hs.SQLStore)
-	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
-	if err != nil {
-		return response.Error(500, "Error while checking if dashboard is provisioned", err)
-	}
-
-	allowUiUpdate := true
-	if provisioningData != nil {
-		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
-	}
-
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// clean up all unnecessary library panels JSON properties so we store a minimum JSON
-		err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
-		if err != nil {
-			return response.Error(500, "Error while cleaning library panels", err)
-		}
-	}
-
-	dashItem := &dashboards.SaveDashboardDTO{
-		Dashboard: dash,
-		Message:   cmd.Message,
-		OrgId:     c.OrgId,
-		User:      c.SignedInUser,
-		Overwrite: cmd.Overwrite,
-	}
-
-	dashSvc := dashboards.NewService(hs.SQLStore)
-	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
-	if err != nil {
-		return hs.dashboardSaveErrorToApiResponse(err)
-	}
-
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
-		}
-	}
-
-	// Tell everyone listening that the dashboard changed
-	if hs.Live.IsEnabled() {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
-			dashboard.Uid,
-			c.UserId,
-		)
-		if err != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
-		}
-	}
-
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// connect library panels for this dashboard after the dashboard is stored and has an ID
-		err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
-		if err != nil {
-			return response.Error(500, "Error while connecting library panels", err)
-		}
-	}
-
-	c.TimeRequest(metrics.MApiDashboardSave)
-	return response.JSON(200, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.Id,
-		"uid":     dashboard.Uid,
-		"url":     dashboard.GetUrl(),
-	})
-}
-
-func (hs *HTTPServer) PostTrimedDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
-	cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
-	if err != nil {
-		return response.Error(500, "Error while applying default value to the dashboard json", err)
+	isTrimed := c.QueryBoolWithDefault("istrimed", false)
+	if isTrimed {
+		cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
+		if err != nil {
+			return response.Error(500, "Error while applying default value to the dashboard json", err)
+		}
 	}
-
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.Id == 0 && dash.Uid == ""
 	if newDashboard {

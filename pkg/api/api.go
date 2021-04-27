@@ -320,8 +320,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
-			dashboardRoute.Get("/trim/uid/:uid", routing.Wrap(hs.GetTrimedDashboard))
-			dashboardRoute.Post("/trim/db-input", bind(models.TrimDashboardCommand{}), routing.Wrap(hs.GetTrimedDashboardWithInput))
+			dashboardRoute.Post("/trim", bind(models.TrimDashboardCommand{}), routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
@@ -331,7 +330,6 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), routing.Wrap(CalculateDashboardDiff))
 
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostDashboard))
-			dashboardRoute.Post("/trim/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostTrimedDashboard))
 
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
