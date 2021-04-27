@@ -84,10 +84,10 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 export function preparePlotConfigBuilder(
   frame: DataFrame,
   theme: GrafanaTheme,
-  getTimeRange: () => TimeRange,
-  getTimeZone: () => TimeZone
+  timeZone: TimeZone,
+  getTimeRange: () => TimeRange
 ): UPlotConfigBuilder {
-  const builder = new UPlotConfigBuilder(getTimeZone);
+  const builder = new UPlotConfigBuilder(timeZone);
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
@@ -104,8 +104,8 @@ export function preparePlotConfigBuilder(
       direction: ScaleDirection.Right,
       isTime: true,
       range: () => {
-        const r = getTimeRange();
-        return [r.from.valueOf(), r.to.valueOf()];
+        let timeRange = getTimeRange();
+        return [timeRange.from.valueOf(), timeRange.to.valueOf()];
       },
     });
 
@@ -113,7 +113,7 @@ export function preparePlotConfigBuilder(
       scaleKey: 'x',
       isTime: true,
       placement: AxisPlacement.Bottom,
-      timeZone: getTimeZone(),
+      timeZone: timeZone,
       theme,
     });
   } else {

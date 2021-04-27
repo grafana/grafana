@@ -51,7 +51,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
 
   return (
     <GraphNG
-      data={data.series}
+      frames={data.series}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
