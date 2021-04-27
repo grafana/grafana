@@ -1,9 +1,9 @@
-import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { css } from '@emotion/css';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTemplateSrv, DataSourcePicker } from '@grafana/runtime';
+import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
 import { DataSourceInstanceSettings, LoadingState, SelectableValue } from '@grafana/data';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
@@ -20,7 +20,6 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { isLegacyQueryEditor, isQueryEditor } from '../guard';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
-import { VariableSwitchField } from '../editor/VariableSwitchField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
 
@@ -102,28 +101,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   };
 
-  onTagsQueryChange = async (event: FormEvent<HTMLInputElement>) => {
-    this.setState({ tagsQuery: event.currentTarget.value });
-  };
-
-  onTagsQueryBlur = async (event: FormEvent<HTMLInputElement>) => {
-    const tagsQuery = event.currentTarget.value;
-    if (this.props.variable.tagsQuery !== tagsQuery) {
-      this.props.onPropChange({ propName: 'tagsQuery', propValue: tagsQuery, updateOptions: true });
-    }
-  };
-
-  onTagValuesQueryChange = async (event: FormEvent<HTMLInputElement>) => {
-    this.setState({ tagValuesQuery: event.currentTarget.value });
-  };
-
-  onTagValuesQueryBlur = async (event: FormEvent<HTMLInputElement>) => {
-    const tagValuesQuery = event.currentTarget.value;
-    if (this.props.variable.tagValuesQuery !== tagValuesQuery) {
-      this.props.onPropChange({ propName: 'tagValuesQuery', propValue: tagValuesQuery, updateOptions: true });
-    }
-  };
-
   onRefreshChange = (option: SelectableValue<VariableRefresh>) => {
     this.props.onPropChange({ propName: 'refresh', propValue: option.value });
   };
@@ -134,10 +111,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onSelectionOptionsChange = async ({ propValue, propName }: OnPropChangeArguments<VariableWithMultiSupport>) => {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
-  };
-
-  onUseTagsChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange({ propName: 'useTags', propValue: event.target.checked, updateOptions: true });
   };
 
   renderQueryEditor = () => {
@@ -236,46 +209,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             onPropChange={this.onSelectionOptionsChange}
             onMultiChanged={this.props.changeVariableMultiValue}
           />
-
-          <VerticalGroup spacing="none">
-            <h5>Value group tags</h5>
-            <em className="muted p-b-1">Experimental feature, will be deprecated in Grafana v8.</em>
-
-            <VariableSwitchField
-              value={this.props.variable.useTags}
-              name="Enabled"
-              onChange={this.onUseTagsChange}
-              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch}
-            />
-            {this.props.variable.useTags ? (
-              <VerticalGroup spacing="none">
-                <VariableTextField
-                  value={this.state.tagsQuery ?? this.props.variable.tagsQuery}
-                  name="Tags query"
-                  placeholder="metric name or tags query"
-                  onChange={this.onTagsQueryChange}
-                  onBlur={this.onTagsQueryBlur}
-                  ariaLabel={
-                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsQueryInput
-                  }
-                  labelWidth={20}
-                  grow
-                />
-                <VariableTextField
-                  value={this.state.tagValuesQuery ?? this.props.variable.tagValuesQuery}
-                  name="Tag values query"
-                  placeholder="apps.$tag.*"
-                  onChange={this.onTagValuesQueryChange}
-                  onBlur={this.onTagValuesQueryBlur}
-                  ariaLabel={
-                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsValuesQueryInput
-                  }
-                  labelWidth={20}
-                  grow
-                />
-              </VerticalGroup>
-            ) : null}
-          </VerticalGroup>
         </VerticalGroup>
       </VerticalGroup>
     );
