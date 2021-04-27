@@ -54,7 +54,7 @@ IconButton.displayName = 'IconButton';
 const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
   const hoverColor = theme.colors.action.hover;
   const pixelSize = getSvgSize(size);
-  const hoverSize = pixelSize / 2;
+  const hoverSize = Math.max(pixelSize / 3, 8);
 
   return {
     button: css`

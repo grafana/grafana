@@ -92,7 +92,8 @@ func (s *ManagedStream) ListChannels(prefix string) []util.DynMap {
 }
 
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
-func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) error {
+// unstableSchema flag can be set to disable schema caching for a path.
+func (s *ManagedStream) Push(path string, frame *data.Frame, unstableSchema bool) error {
 	// Keep schema + data for last packet.
 	frameJSON, err := data.FrameToJSON(frame, true, true)
 	if err != nil {
@@ -100,7 +101,7 @@ func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) 
 		return err
 	}
 
-	if stableSchema {
+	if !unstableSchema {
 		// If schema is stable we can safely cache it, and only send values if
 		// stream already has schema cached.
 		s.mu.Lock()

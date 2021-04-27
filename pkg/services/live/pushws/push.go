@@ -171,13 +171,13 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		// TODO Grafana 8: decide which formats to use or keep all.
 		urlValues := r.URL.Query()
 		frameFormat := pushurl.FrameFormatFromValues(urlValues)
-		stableSchema := pushurl.StableSchemaFromValues(urlValues)
+		unstableSchema := pushurl.UnstableSchemaFromValues(urlValues)
 
 		logger.Debug("Live Push request",
 			"protocol", "http",
 			"streamId", streamID,
 			"bodyLength", len(body),
-			"stableSchema", stableSchema,
+			"unstableSchema", unstableSchema,
 			"frameFormat", frameFormat,
 		)
 
@@ -188,7 +188,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, mf := range metricFrames {
-			err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
+			err := stream.Push(mf.Key(), mf.Frame(), unstableSchema)
 			if err != nil {
 				return
 			}

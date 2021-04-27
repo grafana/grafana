@@ -65,8 +65,6 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch().should('not.be.checked');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch().should('not.be.checked');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch().should('not.be.checked');
-
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
   });

@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import { Button, HorizontalGroup, stylesFactory, TextArea, useTheme, VerticalGroup } from '@grafana/ui';
+import { Button, Modal, stylesFactory, TextArea, useTheme } from '@grafana/ui';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { SaveDashboardFormProps } from '../types';
 import { AppEvents, GrafanaTheme } from '@grafana/data';
@@ -29,8 +29,8 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
   const styles = getStyles(theme);
   return (
     <>
-      <VerticalGroup spacing="lg">
-        <small>
+      <div>
+        <div>
           This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
           the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
           <br />
@@ -46,8 +46,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
             </a>{' '}
             for more information about provisioning.
           </i>
-        </small>
-        <div>
+          <br /> <br />
           <strong>File path: </strong> {dashboard.meta.provisionedExternalId}
         </div>
         <TextArea
@@ -58,16 +57,16 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           }}
           className={styles.json}
         />
-        <HorizontalGroup>
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
           <CopyToClipboard text={() => dashboardJSON} elType={Button} onSuccess={onCopyToClipboardSuccess}>
             Copy JSON to clipboard
           </CopyToClipboard>
           <Button onClick={saveToFile}>Save JSON to file</Button>
-          <Button variant="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
-        </HorizontalGroup>
-      </VerticalGroup>
+        </Modal.ButtonRow>
+      </div>
     </>
   );
 };
