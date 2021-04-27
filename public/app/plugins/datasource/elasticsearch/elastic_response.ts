@@ -135,33 +135,30 @@ export class ElasticResponse {
           break;
         }
         case 'top_metrics': {
-          newSeries = {
-            datapoints: [],
-            metric: metric.type,
-            metricId: metric.id,
-            props: props,
-            refId: target.refId,
-            field: metric.field,
-          };
-
-          for (let i = 0; i < esAgg.buckets.length; i++) {
-            const bucket = esAgg.buckets[i];
-            const stats = bucket[metric.id];
-            const values = stats.top.map((hit: { metrics: Record<string, number> }) => {
-              if (hit.metrics[metric.field!]) {
-                return hit.metrics[metric.field!];
-              }
-              return null;
-            });
-            newSeries.datapoints.push([
-              aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.separator),
-              bucket.key,
-            ]);
-          }
-
-          seriesList.push(newSeries);
-
-          break;
+          // newSeries = {
+          //   datapoints: [],
+          //   metric: metric.type,
+          //   metricId: metric.id,
+          //   props: props,
+          //   refId: target.refId,
+          //   field: metric.field,
+          // };
+          // for (let i = 0; i < esAgg.buckets.length; i++) {
+          //   const bucket = esAgg.buckets[i];
+          //   const stats = bucket[metric.id];
+          //   const values = stats.top.map((hit: { metrics: Record<string, number> }) => {
+          //     if (hit.metrics[metric.field!]) {
+          //       return hit.metrics[metric.field!];
+          //     }
+          //     return null;
+          //   });
+          //   newSeries.datapoints.push([
+          //     aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.separator),
+          //     bucket.key,
+          //   ]);
+          // }
+          // seriesList.push(newSeries);
+          // break;
         }
         default: {
           newSeries = {
@@ -248,19 +245,19 @@ export class ElasticResponse {
             break;
           }
           case 'top_metrics': {
-            const stats = bucket[metric.id];
-            const topMetricValues = stats.top.map((hit: { metrics: Record<string, number> }) => {
-              if (hit.metrics[metric.field!]) {
-                return hit.metrics[metric.field!];
-              }
-              return null;
-            });
-            const finalValue = aggValues(
-              metric.settings?.aggregateBy ?? 'avg',
-              topMetricValues,
-              metric.settings?.separator
-            );
-            addMetricValue(values, this.getMetricName(metric.type), finalValue);
+            // const stats = bucket[metric.id];
+            // const topMetricValues = stats.top.map((hit: { metrics: Record<string, number> }) => {
+            //   if (hit.metrics[metric.field!]) {
+            //     return hit.metrics[metric.field!];
+            //   }
+            //   return null;
+            // });
+            // const finalValue = aggValues(
+            //   metric.settings?.aggregateBy ?? 'avg',
+            //   topMetricValues,
+            //   metric.settings?.separator
+            // );
+            // addMetricValue(values, this.getMetricName(metric.type), finalValue);
             break;
           }
           case 'percentiles': {

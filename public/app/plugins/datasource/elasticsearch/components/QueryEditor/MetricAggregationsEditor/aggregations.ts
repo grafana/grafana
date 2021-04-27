@@ -283,14 +283,15 @@ export interface BucketScript extends PipelineMetricAggregationWithMultipleBucke
   };
 }
 
-export interface TopMetrics extends MetricAggregationWithField {
+export interface TopMetrics extends BaseMetricAggregation {
   type: 'top_metrics';
   settings?: {
     order?: string;
     orderBy?: string;
-    size?: number;
+    size?: string;
     aggregateBy?: string;
     separator?: string;
+    metrics?: string[];
   };
 }
 
@@ -357,7 +358,7 @@ export const isMetricAggregationWithInlineScript = (
   metric: BaseMetricAggregation | MetricAggregationWithInlineScript
 ): metric is MetricAggregationWithInlineScript => metricAggregationConfig[metric.type].supportsInlineScript;
 
-export const METRIC_AGGREGATION_TYPES = [
+export const METRIC_AGGREGATION_TYPES: MetricAggregationType[] = [
   'count',
   'avg',
   'sum',
@@ -379,4 +380,4 @@ export const METRIC_AGGREGATION_TYPES = [
 ];
 
 export const isMetricAggregationType = (s: MetricAggregationType | string): s is MetricAggregationType =>
-  METRIC_AGGREGATION_TYPES.includes(s);
+  METRIC_AGGREGATION_TYPES.includes(s as MetricAggregationType);

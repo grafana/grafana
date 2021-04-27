@@ -440,12 +440,12 @@ describe('ElasticQueryBuilder', () => {
             {
               id: '2',
               type: 'top_metrics',
-              field: '@value',
               settings: {
                 order: 'desc',
                 orderBy: '@timestamp',
                 aggregateBy: 'sum',
-                size: 2,
+                size: '2',
+                metrics: ['@value'],
               },
             },
           ],
