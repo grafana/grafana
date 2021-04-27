@@ -10,21 +10,21 @@ import (
 )
 
 // Evaluate evaluates access to the given resource, using provided AccessControl instance
-func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
+func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, scope ...string) (bool, error) {
 	userPermissions, err := ac.GetUserPermissions(ctx, user)
 	if err != nil {
 		return false, err
 	}
 
-	ok, dbScopes := extractPermission(userPermissions, permission)
+	ok, dbScopes := extractScopes(userPermissions, action)
 	if !ok {
 		return false, nil
 	}
 
-	return evaluatePermission(dbScopes, scope...)
+	return evaluateScope(dbScopes, scope...)
 }
 
-func evaluatePermission(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {
+func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {
 	for _, s := range targetScopes {
 		var match bool
 		for dbScope := range dbScopes {
@@ -43,7 +43,7 @@ func evaluatePermission(dbScopes map[string]struct{}, targetScopes ...string) (b
 	return false, nil
 }
 
-func extractPermission(permissions []*accesscontrol.Permission, targetPermission string) (bool, map[string]struct{}) {
+func extractScopes(permissions []*accesscontrol.Permission, targetAction string) (bool, map[string]struct{}) {
 	scopes := map[string]struct{}{}
 	ok := false
 
@@ -51,7 +51,7 @@ func extractPermission(permissions []*accesscontrol.Permission, targetPermission
 		if p == nil {
 			continue
 		}
-		if p.Action == targetPermission {
+		if p.Action == targetAction {
 			ok = true
 			scopes[p.Scope] = struct{}{}
 		}

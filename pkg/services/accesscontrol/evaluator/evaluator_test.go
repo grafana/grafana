@@ -9,7 +9,7 @@ import (
 )
 
 func TestExtractPermission(t *testing.T) {
-	targetPermission := "permissions:create"
+	const targetPermission = "permissions:create"
 	userPermissions := []*accesscontrol.Permission{
 		{
 			Action: "permissions:create",
@@ -23,9 +23,9 @@ func TestExtractPermission(t *testing.T) {
 	expectedScopes := map[string]struct{}{
 		"teams:*/permissions:*": {},
 	}
-	ok, scopes := extractPermission(userPermissions, targetPermission)
+	ok, scopes := extractScopes(userPermissions, targetPermission)
 	assert.True(t, ok)
-	assert.Equal(t, scopes, expectedScopes)
+	assert.Equal(t, expectedScopes, scopes)
 }
 
 func TestEvaluatePermissions(t *testing.T) {
@@ -35,7 +35,7 @@ func TestEvaluatePermissions(t *testing.T) {
 		"permissions:delegate":  {},
 	}
 
-	ok, err := evaluatePermission(scopes, "teams:1/permissions:delegate")
+	ok, err := evaluateScope(scopes, "teams:1/permissions:delegate")
 	require.NoError(t, err)
 	assert.True(t, ok)
 }
@@ -47,7 +47,7 @@ func TestEvaluatePermissions_WhenAtLeastOneScopeIsMatched_ReturnsTrue(t *testing
 		"permissions:delegate":  {},
 	}
 
-	ok, err := evaluatePermission(scopes, "global:admin", "permissions:delegate")
+	ok, err := evaluateScope(scopes, "global:admin", "permissions:delegate")
 	require.NoError(t, err)
 	assert.True(t, ok)
 }
@@ -59,7 +59,7 @@ func TestEvaluatePermissions_WhenNoMatchFound_ReturnsFase(t *testing.T) {
 		"permissions:delegate":  {},
 	}
 
-	ok, err := evaluatePermission(scopes, "teams1/permissions:delegate")
+	ok, err := evaluateScope(scopes, "teams1/permissions:delegate")
 	require.NoError(t, err)
 	assert.False(t, ok)
 }
