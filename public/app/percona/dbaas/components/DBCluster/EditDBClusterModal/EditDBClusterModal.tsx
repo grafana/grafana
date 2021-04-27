@@ -18,7 +18,7 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
   selectedCluster,
 }) => {
   const styles = useStyles(getStyles);
-  const onSubmit = async ({ databaseType, topology, nodes, single, memory, cpu, disk }: Record<string, any>) => {
+  const onSubmit = async ({ topology, nodes, single, memory, cpu, disk }: Record<string, any>) => {
     if (!selectedCluster) {
       setVisible(false);
 
@@ -26,10 +26,10 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
     }
 
     try {
-      const dbClusterService = newDBClusterService(databaseType);
+      const dbClusterService = newDBClusterService(selectedCluster.databaseType);
 
       await dbClusterService.updateDBCluster({
-        databaseType,
+        databaseType: selectedCluster.databaseType,
         clusterName: selectedCluster.clusterName,
         kubernetesClusterName: selectedCluster.kubernetesClusterName,
         clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
