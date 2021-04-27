@@ -72,6 +72,7 @@ export class PanelQueryRunner {
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
     this.dataConfigSource = dataConfigSource;
+    this.dataSupport = this.dataConfigSource.dataSupport;
   }
 
   /**
