@@ -21,13 +21,9 @@ export default {
     knobs: {
       disable: true,
     },
-  },
-  argTypes: {
-    heading: { control: { disable: true } },
-    description: { control: { disable: true } },
-    href: { control: { disable: true } },
-    tooltip: { control: { disable: true } },
-    onClick: { control: { disable: true } },
+    controls: {
+      exclude: ['onClick', 'tooltip', 'href', 'heading', 'description', 'className'],
+    },
   },
 };
 
