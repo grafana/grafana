@@ -1,6 +1,5 @@
-import { GrafanaQuery } from '../../../types/unified-alerting-dto';
-import { getBackendSrv } from '../../../core/services/backend_srv';
-import { BackendSrvRequest, FetchResponse, toDataQueryError } from '@grafana/runtime';
+import { merge, Observable, of, ReplaySubject, timer, Unsubscribable } from 'rxjs';
+import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
 import {
   compareArrayValues,
   compareDataFrameStructures,
@@ -10,9 +9,11 @@ import {
   PanelData,
   rangeUtil,
 } from '@grafana/data';
-import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
-import { merge, Observable, of, ReplaySubject, timer, Unsubscribable } from 'rxjs';
+import { BackendSrvRequest, FetchResponse, toDataQueryError } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
+import { GrafanaExpressionModel, GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { getTimeRangeForExpression } from '../unified/utils/timeRange';
 
 interface AlertingQueryResult {
   frames: DataFrameJSON[];
@@ -76,16 +77,13 @@ const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelDat
 };
 
 const initialState = (queries: GrafanaQuery[], state: LoadingState): Record<string, PanelData> => {
-  // 1. query with time range
-  // 2. expression without time range
-  // 2.1 classic/math condition reference multiple queries.
-  // 2.2 other condition reference single query.
-
   return queries.reduce((dataByQuery: Record<string, PanelData>, query) => {
     dataByQuery[query.refId] = {
       state,
       series: [],
-      timeRange: rangeUtil.relativeToTimeRange(query.relativeTimeRange!),
+      timeRange: rangeUtil.relativeToTimeRange(
+        query.relativeTimeRange ?? getTimeRangeForExpression(query.model as GrafanaExpressionModel, queries)
+      ),
     };
 
     return dataByQuery;
