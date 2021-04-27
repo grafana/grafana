@@ -135,7 +135,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       }
 
       &:hover {
-        box-shadow: ${theme.shadows.z2};
+        box-shadow: ${theme.shadows.z1};
       }
 
       &[disabled],
