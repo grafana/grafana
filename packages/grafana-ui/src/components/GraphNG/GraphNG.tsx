@@ -1,6 +1,6 @@
 import React from 'react';
-import uPlot, { AlignedData } from 'uplot';
-import { DashboardCursorSync, DataFrame, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
+import { AlignedData } from 'uplot';
+import { DataFrame, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -18,18 +18,6 @@ import { PlotSyncConfig } from '../uPlot/context';
  * @internal -- not a public API
  */
 export const FIXED_UNIT = '__fixed';
-
-function syncPubFilter(type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) {
-  console.log(type);
-
-  // emit to own or some other sync group
-  //let syncKey = src.cursor.sync!.key;
-  //let syncGroup = uPlot.sync(syncKey);
-  //syncGroup.pub(type, src, x, y, w, h, dataIdx);
-
-  // allow emit to src's own sync group
-  return true;
-}
 
 export interface GraphNGProps extends Themeable {
   data: DataFrame[];
@@ -68,19 +56,8 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     if (!alignedData) {
       return;
     }
-    const config = preparePlotConfigBuilder(alignedData, props.theme, this.getTimeRange, this.getTimeZone);
+    const config = preparePlotConfigBuilder(alignedData, props.theme, this.getTimeRange, this.getTimeZone, props.sync);
 
-    if (props.sync) {
-      config.setCursor({
-        sync: {
-          key: props.sync.key,
-          setSeries: props.sync.sync === DashboardCursorSync.Tooltip,
-          filters: {
-            pub: syncPubFilter,
-          },
-        },
-      });
-    }
     this.state = {
       alignedDataFrame: alignedData,
       data: preparePlotData(alignedData),
@@ -122,18 +99,14 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
       if (shouldConfigUpdate || hasStructureChanged) {
         pluginLog('GraphNG', false, 'updating config');
-        const config = preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone);
-        if (this.props.sync) {
-          config.setCursor({
-            sync: {
-              key: this.props.sync.key,
-              setSeries: this.props.sync.sync === DashboardCursorSync.Tooltip,
-              filters: {
-                pub: syncPubFilter,
-              },
-            },
-          });
-        }
+        const config = preparePlotConfigBuilder(
+          alignedData,
+          theme,
+          this.getTimeRange,
+          this.getTimeZone,
+          this.props.sync
+        );
+
         stateUpdate = { ...stateUpdate, config };
       }
     }

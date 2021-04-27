@@ -3,6 +3,7 @@ import { isNumber } from 'lodash';
 import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
   ArrayVector,
+  DashboardCursorSync,
   DataFrame,
   FieldConfig,
   FieldType,
@@ -27,6 +28,9 @@ import {
   ScaleOrientation,
 } from '../uPlot/config';
 import { collectStackingGroups } from '../uPlot/utils';
+import { PlotSyncConfig } from '../uPlot/context';
+import { globalSyncFilter } from './events';
+import uPlot from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -85,7 +89,8 @@ export function preparePlotConfigBuilder(
   frame: DataFrame,
   theme: GrafanaTheme,
   getTimeRange: () => TimeRange,
-  getTimeZone: () => TimeZone
+  getTimeZone: () => TimeZone,
+  sync?: PlotSyncConfig | null
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder(getTimeZone);
 
@@ -237,6 +242,24 @@ export function preparePlotConfigBuilder(
       }
     }
   }
+
+  // Always publish events
+  const syncMode = sync?.sync ?? DashboardCursorSync.Off;
+  const cursorSync: uPlot.Cursor.Sync = {
+    key: '__global__',
+    filters: {
+      pub: globalSyncFilter,
+    },
+    setSeries: syncMode === DashboardCursorSync.Tooltip,
+  };
+  if (syncMode === DashboardCursorSync.Off) {
+    cursorSync.key = `stub__${counter++}`;
+  }
+
+  builder.setCursor({
+    sync: cursorSync,
+  });
+
   return builder;
 }
 
@@ -247,3 +270,5 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
   }
   return names;
 }
+
+let counter = 0;
