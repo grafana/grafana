@@ -149,7 +149,7 @@ export function getCardStyles(theme: GrafanaThemeV2) {
       .card-item-wrapper {
         padding: 0;
         width: 100%;
-        margin-bottom: ${theme.spacing(4)};
+        margin-bottom: ${theme.spacing(1)};
       }
 
       .card-item-wrapper--clickable {
