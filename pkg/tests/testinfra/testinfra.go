@@ -1,6 +1,7 @@
 package testinfra
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,6 +26,8 @@ import (
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
 	t.Helper()
+
+	ctx := context.Background()
 
 	origSQLStore := registry.GetService(sqlstore.ServiceName)
 	t.Cleanup(func() {
@@ -58,7 +62,9 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 		}
 	}()
 	t.Cleanup(func() {
-		server.Shutdown("test cleanup")
+		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		server.Shutdown(ctx, "test cleanup")
 	})
 
 	// Wait for Grafana to be ready
