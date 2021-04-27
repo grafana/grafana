@@ -69,7 +69,7 @@ export const ConfirmModal = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss}>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
           {dismissText}
         </Button>
         <Button
