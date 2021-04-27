@@ -11,6 +11,9 @@ interface Props {
 }
 
 export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '', error }) => {
+  if (option.element === 'subform') {
+    return <SubformOptionElement option={option} error={error} pathPrefix={pathPrefix} />;
+  }
   return (
     <Field
       label={option.element !== 'checkbox' ? option.label : undefined}
@@ -85,6 +88,24 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
       console.error('Element not supported', option.element);
       return null;
   }
+};
+
+export const SubformOptionElement: FC<Props> = ({ option, pathPrefix = '', error }) => {
+  return (
+    <div>
+      <p>{option.label}</p>
+      {(option.subformOptions ?? []).map((subOption) => {
+        return (
+          <OptionElement
+            key={subOption.propertyName}
+            option={subOption}
+            pathPrefix={`${pathPrefix}${option.propertyName}.`}
+            error={(error as NestDataObject<any, FieldError>)?.[subOption.propertyName]}
+          />
+        );
+      })}
+    </div>
+  );
 };
 
 const validateOption = (value: string, validationRule: string) => {

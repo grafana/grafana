@@ -21,6 +21,53 @@ function option(
   };
 }
 
+const basicAuthOption: NotificationChannelOption = option(
+  'basic_auth',
+  'Basic auth',
+  'Sets the `Authorization` header with the configured username and password. Password and password_file are mutually exclusive.',
+  {
+    element: 'subform',
+    subformOptions: [
+      option('ussername', 'Username', ''),
+      option('password', 'Password', ''),
+      option('password_file', 'Password file', ''),
+    ],
+  }
+);
+
+const tlsConfigOption: NotificationChannelOption = option('tls_config', 'TLS config', 'Configures the TLS settings.', {
+  element: 'subform',
+  subformOptions: [
+    option('ca_file', 'CA file', 'CA certificate to validate the server certificate with.'),
+    option('cert_file', 'Cert file', 'Certificate for client cert authentication to the server.'),
+    option('key_file', 'Key file', 'Key file for client cert authentication to the server.'),
+    option('server_name', 'Server name', 'ServerName extension to indicate the name of the server.'),
+    option('insecure_skip_verify', 'Skip verify', 'Disable validation of the server certificate.', {
+      element: 'checkbox',
+    }),
+  ],
+});
+
+const httpConfigOption: NotificationChannelOption = option(
+  'http_config',
+  'HTTP Config',
+  'Note that `basic_auth`, `bearer_token` and `bearer_token_file` options are mutually exclusive.',
+  {
+    element: 'subform',
+    subformOptions: [
+      basicAuthOption,
+      option('bearer_token', 'Bearer token', 'Sets the `Authorization` header with the configured bearer token.'),
+      option(
+        'bearer_token_file',
+        'Bearer token file',
+        'Sets the `Authorization` header with the bearer token read from the configured file.'
+      ),
+      tlsConfigOption,
+      option('proxy_url', 'Proxy URL', 'Optional proxy URL.'),
+    ],
+  }
+);
+
 export const cloudNotifierTypes: NotifierDTO[] = [
   {
     name: 'Email',
@@ -34,11 +81,11 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option('smarthost', 'SMTP host', 'The SMTP host through which emails are sent.'),
       option('hello', 'Hello', 'The hostname to identify to the SMTP server.'),
       option('auth_username', 'Username', 'SMTP authentication information'),
-      option('auth_username', 'Username', 'SMTP authentication information'),
-      option('auth_username', 'Username', 'SMTP authentication information'),
-      option('auth_username', 'Username', 'SMTP authentication information'),
+      option('auth_password', 'Password', 'SMTP authentication information'),
+      option('auth_secret', 'Secret', 'SMTP authentication information'),
+      option('auth_identity', 'Identity', 'SMTP authentication information'),
       option('require_tls', 'Require TLS', 'The SMTP TLS requirement', { element: 'checkbox' }),
-      // @TODO: tls_config
+      tlsConfigOption,
       option('html', 'Email HTML body', 'The HTML body of the email notification.', {
         placeholder: '{{ template "email.default.html" . }}',
         element: 'textarea',
@@ -80,7 +127,7 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       // @todo details
       // @todo images?
       // @todo links?
-      // @todo http_config
+      httpConfigOption,
     ],
   },
   {
