@@ -443,11 +443,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const tRange = this.datasource.getTimeRange();
-    const urlParams = new URLSearchParams({
+    const urlParams = {
       'match[]': name,
       start: tRange['start'].toString(),
       end: tRange['end'].toString(),
-    });
+    };
     const url = `/api/v1/series`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
