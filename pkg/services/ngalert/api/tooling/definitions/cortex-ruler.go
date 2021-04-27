@@ -295,7 +295,6 @@ const (
 
 // swagger:model
 type PostableGrafanaRule struct {
-	OrgID        int64               `json:"-" yaml:"-"`
 	Title        string              `json:"title" yaml:"title"`
 	Condition    string              `json:"condition" yaml:"condition"`
 	Data         []models.AlertQuery `json:"data" yaml:"data"`

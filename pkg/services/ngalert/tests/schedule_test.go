@@ -35,11 +35,11 @@ func TestWarmStateCache(t *testing.T) {
 
 	expectedEntries := []state.AlertState{
 		{
-			UID:     "test_uid",
-			OrgID:   123,
-			CacheId: "test_uid map[test1:testValue1]",
-			Labels:  data.Labels{"test1": "testValue1"},
-			State:   eval.Normal,
+			AlertRuleUID: "test_uid",
+			OrgID:        123,
+			CacheId:      "test_uid map[test1:testValue1]",
+			Labels:       data.Labels{"test1": "testValue1"},
+			State:        eval.Normal,
 			Results: []state.StateEvaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
 			},
@@ -47,11 +47,11 @@ func TestWarmStateCache(t *testing.T) {
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
 		}, {
-			UID:     "test_uid",
-			OrgID:   123,
-			CacheId: "test_uid map[test2:testValue2]",
-			Labels:  data.Labels{"test2": "testValue2"},
-			State:   eval.Alerting,
+			AlertRuleUID: "test_uid",
+			OrgID:        123,
+			CacheId:      "test_uid map[test2:testValue2]",
+			Labels:       data.Labels{"test2": "testValue2"},
+			State:        eval.Alerting,
 			Results: []state.StateEvaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
 			},

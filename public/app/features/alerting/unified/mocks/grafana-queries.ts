@@ -3,7 +3,7 @@ export const SAMPLE_QUERIES = [
     refId: 'A',
     queryType: '',
     relativeTimeRange: {
-      from: 30,
+      from: 21600,
       to: 0,
     },
     model: {
@@ -26,10 +26,6 @@ export const SAMPLE_QUERIES = [
   {
     refId: 'B',
     queryType: '',
-    relativeTimeRange: {
-      from: 0,
-      to: 0,
-    },
     model: {
       conditions: [
         {

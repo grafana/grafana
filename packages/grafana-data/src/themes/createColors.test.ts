@@ -1,13 +1,13 @@
-import { createPalette } from './createPalette';
+import { createColors } from './createColors';
 
 describe('createColors', () => {
   it('Should enrich colors', () => {
-    const palette = createPalette({});
+    const palette = createColors({});
     expect(palette.primary.name).toBe('primary');
   });
 
   it('Should allow overrides', () => {
-    const palette = createPalette({
+    const palette = createColors({
       primary: {
         main: '#FF0000',
       },

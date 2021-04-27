@@ -10,9 +10,11 @@ import {
   ScaleOrientation,
   ScaleDirection,
 } from '../config';
-import darkTheme from '../../../themes/dark';
+import { createTheme } from '@grafana/data';
 
 describe('UPlotConfigBuilder', () => {
+  const darkTheme = createTheme().v1;
+
   describe('default config', () => {
     it('builds default config', () => {
       const builder = new UPlotConfigBuilder();

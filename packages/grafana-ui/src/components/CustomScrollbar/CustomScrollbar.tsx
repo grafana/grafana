@@ -3,8 +3,8 @@ import { isNil } from 'lodash';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
 import Scrollbars from 'react-custom-scrollbars';
-import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useStyles2 } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
 
 interface Props {
   className?: string;
@@ -38,7 +38,7 @@ export const CustomScrollbar: FC<Props> = ({
   children,
 }) => {
   const ref = useRef<Scrollbars>(null);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const updateScroll = () => {
     if (ref.current && !isNil(scrollTop)) {
@@ -127,7 +127,7 @@ export const CustomScrollbar: FC<Props> = ({
 
 export default CustomScrollbar;
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     customScrollbar: css`
       // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to
@@ -141,27 +141,27 @@ const getStyles = (theme: GrafanaTheme) => {
         flex-direction: column;
       }
       .track-vertical {
-        border-radius: ${theme.border.radius.md};
-        width: ${theme.spacing.sm} !important;
+        border-radius: ${theme.shape.borderRadius(2)};
+        width: ${theme.spacing(1)} !important;
         right: 0px;
-        bottom: ${theme.spacing.xxs};
-        top: ${theme.spacing.xxs};
+        bottom: ${theme.spacing(0.25)};
+        top: ${theme.spacing(0.25)};
       }
       .track-horizontal {
-        border-radius: ${theme.border.radius.md};
-        height: ${theme.spacing.sm} !important;
-        right: ${theme.spacing.xxs};
-        bottom: ${theme.spacing.xxs};
-        left: ${theme.spacing.xxs};
+        border-radius: ${theme.shape.borderRadius(2)};
+        height: ${theme.spacing(1)} !important;
+        right: ${theme.spacing(0.25)};
+        bottom: ${theme.spacing(0.25)};
+        left: ${theme.spacing(0.25)};
       }
       .thumb-vertical {
-        background: ${theme.v2.palette.action.focus};
-        border-radius: ${theme.border.radius.md};
+        background: ${theme.colors.action.focus};
+        border-radius: ${theme.shape.borderRadius(2)};
         opacity: 0;
       }
       .thumb-horizontal {
-        background: ${theme.v2.palette.action.focus};
-        border-radius: ${theme.border.radius.md};
+        background: ${theme.colors.action.focus};
+        border-radius: ${theme.shape.borderRadius(2)};
         opacity: 0;
       }
       &:hover {

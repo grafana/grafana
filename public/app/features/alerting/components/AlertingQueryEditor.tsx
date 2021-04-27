@@ -15,6 +15,8 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
 import { ExpressionQueryType } from '../../expressions/types';
 import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
+import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 interface Props {
   value?: GrafanaQuery[];
@@ -23,23 +25,38 @@ interface Props {
 
 interface State {
   defaultDataSource?: DataSourceApi;
+  panelDataRecord?: Record<string, PanelData>;
 }
 export class AlertingQueryEditor extends PureComponent<Props, State> {
+  private runner: AlertingQueryRunner;
+
   constructor(props: Props) {
     super(props);
     this.state = {};
+    this.runner = new AlertingQueryRunner();
   }
 
   async componentDidMount() {
+    let panelDataRecord: Record<string, PanelData> = {};
     try {
+      this.runner.get().subscribe((data) => (panelDataRecord = data));
       const defaultDataSource = await getDataSourceSrv().get();
-      this.setState({ defaultDataSource });
+      this.setState({ defaultDataSource, panelDataRecord });
     } catch (error) {
       console.error(error);
     }
   }
 
-  onRunQueries = () => {};
+  componentWillUnmount() {
+    this.runner.destroy();
+  }
+
+  onRunQueries = () => {
+    if (!this.props.value) {
+      return;
+    }
+    this.runner.run(this.props.value);
+  };
 
   onDuplicateQuery = (query: GrafanaQuery) => {
     const { onChange, value = [] } = this.props;
@@ -103,6 +120,9 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
             </Button>
           </Tooltip>
         )}
+        <Button type="button" onClick={this.onRunQueries}>
+          Run!
+        </Button>
       </HorizontalGroup>
     );
   }
@@ -136,10 +156,12 @@ const addQuery = (queries: GrafanaQuery[], model: GrafanaQueryModel): GrafanaQue
       hide: false,
       refId: refId,
     },
-    relativeTimeRange: {
-      from: 21600,
-      to: 0,
-    },
+    relativeTimeRange: isExpressionQuery(model)
+      ? undefined
+      : {
+          from: 21600,
+          to: 0,
+        },
   };
 
   return [...queries, query];

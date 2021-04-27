@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -235,6 +240,64 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
+// GetPluginAssets returns public plugin assets (images, JS, etc.)
+//
+// /public/plugins/:pluginId/*
+func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
+	pluginID := c.Params("pluginId")
+	plugin := hs.PluginManager.GetPlugin(pluginID)
+	if plugin == nil {
+		c.Handle(hs.Cfg, 404, "Plugin not found", nil)
+		return
+	}
+
+	requestedFile := filepath.Clean(c.Params("*"))
+	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
+
+	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
+	// use this with a prefix of the plugin's directory, which is set during plugin loading
+	// nolint:gosec
+	f, err := os.Open(pluginFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.Handle(hs.Cfg, 404, "Could not find plugin file", err)
+			return
+		}
+		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
+		return
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			hs.log.Error("Failed to close file", "err", err)
+		}
+	}()
+
+	fi, err := f.Stat()
+	if err != nil {
+		c.Handle(hs.Cfg, 500, "Plugin file exists but could not open", err)
+		return
+	}
+
+	if shouldExclude(fi) {
+		c.Handle(hs.Cfg, 404, "Plugin file not found", nil)
+		return
+	}
+
+	headers := func(c *macaron.Context) {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+
+	if hs.Cfg.Env == setting.Dev {
+		headers = func(c *macaron.Context) {
+			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		}
+	}
+
+	headers(c.Context)
+
+	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
+}
+
 // CheckHealth returns the health of a plugin.
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
@@ -316,4 +379,14 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	}
 
 	return response.Error(500, "Plugin request failed", err)
+}
+
+func shouldExclude(fi os.FileInfo) bool {
+	normalizedFilename := strings.ToLower(fi.Name())
+
+	isUnixExecutable := fi.Mode()&0111 == 0111
+	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
+	isScript := strings.HasSuffix(normalizedFilename, ".sh")
+
+	return isUnixExecutable || isWindowsExecutable || isScript
 }

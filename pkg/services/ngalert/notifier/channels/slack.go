@@ -11,7 +11,6 @@ import (
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -136,12 +135,12 @@ type attachment struct {
 func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	msg, err := sn.buildSlackMessage(ctx, as)
 	if err != nil {
-		return false, errors.Wrap(err, "build slack message")
+		return false, fmt.Errorf("build slack message: %w", err)
 	}
 
 	b, err := json.Marshal(msg)
 	if err != nil {
-		return false, errors.Wrap(err, "marshal json")
+		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
 	cmd := &models.SendWebhookSync{
@@ -227,7 +226,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	}
 
 	if tmplErr != nil {
-		tmplErr = errors.Wrap(tmplErr, "failed to template Slack message")
+		tmplErr = fmt.Errorf("failed to template Slack message: %w", tmplErr)
 	}
 
 	return req, tmplErr

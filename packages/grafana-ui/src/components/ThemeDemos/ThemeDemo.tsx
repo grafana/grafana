@@ -1,9 +1,9 @@
 import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
-import { GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
+import { GrafanaThemeV2, ThemeRichColor } from '@grafana/data';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
@@ -53,17 +53,15 @@ export const ThemeDemo = () => {
   const [radioValue, setRadioValue] = useState('v');
   const [boolValue, setBoolValue] = useState(false);
   const [selectValue, setSelectValue] = useState('Item 2');
-  const oldTheme = useTheme();
-
-  const t = oldTheme.v2;
+  const t = useTheme2();
 
   const richColors = [
-    t.palette.primary,
-    t.palette.secondary,
-    t.palette.success,
-    t.palette.error,
-    t.palette.warning,
-    t.palette.info,
+    t.colors.primary,
+    t.colors.secondary,
+    t.colors.success,
+    t.colors.error,
+    t.colors.warning,
+    t.colors.info,
   ];
 
   const selectOptions = [
@@ -82,16 +80,16 @@ export const ThemeDemo = () => {
     <div
       className={css`
         width: 100%;
-        color: ${t.palette.text.primary};
+        color: ${t.colors.text.primary};
       `}
     >
-      <DemoBox bg={t.palette.background.canvas}>
+      <DemoBox bg={t.colors.background.canvas}>
         <CollapsableSection label="Layers" isOpen={true}>
-          <DemoText>t.palette.background.canvas</DemoText>
-          <DemoBox bg={t.palette.background.primary} border={t.palette.border.weak}>
-            <DemoText>t.palette.background.primary is the main & preferred content </DemoText>
-            <DemoBox bg={t.palette.background.secondary} border={t.palette.border.weak}>
-              <DemoText>t.palette.background.secondary and t.palette.border.layer1</DemoText>
+          <DemoText>t.colors.background.canvas</DemoText>
+          <DemoBox bg={t.colors.background.primary} border={t.colors.border.weak}>
+            <DemoText>t.colors.background.primary is the main & preferred content </DemoText>
+            <DemoBox bg={t.colors.background.secondary} border={t.colors.border.weak}>
+              <DemoText>t.colors.background.secondary and t.colors.border.layer1</DemoText>
             </DemoBox>
           </DemoBox>
         </CollapsableSection>
@@ -100,16 +98,16 @@ export const ThemeDemo = () => {
             <DemoBox>
               <TextColors t={t} />
             </DemoBox>
-            <DemoBox bg={t.palette.background.primary}>
+            <DemoBox bg={t.colors.background.primary}>
               <TextColors t={t} />
             </DemoBox>
-            <DemoBox bg={t.palette.background.secondary}>
+            <DemoBox bg={t.colors.background.secondary}>
               <TextColors t={t} />
             </DemoBox>
           </HorizontalGroup>
         </CollapsableSection>
         <CollapsableSection label="Rich colors" isOpen={true}>
-          <DemoBox bg={t.palette.background.primary}>
+          <DemoBox bg={t.colors.background.primary}>
             <table className={colorsTableStyle}>
               <thead>
                 <tr>
@@ -128,7 +126,7 @@ export const ThemeDemo = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Forms" isOpen={true}>
-          <DemoBox bg={t.palette.background.primary}>
+          <DemoBox bg={t.colors.background.primary}>
             <Field label="Input label" description="Field description">
               <Input placeholder="Placeholder" />
             </Field>
@@ -166,7 +164,7 @@ export const ThemeDemo = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Shadows" isOpen={true}>
-          <DemoBox bg={t.palette.background.primary}>
+          <DemoBox bg={t.colors.background.primary}>
             <HorizontalGroup>
               {Object.keys(t.shadows).map((key) => (
                 <ShadowDemo name={key} shadow={(t.shadows as any)[key]} key={key} />
@@ -175,7 +173,7 @@ export const ThemeDemo = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Buttons" isOpen={true}>
-          <DemoBox bg={t.palette.background.primary}>
+          <DemoBox bg={t.colors.background.primary}>
             <VerticalGroup spacing="lg">
               <HorizontalGroup>
                 {allButtonVariants.map((variant) => (
@@ -214,7 +212,7 @@ export const ThemeDemo = () => {
 
 interface RichColorDemoProps {
   theme: GrafanaThemeV2;
-  color: ThemePaletteColor;
+  color: ThemeRichColor;
 }
 
 export function RichColorDemo({ theme, color }: RichColorDemoProps) {
@@ -274,16 +272,16 @@ const colorsTableStyle = css`
 export function TextColors({ t }: { t: GrafanaThemeV2 }) {
   return (
     <>
-      <DemoText color={t.palette.text.primary}>
+      <DemoText color={t.colors.text.primary}>
         text.primary <Icon name="trash-alt" />
       </DemoText>
-      <DemoText color={t.palette.text.secondary}>
+      <DemoText color={t.colors.text.secondary}>
         text.secondary <Icon name="trash-alt" />
       </DemoText>
-      <DemoText color={t.palette.text.disabled}>
+      <DemoText color={t.colors.text.disabled}>
         text.disabled <Icon name="trash-alt" />
       </DemoText>
-      <DemoText color={t.palette.primary.text}>
+      <DemoText color={t.colors.primary.text}>
         primary.text <Icon name="trash-alt" />
       </DemoText>
     </>
@@ -299,27 +297,27 @@ export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
 }
 
 export function ActionsDemo() {
-  const t = useTheme().v2;
+  const t = useTheme2();
 
   const item = css({
     padding: '8px',
     ':hover': {
-      background: t.palette.action.hover,
+      background: t.colors.action.hover,
     },
   });
   const hover = css({
-    background: t.palette.action.hover,
+    background: t.colors.action.hover,
   });
   const selected = css({
-    background: t.palette.action.selected,
+    background: t.colors.action.selected,
   });
   const focused = css({
-    background: t.palette.action.focus,
+    background: t.colors.action.focus,
   });
 
   return (
     <HorizontalGroup>
-      <DemoBox bg={t.palette.background.canvas}>
+      <DemoBox bg={t.colors.background.canvas}>
         <VerticalGroup>
           <div className={item}>item</div>
           <div className={item}>item</div>
@@ -328,7 +326,7 @@ export function ActionsDemo() {
           <div className={cx(item, focused)}>item focused</div>
         </VerticalGroup>
       </DemoBox>
-      <DemoBox bg={t.palette.background.primary}>
+      <DemoBox bg={t.colors.background.primary}>
         <VerticalGroup>
           <div className={item}>item</div>
           <div className={item}>item</div>
@@ -337,7 +335,7 @@ export function ActionsDemo() {
           <div className={cx(item, focused)}>item focused</div>
         </VerticalGroup>
       </DemoBox>
-      <DemoBox bg={t.palette.background.secondary}>
+      <DemoBox bg={t.colors.background.secondary}>
         <VerticalGroup>
           <div className={item}>item</div>
           <div className={item}>item</div>

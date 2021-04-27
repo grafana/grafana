@@ -4,20 +4,19 @@ import {
   Button,
   Container,
   CustomScrollbar,
-  stylesFactory,
   Themeable,
   FeatureInfoBox,
-  useTheme,
   VerticalGroup,
   withTheme,
   Input,
   IconButton,
+  useStyles2,
 } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
   DocsId,
-  GrafanaTheme,
+  GrafanaThemeV2,
   PanelData,
   SelectableValue,
   standardTransformersRegistry,
@@ -362,18 +361,17 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 }
 
 const TransformationCard: React.FC<CardProps> = (props) => {
-  const theme = useTheme();
-  const styles = getTransformationCardStyles(theme);
+  const styles = useStyles2(getStyles);
   return <Card {...props} className={styles.card} />;
 };
 
-const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     card: css`
-      background: ${theme.colors.bg2};
+      background: ${theme.colors.background.secondary};
       width: 100%;
       border: none;
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
 
       // hack because these cards use classes from a very different card for some reason
       .add-data-source-item-text {
@@ -381,12 +379,12 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       &:hover {
-        background: ${theme.v2.palette.action.hover};
+        background: ${theme.colors.action.hover};
         box-shadow: none;
         border: none;
       }
     `,
   };
-});
+};
 
 export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);

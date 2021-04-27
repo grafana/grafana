@@ -33,7 +33,7 @@ If you are using the cloud account, then the wizards will guide you through the 
 
 > **Note:** The regular system monitoring template in InfluxDB Cloud is not compatible with Windows. Windows users who use InfluxDB Cloud to monitor their system will need to use the [Windows System Monitoring Template](https://github.com/influxdata/community-templates/tree/master/windows_system).
 
-## Step 4. Add your InfluxDB data source to Grafana
+## Step 5. Add your InfluxDB data source to Grafana
 
 You can have more than one InfluxDB data source defined in Grafana.
 
@@ -57,7 +57,7 @@ InfluxDB publishes guidance for connecting different versions of their product t
 - If the text name of the organization or bucket doesn't work, then try the ID number.
 - If you change your bucket name in InfluxDB, then you must also change it in Grafana and your Telegraf .conf file as well.
 
-## Step 5. Add a query
+## Step 6. Add a query
 
 This step varies depending on the query language that you selected when you set up your data source in Grafana.
 
@@ -97,11 +97,11 @@ You can also create Flux queries in the InfluxDB Explore view.
 1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
 1. Click **Apply**. Your new panel should be visible with data from your Flux query.
 
-## Step 6. Check InfluxDB metrics in Grafana Explore
+## Step 7. Check InfluxDB metrics in Grafana Explore
 
 In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics.
 
-## Step 7. Start building dashboards
+## Step 8. Start building dashboards
 
 There you go! Use Explore and Data Explorer to experiment with your data, and add the queries that you like to your dashboard as panels. Have fun!
 

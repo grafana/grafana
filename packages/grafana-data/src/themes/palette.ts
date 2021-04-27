@@ -1,16 +1,7 @@
-export const colors = {
+export const palette = {
   white: '#fff',
   black: '#000',
 
-  // old
-  gray98: '#f7f8fa',
-  gray97: '#f1f5f9',
-  gray95: '#e9edf2',
-  //gray90: '#dce1e6',
-  gray85: '#c7d0d9',
-  gray70: '#9fa7b3',
-  gray60: '#7b8087',
-  gray33: '#464c54',
   gray25: '#2c3235',
   gray15: '#22252b', //'#202226',
   gray10: '#181b1f', // old '#141619',

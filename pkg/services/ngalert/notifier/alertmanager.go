@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"errors"
+
 	gokit_log "github.com/go-kit/kit/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
@@ -115,19 +116,19 @@ func (am *Alertmanager) Init() (err error) {
 		nflog.WithSnapshot(filepath.Join(am.WorkingDirPath(), "notifications")),
 	)
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize the notification log component of alerting")
+		return fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
 	am.silences, err = silence.New(silence.Options{
 		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
 		Retention:    retentionNotificationsAndSilences,
 	})
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
+		return fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
 	am.alerts, err = NewAlertProvider(am.marker)
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize the alert provider component of alerting")
+		return fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
 
 	return nil
@@ -136,7 +137,7 @@ func (am *Alertmanager) Init() (err error) {
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
 	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-		am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
+		am.logger.Error("unable to sync configuration", "err", err)
 	}
 
 	for {
@@ -146,7 +147,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 			return nil
 		case <-time.After(pollInterval):
 			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-				am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
+				am.logger.Error("unable to sync configuration", "err", err)
 			}
 		}
 	}
@@ -171,7 +172,7 @@ func (am *Alertmanager) StopAndWait() {
 func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
-		return errors.Wrap(err, "failed to serialize to the Alertmanager configuration")
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
 	}
 
 	am.reloadConfigMtx.Lock()
@@ -183,10 +184,13 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	}
 
 	if err := am.Store.SaveAlertmanagerConfiguration(cmd); err != nil {
-		return errors.Wrap(err, "failed to save Alertmanager configuration")
+		return fmt.Errorf("failed to save Alertmanager configuration: %w", err)
+	}
+	if err := am.applyConfig(cfg); err != nil {
+		return fmt.Errorf("unable to reload configuration: %w", err)
 	}
 
-	return errors.Wrap(am.applyConfig(cfg), "unable to reload configuration")
+	return nil
 }
 
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
@@ -202,7 +206,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration}
 		} else {
-			return errors.Wrap(err, "unable to get Alertmanager configuration from the database")
+			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
 		}
 	}
 
@@ -211,7 +215,11 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 		return err
 	}
 
-	return errors.Wrap(am.applyConfig(cfg), "unable to reload configuration")
+	if err := am.applyConfig(cfg); err != nil {
+		return fmt.Errorf("unable to reload configuration: %w", err)
+	}
+
+	return nil
 }
 
 // ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
