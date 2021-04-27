@@ -96,6 +96,26 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	return nil
 }
 
+func (m *manager) Unregister(pluginID string) error {
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
+	p, exists := m.plugins[pluginID]
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	if err := p.Stop(context.Background()); err != nil {
+		return err
+	}
+
+	delete(m.plugins, pluginID)
+
+	m.logger.Debug("Backend plugin unregistered", "pluginId", pluginID)
+	return nil
+}
+
 func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
 	p, ok := m.plugins[pluginID]
 	return p, ok

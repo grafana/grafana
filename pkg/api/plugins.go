@@ -361,6 +361,22 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 	return response.JSON(200, hs.PluginManager.ScanningErrors())
 }
 
+func (hs *HTTPServer) InstallPlugin(_ *models.ReqContext) response.Response {
+	//pluginID := c.Params("pluginId")
+
+	return response.JSON(200, []byte{})
+}
+
+func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
+	pluginID := c.Params("pluginId")
+
+	err := hs.PluginManager.Uninstall(pluginID)
+	if err != nil {
+		return response.Error(500, "Failed to uninstall plugin", err)
+	}
+	return response.JSON(200, []byte{})
+}
+
 func translatePluginRequestErrorToAPIError(err error) response.Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
 		return response.Error(404, "Plugin not found", err)

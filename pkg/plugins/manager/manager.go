@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -499,7 +500,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 		return err
 	}
 
-	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
+	signatureState, err := GetPluginSignatureState(s.log, &pluginCommon)
 	if err != nil {
 		s.log.Warn("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
 		return err
@@ -682,4 +683,55 @@ func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	return pm.staticRoutes
+}
+
+func (pm *PluginManager) Uninstall(pluginID string) error {
+	plugin := pm.plugins[pluginID]
+	if plugin == nil {
+		return fmt.Errorf("trying to delete a plugin \"%s\" that doesn't exist", pluginID)
+	}
+
+	if plugin.Backend {
+		err := pm.BackendPluginManager.Unregister(plugin.Id)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := pm.unregister(plugin)
+	if err != nil {
+		return err
+	}
+
+	i := installer.New(true, pm.Cfg.BuildVersion, NewInstallerLogger("installer.logger", true))
+	return i.Uninstall(pluginID, pm.Cfg.PluginsPath)
+}
+
+func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
+	switch plugin.Type {
+	case "panel":
+		delete(pm.panels, plugin.Id)
+	case "datasource":
+		delete(pm.dataSources, plugin.Id)
+	case "app":
+		delete(pm.apps, plugin.Id)
+	case "renderer":
+		pm.renderer = nil
+	}
+
+	delete(pm.plugins, plugin.Id)
+
+	for i, route := range pm.staticRoutes {
+		if plugin.Id == route.PluginId {
+			deleteStaticRoute(pm.staticRoutes, i)
+		}
+	}
+
+	return nil
+}
+
+func deleteStaticRoute(s []*plugins.PluginStaticRoute, i int) []*plugins.PluginStaticRoute {
+	s[i] = s[len(s)-1]
+
+	return s[:len(s)-1]
 }
