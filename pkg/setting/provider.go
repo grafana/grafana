@@ -94,7 +94,7 @@ func (o OSSImpl) Init() error {
 }
 
 func (OSSImpl) Update(SettingsBag, SettingsRemovals) error {
-	return nil
+	return errors.New("oss settings provider do not have support for settings updates")
 }
 
 func (o *OSSImpl) KeyValue(section, key string) KeyValue {
@@ -105,8 +105,7 @@ func (o *OSSImpl) Section(section string) Section {
 	return &sectionImpl{section: o.Cfg.Raw.Section(section)}
 }
 
-func (OSSImpl) RegisterReloadHandler(section string, handler ReloadHandler) {
-}
+func (OSSImpl) RegisterReloadHandler(string, ReloadHandler) {}
 
 type keyValImpl struct {
 	key *ini.Key
