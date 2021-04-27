@@ -90,6 +90,9 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
           </small>
         </div>
         <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            Cancel
+          </Button>
           <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
           <Button
             variant="destructive"
@@ -99,9 +102,6 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
             }}
           >
             Overwrite
-          </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
           </Button>
         </Modal.ButtonRow>
       </div>

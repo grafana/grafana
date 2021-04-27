@@ -36,7 +36,7 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
           {!connected ? <Confirm /> : null}
 
           <Modal.ButtonRow>
-            <Button variant="secondary" onClick={onDismiss}>
+            <Button variant="secondary" onClick={onDismiss} fill="outline">
               Cancel
             </Button>
             <Button variant="destructive" onClick={onConfirm} disabled={connected}>
