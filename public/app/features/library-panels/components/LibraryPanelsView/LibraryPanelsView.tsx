@@ -58,7 +58,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         {loadingState === LoadingState.Loading ? (
           <p>Loading library panels...</p>
         ) : libraryPanels.length < 1 ? (
-          <p>No library panels found.</p>
+          <p className={styles.noPanelsFound}>No library panels found.</p>
         ) : (
           libraryPanels?.map((item, i) => (
             <LibraryPanelCard
@@ -107,6 +107,10 @@ const getPanelViewStyles = (theme: GrafanaTheme) => {
     pagination: css`
       align-self: center;
       margin-top: ${theme.spacing.sm};
+    `,
+    noPanelsFound: css`
+      label: noPanelsFound;
+      min-height: 200px;
     `,
   };
 };

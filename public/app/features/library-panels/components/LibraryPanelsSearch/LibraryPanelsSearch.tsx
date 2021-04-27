@@ -1,6 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import { useAsync } from 'react-use';
-import { getLibraryPanels } from '../../state/api';
 import { HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 import { GrafanaThemeV2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
@@ -33,21 +31,9 @@ export const LibraryPanelsSearch = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortDirection, setSortDirection] = useState<string | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
-  const { value: searchResult, loading } = useAsync(async () => {
-    return getLibraryPanels();
-  });
   const styles = useStyles2(getStyles);
   const onSortChange = useCallback((sort: SelectableValue<string>) => setSortDirection(sort.value), []);
   const onFilterChange = useCallback((plugins: PanelPluginMeta[]) => setPanelFilter(plugins.map((p) => p.id)), []);
-  const hasLibraryPanels = Boolean(searchResult?.libraryPanels.length);
-
-  if (loading) {
-    return <div>Loading global panels...</div>;
-  }
-
-  if (!hasLibraryPanels) {
-    return <div>No global panels found</div>;
-  }
 
   return (
     <div className={styles.container}>

@@ -43,6 +43,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
     noOptionsMessage: 'No Panel types found',
     placeholder: 'Filter by Panel type',
     styles: resetSelectStyles(),
+    maxMenuHeight: 150,
     options,
     value,
     onChange,
