@@ -10,13 +10,13 @@ import { Icon } from '../Icon/Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
-export type ButtonStyle = 'solid' | 'outline' | 'text';
-export const allButtonStyles: ButtonStyle[] = ['solid', 'outline', 'text'];
+export type ButtonFill = 'solid' | 'outline' | 'text';
+export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
 type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
-  buttonStyle?: ButtonStyle;
+  fill?: ButtonFill;
   icon?: IconName;
   className?: string;
   children?: React.ReactNode;
@@ -26,23 +26,20 @@ type CommonProps = {
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    { variant = 'primary', size = 'md', buttonStyle = 'solid', icon, fullWidth, children, className, ...otherProps },
-    ref
-  ) => {
+  ({ variant = 'primary', size = 'md', fill = 'solid', icon, fullWidth, children, className, ...otherProps }, ref) => {
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
       size,
       variant,
-      buttonStyle,
+      fill,
       fullWidth,
       iconOnly: !children,
     });
 
     deprecatedPropWarning(
       variant === 'link',
-      `${Button.displayName}: Prop variant="link" is deprecated. Please use buttonStyle="text".`
+      `${Button.displayName}: Prop variant="link" is deprecated. Please use fill="text".`
     );
 
     return (
@@ -63,7 +60,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     {
       variant = 'primary',
       size = 'md',
-      buttonStyle = 'solid',
+      fill = 'solid',
       icon,
       fullWidth,
       children,
@@ -81,7 +78,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       fullWidth,
       size,
       variant,
-      buttonStyle,
+      fill,
       iconOnly: !children,
     });
 
@@ -89,7 +86,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
     deprecatedPropWarning(
       variant === 'link',
-      `${LinkButton.displayName}: Prop variant="link" is deprecated. Please use buttonStyle="text".`
+      `${LinkButton.displayName}: Prop variant="link" is deprecated. Please use fill="text".`
     );
 
     return (
@@ -106,7 +103,7 @@ LinkButton.displayName = 'LinkButton';
 export interface StyleProps {
   size: ComponentSize;
   variant: ButtonVariant;
-  buttonStyle?: ButtonStyle;
+  fill?: ButtonFill;
   iconOnly?: boolean;
   theme: GrafanaThemeV2;
   fullWidth?: boolean;
@@ -114,10 +111,10 @@ export interface StyleProps {
 }
 
 export const getButtonStyles = (props: StyleProps) => {
-  const { theme, variant, buttonStyle = 'solid', size, iconOnly, fullWidth } = props;
+  const { theme, variant, fill = 'solid', size, iconOnly, fullWidth } = props;
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
-  const variantStyles = getPropertiesForVariant(theme, variant, buttonStyle);
-  const disabledStyles = getPropertiesForDisabled(theme, variant, buttonStyle);
+  const variantStyles = getPropertiesForVariant(theme, variant, fill);
+  const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
 
   const focusStyle = getFocusStyles(theme);
 
@@ -166,8 +163,8 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, style: ButtonStyle): CSSObject {
-  if (style === 'outline') {
+function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+  if (fill === 'outline') {
     return {
       background: 'transparent',
       color: color.text,
@@ -184,7 +181,7 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, st
     };
   }
 
-  if (style === 'text') {
+  if (fill === 'text') {
     return {
       background: 'transparent',
       color: color.text,
@@ -221,7 +218,7 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, st
   };
 }
 
-function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant, style: ButtonStyle) {
+function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant, fill: ButtonFill) {
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
     boxShadow: 'none',
@@ -230,7 +227,7 @@ function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant,
     transition: 'none',
   };
 
-  if (style === 'text' || variant === 'link') {
+  if (fill === 'text' || variant === 'link') {
     return {
       ...disabledStyles,
       background: 'transparent',
@@ -238,7 +235,7 @@ function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant,
     };
   }
 
-  if (style === 'outline') {
+  if (fill === 'outline') {
     return {
       ...disabledStyles,
       background: 'transparent',
@@ -253,20 +250,20 @@ function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant,
   };
 }
 
-export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant, style: ButtonStyle) {
+export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant, fill: ButtonFill) {
   const buttonVariant = variant === 'link' ? 'primary' : variant;
-  const buttonStyle = variant === 'link' ? 'text' : style;
+  const buttonFill = variant === 'link' ? 'text' : fill;
 
   switch (buttonVariant) {
     case 'secondary':
-      return getButtonVariantStyles(theme, theme.colors.secondary, buttonStyle);
+      return getButtonVariantStyles(theme, theme.colors.secondary, buttonFill);
 
     case 'destructive':
-      return getButtonVariantStyles(theme, theme.colors.error, buttonStyle);
+      return getButtonVariantStyles(theme, theme.colors.error, buttonFill);
 
     case 'primary':
     default:
-      return getButtonVariantStyles(theme, theme.colors.primary, buttonStyle);
+      return getButtonVariantStyles(theme, theme.colors.primary, buttonFill);
   }
 }
 

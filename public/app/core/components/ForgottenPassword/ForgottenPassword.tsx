@@ -55,7 +55,7 @@ export const ForgottenPassword: FC = () => {
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>
-            <LinkButton buttonStyle="text" href={loginHref}>
+            <LinkButton fill="text" href={loginHref}>
               Back to login
             </LinkButton>
           </HorizontalGroup>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story, Meta } from '@storybook/react';
-import { allButtonVariants, allButtonStyles, Button, ButtonProps } from './Button';
+import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
 import { iconOptions } from '../../utils/storybook/knobs';
 import mdx from './Button.mdx';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
@@ -33,17 +33,17 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
   const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
   return (
     <VerticalGroup>
-      {allButtonStyles.map((buttonStyle) => (
-        <VerticalGroup key={buttonStyle}>
+      {allButtonFills.map((buttonFill) => (
+        <VerticalGroup key={buttonFill}>
           <HorizontalGroup spacing="lg">
             {allButtonVariants.map((variant) => (
-              <VerticalGroup spacing="lg" key={`${buttonStyle}-${variant}`}>
+              <VerticalGroup spacing="lg" key={`${buttonFill}-${variant}`}>
                 {sizes.map((size) => (
-                  <Button variant={variant} buttonStyle={buttonStyle} size={size} key={size}>
+                  <Button variant={variant} fill={buttonFill} size={size} key={size}>
                     {variant} {size}
                   </Button>
                 ))}
-                <Button variant={variant} buttonStyle={buttonStyle} disabled>
+                <Button variant={variant} fill={buttonFill} disabled>
                   {variant} disabled
                 </Button>
               </VerticalGroup>
