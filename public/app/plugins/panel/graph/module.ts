@@ -373,6 +373,7 @@ export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
       FieldConfigProperty.Mappings,
     ],
   })
+  .setDataSupport({ annotations: true, alertStates: true })
   .setMigrationHandler(graphPanelMigrationHandler);
 
 // Use the angular ctrt rather than a react one

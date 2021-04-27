@@ -198,6 +198,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaThemeV2) => {
       color: ${theme.colors.text.secondary};
       margin: ${theme.spacing(0.5, 0, 0)};
       line-height: ${theme.typography.bodySmall.lineHeight};
+      overflow-wrap: anywhere;
     `,
     description: css`
       width: 100%;
