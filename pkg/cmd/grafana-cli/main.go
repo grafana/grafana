@@ -72,7 +72,7 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		services.Init(version, c.Bool("insecure"))
+		services.Init(version, c.Bool("insecure"), c.Bool("debug"))
 		return nil
 	}
 
