@@ -3,7 +3,7 @@ import { BusEventWithPayload } from './types';
 
 /** @alpha */
 export interface PayloadWithSource {
-  source?: string; // source from where the event originates
+  source?: any; // source from where the event originates
 }
 
 /** @alpha */

@@ -99,24 +99,26 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
  * Wraps EventBus and adds a source to help with identifying if a subscriber should react to the event or not.
  */
 export class EventBusWithSource implements EventBus {
-  source: string;
-  eventBus: EventBus;
-
-  constructor(eventBus: EventBus, source: string) {
-    this.eventBus = eventBus;
-    this.source = source;
-  }
+  constructor(private eventBus: EventBus, private localOnly: boolean) {}
 
   publish<T extends BusEvent>(event: T): void {
     const decoratedEvent = {
       ...event,
-      ...{ payload: { ...event.payload, ...{ source: this.source } } },
+      ...{ payload: { ...event.payload, ...{ source: this } } },
     };
     this.eventBus.publish(decoratedEvent);
   }
 
+  updateScope(localOnly: boolean) {
+    this.localOnly = localOnly;
+  }
+
   subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
-    return this.eventBus.subscribe(eventType, handler);
+    return this.eventBus.subscribe(eventType, (event) => {
+      if (!this.localOnly || event.payload.source === this) {
+        handler(event);
+      }
+    });
   }
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
@@ -128,6 +130,6 @@ export class EventBusWithSource implements EventBus {
   }
 
   isOwnEvent(event: BusEventWithPayload<PayloadWithSource>): boolean {
-    return event.payload.source === this.source;
+    return event.payload.source === this;
   }
 }
