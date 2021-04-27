@@ -61,13 +61,7 @@ func (api *API) RegisterAPIEndpoints() {
 		DataProxy: api.DataProxy,
 	}
 
-	var reg prometheus.Registerer
-	// hack, this just assumes that if this histogram is enabled, we should enable others
-	// TODO(owen-d): expose this as a config option (alerting-instrumentation or similar)
-	if api.Cfg.IsHTTPRequestHistogramEnabled() {
-		reg = prometheus.DefaultRegisterer
-	}
-	metrics := NewMetrics(reg)
+	metrics := NewMetrics(prometheus.DefaultRegisterer)
 
 	// Register endpoints for proxing to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
