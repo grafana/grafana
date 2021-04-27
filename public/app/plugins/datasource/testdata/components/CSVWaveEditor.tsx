@@ -55,7 +55,7 @@ class CSVWaveEditor extends PureComponent<WaveProps> {
         >
           <Input value={wave.valuesCSV} placeholder={'CSV values'} onChange={this.onCSVChange} autoFocus={true} />
         </InlineField>
-        <InlineField label={'Time'} tooltip="The number of seconds between datapoints.">
+        <InlineField label={'Step'} tooltip="The number of seconds between datapoints.">
           <Input value={wave.timeStep} type="number" placeholder={'60'} width={6} onChange={this.onTimeStepChange} />
         </InlineField>
         <InlineField label={'Labels'}>
