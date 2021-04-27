@@ -16,7 +16,8 @@ export interface DashboardQueryRunnerResult {
 export interface DashboardQueryRunner {
   run: (options: DashboardQueryRunnerOptions) => void;
   getResult: (panelId?: number) => Observable<DashboardQueryRunnerResult>;
-  cancel: () => void;
+  cancel: (annotation: AnnotationQuery) => void;
+  cancellations: () => Observable<AnnotationQuery>;
   destroy: () => void;
 }
 

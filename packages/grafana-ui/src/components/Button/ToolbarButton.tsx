@@ -105,8 +105,8 @@ function renderIcon(icon: IconName | React.ReactNode) {
 }
 
 const getStyles = (theme: GrafanaThemeV2) => {
-  const primaryVariant = getPropertiesForVariant(theme, 'primary');
-  const destructiveVariant = getPropertiesForVariant(theme, 'destructive');
+  const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
+  const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 
   return {
     button: css`

@@ -1,10 +1,12 @@
+import { Subject } from 'rxjs';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
+import { locationService, setEchoSrv } from '@grafana/runtime';
+
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
-import { locationService, setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
@@ -90,6 +92,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       getResult: emptyResult,
       run: jest.fn(),
       cancel: () => undefined,
+      cancellations: () => new Subject<any>(),
       destroy: () => undefined,
     }));
 
