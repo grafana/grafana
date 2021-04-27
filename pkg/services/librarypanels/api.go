@@ -81,7 +81,15 @@ func (lps *LibraryPanelService) getHandler(c *models.ReqContext) response.Respon
 
 // getAllHandler handles GET /api/library-panels/.
 func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) response.Response {
-	libraryPanels, err := lps.getAllLibraryPanels(c, c.QueryInt("perPage"), c.QueryInt("page"), c.Query("name"), c.Query("excludeUid"))
+	query := searchLibraryPanelsQuery{
+		perPage:       c.QueryInt("perPage"),
+		page:          c.QueryInt("page"),
+		searchString:  c.Query("searchString"),
+		sortDirection: c.Query("sortDirection"),
+		panelFilter:   c.Query("panelFilter"),
+		excludeUID:    c.Query("excludeUid"),
+	}
+	libraryPanels, err := lps.getAllLibraryPanels(c, query)
 	if err != nil {
 		return toLibraryPanelError(err, "Failed to get library panels")
 	}

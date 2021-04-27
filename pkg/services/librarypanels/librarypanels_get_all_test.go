@@ -311,7 +311,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 1 and name is panel2, it should succeed and the result should be correct",
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 1 and searchString is panel2, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
 			resp := sc.service.createHandler(sc.reqContext, command)
@@ -321,7 +321,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "1")
-			sc.reqContext.Req.Form.Add("name", "panel2")
+			sc.reqContext.Req.Form.Add("searchString", "panel2")
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -375,7 +375,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and name is panel, it should succeed and the result should be correct",
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString is panel, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
 			resp := sc.service.createHandler(sc.reqContext, command)
@@ -385,7 +385,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "3")
-			sc.reqContext.Req.Form.Add("name", "panel")
+			sc.reqContext.Req.Form.Add("searchString", "panel")
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -405,7 +405,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and name does not exist, it should succeed and the result should be correct",
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString does not exist, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
 			resp := sc.service.createHandler(sc.reqContext, command)
@@ -415,7 +415,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "3")
-			sc.reqContext.Req.Form.Add("name", "monkey")
+			sc.reqContext.Req.Form.Add("searchString", "monkey")
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 

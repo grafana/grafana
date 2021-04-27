@@ -384,42 +384,42 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 }
 
 // getAllLibraryPanels gets all library panels.
-func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPage int, page int, name string, excludeUID string) (LibraryPanelSearchResult, error) {
+func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query searchLibraryPanelsQuery) (LibraryPanelSearchResult, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	result := LibraryPanelSearchResult{}
-	if perPage <= 0 {
-		perPage = 100
+	if query.perPage <= 0 {
+		query.perPage = 100
 	}
-	if page <= 0 {
-		page = 1
+	if query.page <= 0 {
+		query.page = 1
 	}
 
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
 		builder.Write(` WHERE lp.org_id=? AND lp.folder_id=0`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(name)) > 0 {
-			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
+		if len(strings.TrimSpace(query.searchString)) > 0 {
+			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
 		}
-		if len(strings.TrimSpace(excludeUID)) > 0 {
-			builder.Write(" AND lp.uid <> ?", excludeUID)
+		if len(strings.TrimSpace(query.excludeUID)) > 0 {
+			builder.Write(" AND lp.uid <> ?", query.excludeUID)
 		}
 		builder.Write(" UNION ")
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(name)) > 0 {
-			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
+		if len(strings.TrimSpace(query.searchString)) > 0 {
+			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
 		}
-		if len(strings.TrimSpace(excludeUID)) > 0 {
-			builder.Write(" AND lp.uid <> ?", excludeUID)
+		if len(strings.TrimSpace(query.excludeUID)) > 0 {
+			builder.Write(" AND lp.uid <> ?", query.excludeUID)
 		}
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
 		}
-		if perPage != 0 {
-			offset := perPage * (page - 1)
-			builder.Write(lps.SQLStore.Dialect.LimitOffset(int64(perPage), int64(offset)))
+		if query.perPage != 0 {
+			offset := query.perPage * (query.page - 1)
+			builder.Write(lps.SQLStore.Dialect.LimitOffset(int64(query.perPage), int64(offset)))
 		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
 			return err
@@ -460,11 +460,11 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 		countBuilder := sqlstore.SQLBuilder{}
 		countBuilder.Write("SELECT * FROM library_panel")
 		countBuilder.Write(` WHERE org_id=?`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(name)) > 0 {
-			countBuilder.Write(" AND name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
+		if len(strings.TrimSpace(query.searchString)) > 0 {
+			countBuilder.Write(" AND name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
 		}
-		if len(strings.TrimSpace(excludeUID)) > 0 {
-			countBuilder.Write(" AND uid <> ?", excludeUID)
+		if len(strings.TrimSpace(query.excludeUID)) > 0 {
+			countBuilder.Write(" AND uid <> ?", query.excludeUID)
 		}
 		if err := session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&panels); err != nil {
 			return err
@@ -473,8 +473,8 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 		result = LibraryPanelSearchResult{
 			TotalCount:    int64(len(panels)),
 			LibraryPanels: retDTOs,
-			Page:          page,
-			PerPage:       perPage,
+			Page:          query.page,
+			PerPage:       query.perPage,
 		}
 
 		return nil
