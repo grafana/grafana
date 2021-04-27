@@ -50,7 +50,6 @@ func (rs *SchemaLoaderService) Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to load dashboard cue schema from path %q: %w", baseLoadPath, err)
 	}
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<I passed", len(schema.AsArray(rs.DashFamily)))
 	return nil
 }
 

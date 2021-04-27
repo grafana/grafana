@@ -11,14 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
-	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/schema/load"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -26,11 +24,6 @@ import (
 const (
 	anonString = "Anonymous"
 )
-
-var baseLoadPath load.BaseLoadPaths = load.BaseLoadPaths{
-	BaseCueFS:       grafana.CoreSchema,
-	DistPluginCueFS: grafana.PluginSchema,
-}
 
 func isDashboardStarredByUser(c *models.ReqContext, dashID int64) (bool, error) {
 	if !c.IsSignedIn {

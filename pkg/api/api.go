@@ -320,17 +320,15 @@ func (hs *HTTPServer) registerRoutes() {
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", routing.Wrap(hs.GetDashboard))
-			dashboardRoute.Post("/trim", bind(models.TrimDashboardCommand{}), routing.Wrap(hs.TrimDashboard))
-
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
 			dashboardRoute.Get("/db/:slug", routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/db/:slug", routing.Wrap(hs.DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), routing.Wrap(CalculateDashboardDiff))
+			dashboardRoute.Post("/trim", bind(models.TrimDashboardCommand{}), routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostDashboard))
-
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), routing.Wrap(hs.ImportDashboard))

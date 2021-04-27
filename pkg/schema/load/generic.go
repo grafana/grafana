@@ -164,22 +164,21 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 	}
 	rv := rvInstance.Value()
 
-	fmt.Println("xxxxxxxxxxxxxxxxxxxxx", inputdef.IncompleteKind())
+	// fmt.Println("xxxxxxxxxxxxxxxxxxxxx", inputdef.IncompleteKind())
 	switch inputdef.IncompleteKind() {
 	case cue.StructKind:
 		// Get all fields including optional fields
-		iter, err := inputdef.Fields(cue.All())
+		iter, err := inputdef.Fields(cue.Optional(true))
 		if err != nil {
 			return rv, false, err
 		}
 		for iter.Next() {
 			lable, _ := iter.Value().Label()
-			Vinfo, err := input.FieldByName(lable, false)
+
+			lv := input.LookupPath(cue.MakePath(cue.Str(lable)))
 			if err != nil {
 				continue
 			}
-			lv := Vinfo.Value
-			fmt.Printf(">>>>> the pathhhhhhhhhhh        %+v          \n", iter.Value().Path())
 			if lv.Exists() {
 				re, isEqual, err := removeDefaultHelper(iter.Value(), lv)
 				if err == nil && !isEqual {
@@ -190,7 +189,6 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 		}
 		return rv, false, nil
 	case cue.ListKind:
-		fmt.Println("xxxxxxxxxxxxxxxxxxxxx")
 		val, _ := inputdef.Default()
 		err1 := input.Subsume(val)
 		err2 := val.Subsume(input)
@@ -198,33 +196,33 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 			return rv, true, nil
 		}
 
-		lable, _ := inputdef.Label()
+		// lable, _ := inputdef.Label()
 
-		// _, exi := inputdef.Elem()
-		// if !exi {
-		// 	return rv, true, nil
-		// }
+		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
+		fmt.Println("xxxxxxxxxxxxxxxxxxxxx ", ele.IncompleteKind())
+		if ele.IncompleteKind() == cue.BottomKind {
+			return rv, true, nil
+		}
 
-		// iter, err := input.List()
-		// if err != nil {
-		// 	return rv, true, nil
-		// }
-		// for iter.Next() {
-		// fmt.Println("xxxxxxxxxxxxxxxxxxxxx", interval.IncompleteKind())
-		// 	// re, isEqual, err := removeDefaultHelper(ele, iter.Value())
-		// 	// if err == nil && !isEqual {
-		// 	// 	fmt.Println("I am filling the path with ", iter.Value().Path())
-		// 	// 	rv = append(rv, re)
-		// 	// }
-		// }
+		iter, err := input.List()
+		if err != nil {
+			return rv, true, nil
+		}
+		index := 0
+		for iter.Next() {
+			re, isEqual, err := removeDefaultHelper(ele, iter.Value())
+			if err == nil && !isEqual {
+				a, _ := re.String()
+				fmt.Println("<<<<<<<< hereeeeeeeeeeee", string(a))
+				rv = rv.FillPath(cue.MakePath(cue.Index(index)), re)
+				index++
+			}
+		}
 
-		rv = rv.FillPath(cue.Path(cue.MakePath(cue.Str(lable))), input)
+		// rv = rv.FillPath(cue.MakePath(cue.Str(lable)), rv)
 		return rv, false, nil
 	default:
 		val, _ := inputdef.Default()
-		// a, _ := val.String()
-		// b, _ := input.String()
-		// fmt.Println("<<<<<<<<<<<<<<<<< val: ", a, " <<<<<<<<<<< input: ", b, "equal result: ", val.Equals(input))
 		err1 := input.Subsume(val)
 		err2 := val.Subsume(input)
 		if val.IsConcrete() && err1 == nil && err2 == nil {
@@ -281,7 +279,7 @@ var terminalMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueS
 // earlier schema) with a later schema.
 func implicitMigration(v cue.Value, next schema.VersionedCueSchema) migrationFunc {
 	return func(x interface{}) (cue.Value, schema.VersionedCueSchema, error) {
-		w := v.Fill(x)
+		w := v.FillPath(cue.Path{}, x)
 		// TODO is it possible that migration would be successful, but there
 		// still exists some error here? Need to better understand internal CUE
 		// erroring rules? seems like incomplete cue.Value may always an Err()?

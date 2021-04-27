@@ -129,7 +129,7 @@ Family: scuemata.#Family & {
                     // with types derived from plugins in the Instance variant.
                     // When working directly from CUE, importers can extend this
                     // type directly to achieve the same effect.
-                    targets?: [...{}]
+                    targets?: [...{...}]
 
                     // The values depend on panel type
                     options: {...}
