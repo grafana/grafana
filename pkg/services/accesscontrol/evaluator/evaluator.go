@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// Evaluate evaluates access to the given resource, using provided AccessControl instance
+// Evaluate evaluates access to the given resource, using provided AccessControl instance.
+// Scopes are evaluated with an `OR` relationship.
 func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, scope ...string) (bool, error) {
 	userPermissions, err := ac.GetUserPermissions(ctx, user)
 	if err != nil {
