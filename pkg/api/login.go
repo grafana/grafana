@@ -96,7 +96,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	}
 
 	viewData.Settings["oauth"] = enabledOAuths
-	viewData.Settings["samlEnabled"] = hs.License.HasValidLicense() && hs.samlEnabled()
+	viewData.Settings["samlEnabled"] = hs.samlEnabled()
 
 	if loginError, ok := tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
@@ -278,7 +278,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
-	if hs.samlEnabled() && hs.samlSingleLogoutEnabled() && hs.License.HasValidLicense() {
+	if hs.samlEnabled() && hs.samlSingleLogoutEnabled() {
 		c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 		return
 	}
@@ -343,11 +343,11 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
-	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false)
+	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.HasValidLicense()
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
-	return hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false)
+	return hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.License.HasValidLicense()
 }
 
 func getLoginExternalError(err error) string {
