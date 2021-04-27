@@ -12,13 +12,10 @@ import { initialAsyncRequestState } from './utils/redux';
 import SilencesTable from './components/silences/SilencesTable';
 
 const Silences: FC = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const [alertManagerSourceName = '', setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);
 
-  if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/silences" />;
-  }
   const alerts =
     useUnifiedAlertingSelector((state) => state.amAlerts)[alertManagerSourceName] || initialAsyncRequestState;
 
@@ -34,6 +31,9 @@ const Silences: FC = () => {
     };
   }, [alertManagerSourceName, dispatch]);
 
+  if (!alertManagerSourceName) {
+    return <Redirect to="/alerting/silences" />;
+  }
   const { result, loading, error } = silences[alertManagerSourceName] || initialAsyncRequestState;
 
   return (
