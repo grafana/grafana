@@ -15,6 +15,7 @@ import {
   EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
+  PanelPluginDataSupport,
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
@@ -61,6 +62,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   editSourceId: true,
   configRev: true,
   getDisplayTitle: true,
+  dataSupport: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -171,6 +173,7 @@ export class PanelModel implements DataConfigSource {
   declare cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
+  dataSupport?: PanelPluginDataSupport;
 
   private queryRunner?: PanelQueryRunner;
 
@@ -354,6 +357,7 @@ export class PanelModel implements DataConfigSource {
       }
     }
 
+    this.dataSupport = plugin.dataSupport;
     this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
   }
