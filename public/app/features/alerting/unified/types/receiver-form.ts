@@ -31,3 +31,8 @@ export interface CommonSettingsComponentProps {
   className?: string;
 }
 export type CommonSettingsComponentType = React.ComponentType<CommonSettingsComponentProps>;
+
+export type CloudChannelConfig = {
+  send_resolved: boolean;
+  [key: string]: unknown;
+};

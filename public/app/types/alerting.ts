@@ -114,7 +114,7 @@ export interface ChannelTypeSettings {
 }
 
 export interface NotificationChannelOption {
-  element: 'input' | 'select' | 'checkbox' | 'textarea';
+  element: 'input' | 'select' | 'checkbox' | 'textarea' | 'subform' | 'key_value_map';
   inputType: string;
   label: string;
   description: string;
@@ -125,6 +125,7 @@ export interface NotificationChannelOption {
   selectOptions?: Array<SelectableValue<string>>;
   showWhen: { field: string; is: string };
   validationRule: string;
+  subformOptions?: NotificationChannelOption[];
 }
 
 export interface NotificationChannelState {

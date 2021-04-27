@@ -21,7 +21,7 @@ function option(
   };
 }
 
-export const cloudAlertManagerNotifierTypes: NotifierDTO[] = [
+export const cloudNotifierTypes: NotifierDTO[] = [
   {
     name: 'Email',
     description: 'Send notification over SMTP',
@@ -164,6 +164,59 @@ export const cloudAlertManagerNotifierTypes: NotifierDTO[] = [
     options: [
       option('api_key', 'API key', 'The API key to use when talking to the OpsGenie API.'),
       option('api_url', 'API URL', 'The host to send OpsGenie API requests to.'),
+      option('message', 'Message', 'Alert text limited to 130 characters.'),
+      option('description', 'Description', 'A description of the incident.', {
+        placeholder: '{{ template "opsgenie.default.description" . }}',
+      }),
+      option('source', 'Source', 'A backlink to the sender of the notification.', {
+        placeholder: '{{ template "opsgenie.default.source" . }}',
+      }),
+      // @TODO details
+      // @TODO responders
+      option('tags', 'Tags', 'Comma separated list of tags attached to the notifications.'),
+      option('note', 'Note', 'Additional alert note.'),
+      option('priority', 'Priority', 'Priority level of alert. Possible values are P1, P2, P3, P4, and P5.'),
+      // @TODO http config
+    ],
+  },
+  {
+    name: 'VictorOps',
+    description: 'Send notifications to VictorOps',
+    type: 'victorops',
+    info: '',
+    heading: 'VictorOps settings',
+    options: [
+      option('api_key', 'API key', 'The API key to use when talking to the VictorOps API.'),
+      option('api_url', 'API URL', 'The VictorOps API URL.'),
+      option('routing_key', 'Routing key', 'A key used to map the alert to a team.', { required: true }),
+      option('message_type', 'Message type', 'Describes the behavior of the alert (CRITICAL, WARNING, INFO).'),
+      option('entity_display_name', 'Entity display name', 'Contains summary of the alerted problem.', {
+        placeholder: '{{ template "victorops.default.entity_display_name" . }}',
+      }),
+      option('state_message', 'State message', 'Contains long explanation of the alerted problem.', {
+        placeholder: '{{ template "victorops.default.state_message" . }}',
+      }),
+      option('monitoring_tool', 'Monitoring tool', 'The monitoring tool the state message is from.', {
+        placeholder: '{{ template "victorops.default.monitoring_tool" . }}',
+      }),
+      // @TODO http config
+    ],
+  },
+  {
+    name: 'Webhook',
+    description: 'Send notifications to a webhook',
+    type: 'webhook',
+    info: '',
+    heading: 'Webhook settings',
+    options: [
+      option('url', 'URL', 'The endpoint to send HTTP POST requests to.', { required: true }),
+      // @TODO http_config
+      option(
+        'max_alerts',
+        'Max alerts',
+        'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
+        { placeholder: '0', validationRule: '^\\d+$' }
+      ),
     ],
   },
 ];

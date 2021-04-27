@@ -4,11 +4,23 @@ import {
   Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, NotifierType } from 'app/types';
-import { GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
+import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types';
+import {
+  CloudChannelConfig,
+  CloudChannelValues,
+  GrafanaChannelValues,
+  ReceiverFormValues,
+} from '../types/receiver-form';
 
 // id to notifier
 type GrafanaChannelMap = Record<string, GrafanaManagedReceiverConfig>;
+type CloudChannelMap = Record<
+  string,
+  {
+    type: CloudNotifierType;
+    config: CloudChannelConfig;
+  }
+>;
 
 export function grafanaReceiverToFormValues(
   receiver: Receiver,
@@ -28,6 +40,37 @@ export function grafanaReceiverToFormValues(
         const notifier = notifiers.find(({ type }) => type === channel.type);
         return grafanaChannelConfigToFormChannelValues(id, channel, notifier);
       }) ?? [],
+  };
+  return [values, channelMap];
+}
+
+export function cloudReceiverToFormValues(
+  receiver: Receiver,
+  notifiers: NotifierDTO[]
+): [ReceiverFormValues<CloudChannelValues>, CloudChannelMap] {
+  const channelMap: CloudChannelMap = {};
+  // giving each form receiver item a unique id so we can use it to map back to "original" items
+  // as well as to use as `key` prop.
+  // @TODO use uid once backend is fixed to provide it. then we can get rid of the GrafanaChannelMap
+  let idCounter = 1;
+  const items: CloudChannelValues[] = Object.entries(receiver)
+    .filter(([type]) => type.endsWith('_configs') && type !== 'grafana_managed_receiver_configs') // filter out only config items
+    .map(([type, configs]) => [type.replace('_configs', ''), configs]) // coerce name into notifier type
+    .map(([type, configs]: [CloudNotifierType, CloudChannelConfig[]]) =>
+      configs.map((config) => {
+        const id = String(idCounter++);
+        channelMap[id] = { type, config };
+        const notifier = notifiers.find((notifier) => notifier.type === type);
+        if (!notifier) {
+          throw new Error(`unknown cloud notifier: ${type}`);
+        }
+        return cloudChannelConfigToFormChannelValues(id, type, config, notifier);
+      })
+    )
+    .flat();
+  const values = {
+    name: receiver.name,
+    items,
   };
   return [values, channelMap];
 }
@@ -100,6 +143,24 @@ function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
     updated.routes = updated.routes.map((route) => renameReceiverInRoute(route, oldName, newName));
   }
   return updated;
+}
+
+function cloudChannelConfigToFormChannelValues(
+  id: string,
+  type: CloudNotifierType,
+  channel: CloudChannelConfig,
+  notifier: NotifierDTO
+): CloudChannelValues {
+  return {
+    __id: id,
+    type,
+    settings: {
+      ...channel,
+    },
+    secureFields: {},
+    secureSettings: {},
+    sendResolved: channel.send_resolved,
+  };
 }
 
 function grafanaChannelConfigToFormChannelValues(
