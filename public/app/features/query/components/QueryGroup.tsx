@@ -45,6 +45,7 @@ interface State {
   scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
+  defaultDataSource?: DataSourceApi;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -76,7 +77,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
-      this.setState({ dataSource: ds, dsSettings });
+      const defaultDataSource = await this.dataSourceSrv.get();
+      this.setState({ dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -140,14 +142,22 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddQueryClick = () => {
-    if (this.state.dsSettings?.meta.mixed) {
-      this.setState({ isAddingMixed: true });
-      return;
-    }
-
-    this.onChange({ queries: addQuery(this.props.options.queries) });
+    const { options } = this.props;
+    this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
     this.onScrollBottom();
   };
+
+  newQuery(): Partial<DataQuery> {
+    const { dsSettings, defaultDataSource } = this.state;
+
+    if (!dsSettings?.meta.mixed) {
+      return {};
+    }
+
+    return {
+      datasource: defaultDataSource?.name,
+    };
+  }
 
   onChange(changedProps: Partial<QueryGroupOptions>) {
     this.props.onOptionsChange({
@@ -320,7 +330,6 @@ export class QueryGroup extends PureComponent<Props, State> {
             Query
           </Button>
         )}
-        {isAddingMixed && this.renderMixedPicker()}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
           <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
             <Button

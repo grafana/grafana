@@ -15,17 +15,19 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     return `Expression: ${query.type}`;
   }
 
-  newQuery(): ExpressionQuery {
+  newQuery(query?: Partial<ExpressionQuery>): ExpressionQuery {
     return {
       refId: '--', // Replaced with query
-      type: ExpressionQueryType.math,
+      type: query?.type ?? ExpressionQueryType.math,
       datasource: ExpressionDatasourceID,
+      conditions: query?.conditions ?? undefined,
     };
   }
 }
 
 // MATCHES the constant in DataSourceWithBackend
 export const ExpressionDatasourceID = '__expr__';
+export const ExpressionDatasourceUID = '-100';
 
 export const expressionDatasource = new ExpressionDatasourceApi({
   id: -100,

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { bind } from 'lodash';
 
 // This is auto generated from the unicode tables.
 // The tables are at:
@@ -1042,7 +1042,7 @@ export class Lexer {
       return /^[0-9a-fA-F]$/.test(str);
     }
 
-    const readUnicodeEscapeSequence = _.bind(function (this: any) {
+    const readUnicodeEscapeSequence = bind(function (this: any) {
       index += 1;
 
       if (this.peek(index) !== 'u') {
@@ -1069,7 +1069,7 @@ export class Lexer {
       return null;
     }, this);
 
-    const getIdentifierStart = _.bind(function (this: any) {
+    const getIdentifierStart = bind(function (this: any) {
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 
@@ -1099,7 +1099,7 @@ export class Lexer {
       return null;
     }, this);
 
-    const getIdentifierPart = _.bind(function (this: any) {
+    const getIdentifierPart = bind(function (this: any) {
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 

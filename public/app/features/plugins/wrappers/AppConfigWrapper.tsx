@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import cloneDeep from 'lodash/cloneDeep';
-import extend from 'lodash/extend';
+import { cloneDeep, extend } from 'lodash';
 
 import { Button } from '@grafana/ui';
 import { PluginMeta, AppPlugin, deprecationWarning } from '@grafana/data';

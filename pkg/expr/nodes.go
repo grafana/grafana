@@ -21,10 +21,11 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID     string `json:"refId"`
-	Query     map[string]interface{}
-	QueryType string
-	TimeRange backend.TimeRange
+	RefID         string `json:"refId"`
+	Query         map[string]interface{}
+	QueryType     string
+	TimeRange     TimeRange
+	DatasourceUID string
 }
 
 func (rn *rawNode) GetDatasourceName() (string, error) {
@@ -37,18 +38,6 @@ func (rn *rawNode) GetDatasourceName() (string, error) {
 		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
 	}
 	return dsName, nil
-}
-
-func (rn *rawNode) GetDatasourceUid() (string, error) {
-	rawDs, ok := rn.Query["datasourceUid"]
-	if !ok {
-		return "", nil
-	}
-	dsUID, ok := rawDs.(string)
-	if !ok {
-		return "", fmt.Errorf("expected datasource identifier to be a string, got %T", rawDs)
-	}
-	return dsUID, nil
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -109,6 +98,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
+		CMDType: commandType,
 	}
 
 	switch commandType {
@@ -144,7 +134,7 @@ type DSNode struct {
 
 	orgID      int64
 	queryType  string
-	timeRange  backend.TimeRange
+	timeRange  TimeRange
 	intervalMS int64
 	maxDP      int64
 }
@@ -182,15 +172,10 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 		}
 		dsNode.datasourceID = int64(floatDsID)
 	default:
-		rawDsUID, ok := rn.Query["datasourceUid"]
-		if !ok {
+		if rn.DatasourceUID == "" {
 			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
 		}
-		strDsUID, ok := rawDsUID.(string)
-		if !ok {
-			return nil, fmt.Errorf("expected datasourceUid to be a string, got type %T for refId %v", rawDsUID, rn.RefID)
-		}
-		dsNode.datasourceUID = strDsUID
+		dsNode.datasourceUID = rn.DatasourceUID
 	}
 
 	var floatIntervalMS float64
@@ -230,8 +215,11 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			MaxDataPoints: dn.maxDP,
 			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
 			JSON:          dn.query,
-			TimeRange:     dn.timeRange,
-			QueryType:     dn.queryType,
+			TimeRange: backend.TimeRange{
+				From: dn.timeRange.From,
+				To:   dn.timeRange.To,
+			},
+			QueryType: dn.queryType,
 		},
 	}
 

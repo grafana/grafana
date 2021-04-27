@@ -14,12 +14,13 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
 func validateInput(c utils.CommandLine, pluginFolder string) error {
@@ -54,10 +55,12 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	pluginToInstall := c.Args().First()
+	pluginID := c.Args().First()
 	version := c.Args().Get(1)
+	skipTLSVerify := c.Bool("insecure")
 
-	return InstallPlugin(pluginToInstall, version, c, cmd.Client)
+	i := installer.New(skipTLSVerify, services.GrafanaVersion, services.Logger)
+	return i.Install(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
@@ -76,7 +79,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := client.GetPlugin(pluginName, c.RepoDirectory())
+		plugin, err := client.GetPlugin(pluginName, c.PluginRepoURL())
 		if err != nil {
 			return err
 		}

@@ -1,8 +1,8 @@
 import React, { FC, ReactNode, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Icon } from '..';
+import { GrafanaThemeV2 } from '@grafana/data';
 
 export interface Props {
   label: string;
@@ -12,7 +12,7 @@ export interface Props {
 
 export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
-  const styles = useStyles(collapsableSectionStyles);
+  const styles = useStyles2(collapsableSectionStyles);
   const headerStyle = open ? styles.header : styles.headerCollapsed;
   const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
 
@@ -27,22 +27,22 @@ export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
   );
 };
 
-const collapsableSectionStyles = (theme: GrafanaTheme) => {
+const collapsableSectionStyles = (theme: GrafanaThemeV2) => {
   const header = css({
     display: 'flex',
     justifyContent: 'space-between',
     fontSize: theme.typography.size.lg,
-    padding: `${theme.spacing.xs} 0`,
+    padding: `${theme.spacing(0.5)} 0`,
     cursor: 'pointer',
   });
   const headerCollapsed = css(header, {
-    borderBottom: `1px solid ${theme.colors.border2}`,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
   });
   const icon = css({
-    color: theme.colors.textWeak,
+    color: theme.colors.text.secondary,
   });
   const content = css({
-    padding: `${theme.spacing.md} 0`,
+    padding: `${theme.spacing(2)} 0`,
   });
 
   return { header, headerCollapsed, icon, content };

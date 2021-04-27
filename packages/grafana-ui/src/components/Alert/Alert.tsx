@@ -1,8 +1,8 @@
-import React, { FC, HTMLAttributes, ReactNode } from 'react';
-import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import React, { HTMLAttributes, ReactNode } from 'react';
+import { css, cx } from '@emotion/css';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -18,6 +18,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
+  bottomSpacing?: number;
 }
 
 function getIconFromSeverity(severity: AlertVariant): string {
@@ -34,19 +35,27 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
-  ({ title, onRemove, children, buttonContent, elevated, severity = 'error', ...restProps }, ref) => {
-    const theme = useTheme();
-    const styles = getStyles(theme, severity, elevated);
+export const Alert = React.forwardRef<HTMLDivElement, Props>(
+  (
+    { title, onRemove, children, buttonContent, elevated, bottomSpacing, className, severity = 'error', ...restProps },
+    ref
+  ) => {
+    const theme = useTheme2();
+    const styles = getStyles(theme, severity, elevated, bottomSpacing);
 
     return (
-      <div ref={ref} className={styles.alert} aria-label={selectors.components.Alert.alert(severity)} {...restProps}>
+      <div
+        ref={ref}
+        className={cx(styles.alert, className)}
+        aria-label={selectors.components.Alert.alert(severity)}
+        {...restProps}
+      >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
         <div className={styles.body}>
           <div className={styles.title}>{title}</div>
-          {children && <div>{children}</div>}
+          {children && <div className={styles.content}>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
@@ -68,19 +77,21 @@ export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boolean) => {
-  const color = theme.v2.palette[severity];
+const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
+  const color = theme.colors[severity];
+  const borderRadius = theme.shape.borderRadius();
 
   return {
     alert: css`
       flex-grow: 1;
       position: relative;
-      border-radius: ${theme.v2.shape.borderRadius()};
+      border-radius: ${borderRadius};
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      background: ${theme.v2.palette.background.secondary};
-      box-shadow: ${elevated ? theme.v2.shadows.z4 : theme.v2.shadows.z1};
+      background: ${theme.colors.background.secondary};
+      box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
+      margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
 
       &:before {
         content: '';
@@ -89,25 +100,26 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
         left: 0;
         bottom: 0;
         right: 0;
-        background: ${theme.v2.palette.background.primary};
+        background: ${theme.colors.background.primary};
         z-index: -1;
       }
     `,
     icon: css`
-      padding: ${theme.v2.spacing(2, 3)};
+      padding: ${theme.spacing(2, 3)};
       background: ${color.main};
+      border-radius: ${borderRadius} 0 0 ${borderRadius};
       color: ${color.contrastText};
       display: flex;
       align-items: center;
       justify-content: center;
     `,
     title: css`
-      font-weight: ${theme.v2.typography.fontWeightMedium};
-      color: ${theme.v2.palette.text.primary};
+      font-weight: ${theme.typography.fontWeightMedium};
+      color: ${theme.colors.text.primary};
     `,
     body: css`
-      color: ${theme.v2.palette.text.secondary};
-      padding: ${theme.v2.spacing(2)};
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(2)};
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -115,16 +127,19 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
       overflow-wrap: break-word;
       word-break: break-word;
     `,
+    content: css`
+      color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
+    `,
     buttonWrapper: css`
-      padding: ${theme.v2.spacing(1)};
+      padding: ${theme.spacing(1)};
       background: none;
       display: flex;
       align-items: center;
     `,
     close: css`
-      padding: ${theme.v2.spacing(1)};
+      padding: ${theme.spacing(2, 1)};
       background: none;
-      align-items: center;
       display: flex;
     `,
   };

@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := openapi
 
-API_DIR = pkg/api
+API_DIR = definitions
 GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
 
 spec.json: $(GO_PKG_FILES)

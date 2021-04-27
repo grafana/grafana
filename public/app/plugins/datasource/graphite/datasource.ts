@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { each, indexOf, isArray, isString, map as _map } from 'lodash';
 import {
   DataFrame,
   DataQueryRequest,
@@ -127,7 +127,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     // Series are either at the root or under a node called 'series'
     const series = result.data.series || result.data;
 
-    if (!_.isArray(series)) {
+    if (!isArray(series)) {
       throw { message: 'Missing series in result', data: result };
     }
 
@@ -262,7 +262,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       const tags = this.templateSrv.replace(options.annotation.tags);
       return this.events({ range: options.range, tags: tags }).then((results: any) => {
         const list = [];
-        if (!_.isArray(results.data)) {
+        if (!isArray(results.data)) {
           console.error(`Unable to get annotations from ${results.url}.`);
           return [];
         }
@@ -270,7 +270,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           const e = results.data[i];
 
           let tags = e.tags;
-          if (_.isString(e.tags)) {
+          if (isString(e.tags)) {
             tags = this.parseTags(e.tags);
           }
 
@@ -313,7 +313,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       if (date === 'now') {
         return 'now';
       } else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
@@ -390,7 +390,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return this.doGraphiteRequest(httpOptions)
       .pipe(
         map((results: any) => {
-          return _.map(results.data, (metric) => {
+          return _map(results.data, (metric) => {
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false,
@@ -419,7 +419,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return this.doGraphiteRequest(httpOptions)
       .pipe(
         map((results: any) => {
-          return _.map(results.data, (tag) => {
+          return _map(results.data, (tag) => {
             return {
               text: tag.tag,
               id: tag.id,
@@ -447,7 +447,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       .pipe(
         map((results: any) => {
           if (results.data && results.data.values) {
-            return _.map(results.data.values, (value) => {
+            return _map(results.data.values, (value) => {
               return {
                 text: value.value,
                 id: value.id,
@@ -468,7 +468,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
+        expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
       },
       // for cancellations
       requestId: options.requestId,
@@ -494,7 +494,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
+        expr: _map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
         tag: this.templateSrv.replace((tag || '').trim()),
       },
       // for cancellations
@@ -690,8 +690,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       }
     }
 
-    _.each(options, (value, key) => {
-      if (_.indexOf(graphiteOptions, key) === -1) {
+    each(options, (value, key) => {
+      if (indexOf(graphiteOptions, key) === -1) {
         return;
       }
       if (value) {
@@ -719,7 +719,7 @@ function mapToTags(): OperatorFunction<any, Array<{ text: string }>> {
   return pipe(
     map((results: any) => {
       if (results.data) {
-        return _.map(results.data, (value) => {
+        return _map(results.data, (value) => {
           return { text: value };
         });
       } else {

@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTime } from '@grafana/data';
 
 import {
-  selectThemeVariant,
   Themeable,
   GraphWithLegend,
   LegendDisplayMode,
@@ -26,7 +25,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 10px 0;
     border-radius: ${theme.border.radius.md};
     text-align: center;
-    background-color: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
+    background-color: ${theme.isLight ? theme.palette.white : theme.palette.dark4};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { each, filter, find } from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { appEvents } from 'app/core/app_events';
@@ -115,7 +115,7 @@ export class ChangeTracker {
     // ignore iteration property
     delete dash.iteration;
 
-    dash.panels = _.filter(dash.panels, (panel) => {
+    dash.panels = filter(dash.panels, (panel) => {
       if (panel.repeatPanelId) {
         return false;
       }
@@ -133,7 +133,7 @@ export class ChangeTracker {
     });
 
     // ignore template variable values
-    _.each(dash.getVariables(), (variable: any) => {
+    each(dash.getVariables(), (variable: any) => {
       variable.current = null;
       variable.options = null;
       variable.filters = null;
@@ -146,8 +146,8 @@ export class ChangeTracker {
     const currentClean = this.cleanDashboardFromIgnoredChanges(current.getSaveModelClone());
     const originalClean = this.cleanDashboardFromIgnoredChanges(original);
 
-    const currentTimepicker: any = _.find((currentClean as any).nav, { type: 'timepicker' });
-    const originalTimepicker: any = _.find((originalClean as any).nav, { type: 'timepicker' });
+    const currentTimepicker: any = find((currentClean as any).nav, { type: 'timepicker' });
+    const originalTimepicker: any = find((originalClean as any).nav, { type: 'timepicker' });
 
     if (currentTimepicker && originalTimepicker) {
       currentTimepicker.now = originalTimepicker.now;

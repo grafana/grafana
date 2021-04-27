@@ -3,10 +3,12 @@ import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   fetchAlertManagerConfigAction,
   fetchExistingRuleAction,
+  fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchSilencesAction,
   saveRuleFormAction,
+  updateAlertManagerConfigAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -23,6 +25,8 @@ export const reducer = combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
     existingRule: createAsyncSlice('existingRule', fetchExistingRuleAction).reducer,
   }),
+  grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
+  saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

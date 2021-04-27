@@ -1,17 +1,33 @@
 import React from 'react';
-import { Themeable } from '../../types/theme';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { stylesFactory } from '../../themes';
+import { useStyles } from '../../themes/ThemeContext';
 
-export interface CallToActionCardProps extends Themeable {
+export interface CallToActionCardProps {
   message?: string | JSX.Element;
   callToActionElement: JSX.Element;
   footer?: string | JSX.Element;
   className?: string;
 }
 
-const getCallToActionCardStyles = stylesFactory((theme: GrafanaTheme) => ({
+export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = ({
+  message,
+  callToActionElement,
+  footer,
+  className,
+}) => {
+  const css = useStyles(getStyles);
+
+  return (
+    <div className={cx([css.wrapper, className])}>
+      {message && <div className={css.message}>{message}</div>}
+      {callToActionElement}
+      {footer && <div className={css.footer}>{footer}</div>}
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     label: call-to-action-card;
     padding: ${theme.spacing.lg};
@@ -30,22 +46,4 @@ const getCallToActionCardStyles = stylesFactory((theme: GrafanaTheme) => ({
   footer: css`
     margin-top: ${theme.spacing.lg};
   `,
-}));
-
-export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = ({
-  message,
-  callToActionElement,
-  footer,
-  theme,
-  className,
-}) => {
-  const css = getCallToActionCardStyles(theme);
-
-  return (
-    <div className={cx([css.wrapper, className])}>
-      {message && <div className={css.message}>{message}</div>}
-      {callToActionElement}
-      {footer && <div className={css.footer}>{footer}</div>}
-    </div>
-  );
-};
+});

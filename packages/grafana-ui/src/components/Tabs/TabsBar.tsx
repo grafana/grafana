@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 
 export interface Props {
@@ -11,12 +11,12 @@ export interface Props {
   hideBorder?: boolean;
 }
 
-const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false) => {
+const getTabsBarStyles = stylesFactory((theme: GrafanaThemeV2, hideBorder = false) => {
   return {
     tabsWrapper:
       !hideBorder &&
       css`
-        border-bottom: 1px solid ${theme.v2.palette.border.weak};
+        border-bottom: 1px solid ${theme.colors.border.weak};
       `,
     tabs: css`
       position: relative;
@@ -29,7 +29,7 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false)
 });
 
 export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder }, ref) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const tabsStyles = getTabsBarStyles(theme, hideBorder);
 
   return (

@@ -74,7 +74,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			desc:                 "should fail to create an alert definition with empty title",
 			inputIntervalSeconds: &customIntervalSeconds,
 			inputTitle:           "",
-			expectedError:        store.ErrEmptyTitleError,
+			expectedError:        fmt.Errorf("title is empty"),
 		},
 	}
 
