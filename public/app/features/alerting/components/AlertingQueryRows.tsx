@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceApi, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -18,18 +18,12 @@ interface Props {
 
 interface State {
   dataPerQuery: Record<string, PanelData>;
-  defaultDataSource: DataSourceApi;
 }
 
 export class AlertingQueryRows extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { dataPerQuery: {}, defaultDataSource: {} as DataSourceApi };
-  }
-
-  async componentDidMount() {
-    const defaultDataSource = await getDataSourceSrv().get();
-    this.setState({ defaultDataSource });
+    this.state = { dataPerQuery: {} };
   }
 
   onRemoveQuery = (query: DataQuery) => {
@@ -105,11 +99,6 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
   };
 
   getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
-    const { defaultDataSource } = this.state;
-
-    if (!query.datasourceUid) {
-      return getDataSourceSrv().getInstanceSettings(defaultDataSource.name);
-    }
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 

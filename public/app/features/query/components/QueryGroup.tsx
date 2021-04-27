@@ -19,7 +19,10 @@ import {
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import {
+  dataSource as expressionDatasource,
+  ExpressionDatasourceID,
+} from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';

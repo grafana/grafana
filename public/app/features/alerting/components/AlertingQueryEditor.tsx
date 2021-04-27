@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
-import { expressionDatasource, ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource, ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
 import { ExpressionQueryType } from '../../expressions/types';
