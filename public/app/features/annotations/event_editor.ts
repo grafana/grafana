@@ -1,8 +1,8 @@
 import { cloneDeep, isNumber } from 'lodash';
 import { coreModule } from 'app/core/core';
 import { AnnotationEvent, dateTime } from '@grafana/data';
-import { AnnotationsSrv } from './all';
 import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
+import { deleteAnnotation, saveAnnotation, updateAnnotation } from './api';
 
 export class EventEditorCtrl {
   // @ts-ignore initialized through Angular not constructor
@@ -15,7 +15,7 @@ export class EventEditorCtrl {
   timeFormated?: string;
 
   /** @ngInject */
-  constructor(private annotationsSrv: AnnotationsSrv) {}
+  constructor() {}
 
   $onInit() {
     this.event.panelId = this.panelCtrl.panel.id;
@@ -49,8 +49,7 @@ export class EventEditorCtrl {
     }
 
     if (saveModel.id) {
-      this.annotationsSrv
-        .updateAnnotationEvent(saveModel)
+      updateAnnotation(saveModel)
         .then(() => {
           this.panelCtrl.refresh();
           this.close();
@@ -60,8 +59,7 @@ export class EventEditorCtrl {
           this.close();
         });
     } else {
-      this.annotationsSrv
-        .saveAnnotationEvent(saveModel)
+      saveAnnotation(saveModel)
         .then(() => {
           this.panelCtrl.refresh();
           this.close();
@@ -74,8 +72,7 @@ export class EventEditorCtrl {
   }
 
   delete() {
-    return this.annotationsSrv
-      .deleteAnnotationEvent(this.event)
+    return deleteAnnotation(this.event)
       .then(() => {
         this.panelCtrl.refresh();
         this.close();
