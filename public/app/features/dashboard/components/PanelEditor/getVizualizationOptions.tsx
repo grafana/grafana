@@ -1,7 +1,7 @@
 import React from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
-import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
@@ -19,7 +19,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     options: currentOptions,
     eventBus: dashboard.events,
     getSuggestions: (scope?: VariableSuggestionsScope) => {
-      return getPanelOptionsVariableSuggestions(plugin, data?.series);
+      return data ? getDataLinksVariableSuggestions(data.series, scope) : [];
     },
   };
 
