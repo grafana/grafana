@@ -121,8 +121,8 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
                   return (
                     <QueryEditorRow
-                      dataSourceSettings={dsSettings}
-                      onChangeDataSourceSettings={
+                      dataSource={dsSettings}
+                      onChangeDataSource={
                         !isExpressionQuery(query.model)
                           ? (settings) => this.onChangeDataSource(settings, index)
                           : undefined

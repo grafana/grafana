@@ -19,7 +19,7 @@ import {
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
-import { QueryEditorRowTitle } from './QueryEditorRowTitle';
+import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -36,8 +36,8 @@ interface Props {
   id: string;
   index: number;
   timeRange?: TimeRange;
-  dataSourceSettings: DataSourceInstanceSettings;
-  onChangeDataSourceSettings?: (dsSettings: DataSourceInstanceSettings) => void;
+  dataSource: DataSourceInstanceSettings;
+  onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
   onChangeTimeRange?: (timeRange: TimeRange) => void;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
@@ -112,7 +112,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dataSourceSettings: dsSettings } = this.props;
+    const { query, dataSource: dsSettings } = this.props;
     return query.datasource ?? dsSettings.name;
   }
 
@@ -303,27 +303,18 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     );
   };
 
-  renderTitle = (props: QueryOperationRowRenderProps) => {
-    const {
-      query,
-      dataSourceSettings,
-      onChangeDataSourceSettings,
-      onChange,
-      queries,
-      onChangeTimeRange,
-      timeRange,
-    } = this.props;
-    const isDisabled = query.hide;
+  renderHeader = (props: QueryOperationRowRenderProps) => {
+    const { query, dataSource, onChangeDataSource, onChange, queries, onChangeTimeRange, timeRange } = this.props;
 
     return (
-      <QueryEditorRowTitle
+      <QueryEditorRowHeader
         query={query}
         queries={queries}
         onChangeTimeRange={onChangeTimeRange}
         timeRange={timeRange}
-        onChangeDataSourceSettings={onChangeDataSourceSettings}
-        dataSourceSettings={dataSourceSettings}
-        disabled={isDisabled}
+        onChangeDataSource={onChangeDataSource}
+        dataSource={dataSource}
+        disabled={query.hide}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
@@ -354,7 +345,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           id={id}
           draggable={true}
           index={index}
-          headerElement={this.renderTitle}
+          headerElement={this.renderHeader}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >

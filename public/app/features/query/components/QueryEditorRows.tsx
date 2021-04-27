@@ -98,8 +98,8 @@ export class QueryEditorRows extends PureComponent<Props> {
                       key={query.refId}
                       data={data}
                       query={query}
-                      dataSourceSettings={dataSourceSettings}
-                      onChangeDataSourceSettings={onChangeDataSourceSettings}
+                      dataSource={dataSourceSettings}
+                      onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={this.props.onAddQuery}

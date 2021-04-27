@@ -11,25 +11,16 @@ export interface Props {
   queries: DataQuery[];
   disabled?: boolean;
   timeRange?: TimeRange;
-  dataSourceSettings: DataSourceInstanceSettings;
-  onChangeDataSourceSettings?: (instanceSettings: DataSourceInstanceSettings) => void;
+  dataSource: DataSourceInstanceSettings;
+  onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
   onChangeTimeRange?: (timeRange: TimeRange) => void;
   onChange: (query: DataQuery) => void;
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
 }
 
-export const QueryEditorRowTitle: React.FC<Props> = (props) => {
-  const {
-    dataSourceSettings,
-    onChangeDataSourceSettings,
-    disabled,
-    query,
-    queries,
-    onClick,
-    onChange,
-    collapsedText,
-  } = props;
+export const QueryEditorRowHeader: React.FC<Props> = (props) => {
+  const { dataSource, onChangeDataSource, disabled, query, queries, onClick, onChange, collapsedText } = props;
 
   const styles = useStyles(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -122,9 +113,7 @@ export const QueryEditorRowTitle: React.FC<Props> = (props) => {
         </>
       )}
       <PickerRenderer {...props} />
-      {dataSourceSettings && !onChangeDataSourceSettings && (
-        <em className={styles.contextInfo}> ({dataSourceSettings.name})</em>
-      )}
+      {dataSource && !onChangeDataSource && <em className={styles.contextInfo}> ({dataSource.name})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (
@@ -137,22 +126,20 @@ export const QueryEditorRowTitle: React.FC<Props> = (props) => {
 };
 
 const PickerRenderer: React.FC<Props> = (props) => {
-  const { onChangeTimeRange, timeRange, onChangeDataSourceSettings, dataSourceSettings } = props;
+  const { onChangeTimeRange, timeRange, onChangeDataSource, dataSource } = props;
   const styles = useStyles(getStyles);
 
-  if (!onChangeTimeRange && !onChangeDataSourceSettings) {
+  if (!onChangeTimeRange && !onChangeDataSource) {
     return null;
   }
 
-  if (dataSourceSettings.uid === ExpressionDatasourceUID) {
+  if (dataSource.uid === ExpressionDatasourceUID) {
     return null;
   }
 
   return (
     <div className={styles.pickerWrapper}>
-      {onChangeDataSourceSettings && (
-        <DataSourcePicker current={dataSourceSettings.name} onChange={onChangeDataSourceSettings} />
-      )}
+      {onChangeDataSource && <DataSourcePicker current={dataSource.name} onChange={onChangeDataSource} />}
       {onChangeTimeRange && timeRange && <TimeRangeInput onChange={onChangeTimeRange} value={timeRange} />}
     </div>
   );
