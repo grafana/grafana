@@ -1,5 +1,6 @@
 import { merge, Observable, of, ReplaySubject, timer, Unsubscribable } from 'rxjs';
 import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
 import {
   compareArrayValues,
   compareDataFrameStructures,
@@ -36,7 +37,7 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  async run(queries: GrafanaQuery[]) {
+  run(queries: GrafanaQuery[]) {
     if (queries.length === 0) {
       const empty = initialState(queries, LoadingState.Done);
       return this.subject.next(empty);
@@ -53,7 +54,23 @@ export class AlertingQueryRunner {
       error: (error) => console.error('PanelQueryRunner Error', error),
     });
   }
-  cancel() {}
+
+  cancel() {
+    if (!this.subscription) {
+      return;
+    }
+    this.subscription.unsubscribe();
+  }
+
+  destroy() {
+    if (this.subject) {
+      this.subject.complete();
+    }
+
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
 }
 
 const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelData>> => {
@@ -62,6 +79,7 @@ const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelDat
     data: { data: queries },
     url: '/api/v1/eval',
     method: 'POST',
+    requestId: uuidv4(),
   };
 
   const runningRequest = getBackendSrv()
