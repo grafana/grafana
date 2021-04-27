@@ -24,10 +24,10 @@ type proxyTransportCache struct {
 
 // dataSourceTransport implements http.RoundTripper (https://golang.org/pkg/net/http/#RoundTripper)
 type dataSourceTransport struct {
-	datasourceName string
-	headers        map[string]string
-	transport      *http.Transport
-	next           http.RoundTripper
+	opts      httpclient.Options
+	headers   map[string]string
+	transport *http.Transport
+	next      http.RoundTripper
 }
 
 // RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
@@ -36,13 +36,15 @@ func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, erro
 		req.Header.Set(key, value)
 	}
 
-	// temporary solution to continue to support earlier supported metrics middleware.
-	opts := httpclient.Options{Labels: map[string]string{
-		"datasource_name": d.datasourceName,
-	}}
-	rt := httpclientprovider.DataSourceMetricsMiddleware().CreateMiddleware(opts, d.next)
+	next := d.next
 
-	return rt.RoundTrip(req)
+	// temporary solution to continue to support earlier supported metrics middleware.
+	if setting.SigV4AuthEnabled {
+		next = httpclientprovider.SigV4Middleware().CreateMiddleware(d.opts, next)
+	}
+	metricsRoundTripper := httpclientprovider.DataSourceMetricsMiddleware().CreateMiddleware(d.opts, next)
+
+	return metricsRoundTripper.RoundTrip(req)
 }
 
 type cachedTransport struct {
@@ -112,16 +114,11 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	// Set default next round tripper to the default transport
 	next := http.RoundTripper(transport)
 
-	// Add SigV4 middleware if enabled, which will then defer to the default transport
-	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool() && setting.SigV4AuthEnabled {
-		next = ds.sigV4Middleware(transport)
-	}
-
 	dsTransport := &dataSourceTransport{
-		datasourceName: ds.Name,
-		headers:        customHeaders,
-		transport:      transport,
-		next:           next,
+		opts:      ds.HTTPClientOptions(),
+		headers:   customHeaders,
+		transport: transport,
+		next:      next,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{

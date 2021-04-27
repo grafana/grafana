@@ -13,6 +13,10 @@ func New(cfg *setting.Cfg) httpclient.Provider {
 		httpclient.CustomHeadersMiddleware(),
 	}
 
+	if cfg.SigV4AuthEnabled {
+		middlewares = append(middlewares, SigV4Middleware())
+	}
+
 	return httpclient.NewProvider(httpclient.ProviderOptions{
 		Middlewares: middlewares,
 	})

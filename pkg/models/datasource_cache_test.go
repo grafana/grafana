@@ -260,6 +260,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := DataSource{
+			Type:     DS_ES,
 			JsonData: json,
 		}
 
