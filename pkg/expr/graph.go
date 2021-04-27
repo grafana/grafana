@@ -22,6 +22,17 @@ const (
 	TypeDatasourceNode
 )
 
+func (nt NodeType) String() string {
+	switch nt {
+	case TypeCMDNode:
+		return "Expression"
+	case TypeDatasourceNode:
+		return "Datasource"
+	default:
+		return "Unknown"
+	}
+}
+
 // Node is a node in a Data Pipeline. Node is either a expression command or a datasource query.
 type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
@@ -179,6 +190,18 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 
 			if neededNode.ID() == cmdNode.ID() {
 				return fmt.Errorf("can not add self referencing node for var '%v' ", neededVar)
+			}
+
+			if cmdNode.CMDType == TypeClassicConditions {
+				if neededNode.NodeType() != TypeDatasourceNode {
+					return fmt.Errorf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType())
+				}
+			}
+
+			if neededNode.NodeType() == TypeCMDNode {
+				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
+					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+				}
 			}
 
 			edge := dp.NewEdge(neededNode, cmdNode)
