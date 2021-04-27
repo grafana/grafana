@@ -4,8 +4,8 @@ import { debounce } from 'lodash';
 
 import { ColorPickerProps } from './ColorPickerPopover';
 import { Input } from '../Input/Input';
-import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useStyles2 } from '../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { cx, css } from '@emotion/css';
 
 interface ColorInputState {
@@ -88,7 +88,7 @@ interface ColorPreviewProps {
 }
 
 const ColorPreview = ({ color }: ColorPreviewProps) => {
-  const styles = useStyles(getColorPreviewStyles);
+  const styles = useStyles2(getColorPreviewStyles);
 
   return (
     <div
@@ -102,9 +102,9 @@ const ColorPreview = ({ color }: ColorPreviewProps) => {
   );
 };
 
-const getColorPreviewStyles = (theme: GrafanaTheme) => css`
+const getColorPreviewStyles = (theme: GrafanaThemeV2) => css`
   height: 100%;
-  width: ${theme.spacing.formInputHeight}px;
-  border-radius: ${theme.border.radius.sm} 0 0 ${theme.border.radius.sm};
-  border: 1px solid ${theme.colors.formInputBorder};
+  width: ${theme.spacing.gridSize * 4}px;
+  border-radius: ${theme.shape.borderRadius()} 0 0 ${theme.shape.borderRadius()};
+  border: 1px solid ${theme.colors.border.medium};
 `;
