@@ -790,6 +790,7 @@ type pCSVOptions struct {
 	TimeStep  int64  `json:"timeStep"`
 	ValuesCSV string `json:"valuesCSV"`
 	Labels    string `json:"labels"`
+	Name      string `json:"name"`
 }
 
 func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*data.Frame, error) {
@@ -852,6 +853,10 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 		frame := newSeriesForQuery(query, model, 0)
 		frame.Fields = fields
 		frame.Fields[1].Labels = parseLabelsString(subQ.Labels)
+		if subQ.Name != "" {
+			frame.Name = ""
+			frame.Fields[1].Name = subQ.Name
+		}
 		frames = append(frames, frame)
 	}
 	return frames, nil
