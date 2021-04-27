@@ -51,6 +51,7 @@ var metricAggType = map[string]string{
 	"serial_diff":    "Serial Difference",
 	"bucket_script":  "Bucket Script",
 	"raw_document":   "Raw Document",
+	"rate":           "Rate",
 }
 
 var extendedStats = map[string]string{
@@ -62,6 +63,7 @@ var extendedStats = map[string]string{
 	"std_deviation":              "Std Dev",
 	"std_deviation_bounds_upper": "Std Dev Upper",
 	"std_deviation_bounds_lower": "Std Dev Lower",
+	"rate":                       "Rate",
 }
 
 var pipelineAggType = map[string]string{
