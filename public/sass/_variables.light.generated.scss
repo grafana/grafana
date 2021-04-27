@@ -124,9 +124,9 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: #fff;
-$panel-border: 1px solid #fff;
+$panel-border: 1px solid rgba(36, 41, 46, 0.12);
 $panel-header-hover-bg: rgba(36, 41, 46, 0.04);
-$panel-box-shadow: 0px 1px 2px rgba(24, 26, 27, 0.2);
+$panel-box-shadow: none;
 $panel-corner: $panel-bg;
 
 // Page header
@@ -224,10 +224,11 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: #F4F5F5;
+$dropdownBackground: #fff;
 $dropdownBorder: rgba(36, 41, 46, 0.12);
 $dropdownDividerTop: rgba(36, 41, 46, 0.12);
 $dropdownDividerBottom: rgba(36, 41, 46, 0.12);
+$dropdownShadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;

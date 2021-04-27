@@ -43,8 +43,8 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     padding: 1,
     headerHeight: 4,
     background: colors.background.primary,
-    borderColor: colors.background.primary,
-    boxShadow: shadows.z1,
+    borderColor: colors.border.weak,
+    boxShadow: 'none',
   };
 
   const input = {

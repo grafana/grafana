@@ -222,10 +222,11 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: ${theme.colors.background.secondary};
+$dropdownBackground: ${theme.colors.background.primary};
 $dropdownBorder: ${theme.colors.border.weak};
 $dropdownDividerTop: ${theme.colors.border.weak};
 $dropdownDividerBottom: ${theme.colors.border.weak};
+$dropdownShadow: ${theme.shadows.z3};
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
