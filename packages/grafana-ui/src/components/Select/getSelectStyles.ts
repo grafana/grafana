@@ -90,7 +90,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
       line-height: 1;
       background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius()};
-      margin: ${theme.spacing(0, 1, 0, 0)};
+      margin: ${theme.spacing(0.25, 1, 0.25, 0)};
       padding: ${theme.spacing(0.25, 0, 0.25, 1)};
       color: ${theme.colors.text.primary};
       font-size: ${theme.typography.size.sm};
