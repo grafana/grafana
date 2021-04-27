@@ -66,13 +66,15 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "failed to unmarshal alertmanager configuration", err)
 	}
 
-	var apiReceiverName string
-	var receivers []*apimodels.GettableGrafanaReceiver
-	alertmanagerCfg := cfg.AlertmanagerConfig
-	if len(alertmanagerCfg.Receivers) > 0 {
-		apiReceiverName = alertmanagerCfg.Receivers[0].Name
-		receivers = make([]*apimodels.GettableGrafanaReceiver, 0, len(alertmanagerCfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers))
-		for _, pr := range alertmanagerCfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers {
+	result := apimodels.GettableUserConfig{
+		TemplateFiles: cfg.TemplateFiles,
+		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
+			Config: cfg.AlertmanagerConfig.Config,
+		},
+	}
+	for _, recv := range cfg.AlertmanagerConfig.Receivers {
+		receivers := make([]*apimodels.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
+		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
 				secureFields[k] = true
@@ -90,22 +92,13 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 			}
 			receivers = append(receivers, &gr)
 		}
-	}
-
-	gettableApiReceiver := apimodels.GettableApiReceiver{
-		GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
-			GrafanaManagedReceivers: receivers,
-		},
-	}
-	gettableApiReceiver.Name = apiReceiverName
-	result := apimodels.GettableUserConfig{
-		TemplateFiles: cfg.TemplateFiles,
-		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
-			Config: alertmanagerCfg.Config,
-			Receivers: []*apimodels.GettableApiReceiver{
-				&gettableApiReceiver,
+		gettableApiReceiver := apimodels.GettableApiReceiver{
+			GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
+				GrafanaManagedReceivers: receivers,
 			},
-		},
+		}
+		gettableApiReceiver.Name = recv.Name
+		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
 
 	return response.JSON(http.StatusOK, result)
