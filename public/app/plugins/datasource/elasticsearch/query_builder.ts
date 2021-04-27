@@ -7,6 +7,7 @@ import {
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
+  isMovingAverageWithModelSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
   MetricAggregation,
@@ -346,6 +347,37 @@ export class ElasticQueryBuilder {
           .forEach(([k, v]) => {
             metricAgg[k] = k === 'script' ? getScriptValue(metric as MetricAggregationWithInlineScript) : v;
           });
+
+        // Elasticsearch isn't generally too picky about the data types in the request body,
+        // however some fields are required to be numeric.
+        // Users might have already created some of those with before, where the values were numbers.
+        if (metric.type === 'moving_avg') {
+          metricAgg = {
+            ...metricAgg,
+            ...(metricAgg?.window !== undefined && { window: this.toNumber(metricAgg.window) }),
+            ...(metricAgg?.predict !== undefined && { predict: this.toNumber(metricAgg.predict) }),
+            ...(isMovingAverageWithModelSettings(metric) && {
+              settings: {
+                ...metricAgg.settings,
+                ...Object.fromEntries(
+                  Object.entries(metricAgg.settings || {})
+                    // Only format properties that are required to be numbers
+                    .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
+                    // omitting undefined
+                    .filter(([_, stringValue]) => stringValue !== undefined)
+                    .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
+                ),
+              },
+            }),
+          };
+        } else if (metric.type === 'serial_diff') {
+          metricAgg = {
+            ...metricAgg,
+            ...(metricAgg.lag !== undefined && {
+              lag: this.toNumber(metricAgg.lag),
+            }),
+          };
+        }
       }
 
       aggField[metric.type] = metricAgg;
@@ -353,6 +385,15 @@ export class ElasticQueryBuilder {
     }
 
     return query;
+  }
+
+  private toNumber(stringValue: unknown): unknown | number {
+    const parsedValue = parseFloat(`${stringValue}`);
+    if (isNaN(parsedValue)) {
+      return stringValue;
+    }
+
+    return parsedValue;
   }
 
   getTermsQuery(queryDef: any) {
