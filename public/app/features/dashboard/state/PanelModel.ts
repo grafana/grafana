@@ -15,6 +15,7 @@ import {
   EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
+  PanelPluginDataSupport,
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
@@ -106,6 +107,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   libraryPanel: true,
   getDisplayTitle: true,
   configRev: true,
+  dataSupport: true,
 };
 
 const defaults: any = {
@@ -171,6 +173,7 @@ export class PanelModel implements DataConfigSource {
   declare cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
+  dataSupport?: PanelPluginDataSupport;
 
   private queryRunner?: PanelQueryRunner;
 
@@ -354,6 +357,7 @@ export class PanelModel implements DataConfigSource {
       }
     }
 
+    this.dataSupport = plugin.dataSupport;
     this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
   }
