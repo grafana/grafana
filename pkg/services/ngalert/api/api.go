@@ -67,33 +67,34 @@ func (api *API) RegisterAPIEndpoints() {
 	if api.Cfg.IsHTTPRequestHistogramEnabled() {
 		reg = prometheus.DefaultRegisterer
 	}
+	metrics := NewMetrics(reg)
 
 	// Register endpoints for proxing to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
-	))
+	), metrics)
 	// Register endpoints for proxing to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
-	))
+	), metrics)
 	// Register endpoints for proxing to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		RulerSrv{DatasourceCache: api.DatasourceCache, store: api.RuleStore, log: logger},
 		reg,
-	))
+	), metrics)
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
 		AlertingProxy:   proxy,
 		Cfg:             api.Cfg,
 		DataService:     api.DataService,
 		DatasourceCache: api.DatasourceCache,
 		log:             logger,
-	})
+	}, metrics)
 
 	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
