@@ -187,14 +187,8 @@ export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
-export {
-  Card,
-  Props as CardProps,
-  ContainerProps,
-  CardInnerProps,
-  getCardStyles,
-  getCardContainerStyles,
-} from './Card/Card';
+export { Card, Props as CardProps, getCardStyles } from './Card/Card';
+export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 
 export { ButtonSelect } from './Dropdown/ButtonSelect';
