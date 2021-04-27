@@ -4,15 +4,16 @@ import React, { FC, Fragment, useMemo, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
-import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
+import { makeAMLink } from '../../utils/misc';
 
 interface Props {
   config: AlertManagerCortexConfig;
+  alertManagerName: string;
 }
 
-export const TemplatesTable: FC<Props> = ({ config }) => {
+export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles(getAlertTableStyles);
 
@@ -22,7 +23,8 @@ export const TemplatesTable: FC<Props> = ({ config }) => {
     <ReceiversSection
       title="Message templates"
       description="Templates construct the messages that get sent to the contact points."
-      addButtonLabel="New templates"
+      addButtonLabel="New template"
+      addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
     >
       <table className={tableStyles.table}>
         <colgroup>
@@ -56,7 +58,14 @@ export const TemplatesTable: FC<Props> = ({ config }) => {
                   </td>
                   <td>{name}</td>
                   <td className={tableStyles.actionsCell}>
-                    <ActionButton icon="pen">Edit</ActionButton>
+                    <ActionIcon
+                      href={makeAMLink(
+                        `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                        alertManagerName
+                      )}
+                      tooltip="edit template"
+                      icon="pen"
+                    />
                     <ActionIcon tooltip="delete template" icon="trash-alt" />
                   </td>
                 </tr>

@@ -14,7 +14,6 @@ import { useDispatch } from 'react-redux';
 import { deleteRuleAction } from '../../state/actions';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { config } from '@grafana/runtime';
 
 interface Props {
   rules: CombinedRule[];
@@ -146,7 +145,7 @@ export const RulesTable: FC<Props> = ({
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          href={`${config.appSubUrl ?? ''}/alerting/${encodeURIComponent(
+                          href={`alerting/${encodeURIComponent(
                             stringifyRuleIdentifier(
                               getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
                             )
