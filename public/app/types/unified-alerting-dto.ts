@@ -92,16 +92,12 @@ export enum GrafanaAlertState {
   KeepLastState = 'KeepLastState',
   OK = 'OK',
 }
-
-export interface GrafanaQueryModel extends DataQuery {
-  datasource: string;
-  datasourceUid: string;
-}
 export interface GrafanaQuery {
   refId: string;
   queryType: string;
   relativeTimeRange: RelativeTimeRange;
-  model: GrafanaQueryModel;
+  datasourceUid: string;
+  model: DataQuery;
 }
 
 export interface PostableGrafanaRuleDefinition {

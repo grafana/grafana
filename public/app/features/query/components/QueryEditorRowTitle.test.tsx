@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Props, QueryEditorRowTitle } from './QueryEditorRowTitle';
+import { DataSourceInstanceSettings } from '@grafana/data';
 
 function renderScenario(overrides: Partial<Props>) {
   const props: Props = {
@@ -15,7 +16,7 @@ function renderScenario(overrides: Partial<Props>) {
         refId: 'B',
       },
     ],
-    dataSourceName: 'hello',
+    dataSourceSettings: {} as DataSourceInstanceSettings,
     disabled: false,
     onChange: jest.fn(),
     onClick: jest.fn(),

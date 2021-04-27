@@ -33,10 +33,11 @@ interface Props {
   data: PanelData;
   query: DataQuery;
   queries: DataQuery[];
-  dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
   timeRange?: TimeRange;
+  dataSourceSettings: DataSourceInstanceSettings;
+  onChangeDataSourceSettings?: (dsSettings: DataSourceInstanceSettings) => void;
   onChangeTimeRange?: (timeRange: TimeRange) => void;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
@@ -111,7 +112,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dsSettings } = this.props;
+    const { query, dataSourceSettings: dsSettings } = this.props;
     return query.datasource ?? dsSettings.name;
   }
 
@@ -303,18 +304,25 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderTitle = (props: QueryOperationRowRenderProps) => {
-    const { query, dsSettings, onChange, queries, onChangeTimeRange, timeRange } = this.props;
-    const { datasource } = this.state;
+    const {
+      query,
+      dataSourceSettings,
+      onChangeDataSourceSettings,
+      onChange,
+      queries,
+      onChangeTimeRange,
+      timeRange,
+    } = this.props;
     const isDisabled = query.hide;
 
     return (
       <QueryEditorRowTitle
         query={query}
         queries={queries}
-        onTimeRangeChange={onChangeTimeRange}
+        onChangeTimeRange={onChangeTimeRange}
         timeRange={timeRange}
-        inMixedMode={dsSettings.meta.mixed}
-        dataSourceName={datasource!.name}
+        onChangeDataSourceSettings={onChangeDataSourceSettings}
+        dataSourceSettings={dataSourceSettings}
         disabled={isDisabled}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}

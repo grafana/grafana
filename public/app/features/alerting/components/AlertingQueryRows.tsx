@@ -40,10 +40,28 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
-        if (itemIndex === index) {
-          return { ...item, relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange) };
+        if (itemIndex !== index) {
+          return item;
         }
-        return item;
+        return {
+          ...item,
+          relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange),
+        };
+      })
+    );
+  }
+
+  onChangeDataSource(settings: DataSourceInstanceSettings, index: number) {
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(
+      queries.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+        return {
+          ...item,
+          datasourceUid: settings.uid,
+        };
       })
     );
   }
@@ -52,10 +70,17 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
-        if (itemIndex === index) {
-          return { ...item, model: { ...item.model, ...query, datasource: query.datasource! } };
+        if (itemIndex !== index) {
+          return item;
         }
-        return item;
+        return {
+          ...item,
+          model: {
+            ...item.model,
+            ...query,
+            datasource: query.datasource!,
+          },
+        };
       })
     );
   }
@@ -79,14 +104,13 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
-  getDataSourceSettings = (query: DataQuery): DataSourceInstanceSettings | undefined => {
+  getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
     const { defaultDataSource } = this.state;
 
-    if (isExpressionQuery(query)) {
+    if (!query.datasourceUid) {
       return getDataSourceSrv().getInstanceSettings(defaultDataSource.name);
     }
-
-    return getDataSourceSrv().getInstanceSettings(query.datasource);
+    return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 
   render() {
@@ -108,7 +132,12 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
                   return (
                     <QueryEditorRow
-                      dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
+                      dataSourceSettings={dsSettings}
+                      onChangeDataSourceSettings={
+                        !isExpressionQuery(query.model)
+                          ? (settings) => this.onChangeDataSource(settings, index)
+                          : undefined
+                      }
                       id={query.refId}
                       index={index}
                       key={query.refId}

@@ -120,7 +120,6 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
   return {
     name: rule.name,
     query: rule.query,
-    queries: rule.query && isGrafanaRulesSource(namespace.rulesSource) ? JSON.parse(rule.query) : undefined,
     labels: rule.labels || {},
     annotations: isAlertingRule(rule) ? rule.annotations || {} : {},
     promRule: rule,
@@ -156,7 +155,6 @@ function rulerRuleToCombinedRule(
       }
     : {
         name: rule.grafana_alert.title,
-        queries: (rule.grafana_alert.data ?? []).map((d) => d.model),
         query: '',
         labels: rule.labels || {},
         annotations: rule.annotations || {},
