@@ -24,6 +24,11 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
+// metrics are a globally registered metric suite for alerting.
+// TODO: refactor testware to allow these to be created without
+// panicking on duplicate registration, thus enabling non-global vars.
+var metrics = NewMetrics(prometheus.DefaultRegisterer)
+
 type Alertmanager interface {
 	// Configuration
 	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
@@ -61,8 +66,6 @@ func (api *API) RegisterAPIEndpoints() {
 		DataProxy: api.DataProxy,
 	}
 
-	metrics := NewMetrics(prometheus.DefaultRegisterer)
-
 	// Register endpoints for proxing to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
@@ -80,7 +83,6 @@ func (api *API) RegisterAPIEndpoints() {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		RulerSrv{DatasourceCache: api.DatasourceCache, store: api.RuleStore, log: logger},
-		reg,
 	), metrics)
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
 		AlertingProxy:   proxy,
