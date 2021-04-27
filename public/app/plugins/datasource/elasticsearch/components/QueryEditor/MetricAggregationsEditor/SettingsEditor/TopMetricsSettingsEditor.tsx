@@ -7,6 +7,7 @@ import { SettingField } from './SettingField';
 import { orderOptions } from '../../BucketAggregationsEditor/utils';
 import { range } from 'lodash';
 import { useFields } from 'app/plugins/datasource/elasticsearch/hooks/useFields';
+import { css } from '@emotion/css';
 
 const aggregateByOptions = [
   { value: 'avg', label: 'Average' },
@@ -33,8 +34,19 @@ export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) =
           value={metric.settings?.order}
         />
       </InlineField>
-      <InlineField label="Order by" labelWidth={16}>
+      <InlineField
+        label="Order By"
+        labelWidth={16}
+        className={css`
+          & > div {
+            width: 100%;
+          }
+        `}
+      >
         <SegmentAsync
+          className={css`
+            margin-right: 0;
+          `}
           loadOptions={getFields}
           onChange={(e) => dispatch(changeMetricSetting(metric, 'orderBy', e.value))}
           placeholder="Select Field"
