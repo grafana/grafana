@@ -53,15 +53,15 @@ export default Page;
 
 const getStyles = (theme: GrafanaThemeV2) => ({
   wrapper: css`
+    background: ${theme.colors.background.primary};
+    bottom: 0;
     position: absolute;
     top: 0;
-    bottom: 0;
     width: 100%;
-    background: ${theme.colors.background.canvas};
   `,
   contentWidth: (size: ThemeBreakpointsKey) => css`
     .page-container {
-      max-width: ${theme.breakpoints.values[size]};
+      max-width: ${theme.breakpoints.values[size]}px;
     }
   `,
 });
