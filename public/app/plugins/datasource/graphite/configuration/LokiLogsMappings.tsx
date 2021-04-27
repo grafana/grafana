@@ -20,8 +20,8 @@ export const LokiLogsMappings = (props: Props): JSX.Element => {
         </p>
         <p>
           All tags are mapped automatically to labels. Graphite matching patterns (using &#123;&#125;) are converted to
-          Loki&apos;s regular expressions matchers. You can use functions in your queries, metric and tags will be
-          extracted to match it with defined mappings.
+          Loki&apos;s regular expressions matchers. You can use functions in your queries, metrics and tags will be
+          extracted to match them with defined mappings.
         </p>
         <p>
           Example: for a mapping = <code>servers.(cluster).(server).*</code>:
@@ -44,7 +44,7 @@ export const LokiLogsMappings = (props: Props): JSX.Element => {
             </tr>
             <tr>
               <td>
-                <code>alias(servers.*.#123;00&1,0022&#125;.*,1,2)</code>
+                <code>alias(servers.*.&#123;001,002&#125;.*,1,2)</code>
               </td>
               <td>
                 <code>&#123;server=~&quot;(001|002)&quot;&#125;</code>
