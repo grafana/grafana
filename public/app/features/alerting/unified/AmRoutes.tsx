@@ -1,6 +1,7 @@
 import { Alert, Field, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -15,10 +16,17 @@ const AmRoutes: FC = () => {
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   useEffect(() => {
-    dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    if (alertManagerSourceName) {
+      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    }
   }, [alertManagerSourceName, dispatch]);
 
-  const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
+  const { result, loading, error } =
+    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+
+  if (!alertManagerSourceName) {
+    return <Redirect to="/alerting/routes" />;
+  }
 
   return (
     <AlertingPageWrapper pageId="am-routes">

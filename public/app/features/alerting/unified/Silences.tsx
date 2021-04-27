@@ -1,6 +1,7 @@
 import { Field, Alert, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -15,10 +16,17 @@ const Silences: FC = () => {
   const silences = useUnifiedAlertingSelector((state) => state.silences);
 
   useEffect(() => {
-    dispatch(fetchSilencesAction(alertManagerSourceName));
+    if (alertManagerSourceName) {
+      dispatch(fetchSilencesAction(alertManagerSourceName));
+    }
   }, [alertManagerSourceName, dispatch]);
 
-  const { result, loading, error } = silences[alertManagerSourceName] || initialAsyncRequestState;
+  const { result, loading, error } =
+    (alertManagerSourceName && silences[alertManagerSourceName]) || initialAsyncRequestState;
+
+  if (!alertManagerSourceName) {
+    return <Redirect to="/alerting/silences" />;
+  }
 
   return (
     <AlertingPageWrapper pageId="silences">
