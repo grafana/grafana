@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/search"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -15,7 +17,7 @@ import (
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
 SELECT DISTINCT
-	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.type, lp.description, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
+	lp.name, lp.id, lp.org_id, lp.folder_id, lp.uid, lp.type, lp.description, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -400,6 +402,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		builder.Write(` WHERE lp.org_id=? AND lp.folder_id=0`, c.SignedInUser.OrgId)
 		if len(strings.TrimSpace(query.searchString)) > 0 {
 			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
+			builder.Write(" OR lp.description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
 		}
 		if len(strings.TrimSpace(query.excludeUID)) > 0 {
 			builder.Write(" AND lp.uid <> ?", query.excludeUID)
@@ -410,12 +413,18 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
 		if len(strings.TrimSpace(query.searchString)) > 0 {
 			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
+			builder.Write(" OR lp.description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
 		}
 		if len(strings.TrimSpace(query.excludeUID)) > 0 {
 			builder.Write(" AND lp.uid <> ?", query.excludeUID)
 		}
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if query.sortDirection == search.SortAlphaDesc.Name {
+			builder.Write(" ORDER BY 1 DESC")
+		} else {
+			builder.Write(" ORDER BY 1 ASC")
 		}
 		if query.perPage != 0 {
 			offset := query.perPage * (query.page - 1)
@@ -462,6 +471,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		countBuilder.Write(` WHERE org_id=?`, c.SignedInUser.OrgId)
 		if len(strings.TrimSpace(query.searchString)) > 0 {
 			countBuilder.Write(" AND name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
+			countBuilder.Write(" OR description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
 		}
 		if len(strings.TrimSpace(query.excludeUID)) > 0 {
 			countBuilder.Write(" AND uid <> ?", query.excludeUID)
