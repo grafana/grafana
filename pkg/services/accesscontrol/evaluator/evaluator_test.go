@@ -52,7 +52,7 @@ func TestEvaluatePermissions_WhenAtLeastOneScopeIsMatched_ReturnsTrue(t *testing
 	assert.True(t, ok)
 }
 
-func TestEvaluatePermissions_WhenNoMatchFound_ReturnsFase(t *testing.T) {
+func TestEvaluatePermissions_WhenNoMatchFound_ReturnsFalse(t *testing.T) {
 	scopes := map[string]struct{}{
 		"teams:*/permissions:*": {},
 		"users:*":               {},
