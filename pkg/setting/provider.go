@@ -2,9 +2,10 @@ package setting
 
 import (
 	"errors"
-	"gopkg.in/ini.v1"
 	"strings"
 	"time"
+
+	"gopkg.in/ini.v1"
 )
 
 var (
