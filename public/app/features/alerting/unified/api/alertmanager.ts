@@ -10,11 +10,11 @@ import {
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
-export async function fetchAlertManagerConfig(alertmanagerSourceName: string): Promise<AlertManagerCortexConfig> {
+export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {
   try {
     const result = await getBackendSrv()
       .fetch<AlertManagerCortexConfig>({
-        url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
+        url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
         showErrorAlert: false,
         showSuccessAlert: false,
       })
@@ -26,7 +26,7 @@ export async function fetchAlertManagerConfig(alertmanagerSourceName: string): P
   } catch (e) {
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
-      alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+      alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
       e.data?.message?.includes('failed to get latest configuration')
     ) {
       return {
@@ -39,19 +39,24 @@ export async function fetchAlertManagerConfig(alertmanagerSourceName: string): P
 }
 
 export async function updateAlertmanagerConfig(
-  alertmanagerSourceName: string,
+  alertManagerSourceName: string,
   config: AlertManagerCortexConfig
 ): Promise<void> {
-  await getBackendSrv().post(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
-    config
-  );
+  await getBackendSrv()
+    .fetch({
+      method: 'POST',
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
+      data: config,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
 }
 
-export async function fetchSilences(alertmanagerSourceName: string): Promise<Silence[]> {
+export async function fetchSilences(alertManagerSourceName: string): Promise<Silence[]> {
   const result = await getBackendSrv()
     .fetch<Silence[]>({
-      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/silences`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
