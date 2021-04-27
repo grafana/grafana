@@ -1,7 +1,7 @@
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
-export function getPlaylistStyles(theme: GrafanaTheme) {
+export function getPlaylistStyles(theme: GrafanaThemeV2) {
   return {
     description: css`
       label: description;
@@ -10,7 +10,7 @@ export function getPlaylistStyles(theme: GrafanaTheme) {
     `,
     subHeading: css`
       label: sub-heading;
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
   };
 }
