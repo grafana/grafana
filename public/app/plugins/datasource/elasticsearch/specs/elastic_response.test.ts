@@ -611,9 +611,8 @@ describe('ElasticResponse', () => {
           metrics: [
             {
               type: 'top_metrics',
-              settings: { order: 'top', orderBy: '@timestamp', size: 2, aggregateBy: 'sum' },
+              settings: { order: 'top', orderBy: '@timestamp', size: '2', aggregateBy: 'sum', metrics: ['@value'] },
               id: '1',
-              field: '@value',
             },
           ],
           bucketAggs: [{ type: 'date_histogram', id: '2' }],

@@ -244,7 +244,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     label: 'Top Metrics',
     xpack: true,
     minVersion: 77,
-    requiresField: true,
+    requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
@@ -253,11 +253,9 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasMeta: false,
     defaults: {
       settings: {
-        size: 1,
+        size: '1',
         order: 'desc',
         aggregateBy: 'avg',
-        orderBy: '@timestamp',
-        separator: ' ',
       },
     },
   },

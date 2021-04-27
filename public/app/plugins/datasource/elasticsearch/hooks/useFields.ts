@@ -24,7 +24,8 @@ const getFilter = (type: AggregationType | string[]) => {
       case 'cardinality':
         return void 0;
       case 'top_metrics':
-        return ['number', 'ip'];
+        // FIXME: DOUBLE CHECK THIS
+        return ['string', 'boolean', 'number', 'ip'];
       default:
         return ['number'];
     }
@@ -60,9 +61,14 @@ export const useFields = (type: AggregationType | string[]) => {
   const datasource = useDatasource();
   const range = useRange();
   const filter = getFilter(type);
+  let rawFields: MetricFindValue[];
 
-  return async () => {
-    const rawFields = await datasource.getFields(filter, range).toPromise();
-    return rawFields.map(toSelectableValue);
+  return async (q?: string) => {
+    // _mapping doesn't support filtering, we avoid sending a request everytime q changes
+    if (!rawFields) {
+      rawFields = await datasource.getFields(filter, range).toPromise();
+    }
+
+    return rawFields.filter(({ text }) => q === undefined || text.includes(q)).map(toSelectableValue);
   };
 };

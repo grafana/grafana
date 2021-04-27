@@ -283,14 +283,15 @@ export interface BucketScript extends PipelineMetricAggregationWithMultipleBucke
   };
 }
 
-export interface TopMetrics extends MetricAggregationWithField {
+export interface TopMetrics extends BaseMetricAggregation {
   type: 'top_metrics';
   settings?: {
     order?: string;
     orderBy?: string;
-    size?: number;
+    size?: string;
     aggregateBy?: string;
     separator?: string;
+    metrics?: string[];
   };
 }
 
