@@ -36,7 +36,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
 
   return (
     <div className={styles.wrapper}>
-      <TabsBar className={styles.tabBar} hideBorder>
+      <TabsBar className={styles.tabBar}>
         {tabs.map((tab) => {
           return (
             <Tab

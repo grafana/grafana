@@ -92,6 +92,7 @@ export type Receiver = {
   victorops_configs?: unknown[];
   wechat_configs?: unknown[];
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
+  [key: string]: unknown;
 };
 
 export type Route = {

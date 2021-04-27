@@ -13,7 +13,7 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
   const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;
   const hasServerName = dataSourceConfig.jsonData && dataSourceConfig.jsonData.serverName;
 
-  const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     const newSecureJsonFields: KeyValue<boolean> = { ...dataSourceConfig.secureJsonFields };
     newSecureJsonFields[field] = false;
