@@ -9,8 +9,8 @@ interface XYCanvasProps {}
  * Useful when you want to render some overlay with canvas-independent elements on top of the plot.
  */
 export const XYCanvas: React.FC<XYCanvasProps> = ({ children }) => {
-  const plotContext = usePlotContext();
-  const plotInstance = plotContext.getPlotInstance();
+  const plotCtx = usePlotContext();
+  const plotInstance = plotCtx.plot;
 
   if (!plotInstance) {
     return null;

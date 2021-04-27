@@ -1,3 +1,4 @@
+import { reduceField, ReducerID } from '..';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
@@ -200,10 +201,14 @@ describe('Streaming JSON', () => {
         maxLength: 5,
       }
     );
+    let val = reduceField({ field: stream.fields[0], reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
+    expect(val).toEqual(100);
     expect(stream.length).toEqual(1);
     stream.push({
       data: { values: [[200]] },
     });
+    val = reduceField({ field: stream.fields[0], reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
+    expect(val).toEqual(200);
     expect(stream.length).toEqual(2);
 
     const copy = ({ ...stream } as any) as DataFrame;

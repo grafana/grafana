@@ -39,6 +39,5 @@ Query expressions are different for each data source. For more information, refe
 1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "../filter-variables-with-regex.md" >}}).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
 1. (optional) Enter [Selection Options]({{< relref "../variable-selection-options.md" >}}).
-1. (optional) Enter [Value groups/tags]({{< relref "../variable-value-tags.md" >}}).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Add** to add the variable to the dashboard.

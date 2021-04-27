@@ -32,6 +32,7 @@ function setupTestContext(options: Partial<Props>) {
   setTimeSrv(timeSrv);
   const defaults: Props = {
     panel: ({
+      id: 123,
       hasTitle: jest.fn(),
       replaceVariables: jest.fn(),
       events: { subscribe: jest.fn() },
