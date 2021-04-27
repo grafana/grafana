@@ -1,5 +1,5 @@
 +++
-title = "Inspect a panel"
+title = "Inspector in Explore"
 weight = 400
 +++
 
