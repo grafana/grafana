@@ -395,7 +395,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields('date')
+    return this.getFields(['date'])
       .pipe(
         mergeMap((dateFields) => {
           const timeField: any = find(dateFields, { text: this.timeField });
@@ -639,35 +639,34 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
   // FIXME: This doesn't seem to return actual MetricFindValues, we should either change the return type
   // or fix the implementation.
-  getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
-    const configuredEsVersion = this.esVersion;
+  getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
+    const typeMap: Record<string, string> = {
+      float: 'number',
+      double: 'number',
+      integer: 'number',
+      long: 'number',
+      date: 'date',
+      date_nanos: 'date',
+      string: 'string',
+      text: 'string',
+      scaled_float: 'number',
+      nested: 'nested',
+      histogram: 'number',
+    };
+
     return this.get('/_mapping', range).pipe(
       map((result) => {
-        const typeMap: any = {
-          float: 'number',
-          double: 'number',
-          integer: 'number',
-          long: 'number',
-          date: 'date',
-          date_nanos: 'date',
-          string: 'string',
-          text: 'string',
-          scaled_float: 'number',
-          nested: 'nested',
-          histogram: 'number',
-        };
-
         const shouldAddField = (obj: any, key: string) => {
           if (this.isMetadataField(key)) {
             return false;
           }
 
-          if (!type) {
+          if (!type || type.length === 0) {
             return true;
           }
 
           // equal query type filter, or via typemap translation
-          return type === obj.type || type === typeMap[obj.type];
+          return type.includes(obj.type) || type.includes(typeMap[obj.type]);
         };
 
         // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
@@ -709,7 +708,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           if (index && index.mappings) {
             const mappings = index.mappings;
 
-            if (configuredEsVersion < 70) {
+            if (this.esVersion < 70) {
               for (const typeName in mappings) {
                 const properties = mappings[typeName].properties;
                 getFieldsRecursively(properties);

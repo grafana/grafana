@@ -357,7 +357,7 @@ export const isMetricAggregationWithInlineScript = (
   metric: BaseMetricAggregation | MetricAggregationWithInlineScript
 ): metric is MetricAggregationWithInlineScript => metricAggregationConfig[metric.type].supportsInlineScript;
 
-export const METRIC_AGGREGATION_TYPES = [
+export const METRIC_AGGREGATION_TYPES: MetricAggregationType[] = [
   'count',
   'avg',
   'sum',
@@ -379,4 +379,4 @@ export const METRIC_AGGREGATION_TYPES = [
 ];
 
 export const isMetricAggregationType = (s: MetricAggregationType | string): s is MetricAggregationType =>
-  METRIC_AGGREGATION_TYPES.includes(s);
+  METRIC_AGGREGATION_TYPES.includes(s as MetricAggregationType);

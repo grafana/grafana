@@ -1,5 +1,8 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
-import { BucketAggregationType } from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
+import {
+  BucketAggregationType,
+  isBucketAggregationType,
+} from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { useDatasource, useRange } from '../components/QueryEditor/ElasticsearchQueryContext';
 import {
   isMetricAggregationType,
@@ -8,27 +11,35 @@ import {
 
 type AggregationType = BucketAggregationType | MetricAggregationType;
 
-const getFilter = (aggregationType: AggregationType) => {
+const getFilter = (type: AggregationType | string[]) => {
   // For all metric types we want only numbers, except for cardinality
   // TODO: To have a more configuration-driven editor, it would be nice to move this logic in
   // metricAggregationConfig and bucketAggregationConfig so that each aggregation type can specify on
   // which kind of data it operates.
-  if (isMetricAggregationType(aggregationType)) {
-    if (!['cardinality', 'top_metrics'].includes(aggregationType)) {
-      return 'number';
+  if (Array.isArray(type)) {
+    return type;
+  }
+
+  if (isMetricAggregationType(type)) {
+    if (!['cardinality', 'top_metrics'].includes(type)) {
+      return ['number'];
     }
 
     return void 0;
   }
 
-  switch (aggregationType) {
-    case 'date_histogram':
-      return 'date';
-    case 'geohash_grid':
-      return 'geo_point';
-    default:
-      return void 0;
+  if (isBucketAggregationType(type)) {
+    switch (type) {
+      case 'date_histogram':
+        return ['date'];
+      case 'geohash_grid':
+        return ['geo_point'];
+      default:
+        return void 0;
+    }
   }
+
+  return void 0;
 };
 
 const toSelectableValue = ({ text }: MetricFindValue): SelectableValue<string> => ({
@@ -37,14 +48,16 @@ const toSelectableValue = ({ text }: MetricFindValue): SelectableValue<string> =
 });
 
 /**
- * Returns a function to query the configured datasource for autocomplete values for the specified aggregation type.
+ * Returns a function to query the configured datasource for autocomplete values for the specified aggregation type or data types.
  * Each aggregation can be run on different types, for example avg only operates on numeric fields, geohash_grid only on geo_point fields.
+ * If an aggregation type is provided, the promise will resolve with all fields suitable to be used as a field for the given aggregation.
+ * If an array of types is providem the promise will resolve with all the fields matching the provided types.
  * @param aggregationType the type of aggregation to get fields for
  */
-export const useFields = (aggregationType: AggregationType) => {
+export const useFields = (type: AggregationType | string[]) => {
   const datasource = useDatasource();
   const range = useRange();
-  const filter = getFilter(aggregationType);
+  const filter = getFilter(type);
 
   return async () => {
     const rawFields = await datasource.getFields(filter, range).toPromise();
