@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/go-macaron/binding"
 
@@ -59,6 +60,14 @@ func (api *API) RegisterAPIEndpoints() {
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
 	}
+
+	var reg prometheus.Registerer
+	// hack, this just assumes that if this histogram is enabled, we should enable others
+	// TODO(owen-d): expose this as a config option (alerting-instrumentation or similar)
+	if api.Cfg.IsHTTPRequestHistogramEnabled() {
+		reg = prometheus.DefaultRegisterer
+	}
+
 	// Register endpoints for proxing to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
@@ -76,6 +85,7 @@ func (api *API) RegisterAPIEndpoints() {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		RulerSrv{store: api.RuleStore, log: logger},
+		reg,
 	))
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
 		AlertingProxy:   proxy,
