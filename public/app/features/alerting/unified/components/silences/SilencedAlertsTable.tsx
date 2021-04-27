@@ -4,7 +4,7 @@ import { getAlertTableStyles } from '../../styles/table';
 import { useStyles } from '@grafana/ui';
 import { SilencedAlertsTableRow } from './SilencedAlertsTableRow';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 interface Props {
   silencedAlerts: AlertmanagerAlert[];
@@ -16,7 +16,7 @@ const SilencedAlertsTable: FC<Props> = ({ silencedAlerts }) => {
 
   if (!!silencedAlerts.length) {
     return (
-      <table className={tableStyles.table}>
+      <table className={cx(tableStyles.table, styles.tableMargin)}>
         <colgroup>
           <col className={tableStyles.colExpand} />
           <col className={styles.colState} />
@@ -52,6 +52,9 @@ const SilencedAlertsTable: FC<Props> = ({ silencedAlerts }) => {
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  tableMargin: css`
+    margin-bottom: ${theme.spacing.sm};
+  `,
   colState: css`
     width: 110px;
   `,

@@ -1,6 +1,6 @@
 import React, { FC, Fragment, useState } from 'react';
 import { dateMath, GrafanaTheme, toDuration } from '@grafana/data';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Silence, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AlertLabel } from '../AlertLabel';
 import { StateTag } from '../StateTag';
@@ -90,9 +90,9 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
             <td colSpan={4}>{createdBy}</td>
           </tr>
           {!!silencedAlerts.length && (
-            <tr className={className}>
+            <tr className={cx(className, styles.alertRulesCell)}>
               <td />
-              <td>Affected alert rules</td>
+              <td>Affected alerts</td>
               <td colSpan={4}>
                 <SilencedAlertsTable silencedAlerts={silencedAlerts} />
               </td>
@@ -118,6 +118,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     & > * + * {
       margin-left: ${theme.spacing.sm};
     }
+  `,
+  alertRulesCell: css`
+    vertical-align: top;
   `,
 });
 
