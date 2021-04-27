@@ -1,18 +1,5 @@
 // Libraries
-import {
-  defaults,
-  each,
-  find,
-  findIndex,
-  flattenDeep,
-  isArray,
-  isBoolean,
-  isNumber,
-  isString,
-  map,
-  max,
-  some,
-} from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
@@ -29,9 +16,9 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { isConstant, isMulti, isQuery } from 'app/features/variables/guard';
+import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableHide, VariableTag } from '../../variables/types';
+import { VariableHide } from '../../variables/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -44,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 27;
+    this.dashboard.schemaVersion = 28;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -537,43 +524,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 25) {
-      for (const variable of this.dashboard.templating.list) {
-        if (!isQuery(variable)) {
-          continue;
-        }
-
-        const { tags, current } = variable;
-        if (!Array.isArray(tags)) {
-          variable.tags = [];
-          continue;
-        }
-
-        const currentTags = current?.tags ?? [];
-        const currents = currentTags.reduce((all, tag) => {
-          if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
-            all[tag.text] = tag;
-          }
-          return all;
-        }, {} as Record<string, VariableTag>);
-
-        const newTags: VariableTag[] = [];
-
-        for (const tag of tags) {
-          if (typeof tag === 'object') {
-            // new format let's assume it's correct
-            newTags.push(tag);
-            continue;
-          }
-
-          if (typeof tag !== 'string') {
-            // something that we do not support
-            continue;
-          }
-
-          newTags.push(defaults(currents[tag], { text: tag, selected: false }));
-        }
-        variable.tags = newTags;
-      }
+      // tags are removed in version 28
     }
 
     if (oldVersion < 26) {
@@ -600,6 +551,26 @@ export class DashboardMigrator {
 
         variable.current = { selected: true, text: variable.query ?? '', value: variable.query ?? '' };
         variable.options = [variable.current];
+      }
+    }
+
+    if (oldVersion < 28) {
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.tags) {
+          delete variable.tags;
+        }
+
+        if (variable.tagsQuery) {
+          delete variable.tagsQuery;
+        }
+
+        if (variable.tagValuesQuery) {
+          delete variable.tagValuesQuery;
+        }
+
+        if (variable.useTags) {
+          delete variable.useTags;
+        }
       }
     }
 
