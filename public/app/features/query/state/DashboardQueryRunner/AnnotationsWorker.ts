@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { from, merge, Observable, of } from 'rxjs';
-import { map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
+import { filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 
@@ -13,6 +13,8 @@ import {
 import { emptyResult, translateQueryResult } from './utils';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
+import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
+import { getDashboardQueryRunner } from './DashboardQueryRunner';
 
 export class AnnotationsWorker implements DashboardQueryRunnerWorker {
   constructor(
@@ -43,7 +45,14 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
             return of([]);
           }
 
+          dashboard.events.publish(new AnnotationQueryStarted(annotation));
+
           return runner.run({ annotation, datasource, dashboard, range }).pipe(
+            takeUntil(
+              getDashboardQueryRunner()
+                .cancellations()
+                .pipe(filter((a) => a === annotation))
+            ),
             map((results) => {
               // store response in annotation object if this is a snapshot call
               if (dashboard.snapshot) {
@@ -51,6 +60,9 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
               }
               // translate result
               return translateQueryResult(annotation, results);
+            }),
+            finalize(() => {
+              dashboard.events.publish(new AnnotationQueryFinished(annotation));
             })
           );
         })

@@ -206,7 +206,7 @@ describe('DashboardQueryRunnerImpl', () => {
   });
 
   describe('when calling cancel', () => {
-    it('then it should cancel previous run', (done) => {
+    it('then it should cancel matching workers', (done) => {
       const { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
       executeAnnotationQueryMock.mockReturnValueOnce(
         toAsyncOfResult({ events: [{ id: 'NextGen' }] }).pipe(delay(10000))
@@ -219,16 +219,19 @@ describe('DashboardQueryRunnerImpl', () => {
         expect: (results) => {
           // should have one alert state, one snapshot, one legacy and one next gen result
           // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
-          const expected = { alertState: undefined, annotations: [] };
-          expect(results).toEqual(expected);
-          expect(annotationQueryMock).toHaveBeenCalledTimes(0);
-          expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(0);
+          const { alertState, annotations } = getExpectedForAllResult();
+          expect(results).toEqual({ alertState, annotations: [annotations[0], annotations[2]] });
+          expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+          expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
           expect(getMock).toHaveBeenCalledTimes(1);
         },
       });
 
       runner.run(options);
-      runner.cancel();
+      setTimeout(() => {
+        // call to async needs to be async or the cancellation will be called before any of the workers have started
+        runner.cancel(options.dashboard.annotations.list[1]);
+      }, 100);
     });
   });
 });
