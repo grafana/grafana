@@ -4,13 +4,13 @@ exports[`Render should render component 1`] = `
 <div
   className="gf-form-button-row"
 >
-  <Button
-    onClick={[MockFunction]}
-    type="submit"
-    variant="primary"
+  <LinkButton
+    fill="outline"
+    href="/datasources"
+    variant="secondary"
   >
-    Test
-  </Button>
+    Back
+  </LinkButton>
   <Button
     aria-label="Data source settings page Delete button"
     disabled={true}
@@ -20,12 +20,13 @@ exports[`Render should render component 1`] = `
   >
     Delete
   </Button>
-  <LinkButton
-    fill="text"
-    href="/datasources"
+  <Button
+    onClick={[MockFunction]}
+    type="submit"
+    variant="primary"
   >
-    Back
-  </LinkButton>
+    Test
+  </Button>
 </div>
 `;
 
@@ -33,15 +34,13 @@ exports[`Render should render with buttons enabled 1`] = `
 <div
   className="gf-form-button-row"
 >
-  <Button
-    aria-label="Data source settings page Save and Test button"
-    disabled={false}
-    onClick={[Function]}
-    type="submit"
-    variant="primary"
+  <LinkButton
+    fill="outline"
+    href="/datasources"
+    variant="secondary"
   >
-    Save & test
-  </Button>
+    Back
+  </LinkButton>
   <Button
     aria-label="Data source settings page Delete button"
     disabled={false}
@@ -51,11 +50,14 @@ exports[`Render should render with buttons enabled 1`] = `
   >
     Delete
   </Button>
-  <LinkButton
-    fill="text"
-    href="/datasources"
+  <Button
+    aria-label="Data source settings page Save and Test button"
+    disabled={false}
+    onClick={[Function]}
+    type="submit"
+    variant="primary"
   >
-    Back
-  </LinkButton>
+    Save & test
+  </Button>
 </div>
 `;
