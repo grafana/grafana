@@ -13,7 +13,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    variable: { ...initialQueryVariableModelState, useTags: true },
+    variable: { ...initialQueryVariableModelState },
     initQueryVariableEditor: jest.fn(),
     changeQueryVariableDataSource: jest.fn(),
     changeQueryVariableQuery: jest.fn(),
@@ -51,11 +51,9 @@ describe('QueryVariableEditor', () => {
 
   describe('when the user changes', () => {
     it.each`
-      fieldName           | propName                      | expectedArgs
-      ${'query'}          | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID }, 't', 't']}
-      ${'regex'}          | ${'onPropChange'}             | ${{ propName: 'regex', propValue: 't', updateOptions: true }}
-      ${'tagsQuery'}      | ${'onPropChange'}             | ${{ propName: 'tagsQuery', propValue: 't', updateOptions: true }}
-      ${'tagValuesQuery'} | ${'onPropChange'}             | ${{ propName: 'tagValuesQuery', propValue: 't', updateOptions: true }}
+      fieldName  | propName                      | expectedArgs
+      ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID }, 't', 't']}
+      ${'regex'} | ${'onPropChange'}             | ${{ propName: 'regex', propValue: 't', updateOptions: true }}
     `(
       '$fieldName field and tabs away then $propName should be called with correct args',
       ({ fieldName, propName, expectedArgs }) => {
@@ -74,11 +72,9 @@ describe('QueryVariableEditor', () => {
 
   describe('when the user changes', () => {
     it.each`
-      fieldName           | propName
-      ${'query'}          | ${'changeQueryVariableQuery'}
-      ${'regex'}          | ${'onPropChange'}
-      ${'tagsQuery'}      | ${'onPropChange'}
-      ${'tagValuesQuery'} | ${'onPropChange'}
+      fieldName  | propName
+      ${'query'} | ${'changeQueryVariableQuery'}
+      ${'regex'} | ${'onPropChange'}
     `(
       '$fieldName field but reverts the change and tabs away then $propName should not be called',
       ({ fieldName, propName }) => {
@@ -101,14 +97,7 @@ const getQueryField = () =>
 
 const getRegExField = () => screen.getByRole('textbox', { name: /variable editor form query regex field/i });
 
-const getTagsQueryField = () => screen.getByRole('textbox', { name: /variable editor form query tagsquery field/i });
-
-const getTagValuesQueryField = () =>
-  screen.getByRole('textbox', { name: /variable editor form query tagsvaluesquery field/i });
-
 const fieldAccessors: Record<string, () => HTMLElement> = {
   query: getQueryField,
   regex: getRegExField,
-  tagsQuery: getTagsQueryField,
-  tagValuesQuery: getTagValuesQueryField,
 };
