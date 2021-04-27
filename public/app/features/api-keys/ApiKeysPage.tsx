@@ -151,7 +151,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                     <>
                       <h3 className="page-heading">Existing API keys</h3>
                       <InlineField label="Show expired">
-                        <InlineSwitch value={includeExpired} onChange={this.onIncludeExpiredChange} />
+                        <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
                       <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
                     </>
