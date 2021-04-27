@@ -34,10 +34,10 @@ export const RowOptionsForm: FC<Props> = ({ repeat, title, onUpdate, onCancel })
           </Field>
 
           <Modal.ButtonRow>
-            <Button type="submit">Update</Button>
-            <Button variant="secondary" onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
+            <Button type="submit">Update</Button>
           </Modal.ButtonRow>
         </>
       )}
