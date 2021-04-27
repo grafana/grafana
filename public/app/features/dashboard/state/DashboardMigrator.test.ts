@@ -5,6 +5,8 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
 import { DataLinkBuiltInVars } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
+import { config } from 'app/core/config';
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -14,6 +16,12 @@ describe('DashboardModel', () => {
     let graph: any;
     let singlestat: any;
     let table: any;
+    let singlestatGauge: any;
+
+    config.panels = {
+      stat: getPanelPlugin({ id: 'stat' }).meta,
+      gauge: getPanelPlugin({ id: 'gauge' }).meta,
+    };
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -49,9 +57,21 @@ describe('DashboardModel', () => {
             type: 'singlestat',
             legend: true,
             thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
             grid: { min: 1, max: 10 },
             targets: [{ refId: 'A' }, {}],
+          },
+          {
+            type: 'singlestat',
+            thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
+            gauge: {
+              show: true,
+              thresholdMarkers: true,
+              thresholdLabels: false,
+            },
+            grid: { min: 1, max: 10 },
           },
           {
             type: 'table',
@@ -64,7 +84,8 @@ describe('DashboardModel', () => {
 
       graph = model.panels[0];
       singlestat = model.panels[1];
-      table = model.panels[2];
+      singlestatGauge = model.panels[2];
+      table = model.panels[3];
     });
 
     it('should have title', () => {
@@ -84,8 +105,16 @@ describe('DashboardModel', () => {
       expect(graph.type).toBe('graph');
     });
 
-    it('single stat panel should have two thresholds', () => {
-      expect(singlestat.thresholds).toBe('20,30');
+    it('singlestat panel should be mapped to stat panel', () => {
+      expect(singlestat.type).toBe('stat');
+      expect(singlestat.fieldConfig.defaults.thresholds.steps[2].value).toBe(30);
+      expect(singlestat.fieldConfig.defaults.thresholds.steps[0].color).toBe('#FF0000');
+    });
+
+    it('singlestat panel should be mapped to gauge panel', () => {
+      expect(singlestatGauge.type).toBe('gauge');
+      expect(singlestatGauge.options.showThresholdMarkers).toBe(true);
+      expect(singlestatGauge.options.showThresholdLabels).toBe(false);
     });
 
     it('queries without refId should get it', () => {

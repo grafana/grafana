@@ -15,7 +15,7 @@ import config from 'app/core/config';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
-import { DEPRECATED_PANELS, LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
@@ -186,8 +186,4 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
-}
-
-export function isDeprecatedPanel(panelType: string) {
-  return !!DEPRECATED_PANELS[panelType];
 }
