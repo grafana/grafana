@@ -80,13 +80,34 @@ export function buildColorsMapForTheme(theme: GrafanaTheme | GrafanaThemeV2): Re
 
   for (const def of getNamedColorPalette().values()) {
     for (const c of def) {
-      colorsMap[c.name] = typeof theme === GrafanaTheme ? c.variants[theme.type] : c.variants[theme.colors.mode];
+      if (isGrafanaTheme(theme)) {
+        colorsMap[c.name] = c.variants[theme.type];
+        colorsMap['panel-bg'] = theme.colors.panelBg;
+      }
+      if (isGrafanaThemeV2(theme)) {
+        colorsMap[c.name] = c.variants[theme.colors.mode];
+        colorsMap['panel-bg'] = theme.colors.background.primary;
+      }
     }
   }
 
-  colorsMap['panel-bg'] = theme.colors.background.primary ?? theme.colors.panelBg;
-
   return colorsMap;
+}
+
+function isGrafanaTheme(theme: any): theme is GrafanaTheme {
+  if (!theme) {
+    return false;
+  }
+
+  return !theme.hasOwnProperty('v1');
+}
+
+function isGrafanaThemeV2(theme: any): theme is GrafanaThemeV2 {
+  if (!theme) {
+    return false;
+  }
+
+  return theme.hasOwnProperty('v1');
 }
 
 export function getColorForTheme(color: string, theme: GrafanaTheme | GrafanaThemeV2): string {
