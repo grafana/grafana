@@ -6,11 +6,13 @@ import { css } from '@emotion/css';
 interface Props {
   labelKey: string;
   value: string;
+  isRegex?: boolean;
 }
 
-export const AlertLabel: FC<Props> = ({ labelKey, value }) => (
+export const AlertLabel: FC<Props> = ({ labelKey, value, isRegex = false }) => (
   <div className={useStyles(getStyles)}>
-    {labelKey}={value}
+    {labelKey}={isRegex && '~'}
+    {value}
   </div>
 );
 
