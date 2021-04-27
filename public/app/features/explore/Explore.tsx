@@ -335,8 +335,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onClickRichHistoryButton={this.toggleShowRichHistory}
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
+              <ResponseErrorContainer exploreId={exploreId} />
             </div>
-            <ResponseErrorContainer exploreId={exploreId} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
