@@ -62,6 +62,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   editSourceId: true,
   configRev: true,
   getDisplayTitle: true,
+  dataSupport: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -107,7 +108,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   libraryPanel: true,
   getDisplayTitle: true,
   configRev: true,
-  dataSupport: true,
 };
 
 const defaults: any = {
