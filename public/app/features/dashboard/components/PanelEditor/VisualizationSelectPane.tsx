@@ -74,7 +74,12 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const radioOptions: Array<SelectableValue<ListMode>> = [
     { label: 'Visualizations', value: ListMode.Visualizations },
-    { label: 'Global panels', value: ListMode.Globals },
+    {
+      label: 'Global panels',
+      value: ListMode.Globals,
+      icon: 'info-circle',
+      description: 'Reusable panels whose state is reflected on each dashboard they are used with.',
+    },
   ];
 
   return (
