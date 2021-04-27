@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -33,6 +33,7 @@ import {
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
 import { usePanelContext } from '../PanelChrome';
+import { Subscription } from 'rxjs';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -58,25 +59,7 @@ export const PieChart: FC<PieChartProps> = ({
   ...restProps
 }) => {
   const theme = useTheme2();
-  const [highlightedTitle, setHighlightedTitle] = useState<string>();
-  const { eventBus } = usePanelContext();
-
-  if (eventBus) {
-    const setHighlightedSlice = (event: DataHoverEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(event.payload.dataId);
-      }
-    };
-
-    const resetHighlightedSlice = (event: DataHoverClearEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(undefined);
-      }
-    };
-
-    eventBus.subscribe(DataHoverEvent, setHighlightedSlice);
-    eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice);
-  }
+  const highlightedTitle = useSliceHighlightState();
 
   const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
@@ -153,6 +136,39 @@ export const PieChart: FC<PieChartProps> = ({
   );
 };
 
+function useSliceHighlightState() {
+  const [highlightedTitle, setHighlightedTitle] = useState<string>();
+  const { eventBus } = usePanelContext();
+
+  useEffect(() => {
+    if (!eventBus) {
+      return;
+    }
+
+    const setHighlightedSlice = (event: DataHoverEvent) => {
+      if (eventBus.isOwnEvent(event)) {
+        setHighlightedTitle(event.payload.dataId);
+      }
+    };
+
+    const resetHighlightedSlice = (event: DataHoverClearEvent) => {
+      if (eventBus.isOwnEvent(event)) {
+        setHighlightedTitle(undefined);
+      }
+    };
+
+    const subs = new Subscription();
+    subs.add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice));
+    subs.add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
+
+    return () => {
+      subs.unsubscribe();
+    };
+  }, [setHighlightedTitle, eventBus]);
+
+  return highlightedTitle;
+}
+
 export const PieChartSvg: FC<PieChartSvgProps> = ({
   fieldDisplayValues,
   pieType,
@@ -217,56 +233,55 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             cornerRadius={3}
             padAngle={0.005}
           >
-            {(pie) => {
-              return pie.arcs.map((arc) => {
-                let color = arc.data.display.color ?? FALLBACK_COLOR;
-                const highlighted = highlightedTitle === arc.data.display.title;
-
-                const label = showLabel ? (
-                  <PieLabel
-                    arc={arc}
-                    outerRadius={layout.outerRadius}
-                    innerRadius={layout.innerRadius}
-                    displayLabels={displayLabels}
-                    total={total}
-                    color={theme.colors.text.primary}
-                  />
-                ) : undefined;
-                if (arc.data.hasLinks && arc.data.getLinks) {
-                  return (
-                    <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
-                      {(api) => (
-                        <PieSlice
-                          tooltip={tooltip}
-                          highlighted={highlighted}
-                          arc={arc}
-                          pie={pie}
-                          fill={getGradientColor(color)}
-                          openMenu={api.openMenu}
-                          tooltipOptions={tooltipOptions}
-                        >
-                          {label}
-                        </PieSlice>
-                      )}
-                    </DataLinksContextMenu>
-                  );
-                } else {
-                  return (
-                    <PieSlice
-                      key={arc.index}
-                      highlighted={highlighted}
-                      tooltip={tooltip}
+            {(pie) => (
+              <>
+                {pie.arcs.map((arc) => {
+                  let color = arc.data.display.color ?? FALLBACK_COLOR;
+                  const highlighted = highlightedTitle === arc.data.display.title;
+                  if (arc.data.hasLinks && arc.data.getLinks) {
+                    return (
+                      <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
+                        {(api) => (
+                          <PieSlice
+                            tooltip={tooltip}
+                            highlighted={highlighted}
+                            arc={arc}
+                            pie={pie}
+                            fill={getGradientColor(color)}
+                            openMenu={api.openMenu}
+                            tooltipOptions={tooltipOptions}
+                          />
+                        )}
+                      </DataLinksContextMenu>
+                    );
+                  } else {
+                    return (
+                      <PieSlice
+                        key={arc.index}
+                        highlighted={highlighted}
+                        tooltip={tooltip}
+                        arc={arc}
+                        pie={pie}
+                        fill={getGradientColor(color)}
+                        tooltipOptions={tooltipOptions}
+                      />
+                    );
+                  }
+                })}
+                {showLabel &&
+                  pie.arcs.map((arc) => (
+                    <PieLabel
                       arc={arc}
-                      pie={pie}
-                      fill={getGradientColor(color)}
-                      tooltipOptions={tooltipOptions}
-                    >
-                      {label}
-                    </PieSlice>
-                  );
-                }
-              });
-            }}
+                      key={arc.index}
+                      outerRadius={layout.outerRadius}
+                      innerRadius={layout.innerRadius}
+                      displayLabels={displayLabels}
+                      total={total}
+                      color={theme.colors.text.primary}
+                    />
+                  ))}
+              </>
+            )}
           </Pie>
         </Group>
       </svg>
@@ -286,8 +301,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   );
 };
 
-const PieSlice: FC<{
-  children: ReactNode;
+interface SliceProps {
   arc: PieArcDatum<FieldDisplay>;
   pie: ProvidedProps<FieldDisplay>;
   highlighted?: boolean;
@@ -295,7 +309,9 @@ const PieSlice: FC<{
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
-}> = ({ arc, children, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }) => {
+}
+
+function PieSlice({ arc, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -317,19 +333,20 @@ const PieSlice: FC<{
       onClick={openMenu}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
-      {children}
     </g>
   );
-};
+}
 
-const PieLabel: FC<{
+interface LabelProps {
   arc: PieArcDatum<FieldDisplay>;
   outerRadius: number;
   innerRadius: number;
   displayLabels: PieChartLabels[];
   total: number;
   color: string;
-}> = ({ arc, outerRadius, innerRadius, displayLabels, total, color }) => {
+}
+
+function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color }: LabelProps) {
   const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
   const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
   const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
@@ -371,7 +388,7 @@ const PieLabel: FC<{
       </text>
     </g>
   );
-};
+}
 
 function getTooltipData(
   pie: ProvidedProps<FieldDisplay>,
