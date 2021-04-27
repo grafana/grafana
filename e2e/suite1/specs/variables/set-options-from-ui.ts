@@ -6,13 +6,7 @@ describe('Variables - Set options from ui', () => {
   it('clicking a value that is not part of dependents options should change these to All', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-server=AA&var-pod=AAA` });
-    e2e().server();
-    e2e()
-      .route({
-        method: 'POST',
-        url: '/api/ds/query',
-      })
-      .as('query');
+    e2e().intercept('/api/ds/query').as('query');
 
     e2e().wait('@query');
 
@@ -28,9 +22,13 @@ describe('Variables - Set options from ui', () => {
 
     e2e.components.LoadingIndicator.icon().should('have.length', 0);
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 2);
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
+      .should('have.length', 2)
+      .eq(0)
+      .should('be.visible')
+      .click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').eq(0).should('be.visible').click();
+    e2e().wait(2000);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
@@ -44,6 +42,8 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
+
+    e2e().wait(2000);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
@@ -66,13 +66,7 @@ describe('Variables - Set options from ui', () => {
   it('adding a value that is not part of dependents options should add the new values dependant options', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-server=AA&var-pod=AAA` });
-    e2e().server();
-    e2e()
-      .route({
-        method: 'POST',
-        url: '/api/ds/query',
-      })
-      .as('query');
+    e2e().intercept('/api/ds/query').as('query');
 
     e2e().wait('@query');
 
@@ -123,13 +117,7 @@ describe('Variables - Set options from ui', () => {
     e2e.flows.openDashboard({
       uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-datacenter=B&var-server=AA&var-server=BB&var-pod=AAA&var-pod=BBB`,
     });
-    e2e().server();
-    e2e()
-      .route({
-        method: 'POST',
-        url: '/api/ds/query',
-      })
-      .as('query');
+    e2e().intercept('/api/ds/query').as('query');
 
     e2e().wait('@query');
 
