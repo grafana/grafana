@@ -54,8 +54,8 @@ export function ExploreQueryInspector(props: Props) {
   };
 
   const queryInspectorTab: TabConfig = {
-    label: 'Query Inspector',
-    value: 'query_inspector',
+    label: 'Query',
+    value: 'query',
     icon: 'info-circle',
     content: <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries(props.exploreId)} />,
   };

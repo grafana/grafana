@@ -52,11 +52,11 @@ describe('ExploreQueryInspector', () => {
   it('should render 2 Tabs', () => {
     setup();
     expect(screen.getByLabelText(/tab stats/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/tab query inspector/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/tab query/i)).toBeInTheDocument();
   });
   it('should display query data', () => {
     setup();
-    fireEvent.click(screen.getByLabelText(/tab query inspector/i));
+    fireEvent.click(screen.getByLabelText(/tab query/i));
     fireEvent.click(screen.getByText(/expand all/i));
     expect(screen.getByText(/very unique test value/i)).toBeInTheDocument();
   });
