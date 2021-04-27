@@ -6,9 +6,9 @@ import {
   FieldDisplay,
   formattedValueToString,
   getFieldDisplayValues,
-  GrafanaTheme,
+  GrafanaThemeV2,
 } from '@grafana/data';
-import { useStyles, useTheme } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { Group } from '@visx/group';
@@ -57,7 +57,7 @@ export const PieChart: FC<PieChartProps> = ({
   height,
   ...restProps
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const [highlightedTitle, setHighlightedTitle] = useState<string>();
   const { eventBus } = usePanelContext();
 
@@ -130,7 +130,7 @@ export const PieChart: FC<PieChartProps> = ({
     fieldConfig,
     reduceOptions,
     data,
-    theme,
+    theme: theme.v1,
     replaceVariables,
     timeZone,
   });
@@ -159,13 +159,12 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   width,
   height,
   highlightedTitle,
-  useGradients = true,
   displayLabels = [],
   tooltipOptions,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const componentInstanceId = useComponentInstanceId('PieChart');
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const tooltip = useTooltip<SeriesTableRowProps[]>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
@@ -220,8 +219,9 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
           >
             {(pie) => {
               return pie.arcs.map((arc) => {
-                const color = arc.data.display.color ?? FALLBACK_COLOR;
+                let color = arc.data.display.color ?? FALLBACK_COLOR;
                 const highlighted = highlightedTitle === arc.data.display.title;
+
                 const label = showLabel ? (
                   <PieLabel
                     arc={arc}
@@ -229,7 +229,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                     innerRadius={layout.innerRadius}
                     displayLabels={displayLabels}
                     total={total}
-                    color={theme.colors.text}
+                    color={theme.colors.text.primary}
                   />
                 ) : undefined;
                 if (arc.data.hasLinks && arc.data.getLinks) {
@@ -296,8 +296,8 @@ const PieSlice: FC<{
   tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
 }> = ({ arc, children, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }) => {
-  const theme = useTheme();
-  const styles = useStyles(getStyles);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   const onMouseMoveOverArc = (event: any) => {
     const coords = localPoint(event.target.ownerSVGElement, event);
@@ -316,7 +316,7 @@ const PieSlice: FC<{
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
     >
-      <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.panelBg} strokeWidth={1} />
+      <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
       {children}
     </g>
   );
@@ -403,14 +403,14 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
   return [Math.cos(a) * r, Math.sin(a) * r];
 }
 
-function getGradientColorFrom(color: string, theme: GrafanaTheme) {
+function getGradientColorFrom(color: string, theme: GrafanaThemeV2) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
     .spin(8)
     .toRgbString();
 }
 
-function getGradientColorTo(color: string, theme: GrafanaTheme) {
+function getGradientColorTo(color: string, theme: GrafanaThemeV2) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
     .spin(-8)
@@ -442,7 +442,7 @@ function getPieLayout(height: number, width: number, pieType: PieChartType, marg
   };
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
       width: 100%;
