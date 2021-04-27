@@ -5,10 +5,12 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 
 interface Props {
   // The query configuration
   queries: GrafanaQuery[];
+  data?: Record<string, PanelData>;
 
   // Query editing
   onQueriesChange: (queries: GrafanaQuery[]) => void;
@@ -17,14 +19,13 @@ interface Props {
 }
 
 interface State {
-  dataPerQuery: Record<string, PanelData>;
   defaultDataSource: DataSourceApi;
 }
 
 export class AlertingQueryRows extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { dataPerQuery: {}, defaultDataSource: {} as DataSourceApi };
+    this.state = { defaultDataSource: {} as DataSourceApi };
   }
 
   async componentDidMount() {
@@ -115,7 +116,8 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query: GrafanaQuery, index) => {
-                  const data = this.state.dataPerQuery[query.refId];
+                  const data = this.props.data && this.props.data[query.refId];
+                  console.log('query rows', data);
                   const dsSettings = this.getDataSourceSettings(query);
 
                   if (!dsSettings) {
@@ -123,29 +125,32 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                   }
 
                   return (
-                    <QueryEditorRow
-                      dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
-                      id={query.refId}
-                      index={index}
-                      key={query.refId}
-                      data={data}
-                      query={query.model}
-                      onChange={(query) => this.onChangeQuery(query, index)}
-                      timeRange={
-                        !isExpressionQuery(query.model) && query.relativeTimeRange
-                          ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
-                          : undefined
-                      }
-                      onChangeTimeRange={
-                        !isExpressionQuery(query.model)
-                          ? (timeRange) => this.onChangeTimeRange(timeRange, index)
-                          : undefined
-                      }
-                      onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onDuplicateQuery}
-                      onRunQuery={this.props.onRunQueries}
-                      queries={queries}
-                    />
+                    <>
+                      <QueryEditorRow
+                        dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
+                        id={query.refId}
+                        index={index}
+                        key={query.refId}
+                        data={data ?? ({} as PanelData)}
+                        query={query.model}
+                        onChange={(query) => this.onChangeQuery(query, index)}
+                        timeRange={
+                          !isExpressionQuery(query.model) && query.relativeTimeRange
+                            ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
+                            : undefined
+                        }
+                        onChangeTimeRange={
+                          !isExpressionQuery(query.model)
+                            ? (timeRange) => this.onChangeTimeRange(timeRange, index)
+                            : undefined
+                        }
+                        onRemoveQuery={this.onRemoveQuery}
+                        onAddQuery={this.props.onDuplicateQuery}
+                        onRunQuery={this.props.onRunQueries}
+                        queries={queries}
+                      />
+                      {data && <VizWrapper data={data} key={`viz-${query.refId}`} />}
+                    </>
                   );
                 })}
                 {provided.placeholder}

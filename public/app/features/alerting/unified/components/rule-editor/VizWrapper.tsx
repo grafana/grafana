@@ -16,7 +16,7 @@ const vizOptions = [
 
 export const VizWrapper: FC<Props> = ({ data }) => {
   const [pluginId, changePluginId] = useState<string>('timeseries');
-
+  console.log(data);
   return (
     <div>
       <AutoSizer style={{ width: '50%', height: '50%' }}>

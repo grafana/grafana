@@ -5,7 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
-import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 import {
   expressionDatasource,
   ExpressionDatasourceID,
@@ -37,11 +36,12 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    let panelDataRecord: Record<string, PanelData> = {};
     try {
-      this.runner.get().subscribe((data) => (panelDataRecord = data));
+      this.runner.get().subscribe((data) => {
+        this.setState({ panelDataRecord: data });
+      });
       const defaultDataSource = await getDataSourceSrv().get();
-      this.setState({ defaultDataSource, panelDataRecord });
+      this.setState({ defaultDataSource });
     } catch (error) {
       console.error(error);
     }
@@ -129,11 +129,13 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { value = [] } = this.props;
+    const { panelDataRecord } = this.state;
     const styles = getStyles(config.theme);
+
     return (
       <div className={styles.container}>
-        <VizWrapper data={{} as PanelData} />
         <AlertingQueryRows
+          data={panelDataRecord}
           queries={value}
           onQueriesChange={this.props.onChange}
           onDuplicateQuery={this.onDuplicateQuery}
