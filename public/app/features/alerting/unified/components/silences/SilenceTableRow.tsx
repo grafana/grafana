@@ -62,7 +62,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
               Unsilence
             </ActionButton>
           )}
-          <ActionIcon icon="pen" tooltip="edit" />
+          <ActionIcon href={`/alerting/silence/${silence.id}/edit`} icon="pen" tooltip="edit" />
         </td>
       </tr>
       {!isCollapsed && (

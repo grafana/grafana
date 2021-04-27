@@ -3,24 +3,37 @@ import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { AlertLabel } from './AlertLabel';
+import { SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
 
-interface Props {
-  labels: Record<string, string>;
-}
+type LabelsProps = { labels: Record<string, string>; matchers?: never };
+type MatchersProps = { matchers: SilenceMatcher[]; labels?: never };
 
-export const AlertLabels: FC<Props> = ({ labels }) => {
+type Props = LabelsProps | MatchersProps;
+
+export const AlertLabels: FC<Props> = ({ labels, matchers }) => {
   const styles = useStyles(getStyles);
 
-  // transform to array of key value pairs and filter out "private" labels that start and end with double underscore
-  const pairs = Object.entries(labels).filter(([key]) => !(key.startsWith('__') && key.endsWith('__')));
+  if (labels) {
+    const pairs = Object.entries(labels).filter(([key]) => !(key.startsWith('__') && key.endsWith('__')));
 
-  return (
-    <div className={styles.wrapper}>
-      {pairs.map(([key, value]) => (
-        <AlertLabel key={`${key}-${value}`} labelKey={key} value={value} />
-      ))}
-    </div>
-  );
+    return (
+      <div className={styles.wrapper}>
+        {pairs.map(([key, value]) => (
+          <AlertLabel key={`${key}-${value}`} labelKey={key} value={value} />
+        ))}
+      </div>
+    );
+  }
+  if (matchers) {
+    return (
+      <div className={styles.wrapper}>
+        {matchers.map(({ name, value, isRegex }: SilenceMatcher) => {
+          return <AlertLabel key={`${name}-${value}`} labelKey={name} value={value} isRegex={isRegex} />;
+        })}
+      </div>
+    );
+  }
+  return null;
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
