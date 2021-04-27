@@ -1,6 +1,7 @@
 package librarypanels
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -395,6 +396,10 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 	if query.page <= 0 {
 		query.page = 1
 	}
+	var panelFilter []string
+	if len(strings.TrimSpace(query.panelFilter)) > 0 {
+		panelFilter = strings.Split(query.panelFilter, ",")
+	}
 
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
@@ -407,6 +412,15 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		if len(strings.TrimSpace(query.excludeUID)) > 0 {
 			builder.Write(" AND lp.uid <> ?", query.excludeUID)
 		}
+		if len(panelFilter) > 0 {
+			var sql bytes.Buffer
+			params := make([]interface{}, 0)
+			sql.WriteString(` AND lp.type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
+			for _, v := range panelFilter {
+				params = append(params, v)
+			}
+			builder.Write(sql.String(), params...)
+		}
 		builder.Write(" UNION ")
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
@@ -417,6 +431,15 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		}
 		if len(strings.TrimSpace(query.excludeUID)) > 0 {
 			builder.Write(" AND lp.uid <> ?", query.excludeUID)
+		}
+		if len(panelFilter) > 0 {
+			var sql bytes.Buffer
+			params := make([]interface{}, 0)
+			sql.WriteString(` AND lp.type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
+			for _, v := range panelFilter {
+				params = append(params, v)
+			}
+			builder.Write(sql.String(), params...)
 		}
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
@@ -475,6 +498,15 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		}
 		if len(strings.TrimSpace(query.excludeUID)) > 0 {
 			countBuilder.Write(" AND uid <> ?", query.excludeUID)
+		}
+		if len(panelFilter) > 0 {
+			var sql bytes.Buffer
+			params := make([]interface{}, 0)
+			sql.WriteString(` AND type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
+			for _, v := range panelFilter {
+				params = append(params, v)
+			}
+			countBuilder.Write(sql.String(), params...)
 		}
 		if err := session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&panels); err != nil {
 			return err
