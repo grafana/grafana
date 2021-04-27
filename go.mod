@@ -11,6 +11,9 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
+// Loki dependency doesn't currently works with github.com/prometheus/common@v0.21.0. Issue https://github.com/grafana/loki/issues/3659
+replace github.com/prometheus/common => github.com/prometheus/common v0.20.0
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.0-beta.6
@@ -51,7 +54,7 @@ require (
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.92.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.15.0
 	github.com/hashicorp/go-plugin v1.4.0
 	github.com/hashicorp/go-version v1.3.0
@@ -72,7 +75,7 @@ require (
 	github.com/prometheus/alertmanager v0.21.1-0.20210331075806-bc7b16d61afd
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.20.0
+	github.com/prometheus/common v0.21.0
 	github.com/prometheus/prometheus v1.8.2-0.20210217141258-a6be548dbc17
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
@@ -91,7 +94,7 @@ require (
 	go.opentelemetry.io/collector v0.22.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
-	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
+	golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
@@ -112,3 +115,5 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
+
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.92.1-0.20210427164049-0e2072e23313
