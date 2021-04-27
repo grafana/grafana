@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -90,10 +91,17 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 		stateMap := srv.manager.GetStatesByRuleUID()
 		for _, rule := range alertRuleQuery.Result {
+			var queryStr string
+			encodedQuery, err := json.Marshal(rule.Data)
+			if err != nil {
+				queryStr = err.Error()
+			} else {
+				queryStr = string(encodedQuery)
+			}
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
-				Query:       rule.DataToString(), // TODO: don't escape <>& etc
+				Query:       queryStr, // TODO: don't escape <>& etc
 				Duration:    rule.For.Seconds(),
 				Annotations: rule.Annotations,
 			}
