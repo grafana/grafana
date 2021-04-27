@@ -53,6 +53,10 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
     button {
       letter-spacing: ${theme.typography.body.letterSpacing};
+
+      &:focus {
+        outline: none;
+      }
     }
 
     // Ex: 14px base font * 85% = about 12px
