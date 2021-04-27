@@ -1,4 +1,14 @@
 {
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
   "swagger": "2.0",
   "info": {
     "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Unified Alerting API.\nDocumentation of the API.",
@@ -180,7 +190,7 @@
           "200": {
             "description": "AlertGroups",
             "schema": {
-              "$ref": "#/definitions/AlertGroups"
+              "$ref": "#/definitions/alertGroups"
             }
           },
           "400": {
@@ -295,7 +305,7 @@
           "200": {
             "description": "GettableSilences",
             "schema": {
-              "$ref": "#/definitions/GettableSilences"
+              "$ref": "#/definitions/gettableSilences"
             }
           },
           "400": {
@@ -971,6 +981,11 @@
       "type": "object",
       "title": "AlertQuery represents a single query associated with an alert definition.",
       "properties": {
+        "datasourceUid": {
+          "description": "Grafana data source unique identifer; it should be '-100' for a Server Side Expression operation.",
+          "type": "string",
+          "x-go-name": "DatasourceUID"
+        },
         "model": {
           "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
           "type": "object",
@@ -1415,7 +1430,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "GettableAlerts": {
-      "$ref": "#/definitions/GettableAlerts"
+      "$ref": "#/definitions/gettableAlerts"
     },
     "GettableApiAlertingConfig": {
       "type": "object",
@@ -1681,10 +1696,10 @@
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "GettableSilence": {
-      "$ref": "#/definitions/GettableSilence"
+      "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/GettableSilences"
+      "$ref": "#/definitions/gettableSilences"
     },
     "GettableUserConfig": {
       "type": "object",
@@ -3247,7 +3262,7 @@
           "description": "alerts",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/GettableAlert"
+            "$ref": "#/definitions/gettableAlert"
           },
           "x-go-name": "Alerts"
         },
@@ -3455,7 +3470,7 @@
       "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/GettableAlert"
+        "$ref": "#/definitions/gettableAlert"
       },
       "x-go-name": "GettableAlerts",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
@@ -3817,6 +3832,11 @@
       },
       "x-go-name": "VersionInfo",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+    }
+  },
+  "securityDefinitions": {
+    "basic": {
+      "type": "basic"
     }
   }
 }
