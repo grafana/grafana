@@ -27,7 +27,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     { id: AzureQueryType.LogAnalytics, label: 'Logs' },
     { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
-    { id: AzureQueryType.AzureResourceGraph, label: AzureQueryType.AzureResourceGraph },
+    { id: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
 
   // Query types that have been migrated to React
@@ -419,10 +419,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   onLogAnalyticsQueryChange = (nextQuery: string) => {
     this.target.azureLogAnalytics.query = nextQuery;
-  };
-
-  onResourceGraphQueryChange = (nextQuery: string) => {
-    this.target.azureResourceGraph.query = nextQuery;
   };
 
   onLogAnalyticsQueryExecute = () => {

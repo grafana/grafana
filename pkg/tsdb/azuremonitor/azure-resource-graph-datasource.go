@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -48,18 +49,18 @@ type AzureResourceGraphQuery struct {
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
 func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
+	timeRange plugins.DataTimeRange) (backend.QueryDataResponse, error) {
+	result := backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return backend.QueryDataResponse{}, err
 	}
 
 	for _, query := range queries {
-		result.Results[query.RefID] = e.executeQuery(ctx, query, originalQueries, timeRange)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, originalQueries, timeRange)
 	}
 
 	return result, nil
@@ -90,7 +91,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 		}
 
 		params := url.Values{}
-		rawQuery, err := KqlInterpolate(query, timeRange, azureResourceGraphTarget.Query, "TimeGenerated")
+		rawQuery, err := KqlInterpolate(query, timeRange, azureResourceGraphTarget.Query)
 
 		if err != nil {
 			return nil, err
@@ -110,13 +111,13 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 }
 
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery,
-	queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) plugins.DataQueryResult {
-	queryResult := plugins.DataQueryResult{RefID: query.RefID}
+	queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) backend.DataResponse {
+	queryResult := backend.DataResponse{}
 
 	query.Params.Add("api-version", "2018-09-01-preview")
 
-	queryResultErrorWithExecuted := func(err error) plugins.DataQueryResult {
-		queryResult.Error = err
+	queryResultErrorWithExecuted := func(err error) backend.DataResponse {
+		queryResult = backend.DataResponse{Error: err}
 		frames := data.Frames{
 			&data.Frame{
 				RefID: query.RefID,
@@ -125,7 +126,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 				},
 			},
 		}
-		queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
+		queryResult.Frames = frames
 		return queryResult
 	}
 
@@ -186,7 +187,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		}
 	}
 	frames := data.Frames{frame}
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryResult.Frames = frames
 	return queryResult
 }
 

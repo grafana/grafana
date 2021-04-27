@@ -156,8 +156,8 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 		azResult.Results[k] = v
 	}
 
-	for k, v := range argResult.Results {
-		azResult.Results[k] = v
+	for k, v := range argResult.Responses {
+		azResult.Results[k] = plugins.DataQueryResult{Dataframes: plugins.NewDecodedDataFrames(v.Frames)}
 	}
 
 	return azResult, nil
