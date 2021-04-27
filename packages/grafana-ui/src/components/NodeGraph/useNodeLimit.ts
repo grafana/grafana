@@ -19,6 +19,11 @@ export function useNodeLimit(
   // This is pretty expensive also this happens once in the layout code when initializing position but it's a bit
   // tricky to do it only once and reuse the results because layout directly modifies the nodes.
   const [edgesMap, nodesMap] = useMemo(() => {
+    // Make sure we don't compute this util we have all the data.
+    if (!(nodes.length && edges.length)) {
+      return [{}, {}];
+    }
+
     const edgesMap = edges.reduce<EdgesMap>((acc, e) => {
       return {
         ...acc,
