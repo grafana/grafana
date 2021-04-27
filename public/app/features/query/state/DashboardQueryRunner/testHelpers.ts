@@ -1,4 +1,4 @@
-import { asyncScheduler, Observable, of, scheduled, Subject } from 'rxjs';
+import { asyncScheduler, Observable, of, scheduled } from 'rxjs';
 import { DashboardQueryRunnerOptions } from './types';
 import { AnnotationEvent, getDefaultTimeRange } from '@grafana/data';
 
@@ -48,7 +48,10 @@ export function getDefaultOptions(): DashboardQueryRunnerOptions {
         getAnnotation({ enable: false, useSnapshotData: true }),
       ],
     },
-    events: new Subject(),
+    events: {
+      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+      publish: jest.fn(),
+    },
   };
   const range = getDefaultTimeRange();
 

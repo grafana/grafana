@@ -1,4 +1,11 @@
-import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaThemeV2, TimeRange } from '@grafana/data';
+import {
+  AnnotationQuery,
+  BusEventBase,
+  BusEventWithPayload,
+  eventFactory,
+  GrafanaThemeV2,
+  TimeRange,
+} from '@grafana/data';
 import { IconName } from '@grafana/ui';
 
 /**
@@ -183,4 +190,12 @@ export class HideModalEvent extends BusEventBase {
 
 export class DashboardSavedEvent extends BusEventBase {
   static type = 'dashboard-saved';
+}
+
+export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery> {
+  static type = 'annotation-query-started';
+}
+
+export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery> {
+  static type = 'annotation-query-finished';
 }

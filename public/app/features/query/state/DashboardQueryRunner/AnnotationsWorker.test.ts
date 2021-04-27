@@ -1,13 +1,27 @@
-import { throwError } from 'rxjs';
+import { Subject, throwError } from 'rxjs';
 import { setDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
 import * as annotationsSrv from '../../../annotations/annotations_srv';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
+import { createDashboardQueryRunner, setDashboardQueryRunnerFactory } from './DashboardQueryRunner';
+import { emptyResult } from './utils';
+import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorkerResult } from './types';
+import { AnnotationQuery } from '@grafana/data';
+import { delay } from 'rxjs/operators';
 
 function getTestContext() {
   jest.clearAllMocks();
+  const cancellations = new Subject<AnnotationQuery>();
+  setDashboardQueryRunnerFactory(() => ({
+    getResult: emptyResult,
+    run: () => undefined,
+    cancel: () => undefined,
+    cancellations: () => cancellations,
+    destroy: () => undefined,
+  }));
+  createDashboardQueryRunner({} as any);
   const executeAnnotationQueryMock = jest
     .spyOn(annotationsSrv, 'executeAnnotationQuery')
     .mockReturnValue(toAsyncOfResult({ events: [{ id: 'NextGen' }] }));
@@ -32,7 +46,28 @@ function getTestContext() {
   setDataSourceSrv(dataSourceSrvMock);
   const options = getDefaultOptions();
 
-  return { options, annotationQueryMock, executeAnnotationQueryMock };
+  return { options, annotationQueryMock, executeAnnotationQueryMock, cancellations };
+}
+
+function expectOnResults(args: {
+  worker: AnnotationsWorker;
+  options: DashboardQueryRunnerOptions;
+  done: jest.DoneCallback;
+  expect: (results: DashboardQueryRunnerWorkerResult) => void;
+}) {
+  const { worker, done, options, expect: expectCallback } = args;
+  const subscription = worker.work(options).subscribe({
+    next: (value) => {
+      try {
+        expectCallback(value);
+        subscription.unsubscribe();
+        done();
+      } catch (err) {
+        subscription.unsubscribe();
+        done.fail(err);
+      }
+    },
+  });
 }
 
 describe('AnnotationsWorker', () => {
@@ -142,17 +177,21 @@ describe('AnnotationsWorker', () => {
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
       });
     });
+  });
 
-    describe('when run is called with correct props and nextgen worker fails', () => {
-      silenceConsoleOutput();
-      it('then it should return the correct results', async () => {
-        const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext();
-        executeAnnotationQueryMock.mockReturnValue(throwError({ message: 'An error' }));
+  describe('when run is called with correct props and a worker is cancelled', () => {
+    it('then it should return the correct results', (done) => {
+      const { options, executeAnnotationQueryMock, annotationQueryMock, cancellations } = getTestContext();
+      executeAnnotationQueryMock.mockReturnValueOnce(
+        toAsyncOfResult({ events: [{ id: 'NextGen' }] }).pipe(delay(10000))
+      );
 
-        await expect(worker.work(options)).toEmitValuesWith((received) => {
-          expect(received).toHaveLength(1);
-          const result = received[0];
-          expect(result).toEqual({
+      expectOnResults({
+        worker,
+        options,
+        done,
+        expect: (results) => {
+          expect(results).toEqual({
             alertStates: [],
             annotations: [
               {
@@ -173,24 +212,63 @@ describe('AnnotationsWorker', () => {
           });
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
           expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+        },
+      });
+
+      setTimeout(() => {
+        // call to async needs to be async or the cancellation will be called before any of the runners have started
+        cancellations.next(options.dashboard.annotations.list[1]);
+      }, 100);
+    });
+  });
+
+  describe('when run is called with correct props and nextgen worker fails', () => {
+    silenceConsoleOutput();
+    it('then it should return the correct results', async () => {
+      const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext();
+      executeAnnotationQueryMock.mockReturnValue(throwError({ message: 'An error' }));
+
+      await expect(worker.work(options)).toEmitValuesWith((received) => {
+        expect(received).toHaveLength(1);
+        const result = received[0];
+        expect(result).toEqual({
+          alertStates: [],
+          annotations: [
+            {
+              id: 'Legacy',
+              source: {
+                enable: true,
+                hide: false,
+                name: 'Test',
+                iconColor: 'pink',
+                snapshotData: undefined,
+                datasource: 'Legacy',
+              },
+              color: 'pink',
+              type: 'Test',
+              isRegion: false,
+            },
+          ],
         });
+        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
+        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
       });
     });
+  });
 
-    describe('when run is called with correct props and both workers fail', () => {
-      silenceConsoleOutput();
-      it('then it should return the correct results', async () => {
-        const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext();
-        annotationQueryMock.mockRejectedValue({ message: 'Some error' });
-        executeAnnotationQueryMock.mockReturnValue(throwError({ message: 'An error' }));
+  describe('when run is called with correct props and both workers fail', () => {
+    silenceConsoleOutput();
+    it('then it should return the correct results', async () => {
+      const { options, executeAnnotationQueryMock, annotationQueryMock } = getTestContext();
+      annotationQueryMock.mockRejectedValue({ message: 'Some error' });
+      executeAnnotationQueryMock.mockReturnValue(throwError({ message: 'An error' }));
 
-        await expect(worker.work(options)).toEmitValuesWith((received) => {
-          expect(received).toHaveLength(1);
-          const result = received[0];
-          expect(result).toEqual({ alertStates: [], annotations: [] });
-          expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
-          expect(annotationQueryMock).toHaveBeenCalledTimes(1);
-        });
+      await expect(worker.work(options)).toEmitValuesWith((received) => {
+        expect(received).toHaveLength(1);
+        const result = received[0];
+        expect(result).toEqual({ alertStates: [], annotations: [] });
+        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
+        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
       });
     });
   });
