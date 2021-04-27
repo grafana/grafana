@@ -1,25 +1,19 @@
 // Libraries
-import {
-  defaults,
-  each,
-  find,
-  findIndex,
-  flattenDeep,
-  isArray,
-  isBoolean,
-  isNumber,
-  isString,
-  map,
-  max,
-  some,
-} from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
+import {
+  DataLink,
+  DataLinkBuiltInVars,
+  PanelPlugin,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  urlUtil,
+} from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -29,9 +23,16 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { isConstant, isMulti, isQuery } from 'app/features/variables/guard';
+import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableHide, VariableTag } from '../../variables/types';
+import { VariableHide } from '../../variables/types';
+import { config } from 'app/core/config';
+import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
+import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
+import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+
+standardEditorsRegistry.setInit(getStandardOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -44,7 +45,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 27;
+    this.dashboard.schemaVersion = 28;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -537,43 +538,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 25) {
-      for (const variable of this.dashboard.templating.list) {
-        if (!isQuery(variable)) {
-          continue;
-        }
-
-        const { tags, current } = variable;
-        if (!Array.isArray(tags)) {
-          variable.tags = [];
-          continue;
-        }
-
-        const currentTags = current?.tags ?? [];
-        const currents = currentTags.reduce((all, tag) => {
-          if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
-            all[tag.text] = tag;
-          }
-          return all;
-        }, {} as Record<string, VariableTag>);
-
-        const newTags: VariableTag[] = [];
-
-        for (const tag of tags) {
-          if (typeof tag === 'object') {
-            // new format let's assume it's correct
-            newTags.push(tag);
-            continue;
-          }
-
-          if (typeof tag !== 'string') {
-            // something that we do not support
-            continue;
-          }
-
-          newTags.push(defaults(currents[tag], { text: tag, selected: false }));
-        }
-        variable.tags = newTags;
-      }
+      // tags are removed in version 28
     }
 
     if (oldVersion < 26) {
@@ -600,6 +565,32 @@ export class DashboardMigrator {
 
         variable.current = { selected: true, text: variable.query ?? '', value: variable.query ?? '' };
         variable.options = [variable.current];
+      }
+    }
+
+    if (oldVersion < 28) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'singlestat') {
+          migrateSinglestat(panel);
+        }
+      });
+
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.tags) {
+          delete variable.tags;
+        }
+
+        if (variable.tagsQuery) {
+          delete variable.tagsQuery;
+        }
+
+        if (variable.tagValuesQuery) {
+          delete variable.tagValuesQuery;
+        }
+
+        if (variable.useTags) {
+          delete variable.useTags;
+        }
       }
     }
 
@@ -856,4 +847,25 @@ function updateVariablesSyntax(text: string) {
     }
     return match;
   });
+}
+
+function migrateSinglestat(panel: PanelModel) {
+  // If   'grafana-singlestat-panel' exists, move to that
+  if (config.panels['grafana-singlestat-panel']) {
+    panel.type = 'grafana-singlestat-panel';
+    return;
+  }
+
+  // To make sure PanelModel.isAngularPlugin logic thinks the current panel is angular
+  // And since this plugin no longer exist we just fake it here
+  panel.plugin = { angularPanelCtrl: {} } as PanelPlugin;
+
+  // Otheriwse use gauge or stat panel
+  if ((panel as any).gauge?.show) {
+    gaugePanelPlugin.meta = config.panels['gauge'];
+    panel.changePlugin(gaugePanelPlugin);
+  } else {
+    statPanelPlugin.meta = config.panels['stat'];
+    panel.changePlugin(statPanelPlugin);
+  }
 }

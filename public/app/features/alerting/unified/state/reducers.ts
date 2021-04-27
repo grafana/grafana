@@ -8,6 +8,7 @@ import {
   fetchRulerRulesAction,
   fetchSilencesAction,
   saveRuleFormAction,
+  updateAlertManagerConfigAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -25,6 +26,7 @@ export const reducer = combineReducers({
     existingRule: createAsyncSlice('existingRule', fetchExistingRuleAction).reducer,
   }),
   grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
+  saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;
