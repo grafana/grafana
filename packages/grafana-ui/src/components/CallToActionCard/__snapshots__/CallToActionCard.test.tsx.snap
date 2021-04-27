@@ -15,7 +15,7 @@ exports[`CallToActionCard rendering when message and footer provided 1`] = `
     Click me
   </a>
   <div
-    class="css-1sg2huk"
+    class="css-11lqfaj"
   >
     footer content
   </div>
