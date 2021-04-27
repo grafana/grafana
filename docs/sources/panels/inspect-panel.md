@@ -23,6 +23,7 @@ The panel inspector consists of four tabs:
 > **Note:** Not all panel types include all four tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
 
 ## Panel inspector tasks
+
 Tasks you can perform in the panel inspector are described below.
 
 ### Open the panel inspector
@@ -42,11 +43,14 @@ View raw query results in a table. This is the data returned by the query with t
 
 1. Open the panel inspector and then click the **Data** tab or in the panel menu click **Inspect > Data**.
 1. If your panel contains multiple queries or queries multiple nodes, then you have additional options.
+
 - **Select result -** Choose which result set data you want to view.
 - **Transform data**
+
   - **Join by time -** View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.
 
   View raw query results in a table with field options and options overrides applied:
+
   1. Open the **Data** tab in panel inspector.
   1. Click on **Data display options** above the table.
   1. Click on **Apply field configuration** toggle button.
@@ -60,6 +64,14 @@ Grafana generates a CSV file in your default browser download location. You can 
 1. Click **Download CSV**.
 
 To download a CSV file specifically formatted for Excel, expand the **Data options** panel and enable the **Download for Excel** toggle before clicking **Download CSV**.
+
+### Download log results as TXT
+
+Grafana generates a TXT file in your default browser download location. You can open it in the viewer of your choice.
+
+1. Open the panel inspector.
+1. Inspect the log query results as described above.
+1. Click **Download logs**.
 
 ### Inspect query performance
 
