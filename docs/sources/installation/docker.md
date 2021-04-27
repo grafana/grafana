@@ -81,13 +81,13 @@ docker run -d \
 
 > Only available in Grafana v5.3.1 and later.
 
-You can install plugins from custom URLs by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
+You can install a plugin from a custom URL by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
 
 ```bash
 docker run -d \
   -p 3000:3000 \
   --name=grafana \
-  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin" \
+  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
   grafana/grafana
 ```
 
@@ -114,7 +114,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ### Build with pre-installed plugins from other sources
 
-You can build a Docker image with plugins from other sources by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
+You can build a Docker image with plugins from other sources by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
 
 ```bash
 cd packaging/docker/custom
