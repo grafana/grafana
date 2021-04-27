@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"sort"
 	"testing"
 	"time"
 
@@ -284,7 +285,12 @@ func TestPutAlert(t *testing.T) {
 
 			// We take the "now" time from one of the UpdatedAt.
 			now := alerts[0].UpdatedAt
-			require.Equal(t, c.expAlerts(now), alerts)
+			expAlerts := c.expAlerts(now)
+
+			sort.Sort(types.AlertSlice(expAlerts))
+			sort.Sort(types.AlertSlice(alerts))
+
+			require.Equal(t, expAlerts, alerts)
 		})
 	}
 }
