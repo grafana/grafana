@@ -246,11 +246,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
-    defaults: {
-      settings: {
-        mode: 'sum',
-      },
-    },
+    defaults: {},
   },
 };
 

@@ -141,7 +141,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
               id={`ES-query-${query.refId}_metric-${metric.id}-mode`}
               onChange={(e) => dispatch(changeMetricSetting(metric, 'mode', e.value))}
               options={rateAggModeOptions}
-              value={metric.settings?.unit || metricAggregationConfig['rate'].defaults.settings?.mode}
+              value={metric.settings?.unit}
             />
           </InlineField>
         </>
