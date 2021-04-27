@@ -1,5 +1,6 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
+import { css } from '@emotion/css';
 import { usePlotContext } from '../context';
 import {
   CartesianCoords2D,
@@ -19,6 +20,8 @@ interface TooltipPluginProps {
   timeZone: TimeZone;
   data: DataFrame;
   config: UPlotConfigBuilder;
+  id?: string | number;
+  debug?: () => boolean;
 }
 
 /**
@@ -28,45 +31,54 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
   timeZone,
   config,
+  debug = () => false,
   ...otherProps
 }) => {
   const plotCtx = usePlotContext();
-  const plotCanvas = useRef<HTMLDivElement>();
-  const plotCanvasBBox = useRef<any>({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 });
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; plotCanvas: CartesianCoords2D } | null>(null);
+  const [plotCanvasBBox, setPlotCanvasBBox] = useState<DOMRect>();
+  const [coords, setCoords] = useState<CartesianCoords2D>({ x: 0, y: 0 });
+
+  const pluginId = `TooltipPlugin, panel ${otherProps.id}`;
 
   // Debug logs
   useEffect(() => {
-    pluginLog('TooltipPlugin', true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
+    pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
   }, [focusedPointIdx, focusedSeriesIdx]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    const onMouseCapture = (e: MouseEvent) => {
-      setCoords({
-        plotCanvas: {
-          x: e.clientX - plotCanvasBBox.current.left,
-          y: e.clientY - plotCanvasBBox.current.top,
-        },
-        viewport: {
-          x: e.clientX,
-          y: e.clientY,
-        },
+    if (debug()) {
+      config.addHook('init', (u) => {
+        const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
+        if (!canvas) {
+          return;
+        }
+        setPlotCanvasBBox(canvas.getBoundingClientRect());
       });
-    };
+    }
 
-    config.addHook('init', (u) => {
+    config.addHook('draw', (u) => {
       const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
-      plotCanvas.current = canvas || undefined;
-      plotCanvas.current?.addEventListener('mousemove', onMouseCapture);
-      plotCanvas.current?.addEventListener('mouseleave', () => {});
+      if (!canvas) {
+        return;
+      }
+      setPlotCanvasBBox(canvas.getBoundingClientRect());
     });
 
     config.addHook('setCursor', (u) => {
-      setFocusedPointIdx(u.cursor.idx === undefined ? null : u.cursor.idx);
+      // if (u.cursor.left === undefined || u.cursor.top === undefined) {
+      //   return;
+      // }
+      console.log(u.bbox);
+      setCoords({
+        x: u.bbox.left + (u.cursor.left || 0),
+        y: u.bbox.top + (u.cursor.top || 0),
+      });
+      setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
     });
+
     config.addHook('setSeries', (_, idx) => {
       setFocusedSeriesIdx(idx);
     });
@@ -139,15 +151,37 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     tooltip = <SeriesTable series={series} timestamp={xVal} />;
   }
 
-  if (!tooltip || !coords) {
+  if (!plotCanvasBBox) {
     return null;
   }
 
   return (
     <Portal>
-      <VizTooltipContainer position={{ x: coords.viewport.x, y: coords.viewport.y }} offset={{ x: 10, y: 10 }}>
-        {tooltip}
-      </VizTooltipContainer>
+      {debug() && (
+        <div
+          className={css`
+            width: ${plotCanvasBBox.width}px;
+            height: ${plotCanvasBBox.height}px;
+            top: ${plotCanvasBBox.top}px;
+            left: ${plotCanvasBBox.left}px;
+            pointer-events: none;
+            background: red;
+            position: fixed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.2;
+            font-family: monospace;
+          `}
+        >
+          uPlot canvas debug
+        </div>
+      )}
+      {tooltip && coords && (
+        <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: 10, y: 10 }}>
+          {tooltip}
+        </VizTooltipContainer>
+      )}
     </Portal>
   );
 };

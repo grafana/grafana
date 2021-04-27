@@ -5,7 +5,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, stylesFactory, Themeable, withTheme } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Themeable, withTheme, PlotSyncContextProvider } from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -334,14 +334,20 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
                 </div>
               )}
-
-              <DashboardGrid
-                dashboard={dashboard}
-                viewPanel={viewPanel}
-                editPanel={editPanel}
-                scrollTop={approximateScrollTop}
-                isPanelEditorOpen={isPanelEditorOpen}
-              />
+              <PlotSyncContextProvider
+                config={{
+                  sync: dashboard.graphTooltip,
+                  key: dashboard.id,
+                }}
+              >
+                <DashboardGrid
+                  dashboard={dashboard}
+                  viewPanel={viewPanel}
+                  editPanel={editPanel}
+                  scrollTop={approximateScrollTop}
+                  isPanelEditorOpen={isPanelEditorOpen}
+                />
+              </PlotSyncContextProvider>
             </div>
           </CustomScrollbar>
         </div>

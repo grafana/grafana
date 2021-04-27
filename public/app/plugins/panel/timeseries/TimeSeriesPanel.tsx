@@ -1,5 +1,5 @@
 import { Field, PanelProps } from '@grafana/data';
-import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { GraphNG, GraphNGLegendEvent, TooltipPlugin, usePlotSync, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useCallback } from 'react';
 import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
@@ -13,6 +13,7 @@ interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
 export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
+  id,
   timeRange,
   timeZone,
   width,
@@ -23,6 +24,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onFieldConfigChange,
   replaceVariables,
 }) => {
+  const plotSyncContext = usePlotSync();
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
       onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
@@ -60,12 +62,15 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       legend={options.legend}
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
+      sync={plotSyncContext}
     >
-      {(config, alignedDataFrame) => {
+      {(config, alignedDataFrame, debug) => {
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin
+              id={id}
+              debug={debug}
               data={alignedDataFrame}
               config={config}
               mode={options.tooltipOptions.mode}

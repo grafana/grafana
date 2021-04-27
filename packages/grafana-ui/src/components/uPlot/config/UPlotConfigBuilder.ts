@@ -72,7 +72,7 @@ export class UPlotConfigBuilder {
   }
 
   setCursor(cursor?: Cursor) {
-    this.cursor = cursor;
+    this.cursor = { ...this.cursor, ...cursor };
   }
 
   // uPlot types don't export the Select interface prior to 1.6.4

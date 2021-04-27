@@ -1,16 +1,18 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import { DataFrame, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
+import { DashboardCursorSync, DataFrame, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { pluginLog, preparePlotData } from '../uPlot/utils';
+import { pluginLog, pluginLogger, preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
+
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
+import { PlotSyncConfig } from '../uPlot/context';
 
 /**
  * @internal -- not a public API
@@ -18,17 +20,18 @@ import { VizLayout } from '../VizLayout/VizLayout';
 export const FIXED_UNIT = '__fixed';
 
 export interface GraphNGProps extends Themeable {
+  data: DataFrame[];
   width: number;
   height: number;
-  data: DataFrame[];
-  structureRev?: number; // a number that will change when the data[] structure changes
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
+  structureRev?: number; // a number that will change when the data[] structure changes
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   onSeriesColorChange?: (label: string, color: string) => void;
-  children?: (builder: UPlotConfigBuilder, alignedDataFrame: DataFrame) => React.ReactNode;
+  children?: (builder: UPlotConfigBuilder, alignedDataFrame: DataFrame, debug?: () => boolean) => React.ReactNode;
+  sync?: PlotSyncConfig | null;
 }
 
 /**
@@ -53,11 +56,17 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     if (!alignedData) {
       return;
     }
+    const config = preparePlotConfigBuilder(alignedData, props.theme, this.getTimeRange, this.getTimeZone);
 
+    if (props.sync) {
+      config.setCursor({
+        sync: { key: props.sync.key, setSeries: props.sync.sync === DashboardCursorSync.Tooltip },
+      });
+    }
     this.state = {
       alignedDataFrame: alignedData,
       data: preparePlotData(alignedData),
-      config: preparePlotConfigBuilder(alignedData, props.theme, this.getTimeRange, this.getTimeZone),
+      config,
     };
   }
 
@@ -95,8 +104,13 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
       if (shouldConfigUpdate || hasStructureChanged) {
         pluginLog('GraphNG', false, 'updating config');
-        const builder = preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone);
-        stateUpdate = { ...stateUpdate, config: builder };
+        const config = preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone);
+        if (this.props.sync) {
+          config.setCursor({
+            sync: { key: this.props.sync.key, setSeries: this.props.sync.sync === DashboardCursorSync.Tooltip },
+          });
+        }
+        stateUpdate = { ...stateUpdate, config };
       }
     }
 
@@ -150,7 +164,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
             height={vizHeight}
             timeRange={timeRange}
           >
-            {children ? children(config, alignedDataFrame) : null}
+            {children ? children(config, alignedDataFrame, pluginLogger.isEnabled) : null}
           </UPlotChart>
         )}
       </VizLayout>
