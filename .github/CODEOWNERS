@@ -36,6 +36,8 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/zipkin @grafana/observability-squad
 /pkg/tsdb/tempo @grafana/observability-squad
 
+/pkg/services/ngalert @grafana/alerting-squad
+
 # Database migrations
 /pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
