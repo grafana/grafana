@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../../utils/common';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { findOption } from '../../utils/common';
+import { AzureQueryEditorFieldProps } from '../../types';
+import { useMetricDropdownOptions } from '../metrics';
 
 const ERROR_SOURCE = 'metrics-metricname';
 const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
@@ -15,23 +16,13 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   onQueryChange,
   setError,
 }) => {
-  const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
-
-  useEffect(() => {
-    const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor;
-
-    if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
-      metricNames.length > 0 && setMetricNames([]);
-      return;
-    }
-
-    datasource
-      .getMetricNames(subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace)
-      .then((results) => {
-        setMetricNames(results.map(toOption));
-      })
-      .catch((err) => setError(ERROR_SOURCE, err));
-  }, [datasource, metricNames.length, query.azureMonitor, setError, subscriptionId]);
+  const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor;
+  const [metricNames, isLoading] = useMetricDropdownOptions(
+    datasource.getMetricNames.bind(datasource),
+    [subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace],
+    setError,
+    ERROR_SOURCE
+  );
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -55,6 +46,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   return (
     <Field label="Metric">
       <Select
+        isLoading={isLoading}
         inputId="azure-monitor-metrics-metric-field"
         value={findOption(metricNames, query.azureMonitor.metricName)}
         onChange={handleChange}

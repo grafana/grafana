@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import Datasource from '../datasource';
-import { AzureMonitorQuery } from '../types';
-import { convertTimeGrainsToMs } from '../utils/common';
+import { AzureMonitorOption, AzureMonitorQuery } from '../types';
+import { convertTimeGrainsToMs, toOption } from '../utils/common';
 
 export interface MetricMetadata {
   aggOptions: Array<{ label: string; value: string }>;
   timeGrains: Array<{ label: string; value: string }>;
   dimensions: Array<{ label: string; value: string }>;
+  isLoading: boolean;
 }
 
 export function useMetricsMetadata(
@@ -20,6 +21,7 @@ export function useMetricsMetadata(
     aggOptions: [],
     timeGrains: [],
     dimensions: [],
+    isLoading: true,
   });
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function useMetricsMetadata(
     ) {
       return;
     }
-
+    setMetricMetadata((prevState) => ({ ...prevState, isLoading: true }));
     datasource
       .getMetricMetadata(
         subscriptionId,
@@ -69,6 +71,7 @@ export function useMetricsMetadata(
           aggOptions: aggregations,
           timeGrains: metadata.supportedTimeGrains,
           dimensions: metadata.dimensions,
+          isLoading: false,
         });
       })
       .catch((err) => {
@@ -88,4 +91,46 @@ export function useMetricsMetadata(
   ]);
 
   return metricMetadata;
+}
+
+export function useMetricDropdownOptions(
+  fetchFn: (...args: string[]) => Promise<Array<{ text: string; value: string }>>,
+  fetchArgs: Array<string | undefined>,
+  setError: (source: string, error: Error | undefined) => void,
+  errorSource: string,
+  afterSuccessfulFetch?: (results: Array<{ text: string; value: string }>) => void
+): [Array<AzureMonitorOption<string>>, boolean] {
+  const [metricOptions, setMetricOptions] = useState<AzureMonitorOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const lastFetchedWith = useRef('');
+
+  useEffect(() => {
+    const allArgsTruthy = fetchArgs.every((arg) => !!arg);
+    const argsHaveChanged = fetchArgs.toString() !== lastFetchedWith.current;
+    const shouldFetch = allArgsTruthy && argsHaveChanged;
+    if (!shouldFetch) {
+      return;
+    }
+
+    setIsLoading(true);
+    lastFetchedWith.current = fetchArgs.toString();
+    fetchFn(...(fetchArgs as string[]))
+      .then((results) => {
+        if (afterSuccessfulFetch) {
+          afterSuccessfulFetch(results);
+        }
+        return results;
+      })
+      .then((results) => {
+        setMetricOptions(results.map(toOption));
+        setError(errorSource, undefined);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        setError(errorSource, err);
+        setIsLoading(false);
+      });
+  }, [fetchFn, fetchArgs, lastFetchedWith, afterSuccessfulFetch, setError, errorSource]);
+
+  return [metricOptions, isLoading];
 }

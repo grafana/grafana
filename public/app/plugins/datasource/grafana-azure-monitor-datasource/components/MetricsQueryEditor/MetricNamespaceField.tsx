@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../../utils/common';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { findOption } from '../../utils/common';
+import { AzureQueryEditorFieldProps } from '../../types';
+import { useMetricDropdownOptions } from '../metrics';
 
 const ERROR_SOURCE = 'metrics-metricnamespace';
+
 const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
@@ -15,32 +17,28 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   onQueryChange,
   setError,
 }) => {
-  const [metricNamespaces, setMetricNamespaces] = useState<AzureMonitorOption[]>([]);
+  const { resourceGroup, metricDefinition, resourceName } = query.azureMonitor;
 
-  useEffect(() => {
-    const { resourceGroup, metricDefinition, resourceName } = query.azureMonitor;
-
-    if (!(subscriptionId && resourceGroup && metricDefinition && resourceName)) {
-      metricNamespaces.length > 0 && setMetricNamespaces([]);
-      return;
+  const setQueryAfterFetch = (results: Array<{ text: string; value: string }>) => {
+    if (results.length === 1) {
+      onQueryChange({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          metricNamespace: results[0].value,
+        },
+      });
     }
+    return results;
+  };
 
-    datasource
-      .getMetricNamespaces(subscriptionId, resourceGroup, metricDefinition, resourceName)
-      .then((results) => {
-        if (results.length === 1) {
-          onQueryChange({
-            ...query,
-            azureMonitor: {
-              ...query.azureMonitor,
-              metricNamespace: results[0].value,
-            },
-          });
-        }
-        setMetricNamespaces(results.map(toOption));
-      })
-      .catch((err) => setError(ERROR_SOURCE, err));
-  }, [datasource, metricNamespaces.length, onQueryChange, query, setError, subscriptionId]);
+  const [metricNamespaces, isLoading] = useMetricDropdownOptions(
+    datasource.getMetricNamespaces.bind(datasource),
+    [subscriptionId, resourceGroup, metricDefinition, resourceName],
+    setError,
+    ERROR_SOURCE,
+    setQueryAfterFetch
+  );
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -72,6 +70,7 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        isLoading={isLoading}
       />
     </Field>
   );
