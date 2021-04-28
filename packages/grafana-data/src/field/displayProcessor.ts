@@ -3,7 +3,6 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 
 // Types
 import { Field, FieldType } from '../types/dataFrame';
-import { GrafanaTheme } from '../types/theme';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
@@ -11,6 +10,7 @@ import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { getTestTheme } from '../utils/testdata/testTheme';
+import { GrafanaThemeV2 } from '../themes/types';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -21,7 +21,7 @@ interface DisplayProcessorOptions {
   /**
    * Will pick 'dark' if not defined
    */
-  theme?: GrafanaTheme;
+  theme?: GrafanaThemeV2;
 }
 
 // Reasonable units for time
