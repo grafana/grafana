@@ -11,8 +11,7 @@
     "rootDirs": ["public/"],
     "typeRoots": ["node_modules/@types", "public/app/types"],
     "allowJs": true,
-    "strictNullChecks": true,
-    "strict": true
+    "strictNullChecks": true
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [
