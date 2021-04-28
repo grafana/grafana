@@ -116,6 +116,7 @@ export class PanelQueryRunner {
                   fields: frame.fields.map((field, fieldIndex) => ({
                     ...field,
                     values: data.series[frameIndex].fields[fieldIndex].values,
+                    state: {},
                   })),
                 })),
               };
