@@ -23,7 +23,7 @@ class UPlotGlobalEvents {
     // emit to own or some other sync group
     let syncKey = src.cursor.sync!.key;
 
-    console.log(syncKey, type, Object.keys(src.scales));
+    // console.log(syncKey, type, Object.keys(src.scales));
 
     if (this.events.observers.length) {
       this.events.next({
@@ -51,7 +51,7 @@ class UPlotGlobalEvents {
     if (!sync) {
       return;
     }
-    console.log('TODO send to uplot>>', values);
+    console.log('TODO sync uplot>>', Object.keys(values));
   };
 }
 

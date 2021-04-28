@@ -258,12 +258,12 @@ export function preparePlotConfigBuilder(
   // Always publish events
   const syncMode = sync?.sync ?? DashboardCursorSync.Off;
   const cursorSync: uPlot.Cursor.Sync = {
-    key: uPlotGlobalEvents.globalKey,
+    key: uPlotGlobalEvents.globalKey, // + '/' + xScaleKey + '/' + yScaleKey,
     filters: {
       pub: uPlotGlobalEvents.filter,
     },
     setSeries: syncMode === DashboardCursorSync.Tooltip,
-    scales: [xScaleKey, yScaleKey],
+    scales: ['x', 'y'], //TODO: [xScaleKey, yScaleKey],
   };
   if (syncMode === DashboardCursorSync.Off) {
     cursorSync.key = `${uPlotGlobalEvents.localPrefix}${counter++}`;
