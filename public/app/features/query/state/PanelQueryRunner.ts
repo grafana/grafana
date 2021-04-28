@@ -113,6 +113,7 @@ export class PanelQueryRunner {
                 ...processedData,
                 series: lastData.map((frame, frameIndex) => ({
                   ...frame,
+                  length: data.series[frameIndex].length,
                   fields: frame.fields.map((field, fieldIndex) => ({
                     ...field,
                     values: data.series[frameIndex].fields[fieldIndex].values,
