@@ -5,7 +5,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, stylesFactory, Themeable, withTheme } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -26,7 +26,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { GrafanaTheme, UrlQueryValue } from '@grafana/data';
+import { GrafanaThemeV2, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 
@@ -50,7 +50,7 @@ type DashboardPageRouteSearchParams = {
 };
 
 export interface Props
-  extends Themeable,
+  extends Themeable2,
     GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
@@ -373,7 +373,7 @@ const mapDispatchToProps = {
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     dashboardContainer: css`
       position: absolute;
@@ -392,13 +392,13 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
     `,
     dashboardContent: css`
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing(2)};
       flex-basis: 100%;
       flex-grow: 1;
     `,
   };
 });
 
-export const DashboardPage = withTheme(UnthemedDashboardPage);
+export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

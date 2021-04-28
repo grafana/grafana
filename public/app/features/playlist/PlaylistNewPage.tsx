@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -21,7 +21,7 @@ interface ConnectedProps {
 interface Props extends ConnectedProps, GrafanaRouteComponentProps {}
 
 export const PlaylistNewPage: FC<Props> = ({ navModel }) => {
-  const styles = useStyles(getPlaylistStyles);
+  const styles = useStyles2(getPlaylistStyles);
   const { playlist, loading } = usePlaylist();
   const onSubmit = async (playlist: Playlist) => {
     await createPlaylist(playlist);
