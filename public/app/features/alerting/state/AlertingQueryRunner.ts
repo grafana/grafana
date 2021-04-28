@@ -11,16 +11,16 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, toDataQueryError } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
 import { GrafanaExpressionModel, GrafanaQuery } from 'app/types/unified-alerting-dto';
 import { getTimeRangeForExpression } from '../unified/utils/timeRange';
 
-interface AlertingQueryResult {
+export interface AlertingQueryResult {
   frames: DataFrameJSON[];
 }
 
-interface AlertingQueryResponse {
+export interface AlertingQueryResponse {
   results: Record<string, AlertingQueryResult>;
 }
 export class AlertingQueryRunner {
@@ -28,7 +28,7 @@ export class AlertingQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult: Record<string, PanelData>;
 
-  constructor() {
+  constructor(private backendSrv = getBackendSrv()) {
     this.subject = new ReplaySubject(1);
     this.lastResult = {};
   }
@@ -43,7 +43,7 @@ export class AlertingQueryRunner {
       return this.subject.next(empty);
     }
 
-    this.subscription = runRequest(queries).subscribe({
+    this.subscription = runRequest(this.backendSrv, queries).subscribe({
       next: (dataPerQuery) => {
         for (const [refId, data] of Object.entries(dataPerQuery)) {
           const previous = this.lastResult[refId];
@@ -73,7 +73,7 @@ export class AlertingQueryRunner {
   }
 }
 
-const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelData>> => {
+const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable<Record<string, PanelData>> => {
   const initial = initialState(queries, LoadingState.Loading);
   const request = {
     data: { data: queries },
@@ -87,7 +87,7 @@ const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelDat
     .pipe(
       map(mapToPanelData(initial)),
       catchError(mapToError(initial)),
-      finalize(cancelNetworkRequestsOnUnsubscribe(request)),
+      finalize(cancelNetworkRequestsOnUnsubscribe(backendSrv, request)),
       share()
     );
 
@@ -146,10 +146,10 @@ const mapToError = (
   };
 };
 
-const cancelNetworkRequestsOnUnsubscribe = (request: BackendSrvRequest): (() => void) => {
+const cancelNetworkRequestsOnUnsubscribe = (backendSrv: BackendSrv, request: BackendSrvRequest): (() => void) => {
   return () => {
     if (request.requestId) {
-      getBackendSrv().resolveCancelerIfExists(request.requestId);
+      backendSrv.resolveCancelerIfExists(request.requestId);
     }
   };
 };
