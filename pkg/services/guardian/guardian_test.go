@@ -728,8 +728,8 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 }
 
 func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
-	Convey("Get hidden ACL tests", t, func() {
-		bus.ClearBusHandlers()
+	t.Run("Get hidden ACL tests", func(t *testing.T) {
+		t.Cleanup(bus.ClearBusHandlers)
 
 		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = []*models.DashboardAclInfoDTO{
@@ -745,7 +745,7 @@ func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 			return nil
 		})
 
-		Convey("Should get acl without duplicates", func() {
+		t.Run("Should get acl without duplicates", func(t *testing.T) {
 			user := &models.SignedInUser{
 				OrgId:  orgID,
 				UserId: 1,
@@ -753,18 +753,18 @@ func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 			}
 			g := New(dashboardID, orgID, user)
 
-			acl, err := g.GetAclWithoutDuplicates()
-			So(err, ShouldBeNil)
-			So(acl, ShouldNotBeNil)
-			So(acl, ShouldHaveLength, 6)
-			So(acl, ShouldResemble, []*models.DashboardAclInfoDTO{
+			acl, err := g.GetACLWithoutDuplicates()
+			require.NoError(t, err)
+			require.NotNil(t, acl)
+			require.Len(t, acl, 6)
+			require.ElementsMatch(t, []*models.DashboardAclInfoDTO{
 				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
 				{Inherited: true, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
 				{Inherited: true, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
 				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
 				{Inherited: false, UserId: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
 				{Inherited: false, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
-			})
+			}, acl)
 		})
 	})
 }
