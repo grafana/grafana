@@ -25,8 +25,12 @@ type alertRule struct {
 	// Labels map[string]string (Labels are not Created in the migration)
 }
 
+func getMigrationInfo(da dashAlert) string {
+	return fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
+}
+
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
-	migAnnotation := fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
+	migAnnotation := getMigrationInfo(da)
 
 	annotations := da.ParsedSettings.AlertRuleTags
 	if annotations == nil {
