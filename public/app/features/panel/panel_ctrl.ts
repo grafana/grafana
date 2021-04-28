@@ -24,8 +24,8 @@ export class PanelCtrl {
   $location: any;
   $timeout: any;
   editModeInitiated = false;
-  height = 0;
-  width = 0;
+  height: number;
+  width: number;
   containerHeight: any;
   events: EventBusExtended;
   loading = false;
