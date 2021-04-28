@@ -1,17 +1,22 @@
 package managedstream
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+	"os"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/remotewrite"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -59,20 +64,65 @@ func (r *Runner) GetOrCreateStream(streamID string) (*ManagedStream, error) {
 
 // ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
-	mu        sync.RWMutex
-	id        string
-	start     time.Time
-	last      map[string]json.RawMessage
-	publisher models.ChannelPublisher
+	mu              sync.RWMutex
+	id              string
+	start           time.Time
+	last            map[string]json.RawMessage
+	publisher       models.ChannelPublisher
+	remoteWriteData chan []byte
 }
 
 // NewManagedStream creates new ManagedStream.
 func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStream {
-	return &ManagedStream{
-		id:        id,
-		start:     time.Now(),
-		last:      map[string]json.RawMessage{},
-		publisher: publisher,
+	s := &ManagedStream{
+		id:              id,
+		start:           time.Now(),
+		last:            map[string]json.RawMessage{},
+		publisher:       publisher,
+		remoteWriteData: make(chan []byte, 128),
+	}
+	go s.remoteWrite()
+	return s
+}
+
+func (s *ManagedStream) remoteWrite() {
+	url := os.Getenv("GF_CLOUD_URL")
+	user := os.Getenv("GF_CLOUD_USER")
+	password := os.Getenv("GF_CLOUD_PASSWORD")
+
+	httpClient := &http.Client{
+		Timeout: 500 * time.Millisecond,
+	}
+
+	for {
+		writeData := <-s.remoteWriteData
+		if url == "" {
+			logger.Debug("Skip sending to remote write: no url")
+			continue
+		}
+		logger.Debug("Sending to remote write endpoint", "url", url, "bodyLength", len(writeData))
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(writeData))
+		if err != nil {
+			logger.Error("Error constructing remote write request", "error", err)
+			continue
+		}
+		req.Header.Set("Content-Type", "application/x-protobuf")
+		req.Header.Set("Content-Encoding", "snappy")
+		req.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
+		req.SetBasicAuth(user, password)
+
+		started := time.Now()
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			logger.Error("Error sending remote write request", "error", err)
+			continue
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			logger.Error("Unexpected response from remote write endpoint", "error", err)
+			continue
+		}
+		logger.Debug("Successfully sent to remote write endpoint", "url", url, "elapsed", time.Since(started))
 	}
 }
 
@@ -128,6 +178,18 @@ func (s *ManagedStream) Push(path string, frame *data.Frame, unstableSchema bool
 		s.last[path] = nil
 		s.mu.Unlock()
 	}
+
+	remoteWriteData, err := remotewrite.Serialize(frame)
+	if err != nil {
+		logger.Error("Error serializing to remote write format", "error", err)
+	} else {
+		select {
+		case s.remoteWriteData <- remoteWriteData:
+		default:
+			logger.Warn("Remote write is slow, dropping frame")
+		}
+	}
+
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
