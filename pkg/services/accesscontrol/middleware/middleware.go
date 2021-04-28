@@ -54,15 +54,15 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ..
 }
 
 func deny(c *models.ReqContext, permission string, scopes []string, err error) {
-	randomizedID := newID()
+	id := newID()
 	if err != nil {
-		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", randomizedID)
+		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
 	} else {
 		c.Logger.Info("Access denied",
 			"userID", c.UserId,
 			"permission", permission,
 			"scopes", scopes,
-			"accessErrorID", randomizedID)
+			"accessErrorID", id)
 	}
 
 	// If the user triggers an error in the access control system, we
@@ -70,17 +70,19 @@ func deny(c *models.ReqContext, permission string, scopes []string, err error) {
 	// same information from the system regardless of if it's an
 	// internal server error or access denied.
 	c.JSON(http.StatusForbidden, map[string]string{
-		"message":       fmt.Sprintf("Access denied. [Access error ID: %s]", randomizedID),
-		"accessErrorId": randomizedID,
+		"message":       fmt.Sprintf("Access denied. [Access error ID: %s]", id),
+		"accessErrorId": id,
 	})
 }
 
 func newID() string {
 	// Less ambiguity than alphanumerical.
-	base32 := []byte("0123456789")
-	randomizedID, err := util.GetRandomString(8, base32...)
+	numerical := []byte("0123456789")
+	id, err := util.GetRandomString(10, numerical...)
 	if err != nil {
-		randomizedID = fmt.Sprintf("%d", time.Now().UnixNano())
+		// this should not happen, but if it does, a timestamp is as
+		// useful as anything.
+		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
-	randomizedID = "ACE" + randomizedID
+	id = "ACE" + id
 }
