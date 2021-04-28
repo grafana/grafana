@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { ClipboardButton, CodeEditor, Modal, VerticalGroup } from '@grafana/ui';
+
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { notifyApp } from '../../../../core/actions';
 import { dispatch } from '../../../../store/store';
