@@ -19,9 +19,10 @@ interface ExemplarsPluginProps {
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
   const plotCtx = usePlotContext();
+
   const mapExemplarToXYCoords = useCallback(
     (dataFrame: DataFrame, index: number) => {
-      const plotInstance = plotCtx.getPlotInstance();
+      const plotInstance = plotCtx.plot;
       const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
       const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 

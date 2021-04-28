@@ -1,11 +1,12 @@
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { SilenceState, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
 
 type Props = {
-  status: PromAlertingRuleState;
+  status: PromAlertingRuleState | SilenceState | AlertState;
 };
 
 export const StateTag: FC<Props> = ({ children, status }) => {
@@ -35,5 +36,21 @@ const getStyles = (theme: GrafanaTheme) => ({
   [PromAlertingRuleState.Firing]: css`
     background-color: ${theme.palette.brandDanger};
     border: solid 1px ${theme.palette.brandDanger};
+  `,
+  [SilenceState.Expired]: css`
+    background-color: ${theme.palette.gray33};
+    border: solid 1px ${theme.palette.gray33};
+  `,
+  [SilenceState.Active]: css`
+    background-color: ${theme.palette.brandSuccess};
+    border: solid 1px ${theme.palette.brandSuccess};
+  `,
+  [AlertState.Unprocessed]: css`
+    background-color: ${theme.palette.gray33};
+    border: solid 1px ${theme.palette.gray33};
+  `,
+  [AlertState.Suppressed]: css`
+    background-color: ${theme.palette.brandPrimary};
+    border: solid 1px ${theme.palette.brandPrimary};
   `,
 });
