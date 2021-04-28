@@ -32,7 +32,9 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	lbs[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
 	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
 
-	id := fmt.Sprintf("%s", map[string]string(lbs))
+	il := ngModels.InstanceLabels(lbs)
+	id, _, _ := il.StringAndHash()
+
 	if state, ok := c.states[id]; ok {
 		return state
 	}

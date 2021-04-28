@@ -355,10 +355,11 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 		}
 		for _, entry := range cmd.Result {
 			lbs := map[string]string(entry.Labels)
+			cacheId, _, _ := entry.Labels.StringAndHash()
 			stateForEntry := &state.State{
 				AlertRuleUID:       entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,
-				CacheId:            fmt.Sprintf("%s %s", entry.DefinitionUID, lbs),
+				CacheId:            cacheId,
 				Labels:             lbs,
 				State:              translateInstanceState(entry.CurrentState),
 				Results:            []state.Evaluation{},
