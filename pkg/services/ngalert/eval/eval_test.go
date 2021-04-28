@@ -228,6 +228,28 @@ func TestEvaluateExecutionResult(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "certain errors will produce multiple mixed Error and other state results",
+			execResults: ExecutionResults{
+				Results: []*data.Frame{
+					data.NewFrame("",
+						data.NewField("", nil, []float64{3}),
+					),
+					data.NewFrame("",
+						data.NewField("", data.Labels{"a": "b"}, []*float64{ptr.Float64(2)}),
+					),
+				},
+			},
+			expectResultLength: 2,
+			expectResults: Results{
+				{
+					State: Error,
+				},
+				{
+					State: Alerting,
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
