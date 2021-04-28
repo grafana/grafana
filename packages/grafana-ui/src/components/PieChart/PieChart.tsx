@@ -45,70 +45,22 @@ const defaultLegendOptions: PieChartLegendOptions = {
 /**
  * @beta
  */
-export const PieChart: FC<PieChartProps> = ({
-  data,
-  timeZone,
-  reduceOptions,
-  fieldConfig,
-  replaceVariables,
-  legendOptions = defaultLegendOptions,
-  tooltipOptions,
-  onSeriesColorChange,
-  width,
-  height,
-  ...restProps
-}) => {
+export function PieChart(props: PieChartProps) {
+  const {
+    data,
+    timeZone,
+    reduceOptions,
+    fieldConfig,
+    replaceVariables,
+    tooltipOptions,
+    onSeriesColorChange,
+    width,
+    height,
+    ...restProps
+  } = props;
+
   const theme = useTheme2();
   const highlightedTitle = useSliceHighlightState();
-
-  const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
-    if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
-      return undefined;
-    }
-    const values = fields.map((v) => v.display);
-    const total = values.reduce((acc, item) => item.numeric + acc, 0);
-
-    const legendItems = values.map<VizLegendItem>((value, idx) => {
-      return {
-        label: value.title ?? '',
-        color: value.color ?? FALLBACK_COLOR,
-        yAxis: 1,
-        getItemKey: () => (value.title ?? '') + idx,
-        getDisplayValues: () => {
-          const valuesToShow = legendOptions.values ?? [];
-          let displayValues = [];
-
-          if (valuesToShow.includes(PieChartLegendValues.Value)) {
-            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
-          }
-
-          if (valuesToShow.includes(PieChartLegendValues.Percent)) {
-            const fractionOfTotal = value.numeric / total;
-            const percentOfTotal = fractionOfTotal * 100;
-
-            displayValues.push({
-              numeric: fractionOfTotal,
-              percent: percentOfTotal,
-              text: percentOfTotal.toFixed(0) + '%',
-              title: valuesToShow.length > 1 ? 'Percent' : undefined,
-            });
-          }
-
-          return displayValues;
-        },
-      };
-    });
-
-    return (
-      <VizLegend
-        items={legendItems}
-        onSeriesColorChange={onSeriesColorChange}
-        placement={legendOptions.placement}
-        displayMode={legendOptions.displayMode}
-      />
-    );
-  };
-
   const fieldDisplayValues = getFieldDisplayValues({
     fieldConfig,
     reduceOptions,
@@ -119,7 +71,7 @@ export const PieChart: FC<PieChartProps> = ({
   });
 
   return (
-    <VizLayout width={width} height={height} legend={getLegend(fieldDisplayValues, legendOptions)}>
+    <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues)}>
       {(vizWidth: number, vizHeight: number) => {
         return (
           <PieChartSvg
@@ -134,7 +86,57 @@ export const PieChart: FC<PieChartProps> = ({
       }}
     </VizLayout>
   );
-};
+}
+
+function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
+  const { legendOptions = defaultLegendOptions } = props;
+
+  if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
+    return undefined;
+  }
+  const values = displayValues.map((v) => v.display);
+  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+
+  const legendItems = values.map<VizLegendItem>((value, idx) => {
+    return {
+      label: value.title ?? '',
+      color: value.color ?? FALLBACK_COLOR,
+      yAxis: 1,
+      getItemKey: () => (value.title ?? '') + idx,
+      getDisplayValues: () => {
+        const valuesToShow = legendOptions.values ?? [];
+        let displayValues = [];
+
+        if (valuesToShow.includes(PieChartLegendValues.Value)) {
+          displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
+        }
+
+        if (valuesToShow.includes(PieChartLegendValues.Percent)) {
+          const fractionOfTotal = value.numeric / total;
+          const percentOfTotal = fractionOfTotal * 100;
+
+          displayValues.push({
+            numeric: fractionOfTotal,
+            percent: percentOfTotal,
+            text: percentOfTotal.toFixed(0) + '%',
+            title: valuesToShow.length > 1 ? 'Percent' : undefined,
+          });
+        }
+
+        return displayValues;
+      },
+    };
+  });
+
+  return (
+    <VizLegend
+      items={legendItems}
+      onSeriesColorChange={props.onSeriesColorChange}
+      placement={legendOptions.placement}
+      displayMode={legendOptions.displayMode}
+    />
+  );
+}
 
 function useSliceHighlightState() {
   const [highlightedTitle, setHighlightedTitle] = useState<string>();
