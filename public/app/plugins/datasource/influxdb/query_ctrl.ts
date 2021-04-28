@@ -16,7 +16,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   queryBuilder: any;
   groupBySegment: any;
   resultFormats: any[];
-  orderByTime: any[];
+  orderByTime: any[] = [];
   policySegment: any;
   tagSegments: any[];
   selectMenu: any;
