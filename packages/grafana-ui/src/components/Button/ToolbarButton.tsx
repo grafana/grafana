@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       border-radius: ${theme.shape.borderRadius()};
       line-height: ${theme.components.height.md * theme.spacing.gridSize - 2}px;
       font-weight: ${theme.typography.fontWeightMedium};
-      border: 1px solid ${theme.colors.border.medium};
+      border: 1px solid ${theme.colors.border.weak};
       white-space: nowrap;
       transition: ${theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
@@ -135,7 +135,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       }
 
       &:hover {
-        box-shadow: ${theme.shadows.z2};
+        box-shadow: ${theme.shadows.z1};
       }
 
       &[disabled],

@@ -174,7 +174,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
                   Delete
                 </Button>
               )}
-              <LinkButton variant="link" href="datasources">
+              <LinkButton variant="secondary" href="datasources" fill="outline">
                 Back
               </LinkButton>
             </div>
