@@ -56,6 +56,11 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 		}
 	}
 
+	p.PluginDir = base.PluginDir
+	p.Signature = base.Signature
+	p.SignatureType = base.SignatureType
+	p.SignatureOrg = base.SignatureOrg
+
 	return p, nil
 }
 

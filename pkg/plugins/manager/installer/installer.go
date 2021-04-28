@@ -67,7 +67,7 @@ func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstall
 
 // Install downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
-func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+func (i *Installer) Install(result *[]string, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
 	var checksum string
@@ -133,10 +133,13 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 		return errutil.Wrap("failed to close tmp file", err)
 	}
 
-	err = i.extractFiles(tmpFile.Name(), pluginID, pluginsDir, isInternal)
+	installDir, err := i.extractFiles(tmpFile.Name(), pluginID, pluginsDir, isInternal)
 	if err != nil {
 		return errutil.Wrap("failed to extract plugin archive", err)
 	}
+
+	pluginJSONPath := fmt.Sprintf("%s/%s", installDir, "plugin.json")
+	*result = append(*result, pluginJSONPath)
 
 	res, _ := toPluginDTO(pluginsDir, pluginID)
 
@@ -145,7 +148,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Infof("Fetching %s dependencies...", res.ID)
-		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
+		if err := i.Install(result, dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
 		}
 	}
@@ -460,20 +463,21 @@ func latestSupportedVersion(plugin *Plugin) *Version {
 	return nil
 }
 
-func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) error {
+func (i *Installer) extractFiles(archiveFile string, pluginID string, dest string, allowSymlinks bool) (string, error) {
 	var err error
 	dest, err = filepath.Abs(dest)
 	if err != nil {
-		return err
+		return "", err
 	}
 	i.log.Debug(fmt.Sprintf("Extracting archive %q to %q...", archiveFile, dest))
 
-	existingInstallDir := filepath.Join(dest, pluginID)
-	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
-		i.log.Debugf("Removing existing installation of plugin %s", existingInstallDir)
-		err = os.RemoveAll(existingInstallDir)
+	installDir := filepath.Join(dest, pluginID)
+	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
+		i.log.Debugf("Removing existing installation of plugin %s", installDir)
+		err = os.RemoveAll(installDir)
 		if err != nil {
-			return err
+			return "", err
+
 		}
 	}
 
@@ -484,7 +488,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 	}()
 	if err != nil {
-		return err
+		return "", err
 	}
 	for _, zf := range r.File {
 		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
@@ -495,7 +499,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		if filepath.IsAbs(zf.Name) ||
 			!strings.HasPrefix(fullPath, filepath.Clean(dest)+string(os.PathSeparator)) ||
 			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
-			return fmt.Errorf(
+			return "", fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, dest)
 		}
@@ -507,10 +511,10 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 			// nolint:gosec
 			if err := os.MkdirAll(dstPath, 0755); err != nil {
 				if os.IsPermission(err) {
-					return fmt.Errorf(permissionsDeniedMessage, dstPath)
+					return "", fmt.Errorf(permissionsDeniedMessage, dstPath)
 				}
 
-				return err
+				return "", err
 			}
 
 			continue
@@ -520,7 +524,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		// We can ignore gosec G304 here since it makes sense to give all users read access
 		// nolint:gosec
 		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return errutil.Wrap("failed to create directory to extract plugin files", err)
+			return "", errutil.Wrap("failed to create directory to extract plugin files", err)
 		}
 
 		if isSymlink(zf) {
@@ -536,11 +540,11 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 
 		if err := extractFile(zf, dstPath); err != nil {
-			return errutil.Wrap("failed to extract file", err)
+			return "", errutil.Wrap("failed to extract file", err)
 		}
 	}
 
-	return nil
+	return installDir, nil
 }
 
 func isSymlink(file *zip.File) bool {

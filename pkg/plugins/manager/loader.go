@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
@@ -48,7 +47,7 @@ func (l *Loader) Init() error {
 	return nil
 }
 
-func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.PluginBase, error) {
+func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (interface{}, error) {
 	p, err := l.LoadAll([]string{pluginJSONPath}, requireSigned)
 	if err != nil {
 		return nil, err
@@ -57,7 +56,7 @@ func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.Plugi
 	return p[0], nil
 }
 
-func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugins.PluginBase, error) {
+func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]interface{}, error) {
 	var foundPlugins = make(map[string]*plugins.PluginBase)
 
 	for _, pluginJSONPath := range pluginJSONPaths {
@@ -115,6 +114,8 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		}
 	}
 
+	var result []interface{}
+
 	// start of second pass
 	for _, plugin := range foundPlugins {
 		l.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasParent", plugin.Root != nil)
@@ -162,38 +163,35 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		}
 		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(plugins.PluginLoader)
 
-		if err := jsonParser.Decode(loader); err != nil {
-			return nil, err
-		}
-
-		_, err = loader.Load(jsonParser, plugin, l.BackendPluginManager)
+		p, err := loader.Load(jsonParser, plugin, l.BackendPluginManager)
 		if err != nil {
 			return nil, err
 		}
 
+		result = append(result, p)
 		//if p, exists := pm.plugins[pb.Id]; exists {
 		//	l.log.Warn("Plugin is duplicate", "id", pb.Id)
 		//	scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{Plugin: pb, ExistingPlugin: p})
 		//	return nil, nil // return duplicate error?
 		//}
 
-		if !strings.HasPrefix(plugin.PluginDir, l.Cfg.StaticRootPath) {
-			l.log.Info("Registering plugin", "id", plugin.Id)
-		}
-
-		if len(plugin.Dependencies.Plugins) == 0 {
-			plugin.Dependencies.Plugins = []plugins.PluginDependencyItem{}
-		}
-
-		if plugin.Dependencies.GrafanaVersion == "" {
-			plugin.Dependencies.GrafanaVersion = "*"
-		}
-
-		for _, include := range plugin.Includes {
-			if include.Role == "" {
-				include.Role = models.ROLE_VIEWER
-			}
-		}
+		//if !strings.HasPrefix(plugin.PluginDir, l.Cfg.StaticRootPath) {
+		//	l.log.Info("Registering plugin", "id", plugin.Id)
+		//}
+		//
+		//if len(plugin.Dependencies.Plugins) == 0 {
+		//	plugin.Dependencies.Plugins = []plugins.PluginDependencyItem{}
+		//}
+		//
+		//if plugin.Dependencies.GrafanaVersion == "" {
+		//	plugin.Dependencies.GrafanaVersion = "*"
+		//}
+		//
+		//for _, include := range plugin.Includes {
+		//	if include.Role == "" {
+		//		include.Role = models.ROLE_VIEWER
+		//	}
+		//}
 
 		l.log.Debug("Successfully added plugin", "id", plugin.Id)
 
@@ -203,13 +201,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		//}
 	}
 
-	res := make([]*plugins.PluginBase, 0, len(foundPlugins))
-
-	for _, p := range foundPlugins {
-		res = append(res, p)
-	}
-
-	return res, nil
+	return result, nil
 }
 
 func isRendererPlugin(pluginType string) bool {

@@ -57,7 +57,9 @@ type Manager interface {
 	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
 	// IsAppInstalled returns whether an app is installed.
 	IsAppInstalled(id string) bool
-	// Uninstall de-registers and uninstalls plugins.
+	// Install installs a plugin.
+	Install(pluginID string) error
+	// Uninstall uninstalls a plugin.
 	Uninstall(pluginID string) error
 }
 
@@ -77,7 +79,7 @@ type DataRequestHandler interface {
 type PluginInstaller interface {
 	// Install finds the plugin given the provided information
 	// and installs in the provided plugins directory.
-	Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
+	Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) ([]string, error)
 	// Uninstall removes the specified plugin from the provided plugins directory.
 	Uninstall(pluginID, pluginPath string) error
 	DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) error

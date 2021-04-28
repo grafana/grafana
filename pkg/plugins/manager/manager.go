@@ -32,6 +32,10 @@ var (
 	plog log.Logger
 )
 
+const (
+	grafanaComURL = "https://grafana.com/api/plugins"
+)
+
 type unsignedPluginConditionFunc = func(plugin *plugins.PluginBase) bool
 
 type PluginScanner struct {
@@ -49,6 +53,7 @@ type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	SQLStore             *sqlstore.SQLStore    `inject:""`
+	Loader               *Loader               `inject:""`
 	log                  log.Logger
 	scanningErrors       []error
 
@@ -683,6 +688,116 @@ func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	return pm.staticRoutes
+}
+
+func (pm *PluginManager) Install(pluginID string) error {
+	i := installer.New(true, pm.Cfg.BuildVersion, NewInstallerLogger("installer.logger", true))
+
+	version := ""
+	pluginZipURL := ""
+
+	var pluginJSONPaths []string
+	err := i.Install(&pluginJSONPaths, pluginID, version, pm.Cfg.PluginsPath, pluginZipURL, grafanaComURL)
+	if err != nil {
+		return err
+	}
+
+	if pluginJSONPaths == nil {
+		return fmt.Errorf("no plugin.json files returned")
+	}
+
+	pm.log.Info("Downloaded plugins", "plugins", pluginJSONPaths)
+	loadedPlugins, err := pm.Loader.LoadAll(pluginJSONPaths, true)
+	if err != nil {
+		return err
+	}
+
+	for _, plugin := range loadedPlugins {
+		var pb *plugins.PluginBase
+		var staticRoutes []*plugins.PluginStaticRoute
+		switch p := plugin.(type) {
+		case *plugins.DataSourcePlugin:
+			pm.dataSources[p.Id] = p
+
+			pb = &p.PluginBase
+
+			// Copy relevant fields from the base
+			pb.PluginDir = p.PluginDir
+			pb.Signature = p.Signature
+			pb.SignatureType = p.SignatureType
+			pb.SignatureOrg = p.SignatureOrg
+
+			staticRoutes = p.InitFrontendPlugin(pm.Cfg)
+		case *plugins.PanelPlugin:
+			pm.panels[p.Id] = p
+
+			pb = &p.PluginBase
+
+			// Copy relevant fields from the base
+			pb.PluginDir = p.PluginDir
+			pb.Signature = p.Signature
+			pb.SignatureType = p.SignatureType
+			pb.SignatureOrg = p.SignatureOrg
+
+			staticRoutes = p.InitFrontendPlugin(pm.Cfg)
+		case *plugins.RendererPlugin:
+			pm.renderer = p
+
+			pb = &p.PluginBase
+
+			// Copy relevant fields from the base
+			pb.PluginDir = p.PluginDir
+			pb.Signature = p.Signature
+			pb.SignatureType = p.SignatureType
+			pb.SignatureOrg = p.SignatureOrg
+
+			staticRoutes = pm.renderer.InitFrontendPlugin(pm.Cfg)
+		case *plugins.AppPlugin:
+			pm.apps[p.Id] = p
+
+			pb = &p.PluginBase
+
+			// Copy relevant fields from the base
+			pb.PluginDir = p.PluginDir
+			pb.Signature = p.Signature
+			pb.SignatureType = p.SignatureType
+			pb.SignatureOrg = p.SignatureOrg
+
+			staticRoutes = p.InitApp(pm.panels, pm.dataSources, pm.Cfg)
+		default:
+			panic(fmt.Sprintf("Unrecognized plugin type %T", plugin))
+		}
+
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+
+		if pb.IsCorePlugin {
+			pb.Signature = plugins.PluginSignatureInternal
+		} else {
+			metrics.SetPluginBuildInformation(pb.Id, pb.Type, pb.Info.Version)
+		}
+
+		if !strings.HasPrefix(pb.PluginDir, pm.Cfg.StaticRootPath) {
+			pm.log.Info("Registering plugin", "id", pb.Id)
+		}
+
+		if len(pb.Dependencies.Plugins) == 0 {
+			pb.Dependencies.Plugins = []plugins.PluginDependencyItem{}
+		}
+
+		if pb.Dependencies.GrafanaVersion == "" {
+			pb.Dependencies.GrafanaVersion = "*"
+		}
+
+		for _, include := range pb.Includes {
+			if include.Role == "" {
+				include.Role = models.ROLE_VIEWER
+			}
+		}
+
+		pm.plugins[pb.Id] = pb
+	}
+
+	return nil
 }
 
 func (pm *PluginManager) Uninstall(pluginID string) error {

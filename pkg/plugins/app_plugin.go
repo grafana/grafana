@@ -75,6 +75,11 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 		}
 	}
 
+	app.PluginDir = base.PluginDir
+	app.Signature = base.Signature
+	app.SignatureType = base.SignatureType
+	app.SignatureOrg = base.SignatureOrg
+
 	return app, nil
 }
 

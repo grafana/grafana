@@ -361,8 +361,13 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 	return response.JSON(200, hs.PluginManager.ScanningErrors())
 }
 
-func (hs *HTTPServer) InstallPlugin(_ *models.ReqContext) response.Response {
-	//pluginID := c.Params("pluginId")
+func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
+	pluginID := c.Params("pluginId")
+
+	err := hs.PluginManager.Install(pluginID)
+	if err != nil {
+		return response.Error(500, "Failed to install plugin", err)
+	}
 
 	return response.JSON(200, []byte{})
 }
