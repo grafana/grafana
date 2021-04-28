@@ -16,11 +16,11 @@ func TestNewManagedStream(t *testing.T) {
 	require.NotNil(t, c)
 }
 
-func TestManagedStream_GetLastPacket(t *testing.T) {
+func TestManagedStream_GetLastPacket_UnstableSchema(t *testing.T) {
 	c := NewManagedStream("a", noopPublisher)
 	_, ok := c.getLastPacket("test")
 	require.False(t, ok)
-	err := c.Push("test", data.NewFrame("hello"), false)
+	err := c.Push("test", data.NewFrame("hello"), true)
 	require.NoError(t, err)
 
 	_, ok = c.getLastPacket("test")
@@ -28,11 +28,11 @@ func TestManagedStream_GetLastPacket(t *testing.T) {
 	require.False(t, ok)
 }
 
-func TestManagedStream_GetLastPacket_StableSchema(t *testing.T) {
+func TestManagedStream_GetLastPacket(t *testing.T) {
 	c := NewManagedStream("a", noopPublisher)
 	_, ok := c.getLastPacket("test")
 	require.False(t, ok)
-	err := c.Push("test", data.NewFrame("hello"), true)
+	err := c.Push("test", data.NewFrame("hello"), false)
 	require.NoError(t, err)
 
 	s, ok := c.getLastPacket("test")

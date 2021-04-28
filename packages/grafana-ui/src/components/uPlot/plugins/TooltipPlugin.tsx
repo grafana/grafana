@@ -30,7 +30,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   config,
   ...otherProps
 }) => {
-  const plotContext = usePlotContext();
+  const plotCtx = usePlotContext();
   const plotCanvas = useRef<HTMLDivElement>();
   const plotCanvasBBox = useRef<any>({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 });
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
@@ -72,7 +72,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     });
   }, [config]);
 
-  if (!plotContext.getPlotInstance() || focusedPointIdx === null) {
+  if (!plotCtx.plot || focusedPointIdx === null) {
     return null;
   }
 
@@ -89,10 +89,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   // when interacting with a point in single mode
   if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
     const field = otherProps.data.fields[focusedSeriesIdx];
-    const plotSeries = plotContext.getSeries();
+    const plotSeries = plotCtx.plot.series;
 
     const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
-    const value = fieldFmt(plotContext.data[focusedSeriesIdx!][focusedPointIdx]);
+    const value = fieldFmt(plotCtx.plot.data[focusedSeriesIdx!][focusedPointIdx]);
 
     tooltip = (
       <SeriesTable
@@ -111,7 +111,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
   if (mode === TooltipDisplayMode.Multi) {
     let series: SeriesTableRowProps[] = [];
-    const plotSeries = plotContext.getSeries();
+    const plotSeries = plotCtx.plot.series;
 
     for (let i = 0; i < plotSeries.length; i++) {
       const frame = otherProps.data;
@@ -125,7 +125,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         continue;
       }
 
-      const value = field.display!(plotContext.data[i][focusedPointIdx]);
+      const value = field.display!(plotCtx.plot.data[i][focusedPointIdx]);
 
       series.push({
         // TODO: align with uPlot typings

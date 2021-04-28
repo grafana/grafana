@@ -101,7 +101,7 @@ export interface FieldSchema {
  */
 export interface FieldValueEntityLookup {
   NaN?: number[];
-  Undef?: number[]; // Missing because of absense or join
+  Undef?: number[]; // Missing because of absence or join
   Inf?: number[];
   NegInf?: number[];
 }
