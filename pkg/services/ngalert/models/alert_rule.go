@@ -70,18 +70,6 @@ type AlertRule struct {
 	Labels      map[string]string
 }
 
-func (alertRule *AlertRule) DataToString() string {
-	response := "["
-	for i, part := range alertRule.Data {
-		response += string(part.Model)
-		if i < len(alertRule.Data)-1 {
-			response += ","
-		}
-	}
-	response += "]"
-	return response
-}
-
 // AlertRuleKey is the alert definition identifier
 type AlertRuleKey struct {
 	OrgID int64

@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { Select, FeatureInfoBox, Label, stylesFactory } from '@grafana/ui';
+import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
 import {
   LiveChannelScope,
   LiveChannelAddress,
   LiveChannelSupport,
   SelectableValue,
   StandardEditorProps,
-  FeatureState,
   GrafanaTheme,
 } from '@grafana/data';
 
@@ -100,12 +99,10 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
 
     return (
       <>
-        <FeatureInfoBox title="Grafana Live" featureState={FeatureState.alpha}>
-          <p>
-            This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
-            intefaces and structures to change as this becomes more production ready.
-          </p>
-        </FeatureInfoBox>
+        <Alert title="Grafana Live" severity="info">
+          This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
+          intefaces and structures to change as this becomes more production ready.
+        </Alert>
 
         <div>
           <div className={style.dropWrap}>
