@@ -4,7 +4,7 @@ import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {
   panelCtrl: any;
   panel: any;
-  disabled: boolean;
+  disabled = false;
 
   /** @ngInject */
   constructor(private $scope: any) {}
