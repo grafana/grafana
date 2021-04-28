@@ -42,26 +42,45 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ..
 
 			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, permission, runtimeScope...)
 			if err != nil {
-				c.Logger.Error("Error from access control system", "error", err)
-				c.JsonApiErr(http.StatusForbidden, "Forbidden", nil)
+				deny(c, permission, runtimeScope, err)
 				return
 			}
 			if !hasAccess {
-				// Less ambiguity than alphanumerical.
-				base32 := []byte("0123456789")
-				randomizedID, err := util.GetRandomString(8, base32...)
-				if err != nil {
-					randomizedID = fmt.Sprintf("%d", time.Now().UnixNano())
-				}
-				randomizedID = "ACE" + randomizedID
-				c.Logger.Info("Access denied",
-					"userID", c.UserId,
-					"permission", permission,
-					"scopes", runtimeScope,
-					"accessErrorID", randomizedID)
-				c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("Access denied. [Access error ID: %s]", randomizedID), nil)
+				deny(c, permission, runtimeScope, nil)
 				return
 			}
 		}
 	}
+}
+
+func deny(c *models.ReqContext, permission string, scopes []string, err error) {
+	randomizedID := newID()
+	if err != nil {
+		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", randomizedID)
+	} else {
+		c.Logger.Info("Access denied",
+			"userID", c.UserId,
+			"permission", permission,
+			"scopes", scopes,
+			"accessErrorID", randomizedID)
+	}
+
+	// If the user triggers an error in the access control system, we
+	// don't want the user to be aware of that, so the user gets the
+	// same information from the system regardless of if it's an
+	// internal server error or access denied.
+	c.JSON(http.StatusForbidden, map[string]string{
+		"message":       fmt.Sprintf("Access denied. [Access error ID: %s]", randomizedID),
+		"accessErrorId": randomizedID,
+	})
+}
+
+func newID() string {
+	// Less ambiguity than alphanumerical.
+	base32 := []byte("0123456789")
+	randomizedID, err := util.GetRandomString(8, base32...)
+	if err != nil {
+		randomizedID = fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	randomizedID = "ACE" + randomizedID
 }
