@@ -2,12 +2,12 @@ import React, { memo, cloneElement, FC, ReactNode, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '../../themes';
-import { CardContainer, ContainerProps } from './CardContainer';
+import { CardContainer, CardContainerProps } from './CardContainer';
 
 /**
  * @public
  */
-export interface Props extends Omit<ContainerProps, 'disableEvents' | 'disableHover'> {
+export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disableHover'> {
   /** Main heading for the Card **/
   heading: ReactNode;
   /** Card description text */
@@ -37,7 +37,6 @@ export const Card: CardInterface = ({
   heading,
   description,
   disabled,
-  tooltip,
   href,
   onClick,
   className,
@@ -67,7 +66,6 @@ export const Card: CardInterface = ({
 
   return (
     <CardContainer
-      tooltip={tooltip}
       tabIndex={disableHover ? undefined : 0}
       onClick={onCardClick}
       disableEvents={disableEvents}
