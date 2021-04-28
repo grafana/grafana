@@ -15,7 +15,7 @@ export class DebugPanel extends Component<Props> {
       return <EventBusLoggerPanel eventBus={this.props.eventBus} />;
     }
     if (options.mode === DebugMode.Cursor) {
-      return <CursorView />;
+      return <CursorView eventBus={this.props.eventBus} />;
     }
 
     return <RenderInfoViewer {...this.props} />;

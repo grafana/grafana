@@ -29,7 +29,7 @@ import {
 } from '../uPlot/config';
 import { collectStackingGroups } from '../uPlot/utils';
 import { PlotSyncConfig } from '../uPlot/context';
-import { globalSyncFilter } from './events';
+import { uPlotGlobalEvents } from './events';
 import uPlot from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -102,9 +102,13 @@ export function preparePlotConfigBuilder(
 
   let seriesIndex = 0;
 
+  let xScaleKey = '_x';
+  let yScaleKey = '';
+
   if (xField.type === FieldType.time) {
+    xScaleKey = 'time';
     builder.addScale({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
       isTime: true,
@@ -115,7 +119,7 @@ export function preparePlotConfigBuilder(
     });
 
     builder.addAxis({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       isTime: true,
       placement: AxisPlacement.Bottom,
       timeZone: getTimeZone(),
@@ -123,14 +127,18 @@ export function preparePlotConfigBuilder(
     });
   } else {
     // Not time!
+    if (xField.config.unit) {
+      xScaleKey = xField.config.unit;
+    }
+
     builder.addScale({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
     });
 
     builder.addAxis({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
       theme,
     });
@@ -140,7 +148,7 @@ export function preparePlotConfigBuilder(
 
   let indexByName: Map<string, number> | undefined = undefined;
 
-  for (let i = 0; i < frame.fields.length; i++) {
+  for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
     const config = field.config as FieldConfig<GraphFieldConfig>;
     const customConfig: GraphFieldConfig = {
@@ -171,6 +179,10 @@ export function preparePlotConfigBuilder(
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
     });
+
+    if (!yScaleKey) {
+      yScaleKey = scaleKey;
+    }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       builder.addAxis({
@@ -246,14 +258,15 @@ export function preparePlotConfigBuilder(
   // Always publish events
   const syncMode = sync?.sync ?? DashboardCursorSync.Off;
   const cursorSync: uPlot.Cursor.Sync = {
-    key: '__global__',
+    key: uPlotGlobalEvents.globalKey,
     filters: {
-      pub: globalSyncFilter,
+      pub: uPlotGlobalEvents.filter,
     },
     setSeries: syncMode === DashboardCursorSync.Tooltip,
+    scales: [xScaleKey, yScaleKey],
   };
   if (syncMode === DashboardCursorSync.Off) {
-    cursorSync.key = `stub__${counter++}`;
+    cursorSync.key = `${uPlotGlobalEvents.localPrefix}${counter++}`;
   }
 
   builder.setCursor({
