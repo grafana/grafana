@@ -12,6 +12,7 @@ interface Props {
   onDelete?: () => void;
   disabled?: boolean;
   showBadge?: boolean;
+  description?: string;
 }
 
 export const PanelTypeCard: React.FC<Props> = ({
@@ -22,6 +23,7 @@ export const PanelTypeCard: React.FC<Props> = ({
   onDelete,
   disabled,
   showBadge,
+  description,
 }) => {
   const styles = useStyles2(getStyles);
   const cssClass = cx({
@@ -41,6 +43,7 @@ export const PanelTypeCard: React.FC<Props> = ({
 
       <div className={styles.itemContent}>
         <div className={styles.name}>{title}</div>
+        {description ? <span className={styles.description}>{description}</span> : null}
       </div>
       {showBadge && (
         <div className={cx(styles.badge, disabled && styles.disabled)}>
@@ -107,6 +110,15 @@ const getStyles = (theme: GrafanaThemeV2) => {
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
       padding: 0 10px;
+      width: 100%;
+    `,
+    description: css`
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightLight};
+      padding: 0 ${theme.spacing(1.25)};
       width: 100%;
     `,
     img: css`
