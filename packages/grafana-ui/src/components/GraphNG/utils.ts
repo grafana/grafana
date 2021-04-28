@@ -263,7 +263,8 @@ export function preparePlotConfigBuilder(
       pub: uPlotGlobalEvents.filter,
     },
     setSeries: syncMode === DashboardCursorSync.Tooltip,
-    scales: ['x', 'y'], //TODO: [xScaleKey, yScaleKey],
+    scales: [xScaleKey, yScaleKey],
+    match: [() => true, () => true],
   };
   if (syncMode === DashboardCursorSync.Off) {
     cursorSync.key = `${uPlotGlobalEvents.localPrefix}${counter++}`;

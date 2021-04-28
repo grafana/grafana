@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
-  "id": 293,
   "links": [],
   "panels": [
     {
@@ -102,6 +101,8 @@
       "targets": [
         {
           "alias": "Temperature",
+          "max": 25,
+          "min": 1,
           "refId": "A",
           "scenarioId": "random_walk"
         },
@@ -233,6 +234,8 @@
       "targets": [
         {
           "alias": "Temperature",
+          "max": 25,
+          "min": 5,
           "refId": "A",
           "scenarioId": "random_walk"
         }
@@ -497,6 +500,14 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
+      "targets": [
+        {
+          "max": 25,
+          "min": 1,
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
@@ -623,7 +634,11 @@
   "refresh": false,
   "schemaVersion": 28,
   "style": "dark",
-  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },
