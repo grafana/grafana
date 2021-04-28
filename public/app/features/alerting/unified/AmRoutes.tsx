@@ -4,6 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Alert, Field, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
@@ -36,14 +37,15 @@ const AmRoutes: FC = () => {
   const { result, loading, error } =
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
+  const config = result?.alertmanager_config;
+  const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+
   if (!alertManagerSourceName) {
     return <Redirect to="/alerting/routes" />;
   }
 
-  const config = result?.alertmanager_config;
-  const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
   const receivers = stringsToSelectableValues(
-    (config?.receivers ?? []).map((receiver) => receiver.name)
+    (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
   ) as AmRouteReceiver[];
 
   const enterRootRouteEditMode = () => {
