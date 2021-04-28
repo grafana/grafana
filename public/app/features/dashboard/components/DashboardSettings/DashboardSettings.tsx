@@ -27,6 +27,7 @@ export interface SettingsPage {
   title: string;
   icon: IconName;
   render: () => React.ReactNode;
+  fullWidth?: boolean;
 }
 
 export class DashboardSettings extends PureComponent<Props> {
@@ -98,6 +99,7 @@ export class DashboardSettings extends PureComponent<Props> {
       title: 'JSON Model',
       id: 'dashboard_json',
       icon: 'arrow',
+      fullWidth: true,
       render: () => <JsonEditorSettings dashboard={dashboard} />,
     });
 
@@ -170,7 +172,9 @@ export class DashboardSettings extends PureComponent<Props> {
                   )}
                 </div>
               </aside>
-              <div className="dashboard-settings__content">{currentPage.render()}</div>
+              <div className={currentPage.fullWidth ? styles.settingsContentFullWidth : styles.settingsContent}>
+                {currentPage.render()}
+              </div>
             </div>
           </div>
         </CustomScrollbar>
@@ -189,5 +193,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     display: flex;
     min-height: 100%;
     width: 100%;
+  `,
+  settingsContent: css`
+    flex-grow: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 32px;
+    max-width: 1100px;
+  `,
+  settingsContentFullWidth: css`
+    flex-grow: 1;
+    height: 100%;
+    padding: 32px;
+    min-width: 600px;
+    width: 100%;
+    height: 100%;
   `,
 }));

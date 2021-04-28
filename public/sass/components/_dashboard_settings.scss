@@ -20,14 +20,6 @@
   background: $panel-bg;
 }
 
-.dashboard-settings__content {
-  flex-grow: 1;
-  min-width: 0;
-  height: 100%;
-  padding: 32px;
-  max-width: 1100px;
-}
-
 .dashboard-settings__aside {
   padding: 32px 0 0 32px;
   background: $dashboard-bg;
