@@ -24,7 +24,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return dashboardGuardianResponse(err)
 	}
 
-	acl, err := g.GetAcl()
+	acl, err := g.GetACLWithoutDuplicates()
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard permissions", err)
 	}
