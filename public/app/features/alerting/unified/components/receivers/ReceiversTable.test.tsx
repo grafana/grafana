@@ -25,7 +25,7 @@ const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierD
 
   return render(
     <Provider store={store}>
-      <ReceiversTable config={config} />
+      <ReceiversTable config={config} alertManagerName="alertmanager-1" />
     </Provider>
   );
 };

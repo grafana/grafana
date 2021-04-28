@@ -60,8 +60,8 @@ type SearchService struct {
 func (s *SearchService) Init() error {
 	s.Bus.AddHandler(s.searchHandler)
 	s.sortOptions = map[string]SortOption{
-		sortAlphaAsc.Name:  sortAlphaAsc,
-		sortAlphaDesc.Name: sortAlphaDesc,
+		SortAlphaAsc.Name:  SortAlphaAsc,
+		SortAlphaDesc.Name: SortAlphaDesc,
 	}
 
 	return nil

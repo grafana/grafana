@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
@@ -10,13 +9,13 @@ import { GrafanaTheme } from '@grafana/data';
 
 import config from 'app/core/config';
 import store from 'app/core/store';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
-import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { LibraryPanelDTO } from '../../../library-panels/types';
 import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
+import { LibraryPanelsSearch } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
+import { connect, MapDispatchToProps } from 'react-redux';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -56,7 +55,6 @@ const getCopiedPanelPlugins = () => {
 
 export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard }) => {
   const [addPanelView, setAddPanelView] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
     evt.preventDefault();
@@ -140,17 +138,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
-        <>
-          <div className={styles.panelSearchInput}>
-            <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search global panels'} />
-          </div>
-          <LibraryPanelsView
-            className={styles.libraryPanelsWrapper}
-            onClickCard={(panel) => onAddLibraryPanel(panel)}
-            showSecondaryActions={false}
-            searchString={searchQuery}
-          />
-        </>
+        <LibraryPanelsSearch onClick={onAddLibraryPanel} perPage={3} />
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>
@@ -226,10 +214,6 @@ const getStyles = (theme: GrafanaTheme) => {
   `;
 
   return {
-    panelSearchInput: css`
-      padding-left: ${theme.spacing.sm};
-      padding-right: ${theme.spacing.sm};
-    `,
     wrapper: css`
       overflow: hidden;
       outline: 2px dotted transparent;
@@ -271,9 +255,6 @@ const getStyles = (theme: GrafanaTheme) => {
       row-gap: ${theme.spacing.sm};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
       height: 100%;
-    `,
-    libraryPanelsWrapper: css`
-      padding: ${theme.spacing.sm};
     `,
     headerRow: css`
       display: flex;

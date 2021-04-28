@@ -1,15 +1,36 @@
 import React from 'react';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
-import { CodeEditorProps } from './types';
+import { Monaco, MonacoEditor as MonacoEditorType, CodeEditorProps, MonacoOptions } from './types';
 import { registerSuggestions } from './suggestions';
-import ReactMonaco from 'react-monaco-editor';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
+
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
 type Props = CodeEditorProps & Themeable;
 
+let initalized = false;
+function initMonoco() {
+  if (initalized) {
+    return;
+  }
+
+  monacoEditorLoader.config({
+    paths: {
+      vs: (window.__grafana_public_path__ ?? 'public/') + 'lib/monaco/min/vs',
+    },
+  });
+  initalized = true;
+}
+
 class UnthemedCodeEditor extends React.PureComponent<Props> {
-  completionCancel?: monaco.IDisposable;
+  completionCancel?: monacoType.IDisposable;
+  monaco?: Monaco;
+
+  constructor(props: Props) {
+    super(props);
+    initMonoco();
+  }
 
   componentWillUnmount() {
     if (this.completionCancel) {
@@ -19,13 +40,19 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   componentDidUpdate(oldProps: Props) {
     const { getSuggestions, language } = this.props;
-    if (getSuggestions) {
-      // Language changed
-      if (language !== oldProps.language) {
-        if (this.completionCancel) {
-          this.completionCancel.dispose();
-        }
-        this.completionCancel = registerSuggestions(language, getSuggestions);
+
+    if (language !== oldProps.language) {
+      if (this.completionCancel) {
+        this.completionCancel.dispose();
+      }
+
+      if (!this.monaco) {
+        console.warn('Monaco instance not loaded yet');
+        return;
+      }
+
+      if (getSuggestions) {
+        this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
       }
     }
   }
@@ -40,14 +67,16 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
   };
 
-  editorWillMount = (m: typeof monaco) => {
+  handleBeforeMount = (monaco: Monaco) => {
+    this.monaco = monaco;
     const { language, getSuggestions } = this.props;
+
     if (getSuggestions) {
-      this.completionCancel = registerSuggestions(language, getSuggestions);
+      this.completionCancel = registerSuggestions(monaco, language, getSuggestions);
     }
   };
 
-  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
     const { onSave, onEditorDidMount } = this.props;
 
     this.getEditorValue = () => editor.getValue();
@@ -68,19 +97,24 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const options: monaco.editor.IEditorConstructionOptions = {
+    const options: MonacoOptions = {
       wordWrap: 'off',
-      codeLens: false, // not included in the bundle
+      tabSize: 2,
+      codeLens: false,
+      contextmenu: false,
+
       minimap: {
         enabled: longText && showMiniMap,
         renderCharacters: false,
       },
+
       readOnly,
       lineNumbersMinChars: 4,
       lineDecorationsWidth: 0,
       overviewRulerBorder: false,
       automaticLayout: true,
     };
+
     if (!showLineNumbers) {
       options.glyphMargin = false;
       options.folding = false;
@@ -91,7 +125,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
     return (
       <div onBlur={this.onBlur}>
-        <ReactMonaco
+        <MonacoEditor
           width={width}
           height={height}
           language={language}
@@ -101,8 +135,8 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
             ...options,
             ...(monacoOptions ?? {}),
           }}
-          editorWillMount={this.editorWillMount}
-          editorDidMount={this.editorDidMount}
+          beforeMount={this.handleBeforeMount}
+          onMount={this.handleOnMount}
         />
       </div>
     );
