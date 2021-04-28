@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclientprovider"
@@ -268,24 +267,6 @@ func (ds *DataSource) TLSOptions() httpclient.TLSOptions {
 	}
 
 	return opts
-}
-
-func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper {
-	decrypted := ds.DecryptedValues()
-
-	return sigv4.New(
-		&sigv4.Config{
-			Service:       awsServiceNamespace(ds.Type),
-			AccessKey:     decrypted["sigV4AccessKey"],
-			SecretKey:     decrypted["sigV4SecretKey"],
-			Region:        ds.JsonData.Get("sigV4Region").MustString(),
-			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
-			AuthType:      ds.JsonData.Get("sigV4AuthType").MustString(),
-			ExternalID:    ds.JsonData.Get("sigV4ExternalId").MustString(),
-			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
-		},
-		next,
-	)
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
