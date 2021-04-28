@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,16 +23,17 @@ import (
 
 type LokiExecutor struct {
 	intervalCalculator interval.Calculator
+	httpClientProvider httpclient.Provider
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	return newExecutor(), nil
-}
-
-func newExecutor() *LokiExecutor {
-	return &LokiExecutor{
-		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+// nolint:staticcheck // plugins.DataPlugin deprecated
+func New(httpClientProvider httpclient.Provider) func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+	// nolint:staticcheck // plugins.DataPlugin deprecated
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		return &LokiExecutor{
+			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+			httpClientProvider: httpClientProvider,
+		}, nil
 	}
 }
 
@@ -48,7 +50,7 @@ func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		Results: map[string]plugins.DataQueryResult{},
 	}
 
-	tlsConfig, err := dsInfo.GetTLSConfig()
+	tlsConfig, err := dsInfo.GetTLSConfig2(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}

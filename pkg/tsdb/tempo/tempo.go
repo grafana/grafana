@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,17 +19,20 @@ type tempoExecutor struct {
 	httpClient *http.Client
 }
 
-// NewExecutor returns a tempoExecutor.DataQueryResult
+// NewExecutor returns a tempoExecutor.
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	httpClient, err := dsInfo.GetHttpClient()
-	if err != nil {
-		return nil, err
-	}
+func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		httpClient, err := dsInfo.GetHttpClient2(httpClientProvider)
+		if err != nil {
+			return nil, err
+		}
 
-	return &tempoExecutor{
-		httpClient: httpClient,
-	}, nil
+		return &tempoExecutor{
+			httpClient: httpClient,
+		}, nil
+	}
 }
 
 var (

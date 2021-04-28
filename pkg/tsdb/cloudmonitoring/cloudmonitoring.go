@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -73,7 +74,8 @@ func init() {
 }
 
 type Service struct {
-	PluginManager plugins.Manager `inject:""`
+	PluginManager      plugins.Manager     `inject:""`
+	HTTPClientProvider httpclient.Provider `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -90,7 +92,7 @@ type Executor struct {
 // NewExecutor returns an Executor.
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	httpClient, err := dsInfo.GetHttpClient()
+	httpClient, err := dsInfo.GetHttpClient2(s.HTTPClientProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -506,7 +508,6 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
 	plugin := e.pluginManager.GetDataSource(dsInfo.Type)

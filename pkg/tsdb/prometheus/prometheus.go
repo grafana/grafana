@@ -12,6 +12,7 @@ import (
 
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -41,16 +42,18 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	transport, err := dsInfo.GetHttpTransport()
-	if err != nil {
-		return nil, err
-	}
+func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		transport, err := dsInfo.GetHttpTransport2(provider)
+		if err != nil {
+			return nil, err
+		}
 
-	return &PrometheusExecutor{
-		Transport:          transport,
-		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
-	}, nil
+		return &PrometheusExecutor{
+			Transport:          transport,
+			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+		}, nil
+	}
 }
 
 var (

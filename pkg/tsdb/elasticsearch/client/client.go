@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
@@ -28,8 +29,8 @@ var (
 	clientLog = log.New(loggerName)
 )
 
-var newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
-	return ds.GetHttpClient()
+var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *models.DataSource) (*http.Client, error) {
+	return ds.GetHttpClient2(httpClientProvider)
 }
 
 // Client represents a client which can interact with elasticsearch api
@@ -43,7 +44,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange plugins.DataTimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *models.DataSource, timeRange plugins.DataTimeRange) (Client, error) {
 	version, err := ds.JsonData.Get("esVersion").Int()
 	if err != nil {
 		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
@@ -70,12 +71,13 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange plugi
 	switch version {
 	case 2, 5, 56, 60, 70:
 		return &baseClientImpl{
-			ctx:       ctx,
-			ds:        ds,
-			version:   version,
-			timeField: timeField,
-			indices:   indices,
-			timeRange: timeRange,
+			ctx:                ctx,
+			httpClientProvider: httpClientProvider,
+			ds:                 ds,
+			version:            version,
+			timeField:          timeField,
+			indices:            indices,
+			timeRange:          timeRange,
 		}, nil
 	}
 
@@ -83,13 +85,14 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange plugi
 }
 
 type baseClientImpl struct {
-	ctx          context.Context
-	ds           *models.DataSource
-	version      int
-	timeField    string
-	indices      []string
-	timeRange    plugins.DataTimeRange
-	debugEnabled bool
+	ctx                context.Context
+	httpClientProvider httpclient.Provider
+	ds                 *models.DataSource
+	version            int
+	timeField          string
+	indices            []string
+	timeRange          plugins.DataTimeRange
+	debugEnabled       bool
 }
 
 func (c *baseClientImpl) GetVersion() int {
@@ -183,20 +186,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		}
 	}
 
-	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	if c.ds.BasicAuth {
-		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.BasicAuthUser, c.ds.DecryptedBasicAuthPassword())
-	}
-
-	if !c.ds.BasicAuth && c.ds.User != "" {
-		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.User, c.ds.DecryptedPassword())
-	}
-
-	httpClient, err := newDatasourceHttpClient(c.ds)
+	httpClient, err := newDatasourceHttpClient(c.httpClientProvider, c.ds)
 	if err != nil {
 		return nil, err
 	}
