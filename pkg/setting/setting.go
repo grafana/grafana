@@ -297,10 +297,6 @@ type Cfg struct {
 	// OAuth
 	OAuthCookieMaxAge int
 
-	// SAML Auth
-	SAMLEnabled             bool
-	SAMLSingleLogoutEnabled bool
-
 	// JWT Auth
 	JWTAuthEnabled       bool
 	JWTAuthHeaderName    string
@@ -1174,10 +1170,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// SigV4
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
-
-	// SAML auth
-	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
-	cfg.SAMLSingleLogoutEnabled = iniFile.Section("auth.saml").Key("single_logout").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)

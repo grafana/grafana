@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Alert, Field, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
@@ -23,14 +24,21 @@ const AmRoutes: FC = () => {
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   const fetchConfig = useCallback(() => {
-    dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    if (alertManagerSourceName) {
+      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    }
   }, [alertManagerSourceName, dispatch]);
 
   useEffect(() => {
     fetchConfig();
   }, [fetchConfig]);
 
-  const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
+  const { result, loading, error } =
+    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+
+  if (!alertManagerSourceName) {
+    return <Redirect to="/alerting/routes" />;
+  }
 
   const config = result?.alertmanager_config;
   const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
