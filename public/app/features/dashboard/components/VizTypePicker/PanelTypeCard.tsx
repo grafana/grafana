@@ -22,6 +22,7 @@ export const PanelTypeCard: React.FC<Props> = ({
   onDelete,
   disabled,
   showBadge,
+  children,
 }) => {
   const styles = useStyles2(getStyles);
   const cssClass = cx({
@@ -41,6 +42,7 @@ export const PanelTypeCard: React.FC<Props> = ({
 
       <div className={styles.itemContent}>
         <div className={styles.name}>{title}</div>
+        {children ? children : null}
       </div>
       {showBadge && (
         <div className={cx(styles.badge, disabled && styles.disabled)}>
