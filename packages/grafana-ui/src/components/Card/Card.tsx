@@ -1,50 +1,13 @@
-import React, { memo, cloneElement, FC, HTMLAttributes, ReactNode, useCallback } from 'react';
+import React, { memo, cloneElement, FC, ReactNode, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
-import { useTheme2, styleMixins, stylesFactory } from '../../themes';
-import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
+import { useTheme2, stylesFactory } from '../../themes';
+import { CardContainer, CardContainerProps } from './CardContainer';
 
 /**
  * @public
  */
-export interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
-  /** Content for the card's tooltip */
-  tooltip?: PopoverContent;
-}
-
-const CardContainer: FC<ContainerProps> = ({ children, tooltip, ...props }) => {
-  return tooltip ? (
-    <Tooltip placement="top" content={tooltip} theme="info">
-      <div {...props}>{children}</div>
-    </Tooltip>
-  ) : (
-    <div {...props}>{children}</div>
-  );
-};
-
-/**
- * @public
- */
-export interface CardInnerProps {
-  href?: string;
-}
-
-const CardInner: FC<CardInnerProps> = ({ children, href }) => {
-  const theme = useTheme2();
-  const styles = getCardStyles(theme);
-  return href ? (
-    <a className={styles.innerLink} href={href}>
-      {children}
-    </a>
-  ) : (
-    <div className={styles.innerLink}>{children}</div>
-  );
-};
-
-/**
- * @public
- */
-export interface Props extends ContainerProps {
+export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disableHover'> {
   /** Main heading for the Card **/
   heading: ReactNode;
   /** Card description text */
@@ -74,7 +37,6 @@ export const Card: CardInterface = ({
   heading,
   description,
   disabled,
-  tooltip,
   href,
   onClick,
   className,
@@ -100,65 +62,39 @@ export const Card: CardInterface = ({
   const disableHover = disabled || (!onClick && !href);
   const disableEvents = disabled && !actions;
 
-  const containerStyles = getContainerStyles(theme, disableEvents, disableHover);
   const onCardClick = useCallback(() => (disableHover ? () => {} : onClick?.()), [disableHover, onClick]);
 
   return (
     <CardContainer
-      tooltip={tooltip}
       tabIndex={disableHover ? undefined : 0}
-      className={cx(containerStyles, className)}
       onClick={onCardClick}
+      disableEvents={disableEvents}
+      disableHover={disableHover}
+      href={href}
       {...htmlProps}
     >
-      <CardInner href={href}>
-        {figure}
-        <div className={styles.inner}>
-          <div className={styles.info}>
-            <div>
-              <div className={styles.heading} role="heading">
-                {heading}
-              </div>
-              {meta}
-              {description && <p className={styles.description}>{description}</p>}
+      {figure}
+      <div className={styles.inner}>
+        <div className={styles.info}>
+          <div>
+            <div className={styles.heading} role="heading">
+              {heading}
             </div>
-            {tags}
+            {meta}
+            {description && <p className={styles.description}>{description}</p>}
           </div>
-          {hasActions && (
-            <div className={styles.actionRow}>
-              {actions}
-              {secondaryActions}
-            </div>
-          )}
+          {tags}
         </div>
-      </CardInner>
+        {hasActions && (
+          <div className={styles.actionRow}>
+            {actions}
+            {secondaryActions}
+          </div>
+        )}
+      </div>
     </CardContainer>
   );
 };
-
-const getContainerStyles = stylesFactory((theme: GrafanaThemeV2, disabled = false, disableHover = false) => {
-  return css({
-    display: 'flex',
-    width: '100%',
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.borderRadius(),
-    position: 'relative',
-    pointerEvents: disabled ? 'none' : 'auto',
-    marginBottom: theme.spacing(1),
-    transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-      duration: theme.transitions.duration.short,
-    }),
-
-    ...(!disableHover && {
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-        cursor: 'pointer',
-        zIndex: 1,
-      },
-      '&:focus': styleMixins.getFocusStyles(theme),
-    }),
-  });
-});
 
 /**
  * @public
@@ -244,11 +180,6 @@ export const getCardStyles = stylesFactory((theme: GrafanaThemeV2) => {
     `,
     separator: css`
       margin: 0 ${theme.spacing(1)};
-    `,
-    innerLink: css`
-      display: flex;
-      width: 100%;
-      padding: ${theme.spacing(2)};
     `,
     tagList: css`
       max-width: 50%;
