@@ -24,7 +24,7 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
-  /** Color of  */
+  /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
 }
 
