@@ -1,18 +1,18 @@
 import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
+import { GrafanaThemeV2 } from '@grafana/data';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   collapse: css`
     label: collapse;
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(1)};
   `,
   collapseBody: css`
     label: collapse__body;
-    padding: ${theme.panelPadding}px;
+    padding: ${theme.spacing(theme.components.panel.padding)};
     flex: 1;
     overflow: hidden;
     display: flex;
@@ -29,7 +29,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     position: relative;
     overflow: hidden;
     background: none;
-    margin: ${theme.spacing.xs};
+    margin: ${theme.spacing(0.5)};
   `,
   loaderActive: css`
     label: collapse__loader_active;
@@ -44,7 +44,7 @@ const getStyles = (theme: GrafanaTheme) => ({
       animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
       animation-iteration-count: 100;
       left: -25%;
-      background: ${theme.palette.blue85};
+      background: ${theme.colors.primary.main};
     }
     @keyframes loader {
       from {
@@ -59,7 +59,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   header: css`
     label: collapse__header;
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    padding: ${theme.spacing(1, 2)};
     display: flex;
     cursor: inherit;
     transition: all 0.1s linear;
@@ -68,14 +68,14 @@ const getStyles = (theme: GrafanaTheme) => ({
   headerCollapsed: css`
     label: collapse__header--collapsed;
     cursor: pointer;
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    padding: ${theme.spacing(1, 2)};
   `,
   headerButtons: css`
     label: collapse__header-buttons;
-    margin-right: ${theme.spacing.sm};
-    margin-top: ${theme.spacing.xxs};
+    margin-right: ${theme.spacing(1)};
+    margin-top: ${theme.spacing(0.25)};
     font-size: ${theme.typography.size.lg};
-    line-height: ${theme.typography.heading.h6};
+    line-height: ${theme.typography.h6.lineHeight};
     display: inherit;
   `,
   headerButtonsCollapsed: css`
@@ -84,9 +84,9 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   headerLabel: css`
     label: collapse__header-label;
-    font-weight: ${theme.typography.weight.semibold};
-    margin-right: ${theme.spacing.sm};
-    font-size: ${theme.typography.heading.h6};
+    font-weight: ${theme.typography.fontWeightMedium};
+    margin-right: ${theme.spacing(1)};
+    font-size: ${theme.typography.size.md};
   `,
 });
 
@@ -130,7 +130,7 @@ export const Collapse: FunctionComponent<Props> = ({
   className,
   children,
 }) => {
-  const style = useStyles(getStyles);
+  const style = useStyles2(getStyles);
   const onClickToggle = () => {
     if (onToggle) {
       onToggle(!isOpen);
