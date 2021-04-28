@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { ClipboardButton, CodeEditor, Modal, VerticalGroup } from '@grafana/ui';
+import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
 
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { notifyApp } from '../../../../core/actions';
@@ -18,14 +18,14 @@ export function ViewJsonModal({ json, onDismiss }: ViewJsonModalProps): JSX.Elem
   };
   return (
     <Modal title="JSON" onDismiss={onDismiss} onClickBackdrop={onDismiss} isOpen>
-      <VerticalGroup spacing="sm">
-        <AutoSizer disableHeight>
-          {({ width }) => <CodeEditor value={json} language="json" showMiniMap={false} height="500px" width={width} />}
-        </AutoSizer>
+      <AutoSizer disableHeight>
+        {({ width }) => <CodeEditor value={json} language="json" showMiniMap={false} height="500px" width={width} />}
+      </AutoSizer>
+      <Modal.ButtonRow>
         <ClipboardButton getText={getClipboardText} onClipboardCopy={onClipboardCopy}>
           Copy to Clipboard
         </ClipboardButton>
-      </VerticalGroup>
+      </Modal.ButtonRow>
     </Modal>
   );
 }
