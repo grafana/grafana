@@ -51,7 +51,7 @@ interface State {
 export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
-  querySubscription: Unsubscribable | null;
+  querySubscription: Unsubscribable | null = null;
 
   state: State = {
     isLoadingHelp: false,

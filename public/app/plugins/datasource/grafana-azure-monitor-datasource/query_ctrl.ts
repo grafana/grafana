@@ -112,10 +112,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   };
 
   resultFormats: ResultFormat[];
-  workspaces: any[];
-  showHelp: boolean;
-  showLastQuery: boolean;
-  lastQuery: string;
+  workspaces: any[] = [];
+  showHelp = false;
+  showLastQuery = false;
+  lastQuery = '';
   lastQueryError?: string;
   subscriptions: Array<{ text: string; value: string }>;
 

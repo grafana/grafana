@@ -18,11 +18,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   queryModel: GraphiteQuery;
-  segments: any[];
-  addTagSegments: any[];
+  segments: any[] = [];
+  addTagSegments: any[] = [];
   removeTagValue: string;
-  supportsTags: boolean;
-  paused: boolean;
+  supportsTags = false;
+  paused = false;
 
   // to avoid error flooding, these errors are shown only once per session
   private _tagsAutoCompleteErrorShown = false;

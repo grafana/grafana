@@ -27,7 +27,7 @@ export class MssqlQueryCtrl extends QueryCtrl {
   target: MssqlQuery;
   lastQueryMeta?: QueryResultMeta;
   lastQueryError?: string;
-  showHelp: boolean;
+  showHelp = false;
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {

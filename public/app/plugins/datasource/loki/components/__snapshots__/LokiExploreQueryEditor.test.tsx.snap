@@ -86,6 +86,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           Symbol(length): 0,
         },
         "logLabelFetchTs": 0,
+        "lookupsDisabled": false,
         "request": [Function],
         "seriesCache": LRUCache {
           Symbol(max): 10,
@@ -104,6 +105,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           Symbol(length): 0,
         },
         "start": [Function],
+        "started": false,
       },
       "metadataRequest": [Function],
     }

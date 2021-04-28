@@ -60,7 +60,7 @@ class GraphElement {
   panel: any;
   plot: any;
   sortedSeries?: any[];
-  data: any[];
+  data: any[] = [];
   panelWidth: number;
   eventManager: EventManager;
   thresholdManager: ThresholdManager;

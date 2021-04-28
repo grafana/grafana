@@ -69,9 +69,9 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
   logLabelFetchTs: number;
-  started: boolean;
+  started = false;
   datasource: LokiDatasource;
-  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
+  lookupsDisabled = false; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does

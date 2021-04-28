@@ -53,7 +53,7 @@ describe('QueryVariableEditor', () => {
     it.each`
       fieldName  | propName                      | expectedArgs
       ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID }, 't', 't']}
-      ${'regex'} | ${'onPropChange'}             | ${{ propName: 'regex', propValue: 't', updateOptions: true }}
+      ${'regex'} | ${'onPropChange'}             | ${[{ propName: 'regex', propValue: 't', updateOptions: true }]}
     `(
       '$fieldName field and tabs away then $propName should be called with correct args',
       ({ fieldName, propName, expectedArgs }) => {

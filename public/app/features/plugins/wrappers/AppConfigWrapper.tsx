@@ -19,6 +19,7 @@ interface State {
 
 export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
+  //@ts-ignore
   model: PluginMeta;
 
   // Needed for angular scope

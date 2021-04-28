@@ -31,7 +31,7 @@ import { annotationsFromDataFrames } from '../../../features/query/state/Dashboa
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
-  renderError: boolean;
+  renderError = false;
   hiddenSeries: any = {};
   hiddenSeriesTainted = false;
   seriesList: TimeSeries[] = [];
@@ -41,7 +41,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
 
   dataWarning?: DataWarning;
   colors: any = [];
-  subTabIndex: number;
+  subTabIndex = 0;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
 

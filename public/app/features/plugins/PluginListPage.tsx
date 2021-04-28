@@ -1,27 +1,32 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import PluginList from './PluginList';
 import { loadPlugins } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getPlugins, getPluginsSearchQuery } from './state/selectors';
-import { NavModel, PluginMeta } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { setPluginsSearchQuery } from './state/reducers';
 import { useAsync } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { PluginsErrorsInfo } from './PluginsErrorsInfo';
 
-export interface Props {
-  navModel: NavModel;
-  plugins: PluginMeta[];
-  searchQuery: string;
-  hasFetched: boolean;
-  loadPlugins: typeof loadPlugins;
-  setPluginsSearchQuery: typeof setPluginsSearchQuery;
-}
+const mapStateToProps = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'plugins'),
+  plugins: getPlugins(state.plugins),
+  searchQuery: getPluginsSearchQuery(state.plugins),
+  hasFetched: state.plugins.hasFetched,
+});
+
+const mapDispatchToProps = {
+  loadPlugins,
+  setPluginsSearchQuery,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = ConnectedProps<typeof connector>;
 
 export const PluginListPage: React.FC<Props> = ({
   hasFetched,
@@ -65,20 +70,6 @@ export const PluginListPage: React.FC<Props> = ({
       </Page.Contents>
     </Page>
   );
-};
-
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'plugins'),
-    plugins: getPlugins(state.plugins),
-    searchQuery: getPluginsSearchQuery(state.plugins),
-    hasFetched: state.plugins.hasFetched,
-  };
-}
-
-const mapDispatchToProps = {
-  loadPlugins,
-  setPluginsSearchQuery,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(PluginListPage));
