@@ -17,7 +17,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
   const wrapperBg = theme.colors.background.primary;
   const wrapperShadow = theme.shadows.z1;
   const itemColor = theme.colors.text.primary;
-  const itemBgHover = theme.colors.emphasize(theme.colors.background.primary, 0.05);
+  const itemBgHover = theme.colors.action.hover;
   const itemBgActive = theme.colors.background.secondary;
   const separatorColor = theme.colors.border.weak;
 
