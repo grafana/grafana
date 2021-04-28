@@ -14,42 +14,35 @@ interface DataLinkSuggestionsProps {
 }
 
 const getStyles = (theme: GrafanaThemeV2) => {
-  const wrapperBg = theme.colors.background.primary;
-  const wrapperShadow = theme.shadows.z1;
-  const itemColor = theme.colors.text.primary;
-  const itemBgHover = theme.colors.action.hover;
-  const itemBgActive = theme.colors.background.secondary;
-  const separatorColor = theme.colors.border.weak;
-
   return {
     list: css`
-      border-bottom: 1px solid ${separatorColor};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       &:last-child {
         border: none;
       }
     `,
     wrapper: css`
-      background: ${wrapperBg};
+      background: ${theme.colors.background.primary};
       z-index: 1;
       width: 250px;
-      box-shadow: 0 5px 10px 0 ${wrapperShadow};
+      box-shadow: 0 5px 10px 0 ${theme.shadows.z1};
     `,
     item: css`
       background: none;
       padding: 2px 8px;
-      color: ${itemColor};
+      color: ${theme.colors.text.primary};
       cursor: pointer;
       &:hover {
-        background: ${itemBgHover};
+        background: ${theme.colors.action.hover};
       }
     `,
     label: css`
       color: ${theme.colors.text.secondary};
     `,
     activeItem: css`
-      background: ${itemBgActive};
+      background: ${theme.colors.background.secondary};
       &:hover {
-        background: ${itemBgActive};
+        background: ${theme.colors.background.secondary};
       }
     `,
     itemValue: css`
