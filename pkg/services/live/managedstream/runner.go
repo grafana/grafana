@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -86,9 +87,9 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 }
 
 func (s *ManagedStream) remoteWrite() {
-	url := os.Getenv("GF_CLOUD_URL")
-	user := os.Getenv("GF_CLOUD_USER")
-	password := os.Getenv("GF_CLOUD_PASSWORD")
+	url := os.Getenv("GF_LIVE_REMOTE_WRITE_URL")
+	user := os.Getenv("GF_LIVE_REMOTE_WRITE_USER")
+	password := os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD")
 
 	httpClient := &http.Client{
 		Timeout: 500 * time.Millisecond,
@@ -141,6 +142,17 @@ func (s *ManagedStream) ListChannels(prefix string) []util.DynMap {
 	return info
 }
 
+func stringInSlice(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+var remoteWriteStreams = strings.Split(os.Getenv("GF_LIVE_REMOTE_WRITE_STREAMS"), ",")
+
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
 // unstableSchema flag can be set to disable schema caching for a path.
 func (s *ManagedStream) Push(path string, frame *data.Frame, unstableSchema bool) error {
@@ -179,14 +191,17 @@ func (s *ManagedStream) Push(path string, frame *data.Frame, unstableSchema bool
 		s.mu.Unlock()
 	}
 
-	remoteWriteData, err := remotewrite.Serialize(frame)
-	if err != nil {
-		logger.Error("Error serializing to remote write format", "error", err)
-	} else {
-		select {
-		case s.remoteWriteData <- remoteWriteData:
-		default:
-			logger.Warn("Remote write is slow, dropping frame")
+	if stringInSlice(remoteWriteStreams, s.id) {
+		// Use remote write for a stream.
+		remoteWriteData, err := remotewrite.Serialize(frame)
+		if err != nil {
+			logger.Error("Error serializing to remote write format", "error", err)
+		} else {
+			select {
+			case s.remoteWriteData <- remoteWriteData:
+			default:
+				logger.Warn("Remote write is slow, dropping frame")
+			}
 		}
 	}
 
