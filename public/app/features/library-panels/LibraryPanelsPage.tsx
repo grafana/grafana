@@ -21,7 +21,7 @@ export const LibraryPanelsPage: FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <LibraryPanelsSearch onClick={noop} showSecondaryActions showSearchInput showSort showFilter />
+        <LibraryPanelsSearch onClick={noop} showSecondaryActions showSort showFilter />
       </Page.Contents>
     </Page>
   );

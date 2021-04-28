@@ -11,7 +11,6 @@ import { LibraryPanelDTO } from '../../types';
 
 export interface LibraryPanelsSearchProps {
   onClick: (panel: LibraryPanelDTO) => void;
-  showSearchInput?: boolean;
   showSort?: boolean;
   showFilter?: boolean;
   showSecondaryActions?: boolean;
@@ -23,7 +22,6 @@ export const LibraryPanelsSearch = ({
   onClick,
   currentPanelId,
   perPage = DEFAULT_PER_PAGE_PAGINATION,
-  showSearchInput = false,
   showFilter = false,
   showSort = false,
   showSecondaryActions = false,
@@ -37,10 +35,8 @@ export const LibraryPanelsSearch = ({
 
   return (
     <div className={styles.container}>
-      <VerticalGroup spacing="lg">
-        {showSearchInput && (
-          <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={'Search by name'} width={0} />
-        )}
+      <VerticalGroup spacing={showSort || showFilter ? 'lg' : 'xs'}>
+        <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={'Search by name'} width={0} />
         <HorizontalGroup spacing="sm" justify={showSort && showFilter ? 'space-between' : 'flex-end'}>
           {showSort && <SortPicker value={sortDirection} onChange={onSortChange} />}
           {showFilter && <PanelTypeFilter onChange={onFilterChange} />}
@@ -64,12 +60,11 @@ export const LibraryPanelsSearch = ({
 function getStyles(theme: GrafanaThemeV2) {
   return {
     container: css`
-      label: container;
       width: 100%;
       overflow-y: auto;
+      padding: ${theme.spacing(1)};
     `,
     libraryPanelsView: css`
-      label: libraryPanelsView;
       width: 100%;
     `,
   };

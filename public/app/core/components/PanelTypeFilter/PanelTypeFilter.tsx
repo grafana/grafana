@@ -53,7 +53,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
     <div className={styles.container}>
       {value.length > 0 && (
         <span className={styles.clear} onClick={() => onChange([])}>
-          Clear tags
+          Clear types
         </span>
       )}
       <Select {...selectOptions} prefix={<Icon name="table" />} aria-label="Panel Type filter" />
