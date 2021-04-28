@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { css } from '@emotion/css';
-import { Alert, HorizontalGroup, Modal, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Alert, Field, Modal, useStyles2 } from '@grafana/ui';
 import { GrafanaThemeV2 } from '@grafana/data';
 
 export interface Props {
@@ -13,22 +13,18 @@ export function ApiKeysAddedModal({ onDismiss, apiKey, rootPath }: Props): JSX.E
   const styles = useStyles2(getStyles);
   return (
     <Modal title="API Key Created" onDismiss={onDismiss} onClickBackdrop={onDismiss} isOpen>
-      <VerticalGroup spacing="md">
-        <HorizontalGroup spacing="sm">
-          <span className={styles.label}>Key</span>
-          <span className={styles.label}>{apiKey}</span>
-        </HorizontalGroup>
+      <Field label="Key">
+        <span className={styles.label}>{apiKey}</span>
+      </Field>
 
-        <Alert
-          title="You will only be able to view this key here once! It is not stored in this form, so be sure to copy it now."
-          severity="info"
-        >
-          <p>You can authenticate a request using the Authorization HTTP header, example:</p>
-          <pre className={styles.small}>
-            curl -H &quot;Authorization: Bearer {apiKey}&quot; {rootPath}/api/dashboards/home
-          </pre>
-        </Alert>
-      </VerticalGroup>
+      <Alert severity="info" title="You will only be able to view this key here once!">
+        It is not stored in this form, so be sure to copy it now.
+      </Alert>
+
+      <p className="text-muted">You can authenticate a request using the Authorization HTTP header, example:</p>
+      <pre className={styles.small}>
+        curl -H &quot;Authorization: Bearer {apiKey}&quot; {rootPath}/api/dashboards/home
+      </pre>
     </Modal>
   );
 }
