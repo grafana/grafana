@@ -23,6 +23,7 @@ func init() {
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$\s*([\@\/\w-]+?)*`)
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) plugins.DataQueryResult {
 	var queryRes plugins.DataQueryResult
 

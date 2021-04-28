@@ -1,4 +1,4 @@
-import { Alert, Button, InfoBox, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -43,12 +43,12 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   if (!result) {
     return (
       <Page.Contents>
-        <InfoBox severity="warning" title="Rule not found">
+        <Alert severity="warning" title="Rule not found">
           <p>Sorry! This rule does not exist.</p>
           <a href="/alerting/list">
             <Button>To rule list</Button>
           </a>
-        </InfoBox>
+        </Alert>
       </Page.Contents>
     );
   }

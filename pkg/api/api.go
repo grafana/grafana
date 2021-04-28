@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-macaron/binding"
-
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 )
 
@@ -326,6 +324,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/db/:slug", routing.Wrap(hs.DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), routing.Wrap(CalculateDashboardDiff))
+			dashboardRoute.Post("/trim", bind(models.TrimDashboardCommand{}), routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
@@ -413,13 +412,19 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/frontend-metrics", bind(metrics.PostFrontendMetricsCommand{}), routing.Wrap(hs.PostFrontendMetrics))
 
 		if hs.Live.IsEnabled() {
-			apiRoute.Post("/live/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
+			apiRoute.Group("/live", func(liveRoute routing.RouteRegister) {
+				// the channel path is in the name
+				liveRoute.Post("/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 
-			// POST influx line protocol
-			apiRoute.Post("/live/push/:streamId", hs.LivePushGateway.Handle)
+				// POST influx line protocol
+				liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
 
-			// List available streams and fields
-			apiRoute.Get("/live/list", routing.Wrap(hs.Live.HandleListHTTP))
+				// List available streams and fields
+				liveRoute.Get("/list", routing.Wrap(hs.Live.HandleListHTTP))
+
+				// Some channels may have info
+				liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
+			})
 		}
 
 		// short urls

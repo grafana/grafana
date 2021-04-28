@@ -39,6 +39,7 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
 	originalQueries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -96,6 +97,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 	return iaQueries, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) plugins.DataQueryResult {
 	queryResult := plugins.DataQueryResult{RefID: query.RefID}
 

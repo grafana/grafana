@@ -98,6 +98,7 @@ func TestLoki(t *testing.T) {
 
 func TestParseResponse(t *testing.T) {
 	t.Run("value is not of type matrix", func(t *testing.T) {
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		queryRes := plugins.DataQueryResult{}
 
 		value := loghttp.QueryResponse{

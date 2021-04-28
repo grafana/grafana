@@ -145,6 +145,7 @@ func TestPrometheus(t *testing.T) {
 
 func TestParseResponse(t *testing.T) {
 	t.Run("value is not of type matrix", func(t *testing.T) {
+		//nolint: staticcheck // plugins.DataQueryResult deprecated
 		queryRes := plugins.DataQueryResult{}
 		value := p.Vector{}
 		res, err := parseResponse(value, nil)
