@@ -37,7 +37,7 @@ func TestWarmStateCache(t *testing.T) {
 		{
 			AlertRuleUID: "test_uid",
 			OrgID:        123,
-			CacheId:      "test_uid map[test1:testValue1]",
+			CacheId:      `[["test1","testValue1"]]`,
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
 			Results: []state.Evaluation{
@@ -49,7 +49,7 @@ func TestWarmStateCache(t *testing.T) {
 		}, {
 			AlertRuleUID: "test_uid",
 			OrgID:        123,
-			CacheId:      "test_uid map[test2:testValue2]",
+			CacheId:      `[["test2","testValue2"]]`,
 			Labels:       data.Labels{"test2": "testValue2"},
 			State:        eval.Alerting,
 			Results: []state.Evaluation{

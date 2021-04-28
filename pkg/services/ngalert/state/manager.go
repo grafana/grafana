@@ -17,7 +17,7 @@ type Manager struct {
 
 func NewManager(logger log.Logger) *Manager {
 	manager := &Manager{
-		cache: newCache(),
+		cache: newCache(logger),
 		quit:  make(chan struct{}),
 		Log:   logger,
 	}
