@@ -26,10 +26,10 @@ type DashboardGuardian interface {
 	// GetAcl returns ACL.
 	GetAcl() ([]*models.DashboardAclInfoDTO, error)
 
-	// GetAclWithoutDuplicates returns ACL and strips any permission
+	// GetACLWithoutDuplicates returns ACL and strips any permission
 	// that already has an inherited permission with higher or equal
 	// permission.
-	GetAclWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error)
+	GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error)
 	GetHiddenACL(*setting.Cfg) ([]*models.DashboardAcl, error)
 }
 
@@ -209,7 +209,7 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	return g.acl, nil
 }
 
-func (g *dashboardGuardianImpl) GetAclWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
+func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
 	acl, err := g.GetAcl()
 	if err != nil {
 		return nil, err
@@ -333,7 +333,7 @@ func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	return g.GetAclValue, nil
 }
 
-func (g *FakeDashboardGuardian) GetAclWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
+func (g *FakeDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
 	return g.GetAcl()
 }
 
