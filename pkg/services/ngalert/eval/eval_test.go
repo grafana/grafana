@@ -68,6 +68,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("an execution error"),
 				},
 			},
 		},
@@ -138,6 +139,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : unable to get frame row length: frame has different field lengths, field 0 is len 1 but field 1 is len 0"),
 				},
 			},
 		},
@@ -155,11 +157,12 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : unexpected field length: 2 instead of 1"),
 				},
 			},
 		},
 		{
-			desc: "more than one row Error state result",
+			desc: "more than one row produces Error state result",
 			execResults: ExecutionResults{
 				Results: []*data.Frame{
 					data.NewFrame("",
@@ -171,6 +174,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : unexpected row length: 2 instead of 0 or 1"),
 				},
 			},
 		},
@@ -187,6 +191,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : looks like time series data, only reduced data can be alerted on."),
 				},
 			},
 		},
@@ -203,6 +208,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : invalid field type: []float64"),
 				},
 			},
 		},
@@ -222,6 +228,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : frame cannot uniquely be identified by its labels: has duplicate results with labels {}"),
 				},
 			},
 		},
@@ -241,6 +248,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : frame cannot uniquely be identified by its labels: has duplicate results with labels {}"),
 				},
 			},
 		},
@@ -260,6 +268,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: Error,
+					Error: fmt.Errorf("invalid format of evaluation results for the alert definition : invalid field type: []float64"),
 				},
 				{
 					State:    Alerting,
@@ -278,6 +287,9 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			for i, r := range res {
 				require.Equal(t, tc.expectResults[i].State, r.State)
 				require.Equal(t, tc.expectResults[i].Instance, r.Instance)
+				if tc.expectResults[i].State == Error {
+					require.EqualError(t, tc.expectResults[i].Error, r.Error.Error())
+				}
 			}
 		})
 	}

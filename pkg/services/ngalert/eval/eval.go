@@ -255,7 +255,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		}
 
 		if f.Fields[0].Type() != data.FieldTypeNullableFloat64 {
-			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("invalid field type: %d", f.Fields[0].Type())})
+			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("invalid field type: %s", f.Fields[0].Type())})
 			continue
 		}
 
@@ -290,7 +290,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 					Instance:           res.Instance,
 					EvaluatedAt:        ts,
 					EvaluationDuration: time.Since(ts),
-					Error:              &invalidEvalResultFormatError{reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: %s", labelsStr)},
+					Error:              &invalidEvalResultFormatError{reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: has duplicate results with labels {%s}", labelsStr)},
 				},
 			}
 		}
