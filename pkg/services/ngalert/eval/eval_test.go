@@ -159,11 +159,27 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			},
 		},
 		{
-			desc: "more than one row (e.g. time series) Error state result",
+			desc: "more than one row Error state result",
 			execResults: ExecutionResults{
 				Results: []*data.Frame{
 					data.NewFrame("",
 						data.NewField("", nil, []*float64{ptr.Float64(2), ptr.Float64(3)}),
+					),
+				},
+			},
+			expectResultLength: 1,
+			expectResults: Results{
+				{
+					State: Error,
+				},
+			},
+		},
+		{
+			desc: "time fields (looks like time series) returns error",
+			execResults: ExecutionResults{
+				Results: []*data.Frame{
+					data.NewFrame("",
+						data.NewField("", nil, []time.Time{}),
 					),
 				},
 			},

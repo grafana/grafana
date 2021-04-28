@@ -228,6 +228,11 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 			continue
 		}
 
+		if len(f.TypeIndices(data.FieldTypeTime, data.FieldTypeNullableTime)) > 0 {
+			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "looks like time series data, only reduced data can be alerted on."})
+			continue
+		}
+
 		if rowLen == 0 {
 			if len(f.Fields) == 0 {
 				appendNoData(nil)
