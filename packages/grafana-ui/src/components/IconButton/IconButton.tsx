@@ -9,7 +9,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { TooltipPlacement } from '../Tooltip/PopoverController';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
-export type IconButtonVariant = 'primary' | 'destructive' | undefined;
+export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
@@ -31,7 +31,7 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, variant, ...restProps }, ref) => {
+  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, variant = 'secondary', ...restProps }, ref) => {
     const theme = useTheme2();
     const styles = getStyles(theme, size, variant);
 

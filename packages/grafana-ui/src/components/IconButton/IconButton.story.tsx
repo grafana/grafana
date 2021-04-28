@@ -36,7 +36,7 @@ const RenderScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme2();
   const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
-  const variants: IconButtonVariant[] = [undefined, 'primary', 'destructive'];
+  const variants: IconButtonVariant[] = ['secondary', 'primary', 'destructive'];
 
   return (
     <div
