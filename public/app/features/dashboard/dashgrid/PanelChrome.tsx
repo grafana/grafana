@@ -63,11 +63,15 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       eventBus: new EventBusWithSource(props.dashboard.events, `panel-${props.panel.id}`),
-      data: {
-        state: LoadingState.NotStarted,
-        series: [],
-        timeRange: getDefaultTimeRange(),
-      },
+      data: this.getInitialPanelDataState(),
+    };
+  }
+
+  getInitialPanelDataState(): PanelData {
+    return {
+      state: LoadingState.NotStarted,
+      series: [],
+      timeRange: getDefaultTimeRange(),
     };
   }
 
@@ -138,13 +142,20 @@ export class PanelChrome extends Component<Props, State> {
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
-    if (!this.props.isInView) {
+    const { isInView, dashboard, panel, plugin } = this.props;
+
+    if (!isInView) {
       if (data.state !== LoadingState.Streaming) {
         // Ignore events when not visible.
         // The call will be repeated when the panel comes into view
         this.setState({ refreshWhenInView: true });
       }
+      return;
+    }
 
+    // Ignore this data update if we are now a non data panel
+    if (plugin.meta.skipDataQuery) {
+      this.setState({ data: this.getInitialPanelDataState() });
       return;
     }
 
@@ -169,8 +180,8 @@ export class PanelChrome extends Component<Props, State> {
         break;
       case LoadingState.Done:
         // If we are doing a snapshot save data in panel model
-        if (this.props.dashboard.snapshot) {
-          this.props.panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
+        if (dashboard.snapshot) {
+          panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
         }
         if (isFirstLoad) {
           isFirstLoad = false;
