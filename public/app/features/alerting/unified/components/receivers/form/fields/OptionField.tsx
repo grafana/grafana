@@ -4,18 +4,23 @@ import { NotificationChannelOption } from 'app/types';
 import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
 import { SubformField } from './SubformField';
 import { css } from '@emotion/css';
+import { KeyValueField } from './KeyValueMapField';
 
 interface Props {
   option: NotificationChannelOption;
   invalid?: boolean;
-  pathPrefix?: string;
+  pathPrefix: string;
   error?: FieldError | NestDataObject<any, FieldError>;
 }
 
-export const OptionField: FC<Props> = ({ option, invalid, pathPrefix = '', error }) => {
+export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error }) => {
   if (option.element === 'subform') {
     return <SubformField option={option} error={error} pathPrefix={pathPrefix} />;
   }
+  if (option.element === 'key_value_map') {
+    return <KeyValueField option={option} path={`${pathPrefix}${option.propertyName}`} />;
+  }
+
   return (
     <Field
       label={option.element !== 'checkbox' ? option.label : undefined}

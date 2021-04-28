@@ -91,7 +91,12 @@ export const cloudNotifierTypes: NotifierDTO[] = [
         element: 'textarea',
       }),
       option('text', 'Email text body', 'The text body of the email notification.', { element: 'textarea' }),
-      // @TODO: headers
+      option(
+        'headers',
+        'Headers',
+        'Further headers email header key/value pairs. Overrides any headers previously set by the notification implementation.',
+        { element: 'key_value_map' }
+      ),
     ],
   },
   {
