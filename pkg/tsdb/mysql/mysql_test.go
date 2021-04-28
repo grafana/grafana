@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -52,7 +53,7 @@ func TestMySQL(t *testing.T) {
 			return sql, nil
 		}
 
-		exe, err := NewExecutor(&models.DataSource{
+		exe, err := New(httpclient.NewProvider())(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
 		})
