@@ -13,7 +13,7 @@ replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
 require (
 	cloud.google.com/go/storage v1.14.0
-	cuelang.org/go v0.3.0-beta.6
+	cuelang.org/go v0.3.2
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.38.17
@@ -96,6 +96,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210413134643-5e61552d6c78
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
+	golang.org/x/tools v0.1.0 // indirect
 	gonum.org/v1/gonum v0.9.1
 	google.golang.org/api v0.45.0
 	google.golang.org/grpc v1.37.0
