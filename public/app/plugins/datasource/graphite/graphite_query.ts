@@ -15,12 +15,12 @@ export type GraphiteTag = {
 export default class GraphiteQuery {
   datasource: any;
   target: any;
-  functions: any[];
-  segments: any[];
-  tags: GraphiteTag[];
+  functions: any[] = [];
+  segments: any[] = [];
+  tags: GraphiteTag[] = [];
   error: any;
-  seriesByTagUsed: boolean;
-  checkOtherSegmentsIndex: number;
+  seriesByTagUsed = false;
+  checkOtherSegmentsIndex = 0;
   removeTagValue: string;
   templateSrv: any;
   scopedVars: any;

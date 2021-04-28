@@ -43,7 +43,13 @@ func DeleteAPIKey(c *models.ReqContext) response.Response {
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		return response.Error(500, "Failed to delete API key", err)
+		var status int
+		if errors.Is(err, models.ErrApiKeyNotFound) {
+			status = 404
+		} else {
+			status = 500
+		}
+		return response.Error(status, "Failed to delete API key", err)
 	}
 
 	return response.Success("API key deleted")
