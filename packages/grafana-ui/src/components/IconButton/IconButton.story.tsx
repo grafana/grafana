@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { IconButton } from '@grafana/ui';
+import { IconButton, IconButtonVariant } from './IconButton';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
@@ -35,6 +35,7 @@ const RenderScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme2();
   const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
+  const variants: IconButtonVariant[] = ['primary', 'destructive'];
 
   return (
     <div
@@ -49,6 +50,15 @@ const RenderScenario = ({ background }: ScenarioProps) => {
       `}
     >
       <div>{background}</div>
+      {variants.map((variant) => {
+        return icons.map((icon) => {
+          return sizes.map((size) => (
+            <span key={icon + size}>
+              <IconButton name={icon} size={size} variant={variant} />
+            </span>
+          ));
+        });
+      })}
       {icons.map((icon) => {
         return sizes.map((size) => (
           <span key={icon + size}>
