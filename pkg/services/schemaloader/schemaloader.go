@@ -58,9 +58,6 @@ func (rs *SchemaLoaderService) IsDisabled() bool {
 }
 
 func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {
-	if rs.IsDisabled() {
-		return input, nil
-	}
 	val, _ := input.Map()
 	val = removeNils(val)
 	data, _ := json.Marshal(val)
@@ -77,9 +74,6 @@ func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*
 }
 
 func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (simplejson.Json, error) {
-	if rs.IsDisabled() {
-		return input, nil
-	}
 	val, _ := input.Map()
 	val = removeNils(val)
 	data, _ := json.Marshal(val)

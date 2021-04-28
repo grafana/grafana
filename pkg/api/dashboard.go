@@ -51,13 +51,16 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 	dash := cmd.Dashboard
 	meta := cmd.Meta
 
-	trimedJson, err := hs.LoadSchemaService.DashboardTrimDefaults(*dash)
-	if err != nil {
-		return response.Error(500, "Error while trim default value from dashboard json", err)
+	trimedResult := *dash
+	if !hs.LoadSchemaService.IsDisabled() {
+		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
+		if err != nil {
+			return response.Error(500, "Error while trim default value from dashboard json", err)
+		}
 	}
 
 	dto := dtos.TrimDashboardFullWithMeta{
-		Dashboard: &trimedJson,
+		Dashboard: &trimedResult,
 		Meta:      meta,
 	}
 
@@ -175,7 +178,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		}
 	}
 	var trimedJson simplejson.Json
-	if trimDefaults {
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
 		trimedJson, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
 		if err != nil {
 			return response.Error(500, "Error while trim default value from dashboard json", err)
@@ -286,7 +289,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
-	if trimDefaults {
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
 		cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
 		if err != nil {
 			return response.Error(500, "Error while applying default value to the dashboard json", err)
