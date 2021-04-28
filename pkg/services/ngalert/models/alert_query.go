@@ -68,7 +68,8 @@ type AlertQuery struct {
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
-	DatasourceUID string `json:"-"`
+	// Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
+	DatasourceUID string `json:"datasourceUid"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
@@ -86,34 +87,8 @@ func (aq *AlertQuery) setModelProps() error {
 	return nil
 }
 
-// setDatasource sets DatasourceUID.
-// If it's an expression sets DefaultExprDatasourceUID.
-func (aq *AlertQuery) setDatasource() error {
-	if aq.modelProps == nil {
-		err := aq.setModelProps()
-		if err != nil {
-			return err
-		}
-	}
-
-	i, ok := aq.modelProps["datasourceUid"]
-	if !ok {
-		return fmt.Errorf("failed to get datasourceUid from query model")
-	}
-	dsUID, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("failed to cast datasourceUid to string: %v", i)
-	}
-	aq.DatasourceUID = dsUID
-	return nil
-}
-
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
-	err := aq.setDatasource()
-	if err != nil {
-		return false, err
-	}
 	return aq.DatasourceUID == expr.DatasourceUID, nil
 }
 
@@ -196,20 +171,11 @@ func (aq *AlertQuery) GetIntervalDuration() (time.Duration, error) {
 
 // GetDatasource returns the query datasource identifier.
 func (aq *AlertQuery) GetDatasource() (string, error) {
-	err := aq.setDatasource()
-	if err != nil {
-		return "", err
-	}
 	return aq.DatasourceUID, nil
 }
 
 func (aq *AlertQuery) GetModel() ([]byte, error) {
-	err := aq.setDatasource()
-	if err != nil {
-		return nil, err
-	}
-
-	err = aq.setMaxDatapoints()
+	err := aq.setMaxDatapoints()
 	if err != nil {
 		return nil, err
 	}
@@ -250,10 +216,6 @@ func (aq *AlertQuery) setQueryType() error {
 // PreSave sets query's properties.
 // It should be called before being saved.
 func (aq *AlertQuery) PreSave() error {
-	if err := aq.setDatasource(); err != nil {
-		return fmt.Errorf("failed to set datasource to query model: %w", err)
-	}
-
 	if err := aq.setQueryType(); err != nil {
 		return fmt.Errorf("failed to set query type to query model: %w", err)
 	}

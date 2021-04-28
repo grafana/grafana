@@ -1,9 +1,9 @@
 import { AppEvents } from '@grafana/data';
-import { locationService, config } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
-import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkResult } from 'app/types';
+import { AlertmanagerAlert, AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
@@ -11,7 +11,14 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
-import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
+import { fetchNotifiers } from '../api/grafana';
+import {
+  expireSilence,
+  fetchAlertManagerConfig,
+  fetchAlerts,
+  fetchSilences,
+  updateAlertmanagerConfig,
+} from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
   deleteRulerRulesGroup,
@@ -22,6 +29,7 @@ import {
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
+import { makeAMLink } from '../utils/misc';
 import { withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
@@ -296,12 +304,10 @@ export const saveRuleFormAction = createAsyncThunk(
           throw new Error('Unexpected rule form type');
         }
         if (exitOnSave) {
-          locationService.push(`${config.appSubUrl ?? ''}/alerting/list`);
+          locationService.push('/alerting/list');
         } else {
           // redirect to edit page
-          const newLocation = `${config.appSubUrl ?? ''}/alerting/${encodeURIComponent(
-            stringifyRuleIdentifier(identifier)
-          )}/edit`;
+          const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
           if (locationService.getLocation().pathname !== newLocation) {
             locationService.replace(newLocation);
           }
@@ -312,3 +318,45 @@ export const saveRuleFormAction = createAsyncThunk(
       })()
     )
 );
+
+export const fetchGrafanaNotifiersAction = createAsyncThunk(
+  'unifiedalerting/fetchGrafanaNotifiers',
+  (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
+);
+
+interface UpdateALertManagerConfigActionOptions {
+  alertManagerSourceName: string;
+  oldConfig: AlertManagerCortexConfig; // it will be checked to make sure it didn't change in the meanwhile
+  newConfig: AlertManagerCortexConfig;
+}
+
+export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateALertManagerConfigActionOptions, {}>(
+  'unifiedalerting/updateAMConfig',
+  ({ alertManagerSourceName, oldConfig, newConfig }, thunkApi): Promise<void> =>
+    withSerializedError(
+      (async () => {
+        const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
+        if (JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)) {
+          throw new Error(
+            'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
+          );
+        }
+        await updateAlertmanagerConfig(alertManagerSourceName, newConfig);
+        appEvents.emit(AppEvents.alertSuccess, ['Template saved.']);
+        locationService.push(makeAMLink('/alerting/notifications', alertManagerSourceName));
+      })()
+    )
+);
+export const fetchAmAlertsAction = createAsyncThunk(
+  'unifiedalerting/fetchAmAlerts',
+  (alertManagerSourceName: string): Promise<AlertmanagerAlert[]> =>
+    withSerializedError(fetchAlerts(alertManagerSourceName, [], true, true, true))
+);
+
+export const expireSilenceAction = (alertManagerSourceName: string, silenceId: string): ThunkResult<void> => {
+  return async (dispatch) => {
+    await expireSilence(alertManagerSourceName, silenceId);
+    dispatch(fetchSilencesAction(alertManagerSourceName));
+    dispatch(fetchAmAlertsAction(alertManagerSourceName));
+  };
+};

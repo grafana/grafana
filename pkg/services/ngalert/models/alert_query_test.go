@@ -6,147 +6,130 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAlertQuery(t *testing.T) {
 	testCases := []struct {
-		desc                  string
-		alertQuery            AlertQuery
-		expectedIsExpression  bool
-		expectedDatasource    string
-		expectedDatasourceUID string
-		expectedMaxPoints     int64
-		expectedIntervalMS    int64
-		err                   error
+		desc                 string
+		alertQuery           AlertQuery
+		expectedIsExpression bool
+		expectedDatasource   string
+		expectedMaxPoints    int64
+		expectedIntervalMS   int64
+		err                  error
 	}{
 		{
 			desc: "given an expression query",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "-100",
 					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
+				DatasourceUID: "-100",
 			},
-			expectedIsExpression:  true,
-			expectedDatasourceUID: expr.DatasourceUID,
-			expectedMaxPoints:     int64(defaultMaxDataPoints),
-			expectedIntervalMS:    int64(defaultIntervalMS),
+			expectedIsExpression: true,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
 			},
-			expectedIsExpression:  false,
-			expectedDatasourceUID: "000000001",
-			expectedMaxPoints:     int64(defaultMaxDataPoints),
-			expectedIntervalMS:    int64(defaultIntervalMS),
+			expectedIsExpression: false,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with valid maxDataPoints",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"maxDataPoints": 200,
 					"extraParam": "some text"
 				}`),
 			},
-			expectedIsExpression:  false,
-			expectedDatasourceUID: "000000001",
-			expectedMaxPoints:     200,
-			expectedIntervalMS:    int64(defaultIntervalMS),
+			expectedIsExpression: false,
+			expectedMaxPoints:    200,
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with invalid maxDataPoints",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"maxDataPoints": "invalid",
 					"extraParam": "some text"
 				}`),
 			},
-			expectedIsExpression:  false,
-			expectedDatasourceUID: "000000001",
-			expectedMaxPoints:     int64(defaultMaxDataPoints),
-			expectedIntervalMS:    int64(defaultIntervalMS),
+			expectedIsExpression: false,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with zero maxDataPoints",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"maxDataPoints": 0,
 					"extraParam": "some text"
 				}`),
 			},
-			expectedIsExpression:  false,
-			expectedDatasourceUID: "000000001",
-			expectedMaxPoints:     int64(defaultMaxDataPoints),
-			expectedIntervalMS:    int64(defaultIntervalMS),
+			expectedIsExpression: false,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with valid intervalMs",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"intervalMs": 2000,
 					"extraParam": "some text"
 				}`),
 			},
-			expectedIsExpression:  false,
-			expectedDatasourceUID: "000000001",
-			expectedMaxPoints:     int64(defaultMaxDataPoints),
-			expectedIntervalMS:    2000,
+			expectedIsExpression: false,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   2000,
 		},
 		{
 			desc: "given a query with invalid intervalMs",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"intervalMs": "invalid",
 					"extraParam": "some text"	
 				}`),
 			},
-			expectedIsExpression:  false,
-			expectedDatasourceUID: "000000001",
-			expectedMaxPoints:     int64(defaultMaxDataPoints),
-			expectedIntervalMS:    int64(defaultIntervalMS),
+			expectedIsExpression: false,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with invalid intervalMs",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"intervalMs": 0,
 					"extraParam": "some text"
 				}`),
 			},
-			expectedIsExpression:  false,
-			expectedDatasourceUID: "000000001",
-			expectedMaxPoints:     int64(defaultMaxDataPoints),
-			expectedIntervalMS:    int64(defaultIntervalMS),
+			expectedIsExpression: false,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 	}
 
@@ -156,12 +139,6 @@ func TestAlertQuery(t *testing.T) {
 				isExpression, err := tc.alertQuery.IsExpression()
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedIsExpression, isExpression)
-			})
-
-			t.Run("can set datasource for expression", func(t *testing.T) {
-				err := tc.alertQuery.setDatasource()
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedDatasourceUID, tc.alertQuery.DatasourceUID)
 			})
 
 			t.Run("can set queryType for expression", func(t *testing.T) {
@@ -189,13 +166,7 @@ func TestAlertQuery(t *testing.T) {
 				err = json.Unmarshal(blob, &model)
 				require.NoError(t, err)
 
-				i, ok := model["datasourceUid"]
-				require.True(t, ok)
-				datasourceUID, ok := i.(string)
-				require.True(t, ok)
-				require.Equal(t, tc.expectedDatasourceUID, datasourceUID)
-
-				i, ok = model["maxDataPoints"]
+				i, ok := model["maxDataPoints"]
 				require.True(t, ok)
 				maxDataPoints, ok := i.(float64)
 				require.True(t, ok)

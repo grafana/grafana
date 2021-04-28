@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -42,11 +41,10 @@ type PagerdutyNotifier struct {
 	Summary       string
 	tmpl          *template.Template
 	log           log.Logger
-	externalUrl   *url.URL
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -80,7 +78,6 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 		Group:         model.Settings.Get("group").MustString("todo_group"), // TODO
 		Summary:       model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
 		tmpl:          t,
-		externalUrl:   externalUrl,
 		log:           log.New("alerting.notifier." + model.Name),
 	}, nil
 }
@@ -130,7 +127,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: pn.externalUrl}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
@@ -145,12 +142,12 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
-		ClientURL:   pn.externalUrl.String(),
+		ClientURL:   pn.tmpl.ExternalURL.String(),
 		RoutingKey:  pn.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
 		Links: []pagerDutyLink{{
-			HRef: pn.externalUrl.String(),
+			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
 		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
