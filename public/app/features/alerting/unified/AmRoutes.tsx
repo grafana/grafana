@@ -1,6 +1,7 @@
-import { Field, InfoBox, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, Field, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -15,10 +16,17 @@ const AmRoutes: FC = () => {
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   useEffect(() => {
-    dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    if (alertManagerSourceName) {
+      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    }
   }, [alertManagerSourceName, dispatch]);
 
-  const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
+  const { result, loading, error } =
+    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+
+  if (!alertManagerSourceName) {
+    return <Redirect to="/alerting/routes" />;
+  }
 
   return (
     <AlertingPageWrapper pageId="am-routes">
@@ -28,9 +36,9 @@ const AmRoutes: FC = () => {
       <br />
       <br />
       {error && !loading && (
-        <InfoBox severity="error" title={<h4>Error loading alert manager config</h4>}>
+        <Alert severity="error" title="Error loading alert manager config">
           {error.message || 'Unknown error.'}
-        </InfoBox>
+        </Alert>
       )}
       {loading && <LoadingPlaceholder text="loading alert manager config..." />}
       {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}

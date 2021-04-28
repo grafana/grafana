@@ -1,4 +1,4 @@
-package live
+package managedstream
 
 import (
 	"context"
@@ -9,27 +9,32 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// ManagedStreamRunner keeps ManagedStream per streamID.
-type ManagedStreamRunner struct {
+var (
+	logger = log.New("live.managed_stream")
+)
+
+// Runner keeps ManagedStream per streamID.
+type Runner struct {
 	mu        sync.RWMutex
 	streams   map[string]*ManagedStream
 	publisher models.ChannelPublisher
 }
 
-// NewManagedStreamRunner creates new ManagedStreamRunner.
-func NewManagedStreamRunner(publisher models.ChannelPublisher) *ManagedStreamRunner {
-	return &ManagedStreamRunner{
+// NewRunner creates new Runner.
+func NewRunner(publisher models.ChannelPublisher) *Runner {
+	return &Runner{
 		publisher: publisher,
 		streams:   map[string]*ManagedStream{},
 	}
 }
 
 // Streams returns a map of active managed streams (per streamID).
-func (r *ManagedStreamRunner) Streams() map[string]*ManagedStream {
+func (r *Runner) Streams() map[string]*ManagedStream {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	streams := make(map[string]*ManagedStream, len(r.streams))
@@ -41,7 +46,7 @@ func (r *ManagedStreamRunner) Streams() map[string]*ManagedStream {
 
 // GetOrCreateStream -- for now this will create new manager for each key.
 // Eventually, the stream behavior will need to be configured explicitly
-func (r *ManagedStreamRunner) GetOrCreateStream(streamID string) (*ManagedStream, error) {
+func (r *Runner) GetOrCreateStream(streamID string) (*ManagedStream, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	s, ok := r.streams[streamID]
@@ -87,7 +92,8 @@ func (s *ManagedStream) ListChannels(prefix string) []util.DynMap {
 }
 
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
-func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) error {
+// unstableSchema flag can be set to disable schema caching for a path.
+func (s *ManagedStream) Push(path string, frame *data.Frame, unstableSchema bool) error {
 	// Keep schema + data for last packet.
 	frameJSON, err := data.FrameToJSON(frame, true, true)
 	if err != nil {
@@ -95,7 +101,7 @@ func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) 
 		return err
 	}
 
-	if stableSchema {
+	if !unstableSchema {
 		// If schema is stable we can safely cache it, and only send values if
 		// stream already has schema cached.
 		s.mu.Lock()

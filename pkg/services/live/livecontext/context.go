@@ -1,4 +1,4 @@
-package live
+package livecontext
 
 import (
 	"context"
@@ -11,12 +11,12 @@ type signedUserContextKeyType int
 
 var signedUserContextKey signedUserContextKeyType
 
-func setContextSignedUser(ctx context.Context, user *models.SignedInUser) context.Context {
+func SetContextSignedUser(ctx context.Context, user *models.SignedInUser) context.Context {
 	ctx = context.WithValue(ctx, signedUserContextKey, user)
 	return ctx
 }
 
-func getContextSignedUser(ctx context.Context) (*models.SignedInUser, bool) {
+func GetContextSignedUser(ctx context.Context) (*models.SignedInUser, bool) {
 	if val := ctx.Value(signedUserContextKey); val != nil {
 		user, ok := val.(*models.SignedInUser)
 		return user, ok
@@ -26,12 +26,12 @@ func getContextSignedUser(ctx context.Context) (*models.SignedInUser, bool) {
 
 type valuesContextKey struct{}
 
-func setContextValues(ctx context.Context, values url.Values) context.Context {
+func SetContextValues(ctx context.Context, values url.Values) context.Context {
 	ctx = context.WithValue(ctx, valuesContextKey{}, values)
 	return ctx
 }
 
-func getContextValues(ctx context.Context) (url.Values, bool) {
+func GetContextValues(ctx context.Context) (url.Values, bool) {
 	if val := ctx.Value(valuesContextKey{}); val != nil {
 		values, ok := val.(url.Values)
 		return values, ok

@@ -1,4 +1,4 @@
-package push
+package pushhttp
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	logger = log.New("live_push")
+	logger = log.New("live.push_http")
 )
 
 func init() {
@@ -71,7 +71,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// TODO Grafana 8: decide which formats to use or keep all.
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
-	stableSchema := pushurl.StableSchemaFromValues(urlValues)
+	unstableSchema := pushurl.UnstableSchemaFromValues(urlValues)
 
 	body, err := ctx.Req.Body().Bytes()
 	if err != nil {
@@ -83,7 +83,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		"protocol", "http",
 		"streamId", streamID,
 		"bodyLength", len(body),
-		"stableSchema", stableSchema,
+		"unstableSchema", unstableSchema,
 		"frameFormat", frameFormat,
 	)
 
@@ -102,7 +102,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// interval = "1s" vs flush_interval = "5s"
 
 	for _, mf := range metricFrames {
-		err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
+		err := stream.Push(mf.Key(), mf.Frame(), unstableSchema)
 		if err != nil {
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return

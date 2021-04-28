@@ -24,6 +24,7 @@ import {
   DataTransformerConfig,
   LoadingState,
   PanelData,
+  PanelPluginDataSupport,
   rangeUtil,
   ScopedVars,
   TimeRange,
@@ -66,10 +67,12 @@ export class PanelQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
+  private dataSupport?: PanelPluginDataSupport;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
     this.dataConfigSource = dataConfigSource;
+    this.dataSupport = this.dataConfigSource.dataSupport;
   }
 
   /**
@@ -243,7 +246,12 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
 
-    this.subscription = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId)).subscribe({
+    let panelData = observable;
+    if (this.dataSupport?.alertStates || this.dataSupport?.annotations) {
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
+    }
+
+    this.subscription = panelData.subscribe({
       next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline

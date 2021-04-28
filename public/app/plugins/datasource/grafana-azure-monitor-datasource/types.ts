@@ -63,7 +63,7 @@ export interface AzureMetricQuery {
   timeGrainUnit?: string;
   timeGrain: string;
   allowedTimeGrainsMs: number[];
-  aggregation: string;
+  aggregation: string | undefined;
   dimensionFilters: AzureMetricDimension[];
   alias: string;
   top: string;

@@ -98,6 +98,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
+		CMDType: commandType,
 	}
 
 	switch commandType {

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { FeatureInfoBox, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
+import { Alert, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
 import {
   GrafanaTheme,
   PanelProps,
@@ -126,17 +126,12 @@ export class LivePanel extends PureComponent<Props, State> {
     const preformatted = `[feature_toggles]
     enable = live`;
     return (
-      <FeatureInfoBox
-        title="Grafana Live"
-        style={{
-          height: this.props.height,
-        }}
-      >
+      <Alert title="Grafana Live" severity="info">
         <p>Grafana live requires a feature flag to run</p>
 
         <b>custom.ini:</b>
         <pre>{preformatted}</pre>
-      </FeatureInfoBox>
+      </Alert>
     );
   }
 
@@ -298,14 +293,9 @@ export class LivePanel extends PureComponent<Props, State> {
     const { addr, error } = this.state;
     if (!addr) {
       return (
-        <FeatureInfoBox
-          title="Grafana Live"
-          style={{
-            height: this.props.height,
-          }}
-        >
-          <p>Use the panel editor to pick a channel</p>
-        </FeatureInfoBox>
+        <Alert title="Grafana Live" severity="info">
+          Use the panel editor to pick a channel
+        </Alert>
       );
     }
     if (error) {
