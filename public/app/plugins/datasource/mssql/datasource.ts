@@ -7,6 +7,7 @@ import { AnnotationEvent, DataSourceInstanceSettings, ScopedVars, MetricFindValu
 import ResponseParser from './response_parser';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { MssqlQueryForInterpolation, MssqlQuery, MssqlOptions } from './types';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOptions> {
   id: any;
@@ -16,7 +17,8 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<MssqlOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
@@ -115,6 +117,8 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       refId = optionalOptions.variable.name;
     }
 
+    const range = this.timeSrv.timeRange();
+
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
@@ -127,8 +131,8 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
         url: '/api/ds/query',
         method: 'POST',
         data: {
-          from: optionalOptions.range.from.valueOf().toString(),
-          to: optionalOptions.range.to.valueOf().toString(),
+          from: range.from.valueOf().toString(),
+          to: range.to.valueOf().toString(),
           queries: [interpolatedQuery],
         },
         requestId: refId,
@@ -144,7 +148,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
   testDatasource(): Promise<any> {
     return getBackendSrv()
       .fetch({
-        url: '/api/tsdb/query',
+        url: '/api/ds/query',
         method: 'POST',
         data: {
           from: '5m',
