@@ -159,9 +159,9 @@ function useSliceHighlightState() {
       }
     };
 
-    const subs = new Subscription();
-    subs.add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice));
-    subs.add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
+    const subs = new Subscription()
+      .add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice))
+      .add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
 
     return () => {
       subs.unsubscribe();
