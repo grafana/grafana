@@ -12,7 +12,7 @@
   influxdb_cli:
     links:
       - influxdb
-    image: influxdb:2.0.4
+    image: influxdb:latest
     # The following long command does 2 things:
     #   1. It initializes the bucket
     #   2. Maps bucket to database to enable backward-compatible access (influxql queries)
