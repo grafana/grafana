@@ -204,6 +204,7 @@
     "webpack-cli": "3.3.10",
     "webpack-dev-server": "3.11.1",
     "webpack-merge": "4.2.2",
+    "comlink-loader": "2.0.0",
     "zone.js": "0.7.8"
   },
   "dependencies": {
@@ -240,6 +241,7 @@
     "classnames": "2.2.6",
     "clipboard": "2.0.4",
     "common-tags": "^1.8.0",
+    "comlink": "^4.2.0",
     "copy-webpack-plugin": "6.4.1",
     "core-js": "3.10.0",
     "d3": "5.15.0",

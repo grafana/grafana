@@ -24,6 +24,10 @@ function shouldExclude(filename) {
     return false;
   }
 
+  if (filename.indexOf(`.worker`) > 0) {
+    return true;
+  }
+
   const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger', 'monaco-editor'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
@@ -157,6 +161,17 @@ module.exports = {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
+      },
+      {
+        test: /\.worker\.(js|ts)$/i,
+        use: [
+          {
+            loader: 'comlink-loader',
+            options: {
+              singleton: true,
+            },
+          },
+        ],
       },
     ],
   },
