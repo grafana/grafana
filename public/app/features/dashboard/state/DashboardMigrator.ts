@@ -6,7 +6,14 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
+import {
+  DataLink,
+  DataLinkBuiltInVars,
+  PanelPlugin,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  urlUtil,
+} from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -19,6 +26,13 @@ import {
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
 import { VariableHide } from '../../variables/types';
+import { config } from 'app/core/config';
+import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
+import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
+import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+
+standardEditorsRegistry.setInit(getStandardOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -555,6 +569,12 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 28) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'singlestat') {
+          migrateSinglestat(panel);
+        }
+      });
+
       for (const variable of this.dashboard.templating.list) {
         if (variable.tags) {
           delete variable.tags;
@@ -827,4 +847,25 @@ function updateVariablesSyntax(text: string) {
     }
     return match;
   });
+}
+
+function migrateSinglestat(panel: PanelModel) {
+  // If   'grafana-singlestat-panel' exists, move to that
+  if (config.panels['grafana-singlestat-panel']) {
+    panel.type = 'grafana-singlestat-panel';
+    return;
+  }
+
+  // To make sure PanelModel.isAngularPlugin logic thinks the current panel is angular
+  // And since this plugin no longer exist we just fake it here
+  panel.plugin = { angularPanelCtrl: {} } as PanelPlugin;
+
+  // Otheriwse use gauge or stat panel
+  if ((panel as any).gauge?.show) {
+    gaugePanelPlugin.meta = config.panels['gauge'];
+    panel.changePlugin(gaugePanelPlugin);
+  } else {
+    statPanelPlugin.meta = config.panels['stat'];
+    panel.changePlugin(statPanelPlugin);
+  }
 }

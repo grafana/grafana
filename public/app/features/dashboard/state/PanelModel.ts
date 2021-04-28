@@ -39,7 +39,6 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
-import { isDeprecatedPanel } from '../utils/panel';
 
 export interface GridPos {
   x: number;
@@ -116,6 +115,10 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  fieldConfig: {
+    defaults: {},
+    overrides: [],
+  },
   datasource: null,
   title: '',
 };
@@ -166,11 +169,10 @@ export class PanelModel implements DataConfigSource {
   isEditing = false;
   isInView = false;
   configRev = 0; // increments when configs change
-
   hasRefreshed?: boolean;
   events: EventBus;
   cacheTimeout?: any;
-  declare cachedPluginOptions: Record<string, PanelOptionsCache>;
+  cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
   dataSupport?: PanelPluginDataSupport;
@@ -230,10 +232,6 @@ export class PanelModel implements DataConfigSource {
 
   getOptions() {
     return this.options;
-  }
-
-  getFieldConfig() {
-    return this.fieldConfig;
   }
 
   get hasChanged(): boolean {
@@ -317,10 +315,6 @@ export class PanelModel implements DataConfigSource {
   }
 
   private restorePanelOptions(pluginId: string) {
-    if (!this.cachedPluginOptions) {
-      return;
-    }
-
     const prevOptions = this.cachedPluginOptions[pluginId];
 
     if (!prevOptions) {
@@ -389,7 +383,7 @@ export class PanelModel implements DataConfigSource {
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin() || isDeprecatedPanel(this.type);
+    const wasAngular = this.isAngularPlugin();
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
