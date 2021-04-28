@@ -21,7 +21,7 @@ export interface TestDataQuery extends DataQuery {
   points?: Points;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
-  csvWave?: any;
+  csvWave?: CSVWave[];
   labels?: string;
   lines?: number;
   levelColumn?: boolean;
@@ -49,4 +49,10 @@ export interface PulseWaveQuery {
   offCount?: number;
   onValue?: number;
   offValue?: number;
+}
+export interface CSVWave {
+  timeStep?: number;
+  name?: string;
+  valuesCSV?: string;
+  labels?: string;
 }

@@ -2,7 +2,7 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
-import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -12,7 +12,13 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { fetchNotifiers } from '../api/grafana';
-import { fetchAlertManagerConfig, fetchSilences, updateAlertmanagerConfig } from '../api/alertmanager';
+import {
+  expireSilence,
+  fetchAlertManagerConfig,
+  fetchAlerts,
+  fetchSilences,
+  updateAlertmanagerConfig,
+} from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
   deleteRulerRulesGroup,
@@ -341,3 +347,16 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateALert
       })()
     )
 );
+export const fetchAmAlertsAction = createAsyncThunk(
+  'unifiedalerting/fetchAmAlerts',
+  (alertManagerSourceName: string): Promise<AlertmanagerAlert[]> =>
+    withSerializedError(fetchAlerts(alertManagerSourceName, [], true, true, true))
+);
+
+export const expireSilenceAction = (alertManagerSourceName: string, silenceId: string): ThunkResult<void> => {
+  return async (dispatch) => {
+    await expireSilence(alertManagerSourceName, silenceId);
+    dispatch(fetchSilencesAction(alertManagerSourceName));
+    dispatch(fetchAmAlertsAction(alertManagerSourceName));
+  };
+};

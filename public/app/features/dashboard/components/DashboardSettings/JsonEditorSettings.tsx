@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { Button, CodeEditor } from '@grafana/ui';
+import { Button, CodeEditor, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state/DashboardModel';
+import { GrafanaThemeV2 } from '@grafana/data';
 
 interface Props {
   dashboard: DashboardModel;
@@ -21,6 +23,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
         dashboardWatcher.reloadPage();
       });
   };
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -30,25 +33,33 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
         settings, layout, queries, and so on.
       </div>
 
-      <div>
-        <AutoSizer disableHeight>
-          {({ width }) => (
+      <div className={styles.editWrapper}>
+        <AutoSizer>
+          {({ width, height }) => (
             <CodeEditor
               value={dashboardJson}
               language="json"
               width={width}
-              height="500px"
-              showMiniMap={false}
+              height={height}
+              showMiniMap={true}
+              showLineNumbers={true}
               onBlur={onBlur}
             />
           )}
         </AutoSizer>
       </div>
       {dashboard.meta.canSave && (
-        <Button className="m-t-3" onClick={onClick}>
-          Save changes
-        </Button>
+        <HorizontalGroup>
+          <Button onClick={onClick}>Save changes</Button>
+        </HorizontalGroup>
       )}
     </>
   );
 };
+
+const getStyles = (theme: GrafanaThemeV2) => ({
+  editWrapper: css`
+    height: calc(100vh - 250px);
+    margin-bottom: 10px;
+  `,
+});
