@@ -2,8 +2,12 @@ package middleware
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"text/template"
+	"time"
+
+	"github.com/grafana/grafana/pkg/util"
 
 	macaron "gopkg.in/macaron.v1"
 
@@ -43,8 +47,19 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ..
 				return
 			}
 			if !hasAccess {
-				c.Logger.Info("Access denied", "userID", c.UserId, "permission", permission, "scopes", runtimeScope)
-				c.JsonApiErr(http.StatusForbidden, "Forbidden", nil)
+				// Less ambiguity than alphanumerical.
+				base32 := []byte("0123456789")
+				randomizedID, err := util.GetRandomString(8, base32...)
+				if err != nil {
+					randomizedID = fmt.Sprintf("%d", time.Now().UnixNano())
+				}
+				randomizedID = "ACE" + randomizedID
+				c.Logger.Info("Access denied",
+					"userID", c.UserId,
+					"permission", permission,
+					"scopes", runtimeScope,
+					"accessErrorID", randomizedID)
+				c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("Access denied. [Access error ID: %s]", randomizedID), nil)
 				return
 			}
 		}
