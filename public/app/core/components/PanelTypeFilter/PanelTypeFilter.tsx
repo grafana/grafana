@@ -41,7 +41,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
     getOptionValue: (i: any) => i.value,
     isMulti: true,
     noOptionsMessage: 'No Panel types found',
-    placeholder: 'Filter by Panel type',
+    placeholder: 'Filter by type',
     styles: resetSelectStyles(),
     maxMenuHeight: 150,
     options,
@@ -56,7 +56,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
           Clear types
         </span>
       )}
-      <Select {...selectOptions} prefix={<Icon name="table" />} aria-label="Panel Type filter" />
+      <Select {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
     </div>
   );
 };

@@ -14,7 +14,10 @@ import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { LibraryPanelDTO } from '../../../library-panels/types';
 import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
-import { LibraryPanelsSearch } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
+import {
+  LibraryPanelsSearch,
+  LibraryPanelsSearchVariant,
+} from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { connect, MapDispatchToProps } from 'react-redux';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
@@ -138,7 +141,12 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
-        <LibraryPanelsSearch onClick={onAddLibraryPanel} perPage={3} />
+        <LibraryPanelsSearch
+          onClick={onAddLibraryPanel}
+          perPage={40}
+          variant={LibraryPanelsSearchVariant.Tight}
+          showFilter
+        />
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>
