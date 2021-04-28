@@ -15,8 +15,6 @@ import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 import { PanelModel } from './PanelModel';
 import { cancelVariables } from '../../variables/state/actions';
-import { isDeprecatedPanel } from '../utils/panel';
-import { DEPRECATED_PANELS } from '../../../core/constants';
 import { getPanelPluginNotFound } from '../dashgrid/PanelPluginError';
 import { getTimeSrv } from '../services/TimeSrv';
 
@@ -124,9 +122,6 @@ export function removeDashboard(uri: string): ThunkResult<void> {
 export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
     let pluginToLoad = panel.type;
-
-    const isDeprecated = isDeprecatedPanel(panel.type);
-    let notFound = false;
     let plugin = getStore().plugins.panels[pluginToLoad];
 
     if (!plugin) {
@@ -135,17 +130,7 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
       } catch (e) {
         // When plugin not found
         plugin = getPanelPluginNotFound(pluginToLoad, pluginToLoad === 'row');
-        if (pluginToLoad !== 'row') {
-          notFound = true;
-        }
       }
-    }
-
-    // if there isn't an "external" plugin with the same name as deprecated one, load the deprecated panel replacement
-    if (notFound && isDeprecated) {
-      pluginToLoad = DEPRECATED_PANELS[panel.type](panel);
-      plugin = await dispatch(loadPanelPlugin(pluginToLoad));
-      await dispatch(changePanelPlugin(panel, pluginToLoad));
     }
 
     if (!panel.plugin) {
