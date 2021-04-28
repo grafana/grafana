@@ -234,7 +234,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         </Field>
 
         <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
             Cancel
           </Button>
           {externalEnabled && (

@@ -99,7 +99,7 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
           </table>
         )}
         <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss}>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
             Cancel
           </Button>
           <Button variant="destructive" onClick={discardAndClose}>
