@@ -1,148 +1,138 @@
 import React from 'react';
-import { FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { GraphNGState } from '../GraphNG/GraphNG';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils'; // << preparePlotConfigBuilder is really the only change vs GraphNG
-import { pluginLog, preparePlotData } from '../uPlot/utils';
-import { PlotLegend } from '../uPlot/PlotLegend';
+import { preparePlotData } from '../uPlot/utils';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { TimelineProps } from './types';
 
 class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState> {
   constructor(props: TimelineProps) {
     super(props);
-    const { theme, mode, rowHeight, colWidth, showValue } = props;
+    this.state = this.prepState(props);
+  }
 
-    pluginLog('TimelineChart', false, 'constructor, data aligment');
-    const alignedData = preparePlotFrame(
-      props.data,
-      props.fields || {
+  getTimeRange = () => this.props.timeRange;
+
+  prepState(props: TimelineProps, withConfig = true) {
+    let state: GraphNGState = null as any;
+
+    const { frames, fields, timeZone, theme } = props;
+
+    const alignedFrame = preparePlotFrame(
+      frames,
+      fields || {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
       }
     );
 
-    if (!alignedData) {
-      return;
+    if (alignedFrame) {
+      state = {
+        alignedFrame,
+        alignedData: preparePlotData(alignedFrame, [FieldType.number]),
+      };
+
+      if (withConfig) {
+        state.config = preparePlotConfigBuilder(
+          alignedFrame,
+          theme,
+          timeZone,
+          this.getTimeRange,
+          this.addlProps(props)
+        );
+      }
     }
 
-    this.state = {
-      alignedDataFrame: alignedData,
-      data: preparePlotData(alignedData),
-      config: preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone, {
-        mode,
-        rowHeight,
-        colWidth,
-        showValue,
-      }),
-    };
+    return state;
   }
 
   componentDidUpdate(prevProps: TimelineProps) {
-    const { data, theme, timeZone, mode, rowHeight, colWidth, showValue, structureRev } = this.props;
-    let shouldConfigUpdate = false;
-    let stateUpdate = {} as GraphNGState;
+    const { frames, structureRev, timeZone, theme } = this.props;
 
-    if (
-      this.state.config === undefined ||
-      timeZone !== prevProps.timeZone ||
-      mode !== prevProps.mode ||
-      rowHeight !== prevProps.rowHeight ||
-      colWidth !== prevProps.colWidth ||
-      showValue !== prevProps.showValue
-    ) {
-      shouldConfigUpdate = true;
-    }
+    if (frames !== prevProps.frames) {
+      //console.log("frames !== prevProps.frames");
 
-    if (data !== prevProps.data || shouldConfigUpdate) {
-      const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
+      let newState = this.prepState(this.props, false);
 
-      const alignedData = preparePlotFrame(
-        data,
-        this.props.fields || {
-          x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-          y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+      if (newState) {
+        //console.log("newState");
+
+        const shouldReconfig =
+          this.state.config === undefined ||
+          timeZone !== prevProps.timeZone ||
+          structureRev !== prevProps.structureRev ||
+          !structureRev ||
+          this.shouldReconfig(prevProps, this.props);
+
+        if (shouldReconfig) {
+          //console.log("shouldReconfig");
+
+          newState.config = preparePlotConfigBuilder(
+            newState.alignedFrame,
+            theme,
+            timeZone,
+            this.getTimeRange,
+            this.addlProps(this.props)
+          );
         }
-      );
-      if (!alignedData) {
-        return;
       }
 
-      stateUpdate = {
-        alignedDataFrame: alignedData,
-        data: preparePlotData(alignedData),
-      };
-      if (shouldConfigUpdate || hasStructureChanged) {
-        pluginLog('TimelineChart', false, 'updating config');
-        const builder = preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone, {
-          mode,
-          rowHeight,
-          colWidth,
-          showValue,
-        });
-        stateUpdate = { ...stateUpdate, config: builder };
-      }
+      newState && this.setState(newState);
     }
-
-    if (Object.keys(stateUpdate).length > 0) {
-      this.setState(stateUpdate);
-    }
-  }
-
-  getTimeRange = () => {
-    return this.props.timeRange;
-  };
-
-  getTimeZone = () => {
-    return this.props.timeZone;
-  };
-
-  renderLegend() {
-    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
-    const { config } = this.state;
-
-    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
-      return;
-    }
-
-    return (
-      <PlotLegend
-        data={data}
-        config={config}
-        onSeriesColorChange={onSeriesColorChange}
-        onLegendClick={onLegendClick}
-        maxHeight="35%"
-        maxWidth="60%"
-        {...legend}
-      />
-    );
   }
 
   render() {
     const { width, height, children, timeRange } = this.props;
-    const { config, alignedDataFrame } = this.state;
+    const { config, alignedFrame } = this.state;
 
     if (!config) {
       return null;
     }
 
     return (
-      <VizLayout width={width} height={height}>
+      <VizLayout width={width} height={height} legend={this.renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={this.state.config!}
-            data={this.state.data}
+            data={this.state.alignedData}
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}
           >
-            {children ? children(config, alignedDataFrame) : null}
+            {children ? children(config, alignedFrame) : null}
           </UPlotChart>
         )}
       </VizLayout>
     );
+  }
+
+  shouldReconfig(prevProps: TimelineProps, props: TimelineProps) {
+    const { mode, rowHeight, colWidth, showValue } = props;
+
+    return (
+      mode !== prevProps.mode ||
+      rowHeight !== prevProps.rowHeight ||
+      colWidth !== prevProps.colWidth ||
+      showValue !== prevProps.showValue
+    );
+  }
+
+  addlProps(props: TimelineProps) {
+    const { mode, rowHeight, colWidth, showValue } = props;
+
+    return {
+      mode,
+      rowHeight,
+      colWidth,
+      showValue,
+    };
+  }
+
+  renderLegend() {
+    return undefined;
   }
 }
 

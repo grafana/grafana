@@ -71,21 +71,20 @@ function applySpanNullsThresholds(frames: DataFrame[]) {
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers) {
   applySpanNullsThresholds(frames);
 
-  let joined = outerJoinDataFrames({
+  return outerJoinDataFrames({
     frames: frames,
     joinBy: dimFields.x,
     keep: dimFields.y,
     keepOriginIndices: true,
   });
-
-  return joined;
 }
 
 export function preparePlotConfigBuilder(
   frame: DataFrame,
   theme: GrafanaTheme,
   timeZone: TimeZone,
-  getTimeRange: () => TimeRange
+  getTimeRange: () => TimeRange,
+  addlProps: any
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder(timeZone);
 

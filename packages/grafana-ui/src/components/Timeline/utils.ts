@@ -43,21 +43,14 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-export type uPlotConfigBuilderSupplier = (
-  frame: DataFrame,
-  theme: GrafanaTheme,
-  getTimeRange: () => TimeRange,
-  getTimeZone: () => TimeZone
-) => UPlotConfigBuilder;
-
 export function preparePlotConfigBuilder(
   frame: DataFrame,
   theme: GrafanaTheme,
+  timeZone: TimeZone,
   getTimeRange: () => TimeRange,
-  getTimeZone: () => TimeZone,
   coreOptions: Partial<TimelineCoreOptions>
 ): UPlotConfigBuilder {
-  const builder = new UPlotConfigBuilder(getTimeZone);
+  const builder = new UPlotConfigBuilder(timeZone);
 
   const isDiscrete = (field: Field) => {
     const mode = field.config?.color?.mode;
@@ -136,7 +129,7 @@ export function preparePlotConfigBuilder(
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
-    timeZone: getTimeZone(),
+    timeZone: timeZone,
     theme,
   });
 

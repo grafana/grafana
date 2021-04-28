@@ -6,7 +6,7 @@ import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { pluginLog, preparePlotData } from '../uPlot/utils';
+import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
@@ -68,7 +68,13 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       };
 
       if (withConfig) {
-        state.config = preparePlotConfigBuilder(alignedFrame, theme, timeZone, this.getTimeRange);
+        state.config = preparePlotConfigBuilder(
+          alignedFrame,
+          theme,
+          timeZone,
+          this.getTimeRange,
+          this.addlProps(props)
+        );
       }
     }
 
@@ -90,17 +96,57 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
           structureRev !== prevProps.structureRev ||
-          !structureRev;
+          !structureRev ||
+          this.shouldReconfig(prevProps, this.props);
 
         if (shouldReconfig) {
           //console.log("shouldReconfig");
 
-          newState.config = preparePlotConfigBuilder(newState.alignedFrame, theme, timeZone, this.getTimeRange);
+          newState.config = preparePlotConfigBuilder(
+            newState.alignedFrame,
+            theme,
+            timeZone,
+            this.getTimeRange,
+            this.addlProps(this.props)
+          );
         }
       }
 
       newState && this.setState(newState);
     }
+  }
+
+  render() {
+    const { width, height, children, timeRange } = this.props;
+    const { config, alignedFrame } = this.state;
+
+    if (!config) {
+      return null;
+    }
+
+    return (
+      <VizLayout width={width} height={height} legend={this.renderLegend()}>
+        {(vizWidth: number, vizHeight: number) => (
+          <UPlotChart
+            config={this.state.config!}
+            data={this.state.alignedData}
+            width={vizWidth}
+            height={vizHeight}
+            timeRange={timeRange}
+          >
+            {children ? children(config, alignedFrame) : null}
+          </UPlotChart>
+        )}
+      </VizLayout>
+    );
+  }
+
+  shouldReconfig(prevProps: GraphNGProps, props?: GraphNGProps) {
+    return false;
+  }
+
+  addlProps(props: GraphNGProps) {
+    return props;
   }
 
   renderLegend() {
@@ -121,29 +167,6 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         maxWidth="60%"
         {...legend}
       />
-    );
-  }
-
-  render() {
-    const { width, height, children, timeRange } = this.props;
-    const { config, alignedFrame } = this.state;
-    if (!config) {
-      return null;
-    }
-    return (
-      <VizLayout width={width} height={height} legend={this.renderLegend()}>
-        {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart
-            config={this.state.config!}
-            data={this.state.alignedData}
-            width={vizWidth}
-            height={vizHeight}
-            timeRange={timeRange}
-          >
-            {children ? children(config, alignedFrame) : null}
-          </UPlotChart>
-        )}
-      </VizLayout>
     );
   }
 }

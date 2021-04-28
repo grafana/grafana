@@ -5,7 +5,7 @@ import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
 import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
 import { defaultsDeep } from 'lodash';
-import { DefaultTimeZone, getTimeZoneInfo, TimeZone, TimeZoneInfo } from '@grafana/data';
+import { DefaultTimeZone, getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { pluginLog } from '../utils';
 
 export class UPlotConfigBuilder {
@@ -15,8 +15,7 @@ export class UPlotConfigBuilder {
   private bands: Band[] = [];
   private cursor: Cursor | undefined;
   private isStacking = false;
-  // uPlot types don't export the Select interface prior to 1.6.4
-  private select: Partial<BBox> | undefined;
+  private select: uPlot.Select | undefined;
   private hasLeftAxis = false;
   private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
