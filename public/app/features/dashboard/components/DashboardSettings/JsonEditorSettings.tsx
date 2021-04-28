@@ -24,7 +24,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
         dashboardWatcher.reloadPage();
       });
   };
-  const styles = getStyles(config.theme);
+const styles = useStyles2(getStyles);
 
   return (
     <>
