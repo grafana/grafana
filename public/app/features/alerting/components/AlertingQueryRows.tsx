@@ -10,7 +10,7 @@ import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 interface Props {
   // The query configuration
   queries: GrafanaQuery[];
-  data?: Record<string, PanelData>;
+  data: Record<string, PanelData>;
 
   // Query editing
   onQueriesChange: (queries: GrafanaQuery[]) => void;
@@ -115,9 +115,8 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query: GrafanaQuery, index) => {
-                  const data = this.props.data && this.props.data[query.refId];
-                  console.log('query rows', data);
+                {queries.map((query, index) => {
+                  const data = this.props.data ? this.props.data[query.refId] : ({} as PanelData);
                   const dsSettings = this.getDataSourceSettings(query);
 
                   if (!dsSettings) {
@@ -125,13 +124,12 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                   }
 
                   return (
-                    <>
+                    <React.Fragment key={`query row - ${query.refId}-${index}`}>
                       <QueryEditorRow
                         dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
                         id={query.refId}
                         index={index}
-                        key={query.refId}
-                        data={data ?? ({} as PanelData)}
+                        data={data}
                         query={query.model}
                         onChange={(query) => this.onChangeQuery(query, index)}
                         timeRange={
@@ -149,8 +147,8 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                         onRunQuery={this.props.onRunQueries}
                         queries={queries}
                       />
-                      {data && <VizWrapper data={data} key={`viz-${query.refId}`} />}
-                    </>
+                      {data && <VizWrapper data={data} />}
+                    </React.Fragment>
                   );
                 })}
                 {provided.placeholder}

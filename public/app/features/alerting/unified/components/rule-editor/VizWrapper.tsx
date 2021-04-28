@@ -1,25 +1,31 @@
 import React, { FC, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { PanelData } from '@grafana/data';
+import { PanelData, VizOrientation } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { HorizontalGroup, RadioButtonGroup } from '@grafana/ui';
+import {
+  HorizontalGroup,
+  LegendDisplayMode,
+  RadioButtonGroup,
+  SingleStatBaseOptions,
+  TooltipDisplayMode,
+} from '@grafana/ui';
+import { Options } from 'app/plugins/panel/timeseries/types';
 
 interface Props {
   data: PanelData;
+  defaultPanel?: 'timeseries' | 'table' | 'stat';
 }
 
-const vizOptions = [
-  { value: 'timeseries', label: 'Graph' },
-  { value: 'table', label: 'Table' },
-  { value: 'stat', label: 'Single stat' },
-];
+export const VizWrapper: FC<Props> = ({ data, defaultPanel = 'timeseries' }) => {
+  const [pluginId, changePluginId] = useState<string>(defaultPanel);
+  const options = getOptionsForPanelPlugin(pluginId);
 
-export const VizWrapper: FC<Props> = ({ data }) => {
-  const [pluginId, changePluginId] = useState<string>('timeseries');
-  console.log(data);
+  if (!options) {
+    return null;
+  }
   return (
-    <div>
-      <AutoSizer style={{ width: '50%', height: '50%' }}>
+    <div style={{ height: '200px', width: '100%' }}>
+      <AutoSizer>
         {({ width, height }) => {
           return (
             <PanelRenderer
@@ -29,6 +35,7 @@ export const VizWrapper: FC<Props> = ({ data }) => {
               pluginId={pluginId}
               title="title"
               onOptionsChange={() => {}}
+              options={options}
             />
           );
         }}
@@ -40,4 +47,43 @@ export const VizWrapper: FC<Props> = ({ data }) => {
       </div>
     </div>
   );
+};
+
+const getOptionsForPanelPlugin = (panelPlugin: string) => {
+  switch (panelPlugin) {
+    case 'stat':
+      return singleStatOptions;
+    case 'table':
+      return tableOptions;
+    case 'timeseries':
+      return timeSeriesOptions;
+    default:
+      return undefined;
+  }
+};
+
+const vizOptions = [
+  { value: 'timeseries', label: 'Graph' },
+  { value: 'table', label: 'Table' },
+  { value: 'stat', label: 'Single stat' },
+];
+
+const timeSeriesOptions: Options = {
+  legend: {
+    displayMode: LegendDisplayMode.List,
+    placement: 'bottom',
+    calcs: [],
+  },
+  tooltipOptions: {
+    mode: TooltipDisplayMode.Single,
+  },
+};
+
+const tableOptions = {};
+const singleStatOptions: SingleStatBaseOptions = {
+  reduceOptions: {
+    calcs: [],
+  },
+  orientation: VizOrientation.Auto,
+  text: undefined,
 };

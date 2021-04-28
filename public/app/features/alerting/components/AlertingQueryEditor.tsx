@@ -24,21 +24,24 @@ interface Props {
 
 interface State {
   defaultDataSource?: DataSourceApi;
-  panelDataRecord?: Record<string, PanelData>;
+  panelDataRecord: Record<string, PanelData>;
 }
 export class AlertingQueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
 
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = {
+      panelDataRecord: {} as Record<string, PanelData>,
+    };
     this.runner = new AlertingQueryRunner();
   }
 
   async componentDidMount() {
     try {
       this.runner.get().subscribe((data) => {
-        this.setState({ panelDataRecord: data });
+        console.log('subscribe', data);
+        this.setState({ panelDataRecord: { ...data } });
       });
       const defaultDataSource = await getDataSourceSrv().get();
       this.setState({ defaultDataSource });
@@ -131,6 +134,8 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     const { value = [] } = this.props;
     const { panelDataRecord } = this.state;
     const styles = getStyles(config.theme);
+
+    console.log('render', panelDataRecord);
 
     return (
       <div className={styles.container}>
