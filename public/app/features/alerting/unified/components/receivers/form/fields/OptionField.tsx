@@ -2,6 +2,8 @@ import React, { FC, useEffect } from 'react';
 import { Checkbox, Field, Input, InputControl, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
+import { SubformField } from './SubformField';
+import { css } from '@emotion/css';
 
 interface Props {
   option: NotificationChannelOption;
@@ -10,9 +12,9 @@ interface Props {
   error?: FieldError | NestDataObject<any, FieldError>;
 }
 
-export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '', error }) => {
+export const OptionField: FC<Props> = ({ option, invalid, pathPrefix = '', error }) => {
   if (option.element === 'subform') {
-    return <SubformOptionElement option={option} error={error} pathPrefix={pathPrefix} />;
+    return <SubformField option={option} error={error} pathPrefix={pathPrefix} />;
   }
   return (
     <Field
@@ -39,7 +41,15 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
   );
   switch (option.element) {
     case 'checkbox':
-      return <Checkbox name={name} ref={register()} label={option.label} description={option.description} />;
+      return (
+        <Checkbox
+          className={styles.checkbox}
+          name={name}
+          ref={register()}
+          label={option.label}
+          description={option.description}
+        />
+      );
     case 'input':
       return (
         <Input
@@ -90,22 +100,10 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
   }
 };
 
-export const SubformOptionElement: FC<Props> = ({ option, pathPrefix = '', error }) => {
-  return (
-    <div>
-      <p>{option.label}</p>
-      {(option.subformOptions ?? []).map((subOption) => {
-        return (
-          <OptionElement
-            key={subOption.propertyName}
-            option={subOption}
-            pathPrefix={`${pathPrefix}${option.propertyName}.`}
-            error={(error as NestDataObject<any, FieldError>)?.[subOption.propertyName]}
-          />
-        );
-      })}
-    </div>
-  );
+const styles = {
+  checkbox: css`
+    height: auto; // native chekbox has fixed height which does not take into account description
+  `,
 };
 
 const validateOption = (value: string, validationRule: string) => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Field, Input } from '@grafana/ui';
-import { OptionElement } from './OptionElement';
+import { OptionField } from './fields/OptionField';
 import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-form';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
@@ -63,7 +63,7 @@ export function ChannelOptions<R extends ChannelValues>({
           : errors?.settings) as DeepMap<any, FieldError> | undefined)?.[option.propertyName];
 
         return (
-          <OptionElement
+          <OptionField
             key={key}
             error={error}
             pathPrefix={option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`}
