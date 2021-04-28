@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { Button, CodeEditor, HorizontalGroup, stylesFactory } from '@grafana/ui';
+import { Button, CodeEditor, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state/DashboardModel';
-import { GrafanaTheme } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { GrafanaThemeV2 } from '@grafana/data';
 
 interface Props {
   dashboard: DashboardModel;
@@ -24,7 +23,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
         dashboardWatcher.reloadPage();
       });
   };
-const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -63,4 +62,4 @@ const getStyles = (theme: GrafanaThemeV2) => ({
     height: calc(100vh - 250px);
     margin-bottom: 10px;
   `,
-}));
+});
