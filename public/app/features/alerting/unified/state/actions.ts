@@ -324,15 +324,17 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
 );
 
-interface UpdateALertManagerConfigActionOptions {
+interface UpdateAlertManagerConfigActionOptions {
   alertManagerSourceName: string;
   oldConfig: AlertManagerCortexConfig; // it will be checked to make sure it didn't change in the meanwhile
   newConfig: AlertManagerCortexConfig;
+  successMessage?: string; // show toast on success
+  redirectPath?: string; // where to redirect on success
 }
 
-export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateALertManagerConfigActionOptions, {}>(
+export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig }, thunkApi): Promise<void> =>
+  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath }): Promise<void> =>
     withSerializedError(
       (async () => {
         const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
@@ -342,8 +344,12 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateALert
           );
         }
         await updateAlertmanagerConfig(alertManagerSourceName, newConfig);
-        appEvents.emit(AppEvents.alertSuccess, ['Template saved.']);
-        locationService.push(makeAMLink('/alerting/notifications', alertManagerSourceName));
+        if (successMessage) {
+          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+        }
+        if (redirectPath) {
+          locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
+        }
       })()
     )
 );

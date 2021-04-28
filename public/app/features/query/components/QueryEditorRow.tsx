@@ -38,7 +38,7 @@ interface Props {
   index: number;
   timeRange?: TimeRange;
   onChangeTimeRange?: (timeRange: TimeRange) => void;
-  onAddQuery: (query?: DataQuery) => void;
+  onAddQuery: (query: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
   onRunQuery: () => void;
@@ -55,7 +55,7 @@ interface State {
 
 export class QueryEditorRow extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
-  angularScope: AngularQueryComponentScope | null;
+  angularScope: AngularQueryComponentScope | null = null;
   angularQueryEditor: AngularComponent | null = null;
 
   state: State = {
