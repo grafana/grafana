@@ -15,8 +15,8 @@ content-type: application/json
                 "from": 18000,
                 "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-                "datasourceUid": "-100",
                 "type":"math",
                 "expression":"1 < 2"
             }
@@ -39,8 +39,8 @@ content-type: application/json
       "from": 18000,
       "to": 10800
     },
+    "datasourceUid": "000000004",
     "model": {
-      "datasourceUid": "000000004",
       "intervalMs": 1000,
       "maxDataPoints": 100,
       "orgId": 0,
@@ -56,8 +56,8 @@ content-type: application/json
       "from": 18000,
       "to": 10800
     },
+    "datasourceUid": "-100",
     "model": {
-      "datasourceUid": "-100",
       "expression": "$A",
       "intervalMs": 2000,
       "maxDataPoints": 200,
@@ -113,8 +113,8 @@ content-type: application/json
                 "from": 18000,
                 "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-                "datasourceUid": "-100",
                 "type":"math",
                 "expression":"1 < 2"
             }

@@ -114,7 +114,7 @@ function hslToHex(color: any) {
 
 export function getTextColorForBackground(color: string) {
   const b = tinycolor(color).getBrightness();
-  return b > 180 ? 'rgb(247, 248, 250)' : 'rgb(32, 34, 38)';
+  return b > 180 ? 'rgb(32, 34, 38)' : 'rgb(247, 248, 250)';
 }
 
 export let sortedColors = sortColorsByHue(colors);

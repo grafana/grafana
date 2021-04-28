@@ -68,14 +68,14 @@ export type WebhookConfig = {
 };
 
 export type GrafanaManagedReceiverConfig = {
-  id?: number;
-  frequency: number;
+  uid?: string;
   disableResolveMessage: boolean;
-  secureFields: Record<string, unknown>;
+  secureFields?: Record<string, boolean>;
+  secureSettings?: Record<string, unknown>;
   settings: Record<string, unknown>;
   sendReminder: boolean;
   type: string;
-  uid: string;
+  name: string;
   updated?: string;
   created?: string;
 };
@@ -92,6 +92,7 @@ export type Receiver = {
   victorops_configs?: unknown[];
   wechat_configs?: unknown[];
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
+  [key: string]: unknown;
 };
 
 export type Route = {

@@ -90,8 +90,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -183,8 +183,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title:     "AlwaysFiring",
-						Condition: "A",
+						Title: "AlwaysFiring",
+						Data:  []ngmodels.AlertQuery{},
 					},
 				},
 				expectedResponse: `{"error":"invalid alert rule: no queries or expressions are found", "message":"failed to update rule group"}`,
@@ -208,8 +208,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -238,8 +238,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -268,8 +268,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -299,8 +299,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -309,6 +309,66 @@ func TestAlertRuleCRUD(t *testing.T) {
 					},
 				},
 				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
+			},
+			{
+				desc:      "alert rule with unknown datasource",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "unknown",
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"invalid query A: data source not found: unknown", "message":"failed to validate alert rule AlwaysFiring"}`,
+			},
+			{
+				desc:      "alert rule with invalid condition",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						Condition: "B",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"error":"condition B not found in any query or expression: it should be one of: [A]", "message":"failed to validate alert rule AlwaysFiring"}`,
 			},
 		}
 
@@ -368,8 +428,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -388,8 +448,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -474,8 +534,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
+								"datasourceUid":"-100",
 								"model":{
-								   "datasourceUid":"-100",
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":100,
@@ -509,8 +569,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
+								"datasourceUid":"-100",
 								"model":{
-								   "datasourceUid":"-100",
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":100,
@@ -567,8 +627,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-											"datasourceUid": "-100",
 											"type": "math",
 											"expression": "2 + 3 < 1"
 											}`),
@@ -651,8 +711,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
+								DatasourceUID: "-100",
 								Model: json.RawMessage(`{
-											"datasourceUid": "-100",
 											"type": "math",
 											"expression": "2 + 3 < 1"
 											}`),
@@ -733,8 +793,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 		                           "from":18000,
 		                           "to":10800
 		                        },
-		                        "model":{
-		                           "datasourceUid":"-100",
+		                        "datasourceUid":"-100",
+								"model":{
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
 		                           "maxDataPoints":100,
@@ -817,8 +877,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid":"-100",
 						"model": {
-							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"1 < 2"
 						}
@@ -868,8 +928,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid": "-100",
 						"model": {
-							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"1 > 2"
 						}
@@ -919,8 +979,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid": "-100",
 						"model": {
-							"datasourceUid": "-100",
 							"type":"math",
 							"expression":"1 > 2"
 						}
@@ -931,7 +991,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
+			expectedResponse:   `{"error":"condition B not found in any query or expression: it should be one of: [A]","message":"invalid condition"}`,
 		},
 		{
 			desc: "unknown query datasource",
@@ -946,8 +1006,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
+						"datasourceUid": "unknown",
 						"model": {
-							"datasourceUid": "unknown"
 						}
 					}
 				],
@@ -956,7 +1016,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
+			expectedResponse:   `{"error":"invalid query A: data source not found: unknown","message":"invalid condition"}`,
 		},
 	}
 
@@ -997,8 +1057,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
+							"datasourceUid": "-100",
 							"model": {
-								"datasourceUid": "-100",
 								"type":"math",
 								"expression":"1 < 2"
 							}
@@ -1050,8 +1110,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
+							"datasourceUid": "-100",
 							"model": {
-								"datasourceUid": "-100",
 								"type":"math",
 								"expression":"1 > 2"
 							}
@@ -1103,8 +1163,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
+							"datasourceUid": "unknown",
 							"model": {
-								"datasourceUid": "unknown"
 							}
 						}
 					],
@@ -1112,7 +1172,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid queries or expressions"}`,
+			expectedResponse:   `{"error":"invalid query A: data source not found: unknown","message":"invalid queries or expressions"}`,
 		},
 	}
 

@@ -16,7 +16,7 @@ import {
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
-import { perf } from '@grafana/runtime/src/utils/perf'; // not exported
+import { perf } from 'app/features/live/perf';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',

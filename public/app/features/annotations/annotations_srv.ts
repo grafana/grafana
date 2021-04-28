@@ -1,5 +1,5 @@
 // Libaries
-import { flattenDeep, cloneDeep } from 'lodash';
+import { cloneDeep, flattenDeep } from 'lodash';
 // Components
 import coreModule from 'app/core/core_module';
 // Utils & Services
@@ -24,6 +24,7 @@ import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
 import { RefreshEvent } from 'app/types/events';
+import { deleteAnnotation, saveAnnotation, updateAnnotation } from './api';
 
 let counter = 100;
 function getNextRequestId() {
@@ -176,19 +177,17 @@ export class AnnotationsSrv {
 
   saveAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    return getBackendSrv().post('/api/annotations', annotation);
+    return saveAnnotation(annotation);
   }
 
   updateAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    return getBackendSrv().put(`/api/annotations/${annotation.id}`, annotation);
+    return updateAnnotation(annotation);
   }
 
   deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    const deleteUrl = `/api/annotations/${annotation.id}`;
-
-    return getBackendSrv().delete(deleteUrl);
+    return deleteAnnotation(annotation);
   }
 
   translateQueryResult(annotation: any, results: any) {
