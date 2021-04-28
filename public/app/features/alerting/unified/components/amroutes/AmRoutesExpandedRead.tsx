@@ -50,16 +50,18 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
           receivers={receivers}
           routes={subroutes}
         />
-        <Button
-          icon="plus"
-          onClick={() => {
-            setSubroutes((subroutes) => [...subroutes, emptyRoute]);
-            setIsAddMode(true);
-          }}
-          type="button"
-        >
-          Add nested policy
-        </Button>
+        {!isAddMode && (
+          <Button
+            icon="plus"
+            onClick={() => {
+              setSubroutes((subroutes) => [...subroutes, emptyRoute]);
+              setIsAddMode(true);
+            }}
+            type="button"
+          >
+            Add nested policy
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
-import { FormAmRoute } from './types/amroutes';
+import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -29,7 +29,9 @@ const AmRoutes: FC = () => {
 
   const config = result?.alertmanager_config;
   const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
-  const receivers = stringsToSelectableValues((config?.receivers ?? []).map((receiver) => receiver.name));
+  const receivers = stringsToSelectableValues(
+    (config?.receivers ?? []).map((receiver) => receiver.name)
+  ) as AmRouteReceiver[];
 
   const handleSave = (data: Partial<FormAmRoute>) => {
     const newData = formAmRouteToAmRoute({

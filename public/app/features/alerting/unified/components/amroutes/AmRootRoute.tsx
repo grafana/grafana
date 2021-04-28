@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { EmptyArea } from '../EmptyArea';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
 
@@ -15,6 +16,17 @@ export interface AmRootRouteProps {
 export const AmRootRoute: FC<AmRootRouteProps> = ({ onSave, receivers, routes }) => {
   const styles = useStyles(getStyles);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  if (!routes.receiver && !isEditMode) {
+    return (
+      <EmptyArea
+        buttonIcon="rocket"
+        buttonLabel="Set a default contact point"
+        onButtonClick={() => setIsEditMode(true)}
+        text="You haven't set a default contact point for the root route yet."
+      />
+    );
+  }
 
   return (
     <div className={styles.container}>
