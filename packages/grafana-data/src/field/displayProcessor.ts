@@ -21,7 +21,7 @@ interface DisplayProcessorOptions {
   /**
    * Will pick 'dark' if not defined
    */
-  theme?: GrafanaThemeV2;
+  theme: GrafanaThemeV2;
 }
 
 // Reasonable units for time
@@ -43,9 +43,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const { field } = options;
   const config = field.config ?? {};
 
-  // Theme should be required or we need access to default theme instance from here
-  const theme = options.theme ?? getTestTheme();
-
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
 
@@ -55,7 +52,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field as Field, theme);
+  const scaleFunc = getScaleCalculator(field as Field, options.theme);
 
   return (value: any) => {
     const { mappings } = config;

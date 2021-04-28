@@ -1,7 +1,6 @@
 import { flatten } from 'lodash';
 import tinycolor from 'tinycolor2';
-import { GrafanaThemeV2 } from '../themes/types';
-import { GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -52,7 +51,7 @@ export type ColorDefinition = {
 
 let colorsPaletteInstance: Map<Hue, ColorDefinition[]>;
 let colorsMap: Record<Color, string> | undefined;
-let colorsMapTheme: GrafanaThemeV2 | undefined;
+let colorsMapTheme: GrafanaTheme | undefined;
 
 const buildColorDefinition = (
   hue: Hue,
@@ -73,23 +72,23 @@ export function getColorDefinitionByName(name: Color): ColorDefinition {
   return flatten(Array.from(getNamedColorPalette().values())).filter((definition) => definition.name === name)[0];
 }
 
-export function buildColorsMapForTheme(theme: GrafanaThemeV2): Record<Color, string> {
+export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {
   theme = theme ?? GrafanaThemeType.Dark;
 
   colorsMap = {} as Record<Color, string>;
 
   for (const def of getNamedColorPalette().values()) {
     for (const c of def) {
-      colorsMap[c.name] = c.variants[theme.colors.mode];
+      colorsMap[c.name] = c.variants[theme.type];
     }
   }
 
-  colorsMap['panel-bg'] = theme.components.panel.background;
+  colorsMap['panel-bg'] = theme.colors.panelBg;
 
   return colorsMap;
 }
 
-export function getColorForTheme(color: string, theme: GrafanaThemeV2): string {
+export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   if (!color) {
     return 'gray';
   }
@@ -120,9 +119,27 @@ export function getColorForTheme(color: string, theme: GrafanaThemeV2): string {
  * @deprecated use getColorForTheme
  */
 export function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string {
-  // const themeType = type ?? GrafanaThemeType.Dark;
-  // TODO figure this out
-  return color;
+  const themeType = type ?? GrafanaThemeType.Dark;
+
+  if (themeType === GrafanaThemeType.Dark) {
+    const darkTheme = ({
+      type: themeType,
+      colors: {
+        panelBg: '#141619',
+      },
+    } as unknown) as GrafanaTheme;
+
+    return getColorForTheme(color, darkTheme);
+  }
+
+  const lightTheme = ({
+    type: themeType,
+    colors: {
+      panelBg: '#000000',
+    },
+  } as unknown) as GrafanaTheme;
+
+  return getColorForTheme(color, lightTheme);
 }
 
 const buildNamedColorsPalette = () => {

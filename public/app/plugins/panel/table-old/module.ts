@@ -138,7 +138,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       this.dashboard.getTimezone(),
       this.$sanitize,
       this.templateSrv,
-      config.theme2
+      config.theme
     );
 
     return super.render(this.table);
