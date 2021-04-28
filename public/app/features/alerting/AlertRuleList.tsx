@@ -15,7 +15,8 @@ import { setSearchQuery } from './state/reducers';
 import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { AlertDefinitionItem } from './components/AlertDefinitionItem';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { ShowModalEvent } from '../../types/events';
+import { ShowModalReactEvent } from '../../types/events';
+import { AlertHowToModal } from './AlertHowToModal';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -73,13 +74,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
   };
 
   onOpenHowTo = () => {
-    appEvents.publish(
-      new ShowModalEvent({
-        src: 'public/app/features/alerting/partials/alert_howto.html',
-        modalClass: 'confirm-modal',
-        model: {},
-      })
-    );
+    appEvents.publish(new ShowModalReactEvent({ component: AlertHowToModal }));
   };
 
   onSearchQueryChange = (value: string) => {
