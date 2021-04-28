@@ -5,13 +5,14 @@ import { Alert, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useCleanup } from '../../../core/hooks/useCleanup';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction } from './state/actions';
+import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
@@ -34,15 +35,11 @@ const AmRoutes: FC = () => {
     fetchConfig();
   }, [fetchConfig]);
 
-  const { result, loading, error } =
+  const { result, loading: resultLoading, error: resultError } =
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
   const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
-
-  if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/routes" />;
-  }
 
   const receivers = stringsToSelectableValues(
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
@@ -56,6 +53,11 @@ const AmRoutes: FC = () => {
     setIsRootRouteEditMode(false);
   };
 
+  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  const { loading: saving, error: savingError, dispatched: savingDispatched } = useUnifiedAlertingSelector(
+    (state) => state.saveAMConfig
+  );
+
   const handleSave = (data: Partial<FormAmRoute>) => {
     const newData = formAmRouteToAmRoute({
       ...routes,
@@ -66,23 +68,50 @@ const AmRoutes: FC = () => {
       exitRootRouteEditMode();
     }
 
-    console.log(newData);
-
-    fetchConfig();
+    dispatch(
+      updateAlertManagerConfigAction({
+        newConfig: {
+          ...result,
+          alertmanager_config: {
+            ...result.alertmanager_config,
+            route: newData,
+          },
+        },
+        oldConfig: result,
+        alertManagerSourceName: alertManagerSourceName!,
+        successMessage: 'Saved',
+      })
+    );
   };
+
+  useEffect(() => {
+    if (savingDispatched && !saving) {
+      fetchConfig();
+    }
+  }, [fetchConfig, savingDispatched, saving]);
+
+  if (!alertManagerSourceName) {
+    return <Redirect to="/alerting/routes" />;
+  }
 
   return (
     <AlertingPageWrapper pageId="am-routes">
       <Field label="Choose alert manager">
         <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       </Field>
-      {error && !loading && (
-        <Alert severity="error" title="Error loading alert manager config">
-          {error.message || 'Unknown error.'}
+      {savingError && !saving && (
+        <Alert severity="error" title="Error saving alert manager config">
+          {savingError.message || 'Unknown error.'}
         </Alert>
       )}
-      {loading && <LoadingPlaceholder text="loading alert manager config..." />}
-      {result && !loading && !error && (
+      {resultError && !resultLoading && (
+        <Alert severity="error" title="Error loading alert manager config">
+          {resultError.message || 'Unknown error.'}
+        </Alert>
+      )}
+      {resultLoading && <LoadingPlaceholder text="loading alert manager config..." />}
+      {saving && <LoadingPlaceholder text="saving alert manager config..." />}
+      {result && !resultLoading && !saving && !resultError && (
         <>
           <div className={styles.break} />
           <AmRootRoute

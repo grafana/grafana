@@ -3,4 +3,5 @@ export enum TimeOptions {
   minutes = 'm',
   hours = 'h',
   days = 'd',
+  weeks = 'w',
 }
