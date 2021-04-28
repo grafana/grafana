@@ -120,7 +120,7 @@ func (s *ManagedStream) remoteWrite() {
 		}
 		_ = resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
-			logger.Error("Unexpected response from remote write endpoint", "error", err)
+			logger.Error("Unexpected response code from remote write endpoint", "code", resp.StatusCode)
 			continue
 		}
 		logger.Debug("Successfully sent to remote write endpoint", "url", url, "elapsed", time.Since(started))
