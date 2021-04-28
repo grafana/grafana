@@ -10,10 +10,10 @@ import { CollapsibleSection } from '../CollapsibleSection';
 interface Props {
   option: NotificationChannelOption;
   pathPrefix: string;
-  error?: FieldError | NestDataObject<any, FieldError>;
+  errors?: NestDataObject<any, FieldError>;
 }
 
-export const SubformField: FC<Props> = ({ option, pathPrefix = '', error }) => {
+export const SubformField: FC<Props> = ({ option, pathPrefix, errors }) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>
@@ -24,7 +24,7 @@ export const SubformField: FC<Props> = ({ option, pathPrefix = '', error }) => {
               key={subOption.propertyName}
               option={subOption}
               pathPrefix={`${pathPrefix}${option.propertyName}.`}
-              error={(error as NestDataObject<any, FieldError>)?.[subOption.propertyName]}
+              error={errors?.[subOption.propertyName]}
             />
           );
         })}

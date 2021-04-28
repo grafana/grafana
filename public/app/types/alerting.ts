@@ -114,7 +114,15 @@ export interface ChannelTypeSettings {
 }
 
 export interface NotificationChannelOption {
-  element: 'input' | 'select' | 'checkbox' | 'textarea' | 'subform' | 'key_value_map';
+  element:
+    | 'input'
+    | 'select'
+    | 'checkbox'
+    | 'textarea'
+    | 'subform'
+    | 'subform_array'
+    | 'key_value_map'
+    | 'string_array';
   inputType: string;
   label: string;
   description: string;

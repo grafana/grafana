@@ -129,9 +129,26 @@ export const cloudNotifierTypes: NotifierDTO[] = [
         placeholder: '{{ template "pagerduty.default.description" .}}',
       }),
       option('severity', 'Severity', 'Severity of the incident.', { placeholder: 'error' }),
-      // @todo details
-      // @todo images?
-      // @todo links?
+      option(
+        'details',
+        'Details',
+        'A set of arbitrary key/value pairs that provide further detail about the incident.',
+        {
+          element: 'key_value_map',
+        }
+      ),
+      option('images', 'Images', 'Images to attach to the incident.', {
+        element: 'subform_array',
+        subformOptions: [
+          option('href', 'URL', '', { required: true }),
+          option('source', 'Source', '', { required: true }),
+          option('alt', 'Alt', '', { required: true }),
+        ],
+      }),
+      option('links', 'Links', 'Links to attach to the incident.', {
+        element: 'subform_array',
+        subformOptions: [option('href', 'URL', '', { required: true }), option('text', 'Text', '', { required: true })],
+      }),
       httpConfigOption,
     ],
   },
@@ -174,7 +191,7 @@ export const cloudNotifierTypes: NotifierDTO[] = [
           placeholder: '1h',
         }
       ),
-      // @todo http_config
+      httpConfigOption,
     ],
   },
   {
@@ -190,13 +207,41 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option('icon_url', 'Icon URL', ''),
       option('link_names', 'Names link', '', { element: 'checkbox' }),
       option('username', 'Username', '', { placeholder: '{{ template "slack.default.username" . }}' }),
-      // @TODO actions
+      option('actions', 'Actions', '', {
+        element: 'subform_array',
+        subformOptions: [
+          option('text', 'Text', '', { required: true }),
+          option('type', 'Type', '', { required: true }),
+          option('url', 'URL', 'Either url or name and value are mandatory.'),
+          option('name', 'Name', ''),
+          option('value', 'Value', ''),
+          option('confirm', 'Confirm', '', {
+            element: 'subform',
+            subformOptions: [
+              option('text', 'Text', '', { required: true }),
+              option('dismiss_text', 'Dismiss text', ''),
+              option('ok_text', 'OK text', ''),
+              option('title', 'Title', ''),
+            ],
+          }),
+          option('style', 'Style', ''),
+        ],
+      }),
       option('callback_id', 'Callback ID', '', { placeholder: '{{ template "slack.default.callbackid" . }}' }),
       option('color', 'Color', '', { placeholder: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}' }),
       option('fallback', 'Fallback', '', { placeholder: '{{ template "slack.default.fallback" . }}' }),
-      // @TODO fields
+      option('fields', 'Fields', '', {
+        element: 'subform_array',
+        subformOptions: [
+          option('title', 'Title', '', { required: true }),
+          option('value', 'Value', '', { required: true }),
+          option('short', 'Short', '', { element: 'checkbox' }),
+        ],
+      }),
       option('footer', 'Footer', '', { placeholder: '{{ template "slack.default.footer" . }}' }),
-      // @TODO markdown_in array of strings
+      option('mrkdwn_in', 'Mrkdwn fields', 'An array of field names that should be formatted by mrkdwn syntax.', {
+        element: 'string_array',
+      }),
       option('pretext', 'Pre-text', '', { placeholder: '{{ template "slack.default.pretext" . }}' }),
       option('short_fields', 'Short fields', '', { element: 'checkbox' }),
       option('text', 'Message body', '', { element: 'textarea', placeholder: '{{ template "slack.default.text" . }}' }),
@@ -204,7 +249,7 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option('title_link', 'Title link', '', { placeholder: '{{ template "slack.default.titlelink" . }}' }),
       option('image_url', 'Image URL', ''),
       option('thumb_url', 'Thumbnail URL', ''),
-      // @TODO http_config
+      httpConfigOption,
     ],
   },
   {
@@ -223,12 +268,27 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option('source', 'Source', 'A backlink to the sender of the notification.', {
         placeholder: '{{ template "opsgenie.default.source" . }}',
       }),
-      // @TODO details
-      // @TODO responders
+      option(
+        'details',
+        'Details',
+        'A set of arbitrary key/value pairs that provide further detail about the incident.',
+        {
+          element: 'key_value_map',
+        }
+      ),
+      option('responders', 'Responders', 'List of responders responsible for notifications.', {
+        element: 'subform_array',
+        subformOptions: [
+          option('type', 'Type', '"team", "user", "escalation" or schedule".', { required: true }),
+          option('id', 'ID', 'Exactly one of these fields should be defined.'),
+          option('name', 'Name', 'Exactly one of these fields should be defined.'),
+          option('username', 'Username', 'Exactly one of these fields should be defined.'),
+        ],
+      }),
       option('tags', 'Tags', 'Comma separated list of tags attached to the notifications.'),
       option('note', 'Note', 'Additional alert note.'),
       option('priority', 'Priority', 'Priority level of alert. Possible values are P1, P2, P3, P4, and P5.'),
-      // @TODO http config
+      httpConfigOption,
     ],
   },
   {
@@ -251,7 +311,7 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option('monitoring_tool', 'Monitoring tool', 'The monitoring tool the state message is from.', {
         placeholder: '{{ template "victorops.default.monitoring_tool" . }}',
       }),
-      // @TODO http config
+      httpConfigOption,
     ],
   },
   {
@@ -262,7 +322,7 @@ export const cloudNotifierTypes: NotifierDTO[] = [
     heading: 'Webhook settings',
     options: [
       option('url', 'URL', 'The endpoint to send HTTP POST requests to.', { required: true }),
-      // @TODO http_config
+      httpConfigOption,
       option(
         'max_alerts',
         'Max alerts',

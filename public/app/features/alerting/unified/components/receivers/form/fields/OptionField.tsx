@@ -5,6 +5,8 @@ import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
 import { SubformField } from './SubformField';
 import { css } from '@emotion/css';
 import { KeyValueField } from './KeyValueMapField';
+import { SubformArrayField } from './SubformArrayField';
+import { StringArrayInput } from './StringArrayInput';
 
 interface Props {
   option: NotificationChannelOption;
@@ -15,7 +17,22 @@ interface Props {
 
 export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error }) => {
   if (option.element === 'subform') {
-    return <SubformField option={option} error={error} pathPrefix={pathPrefix} />;
+    return (
+      <SubformField
+        option={option}
+        errors={error as NestDataObject<any, FieldError> | undefined}
+        pathPrefix={pathPrefix}
+      />
+    );
+  }
+  if (option.element === 'subform_array') {
+    return (
+      <SubformArrayField
+        option={option}
+        pathPrefix={pathPrefix}
+        errors={error as Array<NestDataObject<any, FieldError>> | undefined}
+      />
+    );
   }
   if (option.element === 'key_value_map') {
     return <KeyValueField option={option} path={`${pathPrefix}${option.propertyName}`} />;
@@ -98,6 +115,8 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
           invalid={invalid}
         />
       );
+    case 'string_array':
+      return <InputControl as={StringArrayInput} control={control} name={name} />;
 
     default:
       console.error('Element not supported', option.element);
