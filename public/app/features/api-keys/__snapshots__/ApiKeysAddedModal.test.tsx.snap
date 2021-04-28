@@ -7,40 +7,34 @@ exports[`Render should render component 1`] = `
   onDismiss={[MockFunction]}
   title="API Key Created"
 >
-  <VerticalGroup
-    spacing="md"
+  <Field
+    label="Key"
   >
-    <HorizontalGroup
-      spacing="sm"
+    <span
+      className="css-ypoxjz"
     >
-      <span
-        className="css-ypoxjz"
-      >
-        Key
-      </span>
-      <span
-        className="css-ypoxjz"
-      >
-        api key test
-      </span>
-    </HorizontalGroup>
-    <Alert
-      severity="info"
-      title="You will only be able to view this key here once! It is not stored in this form, so be sure to copy it now."
-    >
-      <p>
-        You can authenticate a request using the Authorization HTTP header, example:
-      </p>
-      <pre
-        className="css-omfua5"
-      >
-        curl -H "Authorization: Bearer 
-        api key test
-        " 
-        test/path
-        /api/dashboards/home
-      </pre>
-    </Alert>
-  </VerticalGroup>
+      api key test
+    </span>
+  </Field>
+  <Alert
+    severity="info"
+    title="You will only be able to view this key here once!"
+  >
+    It is not stored in this form, so be sure to copy it now.
+  </Alert>
+  <p
+    className="text-muted"
+  >
+    You can authenticate a request using the Authorization HTTP header, example:
+  </p>
+  <pre
+    className="css-omfua5"
+  >
+    curl -H "Authorization: Bearer 
+    api key test
+    " 
+    test/path
+    /api/dashboards/home
+  </pre>
 </Modal>
 `;
