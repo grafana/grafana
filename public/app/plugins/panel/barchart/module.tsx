@@ -7,13 +7,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import {
-  BarChartFieldConfig,
-  BarChartOptions,
-  BarStackingMode,
-  BarValueVisibility,
-  graphFieldOptions,
-} from '@grafana/ui';
+import { BarChartFieldConfig, BarChartOptions, StackingMode, BarValueVisibility, graphFieldOptions } from '@grafana/ui';
 import { addAxisConfig, addHideFrom, addLegendOptions } from '../timeseries/config';
 import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 
@@ -81,19 +75,6 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         defaultValue: VizOrientation.Auto,
       })
       .addRadio({
-        path: 'stacking',
-        name: 'Stacking',
-        settings: {
-          options: [
-            { value: BarStackingMode.None, label: 'None' },
-            { value: BarStackingMode.Standard, label: 'Standard' },
-            { value: BarStackingMode.Percent, label: 'Percent' },
-          ],
-        },
-        defaultValue: BarStackingMode.None,
-        showIf: () => false, // <<< Hide from the UI for now
-      })
-      .addRadio({
         path: 'showValue',
         name: 'Show values',
         settings: {
@@ -115,7 +96,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           step: 0.01,
         },
         showIf: (c, data) => {
-          if (c.stacking && c.stacking !== BarStackingMode.None) {
+          if (c.stacking && c.stacking !== StackingMode.None) {
             return false;
           }
           return countNumberFields(data) !== 1;

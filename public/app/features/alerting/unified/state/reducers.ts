@@ -1,10 +1,15 @@
 import { combineReducers } from 'redux';
-import { createAsyncMapSlice } from '../utils/redux';
+import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   fetchAlertManagerConfigAction,
+  fetchAmAlertsAction,
+  fetchExistingRuleAction,
+  fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchSilencesAction,
+  saveRuleFormAction,
+  updateAlertManagerConfigAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -16,6 +21,14 @@ export const reducer = combineReducers({
     (alertManagerSourceName) => alertManagerSourceName
   ).reducer,
   silences: createAsyncMapSlice('silences', fetchSilencesAction, (alertManagerSourceName) => alertManagerSourceName)
+    .reducer,
+  ruleForm: combineReducers({
+    saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
+    existingRule: createAsyncSlice('existingRule', fetchExistingRuleAction).reducer,
+  }),
+  grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
+  saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
+  amAlerts: createAsyncMapSlice('amAlerts', fetchAmAlertsAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
 });
 

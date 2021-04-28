@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { size } from 'lodash';
 import { QueryHint, QueryFix } from '@grafana/data';
 import { PrometheusDatasource } from './datasource';
 
@@ -90,7 +90,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
       }
       return acc;
     }, {});
-    if (_.size(mappingForQuery) > 0) {
+    if (size(mappingForQuery) > 0) {
       const label = 'Query contains recording rules.';
       hints.push({
         type: 'EXPAND_RULES',

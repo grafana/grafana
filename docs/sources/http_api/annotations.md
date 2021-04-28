@@ -2,7 +2,7 @@
 title = "Annotations HTTP API "
 description = "Grafana Annotations HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "annotation", "annotations", "comment"]
-aliases = ["/docs/grafana/next/http_api/annotations/"]
+aliases = ["/docs/grafana/latest/http_api/annotations/"]
 +++
 
 # Annotations resources / actions
@@ -53,7 +53,6 @@ Content-Type: application/json
         "timeEnd": 1507266395000,
         "text": "test",
         "metric": "",
-        "type": "event",
         "tags": [
             "tag1",
             "tag2"
@@ -72,7 +71,6 @@ Content-Type: application/json
         "time": 1507265111000,
         "text": "test",
         "metric": "",
-        "type": "event",
         "tags": [
             "tag1",
             "tag2"

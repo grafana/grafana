@@ -372,7 +372,31 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/alerting/notifications',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/templates/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/templates/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {
@@ -393,10 +417,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/new',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/rule-editor/AlertRuleForm'
-          )
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
       ),
     },
     {
@@ -410,10 +431,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/:id/edit',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/rule-editor/AlertRuleForm'
-          )
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
       ),
     },
     {

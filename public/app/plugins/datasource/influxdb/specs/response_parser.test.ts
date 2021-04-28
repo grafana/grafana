@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { size } from 'lodash';
 import ResponseParser from '../response_parser';
 
 describe('influxdb response parser', () => {
@@ -23,7 +23,7 @@ describe('influxdb response parser', () => {
     const result = parser.parse(query, response);
 
     it('expects three results', () => {
-      expect(_.size(result)).toBe(3);
+      expect(size(result)).toBe(3);
     });
   });
 
@@ -48,7 +48,7 @@ describe('influxdb response parser', () => {
       const result = parser.parse(query, response);
 
       it('should get two responses', () => {
-        expect(_.size(result)).toBe(2);
+        expect(size(result)).toBe(2);
         expect(result[0].text).toBe('server1');
         expect(result[1].text).toBe('server2');
       });
@@ -83,7 +83,7 @@ describe('influxdb response parser', () => {
       const result = parser.parse(query, response);
 
       it('should get two responses', () => {
-        expect(_.size(result)).toBe(3);
+        expect(size(result)).toBe(3);
         expect(result[0].text).toBe('site');
         expect(result[1].text).toBe('api');
         expect(result[2].text).toBe('webapi');
@@ -114,7 +114,7 @@ describe('influxdb response parser', () => {
     const result = parser.parse(query, response);
 
     it('should return second column', () => {
-      expect(_.size(result)).toBe(3);
+      expect(size(result)).toBe(3);
       expect(result[0].text).toBe('0');
       expect(result[1].text).toBe('15');
       expect(result[2].text).toBe('20.2');
@@ -142,7 +142,7 @@ describe('influxdb response parser', () => {
       const result = parser.parse(query, response);
 
       it('should get two responses', () => {
-        expect(_.size(result)).toBe(1);
+        expect(size(result)).toBe(1);
       });
     });
 
@@ -164,7 +164,7 @@ describe('influxdb response parser', () => {
       const result = parser.parse(query, response);
 
       it('should return first column', () => {
-        expect(_.size(result)).toBe(1);
+        expect(size(result)).toBe(1);
         expect(result[0].text).toBe('time');
       });
     });

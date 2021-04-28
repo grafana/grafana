@@ -5,6 +5,8 @@ deleteDatasources:
   - name: gdev-influxdb-telegraf
   - name: gdev-influxdb2
   - name: gdev-influxdb2-influxql
+  - name: gdev-loki-0.3
+  - name: gdev-loki-0.4
 
 datasources:
   - name: gdev-graphite

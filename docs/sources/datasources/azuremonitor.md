@@ -2,15 +2,11 @@
 title = "Azure Monitor"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-aliases = ["/docs/grafana/next/features/datasources/azuremonitor"]
+aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
 weight = 300
 +++
 
-# Using Azure Monitor in Grafana
-
-> Officially released in Grafana v6.0.0
-
-As of Grafana 6.0, the Azure Monitor plugin has been moved into Grafana so it now ships with built-in support for Azure Monitor.
+# Azure Monitor data source
 
 The Azure Monitor data source supports multiple services in the Azure cloud:
 

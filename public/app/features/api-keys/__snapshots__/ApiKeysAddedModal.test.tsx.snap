@@ -58,10 +58,10 @@ exports[`Render should render component 1`] = `
         }
       }
     >
-      You will only be able to view this key here once! It is not stored in this form. So be sure to copy it now.
+      You will only be able to view this key here once! It is not stored in this form, so be sure to copy it now.
       <br />
       <br />
-      You can authenticate request using the Authorization HTTP header, example:
+      You can authenticate a request using the Authorization HTTP header, example:
       <br />
       <br />
       <pre

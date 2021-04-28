@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { Tab, TabsBar, Icon, IconName, useStyles } from '@grafana/ui';
-import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme } from '@grafana/data';
+import { Tab, TabsBar, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaThemeV2 } from '@grafana/data';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
 
 export interface Props {
@@ -72,7 +72,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
 };
 
 export const PageHeader: FC<Props> = ({ model }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   if (!model) {
     return null;
@@ -124,7 +124,7 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
   for (const bc of breadcrumbs) {
     if (bc.url) {
       breadcrumbsResult.push(
-        <a className="text-link" key={breadcrumbsResult.length} href={bc.url}>
+        <a className="page-header__link" key={breadcrumbsResult.length} href={bc.url}>
           {bc.title}
         </a>
       );
@@ -137,10 +137,10 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
   return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   headerCanvas: css`
-    background: ${theme.v2.palette.layer0};
-    border-bottom: 1px solid ${theme.v2.palette.border0};
+    background: ${theme.colors.background.canvas};
+    border-bottom: 1px solid ${theme.colors.border.weak};
   `,
 });
 

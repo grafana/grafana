@@ -2,7 +2,7 @@
 title = "Grafana documentation"
 description = "Guides, Installation and Feature Documentation"
 keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/v1.1", "/docs/grafana/next/guides/reference/admin", "/docs/grafana/v3.1"]
+aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", "/docs/grafana/v3.1"]
 +++
 
 # Grafana documentation
@@ -78,7 +78,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/next/guides/reference/admin", "/
       <img src="/img/docs/logos/icon_elasticsearch.svg" >
       <h5>Elasticsearch</h5>
     </a>
-    <a href="{{< relref "datasources/influxdb.md" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/influxdb/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_influxdb.svg" >
       <h5>InfluxDB</h5>
     </a>

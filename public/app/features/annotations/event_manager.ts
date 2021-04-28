@@ -1,11 +1,11 @@
-import _ from 'lodash';
+import { each, filter, keys } from 'lodash';
 import tinycolor from 'tinycolor2';
 import {
-  OK_COLOR,
   ALERTING_COLOR,
-  NO_DATA_COLOR,
-  PENDING_COLOR,
   DEFAULT_ANNOTATION_COLOR,
+  NO_DATA_COLOR,
+  OK_COLOR,
+  PENDING_COLOR,
   REGION_FILL_ALPHA,
 } from '@grafana/ui';
 import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
@@ -13,8 +13,8 @@ import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
 import { AnnotationEvent } from '@grafana/data';
 
 export class EventManager {
-  event: AnnotationEvent | null;
-  editorOpen: boolean;
+  event: AnnotationEvent | null = null;
+  editorOpen = false;
 
   constructor(private panelCtrl: MetricsPanelCtrl) {}
 
@@ -141,7 +141,7 @@ export class EventManager {
     flotOptions.xaxis.eventSectionHeight = eventSectionHeight;
 
     flotOptions.events = {
-      levels: _.keys(types).length + 1,
+      levels: keys(types).length + 1,
       data: annotations,
       types: types,
       manager: this,
@@ -150,7 +150,7 @@ export class EventManager {
 }
 
 function getRegions(events: AnnotationEvent[]) {
-  return _.filter(events, 'isRegion');
+  return filter(events, 'isRegion');
 }
 
 function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any } }) {
@@ -158,7 +158,7 @@ function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any }
   const defaultColor = DEFAULT_ANNOTATION_COLOR;
   let fillColor;
 
-  _.each(regions, (region) => {
+  each(regions, (region) => {
     if (region.source) {
       fillColor = region.source.iconColor || defaultColor;
     } else {

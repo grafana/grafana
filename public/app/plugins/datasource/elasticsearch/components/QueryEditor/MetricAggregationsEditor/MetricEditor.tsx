@@ -1,7 +1,7 @@
-import { MetricFindValue, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useCallback } from 'react';
 import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
@@ -13,21 +13,18 @@ import { MetricPicker } from '../../MetricPicker';
 import { segmentStyles } from '../styles';
 import {
   isMetricAggregationWithField,
+  isMetricAggregationWithInlineScript,
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
   MetricAggregation,
   MetricAggregationType,
 } from './aggregations';
+import { useFields } from '../../../hooks/useFields';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
   value: metric.type,
-});
-
-const toSelectableValue = ({ value, text }: MetricFindValue): SelectableValue<string> => ({
-  label: text,
-  value: `${value || text}`,
 });
 
 interface Props {
@@ -68,23 +65,23 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
   const datasource = useDatasource();
   const query = useQuery();
   const dispatch = useDispatch<MetricAggregationAction>();
+  const getFields = useFields(value.type);
+
+  const loadOptions = useCallback(async () => {
+    const remoteFields = await getFields();
+
+    // Metric aggregations that have inline script support don't require a field to be set.
+    if (isMetricAggregationWithInlineScript(value)) {
+      return [{ label: 'None' }, ...remoteFields];
+    }
+
+    return remoteFields;
+  }, [getFields, value]);
 
   const previousMetrics = query.metrics!.slice(
     0,
     query.metrics!.findIndex((m) => m.id === value.id)
   );
-
-  // TODO: This could be common with the one in BucketAggregationEditor
-  const getFields = async () => {
-    const get = () => {
-      if (value.type === 'cardinality') {
-        return datasource.getFields();
-      }
-      return datasource.getFields('number');
-    };
-
-    return (await get().toPromise()).map(toSelectableValue);
-  };
 
   return (
     <>
@@ -99,7 +96,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
         {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
           <SegmentAsync
             className={cx(styles.color, segmentStyles)}
-            loadOptions={getFields}
+            loadOptions={loadOptions}
             onChange={(e) => dispatch(changeMetricField(value.id, e.value!))}
             placeholder="Select Field"
             value={value.field}

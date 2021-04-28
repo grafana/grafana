@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
-import { UserSession } from 'app/types';
+import { AccessControlAction, UserSession } from 'app/types';
+import { contextSrv } from 'app/core/core';
 
 interface Props {
   sessions: UserSession[];
@@ -42,6 +43,8 @@ export class UserSessions extends PureComponent<Props, State> {
       margin-top: 0.8rem;
     `;
 
+    const canLogout = contextSrv.hasPermission(AccessControlAction.UsersLogout);
+
     return (
       <>
         <h3 className="page-heading">Sessions</h3>
@@ -66,13 +69,15 @@ export class UserSessions extends PureComponent<Props, State> {
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
                         <div className="pull-right">
-                          <ConfirmButton
-                            confirmText="Confirm logout"
-                            confirmVariant="destructive"
-                            onConfirm={this.onSessionRevoke(session.id)}
-                          >
-                            Force logout
-                          </ConfirmButton>
+                          {canLogout && (
+                            <ConfirmButton
+                              confirmText="Confirm logout"
+                              confirmVariant="destructive"
+                              onConfirm={this.onSessionRevoke(session.id)}
+                            >
+                              Force logout
+                            </ConfirmButton>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -81,7 +86,7 @@ export class UserSessions extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={logoutFromAllDevicesClass}>
-            {sessions.length > 0 && (
+            {canLogout && sessions.length > 0 && (
               <Button variant="secondary" onClick={this.showLogoutConfirmationModal(true)}>
                 Force logout from all devices
               </Button>

@@ -76,8 +76,11 @@ export type IconName =
   | 'gf-interpolation-step-after'
   | 'gf-interpolation-step-before'
   | 'gf-logs'
+  | 'github'
+  | 'gitlab'
   | 'grafana'
   | 'graph-bar'
+  | 'google'
   | 'heart-break'
   | 'heart'
   | 'history'
@@ -90,10 +93,12 @@ export type IconName =
   | 'link'
   | 'list-ul'
   | 'lock'
+  | 'microsoft'
   | 'minus-circle'
   | 'minus'
   | 'mobile-android'
   | 'monitor'
+  | 'okta'
   | 'palette'
   | 'panel-add'
   | 'pause'
@@ -135,6 +140,7 @@ export type IconName =
   | 'user'
   | 'users-alt'
   | 'wrap-text'
+  | 'heart-rate'
   | 'x';
 
 export const getAvailableIcons = (): IconName[] => [

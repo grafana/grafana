@@ -11,6 +11,9 @@ import (
 // ChannelPublisher writes data into a channel. Note that permissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
 
+// ChannelClientCount will return the number of clients for a channel
+type ChannelClientCount func(channel string) (int, error)
+
 // SubscribeEvent contains subscription data.
 type SubscribeEvent struct {
 	Channel string
@@ -63,6 +66,16 @@ type ChannelHandlerFactory interface {
 
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
-	DashboardSaved(uid string, userID int64) error
-	DashboardDeleted(uid string, userID int64) error
+	// Called when a dashboard is saved -- this includes the error so we can support a
+	// gitops workflow that knows if the value was saved to the local database or not
+	// in many cases all direct save requests will fail, but the request should be forwarded
+	// to any gitops observers
+	DashboardSaved(user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
+
+	// Called when a dashboard is deleted
+	DashboardDeleted(user *UserDisplayDTO, uid string) error
+
+	// Experimental! Indicate is GitOps is active.  This really means
+	// someone is subscribed to the `grafana/dashboards/gitops` channel
+	HasGitOpsObserver() bool
 }

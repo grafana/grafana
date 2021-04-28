@@ -1,9 +1,10 @@
 import React, { FunctionComponent } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { render } from '@testing-library/react';
-import { ElasticsearchProvider, useDatasource, useQuery } from './ElasticsearchQueryContext';
+import { ElasticsearchProvider, useQuery } from './ElasticsearchQueryContext';
 import { ElasticsearchQuery } from '../../types';
 import { ElasticDatasource } from '../../datasource';
+import { getDefaultTimeRange } from '@grafana/data';
 
 const query: ElasticsearchQuery = {
   refId: 'A',
@@ -24,6 +25,7 @@ describe('ElasticsearchQueryContext', () => {
         onChange={onChange}
         datasource={datasource}
         onRunQuery={onRunQuery}
+        range={getDefaultTimeRange()}
       />
     );
 
@@ -39,6 +41,7 @@ describe('ElasticsearchQueryContext', () => {
     expect(onRunQuery).toHaveBeenCalled();
   });
 
+  // the following applies to all hooks in ElasticsearchQueryContext as they all share the same code.
   describe('useQuery Hook', () => {
     it('Should throw when used outside of ElasticsearchQueryContext', () => {
       const { result } = renderHook(() => useQuery());
@@ -53,6 +56,7 @@ describe('ElasticsearchQueryContext', () => {
           query={query}
           onChange={() => {}}
           onRunQuery={() => {}}
+          range={getDefaultTimeRange()}
         >
           {children}
         </ElasticsearchProvider>
@@ -63,30 +67,6 @@ describe('ElasticsearchQueryContext', () => {
       });
 
       expect(result.current).toBe(query);
-    });
-  });
-
-  describe('useDatasource Hook', () => {
-    it('Should throw when used outside of ElasticsearchQueryContext', () => {
-      const { result } = renderHook(() => useDatasource());
-
-      expect(result.error).toBeTruthy();
-    });
-
-    it('Should return the current datasource instance', () => {
-      const datasource = {} as ElasticDatasource;
-
-      const wrapper: FunctionComponent = ({ children }) => (
-        <ElasticsearchProvider datasource={datasource} query={query} onChange={() => {}} onRunQuery={() => {}}>
-          {children}
-        </ElasticsearchProvider>
-      );
-
-      const { result } = renderHook(() => useDatasource(), {
-        wrapper,
-      });
-
-      expect(result.current).toBe(datasource);
     });
   });
 });

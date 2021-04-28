@@ -5,11 +5,12 @@ import { Select } from '@grafana/ui';
 import { getAllDataSources } from '../utils/config';
 
 interface Props {
-  onChange: (alertManagerSourceName?: string) => void;
+  onChange: (alertManagerSourceName: string) => void;
   current?: string;
+  disabled?: boolean;
 }
 
-export const AlertManagerPicker: FC<Props> = ({ onChange, current }) => {
+export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = false }) => {
   const options: Array<SelectableValue<string>> = useMemo(() => {
     return [
       {
@@ -31,11 +32,13 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current }) => {
 
   return (
     <Select
+      disabled={disabled}
+      width={29}
       className="ds-picker select-container"
       isMulti={false}
       isClearable={false}
       backspaceRemovesValue={false}
-      onChange={(value) => onChange(value.value)}
+      onChange={(value) => value.value && onChange(value.value)}
       options={options}
       maxMenuHeight={500}
       noOptionsMessage="No datasources found"

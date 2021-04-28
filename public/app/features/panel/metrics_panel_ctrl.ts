@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isArray } from 'lodash';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -74,7 +74,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.updateTimeRange();
       let data = this.panel.snapshotData;
       // backward compatibility
-      if (!_.isArray(data)) {
+      if (!isArray(data)) {
         data = data.data;
       }
 

@@ -26,7 +26,7 @@ Here's how to use Grafana themes in React components.
 import React, { FC } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 const getComponentStyles = (theme: GrafanaTheme) => css`
   padding: ${theme.spacing.md};
@@ -57,7 +57,7 @@ const Foo: FC<FooProps> = () => {
 ```tsx
 import { ThemeContext } from '@grafana/ui';
 
-<ThemeContext.Consumer>{theme => <Foo theme={theme} />}</ThemeContext.Consumer>;
+<ThemeContext.Consumer>{(theme) => <Foo theme={theme} />}</ThemeContext.Consumer>;
 ```
 
 #### Using `withTheme` higher-order component (HOC)
@@ -97,9 +97,8 @@ describe('MyComponent', () => {
     restoreThemeContext();
   });
 
-
   it('renders correctly', () => {
-    const wrapper = mount(<MyComponent />)
+    const wrapper = mount(<MyComponent />);
     expect(wrapper).toMatchSnapshot();
   });
 });

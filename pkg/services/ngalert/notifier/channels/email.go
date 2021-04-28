@@ -2,22 +2,20 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"net/url"
-	"strings"
+	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 )
 
 // EmailNotifier is responsible for sending
@@ -26,7 +24,6 @@ type EmailNotifier struct {
 	old_notifiers.NotifierBase
 	Addresses   []string
 	SingleEmail bool
-	AutoResolve bool
 	log         log.Logger
 	externalUrl *url.URL
 }
@@ -34,9 +31,12 @@ type EmailNotifier struct {
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
 func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*EmailNotifier, error) {
+	if model.Settings == nil {
+		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+	}
+
 	addressesString := model.Settings.Get("addresses").MustString()
 	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
-	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
 
 	if addressesString == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
@@ -49,7 +49,6 @@ func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*E
 		NotifierBase: old_notifiers.NewNotifierBase(model),
 		Addresses:    addresses,
 		SingleEmail:  singleEmail,
-		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.email"),
 		externalUrl:  externalUrl,
 	}, nil
@@ -57,11 +56,6 @@ func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*E
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	// TODO(codesome): make sure the receiver name is added in the ctx before calling this.
-	ctx = notify.WithReceiverName(ctx, "email-notification-channel") // Dummy.
-	// TODO(codesome): make sure the group labels is added in the ctx before calling this.
-	ctx = notify.WithGroupLabels(ctx, model.LabelSet{}) // Dummy.
-
 	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
 	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.externalUrl}, as, gokit_log.NewNopLogger())
 
@@ -72,15 +66,14 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			Subject: title,
 			Data: map[string]interface{}{
 				"Title":             title,
-				"Receiver":          data.Receiver,
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,
 				"GroupLabels":       data.GroupLabels,
 				"CommonLabels":      data.CommonLabels,
 				"CommonAnnotations": data.CommonAnnotations,
 				"ExternalURL":       data.ExternalURL,
-				"RuleUrl":           "TODO",
-				"AlertPageUrl":      "TODO",
+				"RuleUrl":           path.Join(en.externalUrl.String(), "/alerting/list"),
+				"AlertPageUrl":      path.Join(en.externalUrl.String(), "/alerting/list?alertState=firing&view=state"),
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,
@@ -95,18 +88,6 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	return true, nil
 }
 
-func getTitleFromTemplateData(data *template.Data) string {
-	title := "[" + data.Status
-	if data.Status == string(model.AlertFiring) {
-		title += fmt.Sprintf(":%d", len(data.Alerts.Firing()))
-	}
-	title += "] " + strings.Join(data.GroupLabels.SortedPairs().Values(), " ") + " "
-	if len(data.CommonLabels) > len(data.GroupLabels) {
-		title += "(" + strings.Join(data.CommonLabels.Remove(data.GroupLabels.Names()).Values(), " ") + ")"
-	}
-	return title
-}
-
 func (en *EmailNotifier) SendResolved() bool {
-	return en.AutoResolve
+	return !en.GetDisableResolveMessage()
 }

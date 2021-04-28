@@ -27,6 +27,13 @@ export default {
         options: ['200px', '500px', '100%'],
       },
     },
+    seriesCount: {
+      control: {
+        type: 'number',
+        min: 1,
+        max: 8,
+      },
+    },
   },
 } as Meta;
 

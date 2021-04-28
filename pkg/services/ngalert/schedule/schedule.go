@@ -6,20 +6,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"golang.org/x/sync/errgroup"
-
 	"github.com/benbjohnson/clock"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -28,10 +24,10 @@ var timeNow = time.Now
 
 // ScheduleService handles scheduling
 type ScheduleService interface {
-	Ticker(context.Context, *state.StateTracker) error
+	Ticker(context.Context, *state.Manager) error
 	Pause() error
 	Unpause() error
-	WarmStateCache(*state.StateTracker)
+	WarmStateCache(*state.Manager)
 
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertRuleKey, time.Time)
@@ -39,7 +35,7 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateTracker *state.StateTracker) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateManager *state.Manager) error {
 	sch.log.Debug("alert rule routine started", "key", key)
 
 	evalRunning := false
@@ -82,13 +78,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return err
 				}
 
-				processedStates := stateTracker.ProcessEvalResults(key.UID, results, condition)
+				processedStates := stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
 				alerts := FromAlertStateToPostableAlerts(processedStates)
-				sch.log.Debug("sending alerts to notifier", "count", len(alerts))
+				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 				err = sch.sendAlerts(alerts)
 				if err != nil {
-					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
+					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
 				}
 				return nil
 			}
@@ -120,7 +116,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 // Notifier handles the delivery of alert notifications to the end user
 type Notifier interface {
-	PutAlerts(alerts ...*notifier.PostableAlert) error
+	PutAlerts(alerts apimodels.PostableAlerts) error
 }
 
 type schedule struct {
@@ -236,7 +232,7 @@ func (sch *schedule) Unpause() error {
 	return nil
 }
 
-func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.StateTracker) error {
+func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Manager) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
 		select {
@@ -265,7 +261,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh, stateTracker)
+						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh, stateManager)
 					})
 				}
 
@@ -310,22 +306,23 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
-			sch.saveAlertStates(stateTracker.GetAll())
+			sch.saveAlertStates(stateManager.GetAll())
+			stateManager.Close()
 			return err
 		}
 	}
 }
 
-func (sch *schedule) sendAlerts(alerts []*notifier.PostableAlert) error {
-	return sch.notifier.PutAlerts(alerts...)
+func (sch *schedule) sendAlerts(alerts apimodels.PostableAlerts) error {
+	return sch.notifier.PutAlerts(alerts)
 }
 
-func (sch *schedule) saveAlertStates(states []state.AlertState) {
+func (sch *schedule) saveAlertStates(states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
 			DefinitionOrgID:   s.OrgID,
-			DefinitionUID:     s.UID,
+			DefinitionUID:     s.AlertRuleUID,
 			Labels:            models.InstanceLabels(s.Labels),
 			State:             models.InstanceStateType(s.State.String()),
 			LastEvalTime:      s.LastEvaluationTime,
@@ -334,20 +331,12 @@ func (sch *schedule) saveAlertStates(states []state.AlertState) {
 		}
 		err := sch.store.SaveAlertInstance(&cmd)
 		if err != nil {
-			sch.log.Error("failed to save alert state", "uid", s.UID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
+			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
 		}
 	}
 }
 
-func dataLabelsFromInstanceLabels(il models.InstanceLabels) data.Labels {
-	lbs := data.Labels{}
-	for k, v := range il {
-		lbs[k] = v
-	}
-	return lbs
-}
-
-func (sch *schedule) WarmStateCache(st *state.StateTracker) {
+func (sch *schedule) WarmStateCache(st *state.Manager) {
 	sch.log.Info("warming cache for startup")
 	st.ResetCache()
 
@@ -356,7 +345,7 @@ func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
-	var states []state.AlertState
+	var states []*state.State
 	for _, orgIdResult := range orgIdsCmd.Result {
 		cmd := models.ListAlertInstancesQuery{
 			DefinitionOrgID: orgIdResult.DefinitionOrgID,
@@ -365,14 +354,14 @@ func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 		for _, entry := range cmd.Result {
-			lbs := dataLabelsFromInstanceLabels(entry.Labels)
-			stateForEntry := state.AlertState{
-				UID:                entry.DefinitionUID,
+			lbs := map[string]string(entry.Labels)
+			stateForEntry := &state.State{
+				AlertRuleUID:       entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,
 				CacheId:            fmt.Sprintf("%s %s", entry.DefinitionUID, lbs),
 				Labels:             lbs,
 				State:              translateInstanceState(entry.CurrentState),
-				Results:            []state.StateEvaluation{},
+				Results:            []state.Evaluation{},
 				StartsAt:           entry.CurrentStateSince,
 				EndsAt:             entry.CurrentStateEnd,
 				LastEvaluationTime: entry.LastEvalTime,

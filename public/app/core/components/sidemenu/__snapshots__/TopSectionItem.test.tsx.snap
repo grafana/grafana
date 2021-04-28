@@ -87,7 +87,7 @@ exports[`Render should render component 1`] = `
                         cacheRequests={true}
                         className="css-sr6nr"
                         height={24}
-                        src="/public/img/icons/unicons/cloud.svg"
+                        src="public/img/iconsunicons/cloud.svg"
                         uniquifyIDs={false}
                         width={24}
                       />
