@@ -58,7 +58,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   editWrapper: css`
     height: calc(100vh - 250px);
     margin-bottom: 10px;
