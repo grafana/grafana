@@ -11,7 +11,7 @@ import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { LegacyForms } from '@grafana/ui';
+import { InlineField, InlineSwitch } from '@grafana/ui';
 import { rangeUtil } from '@grafana/data';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { setSearchQuery } from './state/reducers';
@@ -20,8 +20,6 @@ import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';
 import { ApiKeysController } from './ApiKeysController';
 import { ShowModalReactEvent } from 'app/types/events';
-
-const { Switch } = LegacyForms;
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -154,7 +152,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   {showTable ? (
                     <>
                       <h3 className="page-heading">Existing API keys</h3>
-                      <Switch label="Show expired" checked={includeExpired} onChange={this.onIncludeExpiredChange} />
+                      <InlineField label="Show expired">
+                        <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
+                      </InlineField>
                       <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
                     </>
                   ) : null}
