@@ -16,9 +16,18 @@ type {{classname}}Service interface { {{#operation}}
 	{{nickname}}(*models.ReqContext{{#bodyParams}}, apimodels.{{dataType}}{{/bodyParams}}) response.Response{{/operation}}
 }
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service) {
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service, metrics *Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
-		group.{{httpMethod}}(toMacaronPath("{{{path}}}"){{#bodyParams}}, binding.Bind(apimodels.{{dataType}}{}){{/bodyParams}}, routing.Wrap(srv.{{nickname}})){{/operation}}{{/operations}}
+	group.{{httpMethod}}(
+		toMacaronPath("{{{path}}}"){{#bodyParams}},
+		binding.Bind(apimodels.{{dataType}}{}){{/bodyParams}},
+		Instrument(
+			http.Method{{httpMethod}},
+			"{{{path}}}",
+			srv.{{nickname}},
+			metrics,
+		),
+  ){{/operation}}{{/operations}}
 	}, middleware.ReqSignedIn)
 }{{#operation}}
 {{/operation}}{{/operations}}

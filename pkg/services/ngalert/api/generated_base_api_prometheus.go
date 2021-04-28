@@ -8,6 +8,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -19,9 +21,25 @@ type PrometheusApiService interface {
 	RouteGetRuleStatuses(*models.ReqContext) response.Response
 }
 
-func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService) {
+func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService, metrics *Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
-		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
+		group.Get(
+			toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"),
+			Instrument(
+				http.MethodGet,
+				"/api/prometheus/{Recipient}/api/v1/alerts",
+				srv.RouteGetAlertStatuses,
+				metrics,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"),
+			Instrument(
+				http.MethodGet,
+				"/api/prometheus/{Recipient}/api/v1/rules",
+				srv.RouteGetRuleStatuses,
+				metrics,
+			),
+		)
 	}, middleware.ReqSignedIn)
 }
