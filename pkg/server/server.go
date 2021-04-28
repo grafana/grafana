@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/infra/httpclientprovider"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"

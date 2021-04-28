@@ -19,10 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"

@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"

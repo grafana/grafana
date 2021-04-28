@@ -11,22 +11,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"golang.org/x/oauth2"
-	macaron "gopkg.in/macaron.v1"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func TestDataSourceProxy_routeRule(t *testing.T) {

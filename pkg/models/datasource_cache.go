@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
-	"github.com/grafana/grafana/pkg/infra/httpclientprovider"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,7 +23,7 @@ type proxyTransportCache struct {
 
 // dataSourceTransport implements http.RoundTripper (https://golang.org/pkg/net/http/#RoundTripper)
 type dataSourceTransport struct {
-	opts      httpclient.Options
+	opts      sdkhttpclient.Options
 	headers   map[string]string
 	transport *http.Transport
 	next      http.RoundTripper
@@ -175,10 +175,10 @@ func (ds *DataSource) GetHttpTransport2(provider httpclient.Provider) (http.Roun
 	return rt, nil
 }
 
-func (ds *DataSource) HTTPClientOptions() httpclient.Options {
+func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 	tlsOptions := ds.TLSOptions()
-	opts := httpclient.Options{
-		Timeouts: &httpclient.TimeoutOptions{
+	opts := sdkhttpclient.Options{
+		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout:               ds.getTimeout(),
 			KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
 			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
@@ -200,19 +200,19 @@ func (ds *DataSource) HTTPClientOptions() httpclient.Options {
 	}
 
 	if ds.BasicAuth {
-		opts.BasicAuth = &httpclient.BasicAuthOptions{
+		opts.BasicAuth = &sdkhttpclient.BasicAuthOptions{
 			User:     ds.BasicAuthUser,
 			Password: ds.DecryptedBasicAuthPassword(),
 		}
 	} else if !ds.BasicAuth && ds.User != "" {
-		opts.BasicAuth = &httpclient.BasicAuthOptions{
+		opts.BasicAuth = &sdkhttpclient.BasicAuthOptions{
 			User:     ds.User,
 			Password: ds.DecryptedBasicAuthPassword(),
 		}
 	}
 
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) {
-		opts.SigV4 = &httpclient.SigV4Config{
+		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type),
 			Region:        ds.JsonData.Get("sigV4Region").MustString(),
 			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
@@ -233,7 +233,7 @@ func (ds *DataSource) HTTPClientOptions() httpclient.Options {
 	return opts
 }
 
-func (ds *DataSource) TLSOptions() httpclient.TLSOptions {
+func (ds *DataSource) TLSOptions() sdkhttpclient.TLSOptions {
 	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
 	var serverName string
 
@@ -244,7 +244,7 @@ func (ds *DataSource) TLSOptions() httpclient.TLSOptions {
 		serverName = ds.JsonData.Get("serverName").MustString()
 	}
 
-	opts := httpclient.TLSOptions{
+	opts := sdkhttpclient.TLSOptions{
 		InsecureSkipVerify: tlsSkipVerify,
 		ServerName:         serverName,
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"

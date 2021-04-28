@@ -51,8 +51,6 @@ code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48/go.mod h1:wN/zk
 collectd.org v0.3.0/go.mod h1:A/8DzQBkF6abtvrT2j/AU/4tiBgJWYyh0y/oB/4MlWE=
 contrib.go.opencensus.io/exporter/ocagent v0.6.0/go.mod h1:zmKjrJcdo0aYcVS7bmEeSEBLPA9YJp5bjrofdU3pIXs=
 contrib.go.opencensus.io/exporter/prometheus v0.2.0/go.mod h1:TYmVAyE8Tn1lyPcltF5IYYfWp2KHu7lQGIZnj8iZMys=
-cuelang.org/go v0.3.0-beta.6 h1:od1S/Hbl2S45TLSONl95X3O4TXN1za6CUSD13bTxCVk=
-cuelang.org/go v0.3.0-beta.6/go.mod h1:Ikvs157igkGV5gFUdYSFa+lWp/CDteVhubPTXyvPRtA=
 cuelang.org/go v0.3.2 h1:/Am5yFDwqnaEi+g942OPM1M4/qtfVSm49wtkQbeh5Z4=
 cuelang.org/go v0.3.2/go.mod h1:jvMO35Q4D2D3m2ujAmKESICaYkjMbu5+D+2zIGuWTpQ=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
@@ -819,8 +817,8 @@ github.com/grafana/grafana-live-sdk v0.0.5 h1:Y7qdOLbl+N4pXsfAR5+e4YWcOk/WFB7Wpu
 github.com/grafana/grafana-live-sdk v0.0.5/go.mod h1:f15hHmWyLdFjmuWLsjeKeZnq/HnNQ3QkoPcaEww45AY=
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SPdxCL9BChFTlyi0Khv64vdCW4TMna8+sxL7+Chx+Ag=
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4/go.mod h1:nc0XxBzjeGcrMltCDw269LoWF9S8ibhgxolCdA1R8To=
-github.com/grafana/grafana-plugin-sdk-go v0.92.1-0.20210427164049-0e2072e23313 h1:6Nmie47pI4QEPP59fJiskOkZfYOLL1GbGnUTszz5l0U=
-github.com/grafana/grafana-plugin-sdk-go v0.92.1-0.20210427164049-0e2072e23313/go.mod h1:PYupS6mZ/HXo/xT80KiyjQ2d5wCgyl/nGI5fJtQsxEc=
+github.com/grafana/grafana-plugin-sdk-go v0.92.1-0.20210428142341-fbaafa469f4c h1:jQhAWbpqHmhI8MNQeoeXIreTs8muv6EG75kqKAjBwVA=
+github.com/grafana/grafana-plugin-sdk-go v0.92.1-0.20210428142341-fbaafa469f4c/go.mod h1:PYupS6mZ/HXo/xT80KiyjQ2d5wCgyl/nGI5fJtQsxEc=
 github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387 h1:iwcM8lkYJ3EhytGLJ2BvRSwutb0QWoI7EWbYv3yJRsY=
 github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387/go.mod h1:jHA1OHnPsuj3LLgMXmFopsKDt4ARHHUhrmT3JrGf71g=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -1423,8 +1421,7 @@ github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6L
 github.com/rogpeppe/go-internal v1.1.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.2.2/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
-github.com/rogpeppe/go-internal v1.6.2-0.20200830194709-1115b6af0369 h1:wdCVGtPadWC/ZuuLC7Hv58VQ5UF7V98ewE71n5mJfrM=
-github.com/rogpeppe/go-internal v1.6.2-0.20200830194709-1115b6af0369/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
+github.com/rogpeppe/go-internal v1.8.0 h1:FCbCCtXNOY3UtUuHUYaghJg4y7Fd14rXifAYUAtL9R8=
 github.com/rogpeppe/go-internal v1.8.0/go.mod h1:WmiCO8CzOY8rg0OYDC4/i/2WRWAB6poM+XZ2dLUbcbE=
 github.com/rs/cors v1.6.0/go.mod h1:gFx+x8UowdsKA9AchylcLynDq+nNFfI8FkUZdN/jGCU=
 github.com/rs/cors v1.7.0 h1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=
