@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isArray } from 'lodash';
 import coreModule from '../core_module';
 
 export function arrayJoin() {
@@ -13,7 +13,7 @@ export function arrayJoin() {
       }
 
       function join_array(text: string) {
-        if (_.isArray(text)) {
+        if (isArray(text)) {
           return ((text || '') as any).join(',');
         } else {
           return text;

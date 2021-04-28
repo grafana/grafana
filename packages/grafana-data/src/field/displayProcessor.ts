@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 
 // Types
 import { Field, FieldType } from '../types/dataFrame';
@@ -36,7 +36,7 @@ const timeFormats: KeyValue<boolean> = {
 };
 
 export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
-  if (!options || _.isEmpty(options) || !options.field) {
+  if (!options || isEmpty(options) || !options.field) {
     return toStringProcessor;
   }
 
@@ -65,7 +65,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       value = dateTime(value).valueOf();
     }
 
-    let text = _.toString(value);
+    let text = toString(value);
     let numeric = isStringUnit ? NaN : toNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
@@ -87,7 +87,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     if (!isNaN(numeric)) {
-      if (shouldFormat && !_.isBoolean(value)) {
+      if (shouldFormat && !isBoolean(value)) {
         const v = formatFunc(numeric, config.decimals, null, options.timeZone);
         text = v.text;
         suffix = v.suffix;
@@ -123,11 +123,11 @@ function toNumber(value: any): number {
   if (typeof value === 'boolean') {
     return value ? 1 : 0;
   }
-  return _.toNumber(value);
+  return _toNumber(value);
 }
 
 function toStringProcessor(value: any): DisplayValue {
-  return { text: _.toString(value), numeric: toNumber(value) };
+  return { text: toString(value), numeric: toNumber(value) };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {

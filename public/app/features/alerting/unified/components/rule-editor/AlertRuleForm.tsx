@@ -1,6 +1,6 @@
 import React, { FC, useMemo } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert, InfoBox } from '@grafana/ui';
+import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertTypeStep } from './AlertTypeStep';
@@ -56,6 +56,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     dispatch(
       saveRuleFormAction({
         values: {
+          ...defaultValues,
           ...values,
           annotations: values.annotations?.filter(({ key }) => !!key) ?? [],
           labels: values.labels?.filter(({ key }) => !!key) ?? [],
@@ -81,7 +82,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
             onClick={handleSubmit((values) => submit(values, false))}
             disabled={submitState.loading}
           >
-            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save
           </ToolbarButton>
           <ToolbarButton
@@ -90,17 +91,18 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
             onClick={handleSubmit((values) => submit(values, true))}
             disabled={submitState.loading}
           >
-            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save and exit
           </ToolbarButton>
         </PageToolbar>
-        <div className={styles.contentOutter}>
+        <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               {hasErrors && (
-                <InfoBox severity="error">
-                  There are errors in the form below. Please fix them and try saving again.
-                </InfoBox>
+                <Alert
+                  severity="error"
+                  title="There are errors in the form below. Please fix them and try saving again"
+                />
               )}
               {submitState.error && (
                 <Alert severity="error" title="Error saving rule">
@@ -125,7 +127,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    buttonSpiner: css`
+    buttonSpinner: css`
       margin-right: ${theme.spacing.sm};
     `,
     toolbar: css`
@@ -143,7 +145,7 @@ const getStyles = (theme: GrafanaTheme) => {
       flex: 1;
       padding: ${theme.spacing.md};
     `,
-    contentOutter: css`
+    contentOuter: css`
       background: ${theme.colors.panelBg};
       overflow: hidden;
       flex: 1;

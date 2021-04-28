@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
-import _ from 'lodash';
+import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { locationService } from '@grafana/runtime';
 import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
@@ -32,7 +32,7 @@ export interface DispatchProps {
 export type Props = OwnProps & DispatchProps;
 
 const getCopiedPanelPlugins = () => {
-  const panels = _.chain(config.panels)
+  const panels = chain(config.panels)
     .filter({ hideFromList: false })
     .map((item) => item)
     .value();
@@ -41,9 +41,9 @@ const getCopiedPanelPlugins = () => {
   const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
   if (copiedPanelJson) {
     const copiedPanel = JSON.parse(copiedPanelJson);
-    const pluginInfo: any = _.find(panels, { id: copiedPanel.type });
+    const pluginInfo: any = find(panels, { id: copiedPanel.type });
     if (pluginInfo) {
-      const pluginCopy = _.cloneDeep(pluginInfo);
+      const pluginCopy = cloneDeep(pluginInfo);
       pluginCopy.name = copiedPanel.title;
       pluginCopy.sort = -1;
       pluginCopy.defaults = copiedPanel;
@@ -51,7 +51,7 @@ const getCopiedPanelPlugins = () => {
     }
   }
 
-  return _.sortBy(copiedPanels, 'sort');
+  return sortBy(copiedPanels, 'sort');
 };
 
 export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard }) => {
@@ -98,7 +98,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
 
     // apply panel template / defaults
     if (panelPluginInfo.defaults) {
-      _.defaults(newPanel, panelPluginInfo.defaults);
+      defaults(newPanel, panelPluginInfo.defaults);
       newPanel.title = panelPluginInfo.defaults.title;
       store.delete(LS_PANEL_COPY_KEY);
     }

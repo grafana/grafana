@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
-import { Tooltip, Icon } from '@grafana/ui';
+import { Tooltip, Icon, Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -105,9 +105,9 @@ export class FolderPermissions extends PureComponent<Props, State> {
               <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
             </Tooltip>
             <div className="page-action-bar__spacer" />
-            <button className="btn btn-primary pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+            <Button className="pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
               Add Permission
-            </button>
+            </Button>
           </div>
           <SlideDown in={isAdding}>
             <AddPermission onAddPermission={this.onAddPermission} onCancel={this.onCancelAddPermission} />

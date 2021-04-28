@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import noop from 'lodash/noop';
+import { noop } from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, useStyles } from '@grafana/ui';
 

@@ -11,6 +11,11 @@ min-occurrences = 5
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
+[linters-settings.revive]
+ignore-generated-header = false
+severity = "warning"
+confidence = 3
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
@@ -52,6 +57,7 @@ enable = [
   "asciicheck",
   "errorlint",
   "sqlclosecheck",
+  "revive",
 ]
 
 # Disabled linters (might want them later)

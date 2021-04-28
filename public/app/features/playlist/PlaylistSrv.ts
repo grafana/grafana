@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { pickBy } from 'lodash';
 
 // Utils
 import { getBackendSrv, locationService } from '@grafana/runtime';
@@ -46,7 +46,7 @@ export class PlaylistSrv {
 
     const dash = this.dashboards[this.index];
     const queryParams = locationService.getSearchObject();
-    const filteredParams = _.pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
+    const filteredParams = pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
     const nextDashboardUrl = locationUtil.stripBaseFromUrl(dash.url);
 
     this.index++;

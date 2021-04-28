@@ -1,6 +1,5 @@
 import React from 'react';
-import debounce from 'lodash/debounce';
-import sortBy from 'lodash/sortBy';
+import { debounce, sortBy } from 'lodash';
 
 import { Editor as CoreEditor } from 'slate';
 import { Plugin as SlatePlugin } from '@grafana/slate-react';

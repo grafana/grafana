@@ -1,11 +1,11 @@
 import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme2 } from '../../themes';
 import { Counter } from './Counter';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
@@ -21,7 +21,7 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
-    const theme = useTheme();
+    const theme = useTheme2();
     const tabsStyles = getTabStyles(theme);
     const content = () => (
       <>
@@ -52,7 +52,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
 
 Tab.displayName = 'Tab';
 
-const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
+const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     item: css`
       list-style: none;
@@ -60,24 +60,24 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
     `,
     link: css`
-      color: ${theme.v2.palette.text.secondary};
-      padding: ${theme.v2.spacing(1.5, 2, 1)};
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(1.5, 2, 1)};
 
       svg {
-        margin-right: ${theme.v2.spacing(1)};
+        margin-right: ${theme.spacing(1)};
       }
 
       a {
         display: block;
         height: 100%;
-        color: ${theme.v2.palette.text.secondary};
+        color: ${theme.colors.text.secondary};
       }
     `,
     notActive: css`
       a:hover,
       &:hover,
       &:focus {
-        color: ${theme.v2.palette.text.primary};
+        color: ${theme.colors.text.primary};
 
         &::before {
           display: block;
@@ -88,18 +88,18 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
           height: 4px;
           border-radius: 2px;
           bottom: 0px;
-          background: ${theme.v2.palette.action.hover};
+          background: ${theme.colors.action.hover};
         }
       }
     `,
     activeStyle: css`
       label: activeTabStyle;
-      color: ${theme.v2.palette.text.primary};
+      color: ${theme.colors.text.primary};
       overflow: hidden;
-      font-weight: ${theme.v2.typography.fontWeightMedium};
+      font-weight: ${theme.typography.fontWeightMedium};
 
       a {
-        color: ${theme.v2.palette.text.primary};
+        color: ${theme.colors.text.primary};
       }
 
       &::before {
@@ -111,7 +111,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         height: 4px;
         border-radius: 2px;
         bottom: 0px;
-        background-image: ${theme.v2.palette.gradients.brandHorizontal} !important;
+        background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }
     `,
   };

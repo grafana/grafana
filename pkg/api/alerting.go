@@ -431,6 +431,11 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) re
 		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return response.Error(412, err.Error(), err)
 		}
+		var alertingErr alerting.ValidationError
+		if errors.As(err, &alertingErr) {
+			return response.Error(400, err.Error(), err)
+		}
+
 		return response.Error(500, "Failed to send alert notifications", err)
 	}
 

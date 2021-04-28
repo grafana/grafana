@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
 import { createDimension, ArrayVector, FieldType } from '@grafana/data';
 import { GraphDimensions } from './types';
-import { ActiveDimensions } from '../../Chart/Tooltip';
+import { ActiveDimensions } from '../../VizTooltip';
 
 let dimensions: GraphDimensions;
 
