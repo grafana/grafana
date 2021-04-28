@@ -87,7 +87,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerSrv{QuotaService: api.QuotaService, store: api.RuleStore, log: logger},
+		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, store: api.RuleStore, log: logger},
 		reg,
 	))
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
