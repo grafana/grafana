@@ -232,6 +232,19 @@ func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplug
 	return nil
 }
 
+func (f *fakeBackendPluginManager) Unregister(pluginID string) error {
+	var result []string
+
+	for _, existingPlugin := range f.registeredPlugins {
+		if pluginID != existingPlugin {
+			result = append(result, pluginID)
+		}
+	}
+
+	f.registeredPlugins = result
+	return nil
+}
+
 func (f *fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID string) error {
 	return nil
 }
