@@ -59,7 +59,7 @@ type Results []Result
 type Result struct {
 	Instance data.Labels
 	State    State // Enum
-	// Error message for Error state. should be nil of State != error.
+	// Error message for Error state. should be nil if State != Error.
 	Error              error
 	EvaluatedAt        time.Time
 	EvaluationDuration time.Duration
@@ -174,14 +174,22 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 }
 
 // evaluateExecutionResult takes the ExecutionResult which includes data.Frames returned
-// from SSE (Server Side Expressions). It will create a Results (slice of Result) with a State
-// extract from each Frame.
+// from SSE (Server Side Expressions). It will create Results (slice of Result) with a State
+// extracted from each Frame.
 //
 // If the ExecutionResults error property is not nil, a single Error result will be returned.
-// If there is no error, and no results a single NoData state Result will be returned.
+// If there is no error and no results then a single NoData state Result will be returned.
 //
-// Each non-empty Frame must be a single Field of type []*float64 and of length 1. Each frame must be
-// unique identified by its labels.
+// Each non-empty Frame must be a single Field of type []*float64 and of length 1.
+// Also, each Frame must be uniquely identified by its Field.Labels or a single Error result will be returned.
+//
+// Per Frame, data becomes a State based on the following rules:
+//  - Empty or zero length Frames result in NoData.
+//  - If a value:
+//    - 0 results in Normal.
+//    - Nonzero (e.g 1.2, NaN) results in Alerting.
+//    - nil results in noData.
+//    - unsupported Frame schemas results in Error.
 func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
 	evalResults := make([]Result, 0)
 
