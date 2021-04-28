@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
-import { Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Modal, useStyles2 } from '@grafana/ui';
 
 const shortcuts = {
   Global: [
@@ -50,7 +50,10 @@ export interface HelpModalProps {
 export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
   return (
-    <Modal title={<HelpModalTitle />} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+    <Modal title="Shortcuts" isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+      <div className={styles.titleDescription}>
+        <span className={styles.shortcutTableKey}>mod</span> =<span> CTRL on windows or linux and CMD key on Mac</span>
+      </div>
       <div className={styles.categories}>
         {Object.entries(shortcuts).map(([category, shortcuts], i) => (
           <div className={styles.shortcutCategory} key={i}>
@@ -82,43 +85,13 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   );
 };
 
-const HelpModalTitle = (): JSX.Element => {
-  const styles = useStyles2(getStyles);
-  return (
-    <div className={styles.container}>
-      <div className={styles.titleContainer}>
-        <Icon name="keyboard" size="lg" />
-        <div className={styles.title}>
-          <span>Shortcuts</span>
-        </div>
-      </div>
-      <div className={styles.titleDescription}>
-        <span className={styles.shortcutTableKey}>mod</span> =<span> CTRL on windows or linux and CMD key on Mac</span>
-      </div>
-    </div>
-  );
-};
-
 function getStyles(theme: GrafanaThemeV2) {
   return {
-    container: css`
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    `,
-    titleContainer: css`
-      display: flex;
-      align-items: center;
-    `,
-    title: css`
-      margin-left: ${theme.spacing(1)};
-      font-size: ${theme.typography.size.lg};
-    `,
     titleDescription: css`
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.bodySmall.fontWeight};
       color: ${theme.colors.text.disabled};
+      padding-bottom: ${theme.spacing(2)};
     `,
     categories: css`
       font-size: ${theme.typography.bodySmall.fontSize};
