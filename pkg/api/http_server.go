@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -98,6 +99,7 @@ type HTTPServer struct {
 	DataService            *tsdb.Service                           `inject:""`
 	PluginDashboardService *plugindashboards.Service               `inject:""`
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
+	LoadSchemaService      *schemaloader.SchemaLoaderService       `inject:""`
 	Listener               net.Listener
 }
 

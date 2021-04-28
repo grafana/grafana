@@ -1,8 +1,12 @@
 package load
 
 import (
+	"bytes"
+	"fmt"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
+	cuejson "cuelang.org/go/pkg/encoding/json"
 	"github.com/grafana/grafana/pkg/schema"
 )
 
@@ -106,15 +110,119 @@ func (gvs *genericVersionedSchema) Validate(r schema.Resource) error {
 // ApplyDefaults returns a new, concrete copy of the Resource with all paths
 // that are 1) missing in the Resource AND 2) specified by the schema,
 // filled with default values specified by the schema.
-func (gvs *genericVersionedSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
+func (gvs *genericVersionedSchema) ApplyDefaults(r schema.Resource) (schema.Resource, error) {
+	rv, err := rt.Compile("resource", r.Value)
+	if err != nil {
+		return r, err
+	}
+	rvUnified := rv.Value().Unify(gvs.CUE())
+	re, err := convertCUEValueToString(rvUnified)
+	if err != nil {
+		return r, err
+	}
+	return schema.Resource{Value: re}, nil
+}
+
+func convertCUEValueToString(inputCUE cue.Value) (string, error) {
+	re, err := cuejson.Marshal(inputCUE)
+	if err != nil {
+		return re, err
+	}
+
+	result := []byte(re)
+	result = bytes.Replace(result, []byte("\\u003c"), []byte("<"), -1)
+	result = bytes.Replace(result, []byte("\\u003e"), []byte(">"), -1)
+	result = bytes.Replace(result, []byte("\\u0026"), []byte("&"), -1)
+	return string(result), nil
 }
 
 // TrimDefaults returns a new, concrete copy of the Resource where all paths
 // in the  where the values at those paths are the same as the default value
 // given in the schema.
-func (gvs *genericVersionedSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
+func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resource, error) {
+	rvInstance, err := rt.Compile("resource", r.Value)
+	if err != nil {
+		return r, err
+	}
+	rv, _, err := removeDefaultHelper(gvs.CUE(), rvInstance.Value())
+	if err != nil {
+		return r, err
+	}
+	re, err := convertCUEValueToString(rv)
+	if err != nil {
+		return r, err
+	}
+	return schema.Resource{Value: re}, nil
+}
+
+func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
+	// Since for now, panel definition is open validation,
+	// we need to loop on the input CUE for trimming
+	rvInstance, err := rt.Compile("resource", []byte{})
+	if err != nil {
+		return input, false, err
+	}
+	rv := rvInstance.Value()
+
+	switch inputdef.IncompleteKind() {
+	case cue.StructKind:
+		// Get all fields including optional fields
+		iter, err := inputdef.Fields(cue.Optional(true))
+		if err != nil {
+			return rv, false, err
+		}
+		for iter.Next() {
+			lable, _ := iter.Value().Label()
+
+			lv := input.LookupPath(cue.MakePath(cue.Str(lable)))
+			if err != nil {
+				continue
+			}
+			if lv.Exists() {
+				re, isEqual, err := removeDefaultHelper(iter.Value(), lv)
+				if err == nil && !isEqual {
+					rv = rv.FillPath(cue.MakePath(cue.Str(lable)), re)
+				}
+			}
+		}
+		return rv, false, nil
+	case cue.ListKind:
+		val, _ := inputdef.Default()
+		err1 := input.Subsume(val)
+		err2 := val.Subsume(input)
+		if val.IsConcrete() && err1 == nil && err2 == nil {
+			return rv, true, nil
+		}
+		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
+		fmt.Println("xxxxxxxxxxxxxxxxxxxxx ", ele.IncompleteKind())
+		if ele.IncompleteKind() == cue.BottomKind {
+			return rv, true, nil
+		}
+
+		iter, err := input.List()
+		if err != nil {
+			return rv, true, nil
+		}
+		index := 0
+		for iter.Next() {
+			re, isEqual, err := removeDefaultHelper(ele, iter.Value())
+			if err == nil && !isEqual {
+				rv = rv.FillPath(cue.MakePath(cue.Index(index)), re)
+				index++
+			}
+		}
+
+		// rv = rv.FillPath(cue.MakePath(cue.Str(lable)), rv)
+		return rv, false, nil
+	default:
+		val, _ := inputdef.Default()
+		err1 := input.Subsume(val)
+		err2 := val.Subsume(input)
+		if val.IsConcrete() && err1 == nil && err2 == nil {
+			return input, true, nil
+		}
+		return input, false, nil
+	}
 }
 
 // CUE returns the cue.Value representing the actual schema.
@@ -164,7 +272,7 @@ var terminalMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueS
 // earlier schema) with a later schema.
 func implicitMigration(v cue.Value, next schema.VersionedCueSchema) migrationFunc {
 	return func(x interface{}) (cue.Value, schema.VersionedCueSchema, error) {
-		w := v.Fill(x)
+		w := v.FillPath(cue.Path{}, x)
 		// TODO is it possible that migration would be successful, but there
 		// still exists some error here? Need to better understand internal CUE
 		// erroring rules? seems like incomplete cue.Value may always an Err()?

@@ -30,7 +30,7 @@ func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Va
 			cv := mapPanelModel(id, sch)
 
 			mjv, miv := sch.Version()
-			parts = parts.Fill(cv, "allPanels", fmt.Sprintf("%s@%v.%v", id, mjv, miv))
+			parts = parts.FillPath(cue.MakePath(cue.Str("allPanels"), cue.Str(fmt.Sprintf("%s@%v.%v", id, mjv, miv))), cv)
 			sch = sch.Successor()
 		}
 	}
@@ -63,7 +63,7 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	`, id, maj, min))
 
 	// TODO validate, especially with #PanelModel
-	return inter.Value().Fill(vcs.CUE(), "in", "model").LookupPath(cue.MakePath(cue.Str(("result"))))
+	return inter.Value().FillPath(cue.MakePath(cue.Str("in"), cue.Str("model")), vcs.CUE()).LookupPath(cue.MakePath(cue.Str(("result"))))
 }
 
 func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {

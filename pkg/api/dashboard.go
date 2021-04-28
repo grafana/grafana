@@ -46,9 +46,32 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(403, "Access denied to this dashboard", nil)
 }
 
+func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboardCommand) response.Response {
+	var err error
+	dash := cmd.Dashboard
+	meta := cmd.Meta
+
+	trimedResult := *dash
+	if !hs.LoadSchemaService.IsDisabled() {
+		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
+		if err != nil {
+			return response.Error(500, "Error while trim default value from dashboard json", err)
+		}
+	}
+
+	dto := dtos.TrimDashboardFullWithMeta{
+		Dashboard: &trimedResult,
+		Meta:      meta,
+	}
+
+	c.TimeRequest(metrics.MApiDashboardGet)
+	return response.JSON(200, dto)
+}
+
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
+	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -154,6 +177,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 			return response.Error(500, "Error while loading library panels", err)
 		}
 	}
+	var trimedJson simplejson.Json
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
+		trimedJson, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
+		if err != nil {
+			return response.Error(500, "Error while trim default value from dashboard json", err)
+		}
+		dash.Data = &trimedJson
+	}
 
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
@@ -254,11 +285,17 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
-
+	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
+		cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
+		if err != nil {
+			return response.Error(500, "Error while applying default value to the dashboard json", err)
+		}
+	}
 	dash := cmd.GetDashboardModel()
-
 	newDashboard := dash.Id == 0 && dash.Uid == ""
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
