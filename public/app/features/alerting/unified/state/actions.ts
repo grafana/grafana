@@ -2,7 +2,7 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
-import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -12,7 +12,13 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { fetchNotifiers } from '../api/grafana';
-import { fetchAlertManagerConfig, fetchSilences, updateAlertmanagerConfig } from '../api/alertmanager';
+import {
+  expireSilence,
+  fetchAlertManagerConfig,
+  fetchAlerts,
+  fetchSilences,
+  updateAlertmanagerConfig,
+} from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
   deleteRulerRulesGroup,
@@ -318,15 +324,17 @@ export const fetchGrafanaNotifiersAction = createAsyncThunk(
   (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
 );
 
-interface UpdateALertManagerConfigActionOptions {
+interface UpdateAlertManagerConfigActionOptions {
   alertManagerSourceName: string;
   oldConfig: AlertManagerCortexConfig; // it will be checked to make sure it didn't change in the meanwhile
   newConfig: AlertManagerCortexConfig;
+  successMessage?: string; // show toast on success
+  redirectPath?: string; // where to redirect on success
 }
 
-export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateALertManagerConfigActionOptions, {}>(
+export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig }, thunkApi): Promise<void> =>
+  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath }): Promise<void> =>
     withSerializedError(
       (async () => {
         const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
@@ -336,8 +344,25 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateALert
           );
         }
         await updateAlertmanagerConfig(alertManagerSourceName, newConfig);
-        appEvents.emit(AppEvents.alertSuccess, ['Template saved.']);
-        locationService.push(makeAMLink('/alerting/notifications', alertManagerSourceName));
+        if (successMessage) {
+          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+        }
+        if (redirectPath) {
+          locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
+        }
       })()
     )
 );
+export const fetchAmAlertsAction = createAsyncThunk(
+  'unifiedalerting/fetchAmAlerts',
+  (alertManagerSourceName: string): Promise<AlertmanagerAlert[]> =>
+    withSerializedError(fetchAlerts(alertManagerSourceName, [], true, true, true))
+);
+
+export const expireSilenceAction = (alertManagerSourceName: string, silenceId: string): ThunkResult<void> => {
+  return async (dispatch) => {
+    await expireSilence(alertManagerSourceName, silenceId);
+    dispatch(fetchSilencesAction(alertManagerSourceName));
+    dispatch(fetchAmAlertsAction(alertManagerSourceName));
+  };
+};
