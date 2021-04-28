@@ -78,7 +78,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
       label: 'Global panels',
       value: ListMode.Globals,
       icon: 'info-circle',
-      description: 'Reusable panels whose state is reflected on each dashboard they are used with.',
+      description: 'Panels you can share between dashboards.',
     },
   ];
 
