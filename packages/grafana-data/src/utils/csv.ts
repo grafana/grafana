@@ -1,6 +1,6 @@
 // Libraries
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
-import defaults from 'lodash/defaults';
+import { defaults } from 'lodash';
 
 // Types
 import { DataFrame, Field, FieldConfig, FieldType } from '../types';

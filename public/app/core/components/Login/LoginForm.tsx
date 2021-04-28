@@ -3,7 +3,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { FormModel } from './LoginCtrl';
 import { Button, Form, Input, Field } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props {
   children: ReactElement;

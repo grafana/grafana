@@ -1,12 +1,14 @@
 import React from 'react';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareExport } from './ShareExport';
 import { ShareEmbed } from './ShareEmbed';
 import { ShareModalTabModel } from './types';
 import { contextSrv } from 'app/core/core';
+import { ShareGlobalPanel } from './ShareGlobalPanel';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -38,6 +40,10 @@ function getTabs(props: Props) {
 
   if (panel) {
     tabs.push({ label: 'Embed', value: 'embed', component: ShareEmbed });
+
+    if (!isPanelModelLibraryPanel(panel)) {
+      tabs.push({ label: 'Global panel', value: 'global_panel', component: ShareGlobalPanel });
+    }
     tabs.push(...customPanelTabs);
   } else {
     tabs.push({ label: 'Export', value: 'export', component: ShareExport });

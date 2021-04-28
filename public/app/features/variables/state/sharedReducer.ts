@@ -1,14 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import cloneDeep from 'lodash/cloneDeep';
-import { default as lodashDefaults } from 'lodash/defaults';
-
+import { cloneDeep, defaults as lodashDefaults } from 'lodash';
 import { LoadingState, VariableType } from '@grafana/data';
 import { VariableModel, VariableOption, VariableWithOptions } from '../types';
-import { AddVariable, getInstanceState, VariablePayload } from './types';
+import { AddVariable, getInstanceState, initialVariablesState, VariablePayload, VariablesState } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
-import { initialVariablesState, VariablesState } from './variablesReducer';
-import { isQuery } from '../guard';
 import { ensureStringValues } from '../utils';
 
 const sharedReducerSlice = createSlice({
@@ -143,19 +139,6 @@ const sharedReducerSlice = createSlice({
         option.selected = selected;
         return option;
       });
-
-      if (hasTags(current) && isQuery(instanceState)) {
-        const selected = current!.tags!.reduce((all: Record<string, boolean>, tag) => {
-          all[tag.text.toString()] = tag.selected;
-          return all;
-        }, {});
-
-        instanceState.tags = instanceState.tags.map((t) => {
-          const text = t.text.toString();
-          t.selected = selected[text];
-          return t;
-        });
-      }
     },
     changeVariableProp: (
       state: VariablesState,
@@ -187,7 +170,3 @@ export const {
   variableStateCompleted,
   variableStateFailed,
 } = sharedReducerSlice.actions;
-
-const hasTags = (option: VariableOption): boolean => {
-  return Array.isArray(option.tags);
-};

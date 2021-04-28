@@ -4,7 +4,7 @@ import selectEvent from 'react-select-event';
 
 import MetricsQueryEditor from './MetricsQueryEditor';
 
-import mockQuery from '../../__mocks__/query';
+import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
 
 const variableOptionGroup = {
@@ -18,10 +18,11 @@ describe('Azure Monitor QueryEditor', () => {
     render(
       <MetricsQueryEditor
         subscriptionId="123"
-        query={mockQuery}
+        query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={() => {}}
+        setError={() => {}}
       />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
@@ -30,6 +31,8 @@ describe('Azure Monitor QueryEditor', () => {
   it('should change the subscription ID when selected', async () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
+    const mockQuery = createMockQuery();
+    mockQuery.azureMonitor.metricName = undefined;
     mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockResolvedValueOnce([
       {
         value: 'abc-123',
@@ -48,6 +51,7 @@ describe('Azure Monitor QueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        setError={() => {}}
       />
     );
 
@@ -59,11 +63,12 @@ describe('Azure Monitor QueryEditor', () => {
       subscription: 'abc-456',
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        resourceGroup: 'select',
-        metricDefinition: 'select',
-        resourceName: 'select',
-        metricName: 'select',
-        aggregation: '',
+        resourceGroup: undefined,
+        metricDefinition: undefined,
+        metricNamespace: undefined,
+        resourceName: undefined,
+        metricName: undefined,
+        aggregation: undefined,
         timeGrain: '',
         dimensionFilters: [],
       },
@@ -73,7 +78,8 @@ describe('Azure Monitor QueryEditor', () => {
   it('should change the metric name when selected', async () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
-    mockDatasource.getMetricNames = jest.fn().mockResolvedValueOnce([
+    const mockQuery = createMockQuery();
+    mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
       {
         value: 'metric-a',
         text: 'Metric A',
@@ -83,14 +89,14 @@ describe('Azure Monitor QueryEditor', () => {
         text: 'Metric B',
       },
     ]);
-
     render(
       <MetricsQueryEditor
         subscriptionId="123"
-        query={mockQuery}
+        query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        setError={() => {}}
       />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
@@ -98,11 +104,79 @@ describe('Azure Monitor QueryEditor', () => {
     const metrics = await screen.findByLabelText('Metric');
     await selectEvent.select(metrics, 'Metric B');
 
-    expect(onChange).toHaveBeenCalledWith({
+    expect(onChange).toHaveBeenLastCalledWith({
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
         metricName: 'metric-b',
+      },
+    });
+  });
+
+  it('should auto select a default aggregation if none exists once a metric is selected', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const mockQuery = createMockQuery();
+    mockQuery.azureMonitor.aggregation = undefined;
+    mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
+      {
+        value: 'metric-a',
+        text: 'Metric A',
+      },
+      {
+        value: 'metric-b',
+        text: 'Metric B',
+      },
+    ]);
+    render(
+      <MetricsQueryEditor
+        subscriptionId="123"
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+
+    const metrics = await screen.findByLabelText('Metric');
+    await selectEvent.select(metrics, 'Metric B');
+
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        metricName: 'metric-b',
+        aggregation: 'Average',
+      },
+    });
+  });
+
+  it('should change the aggregation type when selected', async () => {
+    const mockDatasource = createMockDatasource();
+    const onChange = jest.fn();
+    const mockQuery = createMockQuery();
+    render(
+      <MetricsQueryEditor
+        subscriptionId="123"
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+
+    const aggregation = await screen.findByLabelText('Aggregation');
+    await selectEvent.select(aggregation, 'Maximum');
+
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        aggregation: 'Maximum',
       },
     });
   });

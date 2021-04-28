@@ -34,6 +34,7 @@ export interface PanelEditorState {
   shouldDiscardChanges: boolean;
   isOpen: boolean;
   ui: PanelEditorUIState;
+  isVizPickerOpen: boolean;
 }
 
 export const initialState = (): PanelEditorState => {
@@ -56,6 +57,7 @@ export const initialState = (): PanelEditorState => {
     initDone: false,
     shouldDiscardChanges: false,
     isOpen: false,
+    isVizPickerOpen: false,
     ui: {
       ...DEFAULT_PANEL_EDITOR_UI_STATE,
       ...migratedState,
@@ -87,10 +89,22 @@ const pluginsSlice = createSlice({
     },
     setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
+      // Close viz picker if closing options pane
+      if (!state.ui.isPanelOptionsVisible && state.isVizPickerOpen) {
+        state.isVizPickerOpen = false;
+      }
+    },
+    toggleVizPicker: (state, action: PayloadAction<boolean>) => {
+      state.isVizPickerOpen = action.payload;
+      // Ensure options pane is opened when viz picker is open
+      if (state.isVizPickerOpen) {
+        state.ui.isPanelOptionsVisible = true;
+      }
     },
     closeCompleted: (state) => {
       state.isOpen = false;
       state.initDone = false;
+      state.isVizPickerOpen = false;
     },
   },
 });
@@ -101,6 +115,7 @@ export const {
   setDiscardChanges,
   closeCompleted,
   setPanelEditorUIState,
+  toggleVizPicker,
 } = pluginsSlice.actions;
 
 export const panelEditorReducer = pluginsSlice.reducer;

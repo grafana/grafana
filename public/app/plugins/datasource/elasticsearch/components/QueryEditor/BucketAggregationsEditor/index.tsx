@@ -21,7 +21,7 @@ export const BucketAggregationsEditor: FunctionComponent<Props> = ({ nextId }) =
     <>
       {bucketAggs!.map((bucketAgg, index) => (
         <QueryEditorRow
-          key={bucketAgg.id}
+          key={`${bucketAgg.type}-${bucketAgg.id}`}
           label={index === 0 ? 'Group By' : 'Then By'}
           onRemoveClick={totalBucketAggs > 1 && (() => dispatch(removeBucketAggregation(bucketAgg.id)))}
         >

@@ -346,6 +346,12 @@ type SaveDashboardCommand struct {
 	Result *Dashboard
 }
 
+type TrimDashboardCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Meta      *simplejson.Json `json:"meta"`
+	Result    *Dashboard
+}
+
 type DashboardProvisioning struct {
 	Id          int64
 	DashboardId int64
@@ -353,13 +359,6 @@ type DashboardProvisioning struct {
 	ExternalId  string
 	CheckSum    string
 	Updated     int64
-}
-
-type SaveProvisionedDashboardCommand struct {
-	DashboardCmd          *SaveDashboardCommand
-	DashboardProvisioning *DashboardProvisioning
-
-	Result *Dashboard
 }
 
 type DeleteDashboardCommand struct {
@@ -416,11 +415,6 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
-}
-
-type GetProvisionedDashboardDataByIdQuery struct {
-	DashboardId int64
-	Result      *DashboardProvisioning
 }
 
 type GetDashboardsBySlugQuery struct {

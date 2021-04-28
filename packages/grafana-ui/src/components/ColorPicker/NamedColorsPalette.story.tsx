@@ -1,9 +1,8 @@
 import React from 'react';
 import { NamedColorsPalette, NamedColorsPaletteProps } from './NamedColorsPalette';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { UseState } from '../../utils/storybook/UseState';
 import mdx from './ColorPicker.mdx';
 
@@ -18,13 +17,14 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['theme', 'color'],
+    },
   },
   argTypes: {
     selectedColor: { control: { type: 'select', options: ['green', 'red', 'light-blue', 'yellow'] } },
-    theme: NOOP_CONTROL,
-    color: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 interface StoryProps extends Partial<NamedColorsPaletteProps> {
   selectedColor: string;

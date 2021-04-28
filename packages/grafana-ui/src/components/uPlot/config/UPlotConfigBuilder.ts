@@ -6,8 +6,7 @@ import { AxisPlacement } from '../config';
 import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
 import { defaultsDeep } from 'lodash';
 import { DefaultTimeZone, getTimeZoneInfo } from '@grafana/data';
-
-type valueof<T> = T[keyof T];
+import { pluginLog } from '../utils';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -15,6 +14,7 @@ export class UPlotConfigBuilder {
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
   private cursor: Cursor | undefined;
+  private isStacking = false;
   // uPlot types don't export the Select interface prior to 1.6.4
   private select: Partial<BBox> | undefined;
   private hasLeftAxis = false;
@@ -26,7 +26,9 @@ export class UPlotConfigBuilder {
     this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
   }
 
-  addHook(type: keyof Hooks.Defs, hook: valueof<Hooks.Defs>) {
+  addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]) {
+    pluginLog('UPlotConfigBuilder', false, 'addHook', type);
+
     if (!this.hooks[type]) {
       this.hooks[type] = [];
     }
@@ -78,6 +80,9 @@ export class UPlotConfigBuilder {
     this.select = select;
   }
 
+  setStacking(enabled = true) {
+    this.isStacking = enabled;
+  }
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
@@ -118,16 +123,22 @@ export class UPlotConfigBuilder {
 
     config.tzDate = this.tzDate;
 
-    // When bands exist, only keep fill when defined
-    if (this.bands?.length) {
+    if (this.isStacking) {
+      // Let uPlot handle bands and fills
       config.bands = this.bands;
-      const keepFill = new Set<number>();
-      for (const b of config.bands) {
-        keepFill.add(b.series[0]);
-      }
-      for (let i = 1; i < config.series.length; i++) {
-        if (!keepFill.has(i)) {
-          config.series[i].fill = undefined;
+    } else {
+      // When fillBelowTo option enabled, handle series bands fill manually
+      if (this.bands?.length) {
+        config.bands = this.bands;
+        const keepFill = new Set<number>();
+        for (const b of config.bands) {
+          keepFill.add(b.series[0]);
+        }
+
+        for (let i = 1; i < config.series.length; i++) {
+          if (!keepFill.has(i)) {
+            config.series[i].fill = undefined;
+          }
         }
       }
     }

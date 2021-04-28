@@ -1,12 +1,12 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 
 const PAGE_LENGTH_TO_CONDENSE = 8;
 
-interface Props {
+export interface Props {
   /** The current page index being shown.  */
   currentPage: number;
   /** Number of total pages.  */

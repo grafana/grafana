@@ -12,7 +12,7 @@ import {
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
-import pick from 'lodash/pick';
+import { pick } from 'lodash';
 import { locationService } from '@grafana/runtime';
 import { ShowModalReactEvent } from '../../../../../types/events';
 
@@ -42,18 +42,24 @@ export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
   };
 }
 
+export function discardPanelChanges(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { getPanel } = getStore().panelEditor;
+    getPanel().configRev = 0;
+    dispatch(setDiscardChanges(true));
+  };
+}
 export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, shouldDiscardChanges } = getStore().panelEditor;
     const onConfirm = () => locationService.partial({ editPanel: null, tab: null });
 
+    const panel = getPanel();
     const onDiscard = () => {
-      dispatch(setDiscardChanges(true));
+      dispatch(discardPanelChanges());
       onConfirm();
     };
-
-    const panel = getPanel();
 
     if (shouldDiscardChanges || !panel.libraryPanel) {
       onConfirm();
@@ -125,10 +131,11 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
       updateDuplicateLibraryPanels(panel, dashboard!, dispatch);
 
-      // restore the source panel id before we update source panel
+      // restore the source panel ID before we update source panel
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
+      sourcePanel.configRev++; // force check the configs
 
       // Loaded plugin is not included in the persisted properties
       // So is not handled by restoreModel

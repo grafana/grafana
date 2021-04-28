@@ -176,7 +176,6 @@ export interface TSDBQueryResult<T = any> {
   refId: string;
   series: TSDBTimeSeries[];
   tables: Array<TSDBTable<T>>;
-  dataframes: number[][];
 
   error?: string;
   meta?: any;

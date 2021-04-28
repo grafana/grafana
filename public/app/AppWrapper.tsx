@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { ComponentType } from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
 import { config, locationService, navigationLogger } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
-import { ErrorBoundaryAlert, ModalRoot, ModalsProvider } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider } from '@grafana/ui';
 import { GrafanaApp } from './app';
 import { getAppRoutes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
@@ -20,6 +20,13 @@ interface AppWrapperProps {
 
 interface AppWrapperState {
   ngInjector: any;
+}
+
+/** Used by enterprise */
+let bodyRenderHooks: ComponentType[] = [];
+
+export function addBodyRenderHook(fn: ComponentType) {
+  bodyRenderHooks.push(fn);
 }
 
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
@@ -85,6 +92,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
           <ConfigContext.Provider value={config}>
             <ThemeProvider>
               <ModalsProvider>
+                <GlobalStyles />
                 <div className="grafana-app">
                   <Router history={locationService.getHistory()}>
                     <SideMenu />
@@ -98,6 +106,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                       <AppNotificationList />
                       <SearchWrapper />
                       {this.state.ngInjector && this.container && this.renderRoutes()}
+                      {bodyRenderHooks.map((Hook, index) => (
+                        <Hook key={index.toString()} />
+                      ))}
                     </div>
                   </Router>
                 </div>

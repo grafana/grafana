@@ -7,7 +7,7 @@ export const versions = [
     version: 11,
     created: '2021-01-15T14:44:44+01:00',
     createdBy: 'admin',
-    message: 'Another day another change...',
+    message: 'testing changes...',
   },
   {
     id: 247,
@@ -110,3 +110,96 @@ export const versions = [
     message: '',
   },
 ];
+
+export const diffs = {
+  lhs: {
+    data: {
+      annotations: {
+        list: [
+          {
+            builtIn: 1,
+            datasource: '-- Grafana --',
+            enable: true,
+            hide: true,
+            iconColor: 'rgba(0, 211, 255, 1)',
+            name: 'Annotations & Alerts',
+            type: 'dashboard',
+          },
+        ],
+      },
+      editable: true,
+      gnetId: null,
+      graphTooltip: 0,
+      id: 141,
+      links: [],
+      panels: [
+        {
+          type: 'graph',
+          id: 4,
+        },
+      ],
+      schemaVersion: 27,
+      style: 'dark',
+      tags: ['the tag'],
+      templating: {
+        list: [],
+      },
+      time: {
+        from: 'now-6h',
+        to: 'now',
+      },
+      timepicker: {},
+      timezone: '',
+      title: 'test dashboard',
+      uid: '_U4zObQMz',
+      version: 2,
+    },
+  },
+  rhs: {
+    data: {
+      annotations: {
+        list: [
+          {
+            builtIn: 1,
+            datasource: '-- Grafana --',
+            enable: true,
+            hide: true,
+            iconColor: 'rgba(0, 211, 255, 1)',
+            name: 'Annotations & Alerts',
+            type: 'dashboard',
+          },
+        ],
+      },
+      description: 'The dashboard description',
+      editable: true,
+      gnetId: null,
+      graphTooltip: 0,
+      id: 141,
+      links: [],
+      panels: [
+        {
+          type: 'graph',
+          title: 'panel title',
+          id: 6,
+        },
+      ],
+      schemaVersion: 27,
+      style: 'dark',
+      tags: [],
+      templating: {
+        list: [],
+      },
+      time: {
+        from: 'now-6h',
+        to: 'now',
+      },
+      timepicker: {
+        refresh_intervals: ['5s'],
+      },
+      timezone: '',
+      title: 'test dashboard',
+      uid: '_U4zObQMz',
+      version: 11,
+    },
+  },
+};

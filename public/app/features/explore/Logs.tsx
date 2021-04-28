@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 
@@ -415,7 +415,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         {!loading && !hasData && !scanning && (
           <div className={styles.noData}>
             No logs found.
-            <Button size="xs" variant="link" onClick={this.onClickScan}>
+            <Button size="xs" fill="text" onClick={this.onClickScan}>
               Scan for older logs
             </Button>
           </div>
@@ -424,7 +424,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         {scanning && (
           <div className={styles.noData}>
             <span>{scanText}</span>
-            <Button size="xs" variant="link" onClick={this.onClickStopScan}>
+            <Button size="xs" fill="text" onClick={this.onClickStopScan}>
               Stop scan
             </Button>
           </div>
@@ -452,7 +452,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm} ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
       margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
-      border: 1px solid ${theme.colors.panelBorder};
+      border: 1px solid ${theme.colors.border2};
     `,
     flipButton: css`
       margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};

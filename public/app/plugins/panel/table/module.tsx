@@ -1,10 +1,10 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { CustomFieldConfig, Options } from './types';
+import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 
-export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .setNoPadding()
@@ -20,6 +20,7 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             max: 300,
           },
           shouldApply: () => true,
+          defaultValue: defaultPanelFieldConfig.width,
         })
         .addRadio({
           path: 'align',
@@ -32,7 +33,7 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { label: 'right', value: 'right' },
             ],
           },
-          defaultValue: null,
+          defaultValue: defaultPanelFieldConfig.align,
         })
         .addSelect({
           path: 'displayMode',
@@ -42,7 +43,8 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             options: [
               { value: TableCellDisplayMode.Auto, label: 'Auto' },
               { value: TableCellDisplayMode.ColorText, label: 'Color text' },
-              { value: TableCellDisplayMode.ColorBackground, label: 'Color background' },
+              { value: TableCellDisplayMode.ColorBackground, label: 'Color background (gradient)' },
+              { value: TableCellDisplayMode.ColorBackgroundSolid, label: 'Color background (solid)' },
               { value: TableCellDisplayMode.GradientGauge, label: 'Gradient gauge' },
               { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
               { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
@@ -50,12 +52,13 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { value: TableCellDisplayMode.Image, label: 'Image' },
             ],
           },
+          defaultValue: defaultPanelFieldConfig.displayMode,
         })
         .addBooleanSwitch({
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
-          defaultValue: false,
+          defaultValue: defaultPanelFieldConfig.filterable,
         });
     },
   })
@@ -64,6 +67,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       path: 'showHeader',
       name: 'Show header',
       description: "To display table's header or not to display",
-      defaultValue: true,
+      defaultValue: defaultPanelOptions.showHeader,
     });
   });

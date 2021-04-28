@@ -4,7 +4,7 @@ import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
 import { Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme, GrafanaThemeType, getColorForTheme } from '@grafana/data';
 import { stylesFactory, withTheme } from '../../themes';
 
@@ -72,7 +72,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
 
     switch (activePicker) {
       case 'spectrum':
-        return <SpectrumPalette color={color} onChange={this.handleChange} theme={theme} />;
+        return <SpectrumPalette color={color} onChange={this.handleChange} />;
       case 'palette':
         return <NamedColorsPalette color={color} onChange={this.handleChange} theme={theme} />;
       default:

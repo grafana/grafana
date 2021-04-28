@@ -1,5 +1,5 @@
 import React, { MouseEvent, PureComponent } from 'react';
-import { Icon } from '@grafana/ui';
+import { Icon, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
@@ -98,14 +98,13 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           {this.props.variables.length > 0 && variableToEdit === null && (
             <>
               <VariablesDependenciesButton variables={this.props.variables} />
-              <a
+              <LinkButton
                 type="button"
-                className="btn btn-primary"
                 onClick={this.onNewVariable}
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
               >
                 New
-              </a>
+              </LinkButton>
             </>
           )}
         </div>

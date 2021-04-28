@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import find from 'lodash/find';
+import { find } from 'lodash';
 // Types
 import {
   AppPlugin,
@@ -17,7 +17,7 @@ import {
   UrlQueryMap,
 } from '@grafana/data';
 import { AppNotificationSeverity } from 'app/types';
-import { Alert, InfoBox, Tooltip, PluginSignatureBadge } from '@grafana/ui';
+import { Alert, InfoBox, LinkButton, PluginSignatureBadge, Tooltip } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -29,10 +29,11 @@ import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
 import { contextSrv } from '../../core/services/context_srv';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
-import { ShowModalEvent } from 'app/types/events';
+import { ShowModalReactEvent } from 'app/types/events';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { UpdatePluginModal } from './UpdatePluginModal';
 
 interface Props extends GrafanaRouteComponentProps<{ pluginId: string }, UrlQueryMap> {}
 
@@ -142,10 +143,14 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
+    const { id, name } = this.state.plugin!.meta;
     appEvents.publish(
-      new ShowModalEvent({
-        src: 'public/app/features/plugins/partials/update_instructions.html',
-        model: this.state.plugin!.meta,
+      new ShowModalReactEvent({
+        props: {
+          id,
+          name,
+        },
+        component: UpdatePluginModal,
       })
     );
   };
@@ -162,9 +167,12 @@ class PluginPage extends PureComponent<Props, State> {
         {meta.hasUpdate && (
           <div>
             <Tooltip content={meta.latestVersion!} theme="info" placement="top">
-              <a href="#" onClick={this.showUpdateInfo}>
+              <LinkButton fill="text" onClick={this.showUpdateInfo}>
                 Update Available!
-              </a>
+              </LinkButton>
+              {/*<a href="#" onClick={this.showUpdateInfo}>*/}
+              {/*  Update Available!*/}
+              {/*</a>*/}
             </Tooltip>
           </div>
         )}

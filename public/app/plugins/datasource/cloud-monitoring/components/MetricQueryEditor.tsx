@@ -51,14 +51,15 @@ function Editor({
   variableOptionGroup,
 }: React.PropsWithChildren<Props>) {
   const [state, setState] = useState<State>(defaultState);
+  const { projectName, metricType, groupBys, editorMode } = query;
 
   useEffect(() => {
-    if (query && query.projectName && query.metricType) {
+    if (projectName && metricType) {
       datasource
-        .getLabels(query.metricType, refId, query.projectName, query.groupBys)
-        .then((labels) => setState({ ...state, labels }));
+        .getLabels(metricType, refId, projectName, groupBys)
+        .then((labels) => setState((prevState) => ({ ...prevState, labels })));
     }
-  }, [query.projectName, query.groupBys, query.metricType]);
+  }, [datasource, groupBys, metricType, projectName, refId]);
 
   const onChange = (metricQuery: MetricQuery) => {
     onQueryChange({ ...query, ...metricQuery });
@@ -81,14 +82,14 @@ function Editor({
     <>
       <Project
         templateVariableOptions={variableOptionGroup.options}
-        projectName={query.projectName}
+        projectName={projectName}
         datasource={datasource}
         onChange={(projectName) => {
           onChange({ ...query, projectName });
         }}
       />
 
-      {query.editorMode === EditorMode.Visual && (
+      {editorMode === EditorMode.Visual && (
         <VisualMetricQueryEditor
           labels={state.labels}
           variableOptionGroup={variableOptionGroup}
@@ -100,7 +101,7 @@ function Editor({
         />
       )}
 
-      {query.editorMode === EditorMode.MQL && (
+      {editorMode === EditorMode.MQL && (
         <MQLQueryEditor
           onChange={(q: string) => onQueryChange({ ...query, query: q })}
           onRunQuery={onRunQuery}

@@ -1,12 +1,11 @@
 import React, { Component, createRef } from 'react';
-import omit from 'lodash/omit';
 import { PopoverController } from '../Tooltip/PopoverController';
 import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { withTheme, stylesFactory } from '../../themes';
 import { ColorPickerTrigger } from './ColorPickerTrigger';
 
@@ -43,7 +42,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
       const { theme, children } = this.props;
       const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
-        ...omit(this.props, 'children'),
+        ...{ ...this.props, children: null },
         onChange: this.onColorChange,
       });
 

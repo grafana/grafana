@@ -3,7 +3,7 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../common';
+import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 interface AggregationFieldProps extends AzureQueryEditorFieldProps {
@@ -30,7 +30,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...aggregationOptions, variableOptionGroup], [

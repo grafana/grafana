@@ -63,7 +63,15 @@ export async function loadAndInitDatasource(
   orgId: number,
   datasourceName?: string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
-  const instance = await getDatasourceSrv().get(datasourceName);
+  let instance;
+  try {
+    instance = await getDatasourceSrv().get(datasourceName);
+  } catch (error) {
+    // Falling back to the default data source in case the provided data source was not found.
+    // It may happen if last used data source or the data source provided in the URL has been
+    // removed or it is not provisioned anymore.
+    instance = await getDatasourceSrv().get();
+  }
   if (instance.init) {
     try {
       instance.init();
@@ -77,7 +85,7 @@ export async function loadAndInitDatasource(
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
 
-  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
+  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
   return { history, instance };
 }
 

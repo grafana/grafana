@@ -179,6 +179,19 @@ func TestSeriesReduce(t *testing.T) {
 			},
 		},
 		{
+			name:        "mean series (non-null-value)",
+			red:         "mean",
+			varToReduce: "A",
+			vars:        aSeriesNoNull,
+			errIs:       require.NoError,
+			resultsIs:   require.Equal,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, float64Pointer(1.5)),
+				},
+			},
+		},
+		{
 			name:        "count empty series",
 			red:         "count",
 			varToReduce: "A",

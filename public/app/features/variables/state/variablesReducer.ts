@@ -3,10 +3,7 @@ import { variableAdapters } from '../adapters';
 import { sharedReducer } from './sharedReducer';
 import { VariableModel } from '../types';
 import { AnyAction } from 'redux';
-
-export interface VariablesState extends Record<string, VariableModel> {}
-
-export const initialVariablesState: VariablesState = {};
+import { initialVariablesState, VariablesState } from './types';
 
 export const cleanVariables = createAction<undefined>('templating/cleanVariables');
 

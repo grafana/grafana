@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find } from 'lodash';
 import {
   createChangeHandler,
   createResetHandler,
@@ -9,7 +9,9 @@ import DatasourceSrv from 'app/features/plugins/datasource_srv';
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
 
-  current: any;
+  // Set through angular bindings
+  declare current: any;
+
   datasourceSrv: any;
   showTimescaleDBHelp: boolean;
   onPasswordReset: ReturnType<typeof createResetHandler>;
@@ -17,6 +19,7 @@ export class PostgresConfigCtrl {
 
   /** @ngInject */
   constructor($scope: any, datasourceSrv: DatasourceSrv) {
+    this.current = $scope.ctrl.current;
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
     this.current.jsonData.tlsConfigurationMethod = this.current.jsonData.tlsConfigurationMethod || 'file-path';
@@ -52,7 +55,7 @@ export class PostgresConfigCtrl {
         if (version < 1000) {
           name = String(major) + '.' + String(minor);
         }
-        if (!_.find(this.postgresVersions, (p: any) => p.value === version)) {
+        if (!find(this.postgresVersions, (p: any) => p.value === version)) {
           this.postgresVersions.push({ name: name, value: version });
         }
         this.current.jsonData.postgresVersion = version;

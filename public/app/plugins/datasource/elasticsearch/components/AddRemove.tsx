@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { FunctionComponent } from 'react';
 import { IconButton } from './IconButton';
 

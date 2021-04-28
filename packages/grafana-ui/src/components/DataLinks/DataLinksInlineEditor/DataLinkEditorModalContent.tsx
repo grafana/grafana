@@ -8,7 +8,7 @@ interface DataLinkEditorModalContentProps {
   link: DataLink;
   index: number;
   data: DataFrame[];
-  suggestions: VariableSuggestion[];
+  getSuggestions: () => VariableSuggestion[];
   onSave: (index: number, ink: DataLink) => void;
   onCancel: (index: number) => void;
 }
@@ -16,7 +16,7 @@ interface DataLinkEditorModalContentProps {
 export const DataLinkEditorModalContent: FC<DataLinkEditorModalContentProps> = ({
   link,
   index,
-  suggestions,
+  getSuggestions,
   onSave,
   onCancel,
 }) => {
@@ -27,7 +27,7 @@ export const DataLinkEditorModalContent: FC<DataLinkEditorModalContentProps> = (
         value={dirtyLink}
         index={index}
         isLast={false}
-        suggestions={suggestions}
+        suggestions={getSuggestions()}
         onChange={(index, link) => {
           setDirtyLink(link);
         }}

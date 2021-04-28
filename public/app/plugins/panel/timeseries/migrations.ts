@@ -10,19 +10,21 @@ import {
   NullValueMode,
   PanelModel,
 } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import {
-  GraphGradientMode,
   AxisPlacement,
   DrawStyle,
+  GraphFieldConfig,
+  GraphGradientMode,
+  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
-} from '@grafana/ui/src/components/uPlot/config';
+  StackingMode,
+  TooltipDisplayMode,
+} from '@grafana/ui';
 import { Options } from './types';
-import omitBy from 'lodash/omitBy';
-import isNil from 'lodash/isNil';
-import { isNumber, isString } from 'lodash';
+import { omitBy, isNil, isNumber, isString } from 'lodash';
+import { defaultGraphConfig } from './config';
 
 /**
  * This is called when the panel changes from another panel
@@ -210,6 +212,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
                 break;
             }
             break;
+          case 'stack':
+            rule.properties.push({
+              id: 'custom.stacking',
+              value: { mode: StackingMode.Normal, group: v },
+            });
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }
@@ -265,18 +273,24 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.fillOpacity = 100; // bars were always
   }
 
+  if (angular.stack) {
+    graph.stacking = {
+      mode: StackingMode.Normal,
+      group: defaultGraphConfig.stacking!.group,
+    };
+  }
+
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 
   const options: Options = {
-    graph: {},
     legend: {
       displayMode: LegendDisplayMode.List,
       placement: 'bottom',
       calcs: [],
     },
     tooltipOptions: {
-      mode: 'single',
+      mode: TooltipDisplayMode.Single,
     },
   };
 

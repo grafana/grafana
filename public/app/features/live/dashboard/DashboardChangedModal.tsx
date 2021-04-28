@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Modal, stylesFactory } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { dashboardWatcher } from './dashboardWatcher';
 import { config } from '@grafana/runtime';
 import { DashboardEvent, DashboardEventAction } from './types';
@@ -110,7 +110,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
 
       &:hover {
-        background: ${theme.colors.formCheckboxBgCheckedHover};
+        background: ${theme.colors.bgBlue1};
         color: ${theme.colors.text};
       }
     `,

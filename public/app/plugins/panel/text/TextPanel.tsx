@@ -7,7 +7,7 @@ import config from 'app/core/config';
 // Types
 import { TextOptions } from './types';
 import { CustomScrollbar, stylesFactory } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 
 interface Props extends PanelProps<TextOptions> {}

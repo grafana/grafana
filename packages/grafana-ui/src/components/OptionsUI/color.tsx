@@ -2,16 +2,21 @@ import React from 'react';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory, useTheme } from '../../themes';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
-export interface Props {
+/**
+ * @alpha
+ * */
+export interface ColorValueEditorProps {
   value?: string;
   onChange: (value?: string) => void;
 }
 
-// Supporting FixedColor only currently
-export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
+/**
+ * @alpha
+ * */
+export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onChange }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 

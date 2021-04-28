@@ -1,7 +1,7 @@
 syntax = "proto3";
 package pluginextensionv2;
 
-option go_package = ".;pluginextensionv2";
+option go_package = "./;pluginextensionv2";
 
 message StringList {
   repeated string values = 1;

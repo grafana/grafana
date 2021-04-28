@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, stylesFactory, useTheme } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import React, { FunctionComponent } from 'react';
 

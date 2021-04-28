@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { HorizontalGroup, Portal, Tag, TooltipContainer, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { HorizontalGroup, Portal, Tag, VizTooltipContainer, useStyles } from '@grafana/ui';
+import { css } from '@emotion/css';
 
 interface AnnotationMarkerProps {
   time: string;
@@ -38,7 +38,7 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
     const elBBox = el.getBoundingClientRect();
 
     return (
-      <TooltipContainer
+      <VizTooltipContainer
         position={{ x: elBBox.left, y: elBBox.top + elBBox.height }}
         offset={{ x: 0, y: 0 }}
         onMouseEnter={onMouseEnter}
@@ -61,9 +61,9 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
             </>
           </div>
         </div>
-      </TooltipContainer>
+      </VizTooltipContainer>
     );
-  }, [time, tags, text]);
+  }, [onMouseEnter, onMouseLeave, styles, time, text, tags]);
 
   return (
     <>

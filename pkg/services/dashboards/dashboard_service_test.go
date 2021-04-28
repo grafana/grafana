@@ -107,13 +107,6 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("Should not return validation error if dashboard is provisioned but UI updates allowed", func() {
-				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-					provisioningValidated = true
-					cmd.Result = &models.DashboardProvisioning{}
-					return nil
-				})
-
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
@@ -126,16 +119,10 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(dto, true)
-				So(provisioningValidated, ShouldBeFalse)
 				So(err, ShouldBeNil)
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-					cmd.Result = nil
-					return nil
-				})
-
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
@@ -154,13 +141,6 @@ func TestDashboardService(t *testing.T) {
 			dto := &SaveDashboardDTO{}
 
 			Convey("Should not return validation error if dashboard is provisioned", func() {
-				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-					provisioningValidated = true
-					cmd.Result = &models.DashboardProvisioning{}
-					return nil
-				})
-
 				origUpdateAlerting := UpdateAlerting
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
@@ -178,27 +158,17 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				}
 
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
-					return nil
-				})
-
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveProvisionedDashboard(dto, nil)
 				So(err, ShouldBeNil)
-				So(provisioningValidated, ShouldBeFalse)
 			})
 
 			Convey("Should override invalid refresh interval if dashboard is provisioned", func() {
 				oldRefreshInterval := setting.MinRefreshInterval
 				setting.MinRefreshInterval = "5m"
 				defer func() { setting.MinRefreshInterval = oldRefreshInterval }()
-
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-					cmd.Result = &models.DashboardProvisioning{}
-					return nil
-				})
 
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
@@ -207,10 +177,6 @@ func TestDashboardService(t *testing.T) {
 				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
-
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
-					return nil
-				})
 
 				origUpdateAlerting := UpdateAlerting
 				t.Cleanup(func() {
@@ -247,10 +213,6 @@ func TestDashboardService(t *testing.T) {
 				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
-
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
-					return nil
-				})
 
 				origUpdateAlerting := UpdateAlerting
 				t.Cleanup(func() {

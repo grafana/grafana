@@ -124,6 +124,17 @@ var ptc = proxyTransportCache{
 	cache: make(map[int64]cachedTransport),
 }
 
+func (ds *DataSource) getTimeout() time.Duration {
+	timeout := 0
+	if ds.JsonData != nil {
+		timeout = ds.JsonData.Get("timeout").MustInt()
+	}
+	if timeout == 0 {
+		timeout = setting.DataProxyTimeout
+	}
+	return time.Duration(timeout) * time.Second
+}
+
 func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	transport, err := ds.GetHttpTransport()
 	if err != nil {
@@ -131,7 +142,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}
 
 	return &http.Client{
-		Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
+		Timeout:   ds.getTimeout(),
 		Transport: transport,
 	}, nil
 }
@@ -158,7 +169,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		TLSClientConfig: tlsConfig,
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
-			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
+			Timeout:   ds.getTimeout(),
 			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
 		}).Dial,
 		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,

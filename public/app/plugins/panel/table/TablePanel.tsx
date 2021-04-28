@@ -2,15 +2,15 @@ import React, { Component } from 'react';
 
 import { Select, Table } from '@grafana/ui';
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
-import { Options } from './types';
-import { css } from 'emotion';
+import { PanelOptions } from './models.gen';
+import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 export class TablePanel extends Component<Props> {
   constructor(props: Props) {
@@ -67,7 +67,7 @@ export class TablePanel extends Component<Props> {
 
   onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
-    const panelModel = getDashboardSrv().getCurrent().getPanelById(this.props.id);
+    const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
     const datasource = panelModel?.datasource;
 
     if (!datasource) {

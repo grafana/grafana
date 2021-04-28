@@ -1,6 +1,6 @@
 // Libraries
 import React, { memo } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 // Types
 import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
@@ -77,7 +77,11 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           />
         </div>
 
-        <PromExemplarField query={query} onChange={onChange} datasource={datasource} />
+        <PromExemplarField
+          isEnabled={Boolean(query.exemplar)}
+          onChange={(isEnabled) => onChange({ ...query, exemplar: isEnabled })}
+          datasource={datasource}
+        />
       </div>
     );
   }

@@ -66,6 +66,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   return (
     <BarChart
       data={data.series}
+      structureRev={data.structureRev}
       width={width}
       height={height}
       onLegendClick={onLegendClick}

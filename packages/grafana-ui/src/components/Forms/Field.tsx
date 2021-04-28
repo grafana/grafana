@@ -1,7 +1,7 @@
 import React, { HTMLAttributes } from 'react';
 import { Label } from './Label';
 import { stylesFactory, useTheme } from '../../themes';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { getChildId } from '../../utils/children';
@@ -12,7 +12,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
-  description?: string;
+  description?: React.ReactNode;
   /** Indicates if field is in invalid state */
   invalid?: boolean;
   /** Indicates if field is in loading state */

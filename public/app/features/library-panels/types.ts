@@ -1,4 +1,6 @@
 import { PanelModel } from '../dashboard/state';
+import { Dispatch } from 'react';
+import { AnyAction } from '@reduxjs/toolkit';
 
 export interface LibraryPanelSearchResult {
   totalCount: number;
@@ -13,6 +15,8 @@ export interface LibraryPanelDTO {
   folderId: number;
   uid: string;
   name: string;
+  type: string;
+  description: string;
   model: any;
   version: number;
   meta: LibraryPanelDTOMeta;
@@ -38,3 +42,5 @@ export type PanelModelLibraryPanel = Pick<LibraryPanelDTO, 'uid' | 'name' | 'met
 export interface PanelModelWithLibraryPanel extends PanelModel {
   libraryPanel: PanelModelLibraryPanel;
 }
+
+export type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;

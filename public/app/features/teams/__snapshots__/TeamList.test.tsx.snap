@@ -42,8 +42,6 @@ exports[`Render should render teams table 1`] = `
         className="gf-form gf-form--grow"
       >
         <FilterInput
-          inputClassName="gf-form-input"
-          labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
           placeholder="Search teams"
           value=""
@@ -377,8 +375,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
         className="gf-form gf-form--grow"
       >
         <FilterInput
-          inputClassName="gf-form-input"
-          labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
           placeholder="Search teams"
           value=""
@@ -504,8 +500,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
         className="gf-form gf-form--grow"
       >
         <FilterInput
-          inputClassName="gf-form-input"
-          labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
           placeholder="Search teams"
           value=""

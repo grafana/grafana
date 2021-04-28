@@ -3,9 +3,10 @@ title = "Pie chart panel"
 keywords = ["grafana", "pie chart"]
 weight = 850
 +++
-# Pie chart v2 panel
-> **Note:** This documentation refers to a beta feature.
 
+# Pie chart v2 panel
+
+> **Note:** This documentation refers to a beta feature.
 
 The pie chart displays reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
@@ -13,7 +14,7 @@ The pie chart displays reduced series, or values in a series, from one or more q
 
 ## Data and field options
 
-Time series visualizations allow you to apply:
+Pie chart visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
 - [Field options and overrides]({{< relref "../field-options/_index.md" >}})
@@ -40,12 +41,11 @@ When displaying every value from a single series, this limits the number of valu
 
 ### Fields
 
-Select which field or fields to display in the visualization.
+Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:
 
 - **Numeric fields -** All fields with numerical values.
 - **All fields -** All fields that are not removed by transformations.
 - **Time -** All fields with time values.
-- **<field name> -** Each field name is available in the list.
 
 ### Pie chart type
 

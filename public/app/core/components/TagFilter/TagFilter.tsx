@@ -1,9 +1,8 @@
 // Libraries
 import React, { FC } from 'react';
-import { css } from 'emotion';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
-import { AsyncSelect, stylesFactory, useTheme, resetSelectStyles, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { components } from 'react-select';
+import { stylesFactory, useTheme, resetSelectStyles, Icon, AsyncMultiSelect } from '@grafana/ui';
 import { escapeStringForRegex, GrafanaTheme } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
@@ -99,7 +98,7 @@ export const TagFilter: FC<Props> = ({
           Clear tags
         </span>
       )}
-      <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <AsyncMultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };

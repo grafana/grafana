@@ -23,7 +23,6 @@ export interface DashboardMeta {
   submenuEnabled?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
-  focusPanelId?: number;
   isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;

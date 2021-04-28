@@ -686,6 +686,10 @@
               "value": "lengthm"
             },
             {
+              "text": "inch (in)",
+              "value": "lengthin"
+            },
+            {
               "text": "feet (ft)",
               "value": "lengthft"
             },
@@ -726,6 +730,10 @@
             {
               "text": "gram (g)",
               "value": "massg"
+            },
+            {
+              "text": "pound (lb)",
+              "value": "masslb"
             },
             {
               "text": "kilogram (kg)",
@@ -1789,6 +1797,10 @@
               "value": "lengthm"
             },
             {
+              "text": "inch (in)",
+              "value": "lengthin"
+            },
+            {
               "text": "feet (ft)",
               "value": "lengthft"
             },
@@ -1829,6 +1841,10 @@
             {
               "text": "gram (g)",
               "value": "massg"
+            },
+            {
+              "text": "pound (lb)",
+              "value": "masslb"
             },
             {
               "text": "kilogram (kg)",
@@ -2872,6 +2888,10 @@
               "value": "lengthm"
             },
             {
+              "text": "inch (in)",
+              "value": "lengthin"
+            },
+            {
               "text": "feet (ft)",
               "value": "lengthft"
             },
@@ -2912,6 +2932,10 @@
             {
               "text": "gram (g)",
               "value": "massg"
+            },
+            {
+              "text": "pound (lb)",
+              "value": "masslb"
             },
             {
               "text": "kilogram (kg)",

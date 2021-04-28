@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 import Datasource from '../datasource';
 import { AzureMonitorQuery } from '../types';
-import { convertTimeGrainsToMs } from './common';
+import { convertTimeGrainsToMs } from '../utils/common';
 
 export interface MetricMetadata {
   aggOptions: Array<{ label: string; value: string }>;
@@ -50,8 +50,11 @@ export function useMetricsMetadata(
           ...query,
           azureMonitor: {
             ...query.azureMonitor,
-            aggregation: metadata.primaryAggType,
-            timeGrain: 'auto',
+            aggregation:
+              query.azureMonitor.aggregation && metadata.supportedAggTypes.includes(query.azureMonitor.aggregation)
+                ? query.azureMonitor.aggregation
+                : metadata.primaryAggType,
+            timeGrain: query.azureMonitor.timeGrain || 'auto',
             allowedTimeGrainsMs: convertTimeGrainsToMs(metadata.supportedTimeGrains),
           },
         });
@@ -79,6 +82,9 @@ export function useMetricsMetadata(
     query.azureMonitor.resourceName,
     query.azureMonitor.metricNamespace,
     query.azureMonitor.metricName,
+    query,
+    datasource,
+    onQueryChange,
   ]);
 
   return metricMetadata;

@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
-import { AnnotationEvent, AnnotationSupport } from './annotations';
+import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
 import { DataTopic, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
@@ -11,6 +11,7 @@ import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 import { LiveChannelSupport } from './live';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -167,7 +168,7 @@ export interface DataSourceConstructor<
  * Although this is a class, datasource implementations do not *yet* need to extend it.
  * As such, we can not yet add functions with default implementations.
  */
-export abstract class DataSourceApi<
+abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
@@ -608,11 +609,7 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
   rangeRaw: RawTimeRange;
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
-  annotation: {
-    datasource: string;
-    enable: boolean;
-    name: string;
-  } & MoreOptions;
+  annotation: AnnotationQuery;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
@@ -620,7 +617,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
 }
 
-export abstract class LanguageProvider {
+abstract class LanguageProvider {
   abstract datasource: DataSourceApi<any, any>;
   abstract request: (url: string, params?: any) => Promise<any>;
 
@@ -631,3 +628,12 @@ export abstract class LanguageProvider {
   abstract start: () => Promise<Array<Promise<any>>>;
   startTask?: Promise<any[]>;
 }
+
+//@ts-ignore
+LanguageProvider = makeClassES5Compatible(LanguageProvider);
+export { LanguageProvider };
+
+//@ts-ignore
+DataSourceApi = makeClassES5Compatible(DataSourceApi);
+
+export { DataSourceApi };

@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React, { FC, MouseEventHandler } from 'react';
 import { Cell } from 'react-table';
-import { Field } from '@grafana/data';
+import { Field, LinkModel } from '@grafana/data';
 import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
 
@@ -11,9 +11,19 @@ export interface Props {
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
+  /** Index before table sort */
+  dataRowIndex: number;
 }
 
-export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdded, columnIndex, columnCount }) => {
+export const TableCell: FC<Props> = ({
+  cell,
+  field,
+  tableStyles,
+  onCellFilterAdded,
+  columnIndex,
+  columnCount,
+  dataRowIndex,
+}) => {
   const cellProps = cell.getCellProps();
 
   if (!field.display) {
@@ -32,15 +42,33 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
     innerWidth -= tableStyles.lastChildExtraPadding;
   }
 
-  return (
-    <>
-      {cell.render('Cell', {
-        field,
-        tableStyles,
-        onCellFilterAdded,
-        cellProps,
-        innerWidth,
-      })}
-    </>
+  const link: LinkModel | undefined = field.getLinks?.({
+    valueRowIndex: dataRowIndex,
+  })[0];
+
+  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
+  if (link?.onClick) {
+    onClick = (event) => {
+      // Allow opening in new tab
+      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
+        event.preventDefault();
+        link!.onClick(event);
+      }
+    };
+  }
+
+  const renderedCell = cell.render('Cell', {
+    field,
+    tableStyles,
+    onCellFilterAdded,
+    cellProps,
+    innerWidth,
+  });
+  return link ? (
+    <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={tableStyles.cellLink}>
+      {renderedCell}
+    </a>
+  ) : (
+    <>{renderedCell}</>
   );
 };

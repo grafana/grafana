@@ -18,7 +18,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     if (query.exemplar === undefined) {
       onChange({ ...query, exemplar: true });
     }
-  }, [query]);
+  }, [onChange, query]);
 
   function onChangeQueryStep(value: string) {
     const { query, onChange } = props;

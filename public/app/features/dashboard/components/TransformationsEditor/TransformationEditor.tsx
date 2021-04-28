@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { mergeMap } from 'rxjs/operators';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Icon, JSONFormatter, useStyles } from '@grafana/ui';
 import {
   DataFrame,
@@ -61,10 +61,11 @@ export const TransformationEditor = ({
     [
       uiConfig.editor,
       uiConfig.transformation.defaultOptions,
-      config.transformation.id,
       config.transformation.options,
+      config.transformation.id,
       input,
       onChange,
+      index,
     ]
   );
 

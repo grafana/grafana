@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent, memo, FormEvent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';

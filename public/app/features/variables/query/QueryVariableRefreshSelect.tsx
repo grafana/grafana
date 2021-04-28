@@ -11,8 +11,8 @@ interface Props {
 
 const REFRESH_OPTIONS = [
   { label: 'Never', value: VariableRefresh.never },
-  { label: 'On Dashboard Load', value: VariableRefresh.onDashboardLoad },
-  { label: 'On Time Range Change', value: VariableRefresh.onTimeRangeChanged },
+  { label: 'On dashboard load', value: VariableRefresh.onDashboardLoad },
+  { label: 'On time range change', value: VariableRefresh.onTimeRangeChanged },
 ];
 
 export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChildren<Props>) {

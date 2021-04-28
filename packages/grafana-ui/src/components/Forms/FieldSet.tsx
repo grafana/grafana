@@ -1,5 +1,5 @@
 import React, { FC, HTMLProps } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 import { Legend } from './Legend';
@@ -26,6 +26,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.formSpacingBase * 4}px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
     `,
   };
 });

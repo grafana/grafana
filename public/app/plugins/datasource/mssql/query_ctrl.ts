@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
@@ -28,7 +27,7 @@ export class MssqlQueryCtrl extends QueryCtrl {
   target: MssqlQuery;
   lastQueryMeta?: QueryResultMeta;
   lastQueryError?: string;
-  showHelp: boolean;
+  showHelp = false;
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {

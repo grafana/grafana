@@ -1,5 +1,5 @@
 import { GraphiteDatasource } from './datasource';
-import _ from 'lodash';
+import { isArray } from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
@@ -215,7 +215,7 @@ describe('graphiteDatasource', () => {
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(isArray(results[0].tags)).toEqual(true);
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -233,22 +233,62 @@ describe('graphiteDatasource', () => {
         },
       ];
 
-      beforeEach(() => {
+      beforeEach(async () => {
         fetchMock.mockImplementation((options: any) => {
           return of(createFetchResponse(response));
         });
 
-        ctx.ds.annotationQuery(options).then((data: any) => {
+        await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
-        // ctx.$rootScope.$apply();
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(isArray(results[0].tags)).toEqual(true);
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
+      });
+    });
+
+    it('and tags response is invalid', async () => {
+      fetchMock.mockImplementation((options: any) => {
+        return of(createFetchResponse('zzzzzzz'));
+      });
+      await ctx.ds.annotationQuery(options).then((data: any) => {
+        results = data;
+      });
+      expect(results).toEqual([]);
+    });
+  });
+
+  describe('when fetching Graphite function descriptions', () => {
+    // `"default": Infinity` (invalid JSON) in params passed by Graphite API in 1.1.7
+    const INVALID_JSON =
+      '{"testFunction":{"name":"function","description":"description","module":"graphite.render.functions","group":"Transform","params":[{"name":"param","type":"intOrInf","required":true,"default":Infinity}]}}';
+
+    it('should parse the response with an invalid JSON', async () => {
+      fetchMock.mockImplementation(() => {
+        return of(createFetchResponse(INVALID_JSON));
+      });
+      const funcDefs = await ctx.ds.getFuncDefs();
+      expect(funcDefs).toEqual({
+        testFunction: {
+          category: 'Transform',
+          defaultParams: ['inf'],
+          description: 'description',
+          fake: true,
+          name: 'function',
+          params: [
+            {
+              multiple: false,
+              name: 'param',
+              optional: false,
+              options: undefined,
+              type: 'int_or_infinity',
+            },
+          ],
+        },
       });
     });
   });

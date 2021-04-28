@@ -70,6 +70,10 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			ctx.JsonApiErr(500, "Failed to render plugin headers", err)
 			return
 		}
+
+		if err := setBodyContent(req, route, data); err != nil {
+			logger.Error("Failed to set plugin route body content", "error", err)
+		}
 	}
 
 	return &httputil.ReverseProxy{Director: director}

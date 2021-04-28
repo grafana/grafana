@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import { DataFrame, DisplayValue, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { VizLegendItem, VizLegendOptions } from '../VizLegend/types';
+import { VizLegendItem } from '../VizLegend/types';
+import { VizLegendOptions } from '../VizLegend/models.gen';
 import { AxisPlacement } from './config';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { mapMouseEventToMode } from '../GraphNG/utils';

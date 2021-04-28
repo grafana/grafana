@@ -61,18 +61,15 @@ export const Components = {
     },
     OptionsPane: {
       content: 'Panel editor option pane content',
-      close: 'Page toolbar button Close options pane',
-      open: 'Page toolbar button Open options pane',
       select: 'Panel editor option pane select',
-      tab: (title: string) => `Panel editor option pane tab ${title}`,
+      fieldLabel: (type: string) => `${type} field property editor`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    FieldOptions: {
-      propertyEditor: (type: string) => `${type} field property editor`,
-    },
+    toggleVizPicker: 'toggle-viz-picker',
+    toggleVizOptions: 'toggle-viz-options',
   },
   PanelInspector: {
     Data: {

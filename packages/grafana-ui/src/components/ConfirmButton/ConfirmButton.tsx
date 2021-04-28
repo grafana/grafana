@@ -1,5 +1,5 @@
 import React, { PureComponent, SyntheticEvent } from 'react';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
@@ -143,7 +143,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       <span className={styles.buttonContainer}>
         {typeof children === 'string' ? (
           <span className={buttonClass}>
-            <Button size={size} variant="link" onClick={onClick}>
+            <Button size={size} fill="text" onClick={onClick}>
               {children}
             </Button>
           </span>
@@ -153,7 +153,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
           </span>
         )}
         <span className={confirmButtonClass}>
-          <Button size={size} variant="link" onClick={this.onClickCancel}>
+          <Button size={size} fill="text" onClick={this.onClickCancel}>
             Cancel
           </Button>
           <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm}>

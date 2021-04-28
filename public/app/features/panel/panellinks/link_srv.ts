@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chain } from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
@@ -24,7 +24,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 
 const timeRangeVars = [
   {
@@ -110,7 +110,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
     }
   }
 
-  const labels = _.chain(all).flatten().uniq().value();
+  const labels = chain(all).flatten().uniq().value();
 
   return [
     {
@@ -134,30 +134,36 @@ export const getDataFrameVars = (dataFrames: DataFrame[]) => {
   const suggestions: VariableSuggestion[] = [];
   const keys: KeyValue<true> = {};
 
-  for (const frame of dataFrames) {
-    for (const field of frame.fields) {
-      const displayName = getFieldDisplayName(field, frame, dataFrames);
+  if (dataFrames.length !== 1) {
+    // It's not possible to access fields of other dataframes. So if there are multiple dataframes we need to skip these suggestions.
+    // Also return early if there are no dataFrames.
+    return [];
+  }
 
-      if (keys[displayName]) {
-        continue;
-      }
+  const frame = dataFrames[0];
 
-      suggestions.push({
-        value: `__data.fields${buildLabelPath(displayName)}`,
-        label: `${displayName}`,
-        documentation: `Formatted value for ${displayName} on the same row`,
-        origin: VariableOrigin.Fields,
-      });
+  for (const field of frame.fields) {
+    const displayName = getFieldDisplayName(field, frame, dataFrames);
 
-      keys[displayName] = true;
+    if (keys[displayName]) {
+      continue;
+    }
 
-      if (!numeric && field.type === FieldType.number) {
-        numeric = { ...field, name: displayName };
-      }
+    suggestions.push({
+      value: `__data.fields${buildLabelPath(displayName)}`,
+      label: `${displayName}`,
+      documentation: `Formatted value for ${displayName} on the same row`,
+      origin: VariableOrigin.Fields,
+    });
 
-      if (!title && field.config.displayName && field.config.displayName !== field.name) {
-        title = { ...field, name: displayName };
-      }
+    keys[displayName] = true;
+
+    if (!numeric && field.type === FieldType.number) {
+      numeric = { ...field, name: displayName };
+    }
+
+    if (!title && field.config.displayName && field.config.displayName !== field.name) {
+      title = { ...field, name: displayName };
     }
   }
 
@@ -274,7 +280,7 @@ export class LinkSrv implements LinkService {
     if (link.includeVars) {
       params = {
         ...params,
-        ...getAllVariableValuesForUrl(),
+        ...getVariablesUrlParams(),
       };
     }
 

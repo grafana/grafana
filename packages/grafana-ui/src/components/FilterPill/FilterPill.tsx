@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
-import { stylesFactory, ThemeContext } from '../../themes';
+import React from 'react';
+import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconButton } from '../IconButton/IconButton';
 import { IconName } from '../../types';
 
@@ -13,7 +13,7 @@ export interface FilterPillProps {
 }
 
 export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick, icon = 'check' }) => {
-  const theme = useContext(ThemeContext);
+  const theme = useTheme();
   const styles = getFilterPillStyles(theme, selected);
   return (
     <div className={styles.wrapper} onClick={onClick}>

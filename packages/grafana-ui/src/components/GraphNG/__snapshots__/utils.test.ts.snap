@@ -31,10 +31,24 @@ UPlotConfigBuilder {
       },
     },
   },
-  "bands": Array [],
+  "bands": Array [
+    Object {
+      "series": Array [
+        2,
+        1,
+      ],
+    },
+    Object {
+      "series": Array [
+        4,
+        3,
+      ],
+    },
+  ],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {},
+  "isStacking": true,
   "scales": Array [
     UPlotScaleBuilder {
       "props": Object {
@@ -119,6 +133,135 @@ UPlotConfigBuilder {
         },
         "drawStyle": "bars",
         "fieldName": "Metric 2",
+        "fillOpacity": 0.1,
+        "gradientMode": "hue",
+        "hideInLegend": undefined,
+        "lineColor": "#ff0000",
+        "lineInterpolation": "linear",
+        "lineStyle": Object {
+          "dash": Array [
+            1,
+            2,
+          ],
+          "fill": "dash",
+        },
+        "lineWidth": 2,
+        "pointColor": "#808080",
+        "pointSize": undefined,
+        "scaleKey": "__fixed",
+        "show": true,
+        "showPoints": "always",
+        "spanNulls": false,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+    UPlotSeriesBuilder {
+      "props": Object {
+        "barAlignment": undefined,
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 2,
+          "frameIndex": 1,
+        },
+        "drawStyle": "line",
+        "fieldName": "Metric 3",
+        "fillOpacity": 0.1,
+        "gradientMode": "opacity",
+        "hideInLegend": undefined,
+        "lineColor": "#ff0000",
+        "lineInterpolation": "linear",
+        "lineStyle": Object {
+          "dash": Array [
+            1,
+            2,
+          ],
+          "fill": "dash",
+        },
+        "lineWidth": 2,
+        "pointColor": "#808080",
+        "pointSize": undefined,
+        "scaleKey": "__fixed",
+        "show": true,
+        "showPoints": "always",
+        "spanNulls": false,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+    UPlotSeriesBuilder {
+      "props": Object {
+        "barAlignment": -1,
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 3,
+          "frameIndex": 1,
+        },
+        "drawStyle": "bars",
+        "fieldName": "Metric 4",
+        "fillOpacity": 0.1,
+        "gradientMode": "hue",
+        "hideInLegend": undefined,
+        "lineColor": "#ff0000",
+        "lineInterpolation": "linear",
+        "lineStyle": Object {
+          "dash": Array [
+            1,
+            2,
+          ],
+          "fill": "dash",
+        },
+        "lineWidth": 2,
+        "pointColor": "#808080",
+        "pointSize": undefined,
+        "scaleKey": "__fixed",
+        "show": true,
+        "showPoints": "always",
+        "spanNulls": false,
+        "theme": Object {
+          "colors": Object {
+            "panelBg": "#000000",
+          },
+        },
+        "thresholds": undefined,
+      },
+    },
+    UPlotSeriesBuilder {
+      "props": Object {
+        "barAlignment": -1,
+        "colorMode": Object {
+          "description": "Derive colors from thresholds",
+          "getCalculator": [Function],
+          "id": "thresholds",
+          "isByValue": true,
+          "name": "From thresholds",
+        },
+        "dataFrameFieldIndex": Object {
+          "fieldIndex": 4,
+          "frameIndex": 1,
+        },
+        "drawStyle": "bars",
+        "fieldName": "Metric 4",
         "fillOpacity": 0.1,
         "gradientMode": "hue",
         "hideInLegend": undefined,

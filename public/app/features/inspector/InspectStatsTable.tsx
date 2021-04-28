@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { stylesFactory, useTheme } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface InspectStatsTableProps {
   timeZone: TimeZone;

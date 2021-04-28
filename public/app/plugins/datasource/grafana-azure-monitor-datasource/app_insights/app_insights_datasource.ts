@@ -1,6 +1,6 @@
 import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import _, { isString } from 'lodash';
+import { isString } from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from '../types';

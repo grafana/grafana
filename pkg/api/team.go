@@ -176,11 +176,3 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext, dtoCmd dtos.Up
 var createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
 	return sqlStore.CreateTeam(name, email, orgID)
 }
-
-// addTeamMember adds a team member.
-//
-// Stubbable by tests.
-var addTeamMember = func(sqlStore *sqlstore.SQLStore, userID, orgID, teamID int64, isExternal bool,
-	permission models.PermissionType) error {
-	return sqlStore.AddTeamMember(userID, orgID, teamID, isExternal, permission)
-}

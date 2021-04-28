@@ -28,7 +28,6 @@ export const useDashboardRestore = (version: number) => {
       });
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard restored', 'Restored from version ' + version]);
     }
-  }, [state]);
-
+  }, [state, version]);
   return { state, onRestoreDashboard };
 };

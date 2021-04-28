@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Debug",
+  "id": "debug",
+  "state": "alpha",
+
+  "info": {
+    "description": "Debug Panel for Grafana",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-debug.svg",
+      "large": "img/icn-debug.svg"
+    }
+  }
+}

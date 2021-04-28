@@ -1,7 +1,6 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -18,6 +17,19 @@ export default {
     },
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: [
+        'theme',
+        'field',
+        'value',
+        'display',
+        'orientation',
+        'text',
+        'onClick',
+        'className',
+        'alignmentFactors',
+      ],
     },
   },
   args: {
@@ -45,17 +57,8 @@ export default {
     height: { control: { type: 'range', min: 200, max: 800 } },
     threshold1Color: { control: 'color' },
     threshold2Color: { control: 'color' },
-    theme: NOOP_CONTROL,
-    field: NOOP_CONTROL,
-    value: NOOP_CONTROL,
-    display: NOOP_CONTROL,
-    orientation: NOOP_CONTROL,
-    text: NOOP_CONTROL,
-    onClick: NOOP_CONTROL,
-    className: NOOP_CONTROL,
-    alignmentFactors: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 interface StoryProps extends Partial<Props> {
   numeric: number;

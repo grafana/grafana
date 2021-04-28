@@ -10,8 +10,6 @@ list = false
 
 # What’s new in Grafana v7.5
 
-> **Note:** This is content for a beta version of Grafana. It will be updated several times before the stable release.
-
 This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Grafana OSS features
@@ -68,6 +66,8 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
+[Postgres data source]({{< relref "../datasources/postgres.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of this change.
+
 ### Deprecation notice for some Azure Monitor queries
 
 In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs.
@@ -97,6 +97,8 @@ We have converted Tempo to a backend data source and dropped support for tempo-q
 server:
   http_listen_port: 3101
 ```
+
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
@@ -143,8 +145,18 @@ Each Grafana Enterprise user will be limited to three concurrent user sessions. 
 
 A new session is created when you sign in to Grafana from a different device or a different browser. Multiple windows and tabs in the same browser are all part of the same session, so having many Grafana tabs open will not cause any issues.
 
-For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license-restrictions.md" >}}).
+For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license/license-restrictions.md" >}}).
 
 ## Breaking changes
 
 There are no known breaking changes in this release.
+
+## Updated configuration
+
+```
+[server]
+read_timeout = 0
+```
+
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
+`0` means there is no timeout for reading the request.

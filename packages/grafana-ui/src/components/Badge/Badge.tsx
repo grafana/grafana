@@ -6,7 +6,7 @@ import { IconName } from '../../types';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { HorizontalGroup } from '../Layout/Layout';
 
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';

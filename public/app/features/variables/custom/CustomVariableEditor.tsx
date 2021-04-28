@@ -43,7 +43,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
   render() {
     return (
       <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Custom Options" />
+        <VariableSectionHeader name="Custom options" />
         <VerticalGroup spacing="md">
           <VerticalGroup spacing="none">
             <VariableTextAreaField
