@@ -246,7 +246,8 @@ func TestEvaluateExecutionResult(t *testing.T) {
 					State: Error,
 				},
 				{
-					State: Alerting,
+					State:    Alerting,
+					Instance: data.Labels{"a": "b"},
 				},
 			},
 		},
@@ -260,6 +261,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 
 			for i, r := range res {
 				require.Equal(t, tc.expectResults[i].State, r.State)
+				require.Equal(t, tc.expectResults[i].Instance, r.Instance)
 			}
 		})
 	}
