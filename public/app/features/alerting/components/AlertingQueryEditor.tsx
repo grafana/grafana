@@ -40,7 +40,6 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   async componentDidMount() {
     try {
       this.runner.get().subscribe((data) => {
-        console.log('subscribe', data);
         this.setState({ panelDataRecord: { ...data } });
       });
       const defaultDataSource = await getDataSourceSrv().get();
@@ -134,8 +133,6 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     const { value = [] } = this.props;
     const { panelDataRecord } = this.state;
     const styles = getStyles(config.theme);
-
-    console.log('render', panelDataRecord);
 
     return (
       <div className={styles.container}>

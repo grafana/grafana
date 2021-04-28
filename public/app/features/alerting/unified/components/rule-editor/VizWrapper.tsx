@@ -1,6 +1,7 @@
 import React, { FC, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { PanelData, VizOrientation } from '@grafana/data';
+import { css } from '@emotion/css';
+import { GrafanaTheme, PanelData, VizOrientation } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
   HorizontalGroup,
@@ -8,6 +9,7 @@ import {
   RadioButtonGroup,
   SingleStatBaseOptions,
   TooltipDisplayMode,
+  useStyles,
 } from '@grafana/ui';
 import { Options } from 'app/plugins/panel/timeseries/types';
 
@@ -16,34 +18,43 @@ interface Props {
   defaultPanel?: 'timeseries' | 'table' | 'stat';
 }
 
-export const VizWrapper: FC<Props> = ({ data, defaultPanel = 'timeseries' }) => {
-  const [pluginId, changePluginId] = useState<string>(defaultPanel);
-  const options = getOptionsForPanelPlugin(pluginId);
+export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
+  const [pluginId, changePluginId] = useState<string>(defaultPanel ?? 'timeseries');
+  const options = { ...getOptionsForPanelPlugin(pluginId) };
+  const styles = useStyles(getStyles);
 
-  if (!options) {
+  if (!options || !data) {
     return null;
   }
+
+  console.log(pluginId);
+  console.log(options);
+
   return (
-    <div style={{ height: '200px', width: '100%' }}>
-      <AutoSizer>
-        {({ width, height }) => {
-          return (
-            <PanelRenderer
-              height={height}
-              width={width}
-              data={data}
-              pluginId={pluginId}
-              title="title"
-              onOptionsChange={() => {}}
-              options={options}
-            />
-          );
-        }}
-      </AutoSizer>
-      <div>
-        <HorizontalGroup>
-          <RadioButtonGroup options={vizOptions} value={pluginId} onChange={changePluginId} />
-        </HorizontalGroup>
+    <div>
+      <HorizontalGroup>
+        <RadioButtonGroup options={vizOptions} value={pluginId} onChange={changePluginId} />
+      </HorizontalGroup>
+      <div style={{ height: '200px', width: '100%', position: 'relative' }}>
+        <AutoSizer style={{ width: '100%', height: '100%' }}>
+          {({ width, height }) => {
+            if (height === 0 || width === 0) {
+              return null;
+            }
+
+            return (
+              <PanelRenderer
+                height={height}
+                width={width}
+                data={data}
+                pluginId={pluginId}
+                title="title"
+                onOptionsChange={() => {}}
+                options={options}
+              />
+            );
+          }}
+        </AutoSizer>
       </div>
     </div>
   );
@@ -79,7 +90,10 @@ const timeSeriesOptions: Options = {
   },
 };
 
-const tableOptions = {};
+const tableOptions = {
+  frameIndex: 0,
+  showHeader: true,
+};
 const singleStatOptions: SingleStatBaseOptions = {
   reduceOptions: {
     calcs: [],
@@ -87,3 +101,9 @@ const singleStatOptions: SingleStatBaseOptions = {
   orientation: VizOrientation.Auto,
   text: undefined,
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  buttonGroup: css`
+    margin-bottom: ${theme.spacing.md};
+  `,
+});

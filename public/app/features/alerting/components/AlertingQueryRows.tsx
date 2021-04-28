@@ -118,6 +118,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                 {queries.map((query, index) => {
                   const data = this.props.data ? this.props.data[query.refId] : ({} as PanelData);
                   const dsSettings = this.getDataSourceSettings(query);
+                  const isExpression = isExpressionQuery(query.model);
 
                   if (!dsSettings) {
                     return null;
@@ -133,21 +134,19 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                         query={query.model}
                         onChange={(query) => this.onChangeQuery(query, index)}
                         timeRange={
-                          !isExpressionQuery(query.model) && query.relativeTimeRange
+                          !isExpression && query.relativeTimeRange
                             ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
                             : undefined
                         }
                         onChangeTimeRange={
-                          !isExpressionQuery(query.model)
-                            ? (timeRange) => this.onChangeTimeRange(timeRange, index)
-                            : undefined
+                          !isExpression ? (timeRange) => this.onChangeTimeRange(timeRange, index) : undefined
                         }
                         onRemoveQuery={this.onRemoveQuery}
                         onAddQuery={this.props.onDuplicateQuery}
                         onRunQuery={this.props.onRunQueries}
                         queries={queries}
                       />
-                      {data && <VizWrapper data={data} />}
+                      {data && <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} />}
                     </React.Fragment>
                   );
                 })}

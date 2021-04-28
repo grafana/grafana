@@ -30,7 +30,8 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     return <div>Failed to load plugin: {error.message}</div>;
   }
 
-  if (loading) {
+  //@TODO break out
+  if (loading || plugin?.meta.id !== pluginId) {
     return <div>Loading plugin panel...</div>;
   }
 
