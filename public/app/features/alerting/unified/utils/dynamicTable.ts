@@ -11,10 +11,10 @@ export const prepareItems = <T = unknown>(
 
 export const collapseItem = <T = unknown>(
   items: Array<DynamicTableItemProps<T>>,
-  item: DynamicTableItemProps<T>
+  itemId: DynamicTableItemProps<T>['id']
 ): Array<DynamicTableItemProps<T>> =>
   items.map((currentItem) => {
-    if (currentItem !== item) {
+    if (currentItem.id !== itemId) {
       return currentItem;
     }
 
@@ -27,11 +27,11 @@ export const collapseItem = <T = unknown>(
 
 export const expandItem = <T = unknown>(
   items: Array<DynamicTableItemProps<T>>,
-  item: DynamicTableItemProps<T>,
+  itemId: DynamicTableItemProps<T>['id'],
   renderExpandedContent?: DynamicTableItemProps['renderExpandedContent']
 ): Array<DynamicTableItemProps<T>> =>
   items.map((currentItem) => {
-    if (currentItem !== item) {
+    if (currentItem.id !== itemId) {
       return currentItem;
     }
 

@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Alert, Field, LoadingPlaceholder, useStyles } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { Alert, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -18,7 +18,7 @@ import { initialAsyncRequestState } from './utils/redux';
 
 const AmRoutes: FC = () => {
   const dispatch = useDispatch();
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
 
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
@@ -108,15 +108,11 @@ const AmRoutes: FC = () => {
 
 export default AmRoutes;
 
-const getStyles = (theme: GrafanaTheme) => ({
-  iconError: css`
-    color: ${theme.palette.red};
-    margin-right: ${theme.spacing.md};
-  `,
+const getStyles = (theme: GrafanaThemeV2) => ({
   break: css`
     width: 100%;
     height: 0;
-    margin-bottom: ${theme.spacing.md};
-    border-bottom: solid 1px ${theme.colors.border2};
+    margin-bottom: ${theme.spacing(2)};
+    border-bottom: solid 1px ${theme.colors.border.medium};
   `,
 });

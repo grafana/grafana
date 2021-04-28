@@ -1,5 +1,7 @@
+import { css } from '@emotion/css';
+import { GrafanaThemeV2 } from '@grafana/data';
 import React, { FC, useState } from 'react';
-import { Button, useStyles } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyRoute } from '../../utils/amroutes';
 import { AmRoutesTable } from './AmRoutesTable';
@@ -12,7 +14,8 @@ export interface AmRoutesExpandedReadProps {
 }
 
 export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, receivers, routes }) => {
-  const styles = useStyles(getGridStyles);
+  const styles = useStyles2(getStyles);
+  const gridStyles = useStyles2(getGridStyles);
 
   const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
   const groupInterval = routes.groupIntervalValue
@@ -26,15 +29,15 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
   const [isAddMode, setIsAddMode] = useState(false);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.titleCell}>Group wait</div>
-      <div className={styles.valueCell}>{groupWait}</div>
-      <div className={styles.titleCell}>Group interval</div>
-      <div className={styles.valueCell}>{groupInterval}</div>
-      <div className={styles.titleCell}>Repeat interval</div>
-      <div className={styles.valueCell}>{repeatInterval}</div>
-      <div className={styles.titleCell}>Nested policies</div>
-      <div className={styles.valueCell}>
+    <div className={gridStyles.container}>
+      <div className={gridStyles.titleCell}>Group wait</div>
+      <div className={gridStyles.valueCell}>{groupWait}</div>
+      <div className={gridStyles.titleCell}>Group interval</div>
+      <div className={gridStyles.valueCell}>{groupInterval}</div>
+      <div className={gridStyles.titleCell}>Repeat interval</div>
+      <div className={gridStyles.valueCell}>{repeatInterval}</div>
+      <div className={gridStyles.titleCell}>Nested policies</div>
+      <div className={gridStyles.valueCell}>
         <AmRoutesTable
           isAddMode={isAddMode}
           onChange={(newRoutes) => {
@@ -52,11 +55,13 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
         />
         {!isAddMode && (
           <Button
+            className={styles.addNestedRoutingBtn}
             icon="plus"
             onClick={() => {
               setSubroutes((subroutes) => [...subroutes, emptyRoute]);
               setIsAddMode(true);
             }}
+            variant="secondary"
             type="button"
           >
             Add nested policy
@@ -65,4 +70,12 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
       </div>
     </div>
   );
+};
+
+const getStyles = (theme: GrafanaThemeV2) => {
+  return {
+    addNestedRoutingBtn: css`
+      margin-top: ${theme.spacing(2)};
+    `,
+  };
 };

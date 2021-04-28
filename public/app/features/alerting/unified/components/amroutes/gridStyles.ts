@@ -1,22 +1,23 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 
-export const getGridStyles = (theme: GrafanaTheme) => {
+export const getGridStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
       display: grid;
-      font-style: ${theme.typography.size.sm};
-      grid-template-columns: 124px auto;
+      font-style: ${theme.typography.fontSize};
+      grid-template-columns: ${theme.spacing(15.5)} auto;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.down('md')} {
         grid-template-columns: 100%;
       }
     `,
     titleCell: css`
-      color: ${theme.colors.textHeading};
+      color: ${theme.colors.text.primary};
     `,
     valueCell: css`
-      margin-bottom: ${theme.spacing.sm};
+      color: ${theme.colors.text.secondary};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };

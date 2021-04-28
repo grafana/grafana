@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import {
   Button,
   Checkbox,
@@ -13,7 +13,7 @@ import {
   MultiSelect,
   Select,
   Switch,
-  useStyles,
+  useStyles2,
 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import {
@@ -34,7 +34,7 @@ export interface AmRoutesExpandedFormProps {
 }
 
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
   const [overrideTimings, setOverrideTimings] = useState(
     !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
@@ -210,19 +210,21 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
   );
 };
 
-const getStyles = (_theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
+  const commonSpacing = theme.spacing(3.5);
+
   return {
     addMatcherBtn: css`
-      margin-bottom: 28px;
+      margin-bottom: ${commonSpacing};
     `,
     nestedPolicies: css`
-      margin-top: 28px;
+      margin-top: ${commonSpacing};
     `,
     buttonGroup: css`
-      margin: 50px 0 28px;
+      margin: ${theme.spacing(6)} 0 ${commonSpacing};
 
       & > * + * {
-        margin-left: 12px;
+        margin-left: ${theme.spacing(1.5)};
       }
     `,
   };

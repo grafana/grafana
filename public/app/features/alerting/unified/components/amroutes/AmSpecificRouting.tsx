@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Button, useStyles } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyRoute } from '../../utils/amroutes';
 import { EmptyArea } from '../EmptyArea';
@@ -18,7 +18,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, onRoot
   const [actualRoutes, setActualRoutes] = useState(routes.routes);
   const [isAddMode, setIsAddMode] = useState(false);
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const addNewRoute = () => {
     setIsAddMode(true);
@@ -71,7 +71,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, onRoot
   );
 };
 
-const getStyles = (_theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
       display: flex;
@@ -79,7 +79,7 @@ const getStyles = (_theme: GrafanaTheme) => {
     `,
     addMatcherBtn: css`
       align-self: flex-end;
-      margin-bottom: 28px;
+      margin-bottom: ${theme.spacing(3.5)};
     `,
   };
 };

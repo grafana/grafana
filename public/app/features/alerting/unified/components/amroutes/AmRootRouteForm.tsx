@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import {
   mapMultiSelectValueToStrings,
@@ -20,7 +20,7 @@ export interface AmRootRouteFormProps {
 }
 
 export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, receivers, routes }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
 
@@ -150,7 +150,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
       align-items: center;
@@ -158,17 +158,17 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-flow: row nowrap;
 
       & > * + * {
-        margin-left: ${theme.spacing.sm};
+        margin-left: ${theme.spacing(1)};
       }
     `,
     input: css`
       flex: 1;
     `,
     timingContainer: css`
-      max-width: 264px;
+      max-width: ${theme.spacing(33)};
     `,
     smallInput: css`
-      width: 52px;
+      width: ${theme.spacing(6.5)};
     `,
   };
 };

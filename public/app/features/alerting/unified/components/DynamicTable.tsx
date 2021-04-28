@@ -1,7 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { IconButton, useStyles, useTheme } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useMedia } from 'react-use';
 
 export interface DynamicTableColumnProps<T = unknown> {
@@ -38,9 +38,9 @@ export const DynamicTable: FC<DynamicTableProps> = ({
   onExpand,
   renderExpandedContent,
 }) => {
-  const styles = useStyles(getStyles(cols, isExpandable));
-  const theme = useTheme();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.sm})`);
+  const styles = useStyles2(getStyles(cols, isExpandable));
+  const theme = useTheme2();
+  const isMobile = useMedia(`(${theme.breakpoints.down('sm')})`);
 
   return (
     <div className={styles.container}>
@@ -99,10 +99,11 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
     sizes.unshift('calc(1em + 16px)');
   }
 
-  return (theme: GrafanaTheme) => ({
+  return (theme: GrafanaThemeV2) => ({
     container: css`
-      border: 1px solid ${theme.colors.border3};
+      border: 1px solid ${theme.colors.border.strong};
       border-radius: 2px;
+      color: ${theme.colors.text.secondary};
     `,
     row: css`
       display: grid;
@@ -110,17 +111,17 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
       grid-template-rows: 1fr auto;
 
       &:nth-child(2n + 1) {
-        background-color: ${theme.isLight ? theme.colors.bodyBg : theme.colors.panelBg};
+        background-color: ${theme.colors.background.secondary};
       }
 
       &:nth-child(2n) {
-        background-color: ${theme.isLight ? theme.colors.panelBg : theme.colors.bodyBg};
+        background-color: ${theme.colors.background.primary};
       }
 
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+      ${theme.breakpoints.down('sm')} {
         grid-template-columns: auto 1fr;
         grid-template-areas: 'left right';
-        padding: 0 ${theme.spacing.xs};
+        padding: 0 ${theme.spacing(0.5)};
 
         &:first-child {
           display: none;
@@ -130,15 +131,15 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
     cell: css`
       align-items: center;
       display: grid;
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
 
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        padding: ${theme.spacing.sm} 0;
+      ${theme.breakpoints.down('sm')} {
+        padding: ${theme.spacing(1)} 0;
         grid-template-columns: 1fr;
       }
     `,
     bodyCell: css`
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+      ${theme.breakpoints.down('sm')} {
         grid-column-end: right;
         grid-column-start: right;
 
@@ -150,7 +151,7 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
     expandCell: css`
       justify-content: center;
 
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+      ${theme.breakpoints.down('sm')} {
         align-items: start;
         grid-area: left;
       }
@@ -159,12 +160,12 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
       grid-column-end: ${sizes.length + 1};
       grid-column-start: 2;
       grid-row: 2;
-      padding: 0 ${theme.spacing.lg} 0 ${theme.spacing.sm};
+      padding: 0 ${theme.spacing(3)} 0 ${theme.spacing(1)};
 
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        border-top: 1px solid ${theme.colors.border3};
+      ${theme.breakpoints.down('sm')} {
+        border-top: 1px solid ${theme.colors.border.strong};
         grid-row: auto;
-        padding: ${theme.spacing.sm} 0 0 0;
+        padding: ${theme.spacing(1)} 0 0 0;
       }
     `,
     expandButton: css`

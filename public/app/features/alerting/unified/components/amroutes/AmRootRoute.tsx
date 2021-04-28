@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Button, useStyles } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
@@ -23,7 +23,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
   receivers,
   routes,
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
@@ -50,15 +50,15 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
-      background-color: ${theme.colors.bg2};
-      color: ${theme.colors.textSemiWeak};
-      padding: ${theme.spacing.md};
+      background-color: ${theme.colors.background.secondary};
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(2)};
     `,
     titleContainer: css`
-      color: ${theme.colors.textHeading};
+      color: ${theme.colors.text.primary};
       display: flex;
       flex-flow: row nowrap;
     `,

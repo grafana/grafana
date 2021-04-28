@@ -24,7 +24,9 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
     // eslint-disable-next-line react/display-name
     (item: RouteTableItemProps, index: number) => () => (
       <AmRoutesExpandedForm
-        onCancel={() => setItems((items) => expandItem(items, item))}
+        onCancel={() => {
+          setItems((items) => collapseItem(items, item.id));
+        }}
         onSave={(data) => {
           const newRoutes = [...routes];
 
@@ -33,7 +35,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
             ...data,
           };
 
-          setItems((items) => collapseItem(items, item));
+          setItems((items) => collapseItem(items, item.id));
 
           onChange(newRoutes);
         }}
@@ -84,7 +86,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
         }
 
         const expandWithCustomContent = () =>
-          setItems((items) => expandItem(items, item, getRenderEditExpandedContent(item, index)));
+          setItems((items) => expandItem(items, item.id, getRenderEditExpandedContent(item, index)));
 
         return (
           <HorizontalGroup>
@@ -134,8 +136,8 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
       cols={cols}
       isExpandable={true}
       items={items}
-      onCollapse={(item: RouteTableItemProps) => setItems((items) => collapseItem(items, item))}
-      onExpand={(item: RouteTableItemProps) => setItems((items) => expandItem(items, item))}
+      onCollapse={(item: RouteTableItemProps) => setItems((items) => collapseItem(items, item.id))}
+      onExpand={(item: RouteTableItemProps) => setItems((items) => expandItem(items, item.id))}
       renderExpandedContent={(item: RouteTableItemProps, index) => (
         <AmRoutesExpandedRead
           onChange={(data) => {

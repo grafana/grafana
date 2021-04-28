@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { FormAmRoute } from '../../types/amroutes';
 import { getGridStyles } from './gridStyles';
 
@@ -8,7 +8,7 @@ export interface AmRootRouteReadProps {
 }
 
 export const AmRootRouteRead: FC<AmRootRouteReadProps> = ({ routes }) => {
-  const styles = useStyles(getGridStyles);
+  const styles = useStyles2(getGridStyles);
 
   const receiver = routes.receiver || '-';
   const groupBy = routes.groupBy.join(', ') || '-';
