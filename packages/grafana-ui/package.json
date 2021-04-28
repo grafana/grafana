@@ -78,7 +78,7 @@
     "react-transition-group": "4.4.1",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
-    "uplot": "leeoniya/uPlot#b8f6cf129f5fadca202252dba2fdf6bbbbfaa262"
+    "uplot": "leeoniya/uPlot#4b765ad3aca448df8b8897c80e55bc3fb6b4d84f"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "16.0.0",
