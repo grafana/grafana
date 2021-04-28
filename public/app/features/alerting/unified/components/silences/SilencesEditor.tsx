@@ -1,7 +1,6 @@
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC } from 'react';
 import { Field, FieldSet, Input, TextArea } from '@grafana/ui';
-import { AlertLabels } from '../AlertLabels';
 import MatchersField from './MatchersField';
 import { useForm, FormContext } from 'react-hook-form';
 
@@ -43,7 +42,6 @@ export const SilencesEditor: FC<Props> = ({ silence }) => {
           <Field label="Duration">
             <Input ref={register()} name="duration" readOnly />
           </Field>
-          <div>{silence?.matchers && <AlertLabels matchers={silence?.matchers} />}</div>
           <MatchersField />
           <Field label="Comment">
             <TextArea ref={register({ required: true })} name="comment" />
