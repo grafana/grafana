@@ -1,98 +1,127 @@
-interface TableResponse extends Record<string, any> {
-  type: string;
-  refId: string;
-  meta: any;
-}
-
-interface SeriesResponse extends Record<string, any> {
-  target: string;
-  refId: string;
-  meta: any;
-  datapoints: [any[]];
-}
-
-export interface MysqlResponse {
-  data: Array<TableResponse | SeriesResponse>;
-}
+import { map } from 'lodash';
+import { AnnotationEvent, DataFrame, FieldType, MetricFindValue } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
 
 export default class ResponseParser {
-  processQueryResult(res: any): MysqlResponse {
-    const data: any[] = [];
+  transformMetricFindResponse(raw: FetchResponse<BackendDataSourceResponse>): MetricFindValue[] {
+    const frames = toDataQueryResponse(raw).data as DataFrame[];
 
-    if (!res.data.results) {
-      return { data: data };
+    if (!frames || !frames.length) {
+      return [];
     }
 
-    for (const key in res.data.results) {
-      const queryRes = res.data.results[key];
+    const frame = frames[0];
 
-      if (queryRes.series) {
-        for (const series of queryRes.series) {
-          data.push({
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          });
-        }
+    const values: MetricFindValue[] = [];
+    const textField = frame.fields.find((f) => f.name === '__text');
+    const valueField = frame.fields.find((f) => f.name === '__value');
+
+    if (textField && valueField) {
+      for (let i = 0; i < textField.values.length; i++) {
+        values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
       }
-
-      if (queryRes.tables) {
-        for (const table of queryRes.tables) {
-          table.type = 'table';
-          table.refId = queryRes.refId;
-          table.meta = queryRes.meta;
-          data.push(table);
-        }
+    } else {
+      const textFields = frame.fields.filter((f) => f.type === FieldType.string);
+      if (textFields) {
+        values.push(
+          ...textFields
+            .flatMap((f) => f.values.toArray())
+            .map((v) => ({
+              text: '' + v,
+            }))
+        );
       }
     }
 
-    return { data: data };
+    return Array.from(new Set(values.map((v) => v.text))).map((text) => {
+      return { text, value: values.find((v) => v.text === text)?.value } as MetricFindValue;
+    });
   }
 
-  transformAnnotationResponse(options: any, data: any) {
-    const table = data.data.results[options.annotation.name].tables[0];
+  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number): MetricFindValue[] {
+    const res = [];
 
-    let timeColumnIndex = -1;
-    let timeEndColumnIndex = -1;
-    let textColumnIndex = -1;
-    let tagsColumnIndex = -1;
-
-    for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time_sec' || table.columns[i].text === 'time') {
-        timeColumnIndex = i;
-      } else if (table.columns[i].text === 'timeend') {
-        timeEndColumnIndex = i;
-      } else if (table.columns[i].text === 'title') {
-        throw {
-          message: 'The title column for annotations is deprecated, now only a column named text is returned',
-        };
-      } else if (table.columns[i].text === 'text') {
-        textColumnIndex = i;
-      } else if (table.columns[i].text === 'tags') {
-        tagsColumnIndex = i;
+    for (let i = 0; i < rows.length; i++) {
+      if (!this.containsKey(res, rows[i][textColIndex])) {
+        res.push({ text: rows[i][textColIndex], value: rows[i][valueColIndex] });
       }
     }
 
-    if (timeColumnIndex === -1) {
-      throw {
-        message: 'Missing mandatory time column (with time_sec column alias) in annotation query.',
-      };
+    return res;
+  }
+
+  transformToSimpleList(rows: any): MetricFindValue[] {
+    const res = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = 0; j < rows[i].length; j++) {
+        res.push(rows[i][j]);
+      }
     }
 
-    const list = [];
-    for (let i = 0; i < table.rows.length; i++) {
-      const row = table.rows[i];
-      const timeEnd =
-        timeEndColumnIndex !== -1 && row[timeEndColumnIndex] ? Math.floor(row[timeEndColumnIndex]) : undefined;
-      list.push({
-        annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]),
-        timeEnd,
-        text: row[textColumnIndex] ? row[textColumnIndex].toString() : '',
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
+    const unique = Array.from(new Set(res));
+
+    return map(unique, (value) => {
+      return { text: value };
+    });
+  }
+
+  findColIndex(columns: any[], colName: string) {
+    for (let i = 0; i < columns.length; i++) {
+      if (columns[i].text === colName) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  containsKey(res: any[], key: any) {
+    for (let i = 0; i < res.length; i++) {
+      if (res[i].text === key) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
+    const frames = toDataQueryResponse({ data: data }).data as DataFrame[];
+    const frame = frames[0];
+    const timeField = frame.fields.find((f) => f.name === 'time' || f.name === 'time_sec');
+
+    if (!timeField) {
+      return Promise.reject({ message: 'Missing mandatory time column (with time column alias) in annotation query.' });
+    }
+
+    if (frame.fields.find((f) => f.name === 'title')) {
+      return Promise.reject({
+        message: 'The title column for annotations is deprecated, now only a column named text is returned',
       });
     }
+
+    const timeEndField = frame.fields.find((f) => f.name === 'timeend');
+    const textField = frame.fields.find((f) => f.name === 'text');
+    const tagsField = frame.fields.find((f) => f.name === 'tags');
+
+    const list: AnnotationEvent[] = [];
+    for (let i = 0; i < frame.length; i++) {
+      const timeEnd = timeEndField && timeEndField.values.get(i) ? Math.floor(timeEndField.values.get(i)) : undefined;
+      list.push({
+        annotation: options.annotation,
+        time: Math.floor(timeField.values.get(i)),
+        timeEnd,
+        text: textField && textField.values.get(i) ? textField.values.get(i) : '',
+        tags:
+          tagsField && tagsField.values.get(i)
+            ? tagsField.values
+                .get(i)
+                .trim()
+                .split(/\s*,\s*/)
+            : [],
+      });
+    }
+
     return list;
   }
 }

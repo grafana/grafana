@@ -5,6 +5,8 @@ import {
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
+import { MySQLQuery } from './types';
+import { DataSourcePlugin } from '@grafana/data';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -46,3 +48,8 @@ export {
   MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
+
+export const plugin = new DataSourcePlugin<MysqlDatasource, MySQLQuery>(MysqlDatasource)
+  .setQueryCtrl(MysqlQueryCtrl)
+  .setConfigCtrl(MysqlConfigCtrl)
+  .setAnnotationQueryCtrl(MysqlAnnotationsQueryCtrl);

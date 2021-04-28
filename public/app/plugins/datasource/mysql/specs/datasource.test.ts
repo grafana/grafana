@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime, toUtc } from '@grafana/data';
 
 import { MysqlDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -20,17 +20,27 @@ describe('MySQLDatasource', () => {
     } as unknown) as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
-
+    const raw = {
+      from: toUtc('2018-04-25 10:00'),
+      to: toUtc('2018-04-25 11:00'),
+    };
+    const timeSrvMock: any = {
+      timeRange: () => ({
+        from: raw.from,
+        to: raw.to,
+        raw: raw,
+      }),
+    };
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings, templateSrv);
+    const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
 
     return { ds, variable, templateSrv, fetchMock };
   };
 
   describe('When performing annotationQuery', () => {
+    let results: any;
     const annotationName = 'MyAnno';
-
     const options = {
       annotation: {
         name: annotationName,
@@ -60,19 +70,20 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    it('should return annotation list', async () => {
+    beforeEach(() => {
       const { ds } = setupTextContext(response);
-      const results = await ds.annotationQuery(options);
+      return ds.annotationQuery(options).then((data: any) => {
+        results = data;
+      });
+    });
 
+    it('should return annotation list', async () => {
       expect(results.length).toBe(3);
-
       expect(results[0].text).toBe('some text');
       expect(results[0].tags[0]).toBe('TagA');
       expect(results[0].tags[1]).toBe('TagB');
-
       expect(results[1].tags[0]).toBe('TagB');
       expect(results[1].tags[1]).toBe('TagC');
-
       expect(results[2].tags.length).toBe(0);
     });
   });

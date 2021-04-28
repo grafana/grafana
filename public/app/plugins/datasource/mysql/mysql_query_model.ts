@@ -2,7 +2,7 @@ import { find, map } from 'lodash';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
 
-export default class MysqlQuery {
+export default class MySQLQueryModel {
   target: any;
   templateSrv: any;
   scopedVars: any;
