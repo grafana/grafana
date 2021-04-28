@@ -355,7 +355,10 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 		}
 		for _, entry := range cmd.Result {
 			lbs := map[string]string(entry.Labels)
-			cacheId, _, _ := entry.Labels.StringAndHash()
+			cacheId, err := entry.Labels.StringKey()
+			if err != nil {
+				sch.log.Error("error getting cacheId for entry", "msg", err.Error())
+			}
 			stateForEntry := &state.State{
 				AlertRuleUID:       entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,
