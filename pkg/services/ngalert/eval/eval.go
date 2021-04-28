@@ -46,8 +46,6 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // ExecutionResults contains the unevaluated results from executing
 // a condition.
 type ExecutionResults struct {
-	AlertDefinitionID int64
-
 	Error error
 
 	Results data.Frames
@@ -181,10 +179,13 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its State.
-func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, error) {
+func evaluateExecutionResult(execResults *ExecutionResults, ts time.Time) (Results, error) {
+	if execResults != nil && execResults.Error != nil {
+		return Results{{State: Error}}, nil
+	}
 	evalResults := make([]Result, 0)
 	labels := make(map[string]bool)
-	for _, f := range results.Results {
+	for _, f := range execResults.Results {
 		rowLen, err := f.RowLen()
 		if err != nil {
 			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err}
