@@ -7,8 +7,9 @@ Family: {
                 PanelOptions: {
                     // empty/missing will default to grafana blog
                     feedUrl?: string
-                    useProxy?: boolean
-                }
+                    useProxy?: bool
+                },
+                PanelFieldConfig: {}
             }
         ]
     ]

@@ -9,11 +9,12 @@ Family: {
                     showRecentlyViewed: bool | *false
                     showSearch: bool | *false
                     showHeadings: bool | *true
-                    maxItems: int | *10;
+                    maxItems: int | *10
                     query: string | *""
                     folderId?: int
-                    tags: string[] | *[]
-                }
+                    tags: [...string] | *[]
+                },
+                PanelFieldConfig: {}
             }
         ]
     ]
