@@ -88,10 +88,6 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: RuleFilter
     return true;
   }
 
-  if (!Array.isArray(rulerRule.grafana_alert.data)) {
-    return false;
-  }
-
   return !!rulerRule.grafana_alert.data.find((query) => {
     if (!query.datasourceUid) {
       return false;

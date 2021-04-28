@@ -33,10 +33,6 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
     if (isGrafanaRulerRule(rule.rulerRule)) {
       const { data } = rule.rulerRule.grafana_alert;
 
-      if (!Array.isArray(data)) {
-        return [];
-      }
-
       return data.reduce((dataSources, query) => {
         const ds = getDatasourceSrv().getInstanceSettings(query.datasourceUid);
 
