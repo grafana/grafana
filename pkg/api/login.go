@@ -278,7 +278,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
-	if hs.samlEnabled() && hs.samlSingleLogoutEnabled() {
+	if hs.samlSingleLogoutEnabled() {
 		c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 		return
 	}
@@ -347,7 +347,7 @@ func (hs *HTTPServer) samlEnabled() bool {
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
-	return hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.License.HasValidLicense()
+	return hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.samlEnabled()
 }
 
 func getLoginExternalError(err error) string {
