@@ -15,6 +15,8 @@ interface LibraryPanelViewProps {
   showSecondaryActions?: boolean;
   currentPanelId?: string;
   searchString: string;
+  sortDirection?: string;
+  panelFilter?: string[];
   perPage?: number;
 }
 
@@ -22,6 +24,8 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   className,
   onClickCard,
   searchString,
+  sortDirection,
+  panelFilter,
   showSecondaryActions,
   currentPanelId: currentPanel,
   perPage: propsPerPage = 40,
@@ -36,11 +40,14 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
     }
   );
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
-  useDebounce(() => asyncDispatch(searchForLibraryPanels({ searchString, page, perPage, currentPanelId })), 300, [
-    searchString,
-    page,
-    asyncDispatch,
-  ]);
+  useDebounce(
+    () =>
+      asyncDispatch(
+        searchForLibraryPanels({ searchString, sortDirection, panelFilter, page, perPage, currentPanelId })
+      ),
+    300,
+    [searchString, sortDirection, panelFilter, page, asyncDispatch]
+  );
   const onDelete = ({ uid }: LibraryPanelDTO) =>
     asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
@@ -51,7 +58,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         {loadingState === LoadingState.Loading ? (
           <p>Loading library panels...</p>
         ) : libraryPanels.length < 1 ? (
-          <p>No library panels found.</p>
+          <p className={styles.noPanelsFound}>No library panels found.</p>
         ) : (
           libraryPanels?.map((item, i) => (
             <LibraryPanelCard
@@ -100,6 +107,10 @@ const getPanelViewStyles = (theme: GrafanaTheme) => {
     pagination: css`
       align-self: center;
       margin-top: ${theme.spacing.sm};
+    `,
+    noPanelsFound: css`
+      label: noPanelsFound;
+      min-height: 200px;
     `,
   };
 };

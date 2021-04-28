@@ -11,6 +11,8 @@ interface SearchArgs {
   perPage: number;
   page: number;
   searchString: string;
+  sortDirection?: string;
+  panelFilter?: string[];
   currentPanelId?: string;
 }
 
@@ -19,10 +21,12 @@ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
     const subscription = new Subscription();
     const dataObservable = from(
       getLibraryPanels({
-        name: args.searchString,
+        searchString: args.searchString,
         perPage: args.perPage,
         page: args.page,
         excludeUid: args.currentPanelId,
+        sortDirection: args.sortDirection,
+        panelFilter: args.panelFilter,
       })
     ).pipe(
       mergeMap(({ perPage, libraryPanels, page, totalCount }) =>
