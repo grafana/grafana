@@ -4,7 +4,7 @@ import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
-import { useForm, FormContext, NestDataObject, FieldError, Validate } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
@@ -50,11 +50,16 @@ export function ReceiverForm<R extends ChannelValues>({
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
-  const { handleSubmit, register, errors, getValues } = formAPI;
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+    getValues,
+  } = formAPI;
 
   const { items, append, remove } = useControlledFieldArray<R>('items', formAPI);
 
-  const validateNameIsAvailable: Validate = useCallback(
+  const validateNameIsAvailable: Validate<string> = useCallback(
     (name: string) =>
       takenReceiverNames.map((name) => name.trim().toLowerCase()).includes(name.trim().toLowerCase())
         ? 'Another receiver with this name already exists.'
@@ -63,7 +68,7 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 
   return (
-    <FormContext {...formAPI}>
+    <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
         {error && (
@@ -73,9 +78,11 @@ export function ReceiverForm<R extends ChannelValues>({
         )}
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
           <Input
+            {...register('name', {
+              required: 'Name is required',
+              validate: { nameIsAvailable: validateNameIsAvailable },
+            })}
             width={39}
-            name="name"
-            ref={register({ required: 'Name is required', validate: { nameIsAvailable: validateNameIsAvailable } })}
           />
         </Field>
         {items.map((item, index) => {
@@ -84,14 +91,14 @@ export function ReceiverForm<R extends ChannelValues>({
             <ChannelSubForm<R>
               key={item.__id}
               onDuplicate={() => {
-                const currentValues = getValues({ nest: true }).items[index];
+                const currentValues = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
               onDelete={() => remove(index)}
               pathPrefix={`items.${index}.`}
               notifiers={notifiers}
               secureFields={initialItem?.secureFields}
-              errors={errors?.items?.[index] as NestDataObject<R, FieldError>}
+              errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
             />
           );
@@ -115,7 +122,7 @@ export function ReceiverForm<R extends ChannelValues>({
           </LinkButton>
         </div>
       </form>
-    </FormContext>
+    </FormProvider>
   );
 }
 

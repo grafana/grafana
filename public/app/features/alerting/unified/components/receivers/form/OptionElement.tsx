@@ -20,8 +20,7 @@ export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '' }) =
         <Input
           invalid={invalid}
           type={option.inputType}
-          name={`${modelValue}`}
-          ref={register({
+          {...register(`${modelValue}`, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
@@ -32,24 +31,27 @@ export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '' }) =
     case 'select':
       return (
         <InputControl
-          as={Select}
-          options={option.selectOptions}
+          render={({ field: { onChange, ref, ...field } }) => (
+            <Select
+              {...field}
+              options={option.selectOptions}
+              invalid={invalid}
+              onChange={(value) => onChange(value.value)}
+            />
+          )}
           control={control}
           name={`${modelValue}`}
-          invalid={invalid}
-          onChange={(values) => values[0].value}
         />
       );
 
     case 'textarea':
       return (
         <TextArea
-          invalid={invalid}
-          name={`${modelValue}`}
-          ref={register({
+          {...register(`${modelValue}`, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
+          invalid={invalid}
         />
       );
 

@@ -3,7 +3,7 @@ import { NotifierDTO } from 'app/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
-import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
+import { useFormContext, FieldErrors } from 'react-hook-form';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -15,7 +15,7 @@ interface Props<R> {
   commonSettingsComponent: CommonSettingsComponentType;
 
   secureFields?: Record<string, boolean>;
-  errors?: NestDataObject<R, FieldError>;
+  errors?: FieldErrors<R>;
   onDelete?: () => void;
 }
 
@@ -35,7 +35,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   // keep the __id field registered so it's always passed to submit
   useEffect(() => {
-    register({ name: `${pathPrefix}__id` });
+    register(`${pathPrefix}__id`);
     return () => {
       unregister(`${pathPrefix}__id`);
     };
@@ -73,12 +73,11 @@ export function ChannelSubForm<R extends ChannelValues>({
           <Field label="Contact point type">
             <InputControl
               name={name('type')}
-              as={Select}
-              width={37}
-              options={typeOptions}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Select {...field} width={37} options={typeOptions} onChange={(value) => onChange(value?.value)} />
+              )}
               control={control}
               rules={{ required: true }}
-              onChange={(values) => values[0]?.value}
             />
           </Field>
         </div>
