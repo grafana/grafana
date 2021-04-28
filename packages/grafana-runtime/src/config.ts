@@ -1,5 +1,4 @@
 import { merge } from 'lodash';
-import { getTheme } from '@grafana/ui';
 import {
   BuildInfo,
   createTheme,

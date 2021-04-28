@@ -73,7 +73,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme,
+      theme: config.theme2,
       data: data.series,
       timeZone,
     });

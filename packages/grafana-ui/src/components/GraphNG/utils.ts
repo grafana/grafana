@@ -10,7 +10,6 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
-  GrafanaTheme,
   GrafanaThemeV2,
   outerJoinDataFrames,
   TimeRange,
