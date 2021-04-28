@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-macaron/binding"
-
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 )
 
