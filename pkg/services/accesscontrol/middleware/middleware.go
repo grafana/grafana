@@ -84,5 +84,5 @@ func newID() string {
 		// useful as anything.
 		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
-	id = "ACE" + id
+	return "ACE" + id
 }
