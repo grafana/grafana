@@ -4,7 +4,9 @@ import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
+import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
+import { NewReceiverView } from './components/receivers/NewReceiverView';
 import { NewTemplateView } from './components/receivers/NewTemplateView';
 import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTemplatesView';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -72,6 +74,20 @@ const Receivers: FC = () => {
                   alertManagerSourceName={alertManagerSourceName}
                   config={config}
                   templateName={decodeURIComponent(match?.params.name)}
+                />
+              )
+            }
+          </Route>
+          <Route exact={true} path="/alerting/notifications/receivers/new">
+            <NewReceiverView config={config} alertManagerSourceName={alertManagerSourceName} />
+          </Route>
+          <Route exact={true} path="/alerting/notifications/receivers/:name/edit">
+            {({ match }: RouteChildrenProps<{ name: string }>) =>
+              match?.params.name && (
+                <EditReceiverView
+                  alertManagerSourceName={alertManagerSourceName}
+                  config={config}
+                  receiverName={decodeURIComponent(match?.params.name)}
                 />
               )
             }
