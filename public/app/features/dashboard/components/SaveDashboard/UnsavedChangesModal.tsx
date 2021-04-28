@@ -29,7 +29,7 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
     >
       <h5>Do you want to save your changes?</h5>
       <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss}>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
           Cancel
         </Button>
         <Button

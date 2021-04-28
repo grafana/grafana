@@ -4,15 +4,16 @@ import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getAlertTableStyles } from '../../styles/table';
 import { extractReadableNotifierTypes } from '../../utils/receivers';
-import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
+import { makeAMLink } from '../../utils/misc';
 
 interface Props {
   config: AlertManagerCortexConfig;
+  alertManagerName: string;
 }
 
-export const ReceiversTable: FC<Props> = ({ config }) => {
+export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const tableStyles = useStyles(getAlertTableStyles);
 
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
@@ -31,6 +32,7 @@ export const ReceiversTable: FC<Props> = ({ config }) => {
       title="Contact points"
       description="Define where the notifications will be sent to, for example email or Slack."
       addButtonLabel="New contact point"
+      addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
       <table className={tableStyles.table}>
         <colgroup>
@@ -56,7 +58,14 @@ export const ReceiversTable: FC<Props> = ({ config }) => {
               <td>{receiver.name}</td>
               <td>{receiver.types.join(', ')}</td>
               <td className={tableStyles.actionsCell}>
-                <ActionButton icon="pen">Edit</ActionButton>
+                <ActionIcon
+                  href={makeAMLink(
+                    `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                    alertManagerName
+                  )}
+                  tooltip="edit receiver"
+                  icon="pen"
+                />
                 <ActionIcon tooltip="delete receiver" icon="trash-alt" />
               </td>
             </tr>
