@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
 
@@ -16,7 +15,6 @@ import (
 )
 
 func init() {
-	remotecache.Register(&RenderUser{})
 	registry.Register(&registry.Descriptor{
 		Name:     ServiceName,
 		Instance: &SchemaLoaderService{},
@@ -52,8 +50,17 @@ func (rs *SchemaLoaderService) Init() error {
 	}
 	return nil
 }
+func (rs *SchemaLoaderService) IsDisabled() bool {
+	if rs.Cfg == nil {
+		return true
+	}
+	return !rs.Cfg.IsTrimDefaultsEnabled()
+}
 
 func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {
+	if rs.IsDisabled() {
+		return input, nil
+	}
 	val, _ := input.Map()
 	val = removeNils(val)
 	data, _ := json.Marshal(val)
@@ -70,6 +77,9 @@ func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*
 }
 
 func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (simplejson.Json, error) {
+	if rs.IsDisabled() {
+		return input, nil
+	}
 	val, _ := input.Map()
 	val = removeNils(val)
 	data, _ := json.Marshal(val)
