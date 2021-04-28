@@ -1,47 +1,44 @@
 ﻿import React from 'react';
-import { Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { Alert, Field, Modal, useStyles2 } from '@grafana/ui';
+import { GrafanaThemeV2 } from '@grafana/data';
 
 export interface Props {
+  onDismiss: () => void;
   apiKey: string;
   rootPath: string;
 }
 
-export const ApiKeysAddedModal = (props: Props) => {
+export function ApiKeysAddedModal({ onDismiss, apiKey, rootPath }: Props): JSX.Element {
+  const styles = useStyles2(getStyles);
   return (
-    <div className="modal-body">
-      <div className="modal-header">
-        <h2 className="modal-header-title">
-          <Icon name="key-skeleton-alt" size="lg" />
-          <span className="p-l-1">API Key Created</span>
-        </h2>
+    <Modal title="API Key Created" onDismiss={onDismiss} onClickBackdrop={onDismiss} isOpen>
+      <Field label="Key">
+        <span className={styles.label}>{apiKey}</span>
+      </Field>
 
-        <a className="modal-header-close" ng-click="dismiss();">
-          <Icon name="times" />
-        </a>
-      </div>
+      <Alert severity="info" title="You will only be able to view this key here once!">
+        It is not stored in this form, so be sure to copy it now.
+      </Alert>
 
-      <div className="modal-content">
-        <div className="gf-form-group">
-          <div className="gf-form">
-            <span className="gf-form-label">Key</span>
-            <span className="gf-form-label">{props.apiKey}</span>
-          </div>
-        </div>
-
-        <div className="grafana-info-box" style={{ border: 0 }}>
-          You will only be able to view this key here once! It is not stored in this form, so be sure to copy it now.
-          <br />
-          <br />
-          You can authenticate a request using the Authorization HTTP header, example:
-          <br />
-          <br />
-          <pre className="small">
-            curl -H &quot;Authorization: Bearer {props.apiKey}&quot; {props.rootPath}/api/dashboards/home
-          </pre>
-        </div>
-      </div>
-    </div>
+      <p className="text-muted">You can authenticate a request using the Authorization HTTP header, example:</p>
+      <pre className={styles.small}>
+        curl -H &quot;Authorization: Bearer {apiKey}&quot; {rootPath}/api/dashboards/home
+      </pre>
+    </Modal>
   );
-};
+}
 
-export default ApiKeysAddedModal;
+function getStyles(theme: GrafanaThemeV2) {
+  return {
+    label: css`
+      padding: ${theme.spacing(1)};
+      background-color: ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius()};
+    `,
+    small: css`
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.bodySmall.fontWeight};
+    `,
+  };
+}
