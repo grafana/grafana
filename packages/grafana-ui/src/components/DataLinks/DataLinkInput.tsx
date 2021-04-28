@@ -18,6 +18,7 @@ import { SCHEMA } from '../../utils/slate';
 import { useStyles2 } from '../../themes';
 import { DataLinkBuiltInVars, GrafanaThemeV2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 import { getInputStyles } from '../Input/Input';
+import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -172,12 +173,22 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                   {({ ref, style, placement }) => {
                     return (
                       <div ref={ref} style={style} data-placement={placement}>
-                        <DataLinkSuggestions
-                          suggestions={stateRef.current.suggestions}
-                          onSuggestionSelect={onVariableSelect}
-                          onClose={() => setShowingSuggestions(false)}
-                          activeIndex={suggestionsIndex}
-                        />
+                        <CustomScrollbar
+                          className={css`
+                            z-index: 1;
+                          `}
+                          autoHide={false}
+                          hideVerticalTrack={false}
+                          hideTracksWhenNotNeeded={false}
+                          autoHeightMax="200px"
+                        >
+                          <DataLinkSuggestions
+                            suggestions={stateRef.current.suggestions}
+                            onSuggestionSelect={onVariableSelect}
+                            onClose={() => setShowingSuggestions(false)}
+                            activeIndex={suggestionsIndex}
+                          />
+                        </CustomScrollbar>
                       </div>
                     );
                   }}
