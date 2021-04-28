@@ -1,71 +1,38 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div
-  className="modal-body"
+<Modal
+  isOpen={true}
+  onClickBackdrop={[MockFunction]}
+  onDismiss={[MockFunction]}
+  title="API Key Created"
 >
-  <div
-    className="modal-header"
+  <VerticalGroup
+    spacing="md"
   >
-    <h2
-      className="modal-header-title"
+    <HorizontalGroup
+      spacing="sm"
     >
-      <Icon
-        name="key-skeleton-alt"
-        size="lg"
-      />
       <span
-        className="p-l-1"
+        className="css-ypoxjz"
       >
-        API Key Created
+        Key
       </span>
-    </h2>
-    <a
-      className="modal-header-close"
-      ng-click="dismiss();"
-    >
-      <Icon
-        name="times"
-      />
-    </a>
-  </div>
-  <div
-    className="modal-content"
-  >
-    <div
-      className="gf-form-group"
-    >
-      <div
-        className="gf-form"
+      <span
+        className="css-ypoxjz"
       >
-        <span
-          className="gf-form-label"
-        >
-          Key
-        </span>
-        <span
-          className="gf-form-label"
-        >
-          api key test
-        </span>
-      </div>
-    </div>
-    <div
-      className="grafana-info-box"
-      style={
-        Object {
-          "border": 0,
-        }
-      }
+        api key test
+      </span>
+    </HorizontalGroup>
+    <Alert
+      severity="info"
+      title="You will only be able to view this key here once! It is not stored in this form, so be sure to copy it now."
     >
-      You will only be able to view this key here once! It is not stored in this form, so be sure to copy it now.
-      <br />
-      <br />
-      You can authenticate a request using the Authorization HTTP header, example:
-      <br />
-      <br />
+      <p>
+        You can authenticate a request using the Authorization HTTP header, example:
+      </p>
       <pre
-        className="small"
+        className="css-omfua5"
       >
         curl -H "Authorization: Bearer 
         api key test
@@ -73,7 +40,7 @@ exports[`Render should render component 1`] = `
         test/path
         /api/dashboards/home
       </pre>
-    </div>
-  </div>
-</div>
+    </Alert>
+  </VerticalGroup>
+</Modal>
 `;
