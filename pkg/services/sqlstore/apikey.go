@@ -35,8 +35,17 @@ func DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 
 func deleteAPIKey(sess *DBSession, id, orgID int64) error {
 	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=?"
-	_, err := sess.Exec(rawSQL, id, orgID)
-	return err
+	result, err := sess.Exec(rawSQL, id, orgID)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	} else if n == 0 {
+		return models.ErrApiKeyNotFound
+	}
+	return nil
 }
 
 func AddApiKey(cmd *models.AddApiKeyCommand) error {
