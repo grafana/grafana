@@ -84,7 +84,8 @@ func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 		#Panel: obj
 	}
 	`)
-	filled := dummy.Value().Fill(dj, "obj")
+
+	filled := dummy.Value().FillPath(cue.MakePath(cue.Str("obj")), dj)
 	ddj := filled.LookupPath(cue.MakePath(cue.Str("dummy")))
 
 	var first, prev *compositeDashboardSchema
