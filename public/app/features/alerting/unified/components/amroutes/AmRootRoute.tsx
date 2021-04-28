@@ -1,32 +1,29 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
-import { EmptyArea } from '../EmptyArea';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
 
 export interface AmRootRouteProps {
+  isEditMode: boolean;
+  onEnterEditMode: () => void;
+  onExitEditMode: () => void;
   onSave: (data: Partial<FormAmRoute>) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
 }
 
-export const AmRootRoute: FC<AmRootRouteProps> = ({ onSave, receivers, routes }) => {
+export const AmRootRoute: FC<AmRootRouteProps> = ({
+  isEditMode,
+  onSave,
+  onEnterEditMode,
+  onExitEditMode,
+  receivers,
+  routes,
+}) => {
   const styles = useStyles(getStyles);
-  const [isEditMode, setIsEditMode] = useState(false);
-
-  if (!routes.receiver && !isEditMode) {
-    return (
-      <EmptyArea
-        buttonIcon="rocket"
-        buttonLabel="Set a default contact point"
-        onButtonClick={() => setIsEditMode(true)}
-        text="You haven't set a default contact point for the root route yet."
-      />
-    );
-  }
 
   return (
     <div className={styles.container}>
@@ -35,7 +32,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({ onSave, receivers, routes })
           Root policy - <i>default for all alerts</i>
         </h5>
         {!isEditMode && (
-          <Button icon="pen" onClick={() => setIsEditMode(true)} size="sm" type="button" variant="secondary">
+          <Button icon="pen" onClick={onEnterEditMode} size="sm" type="button" variant="secondary">
             Edit
           </Button>
         )}
@@ -45,15 +42,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({ onSave, receivers, routes })
         routing area.
       </p>
       {isEditMode ? (
-        <AmRootRouteForm
-          onCancel={() => setIsEditMode(false)}
-          onSave={(data: Partial<FormAmRoute>) => {
-            onSave(data);
-            setIsEditMode(false);
-          }}
-          receivers={receivers}
-          routes={routes}
-        />
+        <AmRootRouteForm onCancel={onExitEditMode} onSave={onSave} receivers={receivers} routes={routes} />
       ) : (
         <AmRootRouteRead routes={routes} />
       )}

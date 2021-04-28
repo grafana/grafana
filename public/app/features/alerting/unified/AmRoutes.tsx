@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Alert, Field, LoadingPlaceholder, useStyles } from '@grafana/ui';
@@ -17,13 +17,18 @@ import { initialAsyncRequestState } from './utils/redux';
 const AmRoutes: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
+  const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
 
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
-  useEffect(() => {
+  const fetchConfig = useCallback(() => {
     dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
   }, [alertManagerSourceName, dispatch]);
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
   const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
 
@@ -33,13 +38,27 @@ const AmRoutes: FC = () => {
     (config?.receivers ?? []).map((receiver) => receiver.name)
   ) as AmRouteReceiver[];
 
+  const enterRootRouteEditMode = () => {
+    setIsRootRouteEditMode(true);
+  };
+
+  const exitRootRouteEditMode = () => {
+    setIsRootRouteEditMode(false);
+  };
+
   const handleSave = (data: Partial<FormAmRoute>) => {
     const newData = formAmRouteToAmRoute({
       ...routes,
       ...data,
     });
 
+    if (isRootRouteEditMode) {
+      exitRootRouteEditMode();
+    }
+
     console.log(newData);
+
+    fetchConfig();
   };
 
   return (
@@ -56,9 +75,21 @@ const AmRoutes: FC = () => {
       {result && !loading && !error && (
         <>
           <div className={styles.break} />
-          <AmRootRoute onSave={handleSave} receivers={receivers} routes={routes} />
+          <AmRootRoute
+            isEditMode={isRootRouteEditMode}
+            onSave={handleSave}
+            onEnterEditMode={enterRootRouteEditMode}
+            onExitEditMode={exitRootRouteEditMode}
+            receivers={receivers}
+            routes={routes}
+          />
           <div className={styles.break} />
-          <AmSpecificRouting onChange={handleSave} receivers={receivers} routes={routes} />
+          <AmSpecificRouting
+            onChange={handleSave}
+            onRootRouteEdit={enterRootRouteEditMode}
+            receivers={receivers}
+            routes={routes}
+          />
         </>
       )}
     </AlertingPageWrapper>

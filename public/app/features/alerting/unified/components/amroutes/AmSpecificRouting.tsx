@@ -9,11 +9,12 @@ import { AmRoutesTable } from './AmRoutesTable';
 
 export interface AmSpecificRoutingProps {
   onChange: (routes: FormAmRoute) => void;
+  onRootRouteEdit: () => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
 }
 
-export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, receivers, routes }) => {
+export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, onRootRouteEdit, receivers, routes }) => {
   const [actualRoutes, setActualRoutes] = useState(routes.routes);
   const [isAddMode, setIsAddMode] = useState(false);
 
@@ -28,7 +29,14 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, receiv
     <div className={styles.container}>
       <h5>Specific routing</h5>
       <p>Send specific alerts to chosen channels, based on matching criteria</p>
-      {actualRoutes.length > 0 ? (
+      {!routes.receiver ? (
+        <EmptyArea
+          buttonIcon="rocket"
+          buttonLabel="Set a default contact point"
+          onButtonClick={onRootRouteEdit}
+          text="You haven't set a default contact point for the root route yet."
+        />
+      ) : actualRoutes.length > 0 ? (
         <>
           {!isAddMode && (
             <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
