@@ -1,15 +1,14 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, TimeRange, TimeZone } from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
-import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
+import { VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 
 /**
@@ -17,7 +16,7 @@ import { VizLayout } from '../VizLayout/VizLayout';
  */
 export const FIXED_UNIT = '__fixed';
 
-export interface GraphNGProps extends Themeable {
+export interface GraphNGProps<T = {}> extends Themeable {
   width: number;
   height: number;
   frames: DataFrame[];
@@ -29,6 +28,17 @@ export interface GraphNGProps extends Themeable {
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   onSeriesColorChange?: (label: string, color: string) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
+
+  prepConfig: (
+    alignedFrame: DataFrame,
+    theme: GrafanaTheme,
+    timeZone: string,
+    getTimeRange: () => TimeRange,
+    addlProps: T
+  ) => UPlotConfigBuilder;
+  addlProps: (props: GraphNGProps<T>) => T;
+  shouldReconfig: (prevProps: GraphNGProps<T>, props: GraphNGProps<T>) => boolean;
+  renderLegend: (props: GraphNGProps<T>, config: UPlotConfigBuilder, alignedDataFrame: DataFrame) => React.ReactNode;
 }
 
 /**
@@ -68,13 +78,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       };
 
       if (withConfig) {
-        state.config = preparePlotConfigBuilder(
-          alignedFrame,
-          theme,
-          timeZone,
-          this.getTimeRange,
-          this.addlProps(props)
-        );
+        state.config = props.prepConfig(alignedFrame, theme, timeZone, this.getTimeRange, props.addlProps(props));
       }
     }
 
@@ -97,7 +101,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
           timeZone !== prevProps.timeZone ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
-          this.shouldReconfig(prevProps, this.props);
+          this.props.shouldReconfig(prevProps, this.props);
 
         if (shouldReconfig) {
           //console.log("shouldReconfig");
@@ -107,7 +111,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
             theme,
             timeZone,
             this.getTimeRange,
-            this.addlProps(this.props)
+            this.props.addlProps(this.props)
           );
         }
       }
@@ -117,7 +121,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   render() {
-    const { width, height, children, timeRange } = this.props;
+    const { width, height, children, timeRange, renderLegend } = this.props;
     const { config, alignedFrame } = this.state;
 
     if (!config) {
@@ -125,7 +129,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={this.renderLegend()}>
+      <VizLayout width={width} height={height} legend={renderLegend(this.props, config, alignedFrame)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={this.state.config!}
@@ -138,35 +142,6 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
           </UPlotChart>
         )}
       </VizLayout>
-    );
-  }
-
-  shouldReconfig(prevProps: GraphNGProps, props?: GraphNGProps) {
-    return false;
-  }
-
-  addlProps(props: GraphNGProps) {
-    return props;
-  }
-
-  renderLegend() {
-    const { legend, onSeriesColorChange, onLegendClick, frames } = this.props;
-    const { config } = this.state;
-
-    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
-      return;
-    }
-
-    return (
-      <PlotLegend
-        data={frames}
-        config={config}
-        onSeriesColorChange={onSeriesColorChange}
-        onLegendClick={onLegendClick}
-        maxHeight="35%"
-        maxWidth="60%"
-        {...legend}
-      />
     );
   }
 }
