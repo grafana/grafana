@@ -10,7 +10,8 @@ import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
-import { computeAlertManagerConfig, computeDefaultValuesRoute, mapObjectsToSelectableValue } from './utils/amroutes';
+import { FormAmRoute } from './types/amroutes';
+import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AmRoutes: FC = () => {
@@ -27,8 +28,17 @@ const AmRoutes: FC = () => {
   const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const routes = useMemo(() => computeDefaultValuesRoute(config?.route), [config?.route]);
-  const receivers = mapObjectsToSelectableValue(config?.receivers, 'name');
+  const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+  const receivers = stringsToSelectableValues((config?.receivers ?? []).map((receiver) => receiver.name));
+
+  const handleSave = (data: Partial<FormAmRoute>) => {
+    const newData = formAmRouteToAmRoute({
+      ...routes,
+      ...data,
+    });
+
+    console.log(newData);
+  };
 
   return (
     <AlertingPageWrapper pageId="am-routes">
@@ -44,31 +54,9 @@ const AmRoutes: FC = () => {
       {result && !loading && !error && (
         <>
           <div className={styles.break} />
-          <AmRootRoute
-            onSave={(data) => {
-              const newData = computeAlertManagerConfig({
-                ...routes,
-                ...data,
-              });
-
-              console.log(newData);
-            }}
-            receivers={receivers}
-            routes={routes}
-          />
+          <AmRootRoute onSave={handleSave} receivers={receivers} routes={routes} />
           <div className={styles.break} />
-          <AmSpecificRouting
-            onChange={(data) => {
-              const newData = computeAlertManagerConfig({
-                ...routes,
-                ...data,
-              });
-
-              console.log(newData);
-            }}
-            receivers={receivers}
-            routes={routes}
-          />
+          <AmSpecificRouting onChange={handleSave} receivers={receivers} routes={routes} />
         </>
       )}
     </AlertingPageWrapper>

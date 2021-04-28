@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import {
   Button,
   Checkbox,
@@ -15,25 +15,31 @@ import {
   Switch,
   useStyles,
 } from '@grafana/ui';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { AmRouteFormValues } from '../../types/amroutes';
-import { emptyMatcher, mapStringToSelectableValue, optionalPositiveInteger } from '../../utils/amroutes';
+import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import {
+  emptyArrayFieldMatcher,
+  mapMultiSelectValueToStrings,
+  mapSelectValueToString,
+  optionalPositiveInteger,
+  stringToSelectableValue,
+  stringsToSelectableValues,
+} from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
-  onSave: (data: AmRouteFormValues) => void;
-  receivers: Array<SelectableValue<Receiver['name']>>;
-  routes: AmRouteFormValues;
+  onSave: (data: FormAmRoute) => void;
+  receivers: AmRouteReceiver[];
+  routes: FormAmRoute;
 }
 
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles(getStyles);
-  const [overrideGrouping, setOverrideGrouping] = useState(!!routes.groupBy && routes.groupBy.length > 0);
+  const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
   const [overrideTimings, setOverrideTimings] = useState(
     !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
   );
-  const [groupByOptions, setGroupByOptions] = useState(routes.groupBy);
+  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
@@ -71,7 +77,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                 <Button
                   className={styles.addMatcherBtn}
                   icon="plus"
-                  onClick={() => append(emptyMatcher)}
+                  onClick={() => append(emptyArrayFieldMatcher)}
                   variant="secondary"
                   type="button"
                 >
@@ -81,7 +87,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             )}
           </FieldArray>
           <Field label="Contact point">
-            <InputControl as={Select} control={control} name="receiver" options={receivers} />
+            <InputControl
+              as={Select}
+              control={control}
+              name="receiver"
+              onChange={mapSelectValueToString}
+              options={receivers}
+            />
           </Field>
           <Field label="Continue matching subsequent sibling nodes">
             <Switch ref={register()} name="continue" />
@@ -99,12 +111,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                 as={MultiSelect}
                 control={control}
                 name="groupBy"
+                onChange={mapMultiSelectValueToStrings}
                 onCreateOption={(opt: string) => {
-                  const newOpt = mapStringToSelectableValue(opt);
+                  setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
 
-                  setGroupByOptions((groupByOptions) => [...groupByOptions, newOpt]);
-
-                  control.setValue('groupBy', [...getValues().groupBy, newOpt]);
+                  control.setValue('groupBy', [...getValues().groupBy, opt]);
                 }}
                 options={groupByOptions}
               />
@@ -131,7 +142,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       validate: optionalPositiveInteger,
                     }}
                   />
-                  <InputControl as={Select} control={control} name="groupWaitValueType" options={timeOptions} />
+                  <InputControl
+                    as={Select}
+                    control={control}
+                    name="groupWaitValueType"
+                    onChange={mapSelectValueToString}
+                    options={timeOptions}
+                  />
                 </div>
               </Field>
               <Field
@@ -147,7 +164,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       validate: optionalPositiveInteger,
                     }}
                   />
-                  <InputControl as={Select} control={control} name="groupIntervalValueType" options={timeOptions} />
+                  <InputControl
+                    as={Select}
+                    control={control}
+                    name="groupIntervalValueType"
+                    onChange={mapSelectValueToString}
+                    options={timeOptions}
+                  />
                 </div>
               </Field>
               <Field
@@ -168,6 +191,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     control={control}
                     menuPlacement="top"
                     name="repeatIntervalValueType"
+                    onChange={mapSelectValueToString}
                     options={timeOptions}
                   />
                 </div>

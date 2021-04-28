@@ -1,8 +1,6 @@
-import { SelectableValue } from '@grafana/data';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { AmRouteFormValues } from '../../types/amroutes';
+import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { collapseItem, expandItem, prepareItems } from '../../utils/dynamicTable';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
@@ -11,13 +9,13 @@ import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;
-  onChange: (routes: AmRouteFormValues[]) => void;
-  receivers: Array<SelectableValue<Receiver['name']>>;
-  routes: AmRouteFormValues[];
+  onChange: (routes: FormAmRoute[]) => void;
+  receivers: AmRouteReceiver[];
+  routes: FormAmRoute[];
 }
 
-type RouteTableColumnProps = DynamicTableColumnProps<AmRouteFormValues>;
-type RouteTableItemProps = DynamicTableItemProps<AmRouteFormValues>;
+type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
+type RouteTableItemProps = DynamicTableItemProps<FormAmRoute>;
 
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, receivers, routes }) => {
   const [items, setItems] = useState<RouteTableItemProps[]>([]);
@@ -51,7 +49,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
       id: 'matchingCriteria',
       label: 'Matching criteria',
       // eslint-disable-next-line react/display-name
-      renderRow: (item) => (
+      renderCell: (item) => (
         <AlertLabels
           labels={item.data.matchers.reduce(
             (acc, matcher) => ({
@@ -67,20 +65,20 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
     {
       id: 'groupBy',
       label: 'Group by',
-      renderRow: (item) => item.data.groupBy.map((groupBy) => groupBy.label).join(', ') || '-',
+      renderCell: (item) => item.data.groupBy.join(', ') || '-',
       size: 5,
     },
     {
       id: 'receiverChannel',
       label: 'Receiver channel',
-      renderRow: (item) => item.data.receiver?.label || '-',
+      renderCell: (item) => item.data.receiver || '-',
       size: 5,
     },
     {
       id: 'actions',
       label: 'Actions',
       // eslint-disable-next-line react/display-name
-      renderRow: (item, index) => {
+      renderCell: (item, index) => {
         if (item.renderExpandedContent) {
           return null;
         }

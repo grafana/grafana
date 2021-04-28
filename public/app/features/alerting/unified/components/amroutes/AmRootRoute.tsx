@@ -1,16 +1,15 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { AmRouteFormValues } from '../../types/amroutes';
+import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
 
 export interface AmRootRouteProps {
-  onSave: (data: Partial<AmRouteFormValues>) => void;
-  receivers: Array<SelectableValue<Receiver['name']>>;
-  routes: AmRouteFormValues;
+  onSave: (data: Partial<FormAmRoute>) => void;
+  receivers: AmRouteReceiver[];
+  routes: FormAmRoute;
 }
 
 export const AmRootRoute: FC<AmRootRouteProps> = ({ onSave, receivers, routes }) => {
@@ -36,7 +35,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({ onSave, receivers, routes })
       {isEditMode ? (
         <AmRootRouteForm
           onCancel={() => setIsEditMode(false)}
-          onSave={(data: Partial<AmRouteFormValues>) => {
+          onSave={(data: Partial<FormAmRoute>) => {
             onSave(data);
             setIsEditMode(false);
           }}

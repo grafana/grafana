@@ -1,23 +1,23 @@
 import React, { FC } from 'react';
 import { useStyles } from '@grafana/ui';
-import { AmRouteFormValues } from '../../types/amroutes';
+import { FormAmRoute } from '../../types/amroutes';
 import { getGridStyles } from './gridStyles';
 
 export interface AmRootRouteReadProps {
-  routes: AmRouteFormValues;
+  routes: FormAmRoute;
 }
 
 export const AmRootRouteRead: FC<AmRootRouteReadProps> = ({ routes }) => {
   const styles = useStyles(getGridStyles);
 
-  const receiver = routes.receiver?.value || '-';
-  const groupBy = routes.groupBy.map((groupBy) => groupBy.label).join(', ') || '-';
-  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType.value}` : '-';
+  const receiver = routes.receiver || '-';
+  const groupBy = routes.groupBy.join(', ') || '-';
+  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
   const groupInterval = routes.groupIntervalValue
-    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType.value}`
+    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType}`
     : '-';
   const repeatInterval = routes.repeatIntervalValue
-    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType.value}`
+    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType}`
     : '-';
 
   return (

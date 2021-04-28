@@ -1,27 +1,25 @@
-import { SelectableValue } from '@grafana/data';
 import React, { FC, useState } from 'react';
 import { Button, useStyles } from '@grafana/ui';
-import { Receiver } from '../../../../../plugins/datasource/alertmanager/types';
-import { AmRouteFormValues } from '../../types/amroutes';
+import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyRoute } from '../../utils/amroutes';
 import { AmRoutesTable } from './AmRoutesTable';
 import { getGridStyles } from './gridStyles';
 
 export interface AmRoutesExpandedReadProps {
-  onChange: (routes: AmRouteFormValues) => void;
-  receivers: Array<SelectableValue<Receiver['name']>>;
-  routes: AmRouteFormValues;
+  onChange: (routes: FormAmRoute) => void;
+  receivers: AmRouteReceiver[];
+  routes: FormAmRoute;
 }
 
 export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, receivers, routes }) => {
   const styles = useStyles(getGridStyles);
 
-  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType.value}` : '-';
+  const groupWait = routes.groupWaitValue ? `${routes.groupWaitValue}${routes.groupWaitValueType}` : '-';
   const groupInterval = routes.groupIntervalValue
-    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType.value}`
+    ? `${routes.groupIntervalValue}${routes.groupIntervalValueType}`
     : '-';
   const repeatInterval = routes.repeatIntervalValue
-    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType.value}`
+    ? `${routes.repeatIntervalValue}${routes.repeatIntervalValueType}`
     : '-';
 
   const [subroutes, setSubroutes] = useState(routes.routes);

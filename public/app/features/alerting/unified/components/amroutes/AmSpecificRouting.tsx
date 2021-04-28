@@ -1,16 +1,15 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { AmRouteFormValues } from '../../types/amroutes';
+import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import { emptyRoute } from '../../utils/amroutes';
 import { AmRoutesTable } from './AmRoutesTable';
 
 export interface AmSpecificRoutingProps {
-  onChange: (routes: AmRouteFormValues) => void;
-  receivers: Array<SelectableValue<Receiver['name']>>;
-  routes: AmRouteFormValues;
+  onChange: (routes: FormAmRoute) => void;
+  receivers: AmRouteReceiver[];
+  routes: FormAmRoute;
 }
 
 export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, receivers, routes }) => {

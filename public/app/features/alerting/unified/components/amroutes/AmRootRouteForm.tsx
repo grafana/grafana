@@ -1,23 +1,28 @@
 import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles } from '@grafana/ui';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { AmRouteFormValues } from '../../types/amroutes';
-import { mapStringToSelectableValue, optionalPositiveInteger } from '../../utils/amroutes';
+import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import {
+  mapMultiSelectValueToStrings,
+  mapSelectValueToString,
+  optionalPositiveInteger,
+  stringToSelectableValue,
+  stringsToSelectableValues,
+} from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 
 export interface AmRootRouteFormProps {
   onCancel: () => void;
-  onSave: (data: AmRouteFormValues) => void;
-  receivers: Array<SelectableValue<Receiver['name']>>;
-  routes: AmRouteFormValues;
+  onSave: (data: FormAmRoute) => void;
+  receivers: AmRouteReceiver[];
+  routes: FormAmRoute;
 }
 
 export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles(getStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
-  const [groupByOptions, setGroupByOptions] = useState(routes.groupBy);
+  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
@@ -30,6 +35,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
                 className={styles.input}
                 control={control}
                 name="receiver"
+                onChange={mapSelectValueToString}
                 options={receivers}
               />
               <span>or</span>
@@ -43,12 +49,11 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
               className={styles.input}
               control={control}
               name="groupBy"
+              onChange={mapMultiSelectValueToStrings}
               onCreateOption={(opt: string) => {
-                const newOpt = mapStringToSelectableValue(opt);
+                setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
 
-                setGroupByOptions((groupByOptions) => [...groupByOptions, newOpt]);
-
-                control.setValue('groupBy', [...getValues().groupBy, newOpt]);
+                control.setValue('groupBy', [...getValues().groupBy, opt]);
               }}
               options={groupByOptions}
             />
@@ -68,16 +73,17 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  name="groupWaitValue"
                   rules={{
                     validate: optionalPositiveInteger,
                   }}
-                  name="groupWaitValue"
                 />
                 <InputControl
                   as={Select}
                   className={styles.input}
                   control={control}
                   name="groupWaitValueType"
+                  onChange={mapSelectValueToString}
                   options={timeOptions}
                 />
               </div>
@@ -91,16 +97,17 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  name="groupIntervalValue"
                   rules={{
                     validate: optionalPositiveInteger,
                   }}
-                  name="groupIntervalValue"
                 />
                 <InputControl
                   as={Select}
                   className={styles.input}
                   control={control}
                   name="groupIntervalValueType"
+                  onChange={mapSelectValueToString}
                   options={timeOptions}
                 />
               </div>
@@ -114,10 +121,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  name="repeatIntervalValue"
                   rules={{
                     validate: optionalPositiveInteger,
                   }}
-                  name="repeatIntervalValue"
                 />
                 <InputControl
                   as={Select}
@@ -125,6 +132,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
                   control={control}
                   menuPlacement="top"
                   name="repeatIntervalValueType"
+                  onChange={mapSelectValueToString}
                   options={timeOptions}
                 />
               </div>

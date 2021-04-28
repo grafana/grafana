@@ -8,7 +8,7 @@ export interface DynamicTableColumnProps<T = unknown> {
   id: string | number;
   label: string;
 
-  renderRow?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
+  renderCell?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   size?: number | string;
 }
 
@@ -68,7 +68,7 @@ export const DynamicTable: FC<DynamicTableProps> = ({
           )}
           {cols.map((col) => (
             <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
-              {col.renderRow?.(item, index)}
+              {col.renderCell?.(item, index)}
             </div>
           ))}
           {item.isExpanded && (
