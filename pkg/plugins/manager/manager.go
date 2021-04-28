@@ -715,53 +715,26 @@ func (pm *PluginManager) Install(pluginID string) error {
 	for _, plugin := range loadedPlugins {
 		var pb *plugins.PluginBase
 		var staticRoutes []*plugins.PluginStaticRoute
+
 		switch p := plugin.(type) {
 		case *plugins.DataSourcePlugin:
 			pm.dataSources[p.Id] = p
-
 			pb = &p.PluginBase
-
-			// Copy relevant fields from the base
-			pb.PluginDir = p.PluginDir
-			pb.Signature = p.Signature
-			pb.SignatureType = p.SignatureType
-			pb.SignatureOrg = p.SignatureOrg
 
 			staticRoutes = p.InitFrontendPlugin(pm.Cfg)
 		case *plugins.PanelPlugin:
 			pm.panels[p.Id] = p
-
 			pb = &p.PluginBase
-
-			// Copy relevant fields from the base
-			pb.PluginDir = p.PluginDir
-			pb.Signature = p.Signature
-			pb.SignatureType = p.SignatureType
-			pb.SignatureOrg = p.SignatureOrg
 
 			staticRoutes = p.InitFrontendPlugin(pm.Cfg)
 		case *plugins.RendererPlugin:
 			pm.renderer = p
-
 			pb = &p.PluginBase
-
-			// Copy relevant fields from the base
-			pb.PluginDir = p.PluginDir
-			pb.Signature = p.Signature
-			pb.SignatureType = p.SignatureType
-			pb.SignatureOrg = p.SignatureOrg
 
 			staticRoutes = pm.renderer.InitFrontendPlugin(pm.Cfg)
 		case *plugins.AppPlugin:
 			pm.apps[p.Id] = p
-
 			pb = &p.PluginBase
-
-			// Copy relevant fields from the base
-			pb.PluginDir = p.PluginDir
-			pb.Signature = p.Signature
-			pb.SignatureType = p.SignatureType
-			pb.SignatureOrg = p.SignatureOrg
 
 			staticRoutes = p.InitApp(pm.panels, pm.dataSources, pm.Cfg)
 		default:
