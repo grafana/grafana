@@ -207,7 +207,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Attach data links supplier
       newField.getLinks = getLinksSupplier(newFrame, newField, fieldScopedVars, context.replaceVariables, {
-        theme: options.theme,
+        // TODO needed?
+        // theme: options.theme,
         timeZone: options.timeZone,
       });
 
@@ -325,7 +326,7 @@ export const getLinksSupplier = (
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
   options: {
-    theme: GrafanaTheme;
+    theme?: GrafanaTheme;
     timeZone?: TimeZone;
   }
 ) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {

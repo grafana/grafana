@@ -1,6 +1,5 @@
 import { toNumber } from 'lodash';
 import { DataFrame, DisplayValue, GrafanaTheme, TimeZone } from '../types';
-import { getDisplayProcessor } from './displayProcessor';
 import { formattedValueToString } from '../valueFormats';
 
 /**
@@ -14,7 +13,7 @@ export function getFieldDisplayValuesProxy(
   frame: DataFrame,
   rowIndex: number,
   options: {
-    theme: GrafanaTheme;
+    theme?: GrafanaTheme;
     timeZone?: TimeZone;
   }
 ): Record<string, DisplayValue> {
@@ -44,12 +43,13 @@ export function getFieldDisplayValuesProxy(
         return undefined;
       }
       if (!field.display) {
+        throw new Error('Field missing display processor ' + field.name);
         // Lazy load the display processor
-        field.display = getDisplayProcessor({
-          field,
-          theme: options.theme,
-          timeZone: options.timeZone,
-        });
+        // field.display = getDisplayProcessor({
+        //   field,
+        //   theme: options.theme,
+        //   timeZone: options.timeZone,
+        // });
       }
       const raw = field.values.get(rowIndex);
       const disp = field.display(raw);

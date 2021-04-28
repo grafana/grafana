@@ -9,7 +9,6 @@ import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
-import { getTestTheme } from '../utils/testdata/testTheme';
 import { GrafanaThemeV2 } from '../themes/types';
 
 interface DisplayProcessorOptions {

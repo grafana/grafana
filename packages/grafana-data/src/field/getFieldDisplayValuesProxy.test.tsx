@@ -2,7 +2,7 @@ import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { applyFieldOverrides } from './fieldOverrides';
 import { toDataFrame } from '../dataframe';
 import { GrafanaTheme } from '../types';
-import { getTestTheme } from '../utils/testdata/testTheme';
+import { createTheme } from '../themes';
 
 describe('getFieldDisplayValuesProxy', () => {
   const data = applyFieldOverrides({
@@ -33,7 +33,7 @@ describe('getFieldDisplayValuesProxy', () => {
     },
     replaceVariables: (val: string) => val,
     timeZone: 'utc',
-    theme: getTestTheme(),
+    theme: createTheme(),
   })[0];
 
   it('should define all display functions', () => {

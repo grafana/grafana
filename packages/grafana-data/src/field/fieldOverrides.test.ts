@@ -27,7 +27,7 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
 import { ArrayVector } from '../vector';
 import { getDisplayProcessor } from './displayProcessor';
-import { getTestTheme } from '../utils/testdata/testTheme';
+import { createTheme } from '../themes';
 
 const property1: any = {
   id: 'custom.property1', // Match field properties
@@ -179,7 +179,7 @@ describe('applyFieldOverrides', () => {
           overrides: [],
         },
         replaceVariables: (value: any) => value,
-        theme: getTestTheme(),
+        theme: createTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
@@ -241,7 +241,7 @@ describe('applyFieldOverrides', () => {
       },
       fieldConfigRegistry: customFieldRegistry,
       replaceVariables: (v) => v,
-      theme: getTestTheme(),
+      theme: createTheme(),
     })[0];
 
     const outField = processed.fields[0];
@@ -257,7 +257,7 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
-      theme: getTestTheme(),
+      theme: createTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
     const valueColumn = data.fields[1];
@@ -284,7 +284,7 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
-      theme: getTestTheme(),
+      theme: createTheme(),
     })[0];
     const valueColumn = data.fields[1];
     const range = valueColumn.state!.range!;
@@ -306,7 +306,7 @@ describe('applyFieldOverrides', () => {
         replaceVariablesCalls.push(variables);
         return value;
       }) as InterpolateFunction,
-      theme: getTestTheme(),
+      theme: createTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
 
@@ -557,7 +557,7 @@ describe('getLinksSupplier', () => {
       replaceSpy,
       // this is used only for internal links so isn't needed here
       {
-        theme: getTestTheme(),
+        theme: createTheme(),
       }
     );
     supplier({});
@@ -604,7 +604,7 @@ describe('getLinksSupplier', () => {
       {},
       // We do not need to interpolate anything for this test
       (value, vars, format) => value,
-      { theme: getTestTheme() }
+      { theme: createTheme() }
     );
     const links = supplier({ valueRowIndex: 0 });
     expect(links.length).toBe(1);
