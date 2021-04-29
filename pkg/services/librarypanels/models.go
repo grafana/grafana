@@ -137,3 +137,13 @@ type patchLibraryPanelCommand struct {
 	Model    json.RawMessage `json:"model"`
 	Version  int64           `json:"version" binding:"Required"`
 }
+
+// searchLibraryPanelsQuery is the query used for searching for LibraryPanels
+type searchLibraryPanelsQuery struct {
+	perPage       int
+	page          int
+	searchString  string
+	sortDirection string
+	panelFilter   string
+	excludeUID    string
+}
