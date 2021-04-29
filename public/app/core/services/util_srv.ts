@@ -15,7 +15,7 @@ import {
   ShowModalReactEvent,
 } from '../../types/events';
 import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
-import { textUtil } from '@grafana/data';
+import { deprecationWarning, textUtil } from '@grafana/data';
 
 export class UtilSrv {
   modalScope: any;
@@ -55,13 +55,21 @@ export class UtilSrv {
     this.reactModalRoot.removeChild(this.reactModalNode);
   };
 
+  /**
+   * @deprecated use showModalReact instead that has this capability built in
+   */
   hideModal() {
+    deprecationWarning('UtilSrv', 'hideModal', 'showModalReact');
     if (this.modalScope && this.modalScope.dismiss) {
       this.modalScope.dismiss();
     }
   }
 
+  /**
+   * @deprecated use showModalReact instead
+   */
   showModal(options: any) {
+    deprecationWarning('UtilSrv', 'showModal', 'showModalReact');
     if (this.modalScope && this.modalScope.dismiss) {
       this.modalScope.dismiss();
     }

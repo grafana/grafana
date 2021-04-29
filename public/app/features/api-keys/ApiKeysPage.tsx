@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import ReactDOMServer from 'react-dom/server';
 import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 // Utils
@@ -8,11 +7,11 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { addApiKey, deleteApiKey, loadApiKeys } from './state/actions';
 import Page from 'app/core/components/Page/Page';
-import ApiKeysAddedModal from './ApiKeysAddedModal';
+import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { LegacyForms } from '@grafana/ui';
+import { InlineField, InlineSwitch } from '@grafana/ui';
 import { rangeUtil } from '@grafana/data';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { setSearchQuery } from './state/reducers';
@@ -20,9 +19,7 @@ import { ApiKeysForm } from './ApiKeysForm';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';
 import { ApiKeysController } from './ApiKeysController';
-import { ShowModalEvent } from 'app/types/events';
-
-const { Switch } = LegacyForms;
+import { ShowModalReactEvent } from 'app/types/events';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -82,11 +79,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   onAddApiKey = (newApiKey: NewApiKey) => {
     const openModal = (apiKey: string) => {
       const rootPath = window.location.origin + config.appSubUrl;
-      const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
 
       appEvents.publish(
-        new ShowModalEvent({
-          templateHtml: modalTemplate,
+        new ShowModalReactEvent({
+          props: {
+            apiKey,
+            rootPath,
+          },
+          component: ApiKeysAddedModal,
         })
       );
     };
@@ -152,7 +152,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   {showTable ? (
                     <>
                       <h3 className="page-heading">Existing API keys</h3>
-                      <Switch label="Show expired" checked={includeExpired} onChange={this.onIncludeExpiredChange} />
+                      <InlineField label="Show expired">
+                        <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
+                      </InlineField>
                       <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
                     </>
                   ) : null}
