@@ -11,7 +11,7 @@ package scuemata
     PanelOptions: {...}
 
     // Define the custom properties that exist within standard field config
-    PanelFieldConfig: {...}
+    PanelFieldConfig?: {...}
 
     // Panels may define their own types
     ...
