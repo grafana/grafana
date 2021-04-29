@@ -1,9 +1,9 @@
 import React, { useState, useLayoutEffect, useRef, HTMLAttributes, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import useWindowSize from 'react-use/lib/useWindowSize';
-import { Dimensions2D, GrafanaTheme } from '@grafana/data';
+import { Dimensions2D, GrafanaThemeV2 } from '@grafana/data';
 
 /**
  * @public
@@ -84,7 +84,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
     });
   }, [width, height, positionX, offsetX, positionY, offsetY, tooltipMeasurement.width, tooltipMeasurement.height]);
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div
@@ -105,7 +105,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
 
 VizTooltipContainer.displayName = 'VizTooltipContainer';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   wrapper: css`
     ${getTooltipContainerStyles(theme)}
   `,
