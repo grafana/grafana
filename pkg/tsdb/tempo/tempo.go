@@ -72,8 +72,7 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 		}, nil
 	}
 
-	otTrace := ot_pdata.NewTraces()
-	err = otTrace.FromOtlpProtoBytes(body)
+	otTrace, err := ot_pdata.TracesFromOtlpProtoBytes(body)
 
 	if err != nil {
 		return plugins.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
