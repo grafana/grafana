@@ -15,7 +15,7 @@ import {
   TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
-import { GrafanaTheme } from '../types/theme';
+import { GrafanaThemeV2 } from '../themes';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
@@ -71,7 +71,7 @@ export interface GetFieldDisplayValuesOptions {
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
-  theme: GrafanaTheme;
+  theme: GrafanaThemeV2;
   timeZone?: TimeZone;
 }
 
