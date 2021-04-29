@@ -142,7 +142,7 @@ export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptio
         <Tag
           tag={t}
           isFirst={i === 0}
-          key={i.toString()}
+          key={i}
           onChange={(newT) => {
             onTagChange(newT, i);
           }}

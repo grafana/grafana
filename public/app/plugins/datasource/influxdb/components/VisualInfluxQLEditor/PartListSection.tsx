@@ -68,7 +68,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
           return options != null ? (
             <SegmentAsync
               allowCustomValue
-              key={i.toString()}
+              key={i}
               value={value}
               loadOptions={() => options().then((items) => items.map(toSelectableValue))}
               onChange={(v) => {
@@ -78,7 +78,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
           ) : (
             <SegmentInput
               allowCustomValue
-              key={i.toString()}
+              key={i}
               value={value}
               onChange={(v) => {
                 onParamChange(v.toString(), i);
@@ -103,7 +103,7 @@ export const PartListSection = ({
     <>
       {parts.map((part, index) => (
         <Part
-          key={index.toString()}
+          key={index}
           name={part.name}
           params={part.params}
           onRemove={() => {

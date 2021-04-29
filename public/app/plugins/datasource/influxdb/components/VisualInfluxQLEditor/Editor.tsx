@@ -118,7 +118,7 @@ export const Editor = (props: Props): JSX.Element => {
         />
       </SectionWrap>
       {selectLists.map((sel, index) => (
-        <SectionWrap key={index.toString()} initialName={index === 0 ? 'select' : ''}>
+        <SectionWrap key={index} initialName={index === 0 ? 'select' : ''}>
           <PartListSection
             parts={sel}
             newPartOptions={getNewSelectPartOptions()}
