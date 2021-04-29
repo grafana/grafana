@@ -21,8 +21,8 @@ const createStorybookTheme = (theme: GrafanaThemeV2) => {
     fontCode: theme.typography.fontFamilyMonospace,
 
     // Text colors
-    textColor: theme.colors.primary.text,
-    textInverseColor: theme.colors.primary.contrastText,
+    textColor: theme.colors.text.primary,
+    textInverseColor: theme.colors.background.primary,
 
     // Toolbar default and active colors
     barTextColor: theme.colors.text.primary,
