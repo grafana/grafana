@@ -6,7 +6,6 @@ import { DataQuery, DataSourceInstanceSettings, PanelData } from '@grafana/data'
 import { QueryEditorRow } from './QueryEditorRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   // The query configuration
