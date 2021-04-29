@@ -46,6 +46,10 @@ export function RadioButtonGroup<T>({
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
       {options.map((o, i) => {
         const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
+        const buttonContents = [o.label, o.icon && <Icon name={o.icon as IconName} />];
+        if (o.iconPlacement === 'left') {
+          buttonContents.reverse();
+        }
         return (
           <RadioButton
             size={size}
@@ -58,8 +62,7 @@ export function RadioButtonGroup<T>({
             description={o.description}
             fullWidth={fullWidth}
           >
-            {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
-            {o.label}
+            <div className={styles.radioContents}>{buttonContents}</div>
           </RadioButton>
         );
       })}
@@ -82,8 +85,11 @@ const getStyles = (theme: GrafanaThemeV2) => {
     fullWidth: css({
       display: 'flex',
     }),
-    icon: css`
-      margin-right: 6px;
+    radioContents: css`
+      display: grid;
+      grid-auto-flow: column;
+      justify-content: center;
+      gap: 6px;
     `,
   };
 };
