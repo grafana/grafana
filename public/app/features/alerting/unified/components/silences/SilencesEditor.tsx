@@ -2,7 +2,7 @@ import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanag
 import React, { FC } from 'react';
 import { Button, Field, FieldSet, Input, TextArea } from '@grafana/ui';
 import MatchersField from './MatchersField';
-import { useForm, FormContext } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { useDispatch } from 'react-redux';
 import { createSilence } from '../../state/actions';
@@ -66,30 +66,30 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
     dispatch(createSilence(alertManagerSourceName, payload as SilenceCreatePayload, true));
   };
   return (
-    <FormContext {...formAPI}>
+    <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label="Edit silence">
-          <Input ref={register()} name="id" readOnly />
+          <Input {...register('id')} readOnly />
           <Field label="Starts at">
-            <Input ref={register()} name="startsAt" type="datetime-local" />
+            <Input {...register('startsAt')} type="datetime-local" />
           </Field>
           <Field label="Ends at">
-            <Input ref={register()} name="endsAt" type="datetime-local" />
+            <Input {...register('endsAt')} type="datetime-local" />
           </Field>
           <Field label="Duration">
-            <Input ref={register()} name="duration" readOnly />
+            <Input {...register('duration')} readOnly />
           </Field>
           <MatchersField />
           <Field label="Comment" required>
-            <TextArea ref={register({ required: true })} name="comment" />
+            <TextArea {...register('comment', { required: true })} />
           </Field>
           <Field label="Created by" required>
-            <Input ref={register({ required: true })} name="createdBy" />
+            <Input {...register('createdBy', { required: true })} />
           </Field>
         </FieldSet>
         <Button type="submit">Submit</Button>
       </form>
-    </FormContext>
+    </FormProvider>
   );
 };
 
