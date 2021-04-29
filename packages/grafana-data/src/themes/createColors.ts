@@ -26,11 +26,6 @@ export interface ThemeColorsBase<TColor> {
     maxContrast: string;
   };
 
-  inverse: {
-    background: string;
-    text: string;
-  };
-
   background: {
     /** Dashboard and body background */
     canvas: string;
@@ -157,11 +152,6 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
   };
 
-  inverse = {
-    background: palette.gray90,
-    text: 'rgb(36, 41, 46)',
-  };
-
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.15;
@@ -240,11 +230,6 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   gradients = {
     brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
-  };
-
-  inverse = {
-    background: palette.gray05,
-    text: 'rgb(201, 209, 217)',
   };
 
   contrastThreshold = 3;
