@@ -40,7 +40,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         field={field}
         text={options.text}
         display={processor}
-        theme={config.theme}
+        theme={config.theme2}
         itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}
         onClick={openMenu}

@@ -77,12 +77,11 @@ describe('GraphNG utils', () => {
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
-      expect(
-        preparePlotConfigBuilder(frame!, createTheme(), {
-          ...config,
-          orientation: v,
-        })
-      ).toMatchSnapshot();
+      const result = preparePlotConfigBuilder(frame!, createTheme(), {
+        ...config,
+        orientation: v,
+      }).getConfig();
+      expect(result).toMatchSnapshot();
     });
 
     it.each([BarValueVisibility.Always, BarValueVisibility.Auto])('value visibility', (v) => {
@@ -90,7 +89,7 @@ describe('GraphNG utils', () => {
         preparePlotConfigBuilder(frame!, createTheme(), {
           ...config,
           showValue: v,
-        })
+        }).getConfig()
       ).toMatchSnapshot();
     });
 
@@ -99,7 +98,7 @@ describe('GraphNG utils', () => {
         preparePlotConfigBuilder(frame!, createTheme(), {
           ...config,
           stacking: v,
-        })
+        }).getConfig()
       ).toMatchSnapshot();
     });
   });
