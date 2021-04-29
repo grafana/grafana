@@ -28,8 +28,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
     onEscapeNewlines,
     logRows,
   }) => {
-    const logsMetaItem: Array<MetaItemProps | LogsMetaItem> = [...meta];
-    const metaInfo: MetaItemProps[] = [];
+    const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
     // Add deduplication info
     if (dedupStrategy !== LogsDedupStrategy.none) {
@@ -50,7 +49,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
 
     // Add detected fields info
     if (showDetectedFields?.length > 0) {
-      metaInfo.push(
+      logsMetaItem.push(
         {
           label: 'Showing only detected fields',
           value: renderMetaItem(showDetectedFields, LogsMetaKind.LabelsMap),
@@ -68,7 +67,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
 
     // Add unescaped content info
     if (hasUnescapedContent) {
-      metaInfo.push({
+      logsMetaItem.push({
         label: 'Your logs might have incorrectly escaped content',
         value: (
           <Tooltip
@@ -86,12 +85,12 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
 
     return (
       <>
-        {meta && (
+        {logsMetaItem && (
           <MetaInfoText
-            metaItems={meta.map((item) => {
+            metaItems={logsMetaItem.map((item) => {
               return {
                 label: item.label,
-                value: item.kind ? renderMetaItem(item.value, item.kind) : item.value,
+                value: 'kind' in item ? renderMetaItem(item.value, item.kind) : item.value,
               };
             })}
           />
