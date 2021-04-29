@@ -40,6 +40,15 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
       <div className={gridStyles.valueCell}>
         <AmRoutesTable
           isAddMode={isAddMode}
+          onCancelAdd={() => {
+            setIsAddMode(false);
+            setSubroutes((subroutes) => {
+              const newSubroutes = [...subroutes];
+              newSubroutes.pop();
+
+              return newSubroutes;
+            });
+          }}
           onChange={(newRoutes) => {
             onChange({
               ...routes,

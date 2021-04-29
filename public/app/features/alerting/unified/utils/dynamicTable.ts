@@ -21,14 +21,12 @@ export const collapseItem = <T = unknown>(
     return {
       ...currentItem,
       isExpanded: false,
-      renderExpandedContent: undefined,
     };
   });
 
 export const expandItem = <T = unknown>(
   items: Array<DynamicTableItemProps<T>>,
-  itemId: DynamicTableItemProps<T>['id'],
-  renderExpandedContent?: DynamicTableItemProps['renderExpandedContent']
+  itemId: DynamicTableItemProps<T>['id']
 ): Array<DynamicTableItemProps<T>> =>
   items.map((currentItem) => {
     if (currentItem.id !== itemId) {
@@ -38,6 +36,36 @@ export const expandItem = <T = unknown>(
     return {
       ...currentItem,
       isExpanded: true,
+    };
+  });
+
+export const addCustomExpandedContent = <T = unknown>(
+  items: Array<DynamicTableItemProps<T>>,
+  itemId: DynamicTableItemProps<T>['id'],
+  renderExpandedContent: DynamicTableItemProps['renderExpandedContent']
+): Array<DynamicTableItemProps<T>> =>
+  items.map((currentItem) => {
+    if (currentItem.id !== itemId) {
+      return currentItem;
+    }
+
+    return {
+      ...currentItem,
       renderExpandedContent,
+    };
+  });
+
+export const removeCustomExpandedContent = <T = unknown>(
+  items: Array<DynamicTableItemProps<T>>,
+  itemId: DynamicTableItemProps<T>['id']
+): Array<DynamicTableItemProps<T>> =>
+  items.map((currentItem) => {
+    if (currentItem.id !== itemId) {
+      return currentItem;
+    }
+
+    return {
+      ...currentItem,
+      renderExpandedContent: undefined,
     };
   });

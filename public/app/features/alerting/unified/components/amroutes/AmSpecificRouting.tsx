@@ -45,6 +45,15 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, onRoot
           )}
           <AmRoutesTable
             isAddMode={isAddMode}
+            onCancelAdd={() => {
+              setIsAddMode(false);
+              setActualRoutes((actualRoutes) => {
+                const newRoutes = [...actualRoutes];
+                newRoutes.pop();
+
+                return newRoutes;
+              });
+            }}
             onChange={(newRoutes) => {
               onChange({
                 ...routes,

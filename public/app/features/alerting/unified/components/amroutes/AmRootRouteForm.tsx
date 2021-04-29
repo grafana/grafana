@@ -1,6 +1,5 @@
 import React, { FC, useState } from 'react';
-import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { cx } from '@emotion/css';
 import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import {
@@ -11,6 +10,7 @@ import {
   stringsToSelectableValues,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
+import { getFormStyles } from './formStyles';
 
 export interface AmRootRouteFormProps {
   onCancel: () => void;
@@ -20,13 +20,13 @@ export interface AmRootRouteFormProps {
 }
 
 export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, receivers, routes }) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, getValues }) => (
+      {({ control, getValues, errors }) => (
         <>
           <Field label="Default notification channel">
             <div className={styles.container}>
@@ -67,12 +67,15 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
             <Field
               label="Group wait"
               description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
+              invalid={!!errors.groupWaitValue}
+              error={errors.groupWaitValue?.message}
             >
               <div className={cx(styles.container, styles.timingContainer)}>
                 <InputControl
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  invalid={!!errors.groupWaitValue}
                   name="groupWaitValue"
                   rules={{
                     validate: optionalPositiveInteger,
@@ -91,12 +94,15 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
             <Field
               label="Group interval"
               description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
+              invalid={!!errors.groupIntervalValue}
+              error={errors.groupIntervalValue?.message}
             >
               <div className={cx(styles.container, styles.timingContainer)}>
                 <InputControl
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  invalid={!!errors.groupIntervalValue}
                   name="groupIntervalValue"
                   rules={{
                     validate: optionalPositiveInteger,
@@ -115,12 +121,15 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
             <Field
               label="Repeat interval"
               description="The waiting time to resend an alert after they have successfully been sent."
+              invalid={!!errors.repeatIntervalValue}
+              error={errors.repeatIntervalValue?.message}
             >
               <div className={cx(styles.container, styles.timingContainer)}>
                 <InputControl
                   as={Input}
                   className={styles.smallInput}
                   control={control}
+                  invalid={!!errors.repeatIntervalValue}
                   name="repeatIntervalValue"
                   rules={{
                     validate: optionalPositiveInteger,
@@ -148,27 +157,4 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
       )}
     </Form>
   );
-};
-
-const getStyles = (theme: GrafanaThemeV2) => {
-  return {
-    container: css`
-      align-items: center;
-      display: flex;
-      flex-flow: row nowrap;
-
-      & > * + * {
-        margin-left: ${theme.spacing(1)};
-      }
-    `,
-    input: css`
-      flex: 1;
-    `,
-    timingContainer: css`
-      max-width: ${theme.spacing(33)};
-    `,
-    smallInput: css`
-      width: ${theme.spacing(6.5)};
-    `,
-  };
 };

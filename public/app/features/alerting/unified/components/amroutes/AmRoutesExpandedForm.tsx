@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaThemeV2 } from '@grafana/data';
 import {
   Button,
@@ -25,6 +25,7 @@ import {
   stringsToSelectableValues,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
+import { getFormStyles } from './formStyles';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
@@ -35,6 +36,7 @@ export interface AmRoutesExpandedFormProps {
 
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles2(getStyles);
+  const formStyles = useStyles2(getFormStyles);
   const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
   const [overrideTimings, setOverrideTimings] = useState(
     !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
@@ -43,37 +45,48 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, getValues, register }) => (
+      {({ control, getValues, register, errors }) => (
         <>
-          <div>Matchers</div>
           <FieldArray name="matchers" control={control}>
             {({ fields, append }) => (
               <>
-                {fields.map((field, index) => {
-                  const localPath = `matchers[${index}]`;
+                <div>Matchers</div>
+                <div className={styles.matchersContainer}>
+                  {fields.map((field, index) => {
+                    const localPath = `matchers[${index}]`;
 
-                  return (
-                    <HorizontalGroup key={field.id}>
-                      <Field label="Label">
-                        <Input
-                          ref={register({ required: true })}
-                          name={`${localPath}.label`}
-                          defaultValue={field.label}
-                        />
-                      </Field>
-                      <Field label="Value">
-                        <Input
-                          ref={register({ required: true })}
-                          name={`${localPath}.value`}
-                          defaultValue={field.value}
-                        />
-                      </Field>
-                      <Field label="Regex">
-                        <Checkbox ref={register()} name={`${localPath}.isRegex`} defaultChecked={field.isRegex} />
-                      </Field>
-                    </HorizontalGroup>
-                  );
-                })}
+                    return (
+                      <HorizontalGroup key={field.id}>
+                        <Field
+                          label="Label"
+                          invalid={!!errors.matchers?.[index]?.label}
+                          error={errors.matchers?.[index]?.label?.message}
+                        >
+                          <Input
+                            ref={register({ required: 'Field is required' })}
+                            name={`${localPath}.label`}
+                            defaultValue={field.label}
+                          />
+                        </Field>
+                        <span>=</span>
+                        <Field
+                          label="Value"
+                          invalid={!!errors.matchers?.[index]?.value}
+                          error={errors.matchers?.[index]?.value?.message}
+                        >
+                          <Input
+                            ref={register({ required: 'Field is required' })}
+                            name={`${localPath}.value`}
+                            defaultValue={field.value}
+                          />
+                        </Field>
+                        <Field className={styles.matcherRegexField} label="Regex">
+                          <Checkbox ref={register()} name={`${localPath}.isRegex`} defaultChecked={field.isRegex} />
+                        </Field>
+                      </HorizontalGroup>
+                    );
+                  })}
+                </div>
                 <Button
                   className={styles.addMatcherBtn}
                   icon="plus"
@@ -89,6 +102,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           <Field label="Contact point">
             <InputControl
               as={Select}
+              className={formStyles.input}
               control={control}
               name="receiver"
               onChange={mapSelectValueToString}
@@ -109,6 +123,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               <InputControl
                 allowCustomValue
                 as={MultiSelect}
+                className={formStyles.input}
                 control={control}
                 name="groupBy"
                 onChange={mapMultiSelectValueToStrings}
@@ -132,11 +147,15 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               <Field
                 label="Group wait"
                 description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
+                invalid={!!errors.groupWaitValue}
+                error={errors.groupWaitValue?.message}
               >
-                <div>
+                <div className={cx(formStyles.container, formStyles.timingContainer)}>
                   <InputControl
                     as={Input}
+                    className={formStyles.smallInput}
                     control={control}
+                    invalid={!!errors.groupWaitValue}
                     name="groupWaitValue"
                     rules={{
                       validate: optionalPositiveInteger,
@@ -144,6 +163,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   />
                   <InputControl
                     as={Select}
+                    className={formStyles.input}
                     control={control}
                     name="groupWaitValueType"
                     onChange={mapSelectValueToString}
@@ -154,11 +174,15 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               <Field
                 label="Group interval"
                 description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
+                invalid={!!errors.groupIntervalValue}
+                error={errors.groupIntervalValue?.message}
               >
-                <div>
+                <div className={cx(formStyles.container, formStyles.timingContainer)}>
                   <InputControl
                     as={Input}
+                    className={formStyles.smallInput}
                     control={control}
+                    invalid={!!errors.groupIntervalValue}
                     name="groupIntervalValue"
                     rules={{
                       validate: optionalPositiveInteger,
@@ -166,6 +190,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   />
                   <InputControl
                     as={Select}
+                    className={formStyles.input}
                     control={control}
                     name="groupIntervalValueType"
                     onChange={mapSelectValueToString}
@@ -176,11 +201,15 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               <Field
                 label="Repeat interval"
                 description="The waiting time to resend an alert after they have successfully been sent."
+                invalid={!!errors.repeatIntervalValue}
+                error={errors.repeatIntervalValue?.message}
               >
-                <div>
+                <div className={cx(formStyles.container, formStyles.timingContainer)}>
                   <InputControl
                     as={Input}
+                    className={formStyles.smallInput}
                     control={control}
+                    invalid={!!errors.repeatIntervalValue}
                     name="repeatIntervalValue"
                     rules={{
                       validate: optionalPositiveInteger,
@@ -188,6 +217,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   />
                   <InputControl
                     as={Select}
+                    className={formStyles.input}
                     control={control}
                     menuPlacement="top"
                     name="repeatIntervalValueType"
@@ -216,6 +246,15 @@ const getStyles = (theme: GrafanaThemeV2) => {
   return {
     addMatcherBtn: css`
       margin-bottom: ${commonSpacing};
+    `,
+    matchersContainer: css`
+      background-color: ${theme.colors.background.secondary};
+      margin: ${theme.spacing(1, 0)};
+      padding: ${theme.spacing(1, 4.6, 1, 1.5)};
+      width: fit-content;
+    `,
+    matcherRegexField: css`
+      margin-left: ${theme.spacing(6)};
     `,
     nestedPolicies: css`
       margin-top: ${commonSpacing};

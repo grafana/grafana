@@ -1,7 +1,13 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
-import { collapseItem, expandItem, prepareItems } from '../../utils/dynamicTable';
+import {
+  addCustomExpandedContent,
+  collapseItem,
+  expandItem,
+  prepareItems,
+  removeCustomExpandedContent,
+} from '../../utils/dynamicTable';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
@@ -10,6 +16,7 @@ import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
 export interface AmRoutesTableProps {
   isAddMode: boolean;
   onChange: (routes: FormAmRoute[]) => void;
+  onCancelAdd: () => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute[];
 }
@@ -17,7 +24,7 @@ export interface AmRoutesTableProps {
 type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
 type RouteTableItemProps = DynamicTableItemProps<FormAmRoute>;
 
-export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, receivers, routes }) => {
+export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, onChange, receivers, routes }) => {
   const [items, setItems] = useState<RouteTableItemProps[]>([]);
 
   const getRenderEditExpandedContent = useCallback(
@@ -25,7 +32,16 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
     (item: RouteTableItemProps, index: number) => () => (
       <AmRoutesExpandedForm
         onCancel={() => {
-          setItems((items) => collapseItem(items, item.id));
+          setItems((items) => {
+            let newItems = collapseItem(items, item.id);
+            newItems = removeCustomExpandedContent(newItems, item.id);
+
+            return newItems;
+          });
+
+          if (isAddMode) {
+            onCancelAdd();
+          }
         }}
         onSave={(data) => {
           const newRoutes = [...routes];
@@ -43,7 +59,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
         routes={item.data}
       />
     ),
-    [onChange, receivers, routes]
+    [isAddMode, onCancelAdd, onChange, receivers, routes]
   );
 
   const cols: RouteTableColumnProps[] = [
@@ -86,7 +102,12 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onChange, rec
         }
 
         const expandWithCustomContent = () =>
-          setItems((items) => expandItem(items, item.id, getRenderEditExpandedContent(item, index)));
+          setItems((items) => {
+            let newItems = expandItem(items, item.id);
+            newItems = addCustomExpandedContent(newItems, item.id, getRenderEditExpandedContent(item, index));
+
+            return newItems;
+          });
 
         return (
           <HorizontalGroup>

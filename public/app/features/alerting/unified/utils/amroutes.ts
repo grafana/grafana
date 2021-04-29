@@ -50,7 +50,7 @@ export const emptyArrayFieldMatcher: ArrayFieldMatcher = {
 };
 
 export const emptyRoute: FormAmRoute = {
-  matchers: [],
+  matchers: [emptyArrayFieldMatcher],
   groupBy: [],
   routes: [],
   continue: false,
@@ -90,32 +90,41 @@ export const amRouteToFormAmRoute = (route: Route | undefined): FormAmRoute => {
   };
 };
 
-export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute): Route => ({
-  receiver: formAmRoute.receiver,
-  continue: formAmRoute.continue,
-  group_by: formAmRoute.groupBy,
-  ...Object.values(formAmRoute.matchers).reduce(
-    (acc, { label, value, isRegex }) => {
-      const target = acc[isRegex ? 'match_re' : 'match'];
+export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute): Route => {
+  const amRoute: Route = {
+    continue: formAmRoute.continue,
+    group_by: formAmRoute.groupBy,
+    ...Object.values(formAmRoute.matchers).reduce(
+      (acc, { label, value, isRegex }) => {
+        const target = acc[isRegex ? 'match_re' : 'match'];
 
-      target![label] = value;
+        target![label] = value;
 
-      return acc;
-    },
-    {
-      match: {},
-      match_re: {},
-    } as Pick<Route, 'match' | 'match_re'>
-  ),
-  group_wait: formAmRoute.groupWaitValue ? `${formAmRoute.groupWaitValue}${formAmRoute.groupWaitValueType}` : undefined,
-  group_interval: formAmRoute.groupIntervalValue
-    ? `${formAmRoute.groupIntervalValue}${formAmRoute.groupIntervalValueType}`
-    : undefined,
-  repeat_interval: formAmRoute.repeatIntervalValue
-    ? `${formAmRoute.repeatIntervalValue}${formAmRoute.repeatIntervalValueType}`
-    : undefined,
-  routes: formAmRoute.routes.map(formAmRouteToAmRoute),
-});
+        return acc;
+      },
+      {
+        match: {},
+        match_re: {},
+      } as Pick<Route, 'match' | 'match_re'>
+    ),
+    group_wait: formAmRoute.groupWaitValue
+      ? `${formAmRoute.groupWaitValue}${formAmRoute.groupWaitValueType}`
+      : undefined,
+    group_interval: formAmRoute.groupIntervalValue
+      ? `${formAmRoute.groupIntervalValue}${formAmRoute.groupIntervalValueType}`
+      : undefined,
+    repeat_interval: formAmRoute.repeatIntervalValue
+      ? `${formAmRoute.repeatIntervalValue}${formAmRoute.repeatIntervalValueType}`
+      : undefined,
+    routes: formAmRoute.routes.map(formAmRouteToAmRoute),
+  };
+
+  if (formAmRoute.receiver) {
+    amRoute.receiver = formAmRoute.receiver;
+  }
+
+  return amRoute;
+};
 
 export const stringToSelectableValue = (str: string): SelectableValue<string> => ({
   label: str,
