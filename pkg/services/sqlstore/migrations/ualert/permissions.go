@@ -16,14 +16,13 @@ import (
 func (m *migration) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
-	title := fmt.Sprintf(GENERAL_FOLDER, orgID)
-	dashboard := dashboard{OrgId: orgID, FolderId: 0, Title: title}
+	dashboard := dashboard{OrgId: orgID, FolderId: 0, Title: GENERAL_FOLDER}
 	has, err := m.sess.Get(&dashboard)
 	if err != nil {
 		return nil, err
 	} else if !has {
 		// create folder
-		result, err := m.createFolder(orgID, title)
+		result, err := m.createFolder(orgID, GENERAL_FOLDER)
 		if err != nil {
 			return nil, err
 		}

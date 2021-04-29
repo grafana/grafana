@@ -8,8 +8,8 @@ import (
 	"xorm.io/xorm"
 )
 
-const GENERAL_FOLDER = "__general_alerting_org_%d__"
-const DASHBOARD_FOLDER = "__migrated_%s__"
+const GENERAL_FOLDER = "General Alerting"
+const DASHBOARD_FOLDER = "Migrated %s"
 
 type MigrationError struct {
 	AlertId int64
