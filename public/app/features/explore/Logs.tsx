@@ -312,15 +312,15 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         </div>
 
         <LogsMetaRow
+          logRows={logRows}
           meta={logsMeta || []}
           dedupStrategy={dedupStrategy}
           dedupCount={dedupCount}
-          logRows={logRows}
           hasUnescapedContent={hasUnescapedContent}
+          forceEscape={forceEscape}
           showDetectedFields={showDetectedFields}
           onEscapeNewlines={this.onEscapeNewlines}
           clearDetectedFields={this.clearDetectedFields}
-          forceEscape={forceEscape}
         />
 
         <LogRows
