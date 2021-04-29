@@ -9,7 +9,6 @@ import {
   FieldConfigPropertyItem,
   FieldOverrideContext,
   FieldType,
-  GrafanaTheme,
   InterpolateFunction,
   LinkModel,
   NumericRange,
@@ -207,8 +206,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Attach data links supplier
       newField.getLinks = getLinksSupplier(newFrame, newField, fieldScopedVars, context.replaceVariables, {
-        // TODO needed?
-        // theme: options.theme,
         timeZone: options.timeZone,
       });
 
@@ -326,7 +323,6 @@ export const getLinksSupplier = (
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
   options: {
-    theme?: GrafanaTheme;
     timeZone?: TimeZone;
   }
 ) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {

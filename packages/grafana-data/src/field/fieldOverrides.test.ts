@@ -556,9 +556,7 @@ describe('getLinksSupplier', () => {
       {},
       replaceSpy,
       // this is used only for internal links so isn't needed here
-      {
-        theme: createTheme(),
-      }
+      {}
     );
     supplier({});
 
@@ -594,6 +592,7 @@ describe('getLinksSupplier', () => {
               },
             ],
           },
+          display: (v) => ({ numeric: v, text: String(v) }),
         },
       ],
     });
@@ -604,9 +603,11 @@ describe('getLinksSupplier', () => {
       {},
       // We do not need to interpolate anything for this test
       (value, vars, format) => value,
-      { theme: createTheme() }
+      {}
     );
+
     const links = supplier({ valueRowIndex: 0 });
+
     expect(links.length).toBe(1);
     expect(links[0]).toEqual(
       expect.objectContaining({
@@ -786,23 +787,25 @@ describe('applyRawFieldOverrides', () => {
         fields: [numberAsEpoc, numberWithDecimals, numberAsBoolean, boolean, string, datetime],
       });
 
-      dataFrameA.fields[0].display = getDisplayProcessor({ field: dataFrameA.fields[0] });
-      dataFrameA.fields[1].display = getDisplayProcessor({ field: dataFrameA.fields[1] });
-      dataFrameA.fields[2].display = getDisplayProcessor({ field: dataFrameA.fields[2] });
-      dataFrameA.fields[3].display = getDisplayProcessor({ field: dataFrameA.fields[3] });
-      dataFrameA.fields[4].display = getDisplayProcessor({ field: dataFrameA.fields[4] });
-      dataFrameA.fields[5].display = getDisplayProcessor({ field: dataFrameA.fields[5], timeZone: 'utc' });
+      const theme = createTheme();
+
+      dataFrameA.fields[0].display = getDisplayProcessor({ field: dataFrameA.fields[0], theme });
+      dataFrameA.fields[1].display = getDisplayProcessor({ field: dataFrameA.fields[1], theme });
+      dataFrameA.fields[2].display = getDisplayProcessor({ field: dataFrameA.fields[2], theme });
+      dataFrameA.fields[3].display = getDisplayProcessor({ field: dataFrameA.fields[3], theme });
+      dataFrameA.fields[4].display = getDisplayProcessor({ field: dataFrameA.fields[4], theme });
+      dataFrameA.fields[5].display = getDisplayProcessor({ field: dataFrameA.fields[5], theme, timeZone: 'utc' });
 
       const dataFrameB: DataFrame = toDataFrame({
         fields: [numberAsEpoc, numberWithDecimals, numberAsBoolean, boolean, string, datetime],
       });
 
-      dataFrameB.fields[0].display = getDisplayProcessor({ field: dataFrameB.fields[0] });
-      dataFrameB.fields[1].display = getDisplayProcessor({ field: dataFrameB.fields[1] });
-      dataFrameB.fields[2].display = getDisplayProcessor({ field: dataFrameB.fields[2] });
-      dataFrameB.fields[3].display = getDisplayProcessor({ field: dataFrameB.fields[3] });
-      dataFrameB.fields[4].display = getDisplayProcessor({ field: dataFrameB.fields[4] });
-      dataFrameB.fields[5].display = getDisplayProcessor({ field: dataFrameB.fields[5], timeZone: 'utc' });
+      dataFrameB.fields[0].display = getDisplayProcessor({ field: dataFrameB.fields[0], theme });
+      dataFrameB.fields[1].display = getDisplayProcessor({ field: dataFrameB.fields[1], theme });
+      dataFrameB.fields[2].display = getDisplayProcessor({ field: dataFrameB.fields[2], theme });
+      dataFrameB.fields[3].display = getDisplayProcessor({ field: dataFrameB.fields[3], theme });
+      dataFrameB.fields[4].display = getDisplayProcessor({ field: dataFrameB.fields[4], theme });
+      dataFrameB.fields[5].display = getDisplayProcessor({ field: dataFrameB.fields[5], theme, timeZone: 'utc' });
 
       const data = [dataFrameA, dataFrameB];
       const rawData = applyRawFieldOverrides(data);
