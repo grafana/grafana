@@ -112,7 +112,7 @@ export type IconName =
   | 'power'
   | 'question-circle'
   | 'repeat'
-  | 'reusable-panel'
+  | 'library-panel'
   | 'rocket'
   | 'save'
   | 'search-minus'
@@ -247,7 +247,7 @@ export const getAvailableIcons = (): IconName[] => [
   'power',
   'question-circle',
   'repeat',
-  'reusable-panel',
+  'library-panel',
   'rocket',
   'save',
   'search-minus',

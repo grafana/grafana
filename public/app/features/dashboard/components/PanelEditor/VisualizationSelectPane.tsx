@@ -74,7 +74,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const radioOptions: Array<SelectableValue<ListMode>> = [
     { label: 'Visualizations', value: ListMode.Visualizations },
-    { label: 'Global panels', value: ListMode.Globals },
+    { label: 'Library panels', value: ListMode.LibraryPanels },
   ];
 
   return (
@@ -116,7 +116,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === ListMode.Globals && (
+            {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
@@ -128,7 +128,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
 enum ListMode {
   Visualizations,
-  Globals,
+  LibraryPanels,
 }
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';
