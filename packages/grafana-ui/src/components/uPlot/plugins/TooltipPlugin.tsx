@@ -13,6 +13,7 @@ import {
 import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { pluginLog } from '../utils';
+import { useTheme2 } from '../../../themes/ThemeContext';
 
 interface TooltipPluginProps {
   mode?: TooltipDisplayMode;
@@ -30,6 +31,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   config,
   ...otherProps
 }) => {
+  const theme = useTheme2();
   const plotCtx = usePlotContext();
   const plotCanvas = useRef<HTMLDivElement>();
   const plotCanvasBBox = useRef<any>({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 });
@@ -81,7 +83,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   if (!xField) {
     return null;
   }
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone });
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
   let tooltip = null;
 
   const xVal = xFieldFmt(xField!.values.get(focusedPointIdx)).text;
@@ -91,7 +93,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     const field = otherProps.data.fields[focusedSeriesIdx];
     const plotSeries = plotCtx.plot.series;
 
-    const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
+    const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
     const value = fieldFmt(plotCtx.plot.data[focusedSeriesIdx!][focusedPointIdx]);
 
     tooltip = (
