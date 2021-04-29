@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -100,6 +101,7 @@ type Alertmanager struct {
 
 	stageMetrics      *notify.Metrics
 	dispatcherMetrics *dispatch.DispatcherMetrics
+	ngMetrics         *metrics.Metrics
 
 	reloadConfigMtx sync.RWMutex
 	config          []byte
@@ -123,6 +125,7 @@ func (am *Alertmanager) Init() (err error) {
 	am.marker = types.NewMarker(r)
 	am.stageMetrics = notify.NewMetrics(r)
 	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(r)
+	am.ngMetrics = metrics.GlobalMetrics
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	// Initialize the notification log
@@ -456,12 +459,19 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			alert.EndsAt = now.Add(defaultResolveTimeout)
 		}
 
+		if alert.EndsAt.After(now) {
+			am.ngMetrics.AlertsReceived.WithLabelValues("firing").Inc()
+		} else {
+			am.ngMetrics.AlertsReceived.WithLabelValues("resolved").Inc()
+		}
+
 		if err := alert.Validate(); err != nil {
 			if validationErr == nil {
 				validationErr = &AlertValidationError{}
 			}
 			validationErr.Alerts = append(validationErr.Alerts, a)
 			validationErr.Errors = append(validationErr.Errors, err)
+			am.ngMetrics.AlertsInvalid.Inc()
 			continue
 		}
 

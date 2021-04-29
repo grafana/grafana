@@ -28,7 +28,7 @@ const (
 type Metrics struct {
 	Alerts              *prometheus.GaugeVec
 	AlertsInvalid       prometheus.Counter
-	AlertsReceived      prometheus.Counter
+	AlertsReceived      *prometheus.CounterVec
 	NotificationLatency prometheus.Histogram
 	Notifications       *prometheus.CounterVec
 	NotificationsFailed *prometheus.CounterVec
@@ -50,12 +50,12 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			Name:      "alerts_invalid_total",
 			Help:      "The total number of invalid received alerts.",
 		}),
-		AlertsReceived: promauto.With(r).NewCounter(prometheus.CounterOpts{
+		AlertsReceived: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: "alerting",
 			Name:      "alerts_received_total",
 			Help:      "The total number of received alerts.",
-		}),
+		}, []string{"state"}),
 		NotificationLatency: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Subsystem: "alerting",
