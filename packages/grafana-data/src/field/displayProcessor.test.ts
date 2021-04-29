@@ -3,6 +3,7 @@ import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { systemDateFormats } from '../datetime';
+import { createTheme } from '../themes';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
   return getDisplayProcessor({
@@ -10,6 +11,7 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
       config,
       type: FieldType.number,
     },
+    theme: createTheme(),
   });
 }
 
@@ -26,7 +28,7 @@ describe('Process simple display values', () => {
   // Don't test float values here since the decimal formatting changes
   const processors = [
     // Without options, this shortcuts to a much easier implementation
-    getDisplayProcessor({ field: { config: {} } }),
+    getDisplayProcessor({ field: { config: {} }, theme: createTheme() }),
 
     // Add a simple option that is not used (uses a different base class)
     getDisplayProcessorFromConfig({ min: 0, max: 100 }),
@@ -249,6 +251,7 @@ describe('Date display options', () => {
           unit: 'xyz', // ignore non-date formats
         },
       },
+      theme: createTheme(),
     });
     expect(processor(0).text).toEqual('1970-01-01 00:00:00');
   });
@@ -262,6 +265,7 @@ describe('Date display options', () => {
           unit: 'dateTimeAsUS', // ignore non-date formats
         },
       },
+      theme: createTheme(),
     });
     expect(processor(0).text).toEqual('01/01/1970 12:00:00 am');
   });
@@ -275,6 +279,7 @@ describe('Date display options', () => {
           unit: 'time:YYYY', // ignore non-date formats
         },
       },
+      theme: createTheme(),
     });
     expect(processor(0).text).toEqual('1970');
   });
@@ -289,6 +294,7 @@ describe('Date display options', () => {
         type: FieldType.time,
         config: {},
       },
+      theme: createTheme(),
     });
 
     expect(processor(0).text).toEqual('1970-01');
@@ -303,6 +309,7 @@ describe('Date display options', () => {
         type: FieldType.time,
         config: {},
       },
+      theme: createTheme(),
     });
 
     expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43');
@@ -315,6 +322,7 @@ describe('Date display options', () => {
           type: FieldType.string,
           config: { unit: 'string' },
         },
+        theme: createTheme(),
       });
       expect(processor('22.1122334455').text).toEqual('22.1122334455');
     });
@@ -325,6 +333,7 @@ describe('Date display options', () => {
           type: FieldType.string,
           config: { decimals: 2 },
         },
+        theme: createTheme(),
       });
       expect(processor('22.1122334455').text).toEqual('22.11');
     });

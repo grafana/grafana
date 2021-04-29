@@ -32,7 +32,7 @@ export abstract class BigValueLayout {
   constructor(private props: Props) {
     const { width, height, value, theme, text } = props;
 
-    this.valueColor = getColorForTheme(value.color || 'green', theme);
+    this.valueColor = getColorForTheme(value.color || 'green', theme.v1);
     this.panelPadding = height > 100 ? 12 : 8;
     this.textValues = getTextValues(props);
     this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);

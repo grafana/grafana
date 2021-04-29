@@ -1,9 +1,8 @@
 import { getFieldLinksSupplier } from './linkSuppliers';
-import { applyFieldOverrides, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, createTheme, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
-import { getTheme } from '@grafana/ui';
 
 describe('getFieldLinksSupplier', () => {
   let originalLinkSrv: LinkService;
@@ -93,7 +92,7 @@ describe('getFieldLinksSupplier', () => {
       },
       replaceVariables: (val: string) => val,
       timeZone: 'utc',
-      theme: getTheme(),
+      theme: createTheme(),
     })[0];
 
     const rowIndex = 0;

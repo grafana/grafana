@@ -1,11 +1,12 @@
 import { merge } from 'lodash';
-import { getTheme } from '@grafana/ui';
 import {
   BuildInfo,
+  createTheme,
   DataSourceInstanceSettings,
   FeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
+  GrafanaThemeV2,
   LicenseInfo,
   PanelPluginMeta,
   systemDateFormats,
@@ -49,6 +50,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
   theme: GrafanaTheme;
+  theme2: GrafanaThemeV2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     live: false,
@@ -75,7 +77,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   awsAssumeRoleEnabled = false;
 
   constructor(options: GrafanaBootConfig) {
-    this.theme = getTheme(options.bootData.user.lightTheme ? 'light' : 'dark');
+    const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
+    this.theme2 = createTheme({ colors: { mode } });
+    this.theme = this.theme2.v1;
 
     const defaults = {
       datasources: {},

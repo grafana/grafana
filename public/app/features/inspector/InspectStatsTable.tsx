@@ -3,12 +3,11 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  GrafanaTheme,
+  GrafanaThemeV2,
   QueryResultMetaStat,
   TimeZone,
 } from '@grafana/data';
-import { config } from 'app/core/config';
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 interface InspectStatsTableProps {
@@ -18,7 +17,7 @@ interface InspectStatsTableProps {
 }
 
 export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ timeZone, name, stats }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
 
   if (!stats || !stats.length) {
@@ -34,7 +33,7 @@ export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ timeZone, 
             return (
               <tr key={`${stat.displayName}-${index}`}>
                 <td>{stat.displayName}</td>
-                <td className={styles.cell}>{formatStat(stat, timeZone)}</td>
+                <td className={styles.cell}>{formatStat(stat, timeZone, theme)}</td>
               </tr>
             );
           })}
@@ -44,22 +43,22 @@ export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ timeZone, 
   );
 };
 
-function formatStat(stat: QueryResultMetaStat, timeZone?: TimeZone): string {
+function formatStat(stat: QueryResultMetaStat, timeZone: TimeZone, theme: GrafanaThemeV2): string {
   const display = getDisplayProcessor({
     field: {
       type: FieldType.number,
       config: stat,
     },
-    theme: config.theme,
+    theme,
     timeZone,
   });
   return formattedValueToString(display(stat.value));
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     wrapper: css`
-      padding-bottom: ${theme.spacing.md};
+      padding-bottom: ${theme.spacing(2)};
     `,
     cell: css`
       text-align: right;

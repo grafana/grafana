@@ -1,36 +1,57 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "__fixed": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "left",
-        "scaleKey": "__fixed",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "isTime": true,
-        "placement": "bottom",
-        "scaleKey": "x",
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "timeZone": "utc",
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": "utc",
+      "values": [Function],
     },
-  },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "__fixed",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "bands": Array [
     Object {
       "series": Array [
@@ -45,252 +66,143 @@ UPlotConfigBuilder {
       ],
     },
   ],
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+  },
   "hooks": Object {},
-  "isStacking": true,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "isTime": true,
-        "orientation": 0,
-        "range": [Function],
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "__fixed": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "distribution": undefined,
-        "log": undefined,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 1,
-        "scaleKey": "__fixed",
-        "softMax": undefined,
-        "softMin": undefined,
-      },
+    "x": Object {
+      "auto": false,
+      "dir": 1,
+      "ori": 0,
+      "range": [Function],
+      "time": true,
     },
-  ],
+  },
+  "select": undefined,
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "barAlignment": undefined,
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "drawStyle": "line",
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#ff0000",
-        "lineInterpolation": "linear",
-        "lineStyle": Object {
-          "dash": Array [
-            1,
-            2,
-          ],
-          "fill": "dash",
-        },
-        "lineWidth": 2,
-        "pointColor": "#808080",
-        "pointSize": undefined,
-        "scaleKey": "__fixed",
+    Object {},
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
         "show": true,
-        "showPoints": "always",
-        "spanNulls": false,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+        "size": undefined,
+        "stroke": "#808080",
       },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
     },
-    UPlotSeriesBuilder {
-      "props": Object {
-        "barAlignment": -1,
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 1,
-        },
-        "drawStyle": "bars",
-        "fieldName": "Metric 2",
-        "fillOpacity": 0.1,
-        "gradientMode": "hue",
-        "hideInLegend": undefined,
-        "lineColor": "#ff0000",
-        "lineInterpolation": "linear",
-        "lineStyle": Object {
-          "dash": Array [
-            1,
-            2,
-          ],
-          "fill": "dash",
-        },
-        "lineWidth": 2,
-        "pointColor": "#808080",
-        "pointSize": undefined,
-        "scaleKey": "__fixed",
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
         "show": true,
-        "showPoints": "always",
-        "spanNulls": false,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+        "size": undefined,
+        "stroke": "#808080",
       },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
     },
-    UPlotSeriesBuilder {
-      "props": Object {
-        "barAlignment": undefined,
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 2,
-          "frameIndex": 1,
-        },
-        "drawStyle": "line",
-        "fieldName": "Metric 3",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#ff0000",
-        "lineInterpolation": "linear",
-        "lineStyle": Object {
-          "dash": Array [
-            1,
-            2,
-          ],
-          "fill": "dash",
-        },
-        "lineWidth": 2,
-        "pointColor": "#808080",
-        "pointSize": undefined,
-        "scaleKey": "__fixed",
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
         "show": true,
-        "showPoints": "always",
-        "spanNulls": false,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+        "size": undefined,
+        "stroke": "#808080",
       },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
     },
-    UPlotSeriesBuilder {
-      "props": Object {
-        "barAlignment": -1,
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 3,
-          "frameIndex": 1,
-        },
-        "drawStyle": "bars",
-        "fieldName": "Metric 4",
-        "fillOpacity": 0.1,
-        "gradientMode": "hue",
-        "hideInLegend": undefined,
-        "lineColor": "#ff0000",
-        "lineInterpolation": "linear",
-        "lineStyle": Object {
-          "dash": Array [
-            1,
-            2,
-          ],
-          "fill": "dash",
-        },
-        "lineWidth": 2,
-        "pointColor": "#808080",
-        "pointSize": undefined,
-        "scaleKey": "__fixed",
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
         "show": true,
-        "showPoints": "always",
-        "spanNulls": false,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+        "size": undefined,
+        "stroke": "#808080",
       },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
     },
-    UPlotSeriesBuilder {
-      "props": Object {
-        "barAlignment": -1,
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 4,
-          "frameIndex": 1,
-        },
-        "drawStyle": "bars",
-        "fieldName": "Metric 4",
-        "fillOpacity": 0.1,
-        "gradientMode": "hue",
-        "hideInLegend": undefined,
-        "lineColor": "#ff0000",
-        "lineInterpolation": "linear",
-        "lineStyle": Object {
-          "dash": Array [
-            1,
-            2,
-          ],
-          "fill": "dash",
-        },
-        "lineWidth": 2,
-        "pointColor": "#808080",
-        "pointSize": undefined,
-        "scaleKey": "__fixed",
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
         "show": true,
-        "showPoints": "always",
-        "spanNulls": false,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+        "size": undefined,
+        "stroke": "#808080",
       },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;

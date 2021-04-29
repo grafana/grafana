@@ -1,50 +1,74 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GraphNG utils preparePlotConfigBuilder orientation 1`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "bottom",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "left",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -56,116 +80,121 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": -1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 1,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 0,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
 
 exports[`GraphNG utils preparePlotConfigBuilder orientation 2`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "bottom",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "left",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -177,116 +206,121 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": -1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 1,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 0,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
 
 exports[`GraphNG utils preparePlotConfigBuilder orientation 3`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "left",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "bottom",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -298,116 +332,121 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 0,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 1,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
 
 exports[`GraphNG utils preparePlotConfigBuilder stacking 1`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "bottom",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "left",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -419,116 +458,121 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": -1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 1,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 0,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
 
 exports[`GraphNG utils preparePlotConfigBuilder stacking 2`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "bottom",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "left",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -540,116 +584,121 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": -1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 1,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 0,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
 
 exports[`GraphNG utils preparePlotConfigBuilder stacking 3`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "bottom",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "left",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -661,116 +710,121 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": -1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 1,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 0,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
 
 exports[`GraphNG utils preparePlotConfigBuilder value visibility 1`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "bottom",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "left",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -782,116 +836,121 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": -1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 1,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 0,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;
 
 exports[`GraphNG utils preparePlotConfigBuilder value visibility 2`] = `
-UPlotConfigBuilder {
-  "axes": Object {
-    "m/s": UPlotAxisBuilder {
-      "props": Object {
-        "formatValue": [Function],
-        "label": undefined,
-        "placement": "bottom",
-        "scaleKey": "m/s",
-        "size": undefined,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
-    },
-    "x": UPlotAxisBuilder {
-      "props": Object {
-        "gap": 15,
-        "grid": false,
-        "isTime": false,
-        "placement": "left",
-        "scaleKey": "x",
-        "splits": [Function],
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "ticks": false,
-        "values": [Function],
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
       },
+      "timeZone": undefined,
+      "values": [Function],
     },
-  },
-  "bands": Array [],
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(201, 209, 217)",
+      "ticks": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
   "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
     "points": Object {
+      "fill": [Function],
       "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
     },
     "x": false,
     "y": false,
   },
-  "hasBottomAxis": true,
-  "hasLeftAxis": true,
   "hooks": Object {
     "drawClear": Array [
       [Function],
@@ -903,67 +962,48 @@ UPlotConfigBuilder {
       [Function],
     ],
   },
-  "isStacking": false,
-  "scales": Array [
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": -1,
-        "distribution": "ordinal",
-        "isTime": false,
-        "orientation": 1,
-        "scaleKey": "x",
-      },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
     },
-    UPlotScaleBuilder {
-      "props": Object {
-        "direction": 1,
-        "max": undefined,
-        "min": undefined,
-        "orientation": 0,
-        "scaleKey": "m/s",
-        "softMax": undefined,
-        "softMin": 0,
-      },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
     },
-  ],
+  },
   "select": Object {
     "show": false,
   },
   "series": Array [
-    UPlotSeriesBuilder {
-      "props": Object {
-        "colorMode": Object {
-          "description": "Derive colors from thresholds",
-          "getCalculator": [Function],
-          "id": "thresholds",
-          "isByValue": true,
-          "name": "From thresholds",
-        },
-        "dataFrameFieldIndex": Object {
-          "fieldIndex": 1,
-          "frameIndex": 0,
-        },
-        "fieldName": "Metric 1",
-        "fillOpacity": 0.1,
-        "gradientMode": "opacity",
-        "hideInLegend": undefined,
-        "lineColor": "#808080",
-        "lineWidth": 2,
-        "pathBuilder": [Function],
-        "pointsBuilder": [Function],
-        "pxAlign": false,
-        "scaleKey": "m/s",
-        "show": true,
-        "theme": Object {
-          "colors": Object {
-            "panelBg": "#000000",
-          },
-        },
-        "thresholds": undefined,
+    Object {},
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": undefined,
+        "show": [Function],
+        "size": undefined,
+        "stroke": undefined,
       },
+      "pxAlign": false,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "width": 2,
     },
   ],
-  "tz": "UTC",
   "tzDate": [Function],
 }
 `;

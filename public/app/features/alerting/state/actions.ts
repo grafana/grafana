@@ -218,7 +218,7 @@ function handleJSONResponse(frames: DataFrameJSON[]) {
       overrides: [],
     },
     replaceVariables: (value: any) => value,
-    theme: config.theme,
+    theme: config.theme2,
   });
 }
 

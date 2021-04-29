@@ -118,7 +118,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
           field.display ??
           getDisplayProcessor({
             field,
-            theme: config.theme,
+            theme: config.theme2,
             timeZone: data.request?.timezone ?? 'browser',
           });
       }

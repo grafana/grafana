@@ -15,7 +15,6 @@ import {
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import { getColumns, sortCaseInsensitive } from './utils';
-import { useTheme } from '../../themes';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
@@ -27,6 +26,7 @@ import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
 import { TableCell } from './TableCell';
+import { useStyles2 } from '../../themes';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -123,8 +123,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     resizable = true,
     initialSortBy,
   } = props;
-  const theme = useTheme();
-  const tableStyles = getTableStyles(theme);
+  const tableStyles = useStyles2(getTableStyles);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values

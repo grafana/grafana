@@ -65,7 +65,7 @@ export function PieChart(props: PieChartProps) {
     fieldConfig,
     reduceOptions,
     data,
-    theme: theme.v1,
+    theme: theme,
     replaceVariables,
     timeZone,
   });

@@ -1,11 +1,13 @@
 import {
-  GraphSeriesValue,
   toDataFrame,
   FieldType,
   FieldCache,
   FieldColorModeId,
   Field,
   getColorForTheme,
+  applyFieldOverrides,
+  createTheme,
+  DataFrame,
 } from '@grafana/data';
 import { getTheme } from '../../themes';
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
@@ -16,7 +18,7 @@ const mockResult = (
   seriesIndex: number,
   color?: string,
   label?: string,
-  time?: GraphSeriesValue
+  time?: string
 ) => ({
   value,
   datapointIndex,
@@ -26,41 +28,62 @@ const mockResult = (
   time,
 });
 
+function passThroughFieldOverrides(frame: DataFrame) {
+  return applyFieldOverrides({
+    data: [frame],
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (val: string) => val,
+    timeZone: 'utc',
+    theme: createTheme(),
+  });
+}
+
 // A and B series have the same x-axis range and the datapoints are x-axis aligned
-const aSeries = toDataFrame({
-  fields: [
-    { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-    {
-      name: 'value',
-      type: FieldType.number,
-      values: [10, 20, 10],
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
-    },
-  ],
-});
-const bSeries = toDataFrame({
-  fields: [
-    { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-    {
-      name: 'value',
-      type: FieldType.number,
-      values: [30, 60, 30],
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } },
-    },
-  ],
-});
+const aSeries = passThroughFieldOverrides(
+  toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: [10000, 20000, 30000] },
+      {
+        name: 'value',
+        type: FieldType.number,
+        values: [10, 20, 10],
+        config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
+      },
+    ],
+  })
+)[0];
+
+const bSeries = passThroughFieldOverrides(
+  toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: [10000, 20000, 30000] },
+      {
+        name: 'value',
+        type: FieldType.number,
+        values: [30, 60, 30],
+        config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } },
+      },
+    ],
+  })
+)[0];
+
 // C-series has the same x-axis range as A and B but is missing the middle point
-const cSeries = toDataFrame({
-  fields: [
-    { name: 'time', type: FieldType.time, values: [100, 300] },
-    {
-      name: 'value',
-      type: FieldType.number,
-      values: [30, 30],
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'yellow' } },
-    },
-  ],
-});
+const cSeries = passThroughFieldOverrides(
+  toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: [10000, 30000] },
+      {
+        name: 'value',
+        type: FieldType.number,
+        values: [30, 30],
+        config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'yellow' } },
+      },
+    ],
+  })
+)[0];
 
 function getFixedThemedColor(field: Field): string {
   return getColorForTheme(field.config.color!.fixedColor!, getTheme());
@@ -78,12 +101,12 @@ describe('Graph utils', () => {
         const bTimeField = bCache.getFieldByName('time');
 
         const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 0);
-        expect(result.time).toBe(100);
+        expect(result.time).toBe('1970-01-01 00:00:10');
         expect(result.results[0]).toEqual(
-          mockResult('10', 0, 0, getFixedThemedColor(aValueField!), aValueField!.name, 100)
+          mockResult('10', 0, 0, getFixedThemedColor(aValueField!), aValueField!.name, '1970-01-01 00:00:10')
         );
         expect(result.results[1]).toEqual(
-          mockResult('30', 0, 1, getFixedThemedColor(bValueField!), bValueField!.name, 100)
+          mockResult('30', 0, 1, getFixedThemedColor(bValueField!), bValueField!.name, '1970-01-01 00:00:10')
         );
       });
 
@@ -97,13 +120,13 @@ describe('Graph utils', () => {
           const bTimeField = bCache.getFieldByName('time');
 
           //  hovering right before middle point
-          const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 199);
-          expect(result.time).toBe(100);
+          const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 19900);
+          expect(result.time).toBe('1970-01-01 00:00:10');
           expect(result.results[0]).toEqual(
-            mockResult('10', 0, 0, getFixedThemedColor(aValueField!), aValueField!.name, 100)
+            mockResult('10', 0, 0, getFixedThemedColor(aValueField!), aValueField!.name, '1970-01-01 00:00:10')
           );
           expect(result.results[1]).toEqual(
-            mockResult('30', 0, 1, getFixedThemedColor(bValueField!), bValueField!.name, 100)
+            mockResult('30', 0, 1, getFixedThemedColor(bValueField!), bValueField!.name, '1970-01-01 00:00:10')
           );
         });
 
@@ -116,13 +139,13 @@ describe('Graph utils', () => {
           const bTimeField = bCache.getFieldByName('time');
 
           //  hovering right after middle point
-          const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 201);
-          expect(result.time).toBe(200);
+          const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 20100);
+          expect(result.time).toBe('1970-01-01 00:00:20');
           expect(result.results[0]).toEqual(
-            mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, 200)
+            mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, '1970-01-01 00:00:20')
           );
           expect(result.results[1]).toEqual(
-            mockResult('60', 1, 1, getFixedThemedColor(bValueField!), bValueField!.name, 200)
+            mockResult('60', 1, 1, getFixedThemedColor(bValueField!), bValueField!.name, '1970-01-01 00:00:20')
           );
         });
       });
@@ -141,17 +164,17 @@ describe('Graph utils', () => {
 
         // hovering on a middle point
         // aSeries has point at that time, cSeries doesn't
-        const result = getMultiSeriesGraphHoverInfo([aValueField!, cValueField!], [aTimeField!, cTimeField!], 200);
+        const result = getMultiSeriesGraphHoverInfo([aValueField!, cValueField!], [aTimeField!, cTimeField!], 20000);
 
         // we expect a time of the hovered point
-        expect(result.time).toBe(200);
+        expect(result.time).toBe('1970-01-01 00:00:20');
         // we expect middle point from aSeries (the one we are hovering over)
         expect(result.results[0]).toEqual(
-          mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, 200)
+          mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, '1970-01-01 00:00:20')
         );
         // we expect closest point before hovered point from cSeries (1st point)
         expect(result.results[1]).toEqual(
-          mockResult('30', 0, 1, getFixedThemedColor(cValueField!), cValueField!.name, 100)
+          mockResult('30', 0, 1, getFixedThemedColor(cValueField!), cValueField!.name, '1970-01-01 00:00:10')
         );
       });
 
@@ -164,17 +187,17 @@ describe('Graph utils', () => {
         const cTimeField = cCache.getFieldByName('time');
 
         // aSeries has point at that time, cSeries doesn't
-        const result = getMultiSeriesGraphHoverInfo([aValueField!, cValueField!], [aTimeField!, cTimeField!], 201);
+        const result = getMultiSeriesGraphHoverInfo([aValueField!, cValueField!], [aTimeField!, cTimeField!], 20100);
 
         // we expect the time of the closest point before hover
-        expect(result.time).toBe(200);
+        expect(result.time).toBe('1970-01-01 00:00:20');
         // we expect the closest datapoint before hover from aSeries
         expect(result.results[0]).toEqual(
-          mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, 200)
+          mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, '1970-01-01 00:00:20')
         );
         // we expect the closest datapoint before  hover from cSeries (1st point)
         expect(result.results[1]).toEqual(
-          mockResult('30', 0, 1, getFixedThemedColor(cValueField!), cValueField!.name, 100)
+          mockResult('30', 0, 1, getFixedThemedColor(cValueField!), cValueField!.name, '1970-01-01 00:00:10')
         );
       });
     });
@@ -187,13 +210,13 @@ describe('Graph utils', () => {
       // hovering over 1st datapoint
       expect(findHoverIndexFromData(timeField!, 0)).toBe(0);
       // hovering over right before 2nd datapoint
-      expect(findHoverIndexFromData(timeField!, 199)).toBe(0);
+      expect(findHoverIndexFromData(timeField!, 19900)).toBe(0);
       // hovering over 2nd datapoint
-      expect(findHoverIndexFromData(timeField!, 200)).toBe(1);
+      expect(findHoverIndexFromData(timeField!, 20000)).toBe(1);
       // hovering over right before 3rd datapoint
-      expect(findHoverIndexFromData(timeField!, 299)).toBe(1);
+      expect(findHoverIndexFromData(timeField!, 29900)).toBe(1);
       // hovering over 3rd datapoint
-      expect(findHoverIndexFromData(timeField!, 300)).toBe(2);
+      expect(findHoverIndexFromData(timeField!, 30000)).toBe(2);
     });
   });
 

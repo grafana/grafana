@@ -1,5 +1,5 @@
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { FieldConfig, FieldType, GrafanaTheme, MutableDataFrame, VizOrientation } from '@grafana/data';
+import { createTheme, FieldConfig, FieldType, MutableDataFrame, VizOrientation } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, BarValueVisibility } from './types';
 import { GraphGradientMode, StackingMode } from '../uPlot/config';
 import { LegendDisplayMode } from '../VizLegend/models.gen';
@@ -77,29 +77,28 @@ describe('GraphNG utils', () => {
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
-      expect(
-        preparePlotConfigBuilder(frame!, { colors: { panelBg: '#000000' } } as GrafanaTheme, {
-          ...config,
-          orientation: v,
-        })
-      ).toMatchSnapshot();
+      const result = preparePlotConfigBuilder(frame!, createTheme(), {
+        ...config,
+        orientation: v,
+      }).getConfig();
+      expect(result).toMatchSnapshot();
     });
 
     it.each([BarValueVisibility.Always, BarValueVisibility.Auto])('value visibility', (v) => {
       expect(
-        preparePlotConfigBuilder(frame!, { colors: { panelBg: '#000000' } } as GrafanaTheme, {
+        preparePlotConfigBuilder(frame!, createTheme(), {
           ...config,
           showValue: v,
-        })
+        }).getConfig()
       ).toMatchSnapshot();
     });
 
     it.each([StackingMode.None, StackingMode.Percent, StackingMode.Normal])('stacking', (v) => {
       expect(
-        preparePlotConfigBuilder(frame!, { colors: { panelBg: '#000000' } } as GrafanaTheme, {
+        preparePlotConfigBuilder(frame!, createTheme(), {
           ...config,
           stacking: v,
-        })
+        }).getConfig()
       ).toMatchSnapshot();
     });
   });

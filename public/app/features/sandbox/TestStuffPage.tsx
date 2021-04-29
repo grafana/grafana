@@ -103,7 +103,7 @@ export function getDefaultState(): State {
       overrides: [],
     },
     replaceVariables: (v: string) => v,
-    theme: config.theme,
+    theme: config.theme2,
   };
 
   const dataConfig = {

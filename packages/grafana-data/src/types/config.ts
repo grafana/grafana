@@ -2,6 +2,7 @@ import { DataSourceInstanceSettings } from './datasource';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
 import { SystemDateFormatSettings } from '../datetime';
+import { GrafanaThemeV2 } from '../themes';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -123,6 +124,7 @@ export interface GrafanaConfig {
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   theme: GrafanaTheme;
+  theme2: GrafanaThemeV2;
   pluginsToPreload: string[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;

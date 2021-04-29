@@ -149,7 +149,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
       data,
-      theme: config.theme,
+      theme: config.theme2,
       fieldConfig: panel.fieldConfig,
       replaceVariables: (value: string) => {
         return value;

@@ -3,12 +3,12 @@ import { merge } from 'lodash';
 import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { number } from '@storybook/addon-knobs';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import mdx from './Table.mdx';
 import {
   DataFrame,
   FieldType,
-  GrafanaTheme,
+  GrafanaThemeV2,
   MutableDataFrame,
   ThresholdsConfig,
   ThresholdsMode,
@@ -27,7 +27,7 @@ export default {
   },
 };
 
-function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): DataFrame {
+function buildData(theme: GrafanaThemeV2, config: Record<string, FieldConfig>): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -100,7 +100,7 @@ const defaultThresholds: ThresholdsConfig = {
 };
 
 export const Simple = () => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const width = number('width', 700, {}, 'Props');
   const data = buildData(theme, {});
 
@@ -112,7 +112,7 @@ export const Simple = () => {
 };
 
 export const BarGaugeCell = () => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const width = number('width', 700, {}, 'Props');
   const data = buildData(theme, {
     Progress: {
@@ -132,7 +132,7 @@ export const BarGaugeCell = () => {
 };
 
 export const ColoredCells = () => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const width = number('width', 750, {}, 'Props');
   const data = buildData(theme, {
     Progress: {

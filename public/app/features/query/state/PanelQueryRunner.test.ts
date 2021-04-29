@@ -248,7 +248,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: (v) => v,
-        theme: {} as grafanaData.GrafanaTheme,
+        theme: grafanaData.createTheme(),
       }),
       getTransformations: () => undefined,
     }
@@ -312,7 +312,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: (v) => v,
-        theme: {} as grafanaData.GrafanaTheme,
+        theme: grafanaData.createTheme(),
       }),
       // @ts-ignore
       getTransformations: () => [({} as unknown) as grafanaData.DataTransformerConfig],
@@ -354,7 +354,7 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: (v) => v,
-        theme: {} as grafanaData.GrafanaTheme,
+        theme: grafanaData.createTheme(),
       }),
       // @ts-ignore
       getTransformations: () => [{}],

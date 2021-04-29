@@ -10,7 +10,7 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
-  GrafanaTheme,
+  GrafanaThemeV2,
   outerJoinDataFrames,
   TimeRange,
   TimeZone,
@@ -83,7 +83,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
 export function preparePlotConfigBuilder(
   frame: DataFrame,
-  theme: GrafanaTheme,
+  theme: GrafanaThemeV2,
   getTimeRange: () => TimeRange,
   getTimeZone: () => TimeZone
 ): UPlotConfigBuilder {

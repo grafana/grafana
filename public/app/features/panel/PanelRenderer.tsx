@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
-import { config } from 'app/core/config';
 import { appEvents } from 'app/core/core';
 import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../plugins/plugin_loader';
+import { useTheme2 } from '@grafana/ui';
 
 export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
   const {
@@ -94,6 +94,7 @@ const useFieldOverrides = (
   const fieldConfig = defaultOptions?.fieldConfig;
   const series = data?.series;
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
+  const theme = useTheme2();
 
   return useMemo(() => {
     if (!fieldConfigRegistry || !fieldConfig || !data) {
@@ -107,9 +108,9 @@ const useFieldOverrides = (
         fieldConfig,
         fieldConfigRegistry,
         replaceVariables: (str: string) => str,
-        theme: config.theme,
+        theme,
         timeZone,
       }),
     };
-  }, [fieldConfigRegistry, fieldConfig, data, series, timeZone]);
+  }, [fieldConfigRegistry, fieldConfig, data, series, timeZone, theme]);
 };

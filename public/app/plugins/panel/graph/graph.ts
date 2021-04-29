@@ -286,7 +286,7 @@ class GraphElement {
         };
         const fieldDisplay = getDisplayProcessor({
           field: { config: fieldConfig, type: FieldType.number },
-          theme: config.theme,
+          theme: config.theme2,
           timeZone: this.dashboard.getTimezone(),
         })(field.values.get(dataIndex));
         linksSupplier = links.length

@@ -1,10 +1,8 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { applyFieldOverrides, DataFrame, FieldType, toDataFrame } from '@grafana/data';
-
+import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 import { Props, Table } from './Table';
-import { getTheme } from '../../themes';
 
 function getDefaultDataFrame(): DataFrame {
   const dataFrame = toDataFrame({
@@ -67,7 +65,7 @@ function getDefaultDataFrame(): DataFrame {
       return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
     },
     timeZone: 'utc',
-    theme: getTheme(),
+    theme: createTheme(),
   });
   return dataFrames[0];
 }

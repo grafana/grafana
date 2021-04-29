@@ -1,17 +1,18 @@
-import { FALLBACK_COLOR, Field, FieldColorModeId, GrafanaTheme, Threshold } from '../types';
+import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
 import { classicColors, getColorForTheme, RegistryItem } from '../utils';
 import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
 import { fallBackTreshold } from './thresholds';
 import { getScaleCalculator, ColorScaleValue } from './scale';
 import { reduceField } from '../transformations/fieldReducer';
+import { GrafanaThemeV2 } from '../themes/types';
 
 /** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
 
 /** @beta */
 export interface FieldColorMode extends RegistryItem {
-  getCalculator: (field: Field, theme: GrafanaTheme) => FieldValueColorCalculator;
+  getCalculator: (field: Field, theme: GrafanaThemeV2) => FieldValueColorCalculator;
   colors?: string[];
   isContinuous?: boolean;
   isByValue?: boolean;
@@ -34,7 +35,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
           const thresholdSafe = threshold ?? fallBackTreshold;
-          return getColorForTheme(thresholdSafe.color, theme);
+          return getColorForTheme(thresholdSafe.color, theme.v1);
         };
       },
     },
@@ -166,12 +167,12 @@ export class FieldColorSchemeMode implements FieldColorMode {
     this.isByValue = options.isByValue;
   }
 
-  private getColors(theme: GrafanaTheme) {
+  private getColors(theme: GrafanaThemeV2) {
     if (this.colorCache) {
       return this.colorCache;
     }
 
-    this.colorCache = this.colors.map((c) => getColorForTheme(c, theme));
+    this.colorCache = this.colors.map((c) => getColorForTheme(c, theme.v1));
     return this.colorCache;
   }
 
@@ -183,7 +184,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
     return this.interpolator;
   }
 
-  getCalculator(field: Field, theme: GrafanaTheme) {
+  getCalculator(field: Field, theme: GrafanaThemeV2) {
     const colors = this.getColors(theme);
 
     if (this.isByValue) {
@@ -221,7 +222,7 @@ export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorM
  * Function that will return a series color for any given color mode. If the color mode is a by value color
  * mode it will use the field.config.color.seriesBy property to figure out which value to use
  */
-export function getFieldSeriesColor(field: Field, theme: GrafanaTheme): ColorScaleValue {
+export function getFieldSeriesColor(field: Field, theme: GrafanaThemeV2): ColorScaleValue {
   const mode = getFieldColorModeForField(field);
 
   if (!mode.isByValue) {
@@ -240,8 +241,8 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme): ColorSca
   return scale(value);
 }
 
-function getFixedColor(field: Field, theme: GrafanaTheme) {
+function getFixedColor(field: Field, theme: GrafanaThemeV2) {
   return () => {
-    return getColorForTheme(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme);
+    return getColorForTheme(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme.v1);
   };
 }

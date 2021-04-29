@@ -4,7 +4,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { BarChart } from './BarChart';
 import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { select } from '@storybook/addon-knobs';
 import { BarChartOptions, BarValueVisibility } from './types';
 import { StackingMode } from '../uPlot/config';
@@ -42,7 +42,7 @@ const getKnobs = () => {
 export const Basic: React.FC = () => {
   const { legendPlacement, orientation } = getKnobs();
 
-  const theme = useTheme();
+  const theme = useTheme2();
   const frame = toDataFrame({
     fields: [
       { name: 'x', type: FieldType.string, values: ['group 1', 'group 2'] },
