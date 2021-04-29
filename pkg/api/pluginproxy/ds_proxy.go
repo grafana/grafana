@@ -290,6 +290,9 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "PUT" {
 			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus datasource")
 		}
+		if proxy.ctx.Req.Request.Method == "POST" {
+			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus datasource")
+		}
 	}
 
 	return nil

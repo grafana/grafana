@@ -31,17 +31,17 @@
     },
     {
       "method": "GET",
-      "path": "api/v1/rules",
+      "path": "/rules",
       "reqRole": "Viewer"
     },
     {
       "method": "POST",
-      "path": "api/v1/rules",
+      "path": "/rules",
       "reqRole": "Editor"
     },
     {
       "method": "DELETE",
-      "path": "api/v1/rules",
+      "path": "/rules",
       "reqRole": "Editor"
     }
   ],
