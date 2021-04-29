@@ -5,7 +5,7 @@ import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { VizLegendOptions } from '../VizLegend/models.gen';
@@ -106,7 +106,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         if (shouldReconfig) {
           //console.log("shouldReconfig");
 
-          newState.config = preparePlotConfigBuilder(
+          newState.config = this.props.prepConfig(
             newState.alignedFrame,
             theme,
             timeZone,
