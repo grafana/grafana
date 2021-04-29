@@ -47,14 +47,28 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
   onChangeDataSource(settings: DataSourceInstanceSettings, index: number) {
     const { queries, onQueriesChange } = this.props;
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
+
+        const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
+
+        if (previous?.type === settings.uid) {
+          return {
+            ...item,
+            datasourceUid: settings.uid,
+          };
+        }
+
+        const { refId, hide } = item.model;
+
         return {
           ...item,
           datasourceUid: settings.uid,
+          model: { refId, hide },
         };
       })
     );

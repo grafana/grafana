@@ -6,6 +6,7 @@ import { DataQuery, DataSourceInstanceSettings, PanelData } from '@grafana/data'
 import { QueryEditorRow } from './QueryEditorRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   // The query configuration
@@ -49,8 +50,20 @@ export class QueryEditorRows extends PureComponent<Props> {
           return item;
         }
 
+        if (item.datasource) {
+          const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
+
+          if (previous?.type === dataSource.type) {
+            return {
+              ...item,
+              datasource: dataSource.name,
+            };
+          }
+        }
+
         return {
-          ...item,
+          refId: item.refId,
+          hide: item.hide,
           datasource: dataSource.name,
         };
       })
