@@ -1,6 +1,4 @@
 .page-header {
-  padding: $space-xl 0 0 0;
-
   .btn {
     float: right;
     margin-left: $space-md;
@@ -16,7 +14,7 @@
 .page-header__inner {
   flex-grow: 1;
   display: flex;
-  margin-bottom: $space-xl;
+  padding: $space-lg 0;
 }
 
 .page-header__title {
@@ -36,6 +34,7 @@
   width: 50px;
   height: 50px;
   position: relative;
+  color: $text-color-weak;
 
   &.fa {
     top: 10px;
@@ -51,7 +50,8 @@
 }
 
 .page-header__logo {
-  margin: -1px $spacer;
+  margin: -1px $spacer -1px 0;
+  color: $text-color-weak;
 }
 
 .page-header__sub-title {
