@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
 import { css } from '@emotion/css';
 import { usePlotContext } from '../context';
@@ -39,45 +39,66 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-  const [plotCanvasBBox, setPlotCanvasBBox] = useState<DOMRect>();
-  const [coords, setCoords] = useState<CartesianCoords2D>({ x: 0, y: 0 });
+  const plotCanvasBBox = useRef<DOMRect>();
+
+  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
 
   const pluginId = `TooltipPlugin, panel ${otherProps.id}`;
 
   // Debug logs
   useEffect(() => {
+    if (otherProps.id === 3) {
+      console.log(pluginId, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
+    }
     pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
   }, [focusedPointIdx, focusedSeriesIdx]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    if (debug()) {
-      config.addHook('init', (u) => {
-        const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
-        if (!canvas) {
-          return;
-        }
-        setPlotCanvasBBox(canvas.getBoundingClientRect());
-      });
-    }
-
-    config.addHook('draw', (u) => {
+    config.addHook('setSize', (u) => {
       const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
       if (!canvas) {
         return;
       }
-      setPlotCanvasBBox(canvas.getBoundingClientRect());
+      plotCanvasBBox.current = canvas.getBoundingClientRect();
     });
 
     config.addHook('setCursor', (u) => {
-      // if (u.cursor.left === undefined || u.cursor.top === undefined) {
-      //   return;
-      // }
-      console.log(u.bbox);
-      setCoords({
-        x: u.bbox.left + (u.cursor.left || 0),
-        y: u.bbox.top + (u.cursor.top || 0),
-      });
+      const bbox = plotCanvasBBox.current;
+      if (!bbox) {
+        return;
+      }
+
+      let x, y;
+      const cL = u.cursor.left || 0;
+      const cT = u.cursor.top || 0;
+
+      if (!isCursourOutsideCanvas(u.cursor, bbox)) {
+        x = bbox.left + cL;
+        y = bbox.top + cT;
+      } else {
+        if (cL >= 0 && cL <= bbox.width) {
+          // outside left bound
+          x = bbox.left + cL;
+        }
+
+        if (cT < 0) {
+          // outside left bound
+          y = bbox.top;
+        }
+
+        if (cT > bbox.height) {
+          // outside right bound
+          y = bbox.top + bbox.height;
+        }
+      }
+
+      if (x !== undefined && y !== undefined) {
+        setCoords({ x, y });
+      } else {
+        setCoords(null);
+      }
+
       setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
     });
 
@@ -87,7 +108,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   }, [config]);
 
   const plotInstance = plotCtx.getPlot();
-  if (!plotInstance || focusedPointIdx === null) {
+
+  if (!plotInstance || focusedPointIdx === null || !plotCanvasBBox.current) {
     return null;
   }
 
@@ -154,32 +176,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     tooltip = <SeriesTable series={series} timestamp={xVal} />;
   }
 
-  if (!plotCanvasBBox) {
-    return null;
-  }
-
   return (
     <Portal>
-      {debug() && (
-        <div
-          className={css`
-            width: ${plotCanvasBBox.width}px;
-            height: ${plotCanvasBBox.height}px;
-            top: ${plotCanvasBBox.top}px;
-            left: ${plotCanvasBBox.left}px;
-            pointer-events: none;
-            background: red;
-            position: fixed;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0.2;
-            font-family: monospace;
-          `}
-        >
-          uPlot canvas debug
-        </div>
-      )}
       {tooltip && coords && (
         <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: 10, y: 10 }}>
           {tooltip}
@@ -188,3 +186,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     </Portal>
   );
 };
+
+function isCursourOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
+  if (!left || !top) {
+    return false;
+  }
+  return left < 0 || left > canvas.width || top < 0 || top > canvas.height;
+}

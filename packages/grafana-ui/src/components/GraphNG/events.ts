@@ -45,6 +45,7 @@ class UPlotGlobalEvents {
   // Broadcast the values to all global listeners
   publish = (values: KeyValue<number>) => {
     const sync = uPlot.sync(this.globalKey);
+
     if (!sync || !sync.key) {
       return;
     }

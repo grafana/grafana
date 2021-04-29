@@ -28,7 +28,6 @@ import {
   ScaleOrientation,
 } from '../uPlot/config';
 import { collectStackingGroups } from '../uPlot/utils';
-import { PlotSyncConfig } from '../uPlot/context';
 import { uPlotGlobalEvents } from './events';
 import uPlot from 'uplot';
 
@@ -90,7 +89,7 @@ export function preparePlotConfigBuilder(
   theme: GrafanaThemeV2,
   getTimeRange: () => TimeRange,
   getTimeZone: () => TimeZone,
-  sync?: PlotSyncConfig | null
+  sync?: DashboardCursorSync
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder(getTimeZone);
 
@@ -256,7 +255,7 @@ export function preparePlotConfigBuilder(
   }
 
   // Always publish events
-  const syncMode = sync?.sync ?? DashboardCursorSync.Off;
+  const syncMode = sync ?? DashboardCursorSync.Off;
   const cursorSync: uPlot.Cursor.Sync = {
     key: uPlotGlobalEvents.globalKey, // + '/' + xScaleKey + '/' + yScaleKey,
     filters: {

@@ -318,6 +318,7 @@ export class PanelChrome extends Component<Props, State> {
               onFieldConfigChange={this.onFieldConfigChange}
               onChangeTimeRange={this.onChangeTimeRange}
               eventBus={dashboard.events}
+              sync={dashboard.graphTooltip}
             />
           </PanelContextProvider>
         </div>

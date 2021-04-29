@@ -1,5 +1,5 @@
-import { Field, PanelProps } from '@grafana/data';
-import { GraphNG, GraphNGLegendEvent, TooltipPlugin, usePlotSync, ZoomPlugin } from '@grafana/ui';
+import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { GraphNG, GraphNGLegendEvent, TooltipDisplayMode, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useCallback } from 'react';
 import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
@@ -23,8 +23,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   onFieldConfigChange,
   replaceVariables,
+  sync,
 }) => {
-  const plotSyncContext = usePlotSync();
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
       onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
@@ -62,7 +62,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       legend={options.legend}
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
-      sync={plotSyncContext}
+      sync={sync}
     >
       {(config, alignedDataFrame, debug) => {
         return (
@@ -73,7 +73,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
               debug={debug}
               data={alignedDataFrame}
               config={config}
-              mode={options.tooltipOptions.mode}
+              mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltipOptions.mode}
               timeZone={timeZone}
             />
             <ContextMenuPlugin
