@@ -110,7 +110,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
 
       &:hover {
-        background: ${theme.colors.formCheckboxBgCheckedHover};
+        background: ${theme.colors.bgBlue1};
         color: ${theme.colors.text};
       }
     `,

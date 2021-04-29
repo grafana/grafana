@@ -6,15 +6,18 @@ import {
   compareDataFrameStructures,
   dataFrameFromJSON,
   DataFrameJSON,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
   rangeUtil,
+  TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
-import { GrafanaExpressionModel, GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 import { getTimeRangeForExpression } from '../unified/utils/timeRange';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 export interface AlertingQueryResult {
   frames: DataFrameJSON[];
@@ -99,13 +102,25 @@ const initialState = (queries: GrafanaQuery[], state: LoadingState): Record<stri
     dataByQuery[query.refId] = {
       state,
       series: [],
-      timeRange: rangeUtil.relativeToTimeRange(
-        query.relativeTimeRange ?? getTimeRangeForExpression(query.model as GrafanaExpressionModel, queries)
-      ),
+      timeRange: getTimeRange(query, queries),
     };
 
     return dataByQuery;
   }, {});
+};
+
+const getTimeRange = (query: GrafanaQuery, queries: GrafanaQuery[]): TimeRange => {
+  if (isExpressionQuery(query.model)) {
+    const relative = getTimeRangeForExpression(query.model, queries);
+    return rangeUtil.relativeToTimeRange(relative);
+  }
+
+  if (!query.relativeTimeRange) {
+    console.warn(`Query with refId: ${query.refId} did not have any relative time range, using default.`);
+    return getDefaultTimeRange();
+  }
+
+  return rangeUtil.relativeToTimeRange(query.relativeTimeRange);
 };
 
 const mapToPanelData = (

@@ -24,6 +24,10 @@ func TestPagerdutyNotifier(t *testing.T) {
 	tmpl, err := template.FromGlobs("templates/default.tmpl")
 	require.NoError(t, err)
 
+	externalURL, err := url.Parse("http://localhost")
+	require.NoError(t, err)
+	tmpl.ExternalURL = externalURL
+
 	hostname, err := os.Hostname()
 	require.NoError(t, err)
 
@@ -143,9 +147,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			externalURL, err := url.Parse("http://localhost")
-			require.NoError(t, err)
-			pn, err := NewPagerdutyNotifier(m, tmpl, externalURL)
+			pn, err := NewPagerdutyNotifier(m, tmpl)
 			if c.expInitError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError.Error(), err.Error())
