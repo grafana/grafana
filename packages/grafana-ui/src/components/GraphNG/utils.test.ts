@@ -7,7 +7,6 @@ import {
   fieldMatchers,
   FieldType,
   getDefaultTimeRange,
-  GrafanaTheme,
   MutableDataFrame,
 } from '@grafana/data';
 import {

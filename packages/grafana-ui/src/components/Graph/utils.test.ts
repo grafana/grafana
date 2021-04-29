@@ -1,5 +1,4 @@
 import {
-  GraphSeriesValue,
   toDataFrame,
   FieldType,
   FieldCache,
