@@ -65,7 +65,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
         <RemovableName name={name} onRemove={onRemove} />(
         {params.map((p, i) => {
           const { value, options } = p;
-          return options != null ? (
+          return options !== null ? (
             <SegmentAsync
               allowCustomValue
               key={i}
