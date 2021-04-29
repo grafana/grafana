@@ -35,13 +35,24 @@ export function getPageStyles(theme: GrafanaThemeV2) {
 
     .page-container {
       flex-grow: 1;
-      width: 100%;
       flex-basis: 100%;
-      margin-left: auto;
-      margin-right: auto;
       padding-left: ${theme.spacing(2)};
       padding-right: ${theme.spacing(2)};
-      max-width: ${theme.breakpoints.values.xl}px;
+
+      ${theme.breakpoints.up('sm')} {
+        margin: ${theme.spacing(0, 1)};
+      }
+
+      ${theme.breakpoints.up('md')} {
+        margin: ${theme.spacing(0, 2)};
+      }
+
+      ${theme.breakpoints.up('xxl')} {
+        max-width: ${theme.breakpoints.values.xl}px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+      }
     }
 
     .page-full {
@@ -51,10 +62,18 @@ export function getPageStyles(theme: GrafanaThemeV2) {
     }
 
     .page-body {
-      padding: ${theme.spacing(4)};
+      padding: ${theme.spacing(1)};
       background: ${theme.components.panel.background};
       border: 1px solid ${theme.components.panel.borderColor};
       margin-bottom: 32px;
+
+      ${theme.breakpoints.up('md')} {
+        padding: ${theme.spacing(2)};
+      }
+
+      ${theme.breakpoints.up('lg')} {
+        padding: ${theme.spacing(4)};
+      }
     }
 
     .page-heading {
@@ -70,7 +89,7 @@ export function getPageStyles(theme: GrafanaThemeV2) {
 
       > a,
       > button {
-        margin-left: ${theme.spacing(1)};
+        margin-left: ${theme.spacing(2)};
       }
     }
 
