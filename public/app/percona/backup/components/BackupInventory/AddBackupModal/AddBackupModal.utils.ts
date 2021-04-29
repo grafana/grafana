@@ -1,5 +1,6 @@
 import { SelectableValue } from '@grafana/data';
-import { Backup, DataModel } from '../BackupInventory.types';
+import { DataModel } from 'app/percona/backup/Backup.types';
+import { Backup } from '../BackupInventory.types';
 import { AddBackupFormProps, RetryMode, SelectableService } from './AddBackupModal.types';
 
 export const toFormBackup = (backup: Backup | null): AddBackupFormProps => {

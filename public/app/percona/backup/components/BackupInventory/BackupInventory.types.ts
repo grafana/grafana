@@ -1,20 +1,5 @@
 import { Databases } from 'app/percona/shared/core';
-
-export enum DataModel {
-  DATA_MODEL_INVALID = 'DATA_MODEL_INVALID',
-  PHYSICAL = 'PHYSICAL',
-  LOGICAL = 'LOGICAL',
-}
-
-export enum Status {
-  STATUS_INVALID = 'STATUS_INVALID',
-  PENDING = 'PENDING',
-  IN_PROGRESS = 'IN_PROGRESS',
-  PAUSED = 'PAUSED',
-  SUCCESS = 'SUCCESS',
-  ERROR = 'ERROR',
-}
-
+import { DataModel, BackupStatus } from '../../Backup.types';
 export interface Backup {
   id: string;
   name: string;
@@ -24,7 +9,7 @@ export interface Backup {
   serviceId: string;
   serviceName: string;
   dataModel: DataModel;
-  status: Status;
+  status: BackupStatus;
   vendor: Databases;
 }
 
@@ -37,7 +22,7 @@ export interface RawBackup {
   service_id: string;
   service_name: string;
   data_model: DataModel;
-  status: Status;
+  status: BackupStatus;
   vendor: Databases;
 }
 

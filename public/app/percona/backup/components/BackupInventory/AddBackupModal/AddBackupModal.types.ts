@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
+import { DataModel } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';
-import { Backup, DataModel } from '../BackupInventory.types';
+import { Backup } from '../BackupInventory.types';
 
 export interface AddBackupModalProps {
   backup: Backup | null;

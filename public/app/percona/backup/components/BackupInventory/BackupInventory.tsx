@@ -10,10 +10,10 @@ import { ExpandableCell } from 'app/percona/shared/components/Elements/Expandabl
 import { BackupInventoryDetails } from './BackupInventoryDetails';
 import { AddBackupModal } from './AddBackupModal';
 import { AddBackupFormProps } from './AddBackupModal/AddBackupModal.types';
-import { Status } from './Status';
+import { Status } from '../Status';
 import { BackupInventoryActions } from './BackupInventoryActions';
-import { BackupCreation } from './BackupCreation';
-import { Messages } from './BackupInventory.messages';
+import { DetailedDate } from '../DetailedDate';
+import { Messages } from '../../Backup.messages';
 import { Backup } from './BackupInventory.types';
 import { BackupInventoryService } from './BackupInventory.service';
 import { RestoreBackupModal } from './RestoreBackupModal';
@@ -26,11 +26,8 @@ import {
   DATA_INTERVAL,
 } from './BackupInventory.constants';
 
-const { columns, noData } = Messages;
-const { name, created, location, vendor, status, actions } = columns;
-
 export const BackupInventory: FC = () => {
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState(true);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
@@ -40,33 +37,33 @@ export const BackupInventory: FC = () => {
   const columns = useMemo(
     (): Column[] => [
       {
-        Header: name,
+        Header: Messages.backupInventory.table.columns.name,
         accessor: 'name',
         id: 'name',
         width: '250px',
         Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
       },
       {
-        Header: vendor,
+        Header: Messages.backupInventory.table.columns.vendor,
         accessor: ({ vendor }: Backup) => DATABASE_LABELS[vendor],
         width: '150px',
       },
       {
-        Header: created,
+        Header: Messages.backupInventory.table.columns.created,
         accessor: 'created',
-        Cell: ({ value }) => <BackupCreation date={value} />,
+        Cell: ({ value }) => <DetailedDate date={value} />,
       },
       {
-        Header: location,
+        Header: Messages.backupInventory.table.columns.location,
         accessor: 'locationName',
       },
       {
-        Header: status,
+        Header: Messages.backupInventory.table.columns.status,
         accessor: 'status',
         Cell: ({ value }) => <Status status={value} />,
       },
       {
-        Header: actions,
+        Header: Messages.backupInventory.table.columns.actions,
         accessor: 'id',
         Cell: ({ row }) => (
           <BackupInventoryActions onRestore={onRestoreClick} onBackup={onBackupClick} backup={row.original as Backup} />
@@ -170,7 +167,7 @@ export const BackupInventory: FC = () => {
         data={data}
         totalItems={data.length}
         columns={columns}
-        emptyMessage={noData}
+        emptyMessage={Messages.backupInventory.table.noData}
         pendingRequest={pending}
         autoResetExpanded={false}
         renderExpandedRow={renderSelectedSubRow}
