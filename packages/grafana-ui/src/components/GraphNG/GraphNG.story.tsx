@@ -4,7 +4,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphNG, GraphNGProps } from './GraphNG';
 import { LegendDisplayMode, LegendPlacement } from '../VizLegend/models.gen';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Story } from '@storybook/react';
 
 export default {
@@ -34,7 +34,7 @@ interface StoryProps extends GraphNGProps {
   unit: string;
 }
 export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, ...args }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const seriesA = toDataFrame({
     target: 'SeriesA',
     datapoints: [
