@@ -1,8 +1,7 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
-import { withTheme } from '../../themes';
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame } from './utils';
@@ -10,13 +9,14 @@ import { preparePlotData } from '../uPlot/utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
+import { withTheme2 } from '../../themes/ThemeContext';
 
 /**
  * @internal -- not a public API
  */
 export const FIXED_UNIT = '__fixed';
 
-export interface GraphNGProps<T = {}> extends Themeable {
+export interface GraphNGProps<T = {}> extends Themeable2 {
   width: number;
   height: number;
   frames: DataFrame[];
@@ -146,5 +146,5 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 }
 
-export const GraphNG = withTheme(UnthemedGraphNG);
+export const GraphNG = withTheme2(UnthemedGraphNG);
 GraphNG.displayName = 'GraphNG';

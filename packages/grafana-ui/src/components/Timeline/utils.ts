@@ -6,12 +6,12 @@ import {
   FieldConfig,
   formattedValueToString,
   getFieldDisplayName,
-  GrafanaTheme,
   outerJoinDataFrames,
   TimeRange,
   TimeZone,
   classicColors,
   Field,
+  GrafanaThemeV2,
 } from '@grafana/data';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { TimelineCoreOptions, getConfig } from './timeline';
@@ -45,7 +45,7 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
 
 export function preparePlotConfigBuilder(
   frame: DataFrame,
-  theme: GrafanaTheme,
+  theme: GrafanaThemeV2,
   timeZone: TimeZone,
   getTimeRange: () => TimeRange,
   coreOptions: Partial<TimelineCoreOptions>
