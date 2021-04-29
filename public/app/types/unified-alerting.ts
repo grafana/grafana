@@ -8,7 +8,6 @@ import {
   Labels,
   Annotations,
   RulerRuleGroupDTO,
-  GrafanaQueryModel,
 } from './unified-alerting-dto';
 
 export type Alert = {
@@ -82,7 +81,6 @@ export interface CombinedRule {
   rulerRule?: RulerRuleDTO;
   group: CombinedRuleGroup;
   namespace: CombinedRuleNamespace;
-  queries?: GrafanaQueryModel[];
 }
 
 export interface CombinedRuleGroup {

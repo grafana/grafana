@@ -3,14 +3,15 @@ import React, { FC, useMemo } from 'react';
 import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { isAlertingRule } from '../../utils/rules';
+import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { Annotation } from '../Annotation';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from '../DetailsField';
 import { RuleQuery } from './RuleQuery';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 
 interface Props {
   rule: CombinedRule;
@@ -27,17 +28,23 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
   const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {
       return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
-    } else if (rule.queries) {
-      return rule.queries
-        .map(({ datasource }) => {
-          const ds = getDataSourceSrv().getInstanceSettings(datasource);
-          if (ds) {
-            return { name: ds.name, icon: ds.meta.info.logos.small };
-          }
-          return { name: datasource };
-        })
-        .filter(({ name }) => name !== '__expr__');
     }
+
+    if (isGrafanaRulerRule(rule.rulerRule)) {
+      const { data } = rule.rulerRule.grafana_alert;
+
+      return data.reduce((dataSources, query) => {
+        const ds = getDatasourceSrv().getInstanceSettings(query.datasourceUid);
+
+        if (!ds || ds.uid === ExpressionDatasourceUID) {
+          return dataSources;
+        }
+
+        dataSources.push({ name: ds.name, icon: ds.meta.info.logos.small });
+        return dataSources;
+      }, [] as Array<{ name: string; icon?: string }>);
+    }
+
     return [];
   }, [rule, rulesSource]);
 

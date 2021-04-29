@@ -37,8 +37,8 @@ export function isRecordingRulerRule(rule: RulerRuleDTO): rule is RulerRecording
   return 'record' in rule;
 }
 
-export function isGrafanaRulerRule(rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
-  return 'grafana_alert' in rule;
+export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 
 export function alertInstanceKey(alert: Alert): string {

@@ -9,6 +9,7 @@ import { getFocusStyle } from '../Forms/commonStyles';
 import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { otherOptions, quickOptions } from './rangeOptions';
+import { selectors } from '@grafana/e2e-selectors';
 
 const isValidTimeRange = (range: any) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);
@@ -66,7 +67,12 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
 
   return (
     <div className={styles.container}>
-      <div tabIndex={0} className={styles.pickerInput} aria-label="TimePicker Open Button" onClick={onOpen}>
+      <div
+        tabIndex={0}
+        className={styles.pickerInput}
+        aria-label={selectors.components.TimePicker.openButton}
+        onClick={onOpen}
+      >
         {isValidTimeRange(value) ? (
           <TimePickerButtonLabel value={value as TimeRange} timeZone={timeZone} />
         ) : (

@@ -86,7 +86,6 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         ...defaultFormValues,
         name: ga.title,
         type: RuleFormType.threshold,
-        dataSourceName: ga.data[0]?.model.datasource,
         evaluateFor: rule.for,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,
