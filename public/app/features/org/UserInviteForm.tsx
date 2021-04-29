@@ -59,16 +59,20 @@ export const UserInviteForm: FC<Props> = ({}) => {
               error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
               label="Email or username"
             >
-              <Input name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
+              <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
             </Field>
             <Field invalid={!!errors.name} label="Name">
-              <Input name="name" placeholder="(optional)" ref={register} />
+              <Input {...register('name')} placeholder="(optional)" />
             </Field>
             <Field invalid={!!errors.role} label="Role">
-              <InputControl as={RadioButtonGroup} control={control} options={roles} name="role" />
+              <InputControl
+                render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
+                control={control}
+                name="role"
+              />
             </Field>
             <Field label="Send invite email">
-              <Switch name="sendEmail" ref={register} />
+              <Switch {...register('sendEmail')} />
             </Field>
             <HorizontalGroup>
               <Button type="submit">Submit</Button>

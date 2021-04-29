@@ -1,25 +1,27 @@
 import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
 import { NotifierDTO } from 'app/types';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
-import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
+import { useFormContext, FieldErrors } from 'react-hook-form';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface Props<R> {
+  defaultValues: R;
   pathPrefix: string;
   notifiers: NotifierDTO[];
   onDuplicate: () => void;
   commonSettingsComponent: CommonSettingsComponentType;
 
   secureFields?: Record<string, boolean>;
-  errors?: NestDataObject<R, FieldError>;
+  errors?: FieldErrors<R>;
   onDelete?: () => void;
 }
 
 export function ChannelSubForm<R extends ChannelValues>({
+  defaultValues,
   pathPrefix,
   onDuplicate,
   onDelete,
@@ -30,16 +32,8 @@ export function ChannelSubForm<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch, register, unregister } = useFormContext();
-  const selectedType = watch(name('type'));
-
-  // keep the __id field registered so it's always passed to submit
-  useEffect(() => {
-    register({ name: `${pathPrefix}__id` });
-    return () => {
-      unregister(`${pathPrefix}__id`);
-    };
-  });
+  const { control, watch } = useFormContext();
+  const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
 
   const [_secureFields, setSecureFields] = useState(secureFields ?? {});
 
@@ -70,15 +64,21 @@ export function ChannelSubForm<R extends ChannelValues>({
     <div className={styles.wrapper}>
       <div className={styles.topRow}>
         <div>
+          <InputControl
+            name={name('__id')}
+            render={({ field }) => <input type="hidden" {...field} />}
+            defaultValue={defaultValues.__id}
+            control={control}
+          />
           <Field label="Contact point type">
             <InputControl
               name={name('type')}
-              as={Select}
-              width={37}
-              options={typeOptions}
+              defaultValue={defaultValues.type}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Select {...field} width={37} options={typeOptions} onChange={(value) => onChange(value?.value)} />
+              )}
               control={control}
               rules={{ required: true }}
-              onChange={(values) => values[0]?.value}
             />
           </Field>
         </div>

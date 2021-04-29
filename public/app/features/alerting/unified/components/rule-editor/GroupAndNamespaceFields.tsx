@@ -14,7 +14,12 @@ interface Props {
 }
 
 export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
-  const { control, watch, errors, setValue } = useFormContext<RuleFormValues>();
+  const {
+    control,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useFormContext<RuleFormValues>();
 
   const [customGroup, setCustomGroup] = useState(false);
 
@@ -44,32 +49,34 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
     <>
       <Field label="Namespace" error={errors.namespace?.message} invalid={!!errors.namespace?.message}>
         <InputControl
-          as={SelectWithAdd}
-          className={inputStyle}
+          render={({ field: { onChange, ref, ...field } }) => (
+            <SelectWithAdd
+              {...field}
+              className={inputStyle}
+              onChange={(value) => {
+                setValue('group', ''); //reset if namespace changes
+                onChange(value);
+              }}
+              onCustomChange={(custom: boolean) => {
+                custom && setCustomGroup(true);
+              }}
+              options={namespaceOptions}
+              width={42}
+            />
+          )}
           name="namespace"
-          options={namespaceOptions}
           control={control}
-          width={42}
           rules={{
             required: { value: true, message: 'Required.' },
-          }}
-          onChange={(values) => {
-            setValue('group', ''); //reset if namespace changes
-            return values[0];
-          }}
-          onCustomChange={(custom: boolean) => {
-            custom && setCustomGroup(true);
           }}
         />
       </Field>
       <Field label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
-          as={SelectWithAdd}
+          render={({ field: { ref, ...field } }) => (
+            <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={inputStyle} />
+          )}
           name="group"
-          className={inputStyle}
-          options={groupOptions}
-          width={42}
-          custom={customGroup}
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },

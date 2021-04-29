@@ -10,12 +10,11 @@ export const NotificationSettings: FC<Props> = ({ currentFormValues, imageRender
   return (
     <CollapsableSection label="Notification settings" isOpen={false}>
       <Field>
-        <Checkbox name="isDefault" ref={register} label="Default" description="Use this notification for all alerts" />
+        <Checkbox {...register('isDefault')} label="Default" description="Use this notification for all alerts" />
       </Field>
       <Field>
         <Checkbox
-          name="settings.uploadImage"
-          ref={register}
+          {...register('settings.uploadImage')}
           label="Include image"
           description="Captures an image and include it in the notification"
         />
@@ -28,16 +27,14 @@ export const NotificationSettings: FC<Props> = ({ currentFormValues, imageRender
       )}
       <Field>
         <Checkbox
-          name="disableResolveMessage"
-          ref={register}
+          {...register('disableResolveMessage')}
           label="Disable Resolve Message"
           description="Disable the resolve message [OK] that is sent when alerting state returns to false"
         />
       </Field>
       <Field>
         <Checkbox
-          name="sendReminder"
-          ref={register}
+          {...register('sendReminder')}
           label="Send reminders"
           description="Send additional notifications for triggered alerts"
         />
@@ -50,7 +47,7 @@ export const NotificationSettings: FC<Props> = ({ currentFormValues, imageRender
             Alert reminders are sent after rules are evaluated. A reminder can never be sent more frequently
             than a configured alert rule evaluation interval."
           >
-            <Input name="frequency" ref={register} width={8} />
+            <Input {...register('frequency')} width={8} />
           </Field>
         </>
       )}

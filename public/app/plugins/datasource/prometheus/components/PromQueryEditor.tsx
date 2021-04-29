@@ -69,8 +69,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.setState({ formatOption: option }, this.onRunQuery);
   };
 
-  onInstantChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const instant = e.target.checked;
+  onInstantChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const instant = (e.target as HTMLInputElement).checked;
     this.query.instant = instant;
     this.setState({ instant }, this.onRunQuery);
   };

@@ -30,8 +30,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
               <Field label="Name" invalid={!!errors.name} error={errors?.name?.message}>
                 <Input
                   type="text"
-                  name="name"
-                  ref={register({ required: 'Name is required' })}
+                  {...register('name', { required: 'Name is required' })}
                   placeholder="Name"
                   defaultValue={name}
                   aria-label={selectors.pages.PlaylistForm.name}
@@ -40,8 +39,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
               <Field label="Interval" invalid={!!errors.interval} error={errors?.interval?.message}>
                 <Input
                   type="text"
-                  name="interval"
-                  ref={register({ required: 'Interval is required' })}
+                  {...register('interval', { required: 'Interval is required' })}
                   placeholder="5m"
                   defaultValue={interval ?? '5m'}
                   aria-label={selectors.pages.PlaylistForm.interval}

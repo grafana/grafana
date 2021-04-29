@@ -98,10 +98,9 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             {({ register, errors }) => (
               <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
                 <Input
-                  name="gcomDashboard"
                   placeholder="Grafana.com dashboard URL or ID"
                   type="text"
-                  ref={register({
+                  {...register('gcomDashboard', {
                     required: 'A Grafana dashboard URL or ID is required',
                     validate: validateGcomDashboard,
                   })}
@@ -118,8 +117,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
               <>
                 <Field invalid={!!errors.dashboardJson} error={errors.dashboardJson && errors.dashboardJson.message}>
                   <TextArea
-                    name="dashboardJson"
-                    ref={register({
+                    {...register('dashboardJson', {
                       required: 'Need a dashboard JSON model',
                       validate: validateDashboardJson,
                     })}

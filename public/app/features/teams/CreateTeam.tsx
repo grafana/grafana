@@ -34,7 +34,7 @@ export class CreateTeam extends PureComponent<Props> {
             {({ register }) => (
               <FieldSet label="New Team">
                 <Field label="Name">
-                  <Input name="name" ref={register({ required: true })} width={60} />
+                  <Input {...register('name', { required: true })} width={60} />
                 </Field>
                 <Field
                   label={
@@ -46,7 +46,7 @@ export class CreateTeam extends PureComponent<Props> {
                     </Label>
                   }
                 >
-                  <Input type="email" name="email" ref={register()} placeholder="email@test.com" width={60} />
+                  <Input {...register('email')} type="email" placeholder="email@test.com" width={60} />
                 </Field>
                 <div className="gf-form-button-row">
                   <Button type="submit" variant="primary">

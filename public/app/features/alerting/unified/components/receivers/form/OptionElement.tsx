@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import { Input, InputControl, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 import { useFormContext } from 'react-hook-form';
@@ -10,18 +10,26 @@ interface Props {
 }
 
 export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
-  const { control, register } = useFormContext();
+  const { control, register, unregister } = useFormContext();
   const modelValue = option.secure
     ? `${pathPrefix}secureSettings.${option.propertyName}`
     : `${pathPrefix}settings.${option.propertyName}`;
+
+  // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
+  useEffect(
+    () => () => {
+      unregister(modelValue);
+    },
+    [unregister, modelValue]
+  );
+
   switch (option.element) {
     case 'input':
       return (
         <Input
           invalid={invalid}
           type={option.inputType}
-          name={`${modelValue}`}
-          ref={register({
+          {...register(`${modelValue}`, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
@@ -32,24 +40,27 @@ export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '' }) =
     case 'select':
       return (
         <InputControl
-          as={Select}
-          options={option.selectOptions}
+          render={({ field: { onChange, ref, ...field } }) => (
+            <Select
+              {...field}
+              options={option.selectOptions}
+              invalid={invalid}
+              onChange={(value) => onChange(value.value)}
+            />
+          )}
           control={control}
           name={`${modelValue}`}
-          invalid={invalid}
-          onChange={(values) => values[0].value}
         />
       );
 
     case 'textarea':
       return (
         <TextArea
-          invalid={invalid}
-          name={`${modelValue}`}
-          ref={register({
+          {...register(`${modelValue}`, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
+          invalid={invalid}
         />
       );
 

@@ -6,7 +6,7 @@ export interface Folder {
   id: number;
 }
 
-export interface Props extends Omit<FolderPickerProps, 'initiailTitle' | 'initialFolderId'> {
+export interface Props extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
 }
 

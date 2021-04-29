@@ -35,27 +35,25 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
 
   return (
     <Form onSubmit={addPoint} maxWidth="none">
-      {({ register, control, watch }) => {
-        const selectedPoint = watch('selectedPoint') as SelectableValue;
+      {({ register, control, watch, setValue }) => {
+        const selectedPoint = watch('selectedPoint' as any) as SelectableValue;
         return (
           <InlineFieldRow>
             <InlineField label="New value" labelWidth={14}>
               <Input
+                {...register('newPointValue')}
                 width={32}
                 type="number"
                 placeholder="value"
                 id={`newPointValue-${query.refId}`}
-                name="newPointValue"
-                ref={register}
               />
             </InlineField>
             <InlineField label="Time" labelWidth={14}>
               <Input
+                {...register('newPointTime')}
                 width={32}
                 id={`newPointTime-${query.refId}`}
                 placeholder="time"
-                name="newPointTime"
-                ref={register}
                 defaultValue={dateTime().format()}
               />
             </InlineField>
@@ -64,13 +62,11 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
             </InlineField>
             <InlineField label="All values">
               <InputControl
+                name={'selectedPoint' as any}
                 control={control}
-                as={Select}
-                options={pointOptions}
-                width={32}
-                name="selectedPoint"
-                onChange={(value) => value[0]}
-                placeholder="Select point"
+                render={({ field: { ref, ...field } }) => (
+                  <Select {...field} options={pointOptions} width={32} placeholder="Select point" />
+                )}
               />
             </InlineField>
 
@@ -80,7 +76,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
                   type="button"
                   variant="destructive"
                   onClick={() => {
-                    control.setValue('selectedPoint', [{ value: undefined, label: 'Select value' }]);
+                    setValue('selectedPoint' as any, [{ value: undefined, label: 'Select value' }]);
                     deletePoint(selectedPoint);
                   }}
                 >

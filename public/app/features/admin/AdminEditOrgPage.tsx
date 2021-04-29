@@ -66,7 +66,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
               {({ register, errors }) => (
                 <>
                   <Field label="Name" invalid={!!errors.orgName} error="Name is required">
-                    <Input name="orgName" ref={register({ required: true })} />
+                    <Input {...register('orgName', { required: true })} />
                   </Field>
                   <Button>Update</Button>
                 </>

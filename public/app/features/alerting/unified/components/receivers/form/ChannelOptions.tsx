@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button, Checkbox, Field, Input } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
-import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
+import { ChannelValues } from '../../../types/receiver-form';
+import { useFormContext, FieldError, FieldErrors } from 'react-hook-form';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
 export interface Props<R extends ChannelValues> {
@@ -10,7 +10,7 @@ export interface Props<R extends ChannelValues> {
   secureFields: NotificationChannelSecureFields;
 
   onResetSecureField: (key: string) => void;
-  errors?: NestDataObject<R, FieldError>;
+  errors?: FieldErrors<R>;
   pathPrefix?: string;
 }
 
@@ -21,7 +21,7 @@ export function ChannelOptions<R extends ChannelValues>({
   errors,
   pathPrefix = '',
 }: Props<R>): JSX.Element {
-  const { register, watch } = useFormContext<ReceiverFormValues<R>>();
+  const { register, watch } = useFormContext();
   const currentFormValues = watch() as Record<string, any>; // react hook form types ARE LYING!
   return (
     <>
@@ -41,12 +41,11 @@ export function ChannelOptions<R extends ChannelValues>({
           return (
             <Field key={key}>
               <Checkbox
-                name={
+                {...register(
                   option.secure
                     ? `${pathPrefix}secureSettings.${option.propertyName}`
                     : `${pathPrefix}settings.${option.propertyName}`
-                }
-                ref={register()}
+                )}
                 label={option.label}
                 description={option.description}
               />

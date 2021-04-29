@@ -3,7 +3,6 @@ import { Button, Field, FieldArray, Input, InlineLabel, Label, useStyles } from 
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
-import { RuleFormValues } from '../../types/rule-form';
 
 interface Props {
   className?: string;
@@ -11,7 +10,12 @@ interface Props {
 
 const LabelsField: FC<Props> = ({ className }) => {
   const styles = useStyles(getStyles);
-  const { register, control, watch, errors } = useFormContext<RuleFormValues>();
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext();
   const labels = watch('labels');
   return (
     <div className={cx(className, styles.wrapper)}>
@@ -33,8 +37,9 @@ const LabelsField: FC<Props> = ({ className }) => {
                             error={errors.labels?.[index]?.key?.message}
                           >
                             <Input
-                              ref={register({ required: { value: !!labels[index]?.value, message: 'Required.' } })}
-                              name={`labels[${index}].key`}
+                              {...register(`labels[${index}].key`, {
+                                required: { value: !!labels[index]?.value, message: 'Required.' },
+                              })}
                               placeholder="key"
                               defaultValue={field.key}
                             />
@@ -46,8 +51,9 @@ const LabelsField: FC<Props> = ({ className }) => {
                             error={errors.labels?.[index]?.value?.message}
                           >
                             <Input
-                              ref={register({ required: { value: !!labels[index]?.key, message: 'Required.' } })}
-                              name={`labels[${index}].value`}
+                              {...register(`labels[${index}].value`, {
+                                required: { value: !!labels[index]?.key, message: 'Required.' },
+                              })}
                               placeholder="value"
                               defaultValue={field.value}
                             />

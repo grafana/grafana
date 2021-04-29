@@ -29,8 +29,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   intervalMs: any;
   resolution: any;
   timeInfo?: string;
-  skipDataOnInit: boolean;
-  dataList: LegacyResponseData[];
+  skipDataOnInit = false;
+  dataList: LegacyResponseData[] = [];
   querySubscription?: Unsubscribable | null;
   useDataFrames = false;
   panelData?: PanelData;

@@ -29,7 +29,7 @@ function getLabelFromTrace(trace: TraceResponse): string {
 }
 
 export class JaegerQueryField extends React.PureComponent<Props, State> {
-  private _isMounted: boolean;
+  private _isMounted = false;
 
   constructor(props: Props, context: React.Context<any>) {
     super(props, context);

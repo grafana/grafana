@@ -17,7 +17,7 @@ export default {
 };
 
 export const simple = () => {
-  const defaultValues = {
+  const defaultValues: any = {
     people: [{ firstName: 'Janis', lastName: 'Joplin' }],
   };
   return (
@@ -30,8 +30,16 @@ export const simple = () => {
                 <div style={{ marginBottom: '1rem' }}>
                   {fields.map((field, index) => (
                     <HorizontalGroup key={field.id}>
-                      <Input ref={register()} name={`people[${index}].firstName`} value={field.firstName} />
-                      <Input ref={register()} name={`people[${index}].lastName`} value={field.lastName} />
+                      <Input
+                        key={field.id}
+                        {...register(`people.${index}.firstName` as const)}
+                        defaultValue={field.firstName}
+                      />
+                      <Input
+                        key={field.id}
+                        {...register(`people.${index}.lastName` as const)}
+                        defaultValue={field.lastName}
+                      />
                     </HorizontalGroup>
                   ))}
                 </div>

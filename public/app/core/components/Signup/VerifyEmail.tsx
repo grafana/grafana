@@ -47,7 +47,7 @@ export const VerifyEmail: FC = () => {
             invalid={!!(errors as any).email}
             error={(errors as any).email?.message}
           >
-            <Input placeholder="Email" name="email" ref={register({ required: true })} />
+            <Input {...register('email', { required: true })} placeholder="Email" />
           </Field>
           <HorizontalGroup>
             <Button>Send verification email</Button>
