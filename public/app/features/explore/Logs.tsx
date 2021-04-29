@@ -9,7 +9,6 @@ import {
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
-  LogsMetaKind,
   LogsDedupStrategy,
   LogRowModel,
   LogsDedupDescription,
@@ -21,7 +20,6 @@ import {
   GrafanaTheme,
 } from '@grafana/data';
 import {
-  LogLabels,
   RadioButtonGroup,
   LogRows,
   Button,
@@ -30,34 +28,18 @@ import {
   InlineSwitch,
   withTheme,
   stylesFactory,
-  Icon,
-  Tooltip,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import { MetaInfoText } from './MetaInfoText';
+import { LogsMetaRow } from './LogsMetaRow';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
   showTime: 'grafana.explore.logs.showTime',
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
 };
-
-function renderMetaItem(value: any, kind: LogsMetaKind) {
-  if (kind === LogsMetaKind.LabelsMap) {
-    return (
-      <span className="logs-meta-item__labels">
-        <LogLabels labels={value} />
-      </span>
-    );
-  } else if (kind === LogsMetaKind.Error) {
-    return <span className="logs-meta-item__error">{value}</span>;
-  }
-  return value;
-}
 
 interface Props {
   logRows: LogRowModel[];
@@ -269,36 +251,19 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       forceEscape,
     } = this.state;
 
+    const styles = getStyles(theme);
     const hasData = logRows && logRows.length > 0;
+    const hasUnescapedContent = this.checkUnescapedContent(logRows);
+
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
-    const meta = logsMeta ? [...logsMeta] : [];
-
-    if (dedupStrategy !== LogsDedupStrategy.none) {
-      meta.push({
-        label: 'Dedup count',
-        value: dedupCount,
-        kind: LogsMetaKind.Number,
-      });
-    }
-
-    if (logRows.some((r) => r.entry.length > MAX_CHARACTERS)) {
-      meta.push({
-        label: 'Info',
-        value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
-        kind: LogsMetaKind.String,
-      });
-    }
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-    const series = logsSeries ? logsSeries : [];
-    const styles = getStyles(theme);
-    const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
     return (
       <>
         <ExploreGraphPanel
-          series={series}
+          series={logsSeries || []}
           width={width}
           onHiddenSeriesChanged={this.onToggleLogLevel}
           loading={loading}
@@ -346,56 +311,18 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           </Button>
         </div>
 
-        {meta && (
-          <MetaInfoText
-            metaItems={meta.map((item) => {
-              return {
-                label: item.label,
-                value: renderMetaItem(item.value, item.kind),
-              };
-            })}
-          />
-        )}
+        <LogsMetaRow
+          meta={logsMeta || []}
+          dedupStrategy={dedupStrategy}
+          dedupCount={dedupCount}
+          logRows={logRows}
+          hasUnescapedContent={hasUnescapedContent}
+          showDetectedFields={showDetectedFields}
+          onEscapeNewlines={this.onEscapeNewlines}
+          clearDetectedFields={this.clearDetectedFields}
+          forceEscape={forceEscape}
+        />
 
-        {showDetectedFields?.length > 0 && (
-          <MetaInfoText
-            metaItems={[
-              {
-                label: 'Showing only detected fields',
-                value: renderMetaItem(showDetectedFields, LogsMetaKind.LabelsMap),
-              },
-              {
-                label: '',
-                value: (
-                  <Button variant="secondary" size="sm" onClick={this.clearDetectedFields}>
-                    Show all detected fields
-                  </Button>
-                ),
-              },
-            ]}
-          />
-        )}
-
-        {hasUnescapedContent && (
-          <MetaInfoText
-            metaItems={[
-              {
-                label: 'Your logs might have incorrectly escaped content',
-                value: (
-                  <Tooltip
-                    content="We suggest to try to fix the escaping of your log lines first. This is an experimental feature, your logs might not be correctly escaped."
-                    placement="right"
-                  >
-                    <Button variant="secondary" size="sm" onClick={this.onEscapeNewlines}>
-                      <span>{forceEscape ? 'Remove escaping' : 'Escape newlines'}&nbsp;</span>
-                      <Icon name="exclamation-triangle" className="muted" size="sm" />
-                    </Button>
-                  </Tooltip>
-                ),
-              },
-            ]}
-          />
-        )}
         <LogRows
           logRows={logRows}
           deduplicatedRows={dedupedRows}
