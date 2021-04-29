@@ -550,14 +550,7 @@ describe('getLinksSupplier', () => {
     });
 
     const replaceSpy = jest.fn();
-    const supplier = getLinksSupplier(
-      f0,
-      f0.fields[0],
-      {},
-      replaceSpy,
-      // this is used only for internal links so isn't needed here
-      {}
-    );
+    const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
     supplier({});
 
     expect(replaceSpy).toBeCalledTimes(2);
@@ -602,8 +595,7 @@ describe('getLinksSupplier', () => {
       f0.fields[0],
       {},
       // We do not need to interpolate anything for this test
-      (value, vars, format) => value,
-      {}
+      (value, vars, format) => value
     );
 
     const links = supplier({ valueRowIndex: 0 });
