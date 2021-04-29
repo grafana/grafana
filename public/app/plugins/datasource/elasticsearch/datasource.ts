@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, find, isNumber, isObject, isString, first as _first, map as _map } from 'lodash';
 import {
   DataFrame,
   DataLink,
@@ -34,7 +34,10 @@ import {
   Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
-import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import {
+  BucketAggregation,
+  isBucketAggregationWithField,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
 import { getScriptValue } from './utils';
@@ -302,7 +305,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
             let time = getFieldFromSource(source, timeField);
             if (typeof hits[i].fields !== 'undefined') {
               const fields = hits[i].fields;
-              if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+              if (isString(fields[timeField]) || isNumber(fields[timeField])) {
                 time = fields[timeField];
               }
             }
@@ -353,26 +356,39 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
-        const expandedQuery = {
-          ...query,
-          datasource: this.name,
-          query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
+    // lucene query string and then everything else
+    const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
+      if (bucketAgg.type === 'filters') {
+        return {
+          ...bucketAgg,
+          settings: {
+            ...bucketAgg.settings,
+            filters: bucketAgg.settings?.filters?.map((filter) => ({
+              ...filter,
+              query: this.interpolateLuceneQuery(filter.query || '', scopedVars),
+            })),
+          },
         };
+      }
 
-        for (let bucketAgg of query.bucketAggs || []) {
-          if (bucketAgg.type === 'filters') {
-            for (let filter of bucketAgg.settings?.filters || []) {
-              filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
-            }
-          }
-        }
-        return expandedQuery;
-      });
-    }
-    return expandedQueries;
+      return bucketAgg;
+    };
+
+    const expandedQueries = queries.map(
+      (query): ElasticsearchQuery => ({
+        ...query,
+        datasource: this.name,
+        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
+      })
+    );
+
+    const finalQueries: ElasticsearchQuery[] = JSON.parse(
+      this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
+    );
+
+    return finalQueries;
   }
 
   testDatasource() {
@@ -380,7 +396,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return this.getFields('date')
       .pipe(
         mergeMap((dateFields) => {
-          const timeField: any = _.find(dateFields, { text: this.timeField });
+          const timeField: any = find(dateFields, { text: this.timeField });
           if (!timeField) {
             return of({ status: 'error', message: 'No date field named ' + this.timeField + ' found' });
           }
@@ -508,7 +524,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
-    const dataFrame = _.first(logResponse.data);
+    const dataFrame = _first(logResponse.data);
     if (!dataFrame) {
       return { data: [] };
     }
@@ -536,7 +552,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     let payload = '';
-    const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
+    const targets = this.interpolateVariablesInQueries(cloneDeep(options.targets), options.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
@@ -661,17 +677,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
             const subObj = obj[key];
 
             // Check mapping field for nested fields
-            if (_.isObject(subObj.properties)) {
+            if (isObject(subObj.properties)) {
               fieldNameParts.push(key);
               getFieldsRecursively(subObj.properties);
             }
 
-            if (_.isObject(subObj.fields)) {
+            if (isObject(subObj.fields)) {
               fieldNameParts.push(key);
               getFieldsRecursively(subObj.fields);
             }
 
-            if (_.isString(subObj.type)) {
+            if (isString(subObj.type)) {
               const fieldName = fieldNameParts.concat(key).join('.');
 
               // Hide meta-fields and check field type
@@ -704,7 +720,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
 
         // transform to array
-        return _.map(fields, (value) => {
+        return _map(fields, (value) => {
           return value;
         });
       })
@@ -729,7 +745,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
 
         const buckets = res.responses[0].aggregations['1'].buckets;
-        return _.map(buckets, (bucket) => {
+        return _map(buckets, (bucket) => {
           return {
             text: bucket.key_as_string || bucket.key,
             value: bucket.key,

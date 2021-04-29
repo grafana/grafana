@@ -13,6 +13,10 @@ var (
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
 	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
 	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
+	// ErrRuleGroupNamespaceNotFound
+	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
+	// ErrAlertRuleFailedValidation
+	ErrAlertRuleFailedValidation = errors.New("invalid alert rule")
 )
 
 type NoDataState string
@@ -37,6 +41,11 @@ func (executionErrorState ExecutionErrorState) String() string {
 const (
 	AlertingErrState      ExecutionErrorState = "Alerting"
 	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
+)
+
+const (
+	UIDLabel          = "__alert_rule_uid__"
+	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
 )
 
 // AlertRule is the model for alert rules in unified alerting.

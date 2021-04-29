@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map as _map, filter } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { getBackendSrv } from '@grafana/runtime';
@@ -46,7 +46,7 @@ export class PostgresDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, (v) => {
+    const quotedValues = _map(value, (v) => {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
@@ -72,7 +72,7 @@ export class PostgresDatasource {
   }
 
   query(options: any): Observable<DataQueryResponse> {
-    const queries = _.filter(options.targets, (target) => {
+    const queries = filter(options.targets, (target) => {
       return target.hide !== true;
     }).map((target) => {
       const queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);

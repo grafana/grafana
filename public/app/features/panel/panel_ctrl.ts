@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isString } from 'lodash';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { auto } from 'angular';
@@ -79,7 +79,7 @@ export class PanelCtrl {
   addEditorTab(title: string, directiveFn: any, index?: number, icon?: any) {
     const editorTab = { title, directiveFn, icon };
 
-    if (_.isString(directiveFn)) {
+    if (isString(directiveFn)) {
       editorTab.directiveFn = () => {
         return { templateUrl: directiveFn };
       };

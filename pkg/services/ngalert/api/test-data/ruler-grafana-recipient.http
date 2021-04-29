@@ -80,9 +80,8 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "000000002",
             "model": {
-              "datasource": "gdev-prometheus",
-              "datasourceUid": "000000002",
               "expr": "http_request_duration_microseconds_count",
               "hide": false,
               "interval": "",
@@ -99,9 +98,8 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "query",
               "hide": false,
               "intervalMs": 1000,
@@ -118,9 +116,8 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "$reduced > 10",
               "hide": false,
               "intervalMs": 1000,
@@ -169,9 +166,8 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "000000002",
             "model": {
-              "datasource": "gdev-prometheus",
-              "datasourceUid": "000000002",
               "expr": "http_request_duration_microseconds_count",
               "hide": false,
               "interval": "",
@@ -188,9 +184,8 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "query",
               "hide": false,
               "intervalMs": 1000,
@@ -207,9 +202,8 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "$reduced > 42",
               "hide": false,
               "intervalMs": 1000,
@@ -271,9 +265,8 @@ Content-Type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "000000002",
             "model": {
-              "datasource": "gdev-prometheus",
-              "datasourceUid": "000000002",
               "expr": "http_request_duration_microseconds_count",
               "hide": false,
               "interval": "",
@@ -290,9 +283,8 @@ Content-Type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "query",
               "hide": false,
               "intervalMs": 1000,
@@ -309,9 +301,8 @@ Content-Type: application/json
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "$reduced > 42",
               "hide": false,
               "intervalMs": 1000,

@@ -187,8 +187,8 @@ describe('ApiKeysPage', () => {
 });
 
 function toggleShowExpired() {
-  expect(screen.getByText(/show expired/i)).toBeInTheDocument();
-  userEvent.click(screen.getByText(/show expired/i));
+  expect(screen.queryByLabelText(/show expired/i)).toBeInTheDocument();
+  userEvent.click(screen.getByLabelText(/show expired/i));
 }
 
 async function addAndVerifyApiKey(addApiKeyMock: jest.Mock, includeExpired: boolean) {

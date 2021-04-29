@@ -4,26 +4,58 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
+
 package api
 
 import (
+	"net/http"
+
 	"github.com/go-macaron/binding"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 type TestingApiService interface {
+	RouteEvalQueries(*models.ReqContext, apimodels.EvalQueriesPayload) response.Response
 	RouteTestReceiverConfig(*models.ReqContext, apimodels.ExtendedReceiver) response.Response
 	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiService) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, metrics *Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Post(toMacaronPath("/api/v1/receiver/test/{Recipient}"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
-		group.Post(toMacaronPath("/api/v1/rule/test/{Recipient}"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))
+		group.Post(
+			toMacaronPath("/api/v1/eval"),
+			binding.Bind(apimodels.EvalQueriesPayload{}),
+			Instrument(
+				http.MethodPost,
+				"/api/v1/eval",
+				srv.RouteEvalQueries,
+				metrics,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/receiver/test/{Recipient}"),
+			binding.Bind(apimodels.ExtendedReceiver{}),
+			Instrument(
+				http.MethodPost,
+				"/api/v1/receiver/test/{Recipient}",
+				srv.RouteTestReceiverConfig,
+				metrics,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/rule/test/{Recipient}"),
+			binding.Bind(apimodels.TestRulePayload{}),
+			Instrument(
+				http.MethodPost,
+				"/api/v1/rule/test/{Recipient}",
+				srv.RouteTestRuleConfig,
+				metrics,
+			),
+		)
 	}, middleware.ReqSignedIn)
 }

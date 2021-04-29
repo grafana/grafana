@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary } from '@grafana/ui';
+import { ErrorBoundary, PanelContextProvider } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  EventBusWithSource,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -46,6 +47,7 @@ export interface State {
   renderCounter: number;
   errorMessage?: string;
   refreshWhenInView: boolean;
+  eventBus: EventBusWithSource;
   data: PanelData;
 }
 
@@ -60,11 +62,16 @@ export class PanelChrome extends Component<Props, State> {
       isFirstLoad: true,
       renderCounter: 0,
       refreshWhenInView: false,
-      data: {
-        state: LoadingState.NotStarted,
-        series: [],
-        timeRange: getDefaultTimeRange(),
-      },
+      eventBus: new EventBusWithSource(props.dashboard.events, `panel-${props.panel.id}`),
+      data: this.getInitialPanelDataState(),
+    };
+  }
+
+  getInitialPanelDataState(): PanelData {
+    return {
+      state: LoadingState.NotStarted,
+      series: [],
+      timeRange: getDefaultTimeRange(),
     };
   }
 
@@ -135,13 +142,20 @@ export class PanelChrome extends Component<Props, State> {
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
-    if (!this.props.isInView) {
+    const { isInView, dashboard, panel, plugin } = this.props;
+
+    if (!isInView) {
       if (data.state !== LoadingState.Streaming) {
         // Ignore events when not visible.
         // The call will be repeated when the panel comes into view
         this.setState({ refreshWhenInView: true });
       }
+      return;
+    }
 
+    // Ignore this data update if we are now a non data panel
+    if (plugin.meta.skipDataQuery) {
+      this.setState({ data: this.getInitialPanelDataState() });
       return;
     }
 
@@ -166,8 +180,8 @@ export class PanelChrome extends Component<Props, State> {
         break;
       case LoadingState.Done:
         // If we are doing a snapshot save data in panel model
-        if (this.props.dashboard.snapshot) {
-          this.props.panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
+        if (dashboard.snapshot) {
+          panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
         }
         if (isFirstLoad) {
           isFirstLoad = false;
@@ -286,24 +300,26 @@ export class PanelChrome extends Component<Props, State> {
     return (
       <>
         <div className={panelContentClassNames}>
-          <PanelComponent
-            id={panel.id}
-            data={data}
-            title={panel.title}
-            timeRange={timeRange}
-            timeZone={this.props.dashboard.getTimezone()}
-            options={panelOptions}
-            fieldConfig={panel.fieldConfig}
-            transparent={panel.transparent}
-            width={panelWidth}
-            height={innerPanelHeight}
-            renderCounter={renderCounter}
-            replaceVariables={panel.replaceVariables}
-            onOptionsChange={this.onOptionsChange}
-            onFieldConfigChange={this.onFieldConfigChange}
-            onChangeTimeRange={this.onChangeTimeRange}
-            eventBus={dashboard.events}
-          />
+          <PanelContextProvider value={{ eventBus: this.state.eventBus }}>
+            <PanelComponent
+              id={panel.id}
+              data={data}
+              title={panel.title}
+              timeRange={timeRange}
+              timeZone={this.props.dashboard.getTimezone()}
+              options={panelOptions}
+              fieldConfig={panel.fieldConfig}
+              transparent={panel.transparent}
+              width={panelWidth}
+              height={innerPanelHeight}
+              renderCounter={renderCounter}
+              replaceVariables={panel.replaceVariables}
+              onOptionsChange={this.onOptionsChange}
+              onFieldConfigChange={this.onFieldConfigChange}
+              onChangeTimeRange={this.onChangeTimeRange}
+              eventBus={dashboard.events}
+            />
+          </PanelContextProvider>
         </div>
       </>
     );

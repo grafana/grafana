@@ -11,12 +11,12 @@ import (
 	"strconv"
 	"strings"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -158,40 +158,53 @@ func messageExtractor(b []byte) (interface{}, error) {
 }
 
 func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
-	var refID string
-
 	if len(c.Data) == 0 {
 		return nil
 	}
 
-	for _, query := range c.Data {
-		if c.Condition == query.RefID {
-			refID = c.Condition
-		}
+	refIDs, err := validateQueriesAndExpressions(c.Data, user, skipCache, datasourceCache)
+	if err != nil {
+		return err
+	}
 
+	t := make([]string, 0, len(refIDs))
+	for refID := range refIDs {
+		t = append(t, refID)
+	}
+	if _, ok := refIDs[c.Condition]; !ok {
+		return fmt.Errorf("condition %s not found in any query or expression: it should be one of: [%s]", c.Condition, strings.Join(t, ","))
+	}
+	return nil
+}
+
+func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+	refIDs := make(map[string]struct{})
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	for _, query := range data {
 		datasourceUID, err := query.GetDatasource()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		isExpression, err := query.IsExpression()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if isExpression {
+			refIDs[query.RefID] = struct{}{}
 			continue
 		}
 
 		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
 		if err != nil {
-			return fmt.Errorf("failed to get datasource: %s: %w", datasourceUID, err)
+			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
 		}
+		refIDs[query.RefID] = struct{}{}
 	}
-
-	if refID == "" {
-		return fmt.Errorf("condition %s not found in any query or expression", c.Condition)
-	}
-	return nil
+	return refIDs, nil
 }
 
 func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService *tsdb.Service, cfg *setting.Cfg) response.Response {
@@ -210,14 +223,14 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 	}
 
 	evaluator := eval.Evaluator{Cfg: cfg}
-	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow(), dataService)
+	evalResults, err := evaluator.ConditionEval(&evalCond, now, dataService)
 	if err != nil {
-		return response.Error(400, "Failed to evaluate conditions", err)
+		return response.Error(http.StatusBadRequest, "Failed to evaluate conditions", err)
 	}
 
 	frame := evalResults.AsDataFrame()
 
-	return response.JSONStreaming(200, util.DynMap{
+	return response.JSONStreaming(http.StatusOK, util.DynMap{
 		"instances": []*data.Frame{&frame},
 	})
 }

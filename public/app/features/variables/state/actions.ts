@@ -1,5 +1,5 @@
 import angular from 'angular';
-import castArray from 'lodash/castArray';
+import { castArray, isEqual } from 'lodash';
 import { DataQuery, LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 
 import {
@@ -51,7 +51,6 @@ import {
 } from './transactionReducer';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
-import isEqual from 'lodash/isEqual';
 import { ensureStringValues, getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';

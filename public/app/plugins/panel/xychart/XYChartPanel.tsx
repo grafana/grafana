@@ -53,6 +53,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   return (
     <GraphNG
       data={frames}
+      structureRev={data.structureRev}
       fields={dims.fields}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -62,8 +63,16 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
-      <>{/* needs to be an array */}</>
+      {(config, alignedDataFrame) => {
+        return (
+          <TooltipPlugin
+            config={config}
+            data={alignedDataFrame}
+            mode={options.tooltipOptions.mode as any}
+            timeZone={timeZone}
+          />
+        );
+      }}
     </GraphNG>
   );
 };

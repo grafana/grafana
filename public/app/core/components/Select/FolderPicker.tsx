@@ -122,6 +122,9 @@ export class FolderPicker extends PureComponent<Props, State> {
       folder = options.find((option) => option.value === initialFolderId) || null;
     } else if (enableReset && initialTitle) {
       folder = resetFolder;
+    } else if (initialTitle && initialFolderId === -1) {
+      // @TODO temporary, we don't know the id for alerting rule folder in some cases
+      folder = options.find((option) => option.label === initialTitle) || null;
     }
 
     if (!folder && !this.props.allowEmpty) {

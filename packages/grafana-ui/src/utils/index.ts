@@ -6,6 +6,7 @@ export * from './tags';
 export * from './scrollbar';
 export * from './measureText';
 export * from './useForceUpdate';
+export { SearchFunctionType } from './searchFunctions';
 export { default as ansicolor } from './ansicolor';
 
 import * as DOMUtil from './dom'; // includes Element.closest polyfill

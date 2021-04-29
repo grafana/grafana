@@ -1,8 +1,9 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { css, cx } from '@emotion/css';
 
-import { CompletionItem, ThemeContext } from '../..';
 import { GrafanaTheme, renderMarkdown } from '@grafana/data';
+import { useTheme } from '../../themes/ThemeContext';
+import { CompletionItem } from '../../types';
 
 const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
   return {
@@ -36,7 +37,7 @@ export const TypeaheadInfo: React.FC<Props> = ({ item, height }) => {
   const visible = item && !!item.documentation;
   const label = item ? item.label : '';
   const documentation = renderMarkdown(item?.documentation);
-  const theme = useContext(ThemeContext);
+  const theme = useTheme();
   const styles = getStyles(theme, height, visible);
 
   return (

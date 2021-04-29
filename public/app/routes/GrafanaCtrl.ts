@@ -1,4 +1,5 @@
 // Libraries
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import $ from 'jquery';
 

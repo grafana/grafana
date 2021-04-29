@@ -178,7 +178,11 @@ export class StreamingDataFrame implements DataFrame {
       let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
 
       appended.forEach((v, i) => {
-        this.fields[i].values.buffer = v;
+        const { state, values } = this.fields[i];
+        values.buffer = v;
+        if (state) {
+          state.calcs = undefined;
+        }
       });
 
       // Update the frame length

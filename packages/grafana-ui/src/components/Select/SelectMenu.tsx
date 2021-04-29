@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getSelectStyles } from './getSelectStyles';
 import { cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
@@ -12,7 +12,7 @@ interface SelectMenuProps {
 }
 
 export const SelectMenu = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuProps>>((props, ref) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const { children, maxHeight, innerRef, innerProps } = props;
 
@@ -38,7 +38,7 @@ interface SelectMenuOptionProps<T> {
 
 export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuOptionProps<any>>>(
   (props, ref) => {
-    const theme = useTheme();
+    const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const { children, innerProps, data, renderOptionLabel, isSelected, isFocused } = props;
 

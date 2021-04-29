@@ -49,6 +49,7 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
 	originalQueries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
@@ -142,6 +143,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 	return applicationInsightsQueries, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (
 	plugins.DataQueryResult, error) {
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}

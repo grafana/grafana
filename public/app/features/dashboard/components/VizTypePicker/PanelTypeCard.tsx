@@ -1,6 +1,6 @@
 import React from 'react';
-import { GrafanaTheme, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
-import { Badge, BadgeProps, IconButton, PluginSignatureBadge, styleMixins, useStyles } from '@grafana/ui';
+import { GrafanaThemeV2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
+import { Badge, BadgeProps, IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -12,6 +12,7 @@ interface Props {
   onDelete?: () => void;
   disabled?: boolean;
   showBadge?: boolean;
+  description?: string;
 }
 
 export const PanelTypeCard: React.FC<Props> = ({
@@ -22,8 +23,9 @@ export const PanelTypeCard: React.FC<Props> = ({
   onDelete,
   disabled,
   showBadge,
+  description,
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const cssClass = cx({
     [styles.item]: true,
     [styles.disabled]: disabled || plugin.state === PluginState.deprecated,
@@ -41,6 +43,7 @@ export const PanelTypeCard: React.FC<Props> = ({
 
       <div className={styles.itemContent}>
         <div className={styles.name}>{title}</div>
+        {description ? <span className={styles.description}>{description}</span> : null}
       </div>
       {showBadge && (
         <div className={cx(styles.badge, disabled && styles.disabled)}>
@@ -62,28 +65,28 @@ export const PanelTypeCard: React.FC<Props> = ({
 
 PanelTypeCard.displayName = 'PanelTypeCard';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     item: css`
       position: relative;
       display: flex;
       flex-shrink: 0;
       cursor: pointer;
-      background: ${theme.v2.palette.layer2};
-      border-radius: ${theme.v2.shape.borderRadius()};
-      box-shadow: ${theme.v2.shadows.z0};
+      background: ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius()};
+      box-shadow: ${theme.shadows.z1};
       align-items: center;
       padding: 8px;
       width: 100%;
       position: relative;
       overflow: hidden;
       height: 55px;
-      transition: ${theme.v2.transitions.create(['background'], {
-        duration: theme.v2.transitions.duration.short,
+      transition: ${theme.transitions.create(['background'], {
+        duration: theme.transitions.duration.short,
       })};
 
       &:hover {
-        background: ${styleMixins.hoverColor(theme.v2.palette.layer2, theme)};
+        background: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
       }
     `,
     itemContent: css`
@@ -92,25 +95,30 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     current: css`
       label: currentVisualizationItem;
-      border-color: ${theme.colors.bgBlue1};
+      border-color: ${theme.colors.primary.border};
     `,
     disabled: css`
       opacity: 0.2;
       filter: grayscale(1);
       cursor: default;
       pointer-events: none;
-
-      &:hover {
-        border: 1px solid ${theme.colors.border2};
-      }
     `,
     name: css`
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
       padding: 0 10px;
+      width: 100%;
+    `,
+    description: css`
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightLight};
+      padding: 0 ${theme.spacing(1.25)};
       width: 100%;
     `,
     img: css`
@@ -120,7 +128,7 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
     `,
     badge: css`
-      background: ${theme.colors.bg1};
+      background: ${theme.colors.background.primary};
     `,
   };
 };
