@@ -18,15 +18,14 @@ export const QueryEditorModeSwitcher = ({ isRaw, onChange }: Props): JSX.Element
     return (
       <>
         <Button
+          icon="pen"
           variant="secondary"
           type="button"
           onClick={() => {
             // we show the are-you-sure modal
             setModalOpen(true);
           }}
-        >
-          Switch to visual
-        </Button>
+        ></Button>
         <ConfirmModal
           isOpen={isModalOpen}
           title="Switch to visual editor mode"
@@ -45,14 +44,13 @@ export const QueryEditorModeSwitcher = ({ isRaw, onChange }: Props): JSX.Element
   } else {
     return (
       <Button
+        icon="pen"
         variant="secondary"
         type="button"
         onClick={() => {
           onChange(true);
         }}
-      >
-        Edit raw query
-      </Button>
+      ></Button>
     );
   }
 };
