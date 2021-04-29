@@ -2,37 +2,27 @@ import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, TimeRange } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage, TimeRangeInput } from '@grafana/ui';
+import { Icon, Input, FieldValidationMessage, TimeRangeInput, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
 
 export interface Props {
   query: DataQuery;
   queries: DataQuery[];
-  dataSourceName: string;
-  inMixedMode?: boolean;
   disabled?: boolean;
   timeRange?: TimeRange;
-  onTimeRangeChange?: (timeRange: TimeRange) => void;
+  dataSource: DataSourceInstanceSettings;
+  onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
+  onChangeTimeRange?: (timeRange: TimeRange) => void;
   onChange: (query: DataQuery) => void;
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
 }
 
-export const QueryEditorRowTitle: React.FC<Props> = ({
-  dataSourceName,
-  inMixedMode,
-  disabled,
-  query,
-  queries,
-  onClick,
-  onChange,
-  onTimeRangeChange,
-  timeRange,
-  collapsedText,
-}) => {
-  const theme = useTheme();
-  const styles = getQueryEditorRowTitleStyles(theme);
+export const QueryEditorRowHeader: React.FC<Props> = (props) => {
+  const { dataSource, onChangeDataSource, disabled, query, queries, onClick, onChange, collapsedText } = props;
+
+  const styles = useStyles(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -91,10 +81,6 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
     event.target.select();
   };
 
-  const onDataSourceChange = (dataSource: DataSourceInstanceSettings) => {
-    onChange({ ...query, datasource: dataSource.name });
-  };
-
   return (
     <div className={styles.wrapper}>
       {!isEditing && (
@@ -126,17 +112,8 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
           {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
-      {inMixedMode && (
-        <div style={{ display: 'flex', marginLeft: '8px' }}>
-          {query.datasource !== ExpressionDatasourceID && (
-            <>
-              <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />
-              {onTimeRangeChange && timeRange && <TimeRangeInput onChange={onTimeRangeChange} value={timeRange} />}
-            </>
-          )}
-        </div>
-      )}
-      {dataSourceName && !inMixedMode && <em className={styles.contextInfo}> ({dataSourceName})</em>}
+      <PickerRenderer {...props} />
+      {dataSource && !onChangeDataSource && <em className={styles.contextInfo}> ({dataSource.name})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (
@@ -148,7 +125,27 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
   );
 };
 
-const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
+const PickerRenderer: React.FC<Props> = (props) => {
+  const { onChangeTimeRange, timeRange, onChangeDataSource, dataSource } = props;
+  const styles = useStyles(getStyles);
+
+  if (!onChangeTimeRange && !onChangeDataSource) {
+    return null;
+  }
+
+  if (dataSource.uid === ExpressionDatasourceUID) {
+    return null;
+  }
+
+  return (
+    <div className={styles.pickerWrapper}>
+      {onChangeDataSource && <DataSourcePicker current={dataSource.name} onChange={onChangeDataSource} />}
+      {onChangeTimeRange && timeRange && <TimeRangeInput onChange={onChangeTimeRange} value={timeRange} />}
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
       display: flex;
@@ -225,5 +222,9 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${theme.colors.textWeak};
       padding-left: 10px;
     `,
+    pickerWrapper: css`
+      display: flex;
+      margin-left: 8px;
+    `,
   };
-});
+};
