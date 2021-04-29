@@ -85,10 +85,10 @@ const AmRoutes: FC = () => {
   };
 
   useEffect(() => {
-    if (savingDispatched && !saving) {
+    if (savingDispatched && !saving && !savingError) {
       fetchConfig();
     }
-  }, [fetchConfig, savingDispatched, saving]);
+  }, [fetchConfig, savingDispatched, saving, savingError]);
 
   if (!alertManagerSourceName) {
     return <Redirect to="/alerting/routes" />;
@@ -109,9 +109,8 @@ const AmRoutes: FC = () => {
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
-      {resultLoading && <LoadingPlaceholder text="loading alert manager config..." />}
-      {saving && <LoadingPlaceholder text="saving alert manager config..." />}
-      {result && !resultLoading && !saving && !resultError && (
+      {resultLoading && <LoadingPlaceholder text="Loading alert manager config..." />}
+      {result && !resultLoading && !resultError && (
         <>
           <div className={styles.break} />
           <AmRootRoute
