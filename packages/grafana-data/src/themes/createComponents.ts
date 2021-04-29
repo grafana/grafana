@@ -66,8 +66,8 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: input.background,
     },
     tooltip: {
-      background: colors.background.secondary,
-      text: colors.text.primary,
+      background: colors.mode === 'light' ? colors.inverse.background : colors.background.secondary,
+      text: colors.mode === 'light' ? colors.inverse.text : colors.text.primary,
     },
     dashboard: {
       background: colors.background.canvas,
