@@ -5,7 +5,11 @@ import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
 
 export const ConditionField: FC = () => {
-  const { watch, setValue, errors } = useFormContext<RuleFormValues>();
+  const {
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
 
   const queries = watch('queries');
   const condition = watch('condition');
@@ -36,18 +40,22 @@ export const ConditionField: FC = () => {
       invalid={!!errors.condition?.message}
     >
       <InputControl
-        width={42}
         name="condition"
-        as={Select}
-        onChange={(values: SelectableValue[]) => values[0]?.value ?? null}
-        options={options}
+        render={({ field: { onChange, ref, ...field } }) => (
+          <Select
+            {...field}
+            width={42}
+            options={options}
+            onChange={(v: SelectableValue) => onChange(v?.value ?? null)}
+            noOptionsMessage="No queries defined"
+          />
+        )}
         rules={{
           required: {
             value: true,
             message: 'Please select the condition to alert on',
           },
         }}
-        noOptionsMessage="No queries defined"
       />
     </Field>
   );

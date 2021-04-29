@@ -1,12 +1,14 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
+  DataHoverClearEvent,
+  DataHoverEvent,
   FALLBACK_COLOR,
   FieldDisplay,
   formattedValueToString,
   getFieldDisplayValues,
-  GrafanaTheme,
+  GrafanaThemeV2,
 } from '@grafana/data';
-import { useStyles, useTheme } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { Group } from '@visx/group';
@@ -30,6 +32,8 @@ import {
 } from './types';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
+import { usePanelContext } from '../PanelChrome';
+import { Subscription } from 'rxjs';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -38,85 +42,42 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
-export const PieChart: FC<PieChartProps> = ({
-  data,
-  timeZone,
-  reduceOptions,
-  fieldConfig,
-  replaceVariables,
-  legendOptions = defaultLegendOptions,
-  tooltipOptions,
-  onSeriesColorChange,
-  width,
-  height,
-  ...restProps
-}) => {
-  const theme = useTheme();
+/**
+ * @beta
+ */
+export function PieChart(props: PieChartProps) {
+  const {
+    data,
+    timeZone,
+    reduceOptions,
+    fieldConfig,
+    replaceVariables,
+    tooltipOptions,
+    onSeriesColorChange,
+    width,
+    height,
+    ...restProps
+  } = props;
 
-  const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
-    if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
-      return undefined;
-    }
-    const values = fields.map((v) => v.display);
-    const total = values.reduce((acc, item) => item.numeric + acc, 0);
-
-    const legendItems = values.map<VizLegendItem>((value, idx) => {
-      return {
-        label: value.title ?? '',
-        color: value.color ?? FALLBACK_COLOR,
-        yAxis: 1,
-        getItemKey: () => (value.title ?? '') + idx,
-        getDisplayValues: () => {
-          const valuesToShow = legendOptions.values ?? [];
-          let displayValues = [];
-
-          if (valuesToShow.includes(PieChartLegendValues.Value)) {
-            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
-          }
-
-          if (valuesToShow.includes(PieChartLegendValues.Percent)) {
-            const fractionOfTotal = value.numeric / total;
-            const percentOfTotal = fractionOfTotal * 100;
-
-            displayValues.push({
-              numeric: fractionOfTotal,
-              percent: percentOfTotal,
-              text: percentOfTotal.toFixed(0) + '%',
-              title: valuesToShow.length > 1 ? 'Percent' : undefined,
-            });
-          }
-
-          return displayValues;
-        },
-      };
-    });
-
-    return (
-      <VizLegend
-        items={legendItems}
-        onSeriesColorChange={onSeriesColorChange}
-        placement={legendOptions.placement}
-        displayMode={legendOptions.displayMode}
-      />
-    );
-  };
-
+  const theme = useTheme2();
+  const highlightedTitle = useSliceHighlightState();
   const fieldDisplayValues = getFieldDisplayValues({
     fieldConfig,
     reduceOptions,
     data,
-    theme,
+    theme: theme,
     replaceVariables,
     timeZone,
   });
 
   return (
-    <VizLayout width={width} height={height} legend={getLegend(fieldDisplayValues, legendOptions)}>
+    <VizLayout width={width} height={height} legend={getLegend(props, fieldDisplayValues)}>
       {(vizWidth: number, vizHeight: number) => {
         return (
           <PieChartSvg
             width={vizWidth}
             height={vizHeight}
+            highlightedTitle={highlightedTitle}
             fieldDisplayValues={fieldDisplayValues}
             tooltipOptions={tooltipOptions}
             {...restProps}
@@ -125,20 +86,103 @@ export const PieChart: FC<PieChartProps> = ({
       }}
     </VizLayout>
   );
-};
+}
+
+function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
+  const { legendOptions = defaultLegendOptions } = props;
+
+  if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
+    return undefined;
+  }
+  const values = displayValues.map((v) => v.display);
+  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+
+  const legendItems = values.map<VizLegendItem>((value, idx) => {
+    return {
+      label: value.title ?? '',
+      color: value.color ?? FALLBACK_COLOR,
+      yAxis: 1,
+      getItemKey: () => (value.title ?? '') + idx,
+      getDisplayValues: () => {
+        const valuesToShow = legendOptions.values ?? [];
+        let displayValues = [];
+
+        if (valuesToShow.includes(PieChartLegendValues.Value)) {
+          displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
+        }
+
+        if (valuesToShow.includes(PieChartLegendValues.Percent)) {
+          const fractionOfTotal = value.numeric / total;
+          const percentOfTotal = fractionOfTotal * 100;
+
+          displayValues.push({
+            numeric: fractionOfTotal,
+            percent: percentOfTotal,
+            text: percentOfTotal.toFixed(0) + '%',
+            title: valuesToShow.length > 1 ? 'Percent' : undefined,
+          });
+        }
+
+        return displayValues;
+      },
+    };
+  });
+
+  return (
+    <VizLegend
+      items={legendItems}
+      onSeriesColorChange={props.onSeriesColorChange}
+      placement={legendOptions.placement}
+      displayMode={legendOptions.displayMode}
+    />
+  );
+}
+
+function useSliceHighlightState() {
+  const [highlightedTitle, setHighlightedTitle] = useState<string>();
+  const { eventBus } = usePanelContext();
+
+  useEffect(() => {
+    if (!eventBus) {
+      return;
+    }
+
+    const setHighlightedSlice = (event: DataHoverEvent) => {
+      if (eventBus.isOwnEvent(event)) {
+        setHighlightedTitle(event.payload.dataId);
+      }
+    };
+
+    const resetHighlightedSlice = (event: DataHoverClearEvent) => {
+      if (eventBus.isOwnEvent(event)) {
+        setHighlightedTitle(undefined);
+      }
+    };
+
+    const subs = new Subscription()
+      .add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice))
+      .add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
+
+    return () => {
+      subs.unsubscribe();
+    };
+  }, [setHighlightedTitle, eventBus]);
+
+  return highlightedTitle;
+}
 
 export const PieChartSvg: FC<PieChartSvgProps> = ({
   fieldDisplayValues,
   pieType,
   width,
   height,
-  useGradients = true,
+  highlightedTitle,
   displayLabels = [],
   tooltipOptions,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const componentInstanceId = useComponentInstanceId('PieChart');
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const tooltip = useTooltip<SeriesTableRowProps[]>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
@@ -191,52 +235,55 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             cornerRadius={3}
             padAngle={0.005}
           >
-            {(pie) => {
-              return pie.arcs.map((arc) => {
-                const color = arc.data.display.color ?? FALLBACK_COLOR;
-                const label = showLabel ? (
-                  <PieLabel
-                    arc={arc}
-                    outerRadius={layout.outerRadius}
-                    innerRadius={layout.innerRadius}
-                    displayLabels={displayLabels}
-                    total={total}
-                    color={theme.colors.text}
-                  />
-                ) : undefined;
-                if (arc.data.hasLinks && arc.data.getLinks) {
-                  return (
-                    <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
-                      {(api) => (
-                        <PieSlice
-                          tooltip={tooltip}
-                          arc={arc}
-                          pie={pie}
-                          fill={getGradientColor(color)}
-                          openMenu={api.openMenu}
-                          tooltipOptions={tooltipOptions}
-                        >
-                          {label}
-                        </PieSlice>
-                      )}
-                    </DataLinksContextMenu>
-                  );
-                } else {
-                  return (
-                    <PieSlice
-                      key={arc.index}
-                      tooltip={tooltip}
+            {(pie) => (
+              <>
+                {pie.arcs.map((arc) => {
+                  let color = arc.data.display.color ?? FALLBACK_COLOR;
+                  const highlighted = highlightedTitle === arc.data.display.title;
+                  if (arc.data.hasLinks && arc.data.getLinks) {
+                    return (
+                      <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
+                        {(api) => (
+                          <PieSlice
+                            tooltip={tooltip}
+                            highlighted={highlighted}
+                            arc={arc}
+                            pie={pie}
+                            fill={getGradientColor(color)}
+                            openMenu={api.openMenu}
+                            tooltipOptions={tooltipOptions}
+                          />
+                        )}
+                      </DataLinksContextMenu>
+                    );
+                  } else {
+                    return (
+                      <PieSlice
+                        key={arc.index}
+                        highlighted={highlighted}
+                        tooltip={tooltip}
+                        arc={arc}
+                        pie={pie}
+                        fill={getGradientColor(color)}
+                        tooltipOptions={tooltipOptions}
+                      />
+                    );
+                  }
+                })}
+                {showLabel &&
+                  pie.arcs.map((arc) => (
+                    <PieLabel
                       arc={arc}
-                      pie={pie}
-                      fill={getGradientColor(color)}
-                      tooltipOptions={tooltipOptions}
-                    >
-                      {label}
-                    </PieSlice>
-                  );
-                }
-              });
-            }}
+                      key={arc.index}
+                      outerRadius={layout.outerRadius}
+                      innerRadius={layout.innerRadius}
+                      displayLabels={displayLabels}
+                      total={total}
+                      color={theme.colors.text.primary}
+                    />
+                  ))}
+              </>
+            )}
           </Pie>
         </Group>
       </svg>
@@ -256,17 +303,19 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   );
 };
 
-const PieSlice: FC<{
-  children: ReactNode;
+interface SliceProps {
   arc: PieArcDatum<FieldDisplay>;
   pie: ProvidedProps<FieldDisplay>;
+  highlighted?: boolean;
   fill: string;
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
-}> = ({ arc, children, pie, openMenu, fill, tooltip, tooltipOptions }) => {
-  const theme = useTheme();
-  const styles = useStyles(getStyles);
+}
+
+function PieSlice({ arc, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   const onMouseMoveOverArc = (event: any) => {
     const coords = localPoint(event.target.ownerSVGElement, event);
@@ -280,25 +329,26 @@ const PieSlice: FC<{
   return (
     <g
       key={arc.data.display.title}
-      className={styles.svgArg}
+      className={highlighted ? styles.svgArg.highlighted : styles.svgArg.normal}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
     >
-      <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.panelBg} strokeWidth={1} />
-      {children}
+      <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
     </g>
   );
-};
+}
 
-const PieLabel: FC<{
+interface LabelProps {
   arc: PieArcDatum<FieldDisplay>;
   outerRadius: number;
   innerRadius: number;
   displayLabels: PieChartLabels[];
   total: number;
   color: string;
-}> = ({ arc, outerRadius, innerRadius, displayLabels, total, color }) => {
+}
+
+function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color }: LabelProps) {
   const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
   const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
   const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
@@ -340,7 +390,7 @@ const PieLabel: FC<{
       </text>
     </g>
   );
-};
+}
 
 function getTooltipData(
   pie: ProvidedProps<FieldDisplay>,
@@ -372,14 +422,14 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
   return [Math.cos(a) * r, Math.sin(a) * r];
 }
 
-function getGradientColorFrom(color: string, theme: GrafanaTheme) {
+function getGradientColorFrom(color: string, theme: GrafanaThemeV2) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
     .spin(8)
     .toRgbString();
 }
 
-function getGradientColorTo(color: string, theme: GrafanaTheme) {
+function getGradientColorTo(color: string, theme: GrafanaThemeV2) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
     .spin(-8)
@@ -411,7 +461,7 @@ function getPieLayout(height: number, width: number, pieType: PieChartType, marg
   };
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
       width: 100%;
@@ -420,12 +470,18 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
       justify-content: center;
     `,
-    svgArg: css`
-      transition: all 200ms ease-in-out;
-      &:hover {
+    svgArg: {
+      normal: css`
+        transition: all 200ms ease-in-out;
+        &:hover {
+          transform: scale3d(1.03, 1.03, 1);
+        }
+      `,
+      highlighted: css`
+        transition: all 200ms ease-in-out;
         transform: scale3d(1.03, 1.03, 1);
-      }
-    `,
+      `,
+    },
     tooltipPortal: css`
       ${getTooltipContainerStyles(theme)}
     `,

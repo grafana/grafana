@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,9 +20,9 @@ import (
 )
 
 type PrometheusSrv struct {
-	log          log.Logger
-	stateTracker *state.StateTracker
-	store        store.RuleStore
+	log     log.Logger
+	manager *state.Manager
+	store   store.RuleStore
 }
 
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
@@ -33,7 +34,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			Alerts: []*apimodels.Alert{},
 		},
 	}
-	for _, alertState := range srv.stateTracker.GetAll() {
+	for _, alertState := range srv.manager.GetAll() {
 		startsAt := alertState.StartsAt
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
@@ -51,7 +52,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
 		},
-		Data: apimodels.RuleDiscovery{},
+		Data: apimodels.RuleDiscovery{
+			RuleGroups: []*apimodels.RuleGroup{},
+		},
 	}
 
 	ruleGroupQuery := ngmodels.ListOrgRuleGroupsQuery{
@@ -86,12 +89,19 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
 
-		stateMap := srv.stateTracker.GetStatesByRuleUID()
+		stateMap := srv.manager.GetStatesByRuleUID()
 		for _, rule := range alertRuleQuery.Result {
+			var queryStr string
+			encodedQuery, err := json.Marshal(rule.Data)
+			if err != nil {
+				queryStr = err.Error()
+			} else {
+				queryStr = string(encodedQuery)
+			}
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
-				Query:       rule.DataToString(), // TODO: don't escape <>& etc
+				Query:       queryStr, // TODO: don't escape <>& etc
 				Duration:    rule.For.Seconds(),
 				Annotations: rule.Annotations,
 			}
@@ -99,7 +109,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			newRule := apimodels.Rule{
 				Name:           rule.Title,
 				Labels:         rule.Labels,
-				Health:         "ok", // TODO: update this in the future when error and noData states are being evaluated and set
+				Health:         "ok",
 				Type:           apiv1.RuleTypeAlerting,
 				LastEvaluation: time.Time{},
 			}
@@ -131,9 +141,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				case eval.Alerting:
 					alertingRule.State = "firing"
 				case eval.Error:
-					// handle Error case based on configuration in alertRule
+					newRule.Health = "error"
 				case eval.NoData:
-					// handle NoData case based on configuration in alertRule
+					newRule.Health = "nodata"
 				}
 				alertingRule.Alerts = append(alertingRule.Alerts, alert)
 			}
