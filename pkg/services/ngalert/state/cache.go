@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	prometheusModel "github.com/prometheus/common/model"
@@ -14,11 +15,13 @@ import (
 type cache struct {
 	states    map[string]*State
 	mtxStates sync.RWMutex
+	log       log.Logger
 }
 
-func newCache() *cache {
+func newCache(logger log.Logger) *cache {
 	return &cache{
 		states: make(map[string]*State),
+		log:    logger,
 	}
 }
 
@@ -32,7 +35,12 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	lbs[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
 	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
 
-	id := fmt.Sprintf("%s", map[string]string(lbs))
+	il := ngModels.InstanceLabels(lbs)
+	id, err := il.StringKey()
+	if err != nil {
+		c.log.Error("error getting cacheId for entry", "msg", err.Error())
+	}
+
 	if state, ok := c.states[id]; ok {
 		return state
 	}
