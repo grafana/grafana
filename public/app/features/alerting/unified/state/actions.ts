@@ -2,7 +2,12 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
-import { AlertmanagerAlert, AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerAlert,
+  AlertManagerCortexConfig,
+  Silence,
+  SilenceCreatePayload,
+} from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -17,6 +22,7 @@ import {
   fetchAlertManagerConfig,
   fetchAlerts,
   fetchSilences,
+  createOrUpdateSilence,
   updateAlertmanagerConfig,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
@@ -366,3 +372,17 @@ export const expireSilenceAction = (alertManagerSourceName: string, silenceId: s
     dispatch(fetchAmAlertsAction(alertManagerSourceName));
   };
 };
+
+export const createSilence = async (
+  alertManagerName: string,
+  payload: SilenceCreatePayload,
+  exitOnSave: boolean
+): Promise<void> =>
+  withSerializedError(
+    (async () => {
+      await createOrUpdateSilence(alertManagerName, payload);
+      if (exitOnSave) {
+        locationService.push('/alerting/silences');
+      }
+    })()
+  );

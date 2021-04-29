@@ -1,7 +1,9 @@
 import { SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 export type SilenceFormFields = {
-  startsAndEndsAt: string;
+  id: string;
+  startsAt: string;
+  endsAt: string;
   duration: string;
   comment: string;
   matchers: SilenceMatcher[];

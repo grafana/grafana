@@ -70,11 +70,18 @@ const Silences: FC = () => {
             />
           </Route>
           <Route exact path="/alerting/silence/new">
-            <SilencesEditor />
+            <SilencesEditor alertManagerSourceName={alertManagerSourceName} />
           </Route>
           <Route exact path="/alerting/silence/:id/edit">
             {({ match }: RouteChildrenProps<{ id: string }>) => {
-              return match?.params.id && <SilencesEditor silence={getSilenceById(match.params.id)} />;
+              return (
+                match?.params.id && (
+                  <SilencesEditor
+                    silence={getSilenceById(match.params.id)}
+                    alertManagerSourceName={alertManagerSourceName}
+                  />
+                )
+              );
             }}
           </Route>
         </Switch>

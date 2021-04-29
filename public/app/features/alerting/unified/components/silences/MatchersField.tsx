@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, Fragment } from 'react';
 import { Button, Field, Input, InlineLabel, Label, useStyles, Checkbox } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
@@ -15,12 +15,13 @@ interface Props {
 const MatchersField: FC<Props> = ({ className }) => {
   const styles = useStyles(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
-  const { register, getValues } = formApi;
+  const { register, getValues, setValue } = formApi;
   const { items: matchers = [], append, remove } = useControlledFieldArray<SilenceMatcher>('matchers', formApi);
 
   const addMatcher = () => {
     const { matcherName, matcherValue, isRegex } = getValues();
     append({ name: matcherName, value: matcherValue, isRegex });
+    setValue([{ matcherName: '' }, { matcherValue: '' }, { isRegex: false }]);
   };
 
   const onRemoveLabel = (index: number) => {
@@ -30,6 +31,19 @@ const MatchersField: FC<Props> = ({ className }) => {
     <div className={cx(className, styles.wrapper)}>
       <Label>Matchers</Label>
       <AlertLabels matchers={matchers} onRemoveLabel={onRemoveLabel} />
+      {/* Hide the fields from the form but they need to be registered in order to be in the form state */}
+      <div className={styles.displayNone}>
+        {matchers.map((matcher, index) => {
+          return (
+            <Fragment key={`${matcher.name}-${matcher.value}-${index}`}>
+              <Input ref={register()} name={`matchers[${index}].name`} defaultValue={matcher.name} />
+              <Input ref={register()} name={`matchers[${index}].value`} defaultValue={matcher.value} />
+              <Checkbox ref={register()} name={`matchers[${index}].isRegex`} defaultChecked={matcher.isRegex} />
+            </Fragment>
+          );
+        })}
+      </div>
+
       <div className={cx(styles.flexRow)}>
         <Field className={styles.labelInput} label="Name">
           <Input ref={register()} name={`matcherName`} placeholder="name" />
@@ -77,6 +91,9 @@ const getStyles = (theme: GrafanaTheme) => {
     labelInput: css`
       width: 207px;
       margin-bottom: ${theme.spacing.sm};
+    `,
+    displayNone: css`
+      display: none;
     `,
   };
 };
