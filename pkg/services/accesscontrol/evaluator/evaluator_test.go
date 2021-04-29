@@ -3,9 +3,10 @@ package evaluator
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 func TestExtractPermission(t *testing.T) {
@@ -29,37 +30,74 @@ func TestExtractPermission(t *testing.T) {
 }
 
 func TestEvaluatePermissions(t *testing.T) {
-	scopes := map[string]struct{}{
-		"teams:*/permissions:*": {},
-		"users:*":               {},
-		"permissions:delegate":  {},
+	tests := []struct {
+		Name         string
+		HasScopes    map[string]struct{}
+		NeedAnyScope []string
+		Valid        bool
+	}{
+		{
+			Name:         "Base",
+			HasScopes:    map[string]struct{}{},
+			NeedAnyScope: []string{},
+			Valid:        true,
+		},
+		{
+			Name: "No expected scope always returns true",
+			HasScopes: map[string]struct{}{
+				"teams:*/permissions:*": {},
+				"users:*":               {},
+				"permissions:delegate":  {},
+			},
+			NeedAnyScope: []string{},
+			Valid:        true,
+		},
+		{
+			Name: "Single scope from  list",
+			HasScopes: map[string]struct{}{
+				"teams:1/permissions:delegate": {},
+			},
+			NeedAnyScope: []string{"teams:1/permissions:delegate"},
+			Valid:        true,
+		},
+		{
+			Name: "Single scope from glob list",
+			HasScopes: map[string]struct{}{
+				"teams:*/permissions:*": {},
+				"users:*":               {},
+				"permissions:delegate":  {},
+			},
+			NeedAnyScope: []string{"teams:1/permissions:delegate"},
+			Valid:        true,
+		},
+		{
+			Name: "Either of two scopes from glob list",
+			HasScopes: map[string]struct{}{
+				"teams:*/permissions:*": {},
+				"users:*":               {},
+				"permissions:delegate":  {},
+			},
+			NeedAnyScope: []string{"global:admin", "permissions:delegate"},
+			Valid:        true,
+		},
+		{
+			Name: "No match found",
+			HasScopes: map[string]struct{}{
+				"teams:*/permissions:*": {},
+				"users:*":               {},
+				"permissions:delegate":  {},
+			},
+			NeedAnyScope: []string{"teams1/permissions:delegate"},
+			Valid:        false,
+		},
 	}
 
-	ok, err := evaluateScope(scopes, "teams:1/permissions:delegate")
-	require.NoError(t, err)
-	assert.True(t, ok)
-}
-
-func TestEvaluatePermissions_WhenAtLeastOneScopeIsMatched_ReturnsTrue(t *testing.T) {
-	scopes := map[string]struct{}{
-		"teams:*/permissions:*": {},
-		"users:*":               {},
-		"permissions:delegate":  {},
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			ok, err := evaluateScope(tc.HasScopes, tc.NeedAnyScope...)
+			require.NoError(t, err)
+			assert.Equal(t, tc.Valid, ok)
+		})
 	}
-
-	ok, err := evaluateScope(scopes, "global:admin", "permissions:delegate")
-	require.NoError(t, err)
-	assert.True(t, ok)
-}
-
-func TestEvaluatePermissions_WhenNoMatchFound_ReturnsFalse(t *testing.T) {
-	scopes := map[string]struct{}{
-		"teams:*/permissions:*": {},
-		"users:*":               {},
-		"permissions:delegate":  {},
-	}
-
-	ok, err := evaluateScope(scopes, "teams1/permissions:delegate")
-	require.NoError(t, err)
-	assert.False(t, ok)
 }
