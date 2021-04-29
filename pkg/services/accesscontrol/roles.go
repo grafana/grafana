@@ -158,10 +158,10 @@ var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
 		ldapAdminEdit,
 		ldapAdminRead,
-		usersOrgEdit,
-		usersOrgRead,
 		usersAdminEdit,
 		usersAdminRead,
+		usersOrgEdit,
+		usersOrgRead,
 	},
 	string(models.ROLE_ADMIN): {
 		usersOrgEdit,
