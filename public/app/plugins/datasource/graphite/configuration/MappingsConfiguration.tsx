@@ -10,12 +10,12 @@ type Props = {
   showHelp: boolean;
 };
 
-export const LokiLogsMappings = (props: Props): JSX.Element => {
+export const MappingsConfiguration = (props: Props): JSX.Element => {
   const [mappings, setMappings] = useState(props.mappings || []);
 
   return (
     <div>
-      <h3 className="page-heading">Loki labels mappings</h3>
+      <h3 className="page-heading">Label mappings</h3>
       {!props.showHelp && (
         <p>
           <Button onClick={props.onRestoreHelp} type="button" variant="secondary">
@@ -39,7 +39,7 @@ export const LokiLogsMappings = (props: Props): JSX.Element => {
                 onBlur={() => {
                   props.onChange(mappings);
                 }}
-                placeholder="e.g. metric.test.(labelName).*"
+                placeholder="e.g. test.metric.(labelName).*"
                 value={mapping}
               />
             </InlineField>

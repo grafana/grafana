@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { GraphiteOptions, GraphiteType } from '../types';
 import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
-import { LokiLogsMappings } from './LokiLogsMappings';
+import { MappingsConfiguration } from './MappingsConfiguration';
 import { fromString, toString } from './parseLokiLabelMappings';
 import store from 'app/core/store';
 
@@ -105,7 +105,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             </div>
           )}
         </div>
-        <LokiLogsMappings
+        <MappingsConfiguration
           mappings={(options.jsonData.importConfiguration?.loki?.mappings || []).map(toString)}
           showHelp={this.state.showMappingsHelp}
           onDismiss={() => {
