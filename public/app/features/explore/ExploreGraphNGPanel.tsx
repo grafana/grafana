@@ -33,6 +33,7 @@ import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
+import { usePrevious } from 'react-use';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -60,24 +61,15 @@ export function ExploreGraphNGPanel({
   const theme = useTheme();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
   const [baseStructureRev, setBaseStructureRev] = useState(1);
-  const initialStructureRev: { previousData?: DataFrame[]; structureChanges: number } = {
-    previousData: undefined,
-    structureChanges: 0,
-  };
-  const structureRevRef = useRef(initialStructureRev);
 
-  if (
-    data &&
-    structureRevRef.current.previousData &&
-    !compareArrayValues(structureRevRef.current.previousData, data, compareDataFrameStructures)
-  ) {
-    structureRevRef.current.structureChanges++;
+  const previousData = usePrevious(data);
+  const structureChangesRef = useRef(0);
+
+  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
+    structureChangesRef.current++;
   }
-  useEffect(() => {
-    structureRevRef.current.previousData = data;
-  });
 
-  const structureRev = baseStructureRev + structureRevRef.current.structureChanges;
+  const structureRev = baseStructureRev + structureChangesRef.current;
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
