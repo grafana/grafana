@@ -1,6 +1,6 @@
 import { DATABASE_LABELS } from 'app/percona/shared/core';
+import { formatDataModel } from 'app/percona/backup/Backup.utils';
 import { Backup } from '../BackupInventory.types';
-import { formatDataModel } from '../BackupInventory.utils';
 import { RestoreBackupFormProps, ServiceTypeSelect } from './RestoreBackupModal.types';
 
 type ToFormProps = (props: Backup) => RestoreBackupFormProps;

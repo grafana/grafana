@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { useTheme } from '@grafana/ui';
-import { formatStatus } from '../BackupInventory.utils';
+import { formatStatus } from '../../Backup.utils';
 import { StatusProps } from './Status.types';
 import { getStyles } from './Status.styles';
 

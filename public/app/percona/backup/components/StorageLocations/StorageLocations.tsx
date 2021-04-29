@@ -7,7 +7,7 @@ import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { StorageLocationsActions } from './StorageLocationsActions';
-import { Messages } from './StorageLocations.messages';
+import { Messages } from '../../Backup.messages';
 import { StorageLocation } from './StorageLocations.types';
 import { StorageLocationsService } from './StorageLocations.service';
 import { formatLocationList, formatToRawLocation } from './StorageLocations.utils';
@@ -16,9 +16,6 @@ import { StorageLocationDetails } from './StorageLocationDetails';
 import { AddStorageLocationModal } from './AddStorageLocationModal';
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
-
-const { noData, columns } = Messages;
-const { name, type, path, actions } = columns;
 
 export const StorageLocations: FC = () => {
   const [pending, setPending] = useState(true);
@@ -32,23 +29,23 @@ export const StorageLocations: FC = () => {
   const columns = React.useMemo(
     (): Column[] => [
       {
-        Header: name,
+        Header: Messages.storageLocations.table.columns.name,
         accessor: 'name',
         id: 'name',
         width: '315px',
         Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
       },
       {
-        Header: type,
+        Header: Messages.storageLocations.table.columns.type,
         accessor: 'type',
         width: '150px',
       },
       {
-        Header: path,
+        Header: Messages.storageLocations.table.columns.path,
         accessor: 'path',
       },
       {
-        Header: actions,
+        Header: Messages.storageLocations.table.columns.actions,
         accessor: 'locationID',
         Cell: ({ row }) => (
           <StorageLocationsActions
@@ -84,10 +81,10 @@ export const StorageLocations: FC = () => {
     try {
       if (location.locationID) {
         await StorageLocationsService.update(formatToRawLocation(location));
-        appEvents.emit(AppEvents.alertSuccess, [Messages.editSuccess(location.name)]);
+        appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.editSuccess(location.name)]);
       } else {
         await StorageLocationsService.add(formatToRawLocation(location));
-        appEvents.emit(AppEvents.alertSuccess, [Messages.addSuccess]);
+        appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.addSuccess]);
       }
       setAddModalVisible(false);
       setSelectedLocation(null);
@@ -107,7 +104,7 @@ export const StorageLocations: FC = () => {
     try {
       const rawLocation = formatToRawLocation(location, true);
       await StorageLocationsService.testLocation(rawLocation);
-      appEvents.emit(AppEvents.alertSuccess, [Messages.testSuccess]);
+      appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.testSuccess]);
     } catch (e) {
       logger.error(e);
     } finally {
@@ -125,7 +122,7 @@ export const StorageLocations: FC = () => {
     try {
       await StorageLocationsService.delete(location.locationID);
       setDeleteModalVisible(false);
-      appEvents.emit(AppEvents.alertSuccess, [Messages.getDeleteSuccess(location.name)]);
+      appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.getDeleteSuccess(location.name)]);
       getData();
     } catch (e) {
       logger.error(e);
@@ -159,7 +156,7 @@ export const StorageLocations: FC = () => {
         data={data}
         totalItems={data.length}
         columns={columns}
-        emptyMessage={noData}
+        emptyMessage={Messages.storageLocations.table.noData}
         pendingRequest={pending}
         renderExpandedRow={renderSelectedSubRow}
       ></Table>

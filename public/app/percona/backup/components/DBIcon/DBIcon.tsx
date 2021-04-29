@@ -2,8 +2,8 @@ import React, { FC } from 'react';
 import { Tooltip, useStyles } from '@grafana/ui';
 import { cx } from 'emotion';
 import { DBIconProps, DBIconMap } from './DBIcon.types';
+import { Edit, Delete, See, Backup, Cancel, Restore } from './assets';
 import { getStyles } from './DBIcon.styles';
-import { Edit, Delete, See, Restore, Backup } from './assets';
 
 const Icons: DBIconMap = {
   edit: Edit,
@@ -11,6 +11,7 @@ const Icons: DBIconMap = {
   see: See,
   restore: Restore,
   backup: Backup,
+  cancel: Cancel,
 };
 
 export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, disabled, ...rest }) => {

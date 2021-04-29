@@ -6,6 +6,7 @@ import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 import { TabKeys } from './Backup.types';
 import { StorageLocations } from './components/StorageLocations';
 import { BackupInventory } from './components/BackupInventory';
+import { RestoreHistory } from './components/RestoreHistory';
 import { PAGE_MODEL } from './BackupPage.constants';
 import { Messages } from './Backup.messages';
 
@@ -13,14 +14,19 @@ const BackupPage: FC = () => {
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] => [
       {
-        key: TabKeys.locations,
-        label: Messages.tabs.locations,
-        component: <StorageLocations />,
-      },
-      {
         key: TabKeys.inventory,
         label: Messages.tabs.inventory,
         component: <BackupInventory />,
+      },
+      {
+        key: TabKeys.restore,
+        label: Messages.tabs.restore,
+        component: <RestoreHistory />,
+      },
+      {
+        key: TabKeys.locations,
+        label: Messages.tabs.locations,
+        component: <StorageLocations />,
       },
     ],
     []

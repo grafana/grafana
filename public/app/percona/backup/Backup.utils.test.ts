@@ -1,16 +1,16 @@
-import { DataModel, Status } from './BackupInventory.types';
-import { formatStatus, formatDataModel } from './BackupInventory.utils';
-import { Messages } from './BackupInventory.messages';
+import { DataModel, BackupStatus, RestoreStatus } from './Backup.types';
+import { formatStatus, formatDataModel } from './Backup.utils';
+import { Messages } from './Backup.messages';
 
 const { status: statusMsg, dataModel: dataModelMsg } = Messages;
 
-describe('BackupInventory::utils', () => {
+describe('Backup::utils', () => {
   describe('formatStatus', () => {
     it('should correctly format status', () => {
-      expect(formatStatus(Status.STATUS_INVALID)).toBe(statusMsg.invalid);
-      expect(formatStatus(Status.IN_PROGRESS)).toBe(statusMsg.inProgress);
-      expect(formatStatus(Status.ERROR)).toBe(statusMsg.error);
-      expect(formatStatus('bla' as Status)).toBe('');
+      expect(formatStatus(BackupStatus.BACKUP_STATUS_INVALID)).toBe(statusMsg.invalid);
+      expect(formatStatus(RestoreStatus.RESTORE_STATUS_IN_PROGRESS)).toBe(statusMsg.inProgress);
+      expect(formatStatus(RestoreStatus.RESTORE_STATUS_ERROR)).toBe(statusMsg.error);
+      expect(formatStatus('bla' as RestoreStatus)).toBe('');
     });
   });
 
