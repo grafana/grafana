@@ -137,7 +137,7 @@ var adminCommands = []*cli.Command{
 var cueCommands = []*cli.Command{
 	{
 		Name:   "validate",
-		Usage:  "install <plugin id> <plugin version (optional)>",
+		Usage:  "validate *.cue files in the project",
 		Action: runPluginCommand(cmd.validateScuemataBasics),
 	},
 }
