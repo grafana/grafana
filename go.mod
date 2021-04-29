@@ -88,7 +88,7 @@ require (
 	github.com/weaveworks/common v0.0.0-20201119133501-0619918236ec
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
-	go.opentelemetry.io/collector v0.22.0
+	go.opentelemetry.io/collector v0.25.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
