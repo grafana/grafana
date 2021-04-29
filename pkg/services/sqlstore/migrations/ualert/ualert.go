@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"xorm.io/xorm"
 )
@@ -72,7 +71,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
 
 		// get dashboard
-		dash := models.Dashboard{}
+		dash := dashboard{}
 		exists, err := m.sess.Where("org_id=? AND uid=?", da.OrgId, da.DashboardUID).Get(&dash)
 		if err != nil {
 			return MigrationError{
@@ -88,7 +87,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		// get folder if exists
-		folder := models.Dashboard{}
+		folder := dashboard{}
 		if dash.FolderId > 0 {
 			exists, err := m.sess.Where("id=?", dash.FolderId).Get(&folder)
 			if err != nil {

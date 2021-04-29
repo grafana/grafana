@@ -13,11 +13,11 @@ import (
 
 // getOrCreateGeneralFolder returns the general folder under the specific organisation
 // If the general folder does not exist it creates it.
-func (m *migration) getOrCreateGeneralFolder(orgID int64) (*models.Dashboard, error) {
+func (m *migration) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	title := fmt.Sprintf(GENERAL_FOLDER, orgID)
-	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
+	dashboard := dashboard{OrgId: orgID, FolderId: 0, Title: title}
 	has, err := m.sess.Get(&dashboard)
 	if err != nil {
 		return nil, err
@@ -35,8 +35,8 @@ func (m *migration) getOrCreateGeneralFolder(orgID int64) (*models.Dashboard, er
 
 // based on sqlstore.saveDashboard()
 // it should be called from inside a transaction
-func (m *migration) createFolder(orgID int64, title string) (*models.Dashboard, error) {
-	cmd := models.SaveDashboardCommand{
+func (m *migration) createFolder(orgID int64, title string) (*dashboard, error) {
+	cmd := saveFolderCommand{
 		OrgId:    orgID,
 		FolderId: 0,
 		IsFolder: true,
@@ -44,17 +44,17 @@ func (m *migration) createFolder(orgID int64, title string) (*models.Dashboard, 
 			"title": title,
 		}),
 	}
-	dash := cmd.GetDashboardModel()
+	dash := cmd.getDashboardModel()
 	var userId int64 = -1
 
 	uid, err := m.generateNewDashboardUid(dash.OrgId)
 	if err != nil {
 		return nil, err
 	}
-	dash.SetUid(uid)
+	dash.setUid(uid)
 
 	parentVersion := dash.Version
-	dash.SetVersion(1)
+	dash.setVersion(1)
 	dash.Created = time.Now()
 	dash.CreatedBy = userId
 	dash.Updated = time.Now()
