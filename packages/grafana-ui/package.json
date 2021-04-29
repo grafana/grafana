@@ -55,6 +55,7 @@
     "hoist-non-react-statics": "3.3.2",
     "immutable": "3.8.2",
     "jquery": "3.5.1",
+    "@kusto/monaco-kusto": "3.2.7",
     "lodash": "4.17.21",
     "moment": "2.24.0",
     "@monaco-editor/react": "4.1.1",
