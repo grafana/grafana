@@ -7,11 +7,15 @@ import { Icon } from '../../Icon/Icon';
 import { IconName } from '../../../types/icon';
 import { useStyles2 } from '../../../themes';
 
+interface RadioButtonSelectableValue<T = any> extends SelectableValue<T> {
+  iconPlacement?: 'left' | 'right';
+}
+
 export interface RadioButtonGroupProps<T> {
   value?: T;
   disabled?: boolean;
   disabledOptions?: T[];
-  options: Array<SelectableValue<T>>;
+  options: Array<RadioButtonSelectableValue<T>>;
   onChange?: (value: T) => void;
   size?: RadioButtonSize;
   fullWidth?: boolean;

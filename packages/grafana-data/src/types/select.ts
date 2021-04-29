@@ -6,7 +6,6 @@ export interface SelectableValue<T = any> {
   value?: T;
   imgUrl?: string;
   icon?: string;
-  iconPlacement?: 'left' | 'right';
   description?: string;
   [key: string]: any;
 }
