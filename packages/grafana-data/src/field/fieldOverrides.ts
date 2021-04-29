@@ -205,9 +205,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      newField.getLinks = getLinksSupplier(newFrame, newField, fieldScopedVars, context.replaceVariables, {
-        timeZone: options.timeZone,
-      });
+      newField.getLinks = getLinksSupplier(
+        newFrame,
+        newField,
+        fieldScopedVars,
+        context.replaceVariables,
+        options.timeZone
+      );
 
       return newField;
     });
@@ -322,9 +326,7 @@ export const getLinksSupplier = (
   field: Field,
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
-  options: {
-    timeZone?: TimeZone;
-  }
+  timeZone?: TimeZone
 ) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {
   if (!field.config.links || field.config.links.length === 0) {
     return [];
@@ -339,13 +341,19 @@ export const getLinksSupplier = (
 
     // We are not displaying reduction result
     if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-      const fieldsProxy = getFieldDisplayValuesProxy(frame, config.valueRowIndex, options);
+      const fieldsProxy = getFieldDisplayValuesProxy({
+        frame,
+        rowIndex: config.valueRowIndex,
+        timeZone: timeZone,
+      });
+
       valueVars = {
         raw: field.values.get(config.valueRowIndex),
         numeric: fieldsProxy[field.name].numeric,
         text: fieldsProxy[field.name].text,
         time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
       };
+
       dataFrameVars = {
         __data: {
           value: {
