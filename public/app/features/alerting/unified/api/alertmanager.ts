@@ -1,3 +1,4 @@
+import { urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
@@ -27,7 +28,8 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
       alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
-      e.data?.message?.includes('failed to get latest configuration')
+      (e.data?.message?.includes('failed to get latest configuration') ||
+        e.data?.message?.includes('could not find an Alertmanager configuration'))
     ) {
       return {
         template_files: {},
@@ -78,23 +80,27 @@ export async function createOrUpdateSilence(
 
 export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
   await getBackendSrv().delete(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences/${encodeURIComponent(silenceID)}`
+    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silence/${encodeURIComponent(silenceID)}`
   );
 }
 
 export async function fetchAlerts(
   alertmanagerSourceName: string,
-  matchers?: SilenceMatcher[]
+  matchers?: SilenceMatcher[],
+  silenced = true,
+  active = true,
+  inhibited = true
 ): Promise<AlertmanagerAlert[]> {
   const filters =
-    matchers
-      ?.map(
-        (matcher) =>
-          `filter=${encodeURIComponent(
-            `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
-          )}`
-      )
-      .join('&') || '';
+    urlUtil.toUrlParams({ silenced, active, inhibited }) +
+      matchers
+        ?.map(
+          (matcher) =>
+            `filter=${encodeURIComponent(
+              `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
+            )}`
+        )
+        .join('&') || '';
 
   const result = await getBackendSrv()
     .fetch<AlertmanagerAlert[]>({
