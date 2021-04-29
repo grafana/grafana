@@ -6,8 +6,6 @@ import {
   DataQueryRequest,
   DataSourceApi,
   HistoryItem,
-  LogLevel,
-  LogsDedupStrategy,
   LogsModel,
   PanelData,
   QueryHint,
