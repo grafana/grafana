@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { css } from '@emotion/css';
 import { DataQuery, DataSourceApi, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { config } from 'app/core/config';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
@@ -125,7 +127,12 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                   }
 
                   return (
-                    <React.Fragment key={`query row - ${query.refId}-${index}`}>
+                    <div
+                      className={css`
+                        width: 85%;
+                      `}
+                      key={`query row - ${query.refId}-${index}`}
+                    >
                       <QueryEditorRow
                         dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
                         id={query.refId}
@@ -147,7 +154,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                         queries={queries}
                       />
                       {data && <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} />}
-                    </React.Fragment>
+                    </div>
                   );
                 })}
                 {provided.placeholder}

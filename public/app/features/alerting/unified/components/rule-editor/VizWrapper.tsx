@@ -104,7 +104,7 @@ const singleStatOptions: SingleStatBaseOptions = {
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     margin-left: ${theme.spacing.lg};
-    height: 300px;
+    height: 225px;
     display: flex;
     justify-content: space-between;
   `,
