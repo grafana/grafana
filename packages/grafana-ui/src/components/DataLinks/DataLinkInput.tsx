@@ -84,6 +84,9 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
 
     // Used to get the height of the suggestion elements in order to scroll to them.
     const selectedRef = useRef<HTMLDivElement>(null);
+    function getScrollTop() {
+      return (selectedRef.current?.clientHeight ?? 0) * suggestionsIndex;
+    }
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
@@ -174,10 +177,9 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                   ]}
                 >
                   {({ ref, style, placement }) => {
-                    const elementHeight = selectedRef.current?.getBoundingClientRect().height || 0;
                     return (
                       <div ref={ref} style={style} data-placement={placement}>
-                        <CustomScrollbar scrollTop={suggestionsIndex * elementHeight} autoHeightMax="190px">
+                        <CustomScrollbar scrollTop={getScrollTop()} autoHeightMax="190px">
                           <DataLinkSuggestions
                             selectedRef={selectedRef}
                             suggestions={stateRef.current.suggestions}
