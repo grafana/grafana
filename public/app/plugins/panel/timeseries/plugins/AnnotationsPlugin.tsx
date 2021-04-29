@@ -84,7 +84,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     (frame: DataFrame, index: number) => {
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(index);
-      const plotInstance = plotCtx.plot;
+      const plotInstance = plotCtx.getPlot();
       if (!annotation.time || !plotInstance) {
         return undefined;
       }
@@ -94,7 +94,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
         y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },
-    [plotCtx.plot]
+    [plotCtx]
   );
 
   const renderMarker = useCallback(

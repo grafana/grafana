@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import uPlot from 'uplot';
 
 interface PlotContextType {
-  plot: uPlot | undefined;
+  getPlot: () => uPlot | undefined;
 }
 
 /**
