@@ -6,7 +6,7 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
-  GrafanaTheme,
+  GrafanaThemeV2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
@@ -18,7 +18,7 @@ import { FIXED_UNIT } from '../GraphNG/GraphNG';
 /** @alpha */
 export function preparePlotConfigBuilder(
   data: DataFrame,
-  theme: GrafanaTheme,
+  theme: GrafanaThemeV2,
   { orientation, showValue, groupWidth, barWidth }: BarChartOptions
 ) {
   const builder = new UPlotConfigBuilder();

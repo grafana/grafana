@@ -19,7 +19,7 @@ import {
   LegendDisplayMode,
   TooltipPlugin,
   useStyles,
-  useTheme,
+  useTheme2,
   ZoomPlugin,
   TooltipDisplayMode,
 } from '@grafana/ui';
@@ -55,7 +55,7 @@ export function ExploreGraphNGPanel({
   annotations,
   splitOpenFn,
 }: Props) {
-  const theme = useTheme();
+  const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
   const [structureRev, setStructureRev] = useState(1);
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
