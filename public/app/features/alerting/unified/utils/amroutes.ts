@@ -134,27 +134,25 @@ export const stringToSelectableValue = (str: string): SelectableValue<string> =>
 export const stringsToSelectableValues = (arr: string[] | undefined): Array<SelectableValue<string>> =>
   (arr ?? []).map(stringToSelectableValue);
 
-export const mapSelectValueToString = (arr: Array<SelectableValue<string>> | undefined): string => {
-  const items = (arr ?? []).filter((selectableValue) => !!selectableValue);
-
-  if (!items[0]) {
+export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string => {
+  if (!selectableValue) {
     return '';
   }
 
-  return selectableValueToString(items[0]) ?? '';
+  return selectableValueToString(selectableValue) ?? '';
 };
 
-export const mapMultiSelectValueToStrings = (arr: Array<Array<SelectableValue<string>>> | undefined): string[] => {
-  const items = (arr ?? []).filter((selectableValue) => !!selectableValue);
-
-  if (!items[0]) {
+export const mapMultiSelectValueToStrings = (
+  selectableValues: Array<SelectableValue<string>> | undefined
+): string[] => {
+  if (!selectableValues) {
     return [];
   }
 
-  return selectableValuesToStrings(items[0]);
+  return selectableValuesToStrings(selectableValues);
 };
 
-export const optionalPositiveInteger: Validate = (value) => {
+export const optionalPositiveInteger: Validate<string> = (value) => {
   if (!value) {
     return undefined;
   }

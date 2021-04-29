@@ -21,24 +21,34 @@ export interface AmRootRouteFormProps {
   routes: FormAmRoute;
 }
 
-export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ alertManagerSourceName, onCancel, onSave, receivers, routes }) => {
+export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
+  alertManagerSourceName,
+  onCancel,
+  onSave,
+  receivers,
+  routes,
+}) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, getValues, errors }) => (
+      {({ control, errors, setValue, register }) => (
         <>
           <Field label="Default contact point">
             <div className={styles.container}>
               <InputControl
-                as={Select}
-                className={styles.input}
+                render={({ field: { onChange, ref, ...field } }) => (
+                  <Select
+                    {...field}
+                    className={styles.input}
+                    onChange={(value) => onChange(mapSelectValueToString(value))}
+                    options={receivers}
+                  />
+                )}
                 control={control}
                 name="receiver"
-                onChange={mapSelectValueToString}
-                options={receivers}
               />
               <span>or</span>
               <Link href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}>
@@ -47,19 +57,25 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ alertManagerSourceNa
             </div>
           </Field>
           <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
+            {/* @ts-ignore-check: react-hook-form made me do this */}
             <InputControl
-              allowCustomValue
-              as={MultiSelect}
-              className={styles.input}
+              render={({ field: { onChange, ref, ...field } }) => (
+                <MultiSelect
+                  {...field}
+                  allowCustomValue
+                  className={styles.input}
+                  onCreateOption={(opt: string) => {
+                    setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
+
+                    // @ts-ignore-check: react-hook-form made me do this
+                    setValue('groupBy', [...field.value, opt]);
+                  }}
+                  onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
+                  options={groupByOptions}
+                />
+              )}
               control={control}
               name="groupBy"
-              onChange={mapMultiSelectValueToStrings}
-              onCreateOption={(opt: string) => {
-                setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
-
-                control.setValue('groupBy', [...getValues().groupBy, opt]);
-              }}
-              options={groupByOptions}
             />
           </Field>
           <Collapse
@@ -74,26 +90,32 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ alertManagerSourceNa
               invalid={!!errors.groupWaitValue}
               error={errors.groupWaitValue?.message}
             >
-              <div className={cx(styles.container, styles.timingContainer)}>
-                <InputControl
-                  as={Input}
-                  className={styles.smallInput}
-                  control={control}
-                  invalid={!!errors.groupWaitValue}
-                  name="groupWaitValue"
-                  rules={{
-                    validate: optionalPositiveInteger,
-                  }}
-                />
-                <InputControl
-                  as={Select}
-                  className={styles.input}
-                  control={control}
-                  name="groupWaitValueType"
-                  onChange={mapSelectValueToString}
-                  options={timeOptions}
-                />
-              </div>
+              <>
+                <div className={cx(styles.container, styles.timingContainer)}>
+                  <InputControl
+                    render={({ field, fieldState: { invalid } }) => (
+                      <Input {...field} className={styles.smallInput} invalid={invalid} />
+                    )}
+                    control={control}
+                    name="groupWaitValue"
+                    rules={{
+                      validate: optionalPositiveInteger,
+                    }}
+                  />
+                  <InputControl
+                    render={({ field: { onChange, ref, ...field } }) => (
+                      <Select
+                        {...field}
+                        className={styles.input}
+                        onChange={(value) => onChange(mapSelectValueToString(value))}
+                        options={timeOptions}
+                      />
+                    )}
+                    control={control}
+                    name="groupWaitValueType"
+                  />
+                </div>
+              </>
             </Field>
             <Field
               label="Group interval"
@@ -101,26 +123,32 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ alertManagerSourceNa
               invalid={!!errors.groupIntervalValue}
               error={errors.groupIntervalValue?.message}
             >
-              <div className={cx(styles.container, styles.timingContainer)}>
-                <InputControl
-                  as={Input}
-                  className={styles.smallInput}
-                  control={control}
-                  invalid={!!errors.groupIntervalValue}
-                  name="groupIntervalValue"
-                  rules={{
-                    validate: optionalPositiveInteger,
-                  }}
-                />
-                <InputControl
-                  as={Select}
-                  className={styles.input}
-                  control={control}
-                  name="groupIntervalValueType"
-                  onChange={mapSelectValueToString}
-                  options={timeOptions}
-                />
-              </div>
+              <>
+                <div className={cx(styles.container, styles.timingContainer)}>
+                  <InputControl
+                    render={({ field, fieldState: { invalid } }) => (
+                      <Input {...field} className={styles.smallInput} invalid={invalid} />
+                    )}
+                    control={control}
+                    name="groupIntervalValue"
+                    rules={{
+                      validate: optionalPositiveInteger,
+                    }}
+                  />
+                  <InputControl
+                    render={({ field: { onChange, ref, ...field } }) => (
+                      <Select
+                        {...field}
+                        className={styles.input}
+                        onChange={(value) => onChange(mapSelectValueToString(value))}
+                        options={timeOptions}
+                      />
+                    )}
+                    control={control}
+                    name="groupIntervalValueType"
+                  />
+                </div>
+              </>
             </Field>
             <Field
               label="Repeat interval"
@@ -128,27 +156,33 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ alertManagerSourceNa
               invalid={!!errors.repeatIntervalValue}
               error={errors.repeatIntervalValue?.message}
             >
-              <div className={cx(styles.container, styles.timingContainer)}>
-                <InputControl
-                  as={Input}
-                  className={styles.smallInput}
-                  control={control}
-                  invalid={!!errors.repeatIntervalValue}
-                  name="repeatIntervalValue"
-                  rules={{
-                    validate: optionalPositiveInteger,
-                  }}
-                />
-                <InputControl
-                  as={Select}
-                  className={styles.input}
-                  control={control}
-                  menuPlacement="top"
-                  name="repeatIntervalValueType"
-                  onChange={mapSelectValueToString}
-                  options={timeOptions}
-                />
-              </div>
+              <>
+                <div className={cx(styles.container, styles.timingContainer)}>
+                  <InputControl
+                    render={({ field, fieldState: { invalid } }) => (
+                      <Input {...field} className={styles.smallInput} invalid={invalid} />
+                    )}
+                    control={control}
+                    name="repeatIntervalValue"
+                    rules={{
+                      validate: optionalPositiveInteger,
+                    }}
+                  />
+                  <InputControl
+                    render={({ field: { onChange, ref, ...field } }) => (
+                      <Select
+                        {...field}
+                        className={styles.input}
+                        menuPlacement="top"
+                        onChange={(value) => onChange(mapSelectValueToString(value))}
+                        options={timeOptions}
+                      />
+                    )}
+                    control={control}
+                    name="repeatIntervalValueType"
+                  />
+                </div>
+              </>
             </Field>
           </Collapse>
           <div className={styles.container}>
