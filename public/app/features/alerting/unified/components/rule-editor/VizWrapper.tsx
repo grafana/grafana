@@ -2,16 +2,10 @@ import React, { FC, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
 import { GrafanaTheme, PanelData, VizOrientation } from '@grafana/data';
-import { PanelRenderer } from '@grafana/runtime';
-import {
-  HorizontalGroup,
-  LegendDisplayMode,
-  RadioButtonGroup,
-  SingleStatBaseOptions,
-  TooltipDisplayMode,
-  useStyles,
-} from '@grafana/ui';
+import { config, PanelRenderer } from '@grafana/runtime';
+import { HorizontalGroup, LegendDisplayMode, SingleStatBaseOptions, TooltipDisplayMode, useStyles } from '@grafana/ui';
 import { Options } from 'app/plugins/panel/timeseries/types';
+import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
 
 interface Props {
   data: PanelData;
@@ -22,26 +16,22 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
   const [pluginId, changePluginId] = useState<string>(defaultPanel ?? 'timeseries');
   const options = { ...getOptionsForPanelPlugin(pluginId) };
   const styles = useStyles(getStyles);
+  const panels = Object.values(config.panels).filter(
+    (p) => p.id === 'timeseries' || p.id === 'table' || p.id === 'stat'
+  );
 
   if (!options || !data) {
     return null;
   }
 
-  console.log(pluginId);
-  console.log(options);
-
   return (
-    <div>
-      <HorizontalGroup>
-        <RadioButtonGroup options={vizOptions} value={pluginId} onChange={changePluginId} />
-      </HorizontalGroup>
-      <div style={{ height: '200px', width: '100%', position: 'relative' }}>
+    <div className={styles.wrapper}>
+      <div style={{ height: '200px', width: '75%' }}>
         <AutoSizer style={{ width: '100%', height: '100%' }}>
           {({ width, height }) => {
-            if (height === 0 || width === 0) {
+            if (width === 0 || height === 0) {
               return null;
             }
-
             return (
               <PanelRenderer
                 height={height}
@@ -55,6 +45,21 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
             );
           }}
         </AutoSizer>
+      </div>
+      <div style={{ height: '55px' }}>
+        <HorizontalGroup>
+          {panels.map((panel, index) => {
+            return (
+              <PanelTypeCard
+                key={`${panel.id}-${index}`}
+                plugin={panel}
+                isCurrent={panel.id === pluginId}
+                onClick={() => changePluginId(panel.id)}
+                title={panel.name}
+              />
+            );
+          })}
+        </HorizontalGroup>
       </div>
     </div>
   );
@@ -72,12 +77,6 @@ const getOptionsForPanelPlugin = (panelPlugin: string) => {
       return undefined;
   }
 };
-
-const vizOptions = [
-  { value: 'timeseries', label: 'Graph' },
-  { value: 'table', label: 'Table' },
-  { value: 'stat', label: 'Single stat' },
-];
 
 const timeSeriesOptions: Options = {
   legend: {
@@ -103,6 +102,12 @@ const singleStatOptions: SingleStatBaseOptions = {
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  wrapper: css`
+    margin-left: ${theme.spacing.lg};
+    height: 300px;
+    display: flex;
+    justify-content: space-between;
+  `,
   buttonGroup: css`
     margin-bottom: ${theme.spacing.md};
   `,
