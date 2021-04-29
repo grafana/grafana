@@ -4,7 +4,7 @@ import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';
 import { useTheme2 } from '../../themes/ThemeContext';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaThemeV2, colorManipulator } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TooltipPlacement } from '../Tooltip/PopoverController';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -56,7 +56,6 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 IconButton.displayName = 'IconButton';
 
 const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize, variant: IconButtonVariant) => {
-  const hoverColor = theme.colors.action.hover;
   const pixelSize = getSvgSize(size);
   const hoverSize = Math.max(pixelSize / 3, 8);
   let iconColor = theme.colors.text.primary;
@@ -126,7 +125,9 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize, variant:
         color: ${iconColor};
 
         &:before {
-          background-color: ${hoverColor};
+          background-color: ${variant === 'secondary'
+            ? theme.colors.action.hover
+            : colorManipulator.alpha(iconColor, 0.12)};
           border: none;
           box-shadow: none;
           opacity: 1;
