@@ -1,6 +1,6 @@
 import React, { FC, useContext, useEffect, useRef, useState } from 'react';
 import { Form, Field } from 'react-final-form';
-import { Button, HorizontalGroup, Switch, Select, MultiSelect, useStyles } from '@grafana/ui';
+import { Button, HorizontalGroup, Switch, useStyles } from '@grafana/ui';
 import {
   Modal,
   LoaderButton,
@@ -12,6 +12,9 @@ import {
 } from '@percona/platform-core';
 import { SelectableValue } from '@grafana/data';
 import { AppEvents } from '@grafana/data';
+import { Label } from 'app/percona/shared/components/Form/Label';
+import { SelectField } from 'app/percona/shared/components/Form/SelectField';
+import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';
 import { Messages } from './AddAlertRuleModal.messages';
 import { AddAlertRuleModalProps, AddAlertRuleFormValues } from './AddAlertRuleModal.types';
 import { getStyles } from './AddAlertRuleModal.styles';
@@ -140,24 +143,19 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
           <form className={styles.form} onSubmit={handleSubmit} data-qa="add-alert-rule-modal-form">
             <Field name="template" validate={required}>
               {({ input }) => (
-                <>
-                  <label className={styles.label} data-qa="template-select-label">
-                    {Messages.templateField}
-                  </label>
-                  <Select
-                    disabled={!!alertRule}
-                    className={styles.select}
-                    options={templateOptions}
-                    {...input}
-                    onChange={name => {
-                      input.onChange(name);
-                      form.mutators.changeSeverity(name.value);
-                      form.mutators.changeDuration(name.value);
-                      handleTemplateChange(name.value);
-                    }}
-                    data-qa="template-select-input"
-                  />
-                </>
+                <SelectField
+                  label={Messages.templateField}
+                  disabled={!!alertRule}
+                  options={templateOptions}
+                  {...input}
+                  onChange={name => {
+                    input.onChange(name);
+                    form.mutators.changeSeverity(name.value);
+                    form.mutators.changeDuration(name.value);
+                    handleTemplateChange(name.value);
+                  }}
+                  data-qa="template-select-input"
+                />
               )}
             </Field>
 
@@ -170,17 +168,12 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
 
             <Field name="severity" validate={required}>
               {({ input }) => (
-                <>
-                  <label className={styles.label} data-qa="severity-select-label">
-                    {Messages.severityField}
-                  </label>
-                  <Select
-                    className={styles.select}
-                    options={SEVERITY_OPTIONS}
-                    {...input}
-                    data-qa="severity-multiselect-input"
-                  />
-                </>
+                <SelectField
+                  label={Messages.severityField}
+                  options={SEVERITY_OPTIONS}
+                  {...input}
+                  data-qa="severity-select-input"
+                />
               )}
             </Field>
 
@@ -188,29 +181,24 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
 
             <Field name="notificationChannels">
               {({ input }) => (
-                <>
-                  <label className={styles.label} data-qa="notification-channel-select-label">
-                    {Messages.channelField}
-                  </label>
-                  <MultiSelect
-                    className={styles.select}
-                    options={channelsOptions}
-                    {...input}
-                    data-qa="notificationChannels-multiselect-input"
-                  />
-                </>
+                <MultiSelectField
+                  label={Messages.channelField}
+                  options={channelsOptions}
+                  {...input}
+                  data-qa="notificationChannels-multiselect-input"
+                />
               )}
             </Field>
 
             {currentTemplate && (
               <>
                 <div data-qa="template-expression" className={styles.templateParsedField}>
-                  <label className={styles.label}>{Messages.templateExpression}</label>
+                  <Label label={Messages.templateExpression} />
                   <pre>{currentTemplate.expr}</pre>
                 </div>
                 {currentTemplate.annotations?.summary && (
                   <div data-qa="template-alert" className={styles.templateParsedField}>
-                    <label className={styles.label}>{Messages.ruleAlert}</label>
+                    <Label label={Messages.ruleAlert} />
                     <pre>{currentTemplate.annotations?.summary}</pre>
                   </div>
                 )}
@@ -220,9 +208,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
             <Field name="enabled" type="checkbox" defaultValue={true}>
               {({ input }) => (
                 <>
-                  <label className={styles.label} data-qa="enabled-toggle-label">
-                    {Messages.activateSwitch}
-                  </label>
+                  <Label label={Messages.activateSwitch} dataQa="enabled-toggle-label" />
                   <Switch {...input} value={input.checked} data-qa="enabled-toggle-input" />
                 </>
               )}

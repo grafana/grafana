@@ -1,6 +1,7 @@
 import React from 'react';
 import { ReactWrapper } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
+import { Select } from '@grafana/ui';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
 import { AlertRule } from '../AlertRules.types';
 import { templateStubs } from '../../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
@@ -176,8 +177,8 @@ describe('AddAlertRuleModal', () => {
     expect(wrapper.find(dataQa('duration-number-input')).text()).toHaveLength(0);
     expect(
       wrapper
-        .find(dataQa('severity-multiselect-input'))
-        .first()
+        .find(dataQa('severity-select-input'))
+        .find(Select)
         .text()
     ).toBe('Choose');
 
@@ -186,8 +187,8 @@ describe('AddAlertRuleModal', () => {
     expect(wrapper.find(dataQa('duration-number-input')).props().value).toBe(parseInt(templateStubs[0].for, 10));
     expect(
       wrapper
-        .find(dataQa('severity-multiselect-input'))
-        .first()
+        .find(dataQa('severity-select-input'))
+        .find(Select)
         .text()
     ).toBe(SEVERITY_OPTIONS.find(severity => severity.value === templateStubs[0].severity)?.label);
   });
