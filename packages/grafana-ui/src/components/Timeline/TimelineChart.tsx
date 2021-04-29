@@ -1,6 +1,6 @@
 import React from 'react';
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
-import { withTheme } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
 import { GraphNGState } from '../GraphNG/GraphNG';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils'; // << preparePlotConfigBuilder is really the only change vs GraphNG
 import { pluginLog, preparePlotData } from '../uPlot/utils';
@@ -146,5 +146,5 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
   }
 }
 
-export const TimelineChart = withTheme(UnthemedTimelineChart);
+export const TimelineChart = withTheme2(UnthemedTimelineChart);
 TimelineChart.displayName = 'TimelineChart';
