@@ -94,7 +94,7 @@ func TestWarmStateCache(t *testing.T) {
 		Store:        dbstore,
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
-	st := state.NewManager(schedCfg.Logger)
+	st := state.NewManager(schedCfg.Logger, NilMetrics)
 	sched.WarmStateCache(st)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	ctx := context.Background()
 
-	st := state.NewManager(schedCfg.Logger)
+	st := state.NewManager(schedCfg.Logger, NilMetrics)
 	go func() {
 		err := sched.Ticker(ctx, st)
 		require.NoError(t, err)
