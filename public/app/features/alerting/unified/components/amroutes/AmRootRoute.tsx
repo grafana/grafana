@@ -13,6 +13,7 @@ export interface AmRootRouteProps {
   onSave: (data: Partial<FormAmRoute>) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
+  alertManagerSourceName: string;
 }
 
 export const AmRootRoute: FC<AmRootRouteProps> = ({
@@ -22,6 +23,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
   onExitEditMode,
   receivers,
   routes,
+  alertManagerSourceName,
 }) => {
   const styles = useStyles2(getStyles);
 
@@ -38,11 +40,17 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
         )}
       </div>
       <p>
-        All alerts will go to the default notification channel, unless you set additional matchers in the specific
-        routing area.
+        All alerts will go to the default contact point, unless you set additional matchers in the specific routing
+        area.
       </p>
       {isEditMode ? (
-        <AmRootRouteForm onCancel={onExitEditMode} onSave={onSave} receivers={receivers} routes={routes} />
+        <AmRootRouteForm
+          alertManagerSourceName={alertManagerSourceName}
+          onCancel={onExitEditMode}
+          onSave={onSave}
+          receivers={receivers}
+          routes={routes}
+        />
       ) : (
         <AmRootRouteRead routes={routes} />
       )}

@@ -9,17 +9,19 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
+import { makeAMLink } from '../../utils/misc';
 import { timeOptions } from '../../utils/time';
 import { getFormStyles } from './formStyles';
 
 export interface AmRootRouteFormProps {
+  alertManagerSourceName: string;
   onCancel: () => void;
   onSave: (data: FormAmRoute) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
 }
 
-export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, receivers, routes }) => {
+export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ alertManagerSourceName, onCancel, onSave, receivers, routes }) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
@@ -28,7 +30,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
     <Form defaultValues={routes} onSubmit={onSave}>
       {({ control, getValues, errors }) => (
         <>
-          <Field label="Default notification channel">
+          <Field label="Default contact point">
             <div className={styles.container}>
               <InputControl
                 as={Select}
@@ -39,7 +41,9 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, onSave, re
                 options={receivers}
               />
               <span>or</span>
-              <Link href="#">Create a notification channel</Link>
+              <Link href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}>
+                Create a contact point
+              </Link>
             </div>
           </Field>
           <Field label="Group by" description="Group alerts when you receive a notification based on labels.">

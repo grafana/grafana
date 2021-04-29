@@ -88,7 +88,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, 
     },
     {
       id: 'receiverChannel',
-      label: 'Receiver channel',
+      label: 'Contact point',
       renderCell: (item) => item.data.receiver || '-',
       size: 5,
     },
