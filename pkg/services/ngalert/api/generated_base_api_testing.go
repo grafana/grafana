@@ -8,6 +8,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/go-macaron/binding"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -23,10 +25,37 @@ type TestingApiService interface {
 	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiService) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, metrics *Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Post(toMacaronPath("/api/v1/eval"), binding.Bind(apimodels.EvalQueriesPayload{}), routing.Wrap(srv.RouteEvalQueries))
-		group.Post(toMacaronPath("/api/v1/receiver/test/{Recipient}"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
-		group.Post(toMacaronPath("/api/v1/rule/test/{Recipient}"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))
+		group.Post(
+			toMacaronPath("/api/v1/eval"),
+			binding.Bind(apimodels.EvalQueriesPayload{}),
+			Instrument(
+				http.MethodPost,
+				"/api/v1/eval",
+				srv.RouteEvalQueries,
+				metrics,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/receiver/test/{Recipient}"),
+			binding.Bind(apimodels.ExtendedReceiver{}),
+			Instrument(
+				http.MethodPost,
+				"/api/v1/receiver/test/{Recipient}",
+				srv.RouteTestReceiverConfig,
+				metrics,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/rule/test/{Recipient}"),
+			binding.Bind(apimodels.TestRulePayload{}),
+			Instrument(
+				http.MethodPost,
+				"/api/v1/rule/test/{Recipient}",
+				srv.RouteTestRuleConfig,
+				metrics,
+			),
+		)
 	}, middleware.ReqSignedIn)
 }
