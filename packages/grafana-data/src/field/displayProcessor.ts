@@ -3,14 +3,13 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 
 // Types
 import { Field, FieldType } from '../types/dataFrame';
-import { GrafanaTheme } from '../types/theme';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
-import { getTestTheme } from '../utils/testdata/testTheme';
+import { GrafanaThemeV2 } from '../themes/types';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -21,7 +20,7 @@ interface DisplayProcessorOptions {
   /**
    * Will pick 'dark' if not defined
    */
-  theme?: GrafanaTheme;
+  theme: GrafanaThemeV2;
 }
 
 // Reasonable units for time
@@ -43,9 +42,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const { field } = options;
   const config = field.config ?? {};
 
-  // Theme should be required or we need access to default theme instance from here
-  const theme = options.theme ?? getTestTheme();
-
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
 
@@ -55,7 +51,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field as Field, theme);
+  const scaleFunc = getScaleCalculator(field as Field, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
