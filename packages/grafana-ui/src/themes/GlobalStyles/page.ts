@@ -72,14 +72,14 @@ export function getPageStyles(theme: GrafanaThemeV2) {
       }
 
       ${theme.breakpoints.up('lg')} {
-        padding: ${theme.spacing(4)};
+        padding: ${theme.spacing(3)};
       }
     }
 
     .page-heading {
       font-size: ${theme.typography.h4.fontSize};
       margin-top: 0;
-      margin-bottom: $spacer;
+      margin-bottom: ${theme.spacing(2)};
     }
 
     .page-action-bar {
@@ -103,7 +103,7 @@ export function getPageStyles(theme: GrafanaThemeV2) {
     }
 
     .page-sub-heading {
-      margin-bottom: ${theme.spacing(1)};
+      margin-bottom: ${theme.spacing(2)};
     }
 
     .page-sub-heading-icon {
