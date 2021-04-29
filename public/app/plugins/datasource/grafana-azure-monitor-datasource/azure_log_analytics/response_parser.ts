@@ -9,6 +9,7 @@ import {
   KustoSchema,
   KustoTable,
 } from '../types';
+import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class ResponseParser {
   columns: string[];
@@ -221,4 +222,61 @@ export default class ResponseParser {
   static dateTimeToEpoch(dateTimeValue: any) {
     return dateTime(dateTimeValue).valueOf();
   }
+}
+
+const PARAM_RE = /([\w\W]+):([\w]+)(?:\s?=\s?([\w\W]+))?/;
+
+function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
+  if (!sourceSchema.functions) {
+    return [];
+  }
+
+  return sourceSchema.functions.map((fn) => {
+    const params =
+      fn.parameters &&
+      fn.parameters
+        .split(', ')
+        .map((arg) => {
+          const match = arg.match(PARAM_RE);
+          if (!match) {
+            return;
+          }
+
+          const [, name, type, defaultValue] = match;
+
+          return {
+            name,
+            type,
+            defaultValue,
+            cslDefaultValue: defaultValue,
+          };
+        })
+        // TODO: better this
+        .filter(<T>(v: T): v is Exclude<T, undefined> => !!v);
+
+    return {
+      name: fn.name,
+      body: fn.body,
+      inputParameters: params || [],
+    };
+  });
+}
+
+export function transformMetadataToKustoSchema(sourceSchema: AzureLogAnalyticsMetadata, nameOrIdOrSomething: string) {
+  const database = {
+    name: nameOrIdOrSomething,
+    tables: sourceSchema.tables,
+    functions: transformMetadataFunction(sourceSchema),
+    majorVersion: 0,
+    minorVersion: 0,
+  };
+
+  return {
+    clusterType: 'Engine',
+    cluster: {
+      connectionString: nameOrIdOrSomething,
+      databases: [database],
+    },
+    database: database,
+  };
 }

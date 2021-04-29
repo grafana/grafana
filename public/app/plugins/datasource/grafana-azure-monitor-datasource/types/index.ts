@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
-import Datasource from './datasource';
+import Datasource from '../datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 

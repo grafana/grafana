@@ -1,6 +1,6 @@
 import { map } from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
-import ResponseParser from './response_parser';
+import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
 import {
   DataQueryRequest,
@@ -9,9 +9,10 @@ import {
   DataSourceInstanceSettings,
   MetricFindValue,
 } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
+import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -107,15 +108,24 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return this.doRequest(workspaceListUrl, true);
   }
 
-  getSchema(workspace: string) {
+  async getMetadata(workspace: string) {
     if (!workspace) {
       return Promise.resolve();
     }
     const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
 
-    return this.doRequest(url).then((response: any) => {
-      return new ResponseParser(response.data).parseSchemaResult();
-    });
+    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
+
+    if (!resp.ok) {
+      return Promise.resolve();
+    }
+
+    return resp.ok ? resp.data : undefined;
+  }
+
+  async getKustoSchema(workspace: string) {
+    const metadata = await this.getMetadata(workspace);
+    return metadata && transformMetadataToKustoSchema(metadata, workspace);
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
@@ -348,7 +358,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  async doRequest(url: string, useCache = false, maxRetries = 1): Promise<any> {
+  async doRequest<T = any>(url: string, useCache = false, maxRetries = 1): Promise<FetchResponse<T>> {
     try {
       if (useCache && this.cache.has(url)) {
         return this.cache.get(url);
