@@ -31,7 +31,6 @@ type Metrics struct {
 	*metrics.Alerts
 	AlertState      *prometheus.GaugeVec
 	RequestDuration *prometheus.HistogramVec
-	Silences        *prometheus.GaugeVec
 }
 
 func NewMetrics(r prometheus.Registerer) *Metrics {
@@ -53,12 +52,6 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			},
 			[]string{"method", "route", "status_code", "backend"},
 		),
-		Silences: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "silences",
-			Help:      "The total number of silences by state.",
-		}, []string{"state"}),
 	}
 }
 

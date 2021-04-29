@@ -23,6 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// hijack init fn in tests to override default prom registerer
+// to prevent panics on duplicate registering.
+func init() {
+	getDefaultRegisterer = func() prometheus.Registerer { return nil }
+}
+
 func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
 	am := &Alertmanager{}
 	am.Settings = &setting.Cfg{}

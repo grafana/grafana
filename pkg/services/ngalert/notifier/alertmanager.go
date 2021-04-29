@@ -40,6 +40,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// allow overriding in tests to avoid duplicate registration
+var getDefaultRegisterer = func() prometheus.Registerer {
+	return prometheus.DefaultRegisterer
+}
+
 const (
 	pollInterval = 1 * time.Minute
 	workingDir   = "alerting"
@@ -140,6 +145,7 @@ func (am *Alertmanager) Init() (err error) {
 	}
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
+		Metrics:      getDefaultRegisterer(),
 		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
 		Retention:    retentionNotificationsAndSilences,
 	})
