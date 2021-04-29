@@ -34,6 +34,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import store from 'app/core/store';
+import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -62,7 +63,6 @@ interface Props {
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
-  dedupedRows?: LogRowModel[];
   visibleRange?: AbsoluteTimeRange;
   width: number;
   theme: GrafanaTheme;
@@ -72,15 +72,12 @@ interface Props {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  dedupStrategy: LogsDedupStrategy;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
-  onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
-  onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
@@ -89,6 +86,8 @@ interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  dedupStrategy: LogsDedupStrategy;
+  hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
   showDetectedFields: string[];
@@ -103,6 +102,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
+    dedupStrategy: LogsDedupStrategy.none,
+    hiddenLogLevels: [],
     logsSortOrder: null,
     isFlipping: false,
     showDetectedFields: [],
@@ -134,12 +135,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }));
   };
 
-  onChangeDedup = (dedup: LogsDedupStrategy) => {
-    const { onDedupStrategyChange } = this.props;
-    if (this.props.dedupStrategy === dedup) {
-      return onDedupStrategyChange(LogsDedupStrategy.none);
-    }
-    return onDedupStrategyChange(dedup);
+  onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
+    this.setState({ dedupStrategy });
   };
 
   onChangeLabels = (event?: React.SyntheticEvent) => {
@@ -176,8 +173,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
-    this.props.onToggleLogLevel(hiddenLogLevels);
+    const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
+    this.setState({ hiddenLogLevels });
   };
 
   onClickScan = (event: React.SyntheticEvent) => {
@@ -229,6 +226,16 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     return !!logRows.some((r) => r.hasUnescapedContent);
   });
 
+  dedupRows = memoizeOne((logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
+    const dedupedRows = dedupLogRows(logRows, dedupStrategy);
+    const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
+    return { dedupedRows, dedupCount };
+  });
+
+  filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
+    return filterLogLevels(logRows, new Set(hiddenLogLevels));
+  });
+
   render() {
     const {
       logRows,
@@ -244,11 +251,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       scanRange,
       showContextToggle,
       width,
-      dedupedRows,
       absoluteRange,
       onChangeTime,
       getFieldLinks,
-      dedupStrategy,
       theme,
     } = this.props;
 
@@ -256,6 +261,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       showLabels,
       showTime,
       wrapLogMessage,
+      dedupStrategy,
+      hiddenLogLevels,
       logsSortOrder,
       isFlipping,
       showDetectedFields,
@@ -263,9 +270,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     } = this.state;
 
     const hasData = logRows && logRows.length > 0;
-    const dedupCount = dedupedRows
-      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
-      : 0;
+    const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
+    const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
     const meta = logsMeta ? [...logsMeta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
@@ -390,7 +396,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             ]}
           />
         )}
-
         <LogRows
           logRows={logRows}
           deduplicatedRows={dedupedRows}
