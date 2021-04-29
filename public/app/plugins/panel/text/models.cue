@@ -4,8 +4,10 @@ Family: {
     lineages: [
         [
             {
+                TextMode: "html" | "markdown" @cuetsy(targetType="enum",withName="TextMode") 
+
                 PanelOptions: {
-                    mode: "html" | *"markdown" @cuetsy(targetType="enum",withName="TextMode") // TODO This cuetsy attr doesn't exist yet
+                    mode: TextMode | *"markdown"
                     content: string | *"""
                     # Title
 
