@@ -115,6 +115,7 @@ const AmRoutes: FC = () => {
         <>
           <div className={styles.break} />
           <AmRootRoute
+            alertManagerSourceName={alertManagerSourceName}
             isEditMode={isRootRouteEditMode}
             onSave={handleSave}
             onEnterEditMode={enterRootRouteEditMode}

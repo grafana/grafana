@@ -28,7 +28,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ onChange, onRoot
   return (
     <div className={styles.container}>
       <h5>Specific routing</h5>
-      <p>Send specific alerts to chosen channels, based on matching criteria</p>
+      <p>Send specific alerts to chosen contact points, based on matching criteria</p>
       {!routes.receiver ? (
         <EmptyArea
           buttonIcon="rocket"
