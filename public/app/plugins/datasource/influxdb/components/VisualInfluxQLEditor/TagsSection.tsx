@@ -3,6 +3,7 @@ import { SegmentAsync, Segment } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { InfluxQueryTag } from '../../types';
 import { toSelectableValue } from './toSelectableValue';
+import { adjustOperatorIfNeeded, getCondition, getOperator } from './tagUtils';
 
 type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '=~' | '!~';
 const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '=~', '!~'];
@@ -28,22 +29,6 @@ type TagProps = {
   getTagKeyOptions: () => Promise<string[]>;
   getTagValueOptions: (key: string) => Promise<string[]>;
 };
-
-function isRegex(text: string): boolean {
-  return /^\/.*\/$/.test(text);
-}
-
-// FIXME: sync these to the query-string-generation-code
-// probably it's in influx_query_model.ts
-function getOperator(tag: InfluxQueryTag): string {
-  return tag.operator ?? (isRegex(tag.value) ? '=~' : '=');
-}
-
-// FIXME: sync these to the query-string-generation-code
-// probably it's in influx_query_model.ts
-function getCondition(tag: InfluxQueryTag, isFirst: boolean): string | undefined {
-  return isFirst ? undefined : tag.condition ?? 'AND';
-}
 
 const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions }: TagProps): JSX.Element => {
   const operator = getOperator(tag);
@@ -96,7 +81,8 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         value={tag.value}
         loadOptions={getTagValueSegmentOptions}
         onChange={(v) => {
-          onChange({ ...tag, value: v.value ?? '' });
+          const value = v.value ?? '';
+          onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
         }}
       />
     </div>
