@@ -6,8 +6,6 @@ import {
   DataQueryRequest,
   DataSourceApi,
   HistoryItem,
-  LogLevel,
-  LogsDedupStrategy,
   LogsModel,
   PanelData,
   QueryHint,
@@ -118,16 +116,6 @@ export interface ExploreItemState {
    * React keys for rendering of QueryRows
    */
   queryKeys: string[];
-
-  /**
-   * Current logs deduplication strategy
-   */
-  dedupStrategy: LogsDedupStrategy;
-
-  /**
-   * Currently hidden log series
-   */
-  hiddenLogLevels?: LogLevel[];
 
   /**
    * How often query should be refreshed

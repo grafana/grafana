@@ -5,7 +5,6 @@ import {
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
-  LogsDedupStrategy,
   PanelData,
 } from '@grafana/data';
 
@@ -49,7 +48,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  dedupStrategy: LogsDedupStrategy.none,
   eventBridge: (null as unknown) as EventBusExtended,
 });
 
