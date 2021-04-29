@@ -115,11 +115,21 @@ func (pm *PluginManager) Init() error {
 		}
 	}
 
-	// check if plugins dir exists
-	exists, err = fs.Exists(pm.Cfg.PluginsPath)
+	err = pm.initExternalPlugins()
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (pm *PluginManager) initExternalPlugins() error {
+	// check if plugins dir exists
+	exists, err := fs.Exists(pm.Cfg.PluginsPath)
+	if err != nil {
+		return err
+	}
+
 	if !exists {
 		if err = os.MkdirAll(pm.Cfg.PluginsPath, os.ModePerm); err != nil {
 			pm.log.Error("failed to create external plugins directory", "dir", pm.Cfg.PluginsPath, "error", err)
@@ -138,25 +148,28 @@ func (pm *PluginManager) Init() error {
 		return err
 	}
 
+	var staticRoutesList []*plugins.PluginStaticRoute
 	for _, panel := range pm.panels {
 		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
-		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
 
 	for _, ds := range pm.dataSources {
 		staticRoutes := ds.InitFrontendPlugin(pm.Cfg)
-		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
 
 	for _, app := range pm.apps {
 		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
-		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
 
 	if pm.renderer != nil {
 		staticRoutes := pm.renderer.InitFrontendPlugin(pm.Cfg)
-		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
+
+	pm.staticRoutes = staticRoutesList
 
 	for _, p := range pm.plugins {
 		if p.IsCorePlugin {
@@ -268,6 +281,11 @@ func (pm *PluginManager) scanPluginPaths() error {
 
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
+	existingPlugins := make(map[string]struct{})
+	for k := range pm.plugins {
+		existingPlugins[k] = struct{}{}
+	}
+
 	scanner := &PluginScanner{
 		pluginPath:                    pluginDir,
 		backendPluginManager:          pm.BackendPluginManager,
@@ -295,6 +313,13 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	}
 
 	pm.log.Debug("Initial plugin loading done")
+
+	for key, p := range scanner.plugins {
+		if existing, exists := pm.plugins[p.Id]; exists && p.Info.Version == existing.Info.Version {
+			pm.log.Info("Can skip this plugin as it's already registered", "plugin", p.Id)
+			delete(scanner.plugins, key)
+		}
+	}
 
 	pluginTypes := map[string]interface{}{
 		"panel":      plugins.PanelPlugin{},
@@ -706,68 +731,9 @@ func (pm *PluginManager) Install(pluginID string) error {
 		return fmt.Errorf("no plugin.json files returned")
 	}
 
-	pm.log.Info("Downloaded plugins", "plugins", pluginJSONPaths)
-	loadedPlugins, err := pm.Loader.LoadAll(pluginJSONPaths, true)
+	err = pm.initExternalPlugins()
 	if err != nil {
 		return err
-	}
-
-	for _, plugin := range loadedPlugins {
-		var pb *plugins.PluginBase
-		var staticRoutes []*plugins.PluginStaticRoute
-
-		switch p := plugin.(type) {
-		case *plugins.DataSourcePlugin:
-			pm.dataSources[p.Id] = p
-			pb = &p.PluginBase
-
-			staticRoutes = p.InitFrontendPlugin(pm.Cfg)
-		case *plugins.PanelPlugin:
-			pm.panels[p.Id] = p
-			pb = &p.PluginBase
-
-			staticRoutes = p.InitFrontendPlugin(pm.Cfg)
-		case *plugins.RendererPlugin:
-			pm.renderer = p
-			pb = &p.PluginBase
-
-			staticRoutes = pm.renderer.InitFrontendPlugin(pm.Cfg)
-		case *plugins.AppPlugin:
-			pm.apps[p.Id] = p
-			pb = &p.PluginBase
-
-			staticRoutes = p.InitApp(pm.panels, pm.dataSources, pm.Cfg)
-		default:
-			panic(fmt.Sprintf("Unrecognized plugin type %T", plugin))
-		}
-
-		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
-
-		if pb.IsCorePlugin {
-			pb.Signature = plugins.PluginSignatureInternal
-		} else {
-			metrics.SetPluginBuildInformation(pb.Id, pb.Type, pb.Info.Version)
-		}
-
-		if !strings.HasPrefix(pb.PluginDir, pm.Cfg.StaticRootPath) {
-			pm.log.Info("Registering plugin", "id", pb.Id)
-		}
-
-		if len(pb.Dependencies.Plugins) == 0 {
-			pb.Dependencies.Plugins = []plugins.PluginDependencyItem{}
-		}
-
-		if pb.Dependencies.GrafanaVersion == "" {
-			pb.Dependencies.GrafanaVersion = "*"
-		}
-
-		for _, include := range pb.Includes {
-			if include.Role == "" {
-				include.Role = models.ROLE_VIEWER
-			}
-		}
-
-		pm.plugins[pb.Id] = pb
 	}
 
 	return nil
@@ -779,8 +745,8 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 		return fmt.Errorf("trying to delete a plugin \"%s\" that doesn't exist", pluginID)
 	}
 
-	if plugin.Backend {
-		err := pm.BackendPluginManager.Unregister(plugin.Id)
+	if pm.BackendPluginManager.Registered(pluginID) {
+		err := pm.BackendPluginManager.Unregister(pluginID)
 		if err != nil {
 			return err
 		}

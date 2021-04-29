@@ -116,6 +116,12 @@ func (m *manager) Unregister(pluginID string) error {
 	return nil
 }
 
+func (m *manager) Registered(pluginID string) bool {
+	_, exists := m.plugins[pluginID]
+
+	return exists
+}
+
 func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
 	p, ok := m.plugins[pluginID]
 	return p, ok

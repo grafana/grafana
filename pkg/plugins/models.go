@@ -70,7 +70,8 @@ type PluginBase struct {
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
 
-	Root *PluginBase
+	Root        *PluginBase
+	Initialized bool
 }
 
 type PluginDependencies struct {

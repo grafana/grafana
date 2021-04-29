@@ -14,6 +14,8 @@ type Manager interface {
 	Register(pluginID string, factory PluginFactoryFunc) error
 	// Unregister unregisters a backend plugin
 	Unregister(pluginID string) error
+	// Registered checks if plugin is registered with the manager
+	Registered(pluginID string) bool
 	// StartPlugin starts a non-managed backend plugin
 	StartPlugin(ctx context.Context, pluginID string) error
 	// CollectMetrics collects metrics from a registered backend plugin.
