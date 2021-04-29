@@ -55,15 +55,15 @@ const httpConfigOption: NotificationChannelOption = option(
   {
     element: 'subform',
     subformOptions: [
-      basicAuthOption,
       option('bearer_token', 'Bearer token', 'Sets the `Authorization` header with the configured bearer token.'),
       option(
         'bearer_token_file',
         'Bearer token file',
         'Sets the `Authorization` header with the bearer token read from the configured file.'
       ),
-      tlsConfigOption,
       option('proxy_url', 'Proxy URL', 'Optional proxy URL.'),
+      basicAuthOption,
+      tlsConfigOption,
     ],
   }
 );
@@ -85,7 +85,6 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option('auth_secret', 'Secret', 'SMTP authentication information'),
       option('auth_identity', 'Identity', 'SMTP authentication information'),
       option('require_tls', 'Require TLS', 'The SMTP TLS requirement', { element: 'checkbox' }),
-      tlsConfigOption,
       option('html', 'Email HTML body', 'The HTML body of the email notification.', {
         placeholder: '{{ template "email.default.html" . }}',
         element: 'textarea',
@@ -97,6 +96,7 @@ export const cloudNotifierTypes: NotifierDTO[] = [
         'Further headers email header key/value pairs. Overrides any headers previously set by the notification implementation.',
         { element: 'key_value_map' }
       ),
+      tlsConfigOption,
     ],
   },
   {
@@ -207,6 +207,20 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option('icon_url', 'Icon URL', ''),
       option('link_names', 'Names link', '', { element: 'checkbox' }),
       option('username', 'Username', '', { placeholder: '{{ template "slack.default.username" . }}' }),
+      option('callback_id', 'Callback ID', '', { placeholder: '{{ template "slack.default.callbackid" . }}' }),
+      option('color', 'Color', '', { placeholder: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}' }),
+      option('fallback', 'Fallback', '', { placeholder: '{{ template "slack.default.fallback" . }}' }),
+      option('footer', 'Footer', '', { placeholder: '{{ template "slack.default.footer" . }}' }),
+      option('mrkdwn_in', 'Mrkdwn fields', 'An array of field names that should be formatted by mrkdwn syntax.', {
+        element: 'string_array',
+      }),
+      option('pretext', 'Pre-text', '', { placeholder: '{{ template "slack.default.pretext" . }}' }),
+      option('short_fields', 'Short fields', '', { element: 'checkbox' }),
+      option('text', 'Message body', '', { element: 'textarea', placeholder: '{{ template "slack.default.text" . }}' }),
+      option('title', 'Title', '', { placeholder: '{{ template "slack.default.title" . }}' }),
+      option('title_link', 'Title link', '', { placeholder: '{{ template "slack.default.titlelink" . }}' }),
+      option('image_url', 'Image URL', ''),
+      option('thumb_url', 'Thumbnail URL', ''),
       option('actions', 'Actions', '', {
         element: 'subform_array',
         subformOptions: [
@@ -227,9 +241,6 @@ export const cloudNotifierTypes: NotifierDTO[] = [
           option('style', 'Style', ''),
         ],
       }),
-      option('callback_id', 'Callback ID', '', { placeholder: '{{ template "slack.default.callbackid" . }}' }),
-      option('color', 'Color', '', { placeholder: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}' }),
-      option('fallback', 'Fallback', '', { placeholder: '{{ template "slack.default.fallback" . }}' }),
       option('fields', 'Fields', '', {
         element: 'subform_array',
         subformOptions: [
@@ -238,17 +249,6 @@ export const cloudNotifierTypes: NotifierDTO[] = [
           option('short', 'Short', '', { element: 'checkbox' }),
         ],
       }),
-      option('footer', 'Footer', '', { placeholder: '{{ template "slack.default.footer" . }}' }),
-      option('mrkdwn_in', 'Mrkdwn fields', 'An array of field names that should be formatted by mrkdwn syntax.', {
-        element: 'string_array',
-      }),
-      option('pretext', 'Pre-text', '', { placeholder: '{{ template "slack.default.pretext" . }}' }),
-      option('short_fields', 'Short fields', '', { element: 'checkbox' }),
-      option('text', 'Message body', '', { element: 'textarea', placeholder: '{{ template "slack.default.text" . }}' }),
-      option('title', 'Title', '', { placeholder: '{{ template "slack.default.title" . }}' }),
-      option('title_link', 'Title link', '', { placeholder: '{{ template "slack.default.titlelink" . }}' }),
-      option('image_url', 'Image URL', ''),
-      option('thumb_url', 'Thumbnail URL', ''),
       httpConfigOption,
     ],
   },
@@ -322,13 +322,13 @@ export const cloudNotifierTypes: NotifierDTO[] = [
     heading: 'Webhook settings',
     options: [
       option('url', 'URL', 'The endpoint to send HTTP POST requests to.', { required: true }),
-      httpConfigOption,
       option(
         'max_alerts',
         'Max alerts',
         'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
-        { placeholder: '0', validationRule: '^\\d+$' }
+        { placeholder: '0', validationRule: '(^\\d+$|^$)' }
       ),
+      httpConfigOption,
     ],
   },
 ];

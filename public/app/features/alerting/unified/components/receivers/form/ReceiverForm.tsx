@@ -4,7 +4,8 @@ import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
-import { useForm, FormProvider, FieldErrors, Validate, useFieldArray } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
+import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
@@ -54,16 +55,9 @@ export function ReceiverForm<R extends ChannelValues>({
     register,
     formState: { errors },
     getValues,
-    control,
-    watch,
   } = formAPI;
 
-  console.log('errors', errors);
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'items' as any, // bug in types
-  });
+  const { fields, append, remove } = useControlledFieldArray<R>('items', formAPI);
 
   const validateNameIsAvailable: Validate<string> = useCallback(
     (name: string) =>
@@ -72,9 +66,6 @@ export function ReceiverForm<R extends ChannelValues>({
         : true,
     [takenReceiverNames]
   );
-
-  const items = watch('items');
-  console.log('items', JSON.stringify(items, null, 2));
 
   return (
     <FormProvider {...formAPI}>
@@ -94,12 +85,12 @@ export function ReceiverForm<R extends ChannelValues>({
             width={39}
           />
         </Field>
-        {fields.map((field: R & { id: string }, index) => {
+        {(fields ?? []).map((field, index) => {
           const initialItem = initialValues?.items.find(({ __id }) => __id === field.__id);
           return (
             <ChannelSubForm<R>
               defaultValues={field}
-              key={field.id}
+              key={field.__id}
               onDuplicate={() => {
                 const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
