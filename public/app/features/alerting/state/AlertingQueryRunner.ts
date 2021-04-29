@@ -48,10 +48,14 @@ export class AlertingQueryRunner {
 
     this.subscription = runRequest(this.backendSrv, queries).subscribe({
       next: (dataPerQuery) => {
+        const nextResult: Record<string, PanelData> = {};
+
         for (const [refId, data] of Object.entries(dataPerQuery)) {
           const previous = this.lastResult[refId];
-          this.lastResult[refId] = setStructureRevision(data, previous);
+          nextResult[refId] = setStructureRevision(data, previous);
         }
+
+        this.lastResult = nextResult;
         this.subject.next(this.lastResult);
       },
       error: (error) => console.error('PanelQueryRunner Error', error),
@@ -63,6 +67,24 @@ export class AlertingQueryRunner {
       return;
     }
     this.subscription.unsubscribe();
+
+    const nextResult: Record<string, PanelData> = {};
+    let loading = false;
+
+    for (const [refId, data] of Object.entries(this.lastResult)) {
+      if (data.state === LoadingState.Loading) {
+        loading = true;
+      }
+
+      nextResult[refId] = {
+        ...data,
+        state: LoadingState.Done,
+      };
+    }
+
+    if (loading) {
+      this.subject.next(nextResult);
+    }
   }
 
   destroy() {

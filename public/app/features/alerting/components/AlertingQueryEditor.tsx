@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataQuery, GrafanaTheme, PanelData, RelativeTimeRange } from '@grafana/data';
+import { DataQuery, GrafanaTheme, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config } from '@grafana/runtime';
@@ -44,6 +44,10 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   onRunQueries = () => {
     const { value = [] } = this.props;
     this.runner.run(value);
+  };
+
+  onCancelQueries = () => {
+    this.runner.cancel();
   };
 
   onDuplicateQuery = (query: GrafanaQuery) => {
@@ -110,16 +114,42 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
             </Button>
           </Tooltip>
         )}
-        <Button type="button" onClick={this.onRunQueries}>
-          Run!
-        </Button>
       </HorizontalGroup>
+    );
+  }
+
+  isRunning() {
+    const data = Object.values(this.state.panelDataByRefId).find((d) => !!d);
+    return data?.state === LoadingState.Loading;
+  }
+
+  renderRunQueryButton() {
+    const isRunning = this.isRunning();
+    const styles = getStyles(config.theme);
+
+    if (isRunning) {
+      return (
+        <div className={styles.runWrapper}>
+          <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={this.onCancelQueries}>
+            Cancel
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.runWrapper}>
+        <Button icon="sync" type="button" onClick={this.onRunQueries}>
+          Run queries
+        </Button>
+      </div>
     );
   }
 
   render() {
     const { value = [] } = this.props;
     const styles = getStyles(config.theme);
+
     return (
       <div className={styles.container}>
         <AlertingQueryRows
@@ -129,6 +159,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
           onRunQueries={this.onRunQueries}
         />
         {this.renderAddQueryRow(styles)}
+        {this.renderRunQueryButton()}
       </div>
     );
   }
@@ -172,9 +203,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background-color: ${theme.colors.panelBg};
       height: 100%;
     `,
-    refreshWrapper: css`
-      display: flex;
-      justify-content: flex-end;
+    runWrapper: css`
+      margin-top: ${theme.spacing.md};
     `,
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};
