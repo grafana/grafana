@@ -7,7 +7,7 @@ import { List } from '../index';
 import { useStyles2 } from '../../themes';
 
 interface DataLinkSuggestionsProps {
-  selectedRef?: React.RefObject<HTMLDivElement>;
+  activeRef?: React.RefObject<HTMLDivElement>;
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
@@ -24,7 +24,6 @@ const getStyles = (theme: GrafanaThemeV2) => {
     `,
     wrapper: css`
       background: ${theme.colors.background.primary};
-      z-index: 1;
       width: 250px;
       box-shadow: 0 5px 10px 0 ${theme.shadows.z1};
     `,
@@ -101,11 +100,11 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
-  selectedRef?: React.RefObject<HTMLDivElement>;
+  activeRef?: React.RefObject<HTMLDivElement>;
 }
 
 const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, selectedRef }) => {
+  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, activeRef: selectedRef }) => {
     const styles = useStyles2(getStyles);
 
     return (
