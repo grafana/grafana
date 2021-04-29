@@ -4,8 +4,7 @@ import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
-import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
-import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
+import { useForm, FormProvider, FieldErrors, Validate, useFieldArray } from 'react-hook-form';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
@@ -55,9 +54,13 @@ export function ReceiverForm<R extends ChannelValues>({
     register,
     formState: { errors },
     getValues,
+    control,
   } = formAPI;
 
-  const { items, append, remove } = useControlledFieldArray<R>('items', formAPI);
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'items' as any, // bug in types
+  });
 
   const validateNameIsAvailable: Validate<string> = useCallback(
     (name: string) =>
@@ -85,13 +88,14 @@ export function ReceiverForm<R extends ChannelValues>({
             width={39}
           />
         </Field>
-        {items.map((item, index) => {
-          const initialItem = initialValues?.items.find(({ __id }) => __id === item.__id);
+        {fields.map((field: R & { id: string }, index) => {
+          const initialItem = initialValues?.items.find(({ __id }) => __id === field.__id);
           return (
             <ChannelSubForm<R>
-              key={item.__id}
+              defaultValues={field}
+              key={field.id}
               onDuplicate={() => {
-                const currentValues = getValues().items[index];
+                const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
               onDelete={() => remove(index)}

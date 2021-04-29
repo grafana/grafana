@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import { Input, InputControl, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 import { useFormContext } from 'react-hook-form';
@@ -10,10 +10,19 @@ interface Props {
 }
 
 export const OptionElement: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
-  const { control, register } = useFormContext();
+  const { control, register, unregister } = useFormContext();
   const modelValue = option.secure
     ? `${pathPrefix}secureSettings.${option.propertyName}`
     : `${pathPrefix}settings.${option.propertyName}`;
+
+  // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
+  useEffect(
+    () => () => {
+      unregister(modelValue);
+    },
+    [unregister, modelValue]
+  );
+
   switch (option.element) {
     case 'input':
       return (
