@@ -1,5 +1,6 @@
-import { getBackendSrv } from '@grafana/runtime';
 import { LibraryPanelDTO, LibraryPanelSearchResult, PanelModelWithLibraryPanel } from '../types';
+import { DashboardSearchHit } from '../../search/types';
+import { getBackendSrv } from '../../../core/services/backend_srv';
 
 export interface GetLibraryPanelsOptions {
   searchString?: string;
@@ -67,4 +68,14 @@ export function deleteLibraryPanel(uid: string): Promise<{ message: string }> {
 export async function getLibraryPanelConnectedDashboards(libraryPanelUid: string): Promise<number[]> {
   const { result } = await getBackendSrv().get(`/api/library-panels/${libraryPanelUid}/dashboards`);
   return result;
+}
+
+export async function getConnectedDashboards(uid: string): Promise<DashboardSearchHit[]> {
+  const dashboardIds = await getLibraryPanelConnectedDashboards(uid);
+  if (dashboardIds.length === 0) {
+    return [];
+  }
+
+  const searchHits = await getBackendSrv().search({ dashboardIds });
+  return searchHits;
 }
