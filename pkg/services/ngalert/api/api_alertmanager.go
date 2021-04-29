@@ -181,9 +181,41 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to encrypt receiver secrets", err)
 	}
+	// Get the last known working configuration
+	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
+	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
+		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
+		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return response.Error(http.StatusInternalServerError, "failed to get latest configuration", err)
+		}
+	}
+
+	// dont do anything if its the default configuration or there no receivers
+	// copy over the secrets from the last known working configuration
+	// save it
+	currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to load lastest configuration", err)
+	}
+
+	// Copy the previously known secure settings
+	for i, r := range body.AlertmanagerConfig.Receivers {
+		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			cr := currentConfig.AlertmanagerConfig.Receivers[i]
+			if cr != nil {
+				cgmr := cr.PostableGrafanaReceivers.GrafanaManagedReceivers[j]
+				if cgmr != nil {
+					if cgmr.Name == gr.Name && cgmr.Type == gr.Type {
+						body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = cgmr.SecureSettings
+					}
+				}
+			}
+		}
+	}
 
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to save and apply Alertmanager configuration", err)
+		srv.log.Error("unable to save and apply alertmanager configuration", "err", err)
+		return response.Error(http.StatusBadRequest, "failed to save and apply Alertmanager configuration", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
