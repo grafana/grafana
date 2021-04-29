@@ -1,35 +1,15 @@
 import React, { FC, useEffect, useState } from 'react';
-import { NotificationChannelOption } from 'app/types';
-import { useFormContext } from 'react-hook-form';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Button, Input, InputControl, useStyles2 } from '@grafana/ui';
-import { CollapsibleSection } from '../CollapsibleSection';
+import { Button, Input, useStyles2 } from '@grafana/ui';
 import { ActionIcon } from '../../../rules/ActionIcon';
 
 interface Props {
-  option: NotificationChannelOption;
-  path: string;
-}
-
-export const KeyValueField: FC<Props> = ({ option, path }) => {
-  const { control } = useFormContext();
-  const styles = useStyles2(getStyles);
-  return (
-    <div className={styles.wrapper}>
-      <CollapsibleSection className={styles.collapsibleSection} label={option.label} description={option.description}>
-        <InputControl name={path} as={KeyValueInput} control={control} />
-      </CollapsibleSection>
-    </div>
-  );
-};
-
-interface KeyValueInputProps {
   value?: Record<string, string>;
   onChange: (value: Record<string, string>) => void;
 }
 
-const KeyValueInput: FC<KeyValueInputProps> = ({ value, onChange }) => {
+export const KeyValueMapInput: FC<Props> = ({ value, onChange }) => {
   const styles = useStyles2(getStyles);
   const [pairs, setPairs] = useState(recordToPairs(value));
   useEffect(() => setPairs(recordToPairs(value)), [value]);
@@ -106,16 +86,6 @@ const getStyles = (theme: GrafanaThemeV2) => ({
     tbody td {
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)} 0;
     }
-  `,
-  collapsibleSection: css`
-    margin: 0;
-    padding: 0;
-  `,
-  wrapper: css`
-    margin: ${theme.spacing(2, 0)};
-    padding: ${theme.spacing(1)};
-    border: solid 1px ${theme.colors.border.medium};
-    border-radius: ${theme.shape.borderRadius(1)};
   `,
 });
 

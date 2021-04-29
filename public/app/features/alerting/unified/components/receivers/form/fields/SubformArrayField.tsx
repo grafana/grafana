@@ -1,32 +1,32 @@
 import React, { FC } from 'react';
 import { NotificationChannelOption } from 'app/types';
-import { FieldError, NestDataObject, useFormContext } from 'react-hook-form';
+import { FieldError, DeepMap, useFieldArray } from 'react-hook-form';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Button, useStyles2 } from '@grafana/ui';
 import { CollapsibleSection } from '../CollapsibleSection';
-import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
 import { ActionIcon } from '../../../rules/ActionIcon';
 import { OptionField } from './OptionField';
 
 interface Props {
   option: NotificationChannelOption;
   pathPrefix: string;
-  errors?: Array<NestDataObject<any, FieldError>>;
+  errors?: Array<DeepMap<any, FieldError>>;
 }
 
 export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors }) => {
   const styles = useStyles2(getStyles);
   const path = `${pathPrefix}${option.propertyName}`;
-  const formAPI = useFormContext();
-  const { items, append, remove } = useControlledFieldArray(path, formAPI);
+  const { fields, append, remove } = useFieldArray({
+    name: path,
+  });
 
   return (
     <div className={styles.wrapper}>
       <CollapsibleSection className={styles.collapsibleSection} label={option.label} description={option.description}>
-        {(items ?? []).map((_, itemIndex) => {
+        {fields.map((field, itemIndex) => {
           return (
-            <div key={itemIndex} className={styles.wrapper}>
+            <div key={field.id} className={styles.wrapper}>
               <ActionIcon
                 icon="trash-alt"
                 tooltip="delete"

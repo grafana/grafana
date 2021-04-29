@@ -9,8 +9,7 @@ export const CloudCommonChannelSettings: FC<CommonSettingsComponentProps> = ({ p
     <div className={className}>
       <Field>
         <Checkbox
-          name={`${pathPrefix}sendResolved`}
-          ref={register()}
+          {...register(`${pathPrefix}sendResolved`)}
           label="Send resolved"
           description="Whether or not to notify about resolved alerts."
         />

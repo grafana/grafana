@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { NotificationChannelOption } from 'app/types';
-import { FieldError, NestDataObject } from 'react-hook-form';
+import { FieldError, DeepMap } from 'react-hook-form';
 import { OptionField } from './OptionField';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { css } from '@emotion/css';
@@ -10,7 +10,7 @@ import { CollapsibleSection } from '../CollapsibleSection';
 interface Props {
   option: NotificationChannelOption;
   pathPrefix: string;
-  errors?: NestDataObject<any, FieldError>;
+  errors?: DeepMap<any, FieldError>;
 }
 
 export const SubformField: FC<Props> = ({ option, pathPrefix, errors }) => {

@@ -1,10 +1,10 @@
 import React, { FC, useEffect } from 'react';
 import { Checkbox, Field, Input, InputControl, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
-import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
+import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
 import { SubformField } from './SubformField';
 import { css } from '@emotion/css';
-import { KeyValueField } from './KeyValueMapField';
+import { KeyValueMapInput } from './KeyValueMapInput';
 import { SubformArrayField } from './SubformArrayField';
 import { StringArrayInput } from './StringArrayInput';
 
@@ -12,17 +12,13 @@ interface Props {
   option: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix: string;
-  error?: FieldError | NestDataObject<any, FieldError>;
+  error?: FieldError | DeepMap<any, FieldError>;
 }
 
 export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error }) => {
   if (option.element === 'subform') {
     return (
-      <SubformField
-        option={option}
-        errors={error as NestDataObject<any, FieldError> | undefined}
-        pathPrefix={pathPrefix}
-      />
+      <SubformField option={option} errors={error as DeepMap<any, FieldError> | undefined} pathPrefix={pathPrefix} />
     );
   }
   if (option.element === 'subform_array') {
@@ -30,14 +26,10 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error }) =
       <SubformArrayField
         option={option}
         pathPrefix={pathPrefix}
-        errors={error as Array<NestDataObject<any, FieldError>> | undefined}
+        errors={error as Array<DeepMap<any, FieldError>> | undefined}
       />
     );
   }
-  if (option.element === 'key_value_map') {
-    return <KeyValueField option={option} path={`${pathPrefix}${option.propertyName}`} />;
-  }
-
   return (
     <Field
       label={option.element !== 'checkbox' ? option.label : undefined}
@@ -57,7 +49,7 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
   useEffect(
     () => () => {
-      unregister(name);
+      unregister(name, { keepValue: false });
     },
     [unregister, name]
   );
@@ -66,8 +58,7 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
       return (
         <Checkbox
           className={styles.checkbox}
-          name={name}
-          ref={register()}
+          {...register(name)}
           label={option.label}
           description={option.description}
         />
@@ -98,8 +89,6 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
           )}
           control={control}
           name={name}
-          invalid={invalid}
-          onChange={(values) => values[0].value}
         />
       );
 
@@ -107,16 +96,28 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
       return (
         <TextArea
           invalid={invalid}
-          name={name}
-          ref={register({
+          {...register(name, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
-          invalid={invalid}
         />
       );
     case 'string_array':
-      return <InputControl as={StringArrayInput} control={control} name={name} />;
+      return (
+        <InputControl
+          render={({ field: { value, onChange } }) => <StringArrayInput value={value} onChange={onChange} />}
+          control={control}
+          name={name}
+        />
+      );
+    case 'key_value_map':
+      return (
+        <InputControl
+          render={({ field: { value, onChange } }) => <KeyValueMapInput value={value} onChange={onChange} />}
+          control={control}
+          name={name}
+        />
+      );
 
     default:
       console.error('Element not supported', option.element);

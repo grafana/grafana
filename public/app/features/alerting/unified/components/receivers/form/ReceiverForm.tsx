@@ -55,7 +55,10 @@ export function ReceiverForm<R extends ChannelValues>({
     formState: { errors },
     getValues,
     control,
+    watch,
   } = formAPI;
+
+  console.log('errors', errors);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -69,6 +72,9 @@ export function ReceiverForm<R extends ChannelValues>({
         : true,
     [takenReceiverNames]
   );
+
+  const items = watch('items');
+  console.log('items', JSON.stringify(items, null, 2));
 
   return (
     <FormProvider {...formAPI}>
