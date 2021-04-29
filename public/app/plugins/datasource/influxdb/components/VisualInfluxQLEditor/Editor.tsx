@@ -86,12 +86,10 @@ export const Editor = (props: Props): JSX.Element => {
   ]);
   const selectLists = (query.select ?? []).map((sel) => makePartList(sel, dynamicSelectPartOptions));
 
-  const dynamicGroupByPartOptions = new Map([
-    [
-      'tag_0',
-      () => getTagKeysForMeasurementAndTags(unwrap(query.measurement), query.policy, query.tags ?? [], datasource),
-    ],
-  ]);
+  const getTagKeys = () =>
+    getTagKeysForMeasurementAndTags(unwrap(query.measurement), query.policy, query.tags ?? [], datasource);
+
+  const dynamicGroupByPartOptions = new Map([['tag_0', getTagKeys]]);
 
   const groupByList = makePartList(query.groupBy ?? [], dynamicGroupByPartOptions);
 
@@ -121,7 +119,7 @@ export const Editor = (props: Props): JSX.Element => {
         <SectionWrap key={index} initialName={index === 0 ? 'select' : ''}>
           <PartListSection
             parts={sel}
-            newPartOptions={getNewSelectPartOptions()}
+            getNewPartOptions={() => Promise.resolve(getNewSelectPartOptions())}
             onChange={(partIndex, newParams) => {
               const newSel = [...(query.select ?? [])];
               newSel[index] = [...newSel[index]];
@@ -143,7 +141,7 @@ export const Editor = (props: Props): JSX.Element => {
       <SectionWrap initialName="group by">
         <PartListSection
           parts={groupByList}
-          newPartOptions={getNewGroupByPartOptions(query)}
+          getNewPartOptions={() => getNewGroupByPartOptions(query, getTagKeys)}
           onChange={(partIndex, newParams) => {
             const newGroupBy = [...(query.groupBy ?? [])];
             newGroupBy[partIndex] = {

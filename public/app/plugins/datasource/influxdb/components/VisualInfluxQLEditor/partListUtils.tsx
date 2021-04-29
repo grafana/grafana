@@ -27,7 +27,11 @@ export function getNewSelectPartOptions(): SelectableValue[] {
   return options;
 }
 
-export function getNewGroupByPartOptions(query: InfluxQuery): Array<SelectableValue<string>> {
+export async function getNewGroupByPartOptions(
+  query: InfluxQuery,
+  getTagKeys: () => Promise<string[]>
+): Promise<Array<SelectableValue<string>>> {
+  const tagKeys = await getTagKeys();
   const queryCopy = { ...query }; // the query-model mutates the query
   const model = new InfluxQueryModel(queryCopy);
   const options: Array<SelectableValue<string>> = [];
@@ -37,7 +41,9 @@ export function getNewGroupByPartOptions(query: InfluxQuery): Array<SelectableVa
   if (!model.hasGroupByTime()) {
     options.push(toSelectableValue('time($interval)'));
   }
-  options.push(toSelectableValue('tag(tagName)'));
+  tagKeys.forEach((key) => {
+    options.push(toSelectableValue(`tag(${key})`));
+  });
   return options;
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { SegmentAsync, Segment, SegmentInput, MenuItem, WithContextMenu, MenuGroup } from '@grafana/ui';
+import { SegmentAsync, SegmentInput, MenuItem, WithContextMenu, MenuGroup } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { unwrap } from './unwrap';
 import { toSelectableValue } from './toSelectableValue';
@@ -16,7 +16,7 @@ type Props = {
     name: string;
     params: PartParams;
   }>;
-  newPartOptions: SelectableValue[];
+  getNewPartOptions: () => Promise<SelectableValue[]>;
   onChange: (partIndex: number, paramValues: string[]) => void;
   onRemovePart: (index: number) => void;
   onAddNewPart: (type: string) => void;
@@ -94,7 +94,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
 
 export const PartListSection = ({
   parts,
-  newPartOptions,
+  getNewPartOptions,
   onAddNewPart,
   onRemovePart,
   onChange,
@@ -114,9 +114,9 @@ export const PartListSection = ({
           }}
         />
       ))}
-      <Segment<string>
+      <SegmentAsync<string>
         value="+"
-        options={newPartOptions}
+        loadOptions={getNewPartOptions}
         onChange={(v) => {
           onAddNewPart(unwrap(v.value));
         }}
