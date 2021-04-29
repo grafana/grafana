@@ -113,9 +113,10 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             invalid={!!errors.dataSourceName?.message}
           >
             <InputControl
-              render={({ field: { onChange, ref, ...field } }) => (
+              render={({ field: { onChange, ref, value, ...field } }) => (
                 <DataSourcePicker
                   {...field}
+                  current={value}
                   filter={dataSourceFilter}
                   noDefault
                   alerting
