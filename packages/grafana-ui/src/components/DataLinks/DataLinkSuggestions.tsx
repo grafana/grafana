@@ -7,6 +7,7 @@ import { List } from '../index';
 import { styleMixins, useStyles } from '../../themes';
 
 interface DataLinkSuggestionsProps {
+  selectedRef?: React.RefObject<HTMLDivElement>;
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
@@ -30,7 +31,6 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     wrapper: css`
       background: ${wrapperBg};
-      z-index: 1;
       width: 250px;
       box-shadow: 0 5px 10px 0 ${wrapperShadow};
     `,
@@ -107,10 +107,11 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
+  selectedRef?: React.RefObject<HTMLDivElement>;
 }
 
 const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
+  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, selectedRef }) => {
     const styles = useStyles(getStyles);
 
     return (
@@ -119,9 +120,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           className={styles.list}
           items={suggestions}
           renderItem={(item, index) => {
+            const isActive = index + activeIndexOffset === activeIndex;
             return (
               <div
-                className={cx(styles.item, index + activeIndexOffset === activeIndex && styles.activeItem)}
+                className={cx(styles.item, isActive && styles.activeItem)}
+                ref={isActive ? selectedRef : undefined}
                 onClick={() => {
                   onSuggestionSelect(item);
                 }}

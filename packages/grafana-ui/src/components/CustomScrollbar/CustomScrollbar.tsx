@@ -146,6 +146,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
         right: 0px;
         bottom: ${theme.spacing(0.25)};
         top: ${theme.spacing(0.25)};
+        z-index: 1;
       }
       .track-horizontal {
         border-radius: ${theme.shape.borderRadius(2)};
@@ -153,6 +154,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
         right: ${theme.spacing(0.25)};
         bottom: ${theme.spacing(0.25)};
         left: ${theme.spacing(0.25)};
+        z-index: 1;
       }
       .thumb-vertical {
         background: ${theme.colors.action.focus};
