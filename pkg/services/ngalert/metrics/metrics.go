@@ -1,4 +1,4 @@
-package api
+package metrics
 
 import (
 	"fmt"
