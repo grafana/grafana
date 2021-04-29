@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { useStyles, useTheme } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -6,12 +6,12 @@ import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Cell, Column } from 'react-table';
 import { cx } from 'emotion';
 import { Table } from '../Table/Table';
+import { Severity } from '../Severity';
 import { Messages } from '../../IntegratedAlerting.messages';
 import { getStyles } from './Alerts.styles';
 import { Alert, AlertStatus } from './Alerts.types';
-import { formatAlerts, getSeverityColors } from './Alerts.utils';
+import { formatAlerts } from './Alerts.utils';
 import { AlertsService } from './Alerts.service';
-import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 import { AlertsActions } from './AlertsActions';
 import { GET_ALERTS_CANCEL_TOKEN } from './Alerts.constants';
 
@@ -31,7 +31,6 @@ export const Alerts: FC = () => {
   const theme = useTheme();
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<Alert[]>([]);
-  const severityColors = useMemo(() => getSeverityColors(theme), [theme]);
   const [generateToken] = useCancelToken();
   const columns = React.useMemo(
     () => [
@@ -42,14 +41,12 @@ export const Alerts: FC = () => {
       } as Column,
       {
         Header: severityColumn,
-        accessor: ({ severity, status }: Alert) => (
-          <span
-            className={cx({
-              [style.getSeverityStyle(severityColors[severity as AlertRuleSeverity])]: status !== AlertStatus.SILENCED,
-            })}
-          >
-            {severity}
-          </span>
+        accessor: 'severity',
+        Cell: ({ row, value }) => (
+          <Severity
+            severity={value}
+            className={cx({ [style.silencedSeverity]: (row.original as Alert).status === AlertStatus.SILENCED })}
+          />
         ),
         width: '5%',
       } as Column,
