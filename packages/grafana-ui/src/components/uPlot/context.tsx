@@ -3,7 +3,7 @@ import uPlot from 'uplot';
 import { DashboardCursorSync } from '@grafana/data';
 
 interface PlotContextType {
-  plot: uPlot | undefined;
+  getPlot: () => uPlot | undefined;
 }
 
 /**
