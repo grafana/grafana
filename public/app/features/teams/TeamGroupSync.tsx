@@ -1,27 +1,35 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { LegacyForms, Tooltip, Icon, Button } from '@grafana/ui';
 const { Input } = LegacyForms;
 
-import { TeamGroup } from '../../types';
+import { StoreState, TeamGroup } from '../../types';
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
-export interface Props {
-  groups: TeamGroup[];
-  loadTeamGroups: typeof loadTeamGroups;
-  addTeamGroup: typeof addTeamGroup;
-  removeTeamGroup: typeof removeTeamGroup;
+function mapStateToProps(state: StoreState) {
+  return {
+    groups: getTeamGroups(state.team),
+  };
 }
+
+const mapDispatchToProps = {
+  loadTeamGroups,
+  addTeamGroup,
+  removeTeamGroup,
+};
 
 interface State {
   isAdding: boolean;
   newGroupId: string;
 }
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = ConnectedProps<typeof connector>;
 
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
@@ -147,17 +155,5 @@ export class TeamGroupSync extends PureComponent<Props, State> {
     );
   }
 }
-
-function mapStateToProps(state: any) {
-  return {
-    groups: getTeamGroups(state.team),
-  };
-}
-
-const mapDispatchToProps = {
-  loadTeamGroups,
-  addTeamGroup,
-  removeTeamGroup,
-};
 
 export default connect(mapStateToProps, mapDispatchToProps)(TeamGroupSync);

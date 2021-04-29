@@ -1,7 +1,7 @@
 import { createTheme, GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import React, { useContext } from 'react';
-import { Themeable } from '../types/theme';
+import { Themeable, Themeable2 } from '../types/theme';
 import { stylesFactory } from './stylesFactory';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
@@ -42,8 +42,8 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
 };
 
 /** @alpha */
-export const withTheme2 = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
-  const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = (props) => {
+export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: React.ComponentType<P>) => {
+  const WithTheme: React.FunctionComponent<Subtract<P, Themeable2>> = (props) => {
     /**
      * If theme context is mocked, let's use it instead of the original context
      * This is used in tests when mocking theme using mockThemeContext function defined below

@@ -22,6 +22,7 @@ import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
+import { HelpModal } from '../components/help/HelpModal';
 
 export class KeybindingSrv {
   modalOpen = false;
@@ -97,7 +98,7 @@ export class KeybindingSrv {
   }
 
   private showHelpModal() {
-    appEvents.publish(new ShowModalEvent({ templateHtml: '<help-modal></help-modal>' }));
+    appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   }
 
   private exit() {

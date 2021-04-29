@@ -26,6 +26,10 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 }
 
 func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {
+	if len(targetScopes) == 0 {
+		return true, nil
+	}
+
 	for _, s := range targetScopes {
 		var match bool
 		for dbScope := range dbScopes {

@@ -4,10 +4,12 @@ import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';
 import { useTheme2 } from '../../themes/ThemeContext';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaThemeV2, colorManipulator } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TooltipPlacement } from '../Tooltip/PopoverController';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+
+export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
@@ -22,14 +24,16 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
+  /** Variant to change the color of the Icon */
+  variant?: IconButtonVariant;
 }
 
 type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, ...restProps }, ref) => {
+  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, variant = 'secondary', ...restProps }, ref) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, size);
+    const styles = getStyles(theme, size, variant);
 
     const button = (
       <button ref={ref} {...restProps} className={cx(styles.button, className)}>
@@ -51,10 +55,16 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 
 IconButton.displayName = 'IconButton';
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
-  const hoverColor = theme.colors.action.hover;
+const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize, variant: IconButtonVariant) => {
   const pixelSize = getSvgSize(size);
   const hoverSize = Math.max(pixelSize / 3, 8);
+  let iconColor = theme.colors.text.primary;
+
+  if (variant === 'primary') {
+    iconColor = theme.colors.primary.main;
+  } else if (variant === 'destructive') {
+    iconColor = theme.colors.error.main;
+  }
 
   return {
     button: css`
@@ -62,6 +72,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
       height: ${pixelSize}px;
       background: transparent;
       border: none;
+      color: ${iconColor};
       padding: 0;
       margin: 0;
       outline: none;
@@ -77,6 +88,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
       &[disabled],
       &:disabled {
         cursor: not-allowed;
+        color: ${theme.colors.action.disabledText};
         opacity: 0.65;
         box-shadow: none;
       }
@@ -110,10 +122,12 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, size: IconSize) => {
       }
 
       &:hover {
-        color: ${theme.colors.text.primary};
+        color: ${iconColor};
 
         &:before {
-          background-color: ${hoverColor};
+          background-color: ${variant === 'secondary'
+            ? theme.colors.action.hover
+            : colorManipulator.alpha(iconColor, 0.12)};
           border: none;
           box-shadow: none;
           opacity: 1;
