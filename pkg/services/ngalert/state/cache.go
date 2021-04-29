@@ -138,7 +138,7 @@ func (c *cache) trim() {
 	}
 
 	for k, n := range ct {
-		c.metrics.Alerts.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
+		c.metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
 	}
 }
 

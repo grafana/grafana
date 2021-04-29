@@ -460,9 +460,9 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 		}
 
 		if alert.EndsAt.After(now) {
-			am.ngMetrics.AlertsReceived.WithLabelValues("firing").Inc()
+			am.ngMetrics.Firing().Inc()
 		} else {
-			am.ngMetrics.AlertsReceived.WithLabelValues("resolved").Inc()
+			am.ngMetrics.Resolved().Inc()
 		}
 
 		if err := alert.Validate(); err != nil {
@@ -471,7 +471,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			}
 			validationErr.Alerts = append(validationErr.Alerts, a)
 			validationErr.Errors = append(validationErr.Errors, err)
-			am.ngMetrics.AlertsInvalid.Inc()
+			am.ngMetrics.Invalid().Inc()
 			continue
 		}
 

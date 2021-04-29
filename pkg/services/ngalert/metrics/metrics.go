@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/api/metrics"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
@@ -26,55 +28,21 @@ const (
 )
 
 type Metrics struct {
-	Alerts              *prometheus.GaugeVec
-	AlertsInvalid       prometheus.Counter
-	AlertsReceived      *prometheus.CounterVec
-	NotificationLatency prometheus.Histogram
-	Notifications       *prometheus.CounterVec
-	NotificationsFailed *prometheus.CounterVec
-	RequestDuration     *prometheus.HistogramVec
-	Silences            *prometheus.GaugeVec
+	*metrics.Alerts
+	AlertState      *prometheus.GaugeVec
+	RequestDuration *prometheus.HistogramVec
+	Silences        *prometheus.GaugeVec
 }
 
 func NewMetrics(r prometheus.Registerer) *Metrics {
 	return &Metrics{
-		Alerts: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+		Alerts: metrics.NewAlerts("v2", r),
+		AlertState: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "grafana",
 			Subsystem: "alerting",
 			Name:      "alerts",
 			Help:      "How many alerts by state.",
 		}, []string{"state"}),
-		AlertsInvalid: promauto.With(r).NewCounter(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "alerts_invalid_total",
-			Help:      "The total number of invalid received alerts.",
-		}),
-		AlertsReceived: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "alerts_received_total",
-			Help:      "The total number of received alerts.",
-		}, []string{"state"}),
-		NotificationLatency: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "notification_latency_seconds",
-			Help:      "Histogram of notification deliveries",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		Notifications: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "notifications_total",
-			Help:      "The total number of attempted notfications by integration.",
-		}, []string{"integration"}),
-		NotificationsFailed: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "notifications_failed_total",
-			Help:      "The total number of failed notfications by integration.",
-		}, []string{"integration"}),
 		RequestDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
