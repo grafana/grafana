@@ -24,6 +24,11 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
+// metrics are a globally registered metric suite for alerting.
+// TODO: refactor testware to allow these to be created without
+// panicking on duplicate registration, thus enabling non-global vars.
+var metrics = NewMetrics(prometheus.DefaultRegisterer)
+
 type Alertmanager interface {
 	// Configuration
 	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
@@ -61,39 +66,31 @@ func (api *API) RegisterAPIEndpoints() {
 		DataProxy: api.DataProxy,
 	}
 
-	var reg prometheus.Registerer
-	// hack, this just assumes that if this histogram is enabled, we should enable others
-	// TODO(owen-d): expose this as a config option (alerting-instrumentation or similar)
-	if api.Cfg.IsHTTPRequestHistogramEnabled() {
-		reg = prometheus.DefaultRegisterer
-	}
-
 	// Register endpoints for proxing to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
-	))
+	), metrics)
 	// Register endpoints for proxing to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
-	))
+	), metrics)
 	// Register endpoints for proxing to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		RulerSrv{DatasourceCache: api.DatasourceCache, store: api.RuleStore, log: logger},
-		reg,
-	))
+	), metrics)
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
 		AlertingProxy:   proxy,
 		Cfg:             api.Cfg,
 		DataService:     api.DataService,
 		DatasourceCache: api.DatasourceCache,
 		log:             logger,
-	})
+	}, metrics)
 
 	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
