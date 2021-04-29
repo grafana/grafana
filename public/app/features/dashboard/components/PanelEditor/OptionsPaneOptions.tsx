@@ -32,7 +32,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev]
+    [panel.configRev, props.data]
   );
 
   const mainBoxElements: React.ReactNode[] = [];

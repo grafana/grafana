@@ -52,7 +52,6 @@ $gray-4: ${theme.v1.palette.gray4};
 $gray-5: ${theme.v1.palette.gray5};
 $gray-6: ${theme.v1.palette.gray6};
 
-$input-black: ${theme.v1.colors.formInputBg};
 $white: ${theme.v1.palette.white};
 
 $layer0: ${theme.colors.background.canvas};
@@ -206,16 +205,16 @@ $btn-active-box-shadow: 0px 0px 4px rgba(255, 120, 10, 0.5);
 
 // Forms
 // -------------------------
-$input-bg: $input-black;
-$input-bg-disabled: $dark-6;
+$input-bg: ${theme.components.input.background};
+$input-bg-disabled: ${theme.colors.action.disabledBackground};
 
-$input-color: ${theme.v1.colors.formInputText};
-$input-border-color: ${theme.v1.colors.formInputBorder};
+$input-color: ${theme.components.input.text};
+$input-border-color: ${theme.components.input.borderColor};
 $input-box-shadow: none;
-$input-border-focus: ${theme.v1.palette.blue95};
-$input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: ${theme.v1.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.v1.colors.bg2};
+$input-border-focus: ${theme.colors.primary.border};
+$input-box-shadow-focus: ${theme.colors.primary.border} !default;
+$input-color-placeholder: ${theme.colors.text.disabled};
+$input-label-bg: ${theme.colors.background.secondary};
 $input-color-select-arrow: $white;
 
 // Search
@@ -228,10 +227,11 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: ${theme.colors.background.secondary};
+$dropdownBackground: ${theme.colors.background.primary};
 $dropdownBorder: ${theme.colors.border.weak};
 $dropdownDividerTop: ${theme.colors.border.weak};
 $dropdownDividerBottom: ${theme.colors.border.weak};
+$dropdownShadow: ${theme.shadows.z3};
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -269,14 +269,14 @@ $tab-border-color: $dark-9;
 
 // Form states and alerts
 // -------------------------
-$warning-text-color: $warn;
-$error-text-color: #e84d4d;
-$success-text-color: #12d95a;
+$warning-text-color: ${theme.colors.warning.text};
+$error-text-color: ${theme.colors.error.text};
+$success-text-color: ${theme.colors.success.text};
 
-$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
+$alert-error-bg: ${theme.colors.error.main};
+$alert-success-bg: ${theme.colors.success.main};
+$alert-warning-bg: ${theme.colors.warning.main};
+$alert-info-bg: ${theme.colors.warning.main};
 
 // Tooltips and popovers
 // -------------------------
@@ -375,7 +375,7 @@ $panel-editor-viz-item-shadow: 0 0 8px $dark-10;
 $panel-editor-viz-item-border: 1px solid $dark-10;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
-$panel-editor-viz-item-bg: $input-black;
+$panel-editor-viz-item-bg: $input-bg;
 $panel-editor-tabs-line-color: #e3e3e3;
 
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
