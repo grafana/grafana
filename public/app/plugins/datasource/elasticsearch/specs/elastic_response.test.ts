@@ -611,7 +611,13 @@ describe('ElasticResponse', () => {
           metrics: [
             {
               type: 'top_metrics',
-              settings: { order: 'top', orderBy: '@timestamp', size: '2', aggregateBy: 'sum', metrics: ['@value'] },
+              settings: {
+                order: 'top',
+                orderBy: '@timestamp',
+                size: '2',
+                aggregateBy: 'sum',
+                metrics: ['@value', '@anotherValue'],
+              },
               id: '1',
             },
           ],
@@ -629,8 +635,8 @@ describe('ElasticResponse', () => {
                     key_as_string: '2021-01-01T00:00:00.000Z',
                     '1': {
                       top: [
-                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1 } },
-                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1 } },
+                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
+                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
                       ],
                     },
                   },
@@ -639,8 +645,8 @@ describe('ElasticResponse', () => {
                     key_as_string: '2021-01-01T00:00:10.000Z',
                     '1': {
                       top: [
-                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1 } },
-                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1 } },
+                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
+                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
                       ],
                     },
                   },
@@ -654,13 +660,22 @@ describe('ElasticResponse', () => {
 
     it('should return 2 series', () => {
       const result = new ElasticResponse(targets, response).getTimeSeries();
-      expect(result.data.length).toBe(1);
-      const series = result.data[0];
-      expect(series.target).toBe('Top Metrics @value');
-      expect(series.datapoints.length).toBe(2);
-      expect(series.datapoints).toEqual([
+      expect(result.data.length).toBe(2);
+
+      const firstSeries = result.data[0];
+      expect(firstSeries.target).toBe('Sum @value');
+      expect(firstSeries.datapoints.length).toBe(2);
+      expect(firstSeries.datapoints).toEqual([
         [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
         [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      ]);
+
+      const secondSeries = result.data[1];
+      expect(secondSeries.target).toBe('Sum @anotherValue');
+      expect(secondSeries.datapoints.length).toBe(2);
+      expect(secondSeries.datapoints).toEqual([
+        [4, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [4, new Date('2021-01-01T00:00:10.000Z').valueOf()],
       ]);
     });
   });

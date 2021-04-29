@@ -35,6 +35,9 @@ import { metricAggregationConfig } from './components/QueryEditor/MetricAggregat
 
 function aggValues(method: string, values: Array<number | null | string>, separator = ' ') {
   const nonNullValues = values.filter(isNumber) as number[];
+  if (nonNullValues.length === 0) {
+    return null;
+  }
   switch (method) {
     case 'sum':
       return sum(nonNullValues);
@@ -50,6 +53,12 @@ function aggValues(method: string, values: Array<number | null | string>, separa
 }
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
+type TopMetricMetric = Record<string, number>;
+interface TopMetricBucket {
+  top: Array<{
+    metrics: TopMetricMetric;
+  }>;
+}
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -135,30 +144,34 @@ export class ElasticResponse {
           break;
         }
         case 'top_metrics': {
-          // newSeries = {
-          //   datapoints: [],
-          //   metric: metric.type,
-          //   metricId: metric.id,
-          //   props: props,
-          //   refId: target.refId,
-          //   field: metric.field,
-          // };
-          // for (let i = 0; i < esAgg.buckets.length; i++) {
-          //   const bucket = esAgg.buckets[i];
-          //   const stats = bucket[metric.id];
-          //   const values = stats.top.map((hit: { metrics: Record<string, number> }) => {
-          //     if (hit.metrics[metric.field!]) {
-          //       return hit.metrics[metric.field!];
-          //     }
-          //     return null;
-          //   });
-          //   newSeries.datapoints.push([
-          //     aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.separator),
-          //     bucket.key,
-          //   ]);
-          // }
-          // seriesList.push(newSeries);
-          // break;
+          if (metric.settings?.metrics?.length) {
+            for (const metricField of metric.settings?.metrics) {
+              newSeries = {
+                datapoints: [],
+                metric: metric.settings.aggregateBy,
+                props: props,
+                refId: target.refId,
+                field: metricField,
+              };
+              for (let i = 0; i < esAgg.buckets.length; i++) {
+                const bucket = esAgg.buckets[i];
+                const stats = bucket[metric.id] as TopMetricBucket;
+                const values = stats.top.map((hit) => {
+                  if (hit.metrics[metricField]) {
+                    return hit.metrics[metricField];
+                  }
+                  return null;
+                });
+                const point = [
+                  aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.separator),
+                  bucket.key,
+                ];
+                newSeries.datapoints.push(point);
+              }
+              seriesList.push(newSeries);
+            }
+          }
+          break;
         }
         default: {
           newSeries = {
