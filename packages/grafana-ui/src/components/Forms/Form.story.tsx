@@ -19,7 +19,7 @@ import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import mdx from './Form.mdx';
 
 export default {
-  title: 'Forms/Example forms',
+  title: 'Forms/Form',
   decorators: [withStoryContainer, withCenteredStory],
   parameters: {
     docs: {
