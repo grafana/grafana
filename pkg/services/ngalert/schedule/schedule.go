@@ -321,8 +321,8 @@ func (sch *schedule) saveAlertStates(states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
-			DefinitionOrgID:   s.OrgID,
-			DefinitionUID:     s.AlertRuleUID,
+			RuleOrgID:         s.OrgID,
+			RuleUID:           s.AlertRuleUID,
 			Labels:            models.InstanceLabels(s.Labels),
 			State:             models.InstanceStateType(s.State.String()),
 			LastEvalTime:      s.LastEvaluationTime,
@@ -362,7 +362,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 
 		// Get Instances
 		cmd := models.ListAlertInstancesQuery{
-			DefinitionOrgID: orgIdResult.DefinitionOrgID,
+			RuleOrgID: orgIdResult.DefinitionOrgID,
 		}
 		if err := sch.instanceStore.ListAlertInstances(&cmd); err != nil {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
