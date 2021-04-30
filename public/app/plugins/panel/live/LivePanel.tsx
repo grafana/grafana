@@ -16,11 +16,10 @@ import {
   StreamingDataFrame,
   LiveChannelAddress,
   LiveChannelConfig,
-  toLiveChannelId,
 } from '@grafana/data';
 import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
-import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
+import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 
