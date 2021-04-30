@@ -49,13 +49,10 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
-	}
-	var err error
-	ar.Uid, err = m.generateAlertRuleUID(ar.OrgId)
-	if err != nil {
-		return nil, err
+		Uid:             util.GenerateShortUID(),
 	}
 
+	var err error
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
 	if err != nil {
 		return nil, err
@@ -68,25 +65,6 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	return ar, nil
 }
-
-func (m *migration) generateAlertRuleUID(orgId int64) (string, error) {
-	for i := 0; i < 20; i++ {
-		uid := util.GenerateShortUID()
-
-		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&alertRule{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", fmt.Errorf("could not generate unique uid for alert rule")
-}
-
-// TODO: Do I need to create an initial alertRuleVersion as well?
 
 type alertQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
