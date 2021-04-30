@@ -1,5 +1,6 @@
-import { merge, Observable, race, Subject, Unsubscribable } from 'rxjs';
+import { merge, Observable, Subject, Unsubscribable } from 'rxjs';
 import { map, mergeAll, reduce, share, takeUntil } from 'rxjs/operators';
+import { AnnotationQuery } from '@grafana/data';
 
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 import {
@@ -20,7 +21,7 @@ import { RefreshEvent } from '../../../../types/events';
 class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly results: Subject<DashboardQueryRunnerWorkerResult>;
   private readonly runs: Subject<DashboardQueryRunnerOptions>;
-  private readonly cancellations: Subject<any>;
+  private readonly cancellationStream: Subject<AnnotationQuery>;
   private readonly runsSubscription: Unsubscribable;
   private readonly eventsSubscription: Unsubscribable;
 
@@ -40,7 +41,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.executeRun = this.executeRun.bind(this);
     this.results = new Subject<DashboardQueryRunnerWorkerResult>();
     this.runs = new Subject<DashboardQueryRunnerOptions>();
-    this.cancellations = new Subject<any>();
+    this.cancellationStream = new Subject<any>();
     this.runsSubscription = this.runs.subscribe((options) => this.executeRun(options));
     this.eventsSubscription = dashboard.events.subscribe(RefreshEvent, (event) => {
       this.run({ dashboard: this.dashboard, range: this.timeSrv.timeRange() });
@@ -70,7 +71,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
 
     merge(observables)
       .pipe(
-        takeUntil(race(this.runs.asObservable(), this.cancellations.asObservable())),
+        takeUntil(this.runs.asObservable()),
         mergeAll(),
         reduce((acc, value) => {
           // should we use scan or reduce here
@@ -87,15 +88,18 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
       });
   }
 
-  cancel(): void {
-    this.cancellations.next(1);
-    this.results.next({ annotations: [], alertStates: [] });
+  cancel(annotation: AnnotationQuery): void {
+    this.cancellationStream.next(annotation);
+  }
+
+  cancellations(): Observable<AnnotationQuery> {
+    return this.cancellationStream.asObservable().pipe(share());
   }
 
   destroy(): void {
     this.results.complete();
     this.runs.complete();
-    this.cancellations.complete();
+    this.cancellationStream.complete();
     this.runsSubscription.unsubscribe();
     this.eventsSubscription.unsubscribe();
   }

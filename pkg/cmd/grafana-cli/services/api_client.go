@@ -174,10 +174,10 @@ func createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req.Header.Set("grafana-version", grafanaVersion)
+	req.Header.Set("grafana-version", GrafanaVersion)
 	req.Header.Set("grafana-os", runtime.GOOS)
 	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
+	req.Header.Set("User-Agent", "grafana "+GrafanaVersion)
 
 	return req, err
 }

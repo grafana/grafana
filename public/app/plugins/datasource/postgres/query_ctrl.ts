@@ -28,15 +28,15 @@ export class PostgresQueryCtrl extends QueryCtrl {
   metaBuilder: PostgresMetaQuery;
   lastQueryMeta?: QueryResultMeta;
   lastQueryError?: string;
-  showHelp: boolean;
+  showHelp = false;
   tableSegment: any;
   whereAdd: any;
   timeColumnSegment: any;
   metricColumnSegment: any;
-  selectMenu: any[];
-  selectParts: SqlPart[][];
-  groupParts: SqlPart[];
-  whereParts: SqlPart[];
+  selectMenu: any[] = [];
+  selectParts: SqlPart[][] = [[]];
+  groupParts: SqlPart[] = [];
+  whereParts: SqlPart[] = [];
   groupAdd: any;
 
   /** @ngInject */

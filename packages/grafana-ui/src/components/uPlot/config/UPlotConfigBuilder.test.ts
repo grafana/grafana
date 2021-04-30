@@ -13,7 +13,7 @@ import {
 import { createTheme } from '@grafana/data';
 
 describe('UPlotConfigBuilder', () => {
-  const darkTheme = createTheme().v1;
+  const darkTheme = createTheme();
 
   describe('default config', () => {
     it('builds default config', () => {

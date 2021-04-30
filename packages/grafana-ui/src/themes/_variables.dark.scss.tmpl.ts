@@ -227,10 +227,11 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: ${theme.colors.background.secondary};
+$dropdownBackground: ${theme.colors.background.primary};
 $dropdownBorder: ${theme.colors.border.weak};
 $dropdownDividerTop: ${theme.colors.border.weak};
 $dropdownDividerBottom: ${theme.colors.border.weak};
+$dropdownShadow: ${theme.shadows.z3};
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -283,9 +284,9 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: ${theme.colors.background.secondary};
-$tooltipColor: ${theme.colors.text.primary};
-$tooltipArrowColor: ${theme.colors.background.secondary};
+$tooltipBackground: ${theme.components.tooltip.background};
+$tooltipColor: ${theme.components.tooltip.text};
+$tooltipArrowColor: ${theme.components.tooltip.background};
 $tooltipBackgroundError: ${theme.colors.error.main};
 $tooltipShadow: ${theme.shadows.z2};
 
