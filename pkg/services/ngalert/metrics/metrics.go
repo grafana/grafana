@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -22,10 +23,29 @@ const (
 	ProxyBackend   = "proxy"
 )
 
+var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
+
 type Metrics struct {
 	*metrics.Alerts
-	AlertState      *prometheus.GaugeVec
+	AlertState *prometheus.GaugeVec
+	// Registerer is for use by subcomponents which register their own metrics.
+	Registerer      prometheus.Registerer
 	RequestDuration *prometheus.HistogramVec
+}
+
+func init() {
+	registry.RegisterService(GlobalMetrics)
+}
+
+func (m *Metrics) Init() error {
+	return nil
+}
+
+// SwapRegisterer overwrites the prometheus register used by a *Metrics in place.
+// It's used by tests to prevent duplicate registration errors
+func (m *Metrics) SwapRegisterer(r prometheus.Registerer) {
+	next := NewMetrics(r)
+	*m = *next
 }
 
 func NewMetrics(r prometheus.Registerer) *Metrics {
@@ -37,6 +57,7 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			Name:      "alerts",
 			Help:      "How many alerts by state.",
 		}, []string{"state"}),
+		Registerer: r,
 		RequestDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",

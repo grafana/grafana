@@ -22,7 +22,6 @@ import (
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -82,6 +81,7 @@ type Alertmanager struct {
 	Settings *setting.Cfg       `inject:""`
 	SQLStore *sqlstore.SQLStore `inject:""`
 	Store    store.AlertingStore
+	Metrics  *metrics.Metrics `inject:""`
 
 	notificationLog *nflog.Log
 	marker          types.Marker
@@ -101,7 +101,6 @@ type Alertmanager struct {
 
 	stageMetrics      *notify.Metrics
 	dispatcherMetrics *dispatch.DispatcherMetrics
-	ngMetrics         *metrics.Metrics
 
 	reloadConfigMtx sync.RWMutex
 	config          []byte
@@ -119,16 +118,18 @@ func (am *Alertmanager) IsDisabled() bool {
 }
 
 func (am *Alertmanager) Init() error {
-	return am.InitWithRegisterer(prometheus.DefaultRegisterer)
+	return am.InitWithMetrics(am.Metrics)
 }
 
-func (am *Alertmanager) InitWithRegisterer(r prometheus.Registerer) (err error) {
+// InitWithMetrics uses the supplied metrics for instantiation and
+// allows testware to circumvent duplicate registration errors.
+func (am *Alertmanager) InitWithMetrics(m *metrics.Metrics) (err error) {
 	am.stopc = make(chan struct{})
 	am.logger = log.New("alertmanager")
-	am.marker = types.NewMarker(r)
-	am.stageMetrics = notify.NewMetrics(r)
-	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(r)
-	am.ngMetrics = metrics.NewMetrics(r)
+	am.marker = types.NewMarker(m.Registerer)
+	am.stageMetrics = notify.NewMetrics(m.Registerer)
+	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(m.Registerer)
+	am.Metrics = m
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	// Initialize the notification log
@@ -143,7 +144,7 @@ func (am *Alertmanager) InitWithRegisterer(r prometheus.Registerer) (err error) 
 	}
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
-		Metrics:      r,
+		Metrics:      m.Registerer,
 		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
 		Retention:    retentionNotificationsAndSilences,
 	})
@@ -464,9 +465,9 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 		}
 
 		if alert.EndsAt.After(now) {
-			am.ngMetrics.Firing().Inc()
+			am.Metrics.Firing().Inc()
 		} else {
-			am.ngMetrics.Resolved().Inc()
+			am.Metrics.Resolved().Inc()
 		}
 
 		if err := alert.Validate(); err != nil {
@@ -475,7 +476,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			}
 			validationErr.Alerts = append(validationErr.Alerts, a)
 			validationErr.Errors = append(validationErr.Errors, err)
-			am.ngMetrics.Invalid().Inc()
+			am.Metrics.Invalid().Inc()
 			continue
 		}
 
