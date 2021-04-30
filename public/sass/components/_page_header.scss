@@ -9,6 +9,12 @@
       top: 1px;
     }
   }
+
+  margin-top: $space-md;
+
+  @include media-breakpoint-up(md) {
+    margin-top: 0;
+  }
 }
 
 .page-header__inner {
