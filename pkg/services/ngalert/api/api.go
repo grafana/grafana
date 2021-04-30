@@ -3,8 +3,8 @@ package api
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/go-macaron/binding"
 
@@ -23,11 +23,6 @@ import (
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
-
-// metrics are a globally registered metric suite for alerting.
-// TODO: refactor testware to allow these to be created without
-// panicking on duplicate registration, thus enabling non-global vars.
-var metrics = NewMetrics(prometheus.DefaultRegisterer)
 
 type Alertmanager interface {
 	// Configuration
@@ -60,7 +55,7 @@ type API struct {
 }
 
 // RegisterAPIEndpoints registers API handlers
-func (api *API) RegisterAPIEndpoints() {
+func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 	logger := log.New("ngalert.api")
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
@@ -71,26 +66,26 @@ func (api *API) RegisterAPIEndpoints() {
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
-	), metrics)
+	), m)
 	// Register endpoints for proxing to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
-	), metrics)
+	), m)
 	// Register endpoints for proxing to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		RulerSrv{DatasourceCache: api.DatasourceCache, store: api.RuleStore, log: logger},
-	), metrics)
+	), m)
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
 		AlertingProxy:   proxy,
 		Cfg:             api.Cfg,
 		DataService:     api.DataService,
 		DatasourceCache: api.DatasourceCache,
 		log:             logger,
-	}, metrics)
+	}, m)
 
 	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {

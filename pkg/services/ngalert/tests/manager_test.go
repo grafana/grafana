@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
 )
+
+var nilMetrics = metrics.NewMetrics(nil)
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
@@ -775,7 +778,7 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"))
+		st := state.NewManager(log.New("test_state_manager"), nilMetrics)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(tc.alertRule, res)
