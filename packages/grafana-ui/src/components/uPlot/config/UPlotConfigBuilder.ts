@@ -26,6 +26,9 @@ export class UPlotConfigBuilder {
     this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
   }
 
+  // Exposed to let the container know the primary scale keys
+  scaleKeys: [string, string] = ['', ''];
+
   addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]) {
     pluginLog('UPlotConfigBuilder', false, 'addHook', type);
 

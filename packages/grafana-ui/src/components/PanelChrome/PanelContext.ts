@@ -6,7 +6,7 @@ export interface PanelContext {
   eventBus: EventBus;
 }
 
-const PanelContextRoot = React.createContext<PanelContext>({
+export const PanelContextRoot = React.createContext<PanelContext>({
   eventBus: new EventBusSrv(),
 });
 

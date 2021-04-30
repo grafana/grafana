@@ -1,6 +1,14 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import { DashboardCursorSync, DataFrame, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
+import {
+  DashboardCursorSync,
+  DataFrame,
+  DataHoverEvent,
+  FieldMatcherID,
+  fieldMatchers,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
@@ -11,6 +19,8 @@ import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { withTheme2 } from '../../themes/ThemeContext';
+import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
+import { Unsubscribable } from 'rxjs';
 
 /**
  * @internal -- not a public API
@@ -42,6 +52,10 @@ export interface GraphNGState {
 }
 
 class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+  subscriptions: Unsubscribable[] = [];
+
   constructor(props: GraphNGProps) {
     super(props);
 
@@ -54,13 +68,52 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     if (!alignedData) {
       return;
     }
-    const config = preparePlotConfigBuilder(alignedData, props.theme, this.getTimeRange, this.getTimeZone, props.sync);
 
     this.state = {
       alignedDataFrame: alignedData,
       data: preparePlotData(alignedData),
-      config,
     };
+  }
+
+  componentDidMount() {
+    const { alignedDataFrame } = this.state;
+
+    this.panelContext = this.context as PanelContext;
+    console.log('PANEL Context', this.panelContext);
+    const { eventBus } = this.panelContext;
+
+    const config = preparePlotConfigBuilder(
+      alignedDataFrame,
+      this.props.theme,
+      this.getTimeRange,
+      this.getTimeZone,
+      eventBus
+    );
+    this.setState({ config });
+
+    this.subscriptions.push(
+      eventBus.subscribe(DataHoverEvent, (evt) => {
+        if (evt.origin === eventBus) {
+          console.log('skip self?');
+          return;
+        }
+
+        const scales = this.state.config?.scaleKeys;
+        if (scales) {
+          const x = evt.payload.point[scales[0]];
+          const y = evt.payload.point[scales[1]];
+
+          // const pX = (x==null) ? -10 : client.valToPos(x, scales[0]);
+          console.log('DataHoverEvent //', x, y);
+        }
+      })
+    );
+  }
+
+  componentWillUnmount() {
+    for (const sub of this.subscriptions) {
+      sub.unsubscribe();
+    }
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
@@ -102,7 +155,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
           theme,
           this.getTimeRange,
           this.getTimeZone,
-          this.props.sync
+          this.panelContext.eventBus
         );
 
         stateUpdate = { ...stateUpdate, config };

@@ -3,8 +3,11 @@ import { isNumber } from 'lodash';
 import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
   ArrayVector,
-  DashboardCursorSync,
   DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  DataHoverPayload,
+  EventBus,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -28,7 +31,6 @@ import {
   ScaleOrientation,
 } from '../uPlot/config';
 import { collectStackingGroups } from '../uPlot/utils';
-import { uPlotGlobalEvents } from './events';
 import uPlot from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -89,7 +91,7 @@ export function preparePlotConfigBuilder(
   theme: GrafanaThemeV2,
   getTimeRange: () => TimeRange,
   getTimeZone: () => TimeZone,
-  sync?: DashboardCursorSync
+  eventBus: EventBus
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder(getTimeZone);
 
@@ -255,22 +257,38 @@ export function preparePlotConfigBuilder(
   }
 
   // Always publish events
-  const syncMode = sync ?? DashboardCursorSync.Off;
-  const cursorSync: uPlot.Cursor.Sync = {
-    key: uPlotGlobalEvents.globalKey, // + '/' + xScaleKey + '/' + yScaleKey,
-    filters: {
-      pub: uPlotGlobalEvents.filter,
+  builder.scaleKeys = [xScaleKey, yScaleKey];
+  const payload: DataHoverPayload = {
+    point: {
+      [xScaleKey]: null,
+      [yScaleKey]: null,
     },
-    setSeries: syncMode === DashboardCursorSync.Tooltip,
-    scales: [xScaleKey, yScaleKey],
-    match: [() => true, () => true],
+    data: frame,
   };
-  if (syncMode === DashboardCursorSync.Off) {
-    cursorSync.key = `${uPlotGlobalEvents.localPrefix}${counter++}`;
-  }
-
+  const hoverEvent = new DataHoverEvent(payload);
   builder.setCursor({
-    sync: cursorSync,
+    sync: {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          payload.columnIndex = dataIdx;
+          if (x < 0 && y < 0) {
+            payload.point[xScaleKey] = null;
+            payload.point[yScaleKey] = null;
+            eventBus.publish(new DataHoverClearEvent(payload));
+          } else {
+            // convert the points
+            payload.point[xScaleKey] = src.posToVal(x, xScaleKey);
+            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
+            eventBus.publish(hoverEvent);
+          }
+          return false; // always
+        },
+      },
+      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
+      scales: builder.scaleKeys,
+      match: [() => true, () => true],
+    },
   });
 
   return builder;
@@ -283,5 +301,3 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
   }
   return names;
 }
-
-let counter = 0;
