@@ -208,8 +208,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		return
 	}
 
-	e.log.Debug("SQL query after interpolation", "sqlQuery", interpolatedQuery)
-
 	errAppendDebug := func(frameErr string, err error) {
 		var emptyFrame data.Frame
 		emptyFrame.SetMeta(&data.FrameMeta{
@@ -244,15 +242,13 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	myCs := e.queryResultTransformer.GetConverterList()
 	frame, _, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
 	if err != nil {
-		errAppendDebug("db query error", err)
+		errAppendDebug("convert frame from rows error", err)
 		return
 	}
 
 	frame.SetMeta(&data.FrameMeta{
 		ExecutedQueryString: interpolatedQuery,
 	})
-
-	e.log.Debug("SQL query result row number", "queryResult", frame.Fields[0].Len())
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
@@ -278,15 +274,13 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			}
 
 			var err error
-			if frame, err = convertSQLValueColumnToFloat(e.log, frame, i); err != nil {
+			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err)
 				return
 			}
 		}
 
 		tsSchema := frame.TimeSeriesSchema()
-		e.log.Debug("Timeseries schema", "schema", tsSchema.Type)
-
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			var err error
 			frame, err = data.LongToWide(frame, qm.FillMissing)
@@ -299,11 +293,11 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			var err error
 			frame, err = resample(frame, *qm)
 			if err != nil {
-				e.log.Debug("Failed to resample dataframe", "err", err)
+				e.log.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
 			if err := trim(frame, *qm); err != nil {
-				e.log.Debug("Failed to trim dataframe", "err", err)
+				e.log.Error("Failed to trim dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
 			}
 		}
@@ -808,7 +802,7 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 
 // convertSQLValueColumnToFloat converts timeseries value column to float.
 //nolint: gocyclo
-func convertSQLValueColumnToFloat(logger log.Logger, frame *data.Frame, Index int) (*data.Frame, error) {
+func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
 	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
 	}
@@ -823,7 +817,6 @@ func convertSQLValueColumnToFloat(logger log.Logger, frame *data.Frame, Index in
 	newField.Name = origin.Name
 	newField.Labels = origin.Labels
 
-	logger.Debug("SQL column type converting to float64", "sqlConvertFloat64", valueType)
 	switch valueType {
 	case data.FieldTypeInt64:
 		convertInt64ToFloat64(frame.Fields[Index], newField)
