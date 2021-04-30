@@ -1,4 +1,4 @@
-package apigrpc
+package apiserver
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	logger = log.New("api_grpc")
+	logger = log.New("plugin_grpc_api")
 )
 
 func init() {
@@ -39,7 +39,7 @@ type GRPCAPIServer struct {
 }
 
 func (s *GRPCAPIServer) loadTLSCredentials() (credentials.TransportCredentials, error) {
-	serverCert, err := tls.LoadX509KeyPair(s.Cfg.GRPCCertFile, s.Cfg.GRPCKeyFile)
+	serverCert, err := tls.LoadX509KeyPair(s.Cfg.PluginGRPCCertFile, s.Cfg.PluginGRPCKeyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -52,14 +52,14 @@ func (s *GRPCAPIServer) loadTLSCredentials() (credentials.TransportCredentials, 
 
 // Init Receiver.
 func (s *GRPCAPIServer) Init() error {
-	logger.Info("GRPCAPIServer initialization", "address", s.Cfg.GRPCAddress, "network", s.Cfg.GRPCNetwork, "tls", s.Cfg.GRPCUseTLS)
+	logger.Info("Plugin GRPC API server initialization", "address", s.Cfg.PluginGRPCAddress, "network", s.Cfg.PluginGRPCNetwork, "tls", s.Cfg.PluginGRPCUseTLS)
 
 	if !s.IsEnabled() {
 		logger.Debug("GRPCAPIServer not enabled, skipping initialization")
 		return nil
 	}
 
-	listener, err := net.Listen(s.Cfg.GRPCNetwork, s.Cfg.GRPCAddress)
+	listener, err := net.Listen(s.Cfg.PluginGRPCNetwork, s.Cfg.PluginGRPCAddress)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
@@ -70,7 +70,7 @@ func (s *GRPCAPIServer) Init() error {
 		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.Authenticate)),
 		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)),
 	}
-	if s.Cfg.GRPCUseTLS {
+	if s.Cfg.PluginGRPCUseTLS {
 		cred, err := s.loadTLSCredentials()
 		if err != nil {
 			return fmt.Errorf("error loading GRPC TLS Credentials: %w", err)
@@ -101,9 +101,9 @@ func (s *GRPCAPIServer) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// IsEnabled returns true if the Grafana Live feature is enabled.
+// IsEnabled returns true if feature flag is on.
 func (s *GRPCAPIServer) IsEnabled() bool {
-	return s.Cfg.IsLiveEnabled() // turn on when Live on for now.
+	return s.Cfg.IsPluginAPIServerEnabled()
 }
 
 func (s GRPCAPIServer) PublishStream(ctx context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {

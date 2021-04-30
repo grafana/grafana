@@ -15,10 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/grafana/grafana/pkg/apigrpc"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	_ "github.com/grafana/grafana/pkg/plugins/apiserver"
 	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"

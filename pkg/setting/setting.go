@@ -208,12 +208,6 @@ type Cfg struct {
 	EnableGzip       bool
 	EnforceDomain    bool
 
-	GRPCNetwork  string
-	GRPCAddress  string
-	GRPCUseTLS   bool
-	GRPCCertFile string
-	GRPCKeyFile  string
-
 	// build
 	BuildVersion string
 	BuildCommit  string
@@ -266,6 +260,13 @@ type Cfg struct {
 	MarketplaceURL           string
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
+
+	// Plugin GRPC API.
+	PluginGRPCNetwork  string
+	PluginGRPCAddress  string
+	PluginGRPCUseTLS   bool
+	PluginGRPCCertFile string
+	PluginGRPCKeyFile  string
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -385,6 +386,11 @@ type Cfg struct {
 // IsLiveEnabled returns if grafana live should be enabled
 func (cfg Cfg) IsLiveEnabled() bool {
 	return cfg.FeatureToggles["live"]
+}
+
+// IsLiveEnabled returns if grafana live should be enabled
+func (cfg Cfg) IsPluginAPIServerEnabled() bool {
+	return cfg.FeatureToggles["plugin_api_server"]
 }
 
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
@@ -1350,34 +1356,34 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 }
 
 func (cfg *Cfg) readGRPCAPIServerSettings(iniFile *ini.File) error {
-	server := iniFile.Section("grpc_api_server")
-	cfg.GRPCUseTLS = server.Key("use_tls").MustBool(false)
-	cfg.GRPCCertFile = server.Key("cert_file").String()
-	cfg.GRPCKeyFile = server.Key("cert_key").String()
-	cfg.GRPCNetwork = valueAsString(server, "network", "unix")
-	cfg.GRPCAddress = valueAsString(server, "address", "")
-	errPrefix := "grpc_api_server:"
-	switch cfg.GRPCNetwork {
+	server := iniFile.Section("plugin_grpc_api")
+	cfg.PluginGRPCUseTLS = server.Key("use_tls").MustBool(false)
+	cfg.PluginGRPCCertFile = server.Key("cert_file").String()
+	cfg.PluginGRPCKeyFile = server.Key("cert_key").String()
+	cfg.PluginGRPCNetwork = valueAsString(server, "network", "unix")
+	cfg.PluginGRPCAddress = valueAsString(server, "address", "")
+	errPrefix := "plugin_grpc_api:"
+	switch cfg.PluginGRPCNetwork {
 	case "unix":
-		if cfg.GRPCAddress != "" {
+		if cfg.PluginGRPCAddress != "" {
 			// Explicitly provided path for unix domain socket.
-			if stat, err := os.Stat(cfg.GRPCAddress); os.IsNotExist(err) {
+			if stat, err := os.Stat(cfg.PluginGRPCAddress); os.IsNotExist(err) {
 				// File does not exist - nice, nothing to do.
 			} else if err != nil {
-				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCAddress)
+				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.PluginGRPCAddress)
 			} else {
 				if stat.Mode()&fs.ModeSocket == 0 {
-					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCAddress)
+					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.PluginGRPCAddress)
 				}
 				// Unix domain socket file, should be safe to remove.
-				err := os.Remove(cfg.GRPCAddress)
+				err := os.Remove(cfg.PluginGRPCAddress)
 				if err != nil {
-					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCAddress)
+					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.PluginGRPCAddress)
 				}
 			}
 		} else {
 			// Use temporary file path for a unix domain socket.
-			tf, err := ioutil.TempFile("", "gf_grpc_api")
+			tf, err := ioutil.TempFile("", "gf_plugin_grpc_api")
 			if err != nil {
 				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
 			}
@@ -1388,14 +1394,14 @@ func (cfg *Cfg) readGRPCAPIServerSettings(iniFile *ini.File) error {
 			if err := os.Remove(unixPath); err != nil {
 				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
 			}
-			cfg.GRPCAddress = unixPath
+			cfg.PluginGRPCAddress = unixPath
 		}
 	case "tcp":
-		if cfg.GRPCAddress == "" {
-			cfg.GRPCAddress = "127.0.0.1:10000"
+		if cfg.PluginGRPCAddress == "" {
+			cfg.PluginGRPCAddress = "127.0.0.1:10000"
 		}
 	default:
-		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCNetwork)
+		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.PluginGRPCNetwork)
 	}
 	return nil
 }

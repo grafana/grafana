@@ -1,4 +1,4 @@
-package apigrpc
+package apiserver
 
 import "context"
 
