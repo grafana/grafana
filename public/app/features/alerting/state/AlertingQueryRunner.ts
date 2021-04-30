@@ -6,21 +6,24 @@ import {
   compareDataFrameStructures,
   dataFrameFromJSON,
   DataFrameJSON,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
   rangeUtil,
+  TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, toDataQueryError } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
-import { GrafanaExpressionModel, GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 import { getTimeRangeForExpression } from '../unified/utils/timeRange';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
-interface AlertingQueryResult {
+export interface AlertingQueryResult {
   frames: DataFrameJSON[];
 }
 
-interface AlertingQueryResponse {
+export interface AlertingQueryResponse {
   results: Record<string, AlertingQueryResult>;
 }
 export class AlertingQueryRunner {
@@ -28,7 +31,7 @@ export class AlertingQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult: Record<string, PanelData>;
 
-  constructor() {
+  constructor(private backendSrv = getBackendSrv()) {
     this.subject = new ReplaySubject(1);
     this.lastResult = {};
   }
@@ -43,12 +46,16 @@ export class AlertingQueryRunner {
       return this.subject.next(empty);
     }
 
-    this.subscription = runRequest(queries).subscribe({
+    this.subscription = runRequest(this.backendSrv, queries).subscribe({
       next: (dataPerQuery) => {
+        const nextResult: Record<string, PanelData> = {};
+
         for (const [refId, data] of Object.entries(dataPerQuery)) {
           const previous = this.lastResult[refId];
-          this.lastResult[refId] = setStructureRevision(data, previous);
+          nextResult[refId] = setStructureRevision(data, previous);
         }
+
+        this.lastResult = nextResult;
         this.subject.next(this.lastResult);
       },
       error: (error) => console.error('PanelQueryRunner Error', error),
@@ -60,6 +67,24 @@ export class AlertingQueryRunner {
       return;
     }
     this.subscription.unsubscribe();
+
+    const nextResult: Record<string, PanelData> = {};
+    let loading = false;
+
+    for (const [refId, data] of Object.entries(this.lastResult)) {
+      if (data.state === LoadingState.Loading) {
+        loading = true;
+      }
+
+      nextResult[refId] = {
+        ...data,
+        state: LoadingState.Done,
+      };
+    }
+
+    if (loading) {
+      this.subject.next(nextResult);
+    }
   }
 
   destroy() {
@@ -73,7 +98,7 @@ export class AlertingQueryRunner {
   }
 }
 
-const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelData>> => {
+const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable<Record<string, PanelData>> => {
   const initial = initialState(queries, LoadingState.Loading);
   const request = {
     data: { data: queries },
@@ -87,7 +112,7 @@ const runRequest = (queries: GrafanaQuery[]): Observable<Record<string, PanelDat
     .pipe(
       map(mapToPanelData(initial)),
       catchError(mapToError(initial)),
-      finalize(cancelNetworkRequestsOnUnsubscribe(request)),
+      finalize(cancelNetworkRequestsOnUnsubscribe(backendSrv, request)),
       share()
     );
 
@@ -99,13 +124,25 @@ const initialState = (queries: GrafanaQuery[], state: LoadingState): Record<stri
     dataByQuery[query.refId] = {
       state,
       series: [],
-      timeRange: rangeUtil.relativeToTimeRange(
-        query.relativeTimeRange ?? getTimeRangeForExpression(query.model as GrafanaExpressionModel, queries)
-      ),
+      timeRange: getTimeRange(query, queries),
     };
 
     return dataByQuery;
   }, {});
+};
+
+const getTimeRange = (query: GrafanaQuery, queries: GrafanaQuery[]): TimeRange => {
+  if (isExpressionQuery(query.model)) {
+    const relative = getTimeRangeForExpression(query.model, queries);
+    return rangeUtil.relativeToTimeRange(relative);
+  }
+
+  if (!query.relativeTimeRange) {
+    console.warn(`Query with refId: ${query.refId} did not have any relative time range, using default.`);
+    return getDefaultTimeRange();
+  }
+
+  return rangeUtil.relativeToTimeRange(query.relativeTimeRange);
 };
 
 const mapToPanelData = (
@@ -146,10 +183,10 @@ const mapToError = (
   };
 };
 
-const cancelNetworkRequestsOnUnsubscribe = (request: BackendSrvRequest): (() => void) => {
+const cancelNetworkRequestsOnUnsubscribe = (backendSrv: BackendSrv, request: BackendSrvRequest): (() => void) => {
   return () => {
     if (request.requestId) {
-      getBackendSrv().resolveCancelerIfExists(request.requestId);
+      backendSrv.resolveCancelerIfExists(request.requestId);
     }
   };
 };

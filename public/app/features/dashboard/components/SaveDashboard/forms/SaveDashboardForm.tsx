@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { Button, Checkbox, Form, HorizontalGroup, TextArea } from '@grafana/ui';
+import { Button, Checkbox, Form, Modal, TextArea } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { SaveDashboardFormProps } from '../types';
@@ -36,7 +36,7 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
     >
       {({ register, errors }) => (
         <>
-          <div className="gf-form-group">
+          <div>
             {hasTimeChanged && (
               <Checkbox
                 label="Save current time range as dashboard default"
@@ -58,14 +58,14 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
             <TextArea name="message" ref={register} placeholder="Add a note to describe your changes." autoFocus />
           </div>
 
-          <HorizontalGroup>
+          <Modal.ButtonRow>
+            <Button variant="secondary" onClick={onCancel} fill="outline">
+              Cancel
+            </Button>
             <Button type="submit" aria-label={selectors.pages.SaveDashboardModal.save}>
               Save
             </Button>
-            <Button variant="secondary" onClick={onCancel}>
-              Cancel
-            </Button>
-          </HorizontalGroup>
+          </Modal.ButtonRow>
         </>
       )}
     </Form>

@@ -6,9 +6,8 @@ export const SAMPLE_QUERIES = [
       from: 21600,
       to: 0,
     },
+    datasourceUid: '000000004',
     model: {
-      datasource: 'gdev-testdata',
-      datasourceUid: '000000004',
       intervalMs: 1000,
       maxDataPoints: 100,
       pulseWave: {
@@ -26,6 +25,11 @@ export const SAMPLE_QUERIES = [
   {
     refId: 'B',
     queryType: '',
+    relativeTimeRange: {
+      from: 0,
+      to: 0,
+    },
+    datasourceUid: '-100',
     model: {
       conditions: [
         {
@@ -44,8 +48,6 @@ export const SAMPLE_QUERIES = [
           },
         },
       ],
-      datasource: '__expr__',
-      datasourceUid: '-100',
       intervalMs: 1000,
       maxDataPoints: 100,
       refId: 'B',

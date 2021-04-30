@@ -14,7 +14,7 @@ export const getFormStyles = stylesFactory(
     console.warn('getFormStyles is deprecated');
 
     return {
-      label: getLabelStyles(theme.v1),
+      label: getLabelStyles(theme),
       legend: getLegendStyles(theme.v1),
       fieldValidationMessage: getFieldValidationMessageStyles(theme.v1),
       button: getButtonStyles({
@@ -23,7 +23,7 @@ export const getFormStyles = stylesFactory(
         size: options.size,
       }),
       input: getInputStyles({ theme, invalid: options.invalid }),
-      checkbox: getCheckboxStyles(theme.v1),
+      checkbox: getCheckboxStyles(theme),
     };
   }
 );

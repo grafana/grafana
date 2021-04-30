@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
-import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveDataStream } from '@grafana/runtime';
+import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import { Observable, of, merge } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
@@ -53,7 +53,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         }
 
         queries.push(
-          getLiveDataStream({
+          getGrafanaLiveSrv().getDataStream({
             key: `${request.requestId}.${counter++}`,
             addr: addr!,
             filter,

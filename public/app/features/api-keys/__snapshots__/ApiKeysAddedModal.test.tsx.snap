@@ -1,79 +1,40 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div
-  className="modal-body"
+<Modal
+  isOpen={true}
+  onClickBackdrop={[MockFunction]}
+  onDismiss={[MockFunction]}
+  title="API Key Created"
 >
-  <div
-    className="modal-header"
+  <Field
+    label="Key"
   >
-    <h2
-      className="modal-header-title"
+    <span
+      className="css-ypoxjz"
     >
-      <Icon
-        name="key-skeleton-alt"
-        size="lg"
-      />
-      <span
-        className="p-l-1"
-      >
-        API Key Created
-      </span>
-    </h2>
-    <a
-      className="modal-header-close"
-      ng-click="dismiss();"
-    >
-      <Icon
-        name="times"
-      />
-    </a>
-  </div>
-  <div
-    className="modal-content"
+      api key test
+    </span>
+  </Field>
+  <Alert
+    severity="info"
+    title="You will only be able to view this key here once!"
   >
-    <div
-      className="gf-form-group"
-    >
-      <div
-        className="gf-form"
-      >
-        <span
-          className="gf-form-label"
-        >
-          Key
-        </span>
-        <span
-          className="gf-form-label"
-        >
-          api key test
-        </span>
-      </div>
-    </div>
-    <div
-      className="grafana-info-box"
-      style={
-        Object {
-          "border": 0,
-        }
-      }
-    >
-      You will only be able to view this key here once! It is not stored in this form, so be sure to copy it now.
-      <br />
-      <br />
-      You can authenticate a request using the Authorization HTTP header, example:
-      <br />
-      <br />
-      <pre
-        className="small"
-      >
-        curl -H "Authorization: Bearer 
-        api key test
-        " 
-        test/path
-        /api/dashboards/home
-      </pre>
-    </div>
-  </div>
-</div>
+    It is not stored in this form, so be sure to copy it now.
+  </Alert>
+  <p
+    className="text-muted"
+  >
+    You can authenticate a request using the Authorization HTTP header, example:
+  </p>
+  <pre
+    className="css-omfua5"
+  >
+    curl -H "Authorization: Bearer 
+    api key test
+    " 
+    test/path
+    /api/dashboards/home
+  </pre>
+</Modal>
 `;

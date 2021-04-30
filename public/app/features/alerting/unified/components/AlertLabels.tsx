@@ -11,10 +11,13 @@ interface Props {
 export const AlertLabels: FC<Props> = ({ labels }) => {
   const styles = useStyles(getStyles);
 
+  // transform to array of key value pairs and filter out "private" labels that start and end with double underscore
+  const pairs = Object.entries(labels).filter(([key]) => !(key.startsWith('__') && key.endsWith('__')));
+
   return (
     <div className={styles.wrapper}>
-      {Object.entries(labels).map(([k, v]) => (
-        <AlertLabel key={`${k}-${v}`} labelKey={k} value={v} />
+      {pairs.map(([key, value]) => (
+        <AlertLabel key={`${key}-${value}`} labelKey={key} value={value} />
       ))}
     </div>
   );

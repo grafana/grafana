@@ -1,6 +1,7 @@
-import { EventBusSrv } from './EventBus';
-import { BusEventWithPayload } from './types';
+import { EventBusSrv, EventBusWithSource } from './EventBus';
+import { BusEvent, BusEventWithPayload } from './types';
 import { eventFactory } from './eventFactory';
+import { DataHoverEvent } from './common';
 
 interface LoginEventPayload {
   logins: number;
@@ -44,6 +45,27 @@ describe('EventBus', () => {
 
     expect(events[0].payload.logins).toBe(10);
     expect(events.length).toBe(1);
+  });
+
+  describe('EventBusWithSource', () => {
+    it('can add sources to the source path', () => {
+      const bus = new EventBusSrv();
+      const busWithSource = new EventBusWithSource(bus, 'foo');
+      expect(busWithSource.source).toEqual('foo');
+    });
+
+    it('adds the source to the event payload', () => {
+      const bus = new EventBusSrv();
+      let events: BusEvent[] = [];
+
+      bus.subscribe(DataHoverEvent, (event) => events.push(event));
+
+      const busWithSource = new EventBusWithSource(bus, 'foo');
+      busWithSource.publish({ type: DataHoverEvent.type });
+
+      expect(events.length).toEqual(1);
+      expect(events[0].payload.source).toEqual('foo');
+    });
   });
 
   describe('Legacy emitter behavior', () => {

@@ -46,6 +46,8 @@ interface ReduceFieldOptions {
 
 /**
  * @returns an object with a key for each selected stat
+ * NOTE: This will also modify the 'field.state' object,
+ * leaving values in a cache until cleared.
  */
 export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   const { field, reducers } = options;

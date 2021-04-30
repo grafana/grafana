@@ -43,6 +43,11 @@ const (
 	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
 )
 
+const (
+	UIDLabel          = "__alert_rule_uid__"
+	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
+)
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -63,18 +68,6 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
-}
-
-func (alertRule *AlertRule) DataToString() string {
-	response := "["
-	for i, part := range alertRule.Data {
-		response += string(part.Model)
-		if i < len(alertRule.Data)-1 {
-			response += ","
-		}
-	}
-	response += "]"
-	return response
 }
 
 // AlertRuleKey is the alert definition identifier

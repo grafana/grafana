@@ -1,7 +1,7 @@
 import { createTheme, GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
 import hoistNonReactStatics from 'hoist-non-react-statics';
-import React, { useContext, useEffect } from 'react';
-import { Themeable } from '../types/theme';
+import React, { useContext } from 'react';
+import { Themeable, Themeable2 } from '../types/theme';
 import { stylesFactory } from './stylesFactory';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
@@ -42,8 +42,8 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
 };
 
 /** @alpha */
-export const withTheme2 = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
-  const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = (props) => {
+export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: React.ComponentType<P>) => {
+  const WithTheme: React.FunctionComponent<Subtract<P, Themeable2>> = (props) => {
     /**
      * If theme context is mocked, let's use it instead of the original context
      * This is used in tests when mocking theme using mockThemeContext function defined below
@@ -86,12 +86,6 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
     memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
   }
 
-  useEffect(() => {
-    return () => {
-      memoizedStyleCreators.delete(getStyles);
-    };
-  }, [getStyles]);
-
   return memoizedStyleCreator(theme);
 }
 
@@ -110,12 +104,6 @@ export function useStyles2<T>(getStyles: (theme: GrafanaThemeV2) => T) {
     memoizedStyleCreator = stylesFactory(getStyles);
     memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
   }
-
-  useEffect(() => {
-    return () => {
-      memoizedStyleCreators.delete(getStyles);
-    };
-  }, [getStyles]);
 
   return memoizedStyleCreator(theme);
 }
