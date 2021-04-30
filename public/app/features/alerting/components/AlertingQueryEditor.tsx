@@ -5,15 +5,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
-import {
-  expressionDatasource,
-  ExpressionDatasourceID,
-  ExpressionDatasourceUID,
-} from '../../expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource, ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
 import { ExpressionQueryType } from '../../expressions/types';
-import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
+import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
   value?: GrafanaQuery[];
@@ -53,27 +49,29 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const alertingQuery: GrafanaQueryModel = {
-      refId: '',
-      datasourceUid: defaultDataSource.uid,
-      datasource: defaultDataSource.name,
-    };
-
-    onChange(addQuery(value, alertingQuery));
+    onChange(
+      addQuery(value, {
+        datasourceUid: defaultDataSource.uid,
+        model: {
+          refId: '',
+          datasource: defaultDataSource.name,
+        },
+      })
+    );
   };
 
   onNewExpressionQuery = () => {
     const { onChange, value = [] } = this.props;
-    const expressionQuery: GrafanaQueryModel = {
-      ...expressionDatasource.newQuery({
-        type: ExpressionQueryType.classic,
-        conditions: [defaultCondition],
-      }),
-      datasourceUid: ExpressionDatasourceUID,
-      datasource: ExpressionDatasourceID,
-    };
 
-    onChange(addQuery(value, expressionQuery));
+    onChange(
+      addQuery(value, {
+        datasourceUid: ExpressionDatasourceUID,
+        model: expressionDatasource.newQuery({
+          type: ExpressionQueryType.classic,
+          conditions: [defaultCondition],
+        }),
+      })
+    );
   };
 
   renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
@@ -123,14 +121,18 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const addQuery = (queries: GrafanaQuery[], model: GrafanaQueryModel): GrafanaQuery[] => {
+const addQuery = (
+  queries: GrafanaQuery[],
+  queryToAdd: Pick<GrafanaQuery, 'model' | 'datasourceUid'>
+): GrafanaQuery[] => {
   const refId = getNextRefIdChar(queries);
 
   const query: GrafanaQuery = {
+    ...queryToAdd,
     refId,
     queryType: '',
     model: {
-      ...model,
+      ...queryToAdd.model,
       hide: false,
       refId: refId,
     },

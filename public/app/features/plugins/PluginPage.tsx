@@ -17,7 +17,7 @@ import {
   UrlQueryMap,
 } from '@grafana/data';
 import { AppNotificationSeverity } from 'app/types';
-import { Alert, InfoBox, LinkButton, PluginSignatureBadge, Tooltip } from '@grafana/ui';
+import { Alert, LinkButton, PluginSignatureBadge, Tooltip } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -170,9 +170,6 @@ class PluginPage extends PureComponent<Props, State> {
               <LinkButton fill="text" onClick={this.showUpdateInfo}>
                 Update Available!
               </LinkButton>
-              {/*<a href="#" onClick={this.showUpdateInfo}>*/}
-              {/*  Update Available!*/}
-              {/*</a>*/}
             </Tooltip>
           </div>
         )}
@@ -283,11 +280,10 @@ class PluginPage extends PureComponent<Props, State> {
     }
 
     return (
-      <InfoBox
+      <Alert
         aria-label={selectors.pages.PluginPage.signatureInfo}
         severity={plugin.meta.signature !== PluginSignatureStatus.valid ? 'warning' : 'info'}
-        urlTitle="Read more about plugins signing"
-        url="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
+        title="Plugin signature"
       >
         <PluginSignatureBadge
           status={plugin.meta.signature}
@@ -303,7 +299,15 @@ class PluginPage extends PureComponent<Props, State> {
           {plugin.meta.signature !== PluginSignatureStatus.valid &&
             'Grafana Labs can’t guarantee the integrity of this unsigned plugin. Ask the plugin author to request it to be signed.'}
         </p>
-      </InfoBox>
+        <a
+          href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
+          className="external-link"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Read more about plugins signing.
+        </a>
+      </Alert>
     );
   }
 

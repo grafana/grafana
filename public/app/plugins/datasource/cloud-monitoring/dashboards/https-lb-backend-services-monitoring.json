@@ -1,9 +1,24 @@
 {
   "__inputs": [],
   "__requires": [
-    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "7.3.0-pre" },
-    { "type": "panel", "id": "graph", "name": "Graph", "version": "" },
-    { "type": "datasource", "id": "stackdriver", "name": "Google Cloud Monitoring", "version": "1.0.0" }
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "7.3.0-pre"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "stackdriver",
+      "name": "Google Cloud Monitoring",
+      "version": "1.0.0"
+    }
   ],
   "annotations": {
     "list": [
@@ -30,10 +45,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "hiddenSeries": false,
       "id": 1,
       "legend": {
@@ -44,16 +69,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -61,29 +88,22 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Backend Request Count by Code Class",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
       "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
           "metricQuery": {
             "aliasBy": "",
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_RATE",
-            "filters": ["resource.type", "=", "https_lb_rule"],
+            "editorMode": "visual",
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
             "groupBys": [
               "resource.label.url_map_name",
               "resource.label.backend_target_name",
@@ -91,12 +111,56 @@
             ],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_request_count",
+            "perSeriesAligner": "ALIGN_RATE",
             "projectName": "$project",
+            "query": "",
             "unit": "1",
             "valueType": "INT64"
-          }
+          },
+          "queryType": "metrics",
+          "refId": "A"
         }
-      ]
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Backend Request Count by Code Class",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -104,10 +168,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "hiddenSeries": false,
       "id": 2,
       "legend": {
@@ -118,16 +192,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -135,29 +211,21 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Backend Request Count by Path",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
       "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
           "metricQuery": {
             "aliasBy": "",
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_RATE",
-            "filters": ["resource.type", "=", "https_lb_rule"],
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
             "groupBys": [
               "resource.label.url_map_name",
               "resource.label.backend_target_name",
@@ -165,12 +233,55 @@
             ],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_request_count",
+            "perSeriesAligner": "ALIGN_RATE",
             "projectName": "$project",
             "unit": "1",
             "valueType": "INT64"
-          }
+          },
+          "queryType": "metrics",
+          "refId": "A"
         }
-      ]
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Backend Request Count by Path",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -178,10 +289,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
       "hiddenSeries": false,
       "id": 3,
       "legend": {
@@ -192,16 +313,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -209,31 +332,58 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
+      "targets": [
+        {
+          "mqlQuery": {
+            "aliasBy": "",
+            "expression": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| { t_0:\n      filter metric.response_code_class = 500\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)]\n  ; t_1:\n      ident\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)] }\n| outer_join [0]\n| value\n    [t_0_value_backend_request_count_aggregate_div:\n       div(t_0.value_backend_request_count_aggregate,\n         t_1.value_backend_request_count_aggregate)]",
+            "projectName": "$project",
+            "query": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| { t_0:\n      filter metric.response_code_class = 500\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)]\n  ; t_1:\n      ident\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)] }\n| outer_join [0]\n| value\n    [t_0_value_backend_request_count_aggregate_div:\n       div(t_0.value_backend_request_count_aggregate,\n         t_1.value_backend_request_count_aggregate)]"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
       "title": "Error Rate",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
       "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
       "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
-      "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
-          "mqlQuery": {
-            "projectName": "$project",
-            "query": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| { t_0:\n      filter metric.response_code_class = 500\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)]\n  ; t_1:\n      ident\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)] }\n| outer_join [0]\n| value\n    [t_0_value_backend_request_count_aggregate_div:\n       div(t_0.value_backend_request_count_aggregate,\n         t_1.value_backend_request_count_aggregate)]",
-            "expression": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| { t_0:\n      filter metric.response_code_class = 500\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)]\n  ; t_1:\n      ident\n      | align delta()\n      | group_by [resource.backend_target_name],\n          [value_backend_request_count_aggregate:\n             aggregate(value.backend_request_count)] }\n| outer_join [0]\n| value\n    [t_0_value_backend_request_count_aggregate_div:\n       div(t_0.value_backend_request_count_aggregate,\n         t_1.value_backend_request_count_aggregate)]",
-            "aliasBy": ""
-          }
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -241,10 +391,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
       "hiddenSeries": false,
       "id": 4,
       "legend": {
@@ -255,16 +415,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -272,31 +434,58 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
+      "targets": [
+        {
+          "mqlQuery": {
+            "aliasBy": "",
+            "expression": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| filter metric.response_code_class = 500\n| align delta()\n| group_by\n    [resource.matched_url_path_rule, resource.backend_target_name,\n     metric.response_code],\n    [value_backend_request_count_aggregate:\n       aggregate(value.backend_request_count)]",
+            "projectName": "$project",
+            "query": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| filter metric.response_code_class = 500\n| align delta()\n| group_by\n    [resource.matched_url_path_rule, resource.backend_target_name,\n     metric.response_code],\n    [value_backend_request_count_aggregate:\n       aggregate(value.backend_request_count)]"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
       "title": "Error Count by Path and Code",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
       "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
       "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
-      "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
-          "mqlQuery": {
-            "projectName": "$project",
-            "query": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| filter metric.response_code_class = 500\n| align delta()\n| group_by\n    [resource.matched_url_path_rule, resource.backend_target_name,\n     metric.response_code],\n    [value_backend_request_count_aggregate:\n       aggregate(value.backend_request_count)]",
-            "expression": "fetch https_lb_rule::loadbalancing.googleapis.com/https/backend_request_count\n| filter metric.response_code_class = 500\n| align delta()\n| group_by\n    [resource.matched_url_path_rule, resource.backend_target_name,\n     metric.response_code],\n    [value_backend_request_count_aggregate:\n       aggregate(value.backend_request_count)]",
-            "aliasBy": ""
-          }
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -304,10 +493,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
       "hiddenSeries": false,
       "id": 5,
       "legend": {
@@ -318,16 +517,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -335,72 +536,126 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
+      "targets": [
+        {
+          "metricQuery": {
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "crossSeriesReducer": "REDUCE_PERCENTILE_95",
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
+            "groupBys": [
+              "resource.label.url_map_name",
+              "resource.label.backend_target_name"
+            ],
+            "metricKind": "DELTA",
+            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "projectName": "$project",
+            "unit": "ms",
+            "valueType": "DISTRIBUTION"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        },
+        {
+          "metricQuery": {
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "crossSeriesReducer": "REDUCE_PERCENTILE_05",
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
+            "groupBys": [],
+            "metricKind": "DELTA",
+            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "projectName": "$project",
+            "unit": "ms",
+            "valueType": "DISTRIBUTION"
+          },
+          "queryType": "metrics",
+          "refId": "B"
+        },
+        {
+          "metricQuery": {
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "crossSeriesReducer": "REDUCE_PERCENTILE_50",
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
+            "groupBys": [],
+            "metricKind": "DELTA",
+            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "projectName": "$project",
+            "unit": "ms",
+            "valueType": "DISTRIBUTION"
+          },
+          "queryType": "metrics",
+          "refId": "C"
+        }
+      ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
       "title": "Backend Latency",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
       "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
       "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
-      "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
-            "alignmentPeriod": "$alignmentPeriod",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_95",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "filters": ["resource.type", "=", "https_lb_rule"],
-            "groupBys": ["resource.label.url_map_name", "resource.label.backend_target_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          }
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         },
         {
-          "queryType": "metrics",
-          "refId": "B",
-          "metricQuery": {
-            "aliasBy": "",
-            "alignmentPeriod": "$alignmentPeriod",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_05",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "filters": ["resource.type", "=", "https_lb_rule"],
-            "groupBys": [],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          }
-        },
-        {
-          "queryType": "metrics",
-          "refId": "C",
-          "metricQuery": {
-            "aliasBy": "",
-            "alignmentPeriod": "$alignmentPeriod",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_50",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "filters": ["resource.type", "=", "https_lb_rule"],
-            "groupBys": [],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          }
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -408,10 +663,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
       "hiddenSeries": false,
       "id": 6,
       "legend": {
@@ -422,16 +687,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -439,29 +706,21 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Backend P50 Latency by Path",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
       "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
           "metricQuery": {
             "aliasBy": "",
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_PERCENTILE_50",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "filters": ["resource.type", "=", "https_lb_rule"],
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
             "groupBys": [
               "resource.label.url_map_name",
               "resource.label.backend_target_name",
@@ -469,12 +728,55 @@
             ],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
+            "perSeriesAligner": "ALIGN_DELTA",
             "projectName": "$project",
             "unit": "ms",
             "valueType": "DISTRIBUTION"
-          }
+          },
+          "queryType": "metrics",
+          "refId": "A"
         }
-      ]
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Backend P50 Latency by Path",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -482,10 +784,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
       "hiddenSeries": false,
       "id": 7,
       "legend": {
@@ -496,16 +808,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -513,38 +827,76 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
+      "targets": [
+        {
+          "metricQuery": {
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
+            "groupBys": [
+              "resource.label.url_map_name",
+              "resource.label.backend_target_name"
+            ],
+            "metricKind": "DELTA",
+            "metricType": "loadbalancing.googleapis.com/https/backend_request_bytes_count",
+            "perSeriesAligner": "ALIGN_RATE",
+            "projectName": "$project",
+            "unit": "By",
+            "valueType": "INT64"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
       "title": "Backend Request Bytes",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
       "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
       "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
-      "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
-            "alignmentPeriod": "$alignmentPeriod",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_RATE",
-            "filters": ["resource.type", "=", "https_lb_rule"],
-            "groupBys": ["resource.label.url_map_name", "resource.label.backend_target_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_request_bytes_count",
-            "projectName": "$project",
-            "unit": "By",
-            "valueType": "INT64"
-          }
+          "format": "bytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -552,10 +904,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
       "hiddenSeries": false,
       "id": 8,
       "legend": {
@@ -566,16 +928,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -583,29 +947,21 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Backend Request Bytes by Path",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
       "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
           "metricQuery": {
             "aliasBy": "",
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_RATE",
-            "filters": ["resource.type", "=", "https_lb_rule"],
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
             "groupBys": [
               "resource.label.url_map_name",
               "resource.label.backend_target_name",
@@ -613,12 +969,55 @@
             ],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_request_bytes_count",
+            "perSeriesAligner": "ALIGN_RATE",
             "projectName": "$project",
             "unit": "By",
             "valueType": "INT64"
-          }
+          },
+          "queryType": "metrics",
+          "refId": "A"
         }
-      ]
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Backend Request Bytes by Path",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -626,10 +1025,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
       "hiddenSeries": false,
       "id": 9,
       "legend": {
@@ -640,16 +1049,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -657,38 +1068,76 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
+      "targets": [
+        {
+          "metricQuery": {
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
+            "groupBys": [
+              "resource.label.url_map_name",
+              "resource.label.backend_target_name"
+            ],
+            "metricKind": "DELTA",
+            "metricType": "loadbalancing.googleapis.com/https/backend_response_bytes_count",
+            "perSeriesAligner": "ALIGN_RATE",
+            "projectName": "$project",
+            "unit": "By",
+            "valueType": "INT64"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
       "title": "Backend Response Bytes",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
       "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
       "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
-      "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
-            "alignmentPeriod": "$alignmentPeriod",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_RATE",
-            "filters": ["resource.type", "=", "https_lb_rule"],
-            "groupBys": ["resource.label.url_map_name", "resource.label.backend_target_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_response_bytes_count",
-            "projectName": "$project",
-            "unit": "By",
-            "valueType": "INT64"
-          }
+          "format": "bytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -696,10 +1145,20 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "$datasource",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
       "hiddenSeries": false,
       "id": 10,
       "legend": {
@@ -710,16 +1169,18 @@
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
-        "values": false,
-        "sideWidth": 220
+        "values": false
       },
       "lines": true,
       "linewidth": 1,
       "nullPointMode": "null",
-      "options": { "alertThreshold": true },
+      "options": {
+        "alertThreshold": true
+      },
       "percentage": false,
-      "pluginVersion": "7.4.0-pre",
+      "pluginVersion": "7.4.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -727,29 +1188,21 @@
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Backend Response Bytes by Path",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null },
       "targets": [
         {
-          "queryType": "metrics",
-          "refId": "A",
           "metricQuery": {
             "aliasBy": "",
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_RATE",
-            "filters": ["resource.type", "=", "https_lb_rule"],
+            "filters": [
+              "resource.type",
+              "=",
+              "https_lb_rule",
+              "AND",
+              "resource.label.backend_target_name",
+              "=",
+              "$backend"
+            ],
             "groupBys": [
               "resource.label.url_map_name",
               "resource.label.backend_target_name",
@@ -757,21 +1210,72 @@
             ],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_response_bytes_count",
+            "perSeriesAligner": "ALIGN_RATE",
             "projectName": "$project",
             "unit": "By",
             "valueType": "INT64"
-          }
+          },
+          "queryType": "metrics",
+          "refId": "A"
         }
-      ]
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Backend Response Bytes by Path",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
-  "tags": ["Networking", "Cloud Monitoring", "GCP"],
+  "tags": [
+    "Networking",
+    "Cloud Monitoring",
+    "GCP"
+  ],
   "templating": {
     "list": [
       {
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "Google Cloud Monitoring",
+          "value": "Google Cloud Monitoring"
+        },
         "description": null,
         "error": null,
         "hide": 0,
@@ -823,7 +1327,7 @@
       },
       {
         "allValue": null,
-        "current": { "selected": false, "text": "grafana auto", "value": "grafana-auto" },
+        "current": {},
         "datasource": "${datasource}",
         "definition": "",
         "description": null,
@@ -833,30 +1337,12 @@
         "label": "Alignment Period",
         "multi": false,
         "name": "alignmentPeriod",
-        "options": [
-          { "selected": true, "text": "grafana auto", "value": "grafana-auto" },
-          { "selected": false, "text": "stackdriver auto", "value": "stackdriver-auto" },
-          { "selected": false, "text": "cloud monitoring auto", "value": "cloud-monitoring-auto" },
-          { "selected": false, "text": "1m", "value": "+60s" },
-          { "selected": false, "text": "2m", "value": "+120s" },
-          { "selected": false, "text": "5m", "value": "+300s" },
-          { "selected": false, "text": "10m", "value": "+600s" },
-          { "selected": false, "text": "30m", "value": "+1800s" },
-          { "selected": false, "text": "1h", "value": "+3600s" },
-          { "selected": false, "text": "3h", "value": "+7200s" },
-          { "selected": false, "text": "6h", "value": "+21600s" },
-          { "selected": false, "text": "1d", "value": "+86400s" },
-          { "selected": false, "text": "3d", "value": "+259200s" },
-          { "selected": false, "text": "1w", "value": "+604800s" }
-        ],
+        "options": [],
         "query": {
           "labelKey": "",
           "loading": false,
           "projectName": "$project",
-          "projects": [
-            { "name": "project-1", "value": "project-1" },
-            { "name": "project-2", "value": "project-2" }
-          ],
+          "projects": [],
           "refId": "CloudMonitoringVariableQueryEditor-VariableQuery",
           "selectedMetricType": "actions.googleapis.com/smarthome_action/num_active_users",
           "selectedQueryType": "alignmentPeriods",
@@ -864,7 +1350,7 @@
           "selectedService": "actions.googleapis.com",
           "sloServices": []
         },
-        "refresh": 0,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -873,13 +1359,51 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${datasource}",
+        "definition": "",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "backend",
+        "options": [],
+        "query": {
+          "labelKey": "resource.label.backend_target_name",
+          "loading": false,
+          "projectName": "$project",
+          "projects": [],
+          "refId": "CloudMonitoringVariableQueryEditor-VariableQuery",
+          "selectedMetricType": "loadbalancing.googleapis.com/https/backend_latencies",
+          "selectedQueryType": "labelValues",
+          "selectedSLOService": "",
+          "selectedService": "loadbalancing.googleapis.com",
+          "sloServices": []
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },
-  "time": { "from": "now-24h", "to": "now" },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "",
   "title": "HTTP/S LB Backend Services",
   "uid": "",
-  "version": 5
+  "version": 6
 }
