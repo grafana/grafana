@@ -88,6 +88,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	ar := &alertRule{
 		OrgId:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
+		Uid:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            cond.Data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
@@ -99,12 +100,8 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Annotations:     annotations,
 		Labels:          map[string]string{},
 	}
-	var err error
-	ar.Uid, err = m.generateAlertRuleUID(ar.OrgId)
-	if err != nil {
-		return nil, err
-	}
 
+	var err error
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
 	if err != nil {
 		return nil, err
@@ -116,23 +113,6 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	}
 
 	return ar, nil
-}
-
-func (m *migration) generateAlertRuleUID(orgId int64) (string, error) {
-	for i := 0; i < 20; i++ {
-		uid := util.GenerateShortUID()
-
-		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&alertRule{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", fmt.Errorf("could not generate unique uid for alert rule")
 }
 
 type alertQuery struct {
