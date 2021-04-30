@@ -63,10 +63,10 @@ export class TextPanel extends PureComponent<Props, State> {
     }
 
     if (mode === TextMode.HTML) {
-      return this.prepareMarkdown(content);
+      return this.prepareHTML(content);
     }
 
-    return this.prepareHTML(content);
+    return this.prepareMarkdown(content);
   }
 
   render() {
