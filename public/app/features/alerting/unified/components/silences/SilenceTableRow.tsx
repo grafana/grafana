@@ -56,13 +56,17 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
         </td>
         <td className={styles.actionsCell}>
           {status.state === 'expired' ? (
-            <ActionButton icon="sync">Recreate</ActionButton>
+            <a href={`/alerting/silence/${silence.id}/edit`}>
+              <ActionButton icon="sync">Recreate</ActionButton>
+            </a>
           ) : (
             <ActionButton icon="bell" onClick={handleExpireSilenceClick}>
               Unsilence
             </ActionButton>
           )}
-          <ActionIcon href={`/alerting/silence/${silence.id}/edit`} icon="pen" tooltip="edit" />
+          {status.state !== 'expired' && (
+            <ActionIcon href={`/alerting/silence/${silence.id}/edit`} icon="pen" tooltip="edit" />
+          )}
         </td>
       </tr>
       {!isCollapsed && (
