@@ -18,9 +18,9 @@ export const MappingsConfiguration = (props: Props): JSX.Element => {
       <h3 className="page-heading">Label mappings</h3>
       {!props.showHelp && (
         <p>
-          <Button onClick={props.onRestoreHelp} type="button" variant="secondary">
-            Learn more
-          </Button>
+          <a className="external-link" target="_blank" rel="noreferrer" onClick={props.onRestoreHelp}>
+            Learn how label mappings work
+          </a>
         </p>
       )}
       {props.showHelp && <MappingsHelp onDismiss={props.onDismiss} />}
@@ -59,8 +59,6 @@ export const MappingsConfiguration = (props: Props): JSX.Element => {
             </Button>
           </InlineFieldRow>
         ))}
-      </div>
-      <div className="gf-form">
         <Button
           variant="secondary"
           icon="plus"
