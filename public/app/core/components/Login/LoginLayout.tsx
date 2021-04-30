@@ -1,20 +1,22 @@
 import React, { FC } from 'react';
 import { cx, css, keyframes } from '@emotion/css';
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { Branding } from '../Branding/Branding';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
   enterAnimation?: boolean;
 }
 export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true }) => {
-  const loginStyles = useStyles(getLoginStyles);
+  const loginStyles = useStyles2(getLoginStyles);
   return <div className={cx(loginStyles.loginInnerBox, enterAnimation && loginStyles.enterAnimation)}>{children}</div>;
 };
 
 export const LoginLayout: FC = ({ children }) => {
-  const loginStyles = useStyles(getLoginStyles);
+  const loginStyles = useStyles2(getLoginStyles);
+  const subTitle = Branding.GetLoginSubTitle();
+
   return (
     <Branding.LoginBackground className={loginStyles.container}>
       <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground())}>
@@ -22,7 +24,7 @@ export const LoginLayout: FC = ({ children }) => {
           <Branding.LoginLogo className={loginStyles.loginLogo} />
           <div className={loginStyles.titleWrapper}>
             <h1 className={loginStyles.mainTitle}>{Branding.LoginTitle}</h1>
-            <h3 className={loginStyles.subTitle}>{Branding.GetLoginSubTitle()}</h3>
+            {subTitle && <h3 className={loginStyles.subTitle}>{Branding.GetLoginSubTitle()}</h3>}
           </div>
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
@@ -43,8 +45,9 @@ to{
   transform: translate(0px, 0px);
 }`;
 
-export const getLoginStyles = (theme: GrafanaTheme) => {
-  const bgColor = theme.isDark ? theme.palette.black : theme.palette.white;
+export const getLoginStyles = (theme: GrafanaThemeV2) => {
+  const bgColor = theme.isDark ? '#000' : theme.colors.background.canvas;
+
   return {
     container: css`
       min-height: 100vh;
@@ -72,7 +75,7 @@ export const getLoginStyles = (theme: GrafanaTheme) => {
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      padding: ${theme.spacing.lg};
+      padding: ${theme.spacing(3)};
     `,
     titleWrapper: css`
       text-align: center;
@@ -82,7 +85,7 @@ export const getLoginStyles = (theme: GrafanaTheme) => {
     `,
     subTitle: css`
       font-size: ${theme.typography.size.md};
-      color: ${theme.colors.textSemiWeak};
+      color: ${theme.colors.text.secondary};
     `,
     loginContent: css`
       max-width: 550px;
@@ -95,7 +98,7 @@ export const getLoginStyles = (theme: GrafanaTheme) => {
       z-index: 1;
       min-height: 320px;
       border-radius: 3px;
-      padding: 20px 0;
+      padding: ${theme.spacing(4, 0)};
     `,
     loginOuterBox: css`
       display: flex;
@@ -104,10 +107,12 @@ export const getLoginStyles = (theme: GrafanaTheme) => {
       justify-content: center;
     `,
     loginInnerBox: css`
-      padding: ${theme.spacing.xl};
+      padding: ${theme.spacing(4)};
+
       @media (max-width: 320px) {
-        padding: ${theme.spacing.lg};
+        padding: ${theme.spacing(3)};
       }
+
       display: flex;
       flex-direction: column;
       align-items: center;

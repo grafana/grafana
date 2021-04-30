@@ -17,6 +17,7 @@ export const UserSignup: FC<{}> = () => {
         `}
         href={href}
         variant="secondary"
+        fill="outline"
       >
         Sign Up
       </LinkButton>
