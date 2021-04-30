@@ -63,6 +63,7 @@
 
   &.active {
     color: $text-color;
+    font-weight: $font-weight-semi-bold;
 
     &::before {
       content: '';
