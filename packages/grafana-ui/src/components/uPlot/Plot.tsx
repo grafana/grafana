@@ -42,6 +42,12 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
 
     ctx.plot?.destroy();
 
+    let { width, height } = this.props;
+
+    if (width === 0 && height === 0) {
+      return;
+    }
+
     const config: Options = {
       ...DEFAULT_PLOT_CONFIG,
       width: this.props.width,
@@ -63,6 +69,10 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
 
   componentDidMount() {
     this.reinitPlot();
+  }
+
+  componentWillUnmount() {
+    this.state.ctx.plot?.destroy();
   }
 
   shouldComponentUpdate(nextProps: PlotProps, nextState: object) {
