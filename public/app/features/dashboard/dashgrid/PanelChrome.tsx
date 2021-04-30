@@ -15,7 +15,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
-  EventBusWithSource,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -63,7 +62,10 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
-        eventBus: new EventBusWithSource(props.dashboard.events, props.dashboard.graphTooltip === 0),
+        eventBus: props.dashboard.events.newScopedBus(
+          `panel:${props.panel.id}`, // panelID
+          props.dashboard.graphTooltip === 0 // local only
+        ),
       },
       data: this.getInitialPanelDataState(),
     };
@@ -299,7 +301,8 @@ export class PanelChrome extends Component<Props, State> {
     });
     const panelOptions = panel.getOptions();
 
-    (this.state.context.eventBus as EventBusWithSource).updateScope(dashboard.graphTooltip === 0);
+    // Necessary? will only affect *new* subscriptions?
+    (this.state.context.eventBus as any).localOnly = dashboard.graphTooltip === 0;
 
     return (
       <>

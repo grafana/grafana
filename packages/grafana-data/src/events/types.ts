@@ -7,6 +7,7 @@ import { Unsubscribable, Observable } from 'rxjs';
 export interface BusEvent {
   readonly type: string;
   readonly payload?: any;
+  readonly origin?: EventBus;
 }
 
 /**
@@ -63,11 +64,6 @@ export interface EventBus {
   publish<T extends BusEvent>(event: T): void;
 
   /**
-   * Subscribe to single event
-   */
-  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
-
-  /**
    * Get observable of events
    */
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T>;
@@ -76,6 +72,11 @@ export interface EventBus {
    * Remove all event subscriptions
    */
   removeAllListeners(): void;
+
+  /**
+   * Returns a new bus scoped
+   */
+  newScopedBus(key: string, localOnly?: boolean): EventBus;
 }
 
 /**
@@ -89,6 +90,13 @@ export interface AppEvent<T> {
 
 /** @public */
 export interface LegacyEmitter {
+  /**
+   * Subscribe to single event
+   *
+   * NOTE: >> Moved this function from core to legacy
+   */
+  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+
   /**
    * @deprecated use $emit
    */

@@ -1,6 +1,5 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
-import { PayloadWithSource } from './common';
 import {
   EventBus,
   LegacyEmitter,
@@ -9,7 +8,6 @@ import {
   LegacyEventHandler,
   BusEvent,
   AppEvent,
-  BusEventWithPayload,
 } from './types';
 
 /**
@@ -42,6 +40,13 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
         this.emitter.off(eventType.type, handler);
       };
     });
+  }
+
+  /**
+   * Returns a new bus scoped
+   */
+  newScopedBus(key: string, localOnly?: boolean): EventBus {
+    return new ScopedEventBus([key], this, Boolean(localOnly));
   }
 
   /**
@@ -94,42 +99,49 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
 }
 
 /**
- * @alpha
- *
  * Wraps EventBus and adds a source to help with identifying if a subscriber should react to the event or not.
  */
-export class EventBusWithSource implements EventBus {
-  constructor(private eventBus: EventBus, private localOnly: boolean) {}
+class ScopedEventBus implements EventBus {
+  constructor(public path: string[], private eventBus: EventBus, private localOnly: boolean) {}
 
   publish<T extends BusEvent>(event: T): void {
-    const decoratedEvent = {
-      ...event,
-      ...{ payload: { ...event.payload, ...{ source: this } } },
-    };
-    this.eventBus.publish(decoratedEvent);
+    if (!event.origin) {
+      (event as any).origin = this;
+    }
+    this.eventBus.publish(event);
   }
 
   updateScope(localOnly: boolean) {
     this.localOnly = localOnly;
   }
 
-  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
-    return this.eventBus.subscribe(eventType, (event) => {
-      if (!this.localOnly || event.payload.source === this) {
-        handler(event);
-      }
-    });
-  }
-
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
-    return this.eventBus.getStream(eventType);
+    const stream = this.eventBus.getStream(eventType);
+    if (this.localOnly) {
+      return new Observable<T>((observer) => {
+        const sub = stream.subscribe({
+          next: (evt) => {
+            if (evt.origin === this) {
+              observer.next();
+            }
+          },
+        });
+        return () => {
+          sub.unsubscribe();
+        };
+      });
+    }
+    return stream;
   }
 
   removeAllListeners(): void {
     this.eventBus.removeAllListeners();
   }
 
-  isOwnEvent(event: BusEventWithPayload<PayloadWithSource>): boolean {
-    return event.payload.source === this;
+  /**
+   * Creates a nested event bus structure
+   */
+  newScopedBus(key: string, localOnly?: boolean): EventBus {
+    return new ScopedEventBus([...this.path, key], this, Boolean(localOnly));
   }
 }
