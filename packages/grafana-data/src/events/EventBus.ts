@@ -42,9 +42,6 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     });
   }
 
-  /**
-   * Returns a new bus scoped
-   */
   newScopedBus(key: string, localOnly?: boolean): EventBus {
     return new ScopedEventBus([key], this, Boolean(localOnly));
   }
@@ -102,6 +99,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
  * Wraps EventBus and adds a source to help with identifying if a subscriber should react to the event or not.
  */
 class ScopedEventBus implements EventBus {
+  // The path is not yet exposed, but can be used to indicate nested groups and support faster filtering
   constructor(public path: string[], private eventBus: EventBus, private localOnly: boolean) {}
 
   publish<T extends BusEvent>(event: T): void {

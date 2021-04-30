@@ -74,7 +74,9 @@ export interface EventBus {
   removeAllListeners(): void;
 
   /**
-   * Returns a new bus scoped
+   * Returns a new bus scoped that knows where it exists in a heiarchy
+   *
+   * @internal -- This is included for internal use only should not be used directly
    */
   newScopedBus(key: string, localOnly?: boolean): EventBus;
 }
