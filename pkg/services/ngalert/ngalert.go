@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/benbjohnson/clock"
 
@@ -57,8 +58,9 @@ func init() {
 
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
+	m := metrics.NewMetrics(prometheus.DefaultRegisterer)
 	ng.Log = log.New("ngalert")
-	ng.stateManager = state.NewManager(ng.Log, metrics.GlobalMetrics)
+	ng.stateManager = state.NewManager(ng.Log, m)
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
@@ -88,7 +90,7 @@ func (ng *AlertNG) Init() error {
 		Alertmanager:    ng.Alertmanager,
 		StateManager:    ng.stateManager,
 	}
-	api.RegisterAPIEndpoints()
+	api.RegisterAPIEndpoints(m)
 
 	return nil
 }

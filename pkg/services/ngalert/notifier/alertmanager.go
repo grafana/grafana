@@ -128,7 +128,7 @@ func (am *Alertmanager) InitWithRegisterer(r prometheus.Registerer) (err error) 
 	am.marker = types.NewMarker(r)
 	am.stageMetrics = notify.NewMetrics(r)
 	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(r)
-	am.ngMetrics = metrics.GlobalMetrics
+	am.ngMetrics = metrics.NewMetrics(r)
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	// Initialize the notification log
