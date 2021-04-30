@@ -9,9 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+type InstanceStore interface {
+	GetAlertInstance(cmd *models.GetAlertInstanceQuery) error
+	ListAlertInstances(cmd *models.ListAlertInstancesQuery) error
+	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
+	FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error
+}
+
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
-// nolint:unused
 func (st DBstore) GetAlertInstance(cmd *models.GetAlertInstanceQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		instance := models.AlertInstance{}
@@ -77,7 +83,6 @@ func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error 
 }
 
 // SaveAlertInstance is a handler for saving a new alert instance.
-// nolint:unused
 func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()

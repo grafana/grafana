@@ -88,10 +88,10 @@ func TestWarmStateCache(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
 	schedCfg := schedule.SchedulerCfg{
-		C:            clock.NewMock(),
-		BaseInterval: time.Second,
-		Logger:       log.New("ngalert cache warming test"),
-		Store:        dbstore,
+		C:             clock.NewMock(),
+		BaseInterval:  time.Second,
+		Logger:        log.New("ngalert cache warming test"),
+		InstanceStore: dbstore,
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
 	st := state.NewManager(schedCfg.Logger, nilMetrics)
@@ -132,9 +132,9 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		Store:     dbstore,
-		RuleStore: dbstore,
-		Logger:    log.New("ngalert schedule test"),
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Logger:        log.New("ngalert schedule test"),
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
 
