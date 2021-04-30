@@ -107,8 +107,6 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
           propsChanged;
 
         if (shouldReconfig) {
-          //console.log("shouldReconfig");
-
           newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);
         }
       }
