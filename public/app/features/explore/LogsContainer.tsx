@@ -3,15 +3,13 @@ import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { Collapse } from '@grafana/ui';
 
-import { AbsoluteTimeRange, Field, LogLevel, LogRowModel, LogsDedupStrategy, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
 import { splitOpen } from './state/main';
 import { updateTimeRange } from './state/time';
-import { toggleLogLevelAction, changeDedupStrategy } from './state/explorePane';
-import { deduplicatedRowsSelector } from './state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
@@ -34,18 +32,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
-  };
-
-  handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
-    this.props.changeDedupStrategy(this.props.exploreId, dedupStrategy);
-  };
-
-  handleToggleLogLevel = (hiddenLogLevels: LogLevel[]) => {
-    const { exploreId } = this.props;
-    this.props.toggleLogLevelAction({
-      exploreId,
-      hiddenLogLevels,
-    });
   };
 
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
@@ -80,7 +66,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       logRows,
       logsMeta,
       logsSeries,
-      dedupedRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -120,11 +105,9 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
         <LogsCrossFadeTransition visible={!isLive}>
           <Collapse label="Logs" loading={loading} isOpen>
             <Logs
-              dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
-              dedupedRows={dedupedRows}
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
@@ -132,8 +115,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               onClickFilterOutLabel={onClickFilterOutLabel}
               onStartScanning={onStartScanning}
               onStopScanning={onStopScanning}
-              onDedupStrategyChange={this.handleDedupStrategyChange}
-              onToggleLogLevel={this.handleToggleLogLevel}
               absoluteRange={absoluteRange}
               visibleRange={visibleRange}
               timeZone={timeZone}
@@ -165,9 +146,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    dedupStrategy,
   } = item;
-  const dedupedRows = deduplicatedRowsSelector(item) || undefined;
   const timeZone = getTimeZone(state.user);
 
   return {
@@ -179,8 +158,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     visibleRange: logsResult?.visibleRange,
     scanning,
     timeZone,
-    dedupStrategy,
-    dedupedRows,
     datasourceInstance,
     isLive,
     isPaused,
@@ -190,8 +167,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 }
 
 const mapDispatchToProps = {
-  changeDedupStrategy,
-  toggleLogLevelAction,
   updateTimeRange,
   splitOpen,
 };
