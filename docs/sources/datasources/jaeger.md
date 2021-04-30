@@ -33,7 +33,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
 
 ## Query traces
 
@@ -43,12 +43,12 @@ You can query by trace ID or use the search form to find traces. To query by tra
 
 To perform a search, set the query type selector to Search, then use the following fields to find traces:
 
-1. Service - Returns a list of services.
-1. Operation - Field gets populated once you select a service. It then lists the operations related to the selected service. Select [All] option to query all operations.
-1. Tags - Use values in the [logfmt](https://brandur.org/logfmt) format. For example `error=true db.statement="select * from User"`.
-1. Min Duration - Filter all traces with a duration higher than the set value. Possible values are `1.2s, 100ms, 500us`.
-1. Max Duration - Filter all traces with a duration lower than the set value. Possible values are `1.2s, 100ms, 500us`.
-1. Limit - Limits the number of traces returned.
+- Service - Returns a list of services.
+- Operation - Field gets populated once you select a service. It then lists the operations related to the selected service. Select `All` option to query all operations.
+- Tags - Use values in the [logfmt](https://brandur.org/logfmt) format. For example `error=true db.statement="select * from User"`.
+- Min Duration - Filter all traces with a duration higher than the set value. Possible values are `1.2s, 100ms, 500us`.
+- Max Duration - Filter all traces with a duration lower than the set value. Possible values are `1.2s, 100ms, 500us`.
+- Limit - Limits the number of traces returned.
 
 ## Linking Trace ID from logs
 
@@ -74,14 +74,15 @@ datasources:
     editable: true
     isDefault: false
     jsonData:
-        tracesToLogs:
-            # Field with internal link pointing to a Loki data source in Grafana.
-            # datasourceUid value must match the `datasourceUid` value of the Loki data source.
-            datasourceUid: loki
-            tags:
-              - cluster
-              - hostname
-              - namespace
-              - pod
+      tracesToLogs:
+        # Field with internal link pointing to a Loki data source in Grafana.
+        # datasourceUid value must match the `datasourceUid` value of the Loki data source.
+        datasourceUid: loki
+        tags:
+          - cluster
+          - hostname
+          - namespace
+          - pod
     secureJsonData:
-        basicAuthPassword: my_password
+      basicAuthPassword: my_password
+```
