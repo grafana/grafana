@@ -62,7 +62,7 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
                 <Button variant="primary" disabled={isSaving}>
                   Change Password
                 </Button>
-                <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`}>
+                <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">
                   Cancel
                 </LinkButton>
               </HorizontalGroup>

@@ -78,8 +78,6 @@ export class TeamMembers extends PureComponent<Props, State> {
           <div className="gf-form gf-form--grow">
             <FilterInput placeholder="Search members" value={searchMemberQuery} onChange={this.onSearchQueryChange} />
           </div>
-
-          <div className="page-action-bar__spacer" />
           <Button className="pull-right" onClick={this.onToggleAdding} disabled={isAdding || !isTeamAdmin}>
             Add member
           </Button>

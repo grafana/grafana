@@ -11,7 +11,7 @@ import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { InlineField, InlineSwitch } from '@grafana/ui';
+import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import { rangeUtil } from '@grafana/data';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { setSearchQuery } from './state/reducers';
@@ -150,13 +150,12 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   ) : null}
                   <ApiKeysForm show={isAdding} onClose={toggleIsAdding} onKeyAdded={this.onAddApiKey} />
                   {showTable ? (
-                    <>
-                      <h3 className="page-heading">Existing API keys</h3>
+                    <VerticalGroup>
                       <InlineField label="Show expired">
                         <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
                       <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
-                    </>
+                    </VerticalGroup>
                   ) : null}
                 </>
               );

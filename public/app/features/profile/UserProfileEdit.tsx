@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, VerticalGroup } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { NavModel } from '@grafana/data';
 import { UserProvider, UserAPI, LoadingStates } from 'app/core/utils/UserProvider';
@@ -34,16 +34,15 @@ export const UserProfileEdit: FC<Props> = ({ navModel }) => (
             {states.loadUser ? (
               <LoadingPlaceholder text="Loading user profile..." />
             ) : (
-              <UserProfileEditForm
-                updateProfile={api.updateUserProfile}
-                isSavingUser={states.updateUserProfile}
-                user={user!}
-              />
-            )}
-            <SharedPreferences resourceUri="user" />
-            <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
-            {!states.loadUser && (
-              <>
+              <VerticalGroup spacing="md">
+                <UserProfileEditForm
+                  updateProfile={api.updateUserProfile}
+                  isSavingUser={states.updateUserProfile}
+                  user={user!}
+                />
+
+                <SharedPreferences resourceUri="user" />
+                <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
                 <UserOrganizations
                   isLoading={states.loadOrgs}
                   setUserOrg={api.setUserOrg}
@@ -58,7 +57,7 @@ export const UserProfileEdit: FC<Props> = ({ navModel }) => (
                   sessions={sessions}
                   user={user!}
                 />
-              </>
+              </VerticalGroup>
             )}
           </Page.Contents>
         );

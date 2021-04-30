@@ -3,13 +3,14 @@ import { css, cx } from '@emotion/css';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Pagination, Tooltip, HorizontalGroup, stylesFactory, LinkButton, Input, Icon } from '@grafana/ui';
+import { Pagination, Tooltip, stylesFactory, LinkButton, Icon } from '@grafana/ui';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
 import { fetchUsers, changeQuery, changePage } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 interface OwnProps {}
 
@@ -42,27 +43,21 @@ const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
     <Page navModel={navModel}>
       <Page.Contents>
         <>
-          <div>
-            <HorizontalGroup justify="space-between">
-              <Input
-                width={40}
-                type="text"
+          <div className="page-action-bar">
+            <div className="gf-form gf-form--grow">
+              <FilterInput
                 placeholder="Search user by login, email, or name."
-                tabIndex={1}
                 autoFocus={true}
                 value={query}
-                spellCheck={false}
-                onChange={(event) => changeQuery(event.currentTarget.value)}
-                prefix={<Icon name="search" />}
+                onChange={(value) => changeQuery(value)}
               />
-              {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
-                <LinkButton href="admin/users/create" variant="primary">
-                  New user
-                </LinkButton>
-              )}
-            </HorizontalGroup>
+            </div>
+            {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
+              <LinkButton href="admin/users/create" variant="primary">
+                New user
+              </LinkButton>
+            )}
           </div>
-
           <div className={cx(styles.table, 'admin-list-table')}>
             <table className="filter-table form-inline filter-table--hover">
               <thead>

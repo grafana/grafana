@@ -38,7 +38,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
-            <VerticalGroup>
+            <VerticalGroup spacing="lg">
               <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />
               <SharedPreferences resourceUri="org" />
             </VerticalGroup>
