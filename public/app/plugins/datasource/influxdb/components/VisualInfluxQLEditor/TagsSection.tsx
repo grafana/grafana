@@ -4,6 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { InfluxQueryTag } from '../../types';
 import { toSelectableValue } from './toSelectableValue';
 import { adjustOperatorIfNeeded, getCondition, getOperator } from './tagUtils';
+import { AddButton } from './AddButton';
 
 type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '=~' | '!~';
 const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '=~', '!~'];
@@ -139,12 +140,11 @@ export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptio
           getTagValueOptions={getTagValueOptions}
         />
       ))}
-      <SegmentAsync
+      <AddButton
         allowCustomValue
-        value="+"
         loadOptions={getTagKeySegmentOptions}
-        onChange={(v) => {
-          addNewTag(v.value ?? '', tags.length === 0);
+        onAdd={(v) => {
+          addNewTag(v, tags.length === 0);
         }}
       />
     </>

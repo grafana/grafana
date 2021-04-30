@@ -5,6 +5,7 @@ import { SegmentAsync, SegmentInput, MenuItem, WithContextMenu, MenuGroup } from
 import { SelectableValue } from '@grafana/data';
 import { unwrap } from './unwrap';
 import { toSelectableValue } from './toSelectableValue';
+import { AddButton } from './AddButton';
 
 export type PartParams = Array<{
   value: string;
@@ -114,13 +115,7 @@ export const PartListSection = ({
           }}
         />
       ))}
-      <SegmentAsync<string>
-        value="+"
-        loadOptions={getNewPartOptions}
-        onChange={(v) => {
-          onAddNewPart(unwrap(v.value));
-        }}
-      />
+      <AddButton loadOptions={getNewPartOptions} onAdd={onAddNewPart} />
     </>
   );
 };
