@@ -110,6 +110,10 @@ func (m *manager) UnregisterAndStop(pluginID string) error {
 	}
 
 	m.logger.Debug("Stopping backend plugin process", "pluginId", pluginID)
+	if err := p.Decommission(); err != nil {
+		return err
+	}
+
 	if err := p.Stop(context.Background()); err != nil {
 		return err
 	}
@@ -460,6 +464,11 @@ func restartKilledProcess(ctx context.Context, p backendplugin.Plugin) error {
 			}
 			return nil
 		case <-ticker.C:
+			if p.IsDecommissioned() {
+				p.Logger().Debug("Plugin decommissioned")
+				return nil
+			}
+
 			if !p.Exited() {
 				continue
 			}

@@ -317,12 +317,13 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 }
 
 type testPlugin struct {
-	pluginID   string
-	logger     log.Logger
-	startCount int
-	stopCount  int
-	managed    bool
-	exited     bool
+	pluginID       string
+	logger         log.Logger
+	startCount     int
+	stopCount      int
+	managed        bool
+	exited         bool
+	decommissioned bool
 	backend.CollectMetricsHandlerFunc
 	backend.CheckHealthHandlerFunc
 	backend.CallResourceHandlerFunc
@@ -360,6 +361,21 @@ func (tp *testPlugin) Exited() bool {
 	tp.mutex.RLock()
 	defer tp.mutex.RUnlock()
 	return tp.exited
+}
+
+func (tp *testPlugin) Decommission() error {
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
+
+	tp.decommissioned = true
+
+	return nil
+}
+
+func (tp *testPlugin) Decommissioned(ctx context.Context) bool {
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
+	return tp.decommissioned
 }
 
 func (tp *testPlugin) kill() {

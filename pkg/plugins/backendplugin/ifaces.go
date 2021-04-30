@@ -39,6 +39,8 @@ type Plugin interface {
 	Stop(ctx context.Context) error
 	IsManaged() bool
 	Exited() bool
+	Decommission() error
+	IsDecommissioned() bool
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
