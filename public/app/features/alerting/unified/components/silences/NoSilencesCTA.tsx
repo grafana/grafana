@@ -6,7 +6,7 @@ export const NoSilencesSplash: FC = () => (
   <EmptyListCTA
     title="You haven't created any silences yet"
     buttonIcon="bell-slash"
-    buttonLink={`${config.appSubUrl ?? ''}alerting/silences/new`}
+    buttonLink={`${config.appSubUrl ?? ''}alerting/silence/new`}
     buttonTitle="New silence"
   />
 );

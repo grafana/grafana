@@ -1,12 +1,14 @@
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC } from 'react';
 import { Button, Field, FieldSet, Input, TextArea } from '@grafana/ui';
+import { DefaultTimeZone } from '@grafana/data';
 import MatchersField from './MatchersField';
 import { useForm, FormProvider } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { useDispatch } from 'react-redux';
 import { createSilence } from '../../state/actions';
 import { pickBy } from 'lodash';
+import { SilencePeriod } from './SilencePeriod';
 
 interface Props {
   silence?: Silence;
@@ -27,6 +29,7 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       matchers: silence.matchers || [],
       matcherName: '',
       matcherValue: '',
+      timeZone: DefaultTimeZone,
     };
   } else {
     return {
@@ -40,6 +43,7 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       matchers: [],
       matcherName: '',
       matcherValue: '',
+      timeZone: DefaultTimeZone,
     };
   }
 };
@@ -69,16 +73,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label="Edit silence">
-          <Input {...register('id')} readOnly />
-          <Field label="Starts at">
-            <Input {...register('startsAt')} type="datetime-local" />
-          </Field>
-          <Field label="Ends at">
-            <Input {...register('endsAt')} type="datetime-local" />
-          </Field>
-          <Field label="Duration">
-            <Input {...register('duration')} readOnly />
-          </Field>
+          <SilencePeriod />
           <MatchersField />
           <Field label="Comment" required>
             <TextArea {...register('comment', { required: true })} />
