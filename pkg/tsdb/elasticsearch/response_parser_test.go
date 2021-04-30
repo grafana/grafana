@@ -329,12 +329,12 @@ func TestResponseParser(t *testing.T) {
           "metrics": [
             {
               "type": "top_metrics",
-              "field": "@value",
               "settings": {
                 "order": "desc",
                 "orderBy": "@timestamp",
                 "aggregateBy": "sum",
-                "separator": " "
+                "separator": " ",
+                "metrics": ["@value", "@anotherValue"]
               },
               "id": "1"
             }
@@ -353,8 +353,8 @@ func TestResponseParser(t *testing.T) {
                     "key_as_string": "2021-01-01T00:00:00.000Z",
                     "1": {
                       "top": [
-                        { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1 } },
-                        { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1 } }
+                      { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } },
+                      { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } }
                       ]
                     }
                   },
@@ -363,8 +363,8 @@ func TestResponseParser(t *testing.T) {
                     "key_as_string": "2021-01-01T00:00:10.000Z",
                     "1": {
                       "top": [
-                        { "sort": ["2021-01-01T00:00:10.000Z"], "metrics": { "@value": 1 } },
-                        { "sort": ["2021-01-01T00:00:10.000Z"], "metrics": { "@value": 1 } }
+                      { "sort": ["2021-01-01T00:00:10.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } },
+                      { "sort": ["2021-01-01T00:00:10.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } }
                       ]
                     }
                   }
@@ -382,14 +382,23 @@ func TestResponseParser(t *testing.T) {
 
 			queryRes := result.Results["A"]
 			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 1)
+			So(queryRes.Series, ShouldHaveLength, 2)
+
 			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "Top Metrics")
+			So(seriesOne.Name, ShouldEqual, "Sum @value")
 			So(seriesOne.Points, ShouldHaveLength, 2)
 			So(seriesOne.Points[0][0].Float64, ShouldEqual, 2)
 			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1609459200000)
 			So(seriesOne.Points[1][0].Float64, ShouldEqual, 2)
 			So(seriesOne.Points[1][1].Float64, ShouldEqual, 1609459210000)
+
+			seriesTwo := queryRes.Series[1]
+			So(seriesTwo.Name, ShouldEqual, "Sum @anotherValue")
+			So(seriesTwo.Points, ShouldHaveLength, 2)
+			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 4)
+			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1609459200000)
+			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 4)
+			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 1609459210000)
 		})
 
 		Convey("With extended stats", func() {

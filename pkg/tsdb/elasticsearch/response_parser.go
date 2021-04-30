@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	// "fmt"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -227,23 +228,38 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				*series = append(*series, newSeries)
 			}
 		case topMetricsType:
-			newSeries := plugins.DataTimeSeries{
-				Tags: make(map[string]string),
-			}
+			_metrics, hasMetrics := metric.Settings.MustMap()["metrics"].([]interface{})
+			if hasMetrics {
+				metrics := make([]string, len(_metrics))
+				for i, v := range _metrics {
+					metrics[i] = v.(string)
+				}
+				for _, metricField := range metrics {
+					newSeries := plugins.DataTimeSeries{
+						Tags: make(map[string]string),
+					}
 
-			for _, v := range esAgg.Get("buckets").MustArray() {
-				bucket := simplejson.NewFromAny(v)
-				stats := bucket.GetPath(metric.ID, "top")
-				aggregatedValue := processTopMetricValues(stats, metric)
-				key := castToNullFloat(bucket.Get("key"))
-				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{null.FloatFrom(aggregatedValue), key})
-			}
+					for _, v := range esAgg.Get("buckets").MustArray() {
+						bucket := simplejson.NewFromAny(v)
+						stats := bucket.GetPath(metric.ID, "top")
+						aggregatedValue := processTopMetricValues(stats, metric, metricField)
+						key := castToNullFloat(bucket.Get("key"))
+						newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{null.FloatFrom(aggregatedValue), key})
+					}
 
-			for k, v := range props {
-				newSeries.Tags[k] = v
+					for k, v := range props {
+						newSeries.Tags[k] = v
+					}
+					aggregateBy, hasAggregateBy := metric.Settings.MustMap()["aggregateBy"]
+					if hasAggregateBy {
+						newSeries.Tags["metric"] = aggregateBy.(string)
+					} else {
+						newSeries.Tags["metric"] = "avg"
+					}
+					newSeries.Tags["field"] = metricField
+					*series = append(*series, newSeries)
+				}
 			}
-			newSeries.Tags["metric"] = topMetricsType
-			*series = append(*series, newSeries)
 
 		case extendedStatsType:
 			buckets := esAgg.Get("buckets").MustArray()
@@ -645,14 +661,14 @@ func aggregateValuesBy(method string, values []float64) float64 {
 	}
 }
 
-func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg) float64 {
+func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg, field string) float64 {
 	var metricValues []float64
 	for _, _stat := range stats.MustArray() {
 		stat := _stat.(map[string]interface{})
 		_metrics, hasMetrics := stat["metrics"]
 		if hasMetrics {
 			metrics := _metrics.(map[string]interface{})
-			_metricValue, hasMetricValue := metrics[metric.Field]
+			_metricValue, hasMetricValue := metrics[field]
 			if hasMetricValue {
 				metricValue := _metricValue.(float64)
 				metricValues = append(metricValues, metricValue)

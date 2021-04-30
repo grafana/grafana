@@ -2,6 +2,7 @@ package es
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -283,7 +284,7 @@ type MetricAggregation struct {
 func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 	if a.Type == "top_metrics" {
 		root := map[string]interface{}{}
-		root["metrics"] = []map[string]string{{"field": a.Field}}
+		var rootMetrics []map[string]string
 
 		size, hasSize := a.Settings["size"]
 		order, hasOrder := a.Settings["order"]
@@ -293,6 +294,19 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 			root["size"] = size
 		} else {
 			root["size"] = "1"
+		}
+
+		_metrics, hasMetrics := a.Settings["metrics"].([]interface{})
+		if hasMetrics {
+			metrics := make([]string, len(_metrics))
+			for i, v := range _metrics {
+				metrics[i] = v.(string)
+			}
+			for _, metricField := range metrics {
+				metricValue := map[string]string{"field": metricField}
+				rootMetrics = append(rootMetrics, metricValue)
+			}
+			root["metrics"] = rootMetrics
 		}
 
 		if hasOrderBy && hasOrder {
