@@ -26,7 +26,7 @@ export async function getAllMeasurements(datasource: InfluxDatasource): Promise<
 }
 
 export async function getTagKeysForMeasurementAndTags(
-  measurement: string,
+  measurement: string | undefined,
   policy: string | undefined,
   tags: InfluxQueryTag[],
   datasource: InfluxDatasource
@@ -38,7 +38,7 @@ export async function getTagKeysForMeasurementAndTags(
 
 export async function getTagValues(
   tagKey: string,
-  measurement: string,
+  measurement: string | undefined,
   policy: string | undefined,
   datasource: InfluxDatasource
 ): Promise<string[]> {

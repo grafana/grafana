@@ -7,7 +7,6 @@ import { TagsSection } from './TagsSection';
 import { PartListSection } from './PartListSection';
 import { OrderByTimeSection } from './OrderByTimeSection';
 import { InputSection } from './InputSection';
-import { unwrap } from './unwrap';
 import {
   getAllMeasurements,
   getAllPolicies,
@@ -82,12 +81,20 @@ export const Editor = (props: Props): JSX.Element => {
   };
 
   const dynamicSelectPartOptions = new Map([
-    ['field_0', () => getFieldKeysForMeasurement(unwrap(query.measurement), query.policy, datasource)],
+    [
+      'field_0',
+      () => {
+        const { measurement } = query;
+        return measurement !== undefined
+          ? getFieldKeysForMeasurement(measurement, query.policy, datasource)
+          : Promise.resolve([]);
+      },
+    ],
   ]);
   const selectLists = (query.select ?? []).map((sel) => makePartList(sel, dynamicSelectPartOptions));
 
   const getTagKeys = () =>
-    getTagKeysForMeasurementAndTags(unwrap(query.measurement), query.policy, query.tags ?? [], datasource);
+    getTagKeysForMeasurementAndTags(query.measurement, query.policy, query.tags ?? [], datasource);
 
   const dynamicGroupByPartOptions = new Map([['tag_0', getTagKeys]]);
 
@@ -108,10 +115,10 @@ export const Editor = (props: Props): JSX.Element => {
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
           getTagKeyOptions={() =>
-            getTagKeysForMeasurementAndTags(unwrap(query.measurement), query.policy, query.tags ?? [], datasource)
+            getTagKeysForMeasurementAndTags(query.measurement, query.policy, query.tags ?? [], datasource)
           }
           getTagValueOptions={(key: string) =>
-            withTemplateVariableOptions(getTagValues(key, unwrap(query.measurement), query.policy, datasource))
+            withTemplateVariableOptions(getTagValues(key, query.measurement, query.policy, datasource))
           }
         />
       </SectionWrap>
