@@ -33,10 +33,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
   const dispatch = useDispatch();
 
   // transform receiver DTO to form values
-  const [existingValue, id2original] = useMemo((): [
-    ReceiverFormValues<CloudChannelValues> | undefined,
-    CloudChannelMap
-  ] => {
+  const [existingValue] = useMemo((): [ReceiverFormValues<CloudChannelValues> | undefined, CloudChannelMap] => {
     if (!existing) {
       return [undefined, {}];
     }
@@ -44,7 +41,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
   }, [existing]);
 
   const onSubmit = (values: ReceiverFormValues<CloudChannelValues>) => {
-    const newReceiver = formValuesToCloudReceiver(values, id2original, defaultChannelValues);
+    const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);
     dispatch(
       updateAlertManagerConfigAction({
         newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),

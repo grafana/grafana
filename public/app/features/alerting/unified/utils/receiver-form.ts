@@ -84,19 +84,15 @@ export function formValuesToGrafanaReceiver(
 
 export function formValuesToCloudReceiver(
   values: ReceiverFormValues<CloudChannelValues>,
-  channelMap: CloudChannelMap,
   defaults: CloudChannelValues
 ): Receiver {
   const recv: Receiver = {
     name: values.name,
   };
   values.items.forEach(({ __id, type, settings, sendResolved }) => {
-    // existing values, but only if type hasn't changed
-    const existing = channelMap[__id] && channelMap[__id].type === type ? channelMap[__id] : undefined;
     const channel = omitEmptyValues({
-      ...existing?.config,
       ...settings,
-      send_resolved: sendResolved ?? existing?.config.send_resolved ?? defaults.sendResolved,
+      send_resolved: sendResolved ?? defaults.sendResolved,
     });
 
     const configsKey = `${type}_configs`;
