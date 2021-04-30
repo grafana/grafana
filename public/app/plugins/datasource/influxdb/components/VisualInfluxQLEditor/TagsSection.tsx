@@ -37,8 +37,8 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
 
   const getTagKeySegmentOptions = () => {
     return getTagKeyOptions().then((tags) => [
-      ...tags.map(toSelectableValue),
       { label: '-- remove filter --', value: undefined },
+      ...tags.map(toSelectableValue),
     ]);
   };
 
