@@ -21,10 +21,9 @@
 }
 
 .dashboard-settings__aside {
-  padding: 32px 0 0 32px;
-  background: $dashboard-bg;
   display: flex;
   flex-direction: column;
+  margin-top: $spacer;
 }
 
 .dashboard-settings__aside-header {
@@ -56,14 +55,26 @@
 
 .dashboard-settings__nav-item {
   padding: 8px 40px 8px 8px;
-  color: $text-color;
+  color: $text-color-weak;
   font-size: $font-size-md;
   line-height: 20px;
+  position: relative;
   @include left-brand-border;
 
   &.active {
-    @include left-brand-border-gradient();
-    background: $panel-bg;
+    color: $text-color;
+    font-weight: $font-weight-semi-bold;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 4px;
+      background: $brand-gradient-vertical;
+    }
   }
 
   .gicon {
