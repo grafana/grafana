@@ -22,7 +22,11 @@ import {
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './queryAnalytics';
-import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import {
+  dataSource as expressionDatasource,
+  ExpressionDatasourceID,
+  ExpressionDatasourceUID,
+} from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
@@ -175,7 +179,7 @@ export function callQueryMethod(
 ) {
   // If any query has an expression, use the expression endpoint
   for (const target of request.targets) {
-    if (target.datasource === ExpressionDatasourceID) {
+    if (target.datasource === ExpressionDatasourceID || target.datasource === ExpressionDatasourceUID) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
     }
   }

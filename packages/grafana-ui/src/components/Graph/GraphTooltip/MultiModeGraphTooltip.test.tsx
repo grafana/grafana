@@ -1,13 +1,15 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
-import { createDimension, ArrayVector, FieldType } from '@grafana/data';
+import { createDimension, ArrayVector, FieldType, DisplayProcessor } from '@grafana/data';
 import { GraphDimensions } from './types';
 import { ActiveDimensions } from '../../VizTooltip';
 
 let dimensions: GraphDimensions;
 
 describe('MultiModeGraphTooltip', () => {
+  const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
+
   describe('when shown when hovering over a datapoint', () => {
     beforeEach(() => {
       dimensions = {
@@ -17,12 +19,14 @@ describe('MultiModeGraphTooltip', () => {
             values: new ArrayVector([0, 100, 200]),
             name: 'A-series time',
             type: FieldType.time,
+            display,
           },
           {
             config: {},
             values: new ArrayVector([0, 100, 200]),
             name: 'B-series time',
             type: FieldType.time,
+            display,
           },
         ]),
         yAxis: createDimension('yAxis', [
@@ -31,12 +35,14 @@ describe('MultiModeGraphTooltip', () => {
             values: new ArrayVector([10, 20, 10]),
             name: 'A-series values',
             type: FieldType.number,
+            display,
           },
           {
             config: {},
             values: new ArrayVector([20, 30, 40]),
             name: 'B-series values',
             type: FieldType.number,
+            display,
           },
         ]),
       };

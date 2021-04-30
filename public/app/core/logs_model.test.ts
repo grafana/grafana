@@ -13,6 +13,7 @@ import {
   dedupLogRows,
   getSeriesProperties,
   logSeriesToLogsModel,
+  filterLogLevels,
   LIMIT_LABEL,
 } from './logs_model';
 
@@ -138,6 +139,63 @@ describe('dedupLogRows()', () => {
     ]);
 
     expect(dedupLogRows(rows, LogsDedupStrategy.none)).toEqual(rows);
+  });
+});
+
+describe('filterLogLevels()', () => {
+  test('should correctly filter out log levels', () => {
+    const rows: LogRowModel[] = [
+      {
+        entry: 'DEBUG 1',
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'ERROR 1',
+        logLevel: LogLevel.error,
+      },
+      {
+        entry: 'TRACE 1',
+        logLevel: LogLevel.trace,
+      },
+    ] as any;
+    const filteredLogs = filterLogLevels(rows, new Set([LogLevel.debug]));
+    expect(filteredLogs.length).toBe(2);
+    expect(filteredLogs).toEqual([
+      { entry: 'ERROR 1', logLevel: 'error' },
+      { entry: 'TRACE 1', logLevel: 'trace' },
+    ]);
+  });
+  test('should correctly filter out log levels and then deduplicate', () => {
+    const rows: LogRowModel[] = [
+      {
+        entry: 'DEBUG 1',
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'DEBUG 2',
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'DEBUG 2',
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'ERROR 1',
+        logLevel: LogLevel.error,
+      },
+      {
+        entry: 'TRACE 1',
+        logLevel: LogLevel.trace,
+      },
+    ] as any;
+    const filteredLogs = filterLogLevels(rows, new Set([LogLevel.error]));
+    const deduplicatedLogs = dedupLogRows(filteredLogs, LogsDedupStrategy.exact);
+    expect(deduplicatedLogs.length).toBe(3);
+    expect(deduplicatedLogs).toEqual([
+      { duplicates: 0, entry: 'DEBUG 1', logLevel: 'debug' },
+      { duplicates: 1, entry: 'DEBUG 2', logLevel: 'debug' },
+      { duplicates: 0, entry: 'TRACE 1', logLevel: 'trace' },
+    ]);
   });
 });
 

@@ -7,8 +7,8 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	DefinitionOrgID   int64  `xorm:"def_org_id"`
-	DefinitionUID     string `xorm:"def_uid"`
+	RuleOrgID         int64  `xorm:"def_org_id"`
+	RuleUID           string `xorm:"def_uid"`
 	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType
@@ -78,9 +78,8 @@ type FetchUniqueOrgIdsQuery struct {
 
 // ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
 type ListAlertInstancesQueryResult struct {
-	DefinitionOrgID   int64             `xorm:"def_org_id" json:"definitionOrgId"`
-	DefinitionUID     string            `xorm:"def_uid" json:"definitionUid"`
-	DefinitionTitle   string            `xorm:"def_title" json:"definitionTitle"`
+	RuleOrgID         int64             `xorm:"def_org_id" json:"definitionOrgId"`
+	RuleDefinitionUID string            `xorm:"def_uid" json:"definitionUid"`
 	Labels            InstanceLabels    `json:"labels"`
 	LabelsHash        string            `json:"labeHash"`
 	CurrentState      InstanceStateType `json:"currentState"`
@@ -100,11 +99,11 @@ func ValidateAlertInstance(alertInstance *AlertInstance) error {
 		return fmt.Errorf("alert instance is invalid because it is nil")
 	}
 
-	if alertInstance.DefinitionOrgID == 0 {
+	if alertInstance.RuleOrgID == 0 {
 		return fmt.Errorf("alert instance is invalid due to missing alert definition organisation")
 	}
 
-	if alertInstance.DefinitionUID == "" {
+	if alertInstance.RuleUID == "" {
 		return fmt.Errorf("alert instance is invalid due to missing alert definition uid")
 	}
 
