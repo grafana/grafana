@@ -77,7 +77,7 @@ class AppRootPage extends Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { params } = this.props.match;
-    console.log(prevProps.match.params.pluginId !== params.pluginId);
+
     if (prevProps.match.params.pluginId !== params.pluginId) {
       this.setState({
         loading: true,
@@ -118,10 +118,10 @@ class AppRootPage extends Component<Props, State> {
             </Page.Contents>
           </Page>
         ) : (
-          <>
+          <Page>
             <OutPortal node={portalNode} />
             {loading && <PageLoader />}
-          </>
+          </Page>
         )}
       </>
     );
