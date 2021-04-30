@@ -117,7 +117,6 @@ class ScopedEventBus implements EventBus {
   }
 
   filter = (event: BusEvent) => {
-    console.log('FILTER?', this.path, event.type, (event.origin as any)?.path, this.filterConfig);
     if (this.filterConfig.onlyLocal) {
       return event.origin === this;
     }
