@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  EventBusSrv,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -57,15 +58,21 @@ export class PanelChrome extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
+    // Can this eventBus be on PanelModel?
+    // when we have more complex event filtering, that may be a better option
+    const eventBus = props.dashboard.events
+      ? props.dashboard.events.newScopedBus(
+          `panel:${props.panel.id}`, // panelID
+          props.dashboard.graphTooltip === 0 // local only
+        )
+      : new EventBusSrv();
+
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
-        eventBus: props.dashboard.events.newScopedBus(
-          `panel:${props.panel.id}`, // panelID
-          props.dashboard.graphTooltip === 0 // local only
-        ),
+        eventBus,
       },
       data: this.getInitialPanelDataState(),
     };
