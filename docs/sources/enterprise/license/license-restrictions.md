@@ -23,7 +23,7 @@ In the context of licensing, each user is classified as either a viewer or an ed
 - An editor is a user who has permission to edit and save a dashboard. Examples of editors are as follows:
     - Grafana server administrators.
     - Users who are assigned an organization role of Editor or Admin.
-    - Users who have been granted admin or edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}). This means that even if a user has the role "viewer," they will be counted as an editor if they have permission to edit/admin a dashboard or folder.
+    - Users who have been granted admin or edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}). This means that even if a user is assigned to an organization role of Viewer they will be counted as an editor.
 - A viewer is a user with the Viewer role, which does not permit the user to save a dashboard.
 
 Some details:
