@@ -33,8 +33,6 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 	// the registry used.
 	metrics.GlobalMetrics.SwapRegisterer(prometheus.NewRegistry())
 
-	ctx := context.Background()
-
 	origSQLStore := registry.GetService(sqlstore.ServiceName)
 	t.Cleanup(func() {
 		registry.Register(origSQLStore)

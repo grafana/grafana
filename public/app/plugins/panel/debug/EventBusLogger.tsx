@@ -29,16 +29,18 @@ let counter = 100;
 
 export class EventBusLoggerPanel extends PureComponent<Props, State> {
   history = new CircularVector<BusEventEx>({ capacity: 40, append: 'head' });
-  subs: Unsubscribable[] = [];
+  subs: Unsubscribable[];
 
   constructor(props: Props) {
     super(props);
 
     this.state = { counter };
 
-    props.eventBus.getStream(DataHoverEvent).subscribe(this.eventObserver);
-    props.eventBus.getStream(DataHoverClearEvent).subscribe(this.eventObserver);
-    props.eventBus.getStream(DataSelectEvent).subscribe(this.eventObserver);
+    const subs: Unsubscribable[] = [];
+    subs.push(props.eventBus.getStream(DataHoverEvent).subscribe(this.eventObserver));
+    subs.push(props.eventBus.getStream(DataHoverClearEvent).subscribe(this.eventObserver));
+    subs.push(props.eventBus.getStream(DataSelectEvent).subscribe(this.eventObserver));
+    this.subs = subs;
   }
 
   componentWillUnmount() {
