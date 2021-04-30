@@ -174,7 +174,7 @@ export function getPanelMenu(
       });
     } else {
       subMenu.push({
-        text: 'To library panel',
+        text: 'Create library panel',
         onClick: onAddLibraryPanel,
       });
     }
