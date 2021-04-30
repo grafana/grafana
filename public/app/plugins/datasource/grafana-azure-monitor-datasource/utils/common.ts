@@ -6,8 +6,16 @@ import { AzureMonitorOption } from '../types';
 export const findOption = (options: AzureMonitorOption[], value: string | undefined) =>
   value ? options.find((v) => v.value === value) ?? { value, label: value } : null;
 
-export const findOptions = (options: AzureMonitorOption[], values: string[] | undefined) =>
-  values ? options.filter((option) => values.find((v) => v === option.value)) : [];
+export const findOptions = (options: AzureMonitorOption[], values: string[] = []) => {
+  if (values.length === 0) {
+    return [];
+  }
+  const set = values.reduce((accum, item) => {
+    accum.add(item);
+    return accum;
+  }, new Set());
+  return options.filter((option) => set.has(option.value));
+};
 
 export const toOption = (v: { text: string; value: string }) => ({ value: v.value, label: v.text });
 

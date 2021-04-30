@@ -40,6 +40,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     refId: string;
     queryType: AzureQueryType;
     subscription: string;
+    subscriptions: string[];
     azureMonitor: AzureMetricQuery;
     azureLogAnalytics: {
       query: string;
@@ -49,7 +50,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     azureResourceGraph: {
       query: string;
       resultFormat: string;
-      subscriptions: string[];
     };
     appInsights: {
       // metric style query when rawQuery == false
@@ -107,7 +107,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
           : '',
     },
     azureResourceGraph: {
-      resultFormat: 'time_series',
+      resultFormat: 'table',
     },
     appInsights: {
       metricName: this.defaultDropdownValue,
@@ -331,8 +331,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.subscription = this.subscriptions[0].value;
       }
 
-      if (!this.target.azureResourceGraph.subscriptions) {
-        this.target.azureResourceGraph.subscriptions = subscriptions.map((sub) => sub.value);
+      if (!this.target.subscriptions) {
+        this.target.subscriptions = subscriptions.map((sub) => sub.value);
       }
 
       return this.subscriptions;

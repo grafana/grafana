@@ -17,6 +17,7 @@ export interface AzureMonitorQuery extends DataQuery {
   queryType: AzureQueryType;
   format: string;
   subscription: string;
+  subscriptions: string[];
 
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
@@ -78,7 +79,6 @@ export interface AzureLogsQuery {
 }
 
 export interface AzureResourceGraphQuery {
-  subscriptions: string[];
   query: string;
   resultFormat: string;
 }

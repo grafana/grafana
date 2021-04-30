@@ -4,7 +4,6 @@ import Datasource from '../../datasource';
 import { InlineFieldRow } from '@grafana/ui';
 import SubscriptionField from '../SubscriptionField';
 import QueryField from './QueryField';
-import FormatAsField from './FormatAsField';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -38,15 +37,6 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
       </InlineFieldRow>
 
       <QueryField
-        query={query}
-        datasource={datasource}
-        subscriptionId={subscriptionId}
-        variableOptionGroup={variableOptionGroup}
-        onQueryChange={onChange}
-        setError={setError}
-      />
-
-      <FormatAsField
         query={query}
         datasource={datasource}
         subscriptionId={subscriptionId}

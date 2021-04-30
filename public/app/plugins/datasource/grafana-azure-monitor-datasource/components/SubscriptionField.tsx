@@ -103,7 +103,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         return;
       }
 
-      query.azureResourceGraph.subscriptions = change.map((c) => c.value ?? '');
+      query.subscriptions = change.map((c) => c.value ?? '');
 
       onQueryChange(query);
     },
@@ -116,7 +116,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
     <Field label="Subscriptions">
       <MultiSelect
         isClearable
-        value={findOptions(subscriptions, query.azureResourceGraph.subscriptions)}
+        value={findOptions(subscriptions, query.subscriptions)}
         inputId="azure-monitor-subscriptions-field"
         onChange={onSubscriptionsChange}
         options={options}

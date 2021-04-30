@@ -2,7 +2,6 @@ import { cloneDeep, upperFirst } from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
 import {
   DataFrame,
@@ -24,7 +23,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
   insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
-  azureResourceGraphDatasource: AzureResourceGraphDatasource;
+  azureResourceGraphDatasource: DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData>;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
   optionsKey: Record<AzureQueryType, string>;
@@ -38,7 +37,9 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
-    this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+    this.azureResourceGraphDatasource = new DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData>(
+      instanceSettings
+    );
 
     const pseudoDatasource: any = {};
     pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;

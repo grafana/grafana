@@ -44,8 +44,11 @@ type AzureResourceGraphQuery struct {
 	Target       string
 }
 
+const argAPIVersion = "2018-09-01-preview"
+const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
+
 // executeTimeSeriesQuery does the following:
-// 1. build the AzureMonitor url and querystring for each query
+// 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
 func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
@@ -60,7 +63,7 @@ func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Contex
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, originalQueries, timeRange)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, timeRange)
 	}
 
 	return result, nil
@@ -68,7 +71,7 @@ func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Contex
 
 func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) ([]*AzureResourceGraphQuery, error) {
-	azureResourceGraphQueries := []*AzureResourceGraphQuery{}
+	var azureResourceGraphQueries []*AzureResourceGraphQuery
 
 	for _, query := range queries {
 		queryBytes, err := query.Model.Encode()
@@ -87,7 +90,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 
 		resultFormat := azureResourceGraphTarget.ResultFormat
 		if resultFormat == "" {
-			resultFormat = timeSeries
+			resultFormat = "table"
 		}
 
 		params := url.Values{}
@@ -111,10 +114,10 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 }
 
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery,
-	queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) backend.DataResponse {
+	timeRange plugins.DataTimeRange) backend.DataResponse {
 	queryResult := backend.DataResponse{}
 
-	query.Params.Add("api-version", "2018-09-01-preview")
+	query.Params.Add("api-version", argAPIVersion)
 
 	queryResultErrorWithExecuted := func(err error) backend.DataResponse {
 		queryResult = backend.DataResponse{Error: err}
@@ -131,7 +134,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	reqBody := fmt.Sprintf("{'subscriptions':['%s'], 'query':'%s'}",
-		strings.Join(query.Model.Get("azureResourceGraph").Get("subscriptions").MustStringArray(), "','"),
+		strings.Join(query.Model.Get("subscriptions").MustStringArray(), "','"),
 		query.Model.Get("azureResourceGraph").Get("query").MustString())
 	req, err := e.createRequest(ctx, e.dsInfo, reqBody)
 
@@ -140,7 +143,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return queryResult
 	}
 
-	req.URL.Path = path.Join(req.URL.Path, "/providers/Microsoft.ResourceGraph/resources")
+	req.URL.Path = path.Join(req.URL.Path, argQueryProviderName)
 	req.URL.RawQuery = query.Params.Encode()
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure resource graph query")
@@ -175,19 +178,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return queryResultErrorWithExecuted(err)
 	}
 
-	if query.ResultFormat == timeSeries {
-		tsSchema := frame.TimeSeriesSchema()
-		if tsSchema.Type == data.TimeSeriesTypeLong {
-			wideFrame, err := data.LongToWide(frame, nil)
-			if err == nil {
-				frame = wideFrame
-			} else {
-				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
-			}
-		}
-	}
-	frames := data.Frames{frame}
-	queryResult.Frames = frames
+	queryResult.Frames = data.Frames{frame}
 	return queryResult
 }
 
@@ -225,14 +216,6 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
 	*plugins.AppPluginRoute, string, error) {
 	pluginRouteName := "azureresourcegraph"
-
-	// TODO figure out how is cloud sovereign supported in ARG
-	// switch cloudName {
-	// case "chinaazuremonitor":
-	// 	pluginRouteName = "chinaloganalyticsazure"
-	// case "govazuremonitor":
-	// 	pluginRouteName = "govloganalyticsazure"
-	// }
 
 	var argRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
