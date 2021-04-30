@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -25,6 +26,9 @@ import (
 // StartGrafana starts a Grafana server.
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
+	// Grafana uses some global metric registration. Clear the
+	// registry between tests.
+	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 	t.Helper()
 
 	ctx := context.Background()
