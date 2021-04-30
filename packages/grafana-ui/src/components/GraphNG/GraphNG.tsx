@@ -9,7 +9,6 @@ import { preparePlotData } from '../uPlot/utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { withTheme2 } from '../../themes/ThemeContext';
 
 /**
  * @internal -- not a public API
@@ -34,7 +33,7 @@ export interface GraphNGProps extends Themeable2 {
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
 }
 
-function sameProps(prevProps: GraphNGProps, nextProps: GraphNGProps, propsToDiff: string[] = []) {
+function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
   for (const propName of propsToDiff) {
     if (nextProps[propName] !== prevProps[propName]) {
       return false;
@@ -53,7 +52,10 @@ export interface GraphNGState {
   config?: UPlotConfigBuilder;
 }
 
-class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
+/**
+ * "Time as X" core component, expectes ascending x
+ */
+export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   constructor(props: GraphNGProps) {
     super(props);
     this.state = this.prepState(props);
@@ -91,7 +93,9 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   componentDidUpdate(prevProps: GraphNGProps) {
     const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
-    if (frames !== prevProps.frames) {
+    const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
+
+    if (frames !== prevProps.frames || propsChanged) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
@@ -100,7 +104,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
           timeZone !== prevProps.timeZone ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
-          !sameProps(prevProps, this.props, propsToDiff);
+          propsChanged;
 
         if (shouldReconfig) {
           //console.log("shouldReconfig");
@@ -138,6 +142,3 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     );
   }
 }
-
-export const GraphNG = withTheme2(UnthemedGraphNG);
-GraphNG.displayName = 'GraphNG';

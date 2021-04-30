@@ -3,7 +3,7 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
 import { defaultsDeep } from 'lodash';
 import { DefaultTimeZone, getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { pluginLog } from '../utils';
@@ -74,8 +74,7 @@ export class UPlotConfigBuilder {
     this.cursor = cursor;
   }
 
-  // uPlot types don't export the Select interface prior to 1.6.4
-  setSelect(select: Partial<BBox>) {
+  setSelect(select: Select) {
     this.select = select;
   }
 

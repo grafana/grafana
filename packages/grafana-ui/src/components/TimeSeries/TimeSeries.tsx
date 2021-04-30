@@ -4,12 +4,14 @@ import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { LegendDisplayMode } from '../VizLegend/models.gen';
-import { preparePlotConfigBuilder } from '../GraphNG/utils';
+import { preparePlotConfigBuilder } from './utils';
 import { withTheme2 } from '../../themes/ThemeContext';
 
 const propsToDiff: string[] = [];
 
-export class UnthemedTimeSeries extends React.Component<GraphNGProps> {
+type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
+
+export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -44,7 +46,7 @@ export class UnthemedTimeSeries extends React.Component<GraphNGProps> {
         {...this.props}
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
-        renderLegend={this.renderLegend}
+        renderLegend={this.renderLegend as any}
       />
     );
   }

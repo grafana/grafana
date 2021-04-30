@@ -1,10 +1,20 @@
 import React from 'react';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { DataFrame, TimeRange } from '@grafana/data';
-import { GraphNG } from '../GraphNG/GraphNG';
+import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { preparePlotConfigBuilder } from './utils';
-import { TimelineProps } from './types';
+import { BarValueVisibility, TimelineMode } from './types';
+
+/**
+ * @alpha
+ */
+export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
+  mode: TimelineMode;
+  rowHeight: number;
+  showValue: BarValueVisibility;
+  colWidth?: number;
+}
 
 const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue'];
 
@@ -18,7 +28,7 @@ export class UnthemedTimelineChart extends React.Component<TimelineProps> {
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {
-    return undefined;
+    return;
   };
 
   render() {
@@ -27,7 +37,7 @@ export class UnthemedTimelineChart extends React.Component<TimelineProps> {
         {...this.props}
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
-        renderLegend={this.renderLegend}
+        renderLegend={this.renderLegend as any}
       />
     );
   }
