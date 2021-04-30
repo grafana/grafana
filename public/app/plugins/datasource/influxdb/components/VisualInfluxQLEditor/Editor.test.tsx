@@ -53,11 +53,27 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
         'format as[time_series]alias[Naming pattern]'
     );
   });
+  it('should have the alias-field hidden when format-as-table', () => {
+    const query: InfluxQuery = {
+      refId: 'A',
+      alias: 'test-alias',
+      resultFormat: 'table',
+    };
+    assertEditor(
+      query,
+      'from[default][]where+' +
+        'select[field]([value])[mean]()+' +
+        'group by[time]([$__interval])[fill]([null])+' +
+        'timezone[(optional)]order by time[ASC]' +
+        'limit[(optional)]slimit[(optional)]' +
+        'format as[table]'
+    );
+  });
   it('should handle complex query', () => {
     const query: InfluxQuery = {
       refId: 'A',
       policy: 'default',
-      resultFormat: 'table',
+      resultFormat: 'logs',
       orderByTime: 'DESC',
       tags: [
         {
@@ -130,7 +146,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
         'group by[time]([$__interval])[tag]([cpu])[tag]([host])[fill]([null])+' +
         'timezone[UTC]order by time[DESC]' +
         'limit[4]slimit[5]' +
-        'format as[table]alias[all i as]'
+        'format as[logs]alias[all i as]'
     );
   });
 });

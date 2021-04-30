@@ -203,15 +203,19 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, resultFormat: format });
           }}
         />
-        <SectionLabel name="alias" />
-        <InputSection
-          isWide
-          placeholder="Naming pattern"
-          value={query.alias}
-          onChange={(alias) => {
-            onAppliedChange({ ...query, alias });
-          }}
-        />
+        {query.resultFormat !== 'table' && (
+          <>
+            <SectionLabel name="alias" />
+            <InputSection
+              isWide
+              placeholder="Naming pattern"
+              value={query.alias}
+              onChange={(alias) => {
+                onAppliedChange({ ...query, alias });
+              }}
+            />
+          </>
+        )}
       </SectionWrap>
     </div>
   );
