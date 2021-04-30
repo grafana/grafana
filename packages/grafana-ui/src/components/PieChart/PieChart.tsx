@@ -152,8 +152,8 @@ function useSliceHighlightState() {
     };
 
     const subs = new Subscription();
-    subs.add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice));
-    subs.add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
+    subs.add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }));
+    subs.add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
 
     return () => {
       subs.unsubscribe();

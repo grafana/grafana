@@ -11,7 +11,6 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
-  EventBus,
   EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
