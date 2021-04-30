@@ -26,7 +26,7 @@ In the context of licensing, each user is classified as either a viewer or an ed
     - Users who have been granted admin or edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}). This means that even if a user is assigned to an organization role of Viewer they will be counted as an editor.
 - A viewer is a user with the Viewer role, which does not permit the user to save a dashboard.
 
-Some details:
+Additional details:
 - When the number of maximum active viewers or editors is reached, only those currently active users can sign in. New users or non-active users cannot sign in. 
 - A license limit banner will appear to admins when Grafana reaches its active user limit. Editors and viewers will not see the banner.
 - To see how many active users you have in each billing role (Viewer or Editor/Admin), refer to the Licensing page in the Server Admin section of Grafana, which is located at `[your-grafana-url.com]/admin/licensing`. Please note that _billing_ roles can differ from the Active Viewer/Editor/Admin counts on the /admin/stats page in Grafana. This is because the Stats page only counts a user's assigned org role and does not account for dashboard and folder permissions.
