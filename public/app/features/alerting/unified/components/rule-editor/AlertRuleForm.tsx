@@ -146,6 +146,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
     contentOuter: css`
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
       margin: ${theme.spacing(2)};
       overflow: hidden;
       flex: 1;
