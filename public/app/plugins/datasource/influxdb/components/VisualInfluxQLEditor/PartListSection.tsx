@@ -66,25 +66,31 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
         <RemovableName name={name} onRemove={onRemove} />(
         {params.map((p, i) => {
           const { value, options } = p;
-          return options !== null ? (
-            <SegmentAsync
-              allowCustomValue
-              key={i}
-              value={value}
-              loadOptions={() => options().then((items) => items.map(toSelectableValue))}
-              onChange={(v) => {
-                onParamChange(unwrap(v.value), i);
-              }}
-            />
-          ) : (
-            <SegmentInput
-              allowCustomValue
-              key={i}
-              value={value}
-              onChange={(v) => {
-                onParamChange(v.toString(), i);
-              }}
-            />
+          const isLast = i === params.length - 1;
+          return (
+            <>
+              {options !== null ? (
+                <SegmentAsync
+                  allowCustomValue
+                  key={i}
+                  value={value}
+                  loadOptions={() => options().then((items) => items.map(toSelectableValue))}
+                  onChange={(v) => {
+                    onParamChange(unwrap(v.value), i);
+                  }}
+                />
+              ) : (
+                <SegmentInput
+                  allowCustomValue
+                  key={i}
+                  value={value}
+                  onChange={(v) => {
+                    onParamChange(v.toString(), i);
+                  }}
+                />
+              )}
+              {!isLast && ','}
+            </>
           );
         })}
         )
