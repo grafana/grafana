@@ -18,6 +18,7 @@ import { SCHEMA } from '../../utils/slate';
 import { useStyles2 } from '../../themes';
 import { DataLinkBuiltInVars, GrafanaThemeV2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 import { getInputStyles } from '../Input/Input';
+import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -80,6 +81,12 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
     const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
+
+    // Used to get the height of the suggestion elements in order to scroll to them.
+    const activeRef = useRef<HTMLDivElement>(null);
+    const activeIndexPosition = useMemo(() => getElementPosition(activeRef.current, suggestionsIndex), [
+      suggestionsIndex,
+    ]);
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
@@ -172,12 +179,15 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                   {({ ref, style, placement }) => {
                     return (
                       <div ref={ref} style={style} data-placement={placement}>
-                        <DataLinkSuggestions
-                          suggestions={stateRef.current.suggestions}
-                          onSuggestionSelect={onVariableSelect}
-                          onClose={() => setShowingSuggestions(false)}
-                          activeIndex={suggestionsIndex}
-                        />
+                        <CustomScrollbar scrollTop={activeIndexPosition} autoHeightMax="300px">
+                          <DataLinkSuggestions
+                            activeRef={activeRef}
+                            suggestions={stateRef.current.suggestions}
+                            onSuggestionSelect={onVariableSelect}
+                            onClose={() => setShowingSuggestions(false)}
+                            activeIndex={suggestionsIndex}
+                          />
+                        </CustomScrollbar>
                       </div>
                     );
                   }}
@@ -208,3 +218,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
 );
 
 DataLinkInput.displayName = 'DataLinkInput';
+
+function getElementPosition(suggestionElement: HTMLElement | null, activeIndex: number) {
+  return (suggestionElement?.clientHeight ?? 0) * activeIndex;
+}
