@@ -22,7 +22,7 @@ const props: Props = {
 describe('Aggregation', () => {
   it('renders correctly', () => {
     render(<Aggregation {...props} />);
-    expect(screen.getByTestId('cloud-monitoring-aggregations')).toBeInTheDocument();
+    expect(screen.getByTestId('cloud-monitoring-aggregation')).toBeInTheDocument();
   });
 
   describe('options', () => {

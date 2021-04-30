@@ -49,9 +49,10 @@ export const QueryEditorRow: FC<Props> = ({
   noFillEnd,
   fillComponent,
   labelWidth = LABEL_WIDTH,
+  ...rest
 }) => {
   return (
-    <div className="gf-form">
+    <div className="gf-form" {...rest}>
       {label && (
         <InlineLabel width={labelWidth} tooltip={tooltip}>
           {label}
@@ -73,11 +74,11 @@ export const QueryEditorRow: FC<Props> = ({
   );
 };
 
-export const QueryEditorField: FC<Props> = ({ children, label, tooltip, labelWidth = INNER_LABEL_WIDTH }) => {
+export const QueryEditorField: FC<Props> = ({ children, label, tooltip, labelWidth = INNER_LABEL_WIDTH, ...rest }) => {
   return (
     <>
       {label && (
-        <InlineLabel width={labelWidth} tooltip={tooltip}>
+        <InlineLabel width={labelWidth} tooltip={tooltip} {...rest}>
           {label}
         </InlineLabel>
       )}

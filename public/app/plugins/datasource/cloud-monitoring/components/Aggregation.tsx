@@ -19,7 +19,7 @@ export const Aggregation: FC<Props> = (props) => {
   const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
-    <QueryEditorField labelWidth={18} label="Group by function" data-testid="cloud-monitoring-aggregations">
+    <QueryEditorField labelWidth={18} label="Group by function" data-testid="cloud-monitoring-aggregation">
       <Select
         width={16}
         onChange={({ value }) => props.onChange(value!)}
