@@ -22,25 +22,29 @@ In the context of licensing, each user is classified as either a viewer or an ed
 
 - An editor is a user who has permission to edit and save a dashboard. Examples of editors are as follows:
     - Grafana server administrators.
-    - Users who are assigned an organizational role of Editor or Admin.
-    - Users that have been granted Admin or Edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}).
+    - Users who are assigned an organization role of Editor or Admin.
+    - Users who have been granted admin or edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}). This means that even if a user has the role "viewer," they will be counted as an editor if they have permission to edit/admin a dashboard or folder.
 - A viewer is a user with the Viewer role, which does not permit the user to save a dashboard.
 
-Restrictions are applied separately for viewers and editors.
-
-When the number of maximum active viewers or editors is reached, only they can sign in. New users or non-active users cannot sign in.
+Some details:
+- When the number of maximum active viewers or editors is reached, only those currently-active users can sign in. New users or non-active users cannot sign in. 
+- A license limit banner will appear to admins when Grafana reaches its active user limit. Editors and viewers will not see the banner.
+- To see how many active users you have in each billing role (Viewer or Editor/Admin), refer to the Licensing page in the Server Admin section of Grafana, which is located at `[your-grafana-url.com]/admin/licensing`. Please note that _billing_ roles can differ from the Active Viewer/Editor/Admin counts on the /admin/stats page in Grafana. This is because the Stats page only counts a user's assigned org role and does not account for dashboard and folder permissions.
+- Restrictions are applied separately for viewers and editors. If a Grafana instance reaches its limit of active viewers but not its limit of active editor/admins,  new editors and admins will still be able to sign in.
+- You can change a user's billing role by updating their permissions in Grafana (their role or their dashboard/folder permissions). Their new role will go into effect the next time that user signs in.
+- Active user counts are not affected by the number of dashboards, folders, or orgs a user can edit or admin. An active user who can edit many dashboards or folders in many different orgs is still counted as a single editor.
 
 ### Concurrent sessions limit
 
 Sometimes it is useful to sign in to an account from multiple locations simultaneously. As of Grafana Enterprise 7.5+, accounts are limited to the number of concurrent sessions authorized in each license, which is typically three. A new session is created when a user signs in to Grafana from a new device, a different browser, or an incognito window. If a user signs in to Grafana from another tab or window within the same browser, then only one session is used.
 
-Given a limit of three sessions, the longest inactive session is signed out of when a fourth person signs in to the same account.
+Given a limit of three sessions, the longest inactive session is signed out of Grafana when a fourth person signs in to the same account.
 
 ### Usage billing
 
-You can request Grafana Labs to turn on usage billing to allow an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits. Instead, we charge for active users above the limit, according to your customer contract.
+You can request Grafana Labs to turn on usage billing to allow an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits or display warning banners. Instead, you are charged for active users above the limit, according to your customer contract.
 
-Usage billing must be agreed upon with Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license]({{< relref "../enterprise-configuration.md#auto_refresh_license" >}}).
+Usage billing involves a contractual agreement between you and Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license]({{< relref "../enterprise-configuration.md#auto_refresh_license" >}}).
 
 ## Expiration date
 
