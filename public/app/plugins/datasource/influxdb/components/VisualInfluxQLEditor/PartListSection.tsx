@@ -68,11 +68,10 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
           const { value, options } = p;
           const isLast = i === params.length - 1;
           return (
-            <>
+            <React.Fragment key={i}>
               {options !== null ? (
                 <SegmentAsync
                   allowCustomValue
-                  key={i}
                   value={value}
                   loadOptions={() => options().then((items) => items.map(toSelectableValue))}
                   onChange={(v) => {
@@ -82,7 +81,6 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
               ) : (
                 <SegmentInput
                   allowCustomValue
-                  key={i}
                   value={value}
                   onChange={(v) => {
                     onParamChange(v.toString(), i);
@@ -90,7 +88,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
                 />
               )}
               {!isLast && ','}
-            </>
+            </React.Fragment>
           );
         })}
         )
