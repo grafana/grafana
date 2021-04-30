@@ -39,27 +39,25 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
           <div>
             {hasTimeChanged && (
               <Checkbox
+                {...register('saveTimerange')}
                 label="Save current time range as dashboard default"
-                name="saveTimerange"
-                ref={register}
                 aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
               />
             )}
             {hasVariableChanged && (
               <Checkbox
+                {...register('saveVariables')}
                 label="Save current variable values as dashboard default"
-                name="saveVariables"
-                ref={register}
                 aria-label={selectors.pages.SaveDashboardModal.saveVariables}
               />
             )}
             {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
 
-            <TextArea name="message" ref={register} placeholder="Add a note to describe your changes." autoFocus />
+            <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus />
           </div>
 
           <Modal.ButtonRow>
-            <Button variant="secondary" onClick={onCancel}>
+            <Button variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
             <Button type="submit" aria-label={selectors.pages.SaveDashboardModal.save}>

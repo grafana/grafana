@@ -11,7 +11,7 @@ export class ThresholdManager {
   placeholder: any;
   height: any;
   thresholds: any;
-  needsCleanup: boolean;
+  needsCleanup = false;
   hasSecondYAxis: any;
 
   constructor(private panelCtrl: PanelCtrl) {}
