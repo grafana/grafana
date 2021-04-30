@@ -1,6 +1,6 @@
 import { getDefaultTimeRange, rangeUtil } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -158,6 +158,7 @@ const getDefaultExpression = (refId: string): GrafanaQuery => {
     refId,
     hide: false,
     type: ExpressionQueryType.classic,
+    datasource: ExpressionDatasourceID,
     conditions: [
       {
         type: 'query',
