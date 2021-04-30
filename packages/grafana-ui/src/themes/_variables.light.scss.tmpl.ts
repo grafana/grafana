@@ -276,9 +276,9 @@ $alert-warning-bg: ${theme.colors.warning.main};
 $alert-info-bg: ${theme.colors.warning.main};
 
 // Tooltips and popovers
-$tooltipBackground: ${theme.colors.background.secondary};
-$tooltipColor: ${theme.colors.text.primary};
-$tooltipArrowColor: ${theme.colors.background.secondary};
+$tooltipBackground: ${theme.components.tooltip.background};
+$tooltipColor: ${theme.components.tooltip.text};
+$tooltipArrowColor: ${theme.components.tooltip.background};
 $tooltipBackgroundError: ${theme.colors.error.main};
 $tooltipShadow: ${theme.shadows.z2};
 
@@ -372,7 +372,7 @@ $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
-$panel-editor-viz-item-bg: $white;
+$panel-editor-viz-item-bg: $card-background;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);

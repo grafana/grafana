@@ -53,6 +53,7 @@ export const PluginListPage: React.FC<Props> = ({
             searchQuery={searchQuery}
             setSearchQuery={(query) => setPluginsSearchQuery(query)}
             linkButton={linkButton}
+            placeholder="Search by name, author, description or type"
             target="_blank"
           />
 
