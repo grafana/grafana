@@ -7,15 +7,11 @@ import { Icon } from '../../Icon/Icon';
 import { IconName } from '../../../types/icon';
 import { useStyles2 } from '../../../themes';
 
-interface RadioButtonSelectableValue<T = any> extends SelectableValue<T> {
-  iconPlacement?: 'left' | 'right';
-}
-
 export interface RadioButtonGroupProps<T> {
   value?: T;
   disabled?: boolean;
   disabledOptions?: T[];
-  options: Array<RadioButtonSelectableValue<T>>;
+  options: Array<SelectableValue<T>>;
   onChange?: (value: T) => void;
   size?: RadioButtonSize;
   fullWidth?: boolean;
@@ -50,10 +46,6 @@ export function RadioButtonGroup<T>({
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
       {options.map((o, i) => {
         const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
-        const buttonContents = [o.label, o.icon && <Icon name={o.icon as IconName} />];
-        if (o.iconPlacement === 'left') {
-          buttonContents.reverse();
-        }
         return (
           <RadioButton
             size={size}
@@ -66,7 +58,8 @@ export function RadioButtonGroup<T>({
             description={o.description}
             fullWidth={fullWidth}
           >
-            <div className={styles.radioContents}>{buttonContents}</div>
+            {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
+            {o.label}
           </RadioButton>
         );
       })}
@@ -89,11 +82,8 @@ const getStyles = (theme: GrafanaThemeV2) => {
     fullWidth: css({
       display: 'flex',
     }),
-    radioContents: css`
-      display: grid;
-      grid-auto-flow: column;
-      justify-content: center;
-      gap: 6px;
+    icon: css`
+      margin-right: 6px;
     `,
   };
 };
