@@ -29,7 +29,8 @@ import (
 )
 
 var (
-	plog log.Logger
+	plog         log.Logger
+	installerLog = NewInstallerLogger("installer.logger", true)
 )
 
 const (
@@ -310,7 +311,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	for foundPluginPath, foundPlugin := range scanner.plugins {
 		if existing, exists := pm.plugins[foundPlugin.Id]; exists && foundPlugin.Info.Version == existing.Info.Version {
-			pm.log.Info("Can skip this plugin as it's already registered", "plugin", foundPlugin.Id)
+			pm.log.Debug("Skipping plugin as it's already installed", "plugin", foundPlugin.Id)
 			delete(scanner.plugins, foundPluginPath)
 		}
 	}
@@ -709,13 +710,23 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	return pm.staticRoutes
 }
 
-func (pm *PluginManager) Install(pluginID string) error {
+func (pm *PluginManager) Install(pluginID, version string) error {
 	i := installer.New(true, pm.Cfg.BuildVersion, NewInstallerLogger("installer.logger", true))
 
-	version := ""
-	pluginZipURL := ""
+	plugin := pm.plugins[pluginID]
+	if plugin != nil {
+		if version != "" && version == plugin.Info.Version {
+			return fmt.Errorf("trying to install a plugin %s which is already installed", pluginID)
+		}
 
-	err := i.Install(pluginID, version, pm.Cfg.PluginsPath, pluginZipURL, grafanaComURL)
+		// Remove existing installation of plugin
+		err := pm.Uninstall(pluginID)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := i.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
 	if err != nil {
 		return err
 	}
@@ -746,7 +757,7 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 		return err
 	}
 
-	i := installer.New(true, pm.Cfg.BuildVersion, NewInstallerLogger("installer.logger", true))
+	i := installer.New(false, pm.Cfg.BuildVersion, installerLog)
 	return i.Uninstall(pluginID, pm.Cfg.PluginsPath)
 }
 

@@ -58,7 +58,7 @@ type Manager interface {
 	// IsAppInstalled returns whether an app is installed.
 	IsAppInstalled(id string) bool
 	// Install installs a plugin.
-	Install(pluginID string) error
+	Install(pluginID, version string) error
 	// Uninstall uninstalls a plugin.
 	Uninstall(pluginID string) error
 }

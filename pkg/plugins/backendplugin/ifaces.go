@@ -12,7 +12,7 @@ import (
 type Manager interface {
 	// Register registers a backend plugin
 	RegisterAndStart(pluginID string, factory PluginFactoryFunc) error
-	// Unregister unregisters a backend plugin
+	// UnregisterAndStop unregisters a backend plugin
 	UnregisterAndStop(pluginID string) error
 	// Registered checks if plugin is registered with the manager
 	Registered(pluginID string) bool

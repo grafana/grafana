@@ -285,7 +285,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-			pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
+			pluginRoute.Post("/:pluginId/install", bind(dtos.InstallPluginCommand{}), routing.Wrap(hs.InstallPlugin))
 			pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
 		}, reqGrafanaAdmin)
 

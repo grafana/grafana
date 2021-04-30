@@ -146,7 +146,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Infof("Fetching %s dependencies...", res.ID)
 		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
+			return errutil.Wrapf(err, "failed to install plugin %s", dep.ID)
 		}
 	}
 
