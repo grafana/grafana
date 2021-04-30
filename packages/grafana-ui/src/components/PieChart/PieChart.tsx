@@ -143,25 +143,17 @@ function useSliceHighlightState() {
   const { eventBus } = usePanelContext();
 
   useEffect(() => {
-    if (!eventBus) {
-      return;
-    }
-
     const setHighlightedSlice = (event: DataHoverEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(event.payload.dataId);
-      }
+      setHighlightedTitle(event.payload.dataId);
     };
 
     const resetHighlightedSlice = (event: DataHoverClearEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(undefined);
-      }
+      setHighlightedTitle(undefined);
     };
 
     const subs = new Subscription()
-      .add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice))
-      .add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
+      .add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }))
+      .add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
 
     return () => {
       subs.unsubscribe();

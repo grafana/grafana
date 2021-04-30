@@ -2,12 +2,7 @@ import { DataFrame } from '../types';
 import { BusEventWithPayload } from './types';
 
 /** @alpha */
-export interface PayloadWithSource {
-  source?: string; // source from where the event originates
-}
-
-/** @alpha */
-export interface DataHoverPayload extends PayloadWithSource {
+export interface DataHoverPayload {
   raw: any; // Original mouse event (includes pageX etc)
 
   x: Record<string, any>; // { time: 5678 },

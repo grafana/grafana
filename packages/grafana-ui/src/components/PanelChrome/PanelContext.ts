@@ -1,11 +1,14 @@
-import { EventBusWithSource } from '@grafana/data';
+import { EventBusSrv, EventBus } from '@grafana/data';
 import React from 'react';
 
-interface PanelContext {
-  eventBus?: EventBusWithSource;
+/** @alpha */
+export interface PanelContext {
+  eventBus: EventBus;
 }
 
-const PanelContextRoot = React.createContext<PanelContext>({});
+const PanelContextRoot = React.createContext<PanelContext>({
+  eventBus: new EventBusSrv(),
+});
 
 /**
  * @alpha

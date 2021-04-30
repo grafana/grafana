@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBusWithSource } from './EventBus';
+import { EventBusSrv } from './EventBus';
 import { BusEvent, BusEventWithPayload } from './types';
 import { eventFactory } from './eventFactory';
 import { DataHoverEvent } from './common';
@@ -50,8 +50,8 @@ describe('EventBus', () => {
   describe('EventBusWithSource', () => {
     it('can add sources to the source path', () => {
       const bus = new EventBusSrv();
-      const busWithSource = new EventBusWithSource(bus, 'foo');
-      expect(busWithSource.source).toEqual('foo');
+      const busWithSource = bus.newScopedBus('foo');
+      expect((busWithSource as any).path).toEqual(['foo']);
     });
 
     it('adds the source to the event payload', () => {
@@ -60,11 +60,11 @@ describe('EventBus', () => {
 
       bus.subscribe(DataHoverEvent, (event) => events.push(event));
 
-      const busWithSource = new EventBusWithSource(bus, 'foo');
+      const busWithSource = bus.newScopedBus('foo');
       busWithSource.publish({ type: DataHoverEvent.type });
 
       expect(events.length).toEqual(1);
-      expect(events[0].payload.source).toEqual('foo');
+      expect(events[0].origin).toEqual(busWithSource);
     });
   });
 
