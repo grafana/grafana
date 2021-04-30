@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -26,8 +28,10 @@ import (
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
 	t.Helper()
-
 	ctx := context.Background()
+	// Prevent duplicate registration errors between tests by replacing
+	// the registry used.
+	metrics.GlobalMetrics.SwapRegisterer(prometheus.NewRegistry())
 
 	origSQLStore := registry.GetService(sqlstore.ServiceName)
 	t.Cleanup(func() {

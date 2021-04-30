@@ -22,7 +22,6 @@ import (
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -31,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -81,6 +81,7 @@ type Alertmanager struct {
 	Settings *setting.Cfg       `inject:""`
 	SQLStore *sqlstore.SQLStore `inject:""`
 	Store    store.AlertingStore
+	Metrics  *metrics.Metrics `inject:""`
 
 	notificationLog *nflog.Log
 	marker          types.Marker
@@ -116,13 +117,19 @@ func (am *Alertmanager) IsDisabled() bool {
 	return !am.Settings.IsNgAlertEnabled()
 }
 
-func (am *Alertmanager) Init() (err error) {
+func (am *Alertmanager) Init() error {
+	return am.InitWithMetrics(am.Metrics)
+}
+
+// InitWithMetrics uses the supplied metrics for instantiation and
+// allows testware to circumvent duplicate registration errors.
+func (am *Alertmanager) InitWithMetrics(m *metrics.Metrics) (err error) {
 	am.stopc = make(chan struct{})
 	am.logger = log.New("alertmanager")
-	r := prometheus.NewRegistry()
-	am.marker = types.NewMarker(r)
-	am.stageMetrics = notify.NewMetrics(r)
-	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(r)
+	am.marker = types.NewMarker(m.Registerer)
+	am.stageMetrics = notify.NewMetrics(m.Registerer)
+	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(m.Registerer)
+	am.Metrics = m
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	// Initialize the notification log
@@ -137,6 +144,7 @@ func (am *Alertmanager) Init() (err error) {
 	}
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
+		Metrics:      m.Registerer,
 		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
 		Retention:    retentionNotificationsAndSilences,
 	})
@@ -456,12 +464,19 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			alert.EndsAt = now.Add(defaultResolveTimeout)
 		}
 
+		if alert.EndsAt.After(now) {
+			am.Metrics.Firing().Inc()
+		} else {
+			am.Metrics.Resolved().Inc()
+		}
+
 		if err := alert.Validate(); err != nil {
 			if validationErr == nil {
 				validationErr = &AlertValidationError{}
 			}
 			validationErr.Alerts = append(validationErr.Alerts, a)
 			validationErr.Errors = append(validationErr.Errors, err)
+			am.Metrics.Invalid().Inc()
 			continue
 		}
 

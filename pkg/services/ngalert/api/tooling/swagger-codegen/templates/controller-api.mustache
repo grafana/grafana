@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 )
 
@@ -16,16 +17,16 @@ type {{classname}}Service interface { {{#operation}}
 	{{nickname}}(*models.ReqContext{{#bodyParams}}, apimodels.{{dataType}}{{/bodyParams}}) response.Response{{/operation}}
 }
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service, metrics *Metrics) {
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service, m *metrics.Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
 		toMacaronPath("{{{path}}}"){{#bodyParams}},
 		binding.Bind(apimodels.{{dataType}}{}){{/bodyParams}},
-		Instrument(
+		metrics.Instrument(
 			http.Method{{httpMethod}},
 			"{{{path}}}",
 			srv.{{nickname}},
-			metrics,
+			m,
 		),
   ){{/operation}}{{/operations}}
 	}, middleware.ReqSignedIn)

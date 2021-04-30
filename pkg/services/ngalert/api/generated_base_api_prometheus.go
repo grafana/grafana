@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 type PrometheusApiService interface {
@@ -21,24 +22,24 @@ type PrometheusApiService interface {
 	RouteGetRuleStatuses(*models.ReqContext) response.Response
 }
 
-func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService, metrics *Metrics) {
+func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService, m *metrics.Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
 			toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/{Recipient}/api/v1/alerts",
 				srv.RouteGetAlertStatuses,
-				metrics,
+				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/{Recipient}/api/v1/rules",
 				srv.RouteGetRuleStatuses,
-				metrics,
+				m,
 			),
 		)
 	}, middleware.ReqSignedIn)
