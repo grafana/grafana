@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
@@ -25,6 +26,7 @@ func mockTimeNow() {
 
 func TestAlertInstanceOperations(t *testing.T) {
 	dbstore := setupTestEnv(t, baseIntervalSeconds)
+	t.Cleanup(registry.ClearOverrides)
 
 	alertRule1 := createTestAlertRule(t, dbstore, 60)
 	orgID := alertRule1.OrgID
