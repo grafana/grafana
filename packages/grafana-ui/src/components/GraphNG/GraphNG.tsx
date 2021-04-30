@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, GrafanaTheme, TimeRange, TimeZone } from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, TimeRange, TimeZone } from '@grafana/data';
 import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
@@ -16,11 +16,11 @@ import { withTheme2 } from '../../themes/ThemeContext';
  */
 export const FIXED_UNIT = '__fixed';
 
-export interface GraphNGProps<T = {}> extends Themeable2 {
+export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
   frames: DataFrame[];
-  structureRev?: number; // a number that will change when the data[] structure changes
+  structureRev?: number; // a number that will change when the frames[] structure changes
   timeRange: TimeRange;
   timeZone: TimeZone;
   legend: VizLegendOptions;
@@ -29,16 +29,19 @@ export interface GraphNGProps<T = {}> extends Themeable2 {
   onSeriesColorChange?: (label: string, color: string) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
 
-  prepConfig: (
-    alignedFrame: DataFrame,
-    theme: GrafanaTheme,
-    timeZone: string,
-    getTimeRange: () => TimeRange,
-    addlProps: T
-  ) => UPlotConfigBuilder;
-  addlProps: (props: GraphNGProps<T>) => T;
-  shouldReconfig: (prevProps: GraphNGProps<T>, props: GraphNGProps<T>) => boolean;
-  renderLegend: (props: GraphNGProps<T>, config: UPlotConfigBuilder, alignedDataFrame: DataFrame) => React.ReactNode;
+  prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  propsToDiff?: string[];
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
+}
+
+function sameProps(prevProps: GraphNGProps, nextProps: GraphNGProps, propsToDiff: string[] = []) {
+  for (const propName of propsToDiff) {
+    if (nextProps[propName] !== prevProps[propName]) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -61,7 +64,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   prepState(props: GraphNGProps, withConfig = true) {
     let state: GraphNGState = null as any;
 
-    const { frames, fields, timeZone, theme } = props;
+    const { frames, fields } = props;
 
     const alignedFrame = preparePlotFrame(
       frames,
@@ -78,7 +81,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       };
 
       if (withConfig) {
-        state.config = props.prepConfig(alignedFrame, theme, timeZone, this.getTimeRange, props.addlProps(props));
+        state.config = props.prepConfig(alignedFrame, this.getTimeRange);
       }
     }
 
@@ -86,33 +89,23 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, theme } = this.props;
+    const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
     if (frames !== prevProps.frames) {
-      //console.log("frames !== prevProps.frames");
-
       let newState = this.prepState(this.props, false);
 
       if (newState) {
-        //console.log("newState");
-
         const shouldReconfig =
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
-          this.props.shouldReconfig(prevProps, this.props);
+          !sameProps(prevProps, this.props, propsToDiff);
 
         if (shouldReconfig) {
           //console.log("shouldReconfig");
 
-          newState.config = this.props.prepConfig(
-            newState.alignedFrame,
-            theme,
-            timeZone,
-            this.getTimeRange,
-            this.props.addlProps(this.props)
-          );
+          newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);
         }
       }
 
@@ -129,7 +122,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={renderLegend(this.props, config, alignedFrame)}>
+      <VizLayout width={width} height={height} legend={renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={this.state.config!}

@@ -79,13 +79,17 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
   });
 }
 
-export function preparePlotConfigBuilder(
-  frame: DataFrame,
-  theme: GrafanaThemeV2,
-  timeZone: TimeZone,
-  getTimeRange: () => TimeRange,
-  addlProps: any
-): UPlotConfigBuilder {
+export interface PrepConfigOpts {
+  frame: DataFrame;
+  theme: GrafanaThemeV2;
+  timeZone: TimeZone;
+  getTimeRange: () => TimeRange;
+  [prop: string]: any;
+}
+
+type PrepConfig = (opts: PrepConfigOpts) => UPlotConfigBuilder;
+
+export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, getTimeRange }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
   // X is the first field in the aligned frame
@@ -237,7 +241,7 @@ export function preparePlotConfigBuilder(
     }
   }
   return builder;
-}
+};
 
 export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
   const names = new Map<string, number>();
