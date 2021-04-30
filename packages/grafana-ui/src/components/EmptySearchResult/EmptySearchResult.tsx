@@ -1,26 +1,26 @@
 import React, { FC } from 'react';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 export interface Props {
   children: JSX.Element | string;
 }
 
 const EmptySearchResult: FC<Props> = ({ children }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   return <div className={styles.container}>{children}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     container: css`
-      border-left: 3px solid ${theme.palette.blue80};
-      background-color: ${theme.colors.bg2};
-      padding: ${theme.spacing.d};
+      border-left: 3px solid ${theme.colors.info.main};
+      background-color: ${theme.colors.background.secondary};
+      padding: ${theme.spacing(2)};
       min-width: 350px;
-      border-radius: ${theme.border.radius.md};
-      margin-bottom: ${theme.spacing.xl};
+      border-radius: ${theme.shape.borderRadius(2)};
+      margin-bottom: ${theme.spacing(4)};
     `,
   };
 };
