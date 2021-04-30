@@ -97,7 +97,7 @@ export interface PanelProps<T = any> {
   eventBus: EventBus;
 
   /** Dashboard panels sync */
-  sync: DashboardCursorSync;
+  sync?: DashboardCursorSync;
 
   /** Panel options change handler */
   onOptionsChange: (options: T) => void;

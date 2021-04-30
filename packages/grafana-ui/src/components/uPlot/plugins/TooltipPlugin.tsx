@@ -1,6 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
-import { css } from '@emotion/css';
 import { usePlotContext } from '../context';
 import {
   CartesianCoords2D,
