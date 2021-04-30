@@ -281,8 +281,9 @@ export function preparePlotConfigBuilder(
             payload.point[xScaleKey] = src.posToVal(x, xScaleKey);
             payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
             eventBus.publish(hoverEvent);
+            hoverEvent.payload.down = undefined;
           }
-          return false; // always
+          return true; // false; // for now sync everything all the time
         },
       },
       // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,

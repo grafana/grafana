@@ -91,6 +91,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     );
     this.setState({ config });
 
+    // Something like this will be required to get external events *into* uPlot...
     this.subscriptions.push(
       eventBus.subscribe(DataHoverEvent, (evt) => {
         if (evt.origin === eventBus) {
