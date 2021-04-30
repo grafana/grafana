@@ -3,7 +3,6 @@ import {
   getValueFromDimension,
   getColumnFromDimension,
   formattedValueToString,
-  getDisplayProcessor,
   getFieldDisplayName,
 } from '@grafana/data';
 import { SeriesTable } from '../../VizTooltip';
@@ -29,7 +28,7 @@ export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({
 
   const valueField = getColumnFromDimension(dimensions.yAxis, activeDimensions.yAxis[0]);
   const value = getValueFromDimension(dimensions.yAxis, activeDimensions.yAxis[0], activeDimensions.yAxis[1]);
-  const display = valueField.display ?? getDisplayProcessor({ field: valueField, timeZone });
+  const display = valueField.display!;
   const disp = display(value);
 
   return (

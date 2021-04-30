@@ -23,7 +23,6 @@ $mobile-menu-breakpoint: md;
   @include media-breakpoint-up($mobile-menu-breakpoint) {
     background: $side-menu-bg;
     height: auto;
-    box-shadow: $side-menu-shadow;
     position: relative;
     z-index: $zindex-sidemenu;
   }
