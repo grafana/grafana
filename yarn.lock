@@ -2100,10 +2100,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@braintree/sanitize-url@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-4.0.0.tgz#2cda79ffd67b6ea919a63b5e1a883b92d636e844"
-  integrity sha512-bOoFoTxuEUuri/v1q0OXN0HIrZ2EiZlRSKdveU8vS5xf2+g0TmpXhmxkTc1s+XWR5xZNoVU4uvf/Mher98tfLw==
+"@braintree/sanitize-url@5.0.1":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-5.0.1.tgz#3c76855aea4a71904a35c92f433462c775583452"
+  integrity sha512-KzIC8q/UsT8g6bwRAQ0NbOCNxRoGbPKtqGBUtDaN8WN80xqsbHFs8z+Eq0fR0W1wcrcTB5oKNACsrbkK4X+FWA==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.3"
@@ -8570,11 +8570,6 @@ caniuse-api@^3.0.0:
     caniuse-lite "^1.0.0"
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
-
-caniuse-db@1.0.30000772:
-  version "1.0.30000772"
-  resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000772.tgz#51aae891768286eade4a3d8319ea76d6a01b512b"
-  integrity sha1-UarokXaChureSj2DGep21qAbUSs=
 
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000981, caniuse-lite@^1.0.30001020, caniuse-lite@^1.0.30001109, caniuse-lite@^1.0.30001125, caniuse-lite@^1.0.30001181:
   version "1.0.30001205"
@@ -20755,10 +20750,10 @@ react-highlight-words@0.16.0:
     memoize-one "^4.0.0"
     prop-types "^15.5.8"
 
-react-hook-form@5.1.3:
-  version "5.1.3"
-  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-5.1.3.tgz#24610e11878c6bd143569ce203320f7367893e75"
-  integrity sha512-6+6wSge72A2Y7WGqMke4afOz0uDJ3gOPSysmYKkjJszSbmw8X8at7tJPzifnZ+cwLDR88b4on/D+jfH5azWbIw==
+react-hook-form@7.2.3:
+  version "7.2.3"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.2.3.tgz#a4be9214cab3a6e6358f95d342da2e7ded37e3f0"
+  integrity sha512-ki83pkQH/NK6HbSWb4zHLD78s8nh6OW2j4GC5kAjhB2C3yiiVGvNAvybgAfnsXBbx+xb9mPgSpRRVOQUbss+JQ==
 
 react-hot-loader@4.8.0:
   version "4.8.0"
