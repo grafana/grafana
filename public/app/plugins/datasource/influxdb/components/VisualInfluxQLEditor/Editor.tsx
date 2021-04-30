@@ -8,7 +8,7 @@ import { PartListSection } from './PartListSection';
 import { OrderByTimeSection } from './OrderByTimeSection';
 import { InputSection } from './InputSection';
 import {
-  getAllMeasurements,
+  getAllMeasurementsForTags,
   getAllPolicies,
   getFieldKeysForMeasurement,
   getTagKeysForMeasurementAndTags,
@@ -107,7 +107,9 @@ export const Editor = (props: Props): JSX.Element => {
           policy={query.policy}
           measurement={query.measurement}
           getPolicyOptions={() => getAllPolicies(datasource)}
-          getMeasurementOptions={() => withTemplateVariableOptions(getAllMeasurements(datasource))}
+          getMeasurementOptions={() =>
+            withTemplateVariableOptions(getAllMeasurementsForTags(query.tags ?? [], datasource))
+          }
           onChange={handleFromSectionChange}
         />
         <SectionLabel name="where" />

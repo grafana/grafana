@@ -19,8 +19,11 @@ export async function getAllPolicies(datasource: InfluxDatasource): Promise<stri
   return data.map((item) => item.text);
 }
 
-export async function getAllMeasurements(datasource: InfluxDatasource): Promise<string[]> {
-  const target = { tags: [], measurement: undefined, policy: undefined };
+export async function getAllMeasurementsForTags(
+  tags: InfluxQueryTag[],
+  datasource: InfluxDatasource
+): Promise<string[]> {
+  const target = { tags, measurement: undefined, policy: undefined };
   const data = await runExploreQuery('MEASUREMENTS', undefined, target, datasource);
   return data.map((item) => item.text);
 }
