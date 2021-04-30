@@ -26,18 +26,6 @@ func mockTimeNow() {
 func TestAlertInstanceOperations(t *testing.T) {
 	dbstore := setupTestEnv(t, baseIntervalSeconds)
 
-	// alertDefinition1 := createTestAlertDefinition(t, dbstore, 60)
-	// orgID := alertDefinition1.OrgID
-
-	// alertDefinition2 := createTestAlertDefinition(t, dbstore, 60)
-	// require.Equal(t, orgID, alertDefinition2.OrgID)
-
-	// alertDefinition3 := createTestAlertDefinition(t, dbstore, 60)
-	// require.Equal(t, orgID, alertDefinition3.OrgID)
-
-	// alertDefinition4 := createTestAlertDefinition(t, dbstore, 60)
-	// require.Equal(t, orgID, alertDefinition4.OrgID)
-
 	alertRule1 := createTestAlertRule(t, dbstore, 60)
 	orgID := alertRule1.OrgID
 
