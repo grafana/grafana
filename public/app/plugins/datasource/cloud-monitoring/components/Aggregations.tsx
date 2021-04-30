@@ -2,7 +2,7 @@ import React, { FC, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { InlineFields } from '.';
+import { QueryEditorField } from '.';
 import { getAggregationOptionsByMetric } from '../functions';
 import { MetricDescriptor, ValueTypes, MetricKind } from '../types';
 
@@ -19,8 +19,9 @@ export const Aggregations: FC<Props> = (props) => {
   const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
-    <InlineFields label="Group by function" data-testid="aggregations">
+    <QueryEditorField labelWidth={18} label="Group by function" data-testid="aggregations">
       <Select
+        width={16}
         onChange={({ value }) => props.onChange(value!)}
         value={selected}
         options={[
@@ -36,7 +37,7 @@ export const Aggregations: FC<Props> = (props) => {
         ]}
         placeholder="Select Reducer"
       />
-    </InlineFields>
+    </QueryEditorField>
   );
 };
 

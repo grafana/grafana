@@ -13,7 +13,6 @@ export { MetricQueryEditor } from './MetricQueryEditor';
 export { SLOQueryEditor } from './SLO/SLOQueryEditor';
 export { MQLQueryEditor } from './MQLQueryEditor';
 export { QueryTypeSelector } from './QueryType';
-export { VariableQueryField } from './Fields';
+export { VariableQueryField, QueryEditorRow, QueryEditorField } from './Fields';
 export { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 export { Preprocessor } from './Preprocessor';
-export { InlineFields } from './InlineFields';

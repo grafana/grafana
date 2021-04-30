@@ -2,9 +2,9 @@ import React, { FunctionComponent, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
 import { labelsToGroupedOptions } from '../functions';
-import { SYSTEM_LABELS, LABEL_WIDTH, INPUT_WIDTH } from '../constants';
+import { SYSTEM_LABELS, INPUT_WIDTH } from '../constants';
 import { MetricDescriptor, MetricQuery } from '../types';
-import { Aggregations, InlineFields } from '.';
+import { Aggregations, QueryEditorRow } from '.';
 
 export interface Props {
   variableOptionGroup: SelectableValue<string>;
@@ -27,10 +27,8 @@ export const GroupBy: FunctionComponent<Props> = ({
   ]);
 
   return (
-    <InlineFields
-      label="Group By"
-      transparent
-      labelWidth={LABEL_WIDTH}
+    <QueryEditorRow
+      label="Group by"
       tooltip="You can reduce the amount of data returned for a metric by combining different time series. To combine multiple time series, you can specify a grouping and a function. Grouping is done on the basis of labels. The grouping function is used to combine the time series in the group into a single time series."
     >
       <MultiSelect
@@ -49,6 +47,6 @@ export const GroupBy: FunctionComponent<Props> = ({
         groupBys={query.groupBys ?? []}
         onChange={(crossSeriesReducer) => onChange({ ...query, crossSeriesReducer })}
       ></Aggregations>
-    </InlineFields>
+    </QueryEditorRow>
   );
 };

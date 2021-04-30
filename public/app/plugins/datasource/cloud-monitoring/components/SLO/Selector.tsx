@@ -1,10 +1,10 @@
 import React from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { InlineFields } from '..';
+import { QueryEditorRow } from '..';
 import CloudMonitoringDatasource from '../../datasource';
 import { SLOQuery } from '../../types';
-import { LABEL_WIDTH, SELECT_WIDTH, SELECTORS } from '../../constants';
+import { SELECT_WIDTH, SELECTORS } from '../../constants';
 
 export interface Props {
   onChange: (query: SLOQuery) => void;
@@ -15,7 +15,7 @@ export interface Props {
 
 export const Selector: React.FC<Props> = ({ query, templateVariableOptions, onChange, datasource }) => {
   return (
-    <InlineFields label="Selector" grow transparent labelWidth={LABEL_WIDTH}>
+    <QueryEditorRow label="Selector">
       <Select
         width={SELECT_WIDTH}
         allowCustomValue
@@ -29,6 +29,6 @@ export const Selector: React.FC<Props> = ({ query, templateVariableOptions, onCh
         ]}
         onChange={({ value: selectorName }) => onChange({ ...query, selectorName: selectorName ?? '' })}
       />
-    </InlineFields>
+    </QueryEditorRow>
   );
 };

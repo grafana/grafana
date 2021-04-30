@@ -1,10 +1,8 @@
 import React, { FC } from 'react';
-import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
-import { InlineField } from '@grafana/ui';
-import { LABEL_WIDTH } from '../constants';
+import { SELECT_WIDTH } from '../constants';
 import { CustomMetaData, MetricQuery } from '../types';
-import { AlignmentFunction, AlignmentPeriod, AlignmentPeriodLabel, InlineFields } from '.';
+import { AlignmentFunction, AlignmentPeriod, AlignmentPeriodLabel, QueryEditorField, QueryEditorRow } from '.';
 import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
@@ -17,17 +15,20 @@ export interface Props {
 
 export const Alignment: FC<Props> = ({ templateVariableOptions, onChange, query, customMetaData, datasource }) => {
   return (
-    <InlineFields
-      label="Alignment"
-      transparent
-      labelWidth={LABEL_WIDTH}
+    <QueryEditorRow
+      label="Alignment function"
       tooltip="The process of alignment consists of collecting all data points received in a fixed length of time, applying a function to combine those data points, and assigning a timestamp to the result."
+      fillComponent={<AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />}
     >
       <AlignmentFunction templateVariableOptions={templateVariableOptions} query={query} onChange={onChange} />
-      <InlineField label="Period">
-        <AlignmentPeriod templateVariableOptions={templateVariableOptions} query={query} onChange={onChange} />
-      </InlineField>
-      <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
-    </InlineFields>
+      <QueryEditorField label="Alignment period">
+        <AlignmentPeriod
+          selectWidth={SELECT_WIDTH}
+          templateVariableOptions={templateVariableOptions}
+          query={query}
+          onChange={onChange}
+        />
+      </QueryEditorField>
+    </QueryEditorRow>
   );
 };

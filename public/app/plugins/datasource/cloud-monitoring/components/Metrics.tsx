@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { startCase, uniqBy } from 'lodash';
 
-import { InlineField, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
-import { InlineFields } from '.';
+import { QueryEditorRow, QueryEditorField } from '.';
 import CloudMonitoringDatasource from '../datasource';
-import { LABEL_WIDTH } from '../constants';
+import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import { MetricDescriptor } from '../types';
 
 export interface Props {
@@ -120,9 +120,10 @@ export function Metrics(props: Props) {
 
   return (
     <>
-      <InlineFields transparent label="Metric" labelWidth={LABEL_WIDTH}>
-        <InlineField className="width-16" label="Service">
+      <QueryEditorRow>
+        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" noFillEnd>
           <Select
+            width={SELECT_WIDTH}
             onChange={onServiceChange}
             value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
             options={[
@@ -134,9 +135,10 @@ export function Metrics(props: Props) {
             ]}
             placeholder="Select Services"
           ></Select>
-        </InlineField>
-        <InlineField label="Metric name">
+        </QueryEditorField>
+        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} noFillEnd>
           <Select
+            width={SELECT_WIDTH}
             onChange={onMetricTypeChange}
             value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
             options={[
@@ -148,8 +150,8 @@ export function Metrics(props: Props) {
             ]}
             placeholder="Select Metric"
           ></Select>
-        </InlineField>
-      </InlineFields>
+        </QueryEditorField>
+      </QueryEditorRow>
 
       {children(state.metricDescriptor)}
     </>

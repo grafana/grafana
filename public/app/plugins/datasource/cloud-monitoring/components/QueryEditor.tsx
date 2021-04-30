@@ -2,9 +2,9 @@ import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 import { ExploreQueryFieldProps } from '@grafana/data';
 import { Button, Select } from '@grafana/ui';
-import { MetricQueryEditor, SLOQueryEditor, InlineFields } from './';
+import { MetricQueryEditor, SLOQueryEditor, QueryEditorRow } from './';
 import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, EditorMode } from '../types';
-import { LABEL_WIDTH, SELECT_WIDTH, QUERY_TYPES } from '../constants';
+import { SELECT_WIDTH, QUERY_TYPES } from '../constants';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
 import { toOption } from '../functions';
@@ -53,7 +53,28 @@ export class QueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <InlineFields label="Query Type" transparent labelWidth={LABEL_WIDTH}>
+        <QueryEditorRow
+          label="Query type"
+          fillComponent={
+            query.queryType !== QueryType.SLO && (
+              <Button
+                variant="secondary"
+                className={css`
+                  margin-left: auto;
+                `}
+                icon="edit"
+                onClick={() =>
+                  this.onQueryChange('metricQuery', {
+                    ...metricQuery,
+                    editorMode: metricQuery.editorMode === EditorMode.MQL ? EditorMode.Visual : EditorMode.MQL,
+                  })
+                }
+              >
+                {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
+              </Button>
+            )
+          }
+        >
           <Select
             width={SELECT_WIDTH}
             value={queryType}
@@ -63,24 +84,7 @@ export class QueryEditor extends PureComponent<Props> {
               onRunQuery();
             }}
           />
-
-          {query.queryType !== QueryType.SLO && (
-            <Button
-              className={css`
-                margin-left: auto;
-              `}
-              icon="edit"
-              onClick={() =>
-                this.onQueryChange('metricQuery', {
-                  ...metricQuery,
-                  editorMode: metricQuery.editorMode === EditorMode.MQL ? EditorMode.Visual : EditorMode.MQL,
-                })
-              }
-            >
-              {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
-            </Button>
-          )}
-        </InlineFields>
+        </QueryEditorRow>
 
         {queryType === QueryType.METRICS && (
           <MetricQueryEditor

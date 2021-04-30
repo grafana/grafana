@@ -37,7 +37,7 @@ function Editor({
           <LabelFilter
             labels={labels}
             filters={query.filters!}
-            onChange={(filters) => onChange({ ...query, filters })}
+            onChange={(filters: string[]) => onChange({ ...query, filters })}
             variableOptionGroup={variableOptionGroup}
           />
           <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />

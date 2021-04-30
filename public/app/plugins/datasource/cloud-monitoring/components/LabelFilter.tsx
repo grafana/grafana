@@ -1,12 +1,13 @@
 import React, { FunctionComponent, useCallback, useMemo } from 'react';
-import flatten from 'lodash/flatten';
+import { flatten } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 import { CustomControlProps } from '@grafana/ui/src/components/Select/types';
 import { Button, HorizontalGroup, Select, VerticalGroup } from '@grafana/ui';
 import { labelsToGroupedOptions, stringArrayToFilters, toOption } from '../functions';
 import { Filter } from '../types';
-import { LABEL_WIDTH, SELECT_WIDTH } from '../constants';
-import { InlineFields } from '.';
+import { SELECT_WIDTH } from '../constants';
+import { QueryEditorRow } from '.';
 
 export interface Props {
   labels: { [key: string]: string[] };
@@ -18,11 +19,7 @@ export interface Props {
 const operators = ['=', '!=', '=~', '!=~'];
 
 const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(({ value, ...rest }, ref) => {
-  return (
-    <Button ref={ref} {...rest} variant="secondary" icon="plus">
-      Add filter
-    </Button>
-  );
+  return <Button ref={ref} {...rest} variant="secondary" icon="plus"></Button>;
 });
 FilterButton.displayName = 'FilterButton';
 
@@ -49,21 +46,34 @@ export const LabelFilter: FunctionComponent<Props> = ({
 
   const filtersToStringArray = useCallback((filters: Filter[]) => {
     const strArr = flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
-    return strArr.filter((_, i) => i !== strArr.length - 1);
+    return strArr.slice(0, strArr.length - 1);
   }, []);
 
+  const AddFilter = () => {
+    return (
+      <Select
+        allowCustomValue
+        options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
+        onChange={({ value: key = '' }) =>
+          onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter]))
+        }
+        menuPlacement="bottom"
+        renderControl={FilterButton}
+      />
+    );
+  };
+
   return (
-    <InlineFields
+    <QueryEditorRow
       label="Filter"
-      transparent
-      labelWidth={LABEL_WIDTH}
       tooltip={
         'To reduce the amount of data charted, apply a filter. A filter has three components: a label, a comparison, and a value. The comparison can be an equality, inequality, or regular expression.'
       }
+      noFillEnd={filters.length > 1}
     >
-      <VerticalGroup spacing="xs">
+      <VerticalGroup spacing="xs" width="auto">
         {filters.map(({ key, operator, value, condition }, index) => (
-          <HorizontalGroup key={index} spacing="xs">
+          <HorizontalGroup key={index} spacing="xs" width="auto">
             <Select
               width={SELECT_WIDTH}
               allowCustomValue
@@ -107,22 +117,11 @@ export const LabelFilter: FunctionComponent<Props> = ({
               aria-label="Remove"
               onClick={() => onChange(filtersToStringArray(filters.filter((_, i) => i !== index)))}
             ></Button>
+            {index + 1 === filters.length && Object.values(filters).every(({ value }) => value) && <AddFilter />}
           </HorizontalGroup>
         ))}
-        {Object.values(filters).every(({ value }) => value) && (
-          <Select
-            allowCustomValue
-            options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
-            onChange={({ value: key = '' }) =>
-              onChange(
-                filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter])
-              )
-            }
-            menuPlacement="bottom"
-            renderControl={FilterButton}
-          />
-        )}
+        {!filters.length && <AddFilter />}
       </VerticalGroup>
-    </InlineFields>
+    </QueryEditorRow>
   );
 };

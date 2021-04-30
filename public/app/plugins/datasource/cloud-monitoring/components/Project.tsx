@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 import CloudMonitoringDatasource from '../datasource';
-import { LABEL_WIDTH, SELECT_WIDTH } from '../constants';
-import { InlineFields } from '.';
+import { SELECT_WIDTH } from '../constants';
+import { QueryEditorRow } from '.';
 
 export interface Props {
   datasource: CloudMonitoringDatasource;
@@ -27,7 +27,7 @@ export function Project({ projectName, datasource, onChange, templateVariableOpt
   }, [datasource, templateVariableOptions]);
 
   return (
-    <InlineFields label="Project" transparent labelWidth={LABEL_WIDTH}>
+    <QueryEditorRow label="Project">
       <Select
         width={SELECT_WIDTH}
         allowCustomValue
@@ -37,6 +37,6 @@ export function Project({ projectName, datasource, onChange, templateVariableOpt
         value={{ value: projectName, label: projectName }}
         placeholder="Select Project"
       />
-    </InlineFields>
+    </QueryEditorRow>
   );
 }

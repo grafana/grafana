@@ -1,6 +1,4 @@
 import React, { FC, useMemo } from 'react';
-import _ from 'lodash';
-import { css } from '@emotion/css';
 import { rangeUtil } from '@grafana/data';
 import { ALIGNMENTS } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
@@ -24,14 +22,5 @@ export const AlignmentPeriodLabel: FC<Props> = ({ customMetaData, datasource }) 
     return `${hms} interval (${alignment?.text ?? ''})`;
   }, [datasource, perSeriesAligner, alignmentPeriod]);
 
-  return (
-    <label
-      className={css`
-        margin-left: 8px;
-        place-self: center;
-      `}
-    >
-      {formatAlignmentText}
-    </label>
-  );
+  return <label>{formatAlignmentText}</label>;
 };

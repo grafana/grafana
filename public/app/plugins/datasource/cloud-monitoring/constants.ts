@@ -1,9 +1,10 @@
 import { AuthType, MetricKind, QueryType, ValueTypes } from './types';
 
-export const LABEL_WIDTH = 16;
-export const SELECT_WIDTH = 32;
-export const INPUT_WIDTH = 74;
-
+// not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
+export const INPUT_WIDTH = 71;
+export const LABEL_WIDTH = 18;
+export const INNER_LABEL_WIDTH = 14;
+export const SELECT_WIDTH = 28;
 export const AUTH_TYPES = [
   { value: 'Google JWT File', key: AuthType.JWT },
   { value: 'GCE Default Service Account', key: AuthType.GCE },

@@ -1,8 +1,8 @@
 import React, { FunctionComponent, useState } from 'react';
 import { debounce } from 'lodash';
 import { Input } from '@grafana/ui';
-import { InlineFields } from '.';
-import { INPUT_WIDTH, LABEL_WIDTH } from '../constants';
+import { QueryEditorRow } from '.';
+import { INPUT_WIDTH } from '../constants';
 
 export interface Props {
   onChange: (alias: any) => void;
@@ -20,8 +20,8 @@ export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
   };
 
   return (
-    <InlineFields label="Alias By" grow transparent labelWidth={LABEL_WIDTH}>
+    <QueryEditorRow label="Alias by">
       <Input width={INPUT_WIDTH} value={alias} onChange={onChange} />
-    </InlineFields>
+    </QueryEditorRow>
   );
 };

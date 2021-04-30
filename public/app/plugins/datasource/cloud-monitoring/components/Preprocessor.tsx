@@ -2,9 +2,8 @@ import React, { FunctionComponent, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType } from '../types';
-import { LABEL_WIDTH } from '../constants';
 import { getAlignmentPickerData } from '../functions';
-import { InlineFields } from '.';
+import { QueryEditorRow } from '.';
 
 const NONE_OPTION = { label: 'None', value: PreprocessorType.None };
 
@@ -17,10 +16,8 @@ export interface Props {
 export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor, onChange }) => {
   const options = useOptions(metricDescriptor);
   return (
-    <InlineFields
+    <QueryEditorRow
       label="Pre-processing"
-      transparent
-      labelWidth={LABEL_WIDTH}
       tooltip="Preprocessing options are displayed when the selected metric has a metric kind of delta or cumulative. The specific options available are determined by the metic's value type. If you select 'Rate', data points are aligned and converted to a rate per time series. If you select 'Delta', data points are aligned by their delta (difference) per time series"
     >
       <RadioButtonGroup
@@ -32,7 +29,7 @@ export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor
         value={query.preprocessor ?? PreprocessorType.None}
         options={options}
       ></RadioButtonGroup>
-    </InlineFields>
+    </QueryEditorRow>
   );
 };
 
