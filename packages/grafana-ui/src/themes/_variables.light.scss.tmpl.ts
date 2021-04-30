@@ -276,9 +276,9 @@ $alert-warning-bg: ${theme.colors.warning.main};
 $alert-info-bg: ${theme.colors.warning.main};
 
 // Tooltips and popovers
-$tooltipBackground: ${theme.colors.background.secondary};
-$tooltipColor: ${theme.colors.text.primary};
-$tooltipArrowColor: ${theme.colors.background.secondary};
+$tooltipBackground: ${theme.components.tooltip.background};
+$tooltipColor: ${theme.components.tooltip.text};
+$tooltipArrowColor: ${theme.components.tooltip.background};
 $tooltipBackgroundError: ${theme.colors.error.main};
 $tooltipShadow: ${theme.shadows.z2};
 
