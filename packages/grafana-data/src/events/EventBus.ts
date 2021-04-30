@@ -1,5 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { StreamingDataFrame } from '../dataframe';
 import {
   EventBus,
   LegacyEmitter,
@@ -115,20 +117,11 @@ class ScopedEventBus implements EventBus {
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
     const stream = this.eventBus.getStream(eventType);
+
     if (this.localOnly) {
-      return new Observable<T>((observer) => {
-        const sub = stream.subscribe({
-          next: (evt) => {
-            if (evt.origin === this) {
-              observer.next();
-            }
-          },
-        });
-        return () => {
-          sub.unsubscribe();
-        };
-      });
+      return stream.pipe(filter((streamEvent) => streamEvent.origin === this));
     }
+
     return stream;
   }
 
