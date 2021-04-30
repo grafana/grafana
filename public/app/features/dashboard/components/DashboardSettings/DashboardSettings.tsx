@@ -200,6 +200,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2) => ({
     padding: 32px;
     border: 1px solid ${theme.colors.border.weak};
     background: ${theme.colors.background.primary};
+    border-radius: ${theme.shape.borderRadius()};
   `,
   settingsContentFullWidth: css`
     flex-grow: 1;
