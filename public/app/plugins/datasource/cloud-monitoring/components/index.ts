@@ -8,7 +8,7 @@ export { AlignmentFunction } from './AlignmentFunction';
 export { AlignmentPeriod } from './AlignmentPeriod';
 export { AlignmentPeriodLabel } from './AlignmentPeriodLabel';
 export { AliasBy } from './AliasBy';
-export { Aggregations } from './Aggregations';
+export { Aggregation } from './Aggregation';
 export { MetricQueryEditor } from './MetricQueryEditor';
 export { SLOQueryEditor } from './SLO/SLOQueryEditor';
 export { MQLQueryEditor } from './MQLQueryEditor';

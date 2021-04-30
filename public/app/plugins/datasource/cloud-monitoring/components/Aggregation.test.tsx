@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { shallow } from 'enzyme';
 import { Select } from '@grafana/ui';
-import { Aggregations, Props } from './Aggregations';
+import { Aggregation, Props } from './Aggregation';
 import { ValueTypes, MetricKind } from '../types';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
@@ -19,10 +19,10 @@ const props: Props = {
   templateVariableOptions: [],
 };
 
-describe('Aggregations', () => {
+describe('Aggregation', () => {
   it('renders correctly', () => {
-    render(<Aggregations {...props} />);
-    expect(screen.getByTestId('aggregations')).toBeInTheDocument();
+    render(<Aggregation {...props} />);
+    expect(screen.getByTestId('cloud-monitoring-aggregations')).toBeInTheDocument();
   });
 
   describe('options', () => {
@@ -36,7 +36,7 @@ describe('Aggregations', () => {
       };
 
       it('should not have the reduce values', () => {
-        const wrapper = shallow(<Aggregations {...nextProps} />);
+        const wrapper = shallow(<Aggregation {...nextProps} />);
         const { options } = wrapper.find(Select).props() as any;
         const [, aggGroup] = options;
 
@@ -57,7 +57,7 @@ describe('Aggregations', () => {
       };
 
       it('should have the reduce values', () => {
-        const wrapper = shallow(<Aggregations {...nextProps} />);
+        const wrapper = shallow(<Aggregation {...nextProps} />);
         const { options } = wrapper.find(Select).props() as any;
         const [, aggGroup] = options;
 

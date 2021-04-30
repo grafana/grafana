@@ -2,7 +2,7 @@ import { AuthType, MetricKind, QueryType, ValueTypes } from './types';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;
-export const LABEL_WIDTH = 18;
+export const LABEL_WIDTH = 19;
 export const INNER_LABEL_WIDTH = 14;
 export const SELECT_WIDTH = 28;
 export const AUTH_TYPES = [

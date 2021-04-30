@@ -14,12 +14,12 @@ export interface Props {
   templateVariableOptions: Array<SelectableValue<string>>;
 }
 
-export const Aggregations: FC<Props> = (props) => {
+export const Aggregation: FC<Props> = (props) => {
   const aggOptions = useAggregationOptionsByMetric(props);
   const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
-    <QueryEditorField labelWidth={18} label="Group by function" data-testid="aggregations">
+    <QueryEditorField labelWidth={18} label="Group by function" data-testid="cloud-monitoring-aggregations">
       <Select
         width={16}
         onChange={({ value }) => props.onChange(value!)}

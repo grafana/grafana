@@ -4,7 +4,7 @@ import { MultiSelect } from '@grafana/ui';
 import { labelsToGroupedOptions } from '../functions';
 import { SYSTEM_LABELS, INPUT_WIDTH } from '../constants';
 import { MetricDescriptor, MetricQuery } from '../types';
-import { Aggregations, QueryEditorRow } from '.';
+import { Aggregation, QueryEditorRow } from '.';
 
 export interface Props {
   variableOptionGroup: SelectableValue<string>;
@@ -40,13 +40,13 @@ export const GroupBy: FunctionComponent<Props> = ({
           onChange({ ...query, groupBys: options.map((o) => o.value!) });
         }}
       ></MultiSelect>
-      <Aggregations
+      <Aggregation
         metricDescriptor={metricDescriptor}
         templateVariableOptions={variableOptionGroup.options}
         crossSeriesReducer={query.crossSeriesReducer}
         groupBys={query.groupBys ?? []}
         onChange={(crossSeriesReducer) => onChange({ ...query, crossSeriesReducer })}
-      ></Aggregations>
+      ></Aggregation>
     </QueryEditorRow>
   );
 };
