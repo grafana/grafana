@@ -44,7 +44,7 @@ func TestPutAlert(t *testing.T) {
 		DataPath: dir,
 	}
 
-	require.NoError(t, am.Init())
+	require.NoError(t, am.InitWithRegisterer(prometheus.NewRegistry()))
 
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
