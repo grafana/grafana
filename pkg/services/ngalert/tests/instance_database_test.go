@@ -185,7 +185,5 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, saveCmdTwo.DefinitionUID, listQuery.Result[0].DefinitionUID)
 		require.Equal(t, saveCmdTwo.Labels, listQuery.Result[0].Labels)
 		require.Equal(t, saveCmdTwo.State, listQuery.Result[0].CurrentState)
-		require.NotEmpty(t, listQuery.Result[0].DefinitionTitle)
-		require.Equal(t, alertRule4.Title, listQuery.Result[0].DefinitionTitle)
 	})
 }
