@@ -17,7 +17,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-// metrics are a globally registered metric suite for alerting.
+// GlobalMetrics are a globally registered metric suite for alerting.
 // TODO: refactor testware to allow these to be created without
 // panicking on duplicate registration, thus enabling non-global vars.
 var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
