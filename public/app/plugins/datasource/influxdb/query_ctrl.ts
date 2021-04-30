@@ -1,5 +1,5 @@
 import angular, { auto } from 'angular';
-import { reduce, map, each, throttle } from 'lodash';
+import { reduce, map, each } from 'lodash';
 import { InfluxQueryBuilder } from './query_builder';
 import InfluxQueryModel from './influx_query_model';
 import queryPart from './query_part';
@@ -7,9 +7,6 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { TemplateSrv } from '@grafana/runtime';
 import { InfluxQuery } from './types';
 import InfluxDatasource from './datasource';
-
-const GET_MEASUREMENTS_TIMEOUT = 5 * 60 * 1000;
-const GET_MEASUREMENTS_THROTTLE_DELAY = 1000;
 
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -25,7 +22,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
   selectMenu: any;
   measurementSegment: any;
   removeTagFilterSegment: any;
-  getMeasurementsCallback: (measurementFilter: string, result: any, error: any) => void;
 
   /** @ngInject */
   constructor(
@@ -78,15 +74,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
       fake: true,
       value: '-- remove tag filter --',
     });
-
-    // to be able to use lodash.throttle:
-    // 1. we need to call it in the constructor, so it is only called once,
-    //    and not on every method-call
-    // 2. we need to work in a way where there is no return-value from the function.
-    //    we achieve this by calling resolve/reject as callback
-    this.getMeasurementsCallback = throttle((filter: string, result: any, error: any) => {
-      this.getMeasurementsUnlimitedWithTimeout(filter).then(result, error);
-    }, GET_MEASUREMENTS_THROTTLE_DELAY);
   }
 
   /**
@@ -288,38 +275,12 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.target.rawQuery = !this.target.rawQuery;
   }
 
-  getMeasurementsUnlimited(measurementFilter: any) {
+  getMeasurements(measurementFilter: any) {
     const query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
-
     return this.datasource
       .metricFindQuery(query)
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
-  }
-
-  // our measurement-throttling approach will cause some
-  // of the getMeasurement-promises to stay unresolved.
-  // with the following timeout-code we make sure their
-  // handling wil be finished either way, meaning, every getMeasurements
-  // call coming from the "outside" will either resolve with data,
-  // or (after some time) be rejected. i am somewhat worried
-  // that unresolved promises might hold references to resources
-  // and cause memory problems eventually, so we do this to be sure.
-  getMeasurementsUnlimitedWithTimeout(measurementFilter: any) {
-    const timeoutPromise = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        reject('promise timed out');
-      }, GET_MEASUREMENTS_TIMEOUT);
-    });
-
-    const dataPromise = this.getMeasurementsUnlimited(measurementFilter);
-    return Promise.race([timeoutPromise, dataPromise]);
-  }
-
-  getMeasurements(measurementFilter: any) {
-    return new Promise((resolve, reject) => {
-      this.getMeasurementsCallback(measurementFilter, resolve, reject);
-    });
   }
 
   handleQueryError(err: any): any[] {
