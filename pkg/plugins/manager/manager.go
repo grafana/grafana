@@ -54,6 +54,7 @@ type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	SQLStore             *sqlstore.SQLStore    `inject:""`
+	pluginInstaller      *installer.Installer
 	log                  log.Logger
 	scanningErrors       []error
 
@@ -94,6 +95,8 @@ func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	plog = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
+
+	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
 
 	pm.log.Info("Starting plugin search")
 
@@ -711,8 +714,6 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 }
 
 func (pm *PluginManager) Install(pluginID, version string) error {
-	i := installer.New(true, pm.Cfg.BuildVersion, installerLog)
-
 	plugin := pm.plugins[pluginID]
 	if plugin != nil {
 		if version != "" && version == plugin.Info.Version {
@@ -726,7 +727,7 @@ func (pm *PluginManager) Install(pluginID, version string) error {
 		}
 	}
 
-	err := i.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
+	err := pm.pluginInstaller.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
 	if err != nil {
 		return err
 	}
@@ -757,8 +758,7 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 		return err
 	}
 
-	i := installer.New(false, pm.Cfg.BuildVersion, installerLog)
-	return i.Uninstall(pluginID, pm.Cfg.PluginsPath)
+	return pm.pluginInstaller.Uninstall(pluginID, pm.Cfg.PluginsPath)
 }
 
 func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
@@ -777,15 +777,15 @@ func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
 
 	for i, route := range pm.staticRoutes {
 		if plugin.Id == route.PluginId {
-			deleteStaticRoute(pm.staticRoutes, i)
+			removeStaticRoute(pm.staticRoutes, i)
 		}
 	}
 
 	return nil
 }
 
-func deleteStaticRoute(s []*plugins.PluginStaticRoute, i int) []*plugins.PluginStaticRoute {
-	s[i] = s[len(s)-1]
+func removeStaticRoute(routes []*plugins.PluginStaticRoute, i int) []*plugins.PluginStaticRoute {
+	routes[i] = routes[len(routes)-1]
 
-	return s[:len(s)-1]
+	return routes[:len(routes)-1]
 }

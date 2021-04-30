@@ -109,6 +109,7 @@ func (m *manager) UnregisterAndStop(pluginID string) error {
 		return fmt.Errorf("backend plugin %s is not registered", pluginID)
 	}
 
+	m.logger.Debug("Stopping backend plugin process", "pluginId", pluginID)
 	if err := p.Stop(context.Background()); err != nil {
 		return err
 	}
