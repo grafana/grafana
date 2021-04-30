@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	// "fmt"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"

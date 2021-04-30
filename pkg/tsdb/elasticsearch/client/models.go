@@ -2,7 +2,6 @@ package es
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
