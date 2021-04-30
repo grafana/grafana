@@ -92,8 +92,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
         <>
           <Field label="Dashboard name" invalid={!!errors.title} error={errors.title?.message}>
             <Input
-              name="title"
-              ref={register({
+              {...register('title', {
                 validate: validateDashboardName(getValues),
               })}
               aria-label="Save dashboard title field"
@@ -102,17 +101,21 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           </Field>
           <Field label="Folder">
             <InputControl
-              as={FolderPicker}
+              render={({ field: { ref, ...field } }) => (
+                <FolderPicker
+                  {...field}
+                  dashboardId={dashboard.id}
+                  initialFolderId={dashboard.meta.folderId}
+                  initialTitle={dashboard.meta.folderTitle}
+                  enableCreateNew
+                />
+              )}
               control={control}
               name="$folder"
-              dashboardId={dashboard.id}
-              initialFolderId={dashboard.meta.folderId}
-              initialTitle={dashboard.meta.folderTitle}
-              enableCreateNew
             />
           </Field>
           <Field label="Copy tags">
-            <Switch name="copyTags" ref={register} />
+            <Switch {...register('copyTags')} />
           </Field>
           <Modal.ButtonRow>
             <Button variant="secondary" onClick={onCancel} fill="outline">

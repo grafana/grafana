@@ -30,7 +30,7 @@ export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
               id={`randomWalk-${id}-${query.refId}`}
               min={min}
               step={step}
-              value={query[id as keyof TestDataQuery] || placeholder}
+              value={(query as any)[id as keyof TestDataQuery] || placeholder}
               placeholder={placeholder}
               onChange={onChange}
             />
