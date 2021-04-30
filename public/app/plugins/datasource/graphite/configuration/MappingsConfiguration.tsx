@@ -63,7 +63,7 @@ export const MappingsConfiguration = (props: Props): JSX.Element => {
           variant="secondary"
           icon="plus"
           type="button"
-          onClick={(e) => {
+          onClick={() => {
             setMappings([...mappings, '']);
           }}
         >
