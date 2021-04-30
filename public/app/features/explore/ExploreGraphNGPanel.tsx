@@ -1,6 +1,8 @@
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
+  compareArrayValues,
+  compareDataFrameStructures,
   createFieldConfigRegistry,
   DataFrame,
   dateTime,
@@ -19,7 +21,7 @@ import {
   LegendDisplayMode,
   TooltipPlugin,
   useStyles,
-  useTheme,
+  useTheme2,
   ZoomPlugin,
   TooltipDisplayMode,
 } from '@grafana/ui';
@@ -28,9 +30,10 @@ import { hideSeriesConfigFactory } from 'app/plugins/panel/timeseries/overrides/
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
+import { usePrevious } from 'react-use';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -55,9 +58,19 @@ export function ExploreGraphNGPanel({
   annotations,
   splitOpenFn,
 }: Props) {
-  const theme = useTheme();
+  const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
-  const [structureRev, setStructureRev] = useState(1);
+  const [baseStructureRev, setBaseStructureRev] = useState(1);
+
+  const previousData = usePrevious(data);
+  const structureChangesRef = useRef(0);
+
+  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
+    structureChangesRef.current++;
+  }
+
+  const structureRev = baseStructureRev + structureChangesRef.current;
+
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
       color: {
@@ -96,7 +109,7 @@ export function ExploreGraphNGPanel({
 
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
-      setStructureRev((r) => r + 1);
+      setBaseStructureRev((r) => r + 1);
       setFieldConfig(hideSeriesConfigFactory(event, fieldConfig, data));
     },
     [fieldConfig, data]

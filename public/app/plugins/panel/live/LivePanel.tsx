@@ -188,7 +188,7 @@ export class LivePanel extends PureComponent<Props, State> {
         const data: PanelData = {
           series: applyFieldOverrides({
             data: [message],
-            theme: config.theme,
+            theme: config.theme2,
             replaceVariables: (v: string) => v,
             fieldConfig: {
               defaults: {},
