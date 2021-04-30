@@ -50,7 +50,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	// [orgID, dataSourceId] -> [UID, Name]
+	// [orgID, dataSourceId] -> UID
 	dsIDMap, err := m.slurpDSIDs()
 	if err != nil {
 		return err

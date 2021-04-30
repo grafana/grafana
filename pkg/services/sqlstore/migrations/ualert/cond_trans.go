@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2]string) (*condition, error) {
+func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (*condition, error) {
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
 		if len(cond.Query.Params) != 3 {
@@ -56,7 +56,6 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2
 		}
 
 		// This referenced query/refID has different time ranges, so new queries are needed for each unique time range.
-
 		timeRanges := make([][2]string, 0, len(timeRangesToCondIdx)) // a sorted list of unique time ranges for the query
 		for tr := range timeRangesToCondIdx {
 			timeRanges = append(timeRanges, tr)
@@ -119,8 +118,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2
 			}
 
 			// one could have an alert saved but datasource deleted, so can not require match.
-			dsInfo := dsIDMap[[2]int64{orgID, set.Conditions[condIdx].Query.DatasourceID}]
-			queryObj["datasource"] = dsInfo[1] // name is needed for UI to load query editor
+			dsUID := dsUIDMap.GetUID(orgID, set.Conditions[condIdx].Query.DatasourceID)
 			queryObj["refId"] = refID
 
 			encodedObj, err := json.Marshal(queryObj)
@@ -140,7 +138,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     dsInfo[0],
+				DatasourceUID:     dsUID,
 				QueryType:         queryType,
 			}
 			newCond.Data = append(newCond.Data, alertQuery)
@@ -172,12 +170,10 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2
 	exprModel := struct {
 		Type       string                 `json:"type"`
 		RefID      string                 `json:"refId"`
-		Datasource string                 `json:"datasource"`
 		Conditions []classicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		"__expr__",
 		conditions,
 	}
 
