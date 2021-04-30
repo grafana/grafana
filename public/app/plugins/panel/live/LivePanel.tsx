@@ -159,10 +159,7 @@ export class LivePanel extends PureComponent<Props, State> {
       return;
     }
 
-    const rsp = await getBackendSrv().post(`api/live/publish`, {
-      channel: toLiveChannelId(addr),
-      data,
-    });
+    const rsp = await getGrafanaLiveSrv().publish(addr, data);
     console.log('onPublishClicked (response from publish)', rsp);
   };
 
