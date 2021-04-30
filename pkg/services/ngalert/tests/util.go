@@ -76,6 +76,9 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						Annotations: map[string]string{"testAnnoKey": "testAnnoValue"},
+					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     fmt.Sprintf("an alert definition %d", d),
 						Condition: "A",

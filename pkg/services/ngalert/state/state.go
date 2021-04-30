@@ -134,5 +134,6 @@ func (a *State) Equals(b *State) bool {
 		a.State.String() == b.State.String() &&
 		a.StartsAt == b.StartsAt &&
 		a.EndsAt == b.EndsAt &&
-		a.LastEvaluationTime == b.LastEvaluationTime
+		a.LastEvaluationTime == b.LastEvaluationTime &&
+		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }

@@ -58,8 +58,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
-		require.Equal(t, alertRule1.OrgID, getCmd.Result.DefinitionOrgID)
-		require.Equal(t, alertRule1.UID, getCmd.Result.DefinitionUID)
+		require.Equal(t, alertRule1.OrgID, getCmd.Result.RuleOrgID)
+		require.Equal(t, alertRule1.UID, getCmd.Result.RuleUID)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
@@ -80,8 +80,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		err = dbstore.GetAlertInstance(getCmd)
 		require.NoError(t, err)
 
-		require.Equal(t, alertRule2.OrgID, getCmd.Result.DefinitionOrgID)
-		require.Equal(t, alertRule2.UID, getCmd.Result.DefinitionUID)
+		require.Equal(t, alertRule2.OrgID, getCmd.Result.RuleOrgID)
+		require.Equal(t, alertRule2.UID, getCmd.Result.RuleUID)
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
 	})
 
@@ -169,8 +169,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 		require.Len(t, listQuery.Result, 1)
 
-		require.Equal(t, saveCmdTwo.DefinitionOrgID, listQuery.Result[0].DefinitionOrgID)
-		require.Equal(t, saveCmdTwo.DefinitionUID, listQuery.Result[0].DefinitionUID)
+		require.Equal(t, saveCmdTwo.DefinitionOrgID, listQuery.Result[0].RuleOrgID)
+		require.Equal(t, saveCmdTwo.DefinitionUID, listQuery.Result[0].RuleDefinitionUID)
 		require.Equal(t, saveCmdTwo.Labels, listQuery.Result[0].Labels)
 		require.Equal(t, saveCmdTwo.State, listQuery.Result[0].CurrentState)
 	})
