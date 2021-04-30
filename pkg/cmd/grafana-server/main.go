@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/grafana/grafana/pkg/apigrpc"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
