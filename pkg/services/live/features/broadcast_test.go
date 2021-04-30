@@ -5,17 +5,16 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewBroadcastRunner(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	d := NewMockLiveChannelStore(mockCtrl)
+	d := NewMockLiveMessageStore(mockCtrl)
 	br := NewBroadcastRunner(d)
 	require.NotNil(t, br)
 }
@@ -23,16 +22,16 @@ func TestNewBroadcastRunner(t *testing.T) {
 func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockDispatcher := NewMockLiveChannelStore(mockCtrl)
+	mockDispatcher := NewMockLiveMessageStore(mockCtrl)
 
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 
-	mockDispatcher.EXPECT().GetLiveChannel(&models.GetLiveChannelQuery{
+	mockDispatcher.EXPECT().GetLiveMessage(&models.GetLiveMessageQuery{
 		OrgId:   1,
 		Channel: channel,
-	}).DoAndReturn(func(query *models.GetLiveChannelQuery) (models.LiveChannel, bool, error) {
-		return models.LiveChannel{
+	}).DoAndReturn(func(query *models.GetLiveMessageQuery) (models.LiveMessage, bool, error) {
+		return models.LiveMessage{
 			Data: data,
 		}, true, nil
 	}).Times(1)
@@ -57,17 +56,17 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 func TestBroadcastRunner_OnPublish(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockDispatcher := NewMockLiveChannelStore(mockCtrl)
+	mockDispatcher := NewMockLiveMessageStore(mockCtrl)
 
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 	var orgID int64 = 1
 
-	mockDispatcher.EXPECT().SaveLiveChannelData(&models.SaveLiveChannelDataQuery{
+	mockDispatcher.EXPECT().SaveLiveMessage(&models.SaveLiveMessageQuery{
 		OrgId:   orgID,
 		Channel: channel,
 		Data:    data,
-	}).DoAndReturn(func(query *models.SaveLiveChannelDataQuery) error {
+	}).DoAndReturn(func(query *models.SaveLiveMessageQuery) error {
 		return nil
 	}).Times(1)
 

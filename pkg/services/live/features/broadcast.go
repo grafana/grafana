@@ -13,21 +13,21 @@ var (
 	logger = log.New("live.features") // scoped to all features?
 )
 
-//go:generate mockgen -destination=broadcast_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features LiveChannelStore
+//go:generate mockgen -destination=broadcast_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features LiveMessageStore
 
-type LiveChannelStore interface {
-	SaveLiveChannelData(query *models.SaveLiveChannelDataQuery) error
-	GetLiveChannel(query *models.GetLiveChannelQuery) (models.LiveChannel, bool, error)
+type LiveMessageStore interface {
+	SaveLiveMessage(query *models.SaveLiveMessageQuery) error
+	GetLiveMessage(query *models.GetLiveMessageQuery) (models.LiveMessage, bool, error)
 }
 
 // BroadcastRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This assumes that data is a JSON object
 type BroadcastRunner struct {
-	liveChannelStore LiveChannelStore
+	liveMessageStore LiveMessageStore
 }
 
-func NewBroadcastRunner(liveChannelStore LiveChannelStore) *BroadcastRunner {
-	return &BroadcastRunner{liveChannelStore: liveChannelStore}
+func NewBroadcastRunner(liveMessageStore LiveMessageStore) *BroadcastRunner {
+	return &BroadcastRunner{liveMessageStore: liveMessageStore}
 }
 
 // GetHandlerForPath called on init
@@ -41,11 +41,11 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser,
 		Presence:  true,
 		JoinLeave: true,
 	}
-	query := &models.GetLiveChannelQuery{
+	query := &models.GetLiveMessageQuery{
 		OrgId:   u.OrgId,
 		Channel: e.Channel,
 	}
-	msg, ok, err := b.liveChannelStore.GetLiveChannel(query)
+	msg, ok, err := b.liveMessageStore.GetLiveMessage(query)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}
@@ -57,12 +57,12 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser,
 
 // OnPublish is called when a client wants to broadcast on the websocket
 func (b *BroadcastRunner) OnPublish(_ context.Context, u *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	query := &models.SaveLiveChannelDataQuery{
+	query := &models.SaveLiveMessageQuery{
 		OrgId:   u.OrgId,
 		Channel: e.Channel,
 		Data:    e.Data,
 	}
-	if err := b.liveChannelStore.SaveLiveChannelData(query); err != nil {
+	if err := b.liveMessageStore.SaveLiveMessage(query); err != nil {
 		return models.PublishReply{}, 0, err
 	}
 	return models.PublishReply{}, backend.PublishStreamStatusOK, nil

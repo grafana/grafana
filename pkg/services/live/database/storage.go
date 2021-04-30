@@ -1,61 +1,66 @@
 package database
 
 import (
-	"context"
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type Storage struct {
 	store *sqlstore.SQLStore
+	cache *localcache.CacheService
 }
 
-func NewStorage(store *sqlstore.SQLStore) *Storage {
-	return &Storage{store: store}
+func NewStorage(store *sqlstore.SQLStore, cache *localcache.CacheService) *Storage {
+	return &Storage{store: store, cache: cache}
 }
 
-func (s *Storage) SaveLiveChannelData(query *models.SaveLiveChannelDataQuery) error {
-	return s.store.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		now := time.Now()
-		var msg models.LiveChannel
-		exists, err := sess.Where("org_id=? AND channel=?", query.OrgId, query.Channel).Get(&msg)
-		if err != nil {
-			return fmt.Errorf("error getting existing: %w", err)
-		}
-		if !exists {
-			msg = models.LiveChannel{
-				OrgId:     query.OrgId,
-				Channel:   query.Channel,
-				Data:      query.Data,
-				Published: &now,
-				Created:   time.Now(),
-			}
-			_, err := sess.Insert(&msg)
-			if err != nil {
-				return fmt.Errorf("error inserting: %w", err)
-			}
-			return nil
-		}
-		msg.Data = query.Data
-		msg.Published = &now
-		_, err = sess.ID(msg.Id).AllCols().Update(&msg)
-		if err != nil {
-			return fmt.Errorf("error updating: %w", err)
-		}
-		return nil
-	})
+func getLiveMessageCacheKey(orgID int64, channel string) string {
+	return fmt.Sprintf("live_message_%d_%s", orgID, channel)
 }
 
-func (s *Storage) GetLiveChannel(query *models.GetLiveChannelQuery) (models.LiveChannel, bool, error) {
-	var msg models.LiveChannel
-	var exists bool
-	err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		var err error
-		exists, err = sess.Where("org_id=? AND channel=?", query.OrgId, query.Channel).Get(&msg)
-		return err
-	})
-	return msg, exists, err
+func (s *Storage) SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
+	// Come back to saving into database after evaluating database structure.
+	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	//	params := []interface{}{query.OrgId, query.Channel, query.Data, time.Now()}
+	//	upsertSQL := s.store.Dialect.UpsertSQL(
+	//		"live_message",
+	//		[]string{"org_id", "channel"},
+	//		[]string{"org_id", "channel", "data", "published"})
+	//	_, err := sess.SQL(upsertSQL, params...).Query()
+	//	return err
+	//})
+	// return err
+	s.cache.Set(getLiveMessageCacheKey(query.OrgId, query.Channel), models.LiveMessage{
+		Id:        0, // Not used actually.
+		OrgId:     query.OrgId,
+		Channel:   query.Channel,
+		Data:      query.Data,
+		Published: time.Now(),
+	}, 0)
+	return nil
+}
+
+func (s *Storage) GetLiveMessage(query *models.GetLiveMessageQuery) (models.LiveMessage, bool, error) {
+	// Come back to saving into database after evaluating database structure.
+	//var msg models.LiveMessage
+	//var exists bool
+	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	//	var err error
+	//	exists, err = sess.Where("org_id=? AND channel=?", query.OrgId, query.Channel).Get(&msg)
+	//	return err
+	//})
+	//return msg, exists, err
+	m, ok := s.cache.Get(getLiveMessageCacheKey(query.OrgId, query.Channel))
+	if !ok {
+		return models.LiveMessage{}, false, nil
+	}
+	msg, ok := m.(models.LiveMessage)
+	if !ok {
+		return models.LiveMessage{}, false, fmt.Errorf("unexpected live message type in cache: %T", m)
+	}
+	return msg, true, nil
 }

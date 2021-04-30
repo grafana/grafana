@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -70,6 +72,7 @@ type GrafanaLive struct {
 	RouteRegister         routing.RouteRegister    `inject:""`
 	LogsService           *cloudwatch.LogsService  `inject:""`
 	PluginManager         *manager.PluginManager   `inject:""`
+	CacheService          *localcache.CacheService `inject:""`
 	DatasourceCache       datasources.CacheService `inject:""`
 	SQLStore              *sqlstore.SQLStore       `inject:""`
 
@@ -159,7 +162,7 @@ func (g *GrafanaLive) Init() error {
 		Publisher:   g.Publish,
 		ClientCount: g.ClientCount,
 	}
-	g.storage = database.NewStorage(g.SQLStore)
+	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)

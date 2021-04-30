@@ -80,22 +80,21 @@ type DashboardActivityChannel interface {
 	HasGitOpsObserver() bool
 }
 
-type LiveChannel struct {
+type LiveMessage struct {
 	Id        int64
 	OrgId     int64
 	Channel   string
 	Data      json.RawMessage
-	Published *time.Time
-	Created   time.Time
+	Published time.Time
 }
 
-type SaveLiveChannelDataQuery struct {
+type SaveLiveMessageQuery struct {
 	OrgId   int64
 	Channel string
 	Data    json.RawMessage
 }
 
-type GetLiveChannelQuery struct {
+type GetLiveMessageQuery struct {
 	OrgId   int64
 	Channel string
 }
