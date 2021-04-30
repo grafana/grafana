@@ -434,7 +434,7 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 
 	if p, exists := pm.plugins[pb.Id]; exists {
 		pm.log.Warn("Plugin is duplicate", "id", pb.Id)
-		scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{Plugin: pb, ExistingPlugin: p})
+		scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{PluginID: pb.Id, ExistingPluginDir: p.PluginDir})
 		return nil
 	}
 
@@ -717,7 +717,10 @@ func (pm *PluginManager) Install(pluginID, version string) error {
 	plugin := pm.plugins[pluginID]
 	if plugin != nil {
 		if version != "" && version == plugin.Info.Version {
-			return fmt.Errorf("trying to install a plugin %s which is already installed", pluginID)
+			return plugins.DuplicatePluginError{
+				PluginID:          pluginID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
 		}
 
 		// Remove existing installation of plugin
@@ -743,7 +746,7 @@ func (pm *PluginManager) Install(pluginID, version string) error {
 func (pm *PluginManager) Uninstall(pluginID string) error {
 	plugin := pm.plugins[pluginID]
 	if plugin == nil {
-		return fmt.Errorf("trying to delete a plugin \"%s\" that doesn't exist", pluginID)
+		return plugins.PluginNotFoundError{PluginID: pluginID}
 	}
 
 	if pm.BackendPluginManager.Registered(pluginID) {

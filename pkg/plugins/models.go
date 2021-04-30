@@ -22,12 +22,12 @@ func (e PluginNotFoundError) Error() string {
 }
 
 type DuplicatePluginError struct {
-	Plugin         *PluginBase
-	ExistingPlugin *PluginBase
+	PluginID          string
+	ExistingPluginDir string
 }
 
 func (e DuplicatePluginError) Error() string {
-	return fmt.Sprintf("plugin with ID %q already loaded from %q", e.Plugin.Id, e.ExistingPlugin.PluginDir)
+	return fmt.Sprintf("plugin with ID %q already exists from %q", e.PluginID, e.ExistingPluginDir)
 }
 
 func (e DuplicatePluginError) Is(err error) bool {

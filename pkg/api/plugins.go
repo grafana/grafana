@@ -366,6 +366,11 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 
 	err := hs.PluginManager.Install(pluginID, dto.Version)
 	if err != nil {
+		var dupeErr plugins.DuplicatePluginError
+		if errors.As(err, &dupeErr) {
+			return response.Error(409, "Plugin already installed", err)
+		}
+
 		return response.Error(500, "Failed to install plugin", err)
 	}
 
@@ -377,6 +382,11 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 
 	err := hs.PluginManager.Uninstall(pluginID)
 	if err != nil {
+		var notFoundErr plugins.PluginNotFoundError
+		if errors.As(err, &notFoundErr) {
+			return response.Error(404, "Plugin not found", err)
+		}
+
 		return response.Error(500, "Failed to uninstall plugin", err)
 	}
 	return response.JSON(200, []byte{})
