@@ -1,3 +1,26 @@
+.sidebar-content {
+  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
+}
+
+.sidebar-container {
+  @include media-breakpoint-up(md) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.page-sidebar {
+  @include media-breakpoint-up(md) {
+    width: $page-sidebar-width;
+    margin-left: $page-sidebar-margin;
+  }
+}
+
+.page-sidebar-section {
+  margin-bottom: $spacer * 2;
+}
+
 .get-more-plugins-link {
   color: $gray-3;
   font-size: $font-size-sm;
