@@ -1,7 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { StreamingDataFrame } from '../dataframe';
 import {
   EventBus,
   LegacyEmitter,
@@ -10,6 +9,7 @@ import {
   LegacyEventHandler,
   BusEvent,
   AppEvent,
+  EventFilterOptions,
 } from './types';
 
 /**
@@ -44,8 +44,8 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     });
   }
 
-  newScopedBus(key: string, localOnly?: boolean): EventBus {
-    return new ScopedEventBus([key], this, Boolean(localOnly));
+  newScopedBus(key: string, filter?: EventFilterOptions): EventBus {
+    return new ScopedEventBus([key], this, filter);
   }
 
   /**
@@ -101,8 +101,13 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
  * Wraps EventBus and adds a source to help with identifying if a subscriber should react to the event or not.
  */
 class ScopedEventBus implements EventBus {
+  // will be mutated by panel runners
+  filterConfig: EventFilterOptions;
+
   // The path is not yet exposed, but can be used to indicate nested groups and support faster filtering
-  constructor(public path: string[], private eventBus: EventBus, private localOnly: boolean) {}
+  constructor(public path: string[], private eventBus: EventBus, filter?: EventFilterOptions) {
+    this.filterConfig = filter ?? { onlyLocal: false };
+  }
 
   publish<T extends BusEvent>(event: T): void {
     if (!event.origin) {
@@ -111,18 +116,21 @@ class ScopedEventBus implements EventBus {
     this.eventBus.publish(event);
   }
 
-  updateScope(localOnly: boolean) {
-    this.localOnly = localOnly;
-  }
+  filter = (event: BusEvent) => {
+    console.log('FILTER?', this.path, event.type, (event.origin as any)?.path, this.filterConfig);
+    if (this.filterConfig.onlyLocal) {
+      return event.origin === this;
+    }
+    return true;
+  };
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
-    const stream = this.eventBus.getStream(eventType);
+    return this.eventBus.getStream(eventType).pipe(filter(this.filter)) as Observable<T>;
+  }
 
-    if (this.localOnly) {
-      return stream.pipe(filter((streamEvent) => streamEvent.origin === this));
-    }
-
-    return stream;
+  // syntax sugar
+  subscribe<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this.getStream(typeFilter).subscribe({ next: handler });
   }
 
   removeAllListeners(): void {
@@ -132,7 +140,7 @@ class ScopedEventBus implements EventBus {
   /**
    * Creates a nested event bus structure
    */
-  newScopedBus(key: string, localOnly?: boolean): EventBus {
-    return new ScopedEventBus([...this.path, key], this, Boolean(localOnly));
+  newScopedBus(key: string, filter: EventFilterOptions): EventBus {
+    return new ScopedEventBus([...this.path, key], this, filter);
   }
 }

@@ -16,6 +16,7 @@ import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
   EventBusSrv,
+  EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -54,6 +55,7 @@ export interface State {
 export class PanelChrome extends Component<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
+  private eventFilter: EventFilterOptions = { onlyLocal: true };
 
   constructor(props: Props) {
     super(props);
@@ -63,7 +65,7 @@ export class PanelChrome extends Component<Props, State> {
     const eventBus = props.dashboard.events
       ? props.dashboard.events.newScopedBus(
           `panel:${props.panel.id}`, // panelID
-          props.dashboard.graphTooltip === 0 // local only
+          this.eventFilter
         )
       : new EventBusSrv();
 
@@ -308,8 +310,10 @@ export class PanelChrome extends Component<Props, State> {
     });
     const panelOptions = panel.getOptions();
 
-    // Necessary? will only affect *new* subscriptions?
-    (this.state.context.eventBus as any).localOnly = dashboard.graphTooltip === 0;
+    // Update the event filter (dashboard settings may have changed)
+    // Yes this is called ever render for a function that is triggered on every mouse move
+    this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
+    console.log('CHROME FILTER', this.props.panel.id, this.eventFilter);
 
     return (
       <>

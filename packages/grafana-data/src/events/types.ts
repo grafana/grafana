@@ -57,6 +57,14 @@ export interface BusEventHandler<T extends BusEvent> {
  * @alpha
  * Main minimal interface
  */
+export interface EventFilterOptions {
+  onlyLocal: boolean;
+}
+
+/**
+ * @alpha
+ * Main minimal interface
+ */
 export interface EventBus {
   /**
    * Publish single vent
@@ -69,6 +77,13 @@ export interface EventBus {
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T>;
 
   /**
+   * Subscribe to an event stream
+   *
+   * This function is a wrapper around the `getStream(...)` function
+   */
+  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+
+  /**
    * Remove all event subscriptions
    */
   removeAllListeners(): void;
@@ -78,7 +93,7 @@ export interface EventBus {
    *
    * @internal -- This is included for internal use only should not be used directly
    */
-  newScopedBus(key: string, localOnly?: boolean): EventBus;
+  newScopedBus(key: string, filter: EventFilterOptions): EventBus;
 }
 
 /**
@@ -92,13 +107,6 @@ export interface AppEvent<T> {
 
 /** @public */
 export interface LegacyEmitter {
-  /**
-   * Subscribe to single event
-   *
-   * NOTE: >> Moved this function from core to legacy
-   */
-  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
-
   /**
    * @deprecated use $emit
    */
