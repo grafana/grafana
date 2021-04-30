@@ -3,6 +3,7 @@ import uPlot from 'uplot';
 
 interface PlotContextType {
   getPlot: () => uPlot | undefined;
+  getCanvasBoundingBox: () => DOMRect | undefined;
 }
 
 /**

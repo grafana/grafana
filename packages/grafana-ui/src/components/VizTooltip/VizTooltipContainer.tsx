@@ -94,6 +94,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
         left: 0,
         top: 0,
         transform: `translate3d(${placement.x}px, ${placement.y}px, 0)`,
+        transition: 'all ease-out 0.1s',
       }}
       {...otherProps}
       className={cx(styles.wrapper, className)}

@@ -13,10 +13,20 @@ import usePrevious from 'react-use/lib/usePrevious';
  */
 export const UPlotChart: React.FC<PlotProps> = (props) => {
   const plotContainer = useRef<HTMLDivElement>(null);
+  const plotCanvasBBox = useRef<DOMRect>();
   const plotInstance = useRef<uPlot>();
   const prevProps = usePrevious(props);
 
   const config = useMemo(() => {
+    // uPlot hook to memoize Plot's canvas bounding rect
+    props.config.addHook('setSize', (u) => {
+      const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
+      if (!canvas) {
+        return;
+      }
+      plotCanvasBBox.current = canvas.getBoundingClientRect();
+    });
+
     return {
       ...DEFAULT_PLOT_CONFIG,
       width: props.width,
@@ -75,6 +85,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
   const plotCtx = useMemo(() => {
     return {
       getPlot: () => plotInstance.current,
+      getCanvasBoundingBox: () => plotCanvasBBox.current,
     };
   }, []);
 

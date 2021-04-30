@@ -64,13 +64,11 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       onSeriesColorChange={onSeriesColorChange}
       sync={sync}
     >
-      {(config, alignedDataFrame, debug) => {
+      {(config, alignedDataFrame) => {
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin
-              id={id}
-              debug={debug}
               data={alignedDataFrame}
               config={config}
               mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltipOptions.mode}

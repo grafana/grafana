@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import {
@@ -14,15 +14,16 @@ import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContain
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { pluginLog } from '../utils';
 import { useTheme2 } from '../../../themes/ThemeContext';
+import uPlot from 'uplot';
 
 interface TooltipPluginProps {
   mode?: TooltipDisplayMode;
   timeZone: TimeZone;
   data: DataFrame;
   config: UPlotConfigBuilder;
-  id?: string | number;
-  debug?: () => boolean;
 }
+
+const TOOLTIP_OFFSET = 10;
 
 /**
  * @alpha
@@ -31,66 +32,31 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
   timeZone,
   config,
-  debug = () => false,
   ...otherProps
 }) => {
   const theme = useTheme2();
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-  const plotCanvasBBox = useRef<DOMRect>();
 
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
 
-  const pluginId = `TooltipPlugin, panel ${otherProps.id}`;
+  const pluginId = `TooltipPlugin`;
 
   // Debug logs
   useEffect(() => {
-    if (otherProps.id === 3) {
-      console.log(pluginId, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
-    }
     pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
   }, [focusedPointIdx, focusedSeriesIdx]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    config.addHook('setSize', (u) => {
-      const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
-      if (!canvas) {
-        return;
-      }
-      plotCanvasBBox.current = canvas.getBoundingClientRect();
-    });
-
     config.addHook('setCursor', (u) => {
-      const bbox = plotCanvasBBox.current;
+      const bbox = plotCtx.getCanvasBoundingBox();
       if (!bbox) {
         return;
       }
 
-      let x, y;
-      const cL = u.cursor.left || 0;
-      const cT = u.cursor.top || 0;
-
-      if (!isCursourOutsideCanvas(u.cursor, bbox)) {
-        x = bbox.left + cL;
-        y = bbox.top + cT;
-      } else {
-        if (cL >= 0 && cL <= bbox.width) {
-          // outside left bound
-          x = bbox.left + cL;
-        }
-
-        if (cT < 0) {
-          // outside left bound
-          y = bbox.top;
-        }
-
-        if (cT > bbox.height) {
-          // outside right bound
-          y = bbox.top + bbox.height;
-        }
-      }
+      const { x, y } = positionTooltip(u, bbox);
 
       if (x !== undefined && y !== undefined) {
         setCoords({ x, y });
@@ -104,11 +70,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     config.addHook('setSeries', (_, idx) => {
       setFocusedSeriesIdx(idx);
     });
-  }, [config]);
+  }, [plotCtx, config]);
 
   const plotInstance = plotCtx.getPlot();
 
-  if (!plotInstance || focusedPointIdx === null || !plotCanvasBBox.current) {
+  if (!plotInstance || focusedPointIdx === null) {
     return null;
   }
 
@@ -178,7 +144,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   return (
     <Portal>
       {tooltip && coords && (
-        <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: 10, y: 10 }}>
+        <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
           {tooltip}
         </VizTooltipContainer>
       )}
@@ -187,8 +153,81 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 };
 
 function isCursourOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
-  if (!left || !top) {
+  if (left === undefined || top === undefined) {
     return false;
   }
   return left < 0 || left > canvas.width || top < 0 || top > canvas.height;
+}
+
+/**
+ * Given uPlot cursor position, figure out position of the tooltip withing the canvas bbox
+ * Tooltip is positioned relatively to a viewport
+ **/
+function positionTooltip(u: uPlot, bbox: DOMRect) {
+  let x, y;
+  const cL = u.cursor.left || 0;
+  const cT = u.cursor.top || 0;
+
+  if (isCursourOutsideCanvas(u.cursor, bbox)) {
+    const idx = u.posToIdx(cL);
+    let sMaxIdx = 1;
+    let sMinIdx = 1;
+
+    // when cursor outside of uPlot's canvas
+    if (cT < 0 || cT > bbox.height) {
+      // assume min/max being values of 1st series
+      let max = u.data[1][idx];
+      let min = u.data[1][idx];
+
+      // find min max values AND ids of the corresponding series to get the scales
+      for (let i = 1; i < u.data.length; i++) {
+        const sData = u.data[i];
+        const sVal = sData[idx];
+        if (sVal !== null) {
+          if (max === null) {
+            max = sVal;
+          } else {
+            if (sVal > max) {
+              max = u.data[i][idx];
+              sMaxIdx = i;
+            }
+          }
+          if (min === null) {
+            min = sVal;
+          } else {
+            if (sVal < min) {
+              min = u.data[i][idx];
+              sMinIdx = i;
+            }
+          }
+        }
+      }
+
+      if (min === null && max === null) {
+        // no tooltip to show
+        y = undefined;
+      } else if (min !== null && max !== null) {
+        // find median position
+        y =
+          -TOOLTIP_OFFSET +
+          bbox.top +
+          (u.valToPos(min, u.series[sMinIdx].scale!) + u.valToPos(max, u.series[sMaxIdx].scale!)) / 2;
+      } else {
+        // snap tooltip to min OR max point, one of thos is not null :)
+        y = bbox.top + u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
+      }
+
+      if (y) {
+        if (cL >= 0 && cL <= bbox.width) {
+          // find x-scale position for a current cursor left position
+          x = bbox.left + u.valToPos(u.data[0][u.posToIdx(cL)], u.series[0].scale!);
+        }
+      }
+    }
+  } else {
+    x = bbox.left + cL;
+    y = bbox.top + cT;
+  }
+
+  return { x, y };
 }

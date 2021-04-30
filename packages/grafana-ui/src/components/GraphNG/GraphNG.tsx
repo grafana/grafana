@@ -5,7 +5,7 @@ import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { pluginLog, pluginLogger, preparePlotData } from '../uPlot/utils';
+import { pluginLog, preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
@@ -28,7 +28,7 @@ export interface GraphNGProps extends Themeable2 {
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   onSeriesColorChange?: (label: string, color: string) => void;
-  children?: (builder: UPlotConfigBuilder, alignedDataFrame: DataFrame, debug?: () => boolean) => React.ReactNode;
+  children?: (builder: UPlotConfigBuilder, alignedDataFrame: DataFrame) => React.ReactNode;
   sync?: DashboardCursorSync;
 }
 
@@ -159,7 +159,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
             height={vizHeight}
             timeRange={timeRange}
           >
-            {children ? children(config, alignedDataFrame, pluginLogger.isEnabled) : null}
+            {children ? children(config, alignedDataFrame) : null}
           </UPlotChart>
         )}
       </VizLayout>
