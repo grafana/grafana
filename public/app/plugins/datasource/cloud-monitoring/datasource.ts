@@ -34,6 +34,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
     this.variables = new CloudMonitoringVariableSupport(this);
+    this.intervalMs = 0;
   }
 
   getVariables() {
@@ -346,7 +347,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
-    const completeFilter = chunk(filters, 4)
+    const completeFilter: Filter[] = chunk(filters, 4)
       .map(([key, operator, value, condition]) => ({
         key,
         operator,
