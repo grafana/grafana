@@ -1,40 +1,42 @@
 import React, { FC } from 'react';
 import { NotificationChannelOption } from 'app/types';
-import { FieldError, DeepMap, useFieldArray } from 'react-hook-form';
+import { FieldError, DeepMap, useFormContext } from 'react-hook-form';
 import { GrafanaThemeV2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Button, useStyles2 } from '@grafana/ui';
 import { CollapsibleSection } from '../CollapsibleSection';
 import { ActionIcon } from '../../../rules/ActionIcon';
 import { OptionField } from './OptionField';
+import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
 
 interface Props {
+  defaultValues?: any[];
   option: NotificationChannelOption;
   pathPrefix: string;
   errors?: Array<DeepMap<any, FieldError>>;
 }
 
-export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors }) => {
+export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors, defaultValues }) => {
   const styles = useStyles2(getStyles);
   const path = `${pathPrefix}${option.propertyName}`;
-  const { fields, append, remove } = useFieldArray({
-    name: path,
-  });
+  const formAPI = useFormContext();
+  const { fields, append, remove } = useControlledFieldArray(path, formAPI, defaultValues);
 
   return (
     <div className={styles.wrapper}>
       <CollapsibleSection className={styles.collapsibleSection} label={option.label} description={option.description}>
-        {fields.map((field, itemIndex) => {
+        {(fields ?? defaultValues ?? []).map((field, itemIndex) => {
           return (
-            <div key={field.id} className={styles.wrapper}>
+            <div key={itemIndex} className={styles.wrapper}>
               <ActionIcon
                 icon="trash-alt"
                 tooltip="delete"
                 onClick={() => remove(itemIndex)}
                 className={styles.deleteIcon}
               />
-              {option.subformOptions?.map((option, fieldIndex) => (
+              {option.subformOptions?.map((option) => (
                 <OptionField
+                  defaultValue={field}
                   key={option.propertyName}
                   option={option}
                   pathPrefix={`${path}.${itemIndex}.`}
@@ -50,7 +52,7 @@ export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors }) => 
           variant="secondary"
           icon="plus"
           size="sm"
-          onClick={() => append({})}
+          onClick={() => append({ __id: String(Math.random()) })}
         >
           Add
         </Button>

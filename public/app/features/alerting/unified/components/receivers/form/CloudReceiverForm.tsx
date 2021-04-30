@@ -1,8 +1,16 @@
+import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo } from 'react';
-import { CloudChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { useDispatch } from 'react-redux';
+import { updateAlertManagerConfigAction } from '../../../state/actions';
+import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
-import { cloudReceiverToFormValues } from '../../../utils/receiver-form';
+import { makeAMLink } from '../../../utils/misc';
+import {
+  cloudReceiverToFormValues,
+  formValuesToCloudReceiver,
+  updateConfigWithReceiver,
+} from '../../../utils/receiver-form';
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 
@@ -22,10 +30,12 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
 });
 
 export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName, config }) => {
+  const dispatch = useDispatch();
+
   // transform receiver DTO to form values
   const [existingValue, id2original] = useMemo((): [
     ReceiverFormValues<CloudChannelValues> | undefined,
-    Record<string, Record<string, unknown>>
+    CloudChannelMap
   ] => {
     if (!existing) {
       return [undefined, {}];
@@ -34,7 +44,16 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
   }, [existing]);
 
   const onSubmit = (values: ReceiverFormValues<CloudChannelValues>) => {
-    console.log('submit', values, id2original);
+    const newReceiver = formValuesToCloudReceiver(values, id2original, defaultChannelValues);
+    dispatch(
+      updateAlertManagerConfigAction({
+        newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
+        oldConfig: config,
+        alertManagerSourceName,
+        successMessage: existing ? 'Receiver updated.' : 'Receiver created',
+        redirectPath: makeAMLink('/alerting/notifications', alertManagerSourceName),
+      })
+    );
   };
 
   const takenReceiverNames = useMemo(
@@ -43,14 +62,19 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
   );
 
   return (
-    <ReceiverForm<CloudChannelValues>
-      onSubmit={onSubmit}
-      initialValues={existingValue}
-      notifiers={cloudNotifierTypes}
-      alertManagerSourceName={alertManagerSourceName}
-      defaultItem={defaultChannelValues}
-      takenReceiverNames={takenReceiverNames}
-      commonSettingsComponent={CloudCommonChannelSettings}
-    />
+    <>
+      <Alert title="Info" severity="info">
+        Note that empty values will be replaced with global defaults were appropriate.
+      </Alert>
+      <ReceiverForm<CloudChannelValues>
+        onSubmit={onSubmit}
+        initialValues={existingValue}
+        notifiers={cloudNotifierTypes}
+        alertManagerSourceName={alertManagerSourceName}
+        defaultItem={defaultChannelValues}
+        takenReceiverNames={takenReceiverNames}
+        commonSettingsComponent={CloudCommonChannelSettings}
+      />
+    </>
   );
 };

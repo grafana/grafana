@@ -72,8 +72,8 @@ export function ReceiverForm<R extends ChannelValues>({
       <form onSubmit={handleSubmit(onSubmit)}>
         <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
         {error && (
-          <Alert severity="error" title="Error saving template">
-            {error.message || (error as any)?.data?.message || String(error)}
+          <Alert severity="error" title="Error saving receiver">
+            {error.message || String(error)}
           </Alert>
         )}
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>

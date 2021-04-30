@@ -1,3 +1,4 @@
+import { isArray } from 'angular';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -7,20 +8,12 @@ import {
 import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types';
 import {
   CloudChannelConfig,
+  CloudChannelMap,
   CloudChannelValues,
+  GrafanaChannelMap,
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../types/receiver-form';
-
-// id to notifier
-type GrafanaChannelMap = Record<string, GrafanaManagedReceiverConfig>;
-type CloudChannelMap = Record<
-  string,
-  {
-    type: CloudNotifierType;
-    config: CloudChannelConfig;
-  }
->;
 
 export function grafanaReceiverToFormValues(
   receiver: Receiver,
@@ -64,7 +57,7 @@ export function cloudReceiverToFormValues(
         if (!notifier) {
           throw new Error(`unknown cloud notifier: ${type}`);
         }
-        return cloudChannelConfigToFormChannelValues(id, type, config, notifier);
+        return cloudChannelConfigToFormChannelValues(id, type, config);
       })
     )
     .flat();
@@ -87,6 +80,33 @@ export function formValuesToGrafanaReceiver(
       return formChannelValuesToGrafanaChannelConfig(channelValues, defaultChannelValues, values.name, existing);
     }),
   };
+}
+
+export function formValuesToCloudReceiver(
+  values: ReceiverFormValues<CloudChannelValues>,
+  channelMap: CloudChannelMap,
+  defaults: CloudChannelValues
+): Receiver {
+  const recv: Receiver = {
+    name: values.name,
+  };
+  values.items.forEach(({ __id, type, settings, sendResolved }) => {
+    // existing values, but only if type hasn't changed
+    const existing = channelMap[__id] && channelMap[__id].type === type ? channelMap[__id] : undefined;
+    const channel = omitEmptyValues({
+      ...existing?.config,
+      ...settings,
+      send_resolved: sendResolved ?? existing?.config.send_resolved ?? defaults.sendResolved,
+    });
+
+    const configsKey = `${type}_configs`;
+    if (!recv[configsKey]) {
+      recv[configsKey] = [channel];
+    } else {
+      (recv[configsKey] as unknown[]).push(channel);
+    }
+  });
+  return recv;
 }
 
 // will add new receiver, or replace exisitng one
@@ -148,8 +168,7 @@ function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
 function cloudChannelConfigToFormChannelValues(
   id: string,
   type: CloudNotifierType,
-  channel: CloudChannelConfig,
-  notifier: NotifierDTO
+  channel: CloudChannelConfig
 ): CloudChannelValues {
   return {
     __id: id,
@@ -212,4 +231,24 @@ function formChannelValuesToGrafanaChannelConfig(
     channel.uid = existing.uid;
   }
   return channel;
+}
+
+// will remove properties that have empty ('', null, undefined) object properties.
+// traverses nested objects and arrays as well. in place, mutates the object.
+// this is needed because form will submit empty string for not filled in fields,
+// but for cloud alertmanager receiver config to use global default value the property must be omitted entirely
+// this isn't a perfect solution though. No way for user to intentionally provide an empty string. Will need rethinking later
+export function omitEmptyValues<T>(obj: T): T {
+  if (isArray(obj)) {
+    obj.forEach(omitEmptyValues);
+  } else if (typeof obj === 'object' && obj !== null) {
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value === '' || value === null || value === undefined) {
+        delete (obj as any)[key];
+      } else {
+        omitEmptyValues(value);
+      }
+    });
+  }
+  return obj;
 }

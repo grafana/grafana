@@ -8,12 +8,13 @@ import { useStyles2 } from '@grafana/ui';
 import { CollapsibleSection } from '../CollapsibleSection';
 
 interface Props {
+  defaultValue: any;
   option: NotificationChannelOption;
   pathPrefix: string;
   errors?: DeepMap<any, FieldError>;
 }
 
-export const SubformField: FC<Props> = ({ option, pathPrefix, errors }) => {
+export const SubformField: FC<Props> = ({ option, pathPrefix, errors, defaultValue }) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>
@@ -21,6 +22,7 @@ export const SubformField: FC<Props> = ({ option, pathPrefix, errors }) => {
         {(option.subformOptions ?? []).map((subOption) => {
           return (
             <OptionField
+              defaultValue={defaultValue?.[option.propertyName]}
               key={subOption.propertyName}
               option={subOption}
               pathPrefix={`${pathPrefix}${option.propertyName}.`}

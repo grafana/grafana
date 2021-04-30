@@ -10,10 +10,10 @@ import { set } from 'lodash';
  * Warning: you'll have to take care of your own unique identiifer to use as `key` for the ReactNode array.
  * Using index will cause problems.
  */
-export function useControlledFieldArray<R>(name: string, formAPI: UseFormReturn<any>) {
+export function useControlledFieldArray<R>(name: string, formAPI: UseFormReturn<any>, defaults?: R[]) {
   const { watch, getValues, reset } = formAPI;
 
-  const fields: R[] | undefined = watch(name);
+  const fields: R[] | undefined = watch(name) ?? defaults;
 
   const update = useCallback(
     (updateFn: (fields: R[]) => R[]) => {

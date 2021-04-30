@@ -6,6 +6,7 @@ import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-for
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
 export interface Props<R extends ChannelValues> {
+  defaultValues: R;
   selectedChannelOptions: NotificationChannelOption[];
   secureFields: NotificationChannelSecureFields;
 
@@ -15,6 +16,7 @@ export interface Props<R extends ChannelValues> {
 }
 
 export function ChannelOptions<R extends ChannelValues>({
+  defaultValues,
   selectedChannelOptions,
   onResetSecureField,
   secureFields,
@@ -60,8 +62,11 @@ export function ChannelOptions<R extends ChannelValues>({
           ? errors?.secureSettings
           : errors?.settings) as DeepMap<any, FieldError> | undefined)?.[option.propertyName];
 
+        const defaultValue = defaultValues?.settings?.[option.propertyName];
+
         return (
           <OptionField
+            defaultValue={defaultValue}
             key={key}
             error={error}
             pathPrefix={option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`}

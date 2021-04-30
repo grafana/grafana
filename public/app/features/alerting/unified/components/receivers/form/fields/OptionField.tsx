@@ -9,21 +9,28 @@ import { SubformArrayField } from './SubformArrayField';
 import { StringArrayInput } from './StringArrayInput';
 
 interface Props {
+  defaultValue: any;
   option: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix: string;
   error?: FieldError | DeepMap<any, FieldError>;
 }
 
-export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error }) => {
+export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, defaultValue }) => {
   if (option.element === 'subform') {
     return (
-      <SubformField option={option} errors={error as DeepMap<any, FieldError> | undefined} pathPrefix={pathPrefix} />
+      <SubformField
+        defaultValue={defaultValue}
+        option={option}
+        errors={error as DeepMap<any, FieldError> | undefined}
+        pathPrefix={pathPrefix}
+      />
     );
   }
   if (option.element === 'subform_array') {
     return (
       <SubformArrayField
+        defaultValues={defaultValue}
         option={option}
         pathPrefix={pathPrefix}
         errors={error as Array<DeepMap<any, FieldError>> | undefined}
@@ -37,7 +44,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error }) =
       invalid={!!error}
       error={error?.message}
     >
-      <OptionInput option={option} invalid={invalid} pathPrefix={pathPrefix} />
+      <OptionInput defaultValue={defaultValue} option={option} invalid={invalid} pathPrefix={pathPrefix} />
     </Field>
   );
 };

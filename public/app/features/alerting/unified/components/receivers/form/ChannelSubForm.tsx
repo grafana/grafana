@@ -96,6 +96,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       {notifier && (
         <div className={styles.innerContent}>
           <ChannelOptions<R>
+            defaultValues={defaultValues}
             selectedChannelOptions={mandatoryOptions?.length ? mandatoryOptions! : optionalOptions!}
             secureFields={_secureFields}
             errors={errors}
@@ -110,6 +111,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 </Alert>
               )}
               <ChannelOptions<R>
+                defaultValues={defaultValues}
                 selectedChannelOptions={optionalOptions!}
                 secureFields={_secureFields}
                 onResetSecureField={onResetSecureField}

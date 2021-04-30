@@ -109,14 +109,12 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       option(
         'routing_key',
         'Routing key',
-        'The PagerDuty integration key (when using PagerDuty integration type `Events API v2`)',
-        { required: true }
+        'The PagerDuty integration key (when using PagerDuty integration type `Events API v2`)'
       ),
       option(
         'service_key',
         'Service key',
-        'The PagerDuty integration key (when using PagerDuty integration type `Prometheus`).',
-        { required: true }
+        'The PagerDuty integration key (when using PagerDuty integration type `Prometheus`).'
       ),
       option('url', 'URL', 'The URL to send API requests to'),
       option('client', 'Client', 'The client identification of the Alertmanager.', {
@@ -276,6 +274,9 @@ export const cloudNotifierTypes: NotifierDTO[] = [
           element: 'key_value_map',
         }
       ),
+      option('tags', 'Tags', 'Comma separated list of tags attached to the notifications.'),
+      option('note', 'Note', 'Additional alert note.'),
+      option('priority', 'Priority', 'Priority level of alert. Possible values are P1, P2, P3, P4, and P5.'),
       option('responders', 'Responders', 'List of responders responsible for notifications.', {
         element: 'subform_array',
         subformOptions: [
@@ -285,9 +286,6 @@ export const cloudNotifierTypes: NotifierDTO[] = [
           option('username', 'Username', 'Exactly one of these fields should be defined.'),
         ],
       }),
-      option('tags', 'Tags', 'Comma separated list of tags attached to the notifications.'),
-      option('note', 'Note', 'Additional alert note.'),
-      option('priority', 'Priority', 'Priority level of alert. Possible values are P1, P2, P3, P4, and P5.'),
       httpConfigOption,
     ],
   },
