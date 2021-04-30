@@ -1,7 +1,7 @@
 import { isString } from 'lodash';
 import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringVariableQuery, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
+import { CloudMonitoringVariableQuery, MetricDescriptor, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
 import { SelectableValue } from '@grafana/data';
 import {
   extractServicesFromMetricDescriptors,
@@ -65,7 +65,7 @@ export default class CloudMonitoringMetricFindQuery {
 
   async handleServiceQuery({ projectName }: CloudMonitoringVariableQuery) {
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
-    const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
+    const services: MetricDescriptor[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map((s) => ({
       text: s.serviceShortName,
       value: s.service,
@@ -79,7 +79,7 @@ export default class CloudMonitoringMetricFindQuery {
     }
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     return getMetricTypesByService(metricDescriptors, this.datasource.templateSrv.replace(selectedService)).map(
-      (s: any) => ({
+      (s) => ({
         text: s.displayName,
         value: s.type,
         expandable: true,
@@ -121,7 +121,7 @@ export default class CloudMonitoringMetricFindQuery {
     }
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const descriptor = metricDescriptors.find(
-      (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
+      (m) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
 
     if (!descriptor) {
@@ -138,7 +138,7 @@ export default class CloudMonitoringMetricFindQuery {
 
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const descriptor = metricDescriptors.find(
-      (m: any) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
+      (m) => m.type === this.datasource.templateSrv.replace(selectedMetricType)
     );
 
     if (!descriptor) {

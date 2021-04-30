@@ -250,7 +250,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     return this.api.get(`${this.templateSrv.replace(projectName)}/metricDescriptors`, {
-      responseMap: (m: any) => {
+      responseMap: (m: MetricDescriptor) => {
         const [service] = m.type.split('/');
         const [serviceShortName] = service.split('.');
         m.service = service;

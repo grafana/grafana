@@ -19,7 +19,7 @@ export const getMetricTypes = (
   interpolatedMetricType: string,
   selectedService: string
 ) => {
-  const metricTypes = getMetricTypesByService(metricDescriptors, selectedService).map((m: any) => ({
+  const metricTypes = getMetricTypesByService(metricDescriptors, selectedService).map((m) => ({
     value: m.type,
     name: m.displayName,
   }));
