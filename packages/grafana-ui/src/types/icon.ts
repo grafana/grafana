@@ -120,6 +120,7 @@ export type IconName =
   | 'search'
   | 'share-alt'
   | 'shield'
+  | 'shield-exclamation'
   | 'sign-in-alt'
   | 'signal'
   | 'signin'
@@ -255,6 +256,7 @@ export const getAvailableIcons = (): IconName[] => [
   'search',
   'share-alt',
   'shield',
+  'shield-exclamation',
   'sign-in-alt',
   'signal',
   'signin',

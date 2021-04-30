@@ -1,10 +1,11 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { find } from 'lodash';
+import { capitalize, find } from 'lodash';
 // Types
 import {
   AppPlugin,
   GrafanaPlugin,
+  GrafanaThemeV2,
   NavModel,
   NavModelItem,
   PluginDependencies,
@@ -13,11 +14,12 @@ import {
   PluginMeta,
   PluginMetaInfo,
   PluginSignatureStatus,
+  PluginSignatureType,
   PluginType,
   UrlQueryMap,
 } from '@grafana/data';
 import { AppNotificationSeverity } from 'app/types';
-import { Alert, LinkButton, PluginSignatureBadge, Tooltip } from '@grafana/ui';
+import { Alert, LinkButton, PluginSignatureBadge, Tooltip, Badge, useStyles2, Icon } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -275,6 +277,8 @@ class PluginPage extends PureComponent<Props, State> {
       return null;
     }
 
+    const isSignatureValid = plugin.meta.signature === PluginSignatureStatus.valid;
+
     if (plugin.meta.signature === PluginSignatureStatus.internal) {
       return null;
     }
@@ -282,21 +286,32 @@ class PluginPage extends PureComponent<Props, State> {
     return (
       <Alert
         aria-label={selectors.pages.PluginPage.signatureInfo}
-        severity={plugin.meta.signature !== PluginSignatureStatus.valid ? 'warning' : 'info'}
+        severity={isSignatureValid ? 'info' : 'warning'}
         title="Plugin signature"
       >
-        <PluginSignatureBadge
-          status={plugin.meta.signature}
+        <div
           className={css`
-            margin-top: 0;
+            display: flex;
           `}
-        />
-        <br />
+        >
+          <PluginSignatureBadge
+            status={plugin.meta.signature}
+            className={css`
+              margin-top: 0;
+            `}
+          />
+          {isSignatureValid && (
+            <PluginSignatureDetailsBadge
+              signatureType={plugin.meta.signatureType}
+              signatureOrg={plugin.meta.signatureOrg}
+            />
+          )}
+        </div>
         <br />
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
           is part of our security measures to ensure plugins are safe and trustworthy.
-          {plugin.meta.signature !== PluginSignatureStatus.valid &&
+          {!isSignatureValid &&
             'Grafana Labs can’t guarantee the integrity of this unsigned plugin. Ask the plugin author to request it to be signed.'}
         </p>
         <a
@@ -503,5 +518,72 @@ export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     return Promise.reject('Unknown Plugin type: ' + info.type);
   });
 }
+
+type PluginSignatureDetailsBadgeProps = {
+  signatureType?: PluginSignatureType;
+  signatureOrg?: string;
+};
+
+const PluginSignatureDetailsBadge: React.FC<PluginSignatureDetailsBadgeProps> = ({ signatureType, signatureOrg }) => {
+  const styles = useStyles2(getDetailsBadgeStyles);
+
+  if (!signatureType && !signatureOrg) {
+    return null;
+  }
+
+  const signatureTypeIcon =
+    signatureType === PluginSignatureType.grafana
+      ? 'grafana'
+      : signatureType === PluginSignatureType.commercial || signatureType === PluginSignatureType.community
+      ? 'shield'
+      : 'shield-exclamation';
+
+  const signatureTypeText = signatureType === PluginSignatureType.grafana ? 'Grafana Labs' : capitalize(signatureType);
+
+  return (
+    <>
+      {signatureType && (
+        <Badge
+          color="green"
+          className={styles.badge}
+          text={
+            <>
+              <strong className={styles.strong}>Level:&nbsp;</strong>
+              <Icon size="xs" name={signatureTypeIcon} />
+              &nbsp;
+              {signatureTypeText}
+            </>
+          }
+        />
+      )}
+      {signatureOrg && (
+        <Badge
+          color="green"
+          className={styles.badge}
+          text={
+            <>
+              <strong className={styles.strong}>Signed by:</strong> {signatureOrg}
+            </>
+          }
+        />
+      )}
+    </>
+  );
+};
+
+const getDetailsBadgeStyles = (theme: GrafanaThemeV2) => ({
+  badge: css`
+    background-color: ${theme.colors.background.canvas};
+    border-color: ${theme.colors.border.strong};
+    color: ${theme.colors.text.secondary};
+    margin-left: ${theme.spacing()};
+  `,
+  strong: css`
+    color: ${theme.colors.text.primary};
+  `,
+  icon: css`
+    margin-right: ${theme.spacing(0.5)};
+  `,
+});
 
 export default PluginPage;

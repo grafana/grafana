@@ -12,7 +12,7 @@ import { HorizontalGroup } from '../Layout/Layout';
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
-  text: string;
+  text: React.ReactNode;
   color: BadgeColor;
   icon?: IconName;
   tooltip?: string;
