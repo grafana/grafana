@@ -50,11 +50,15 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       ...this.props.config.getConfig(),
     };
 
+    // for some reason does not invoke a re-render when called from componentDidMount or componentDidUpdate
     this.setState({
       ctx: {
         plot: new uPlot(config, this.props.data, this.plotContainer!.current!),
       },
     });
+
+    // force a re-render to update plugins' PlotContext with new instance
+    this.forceUpdate();
   }
 
   componentDidMount() {
