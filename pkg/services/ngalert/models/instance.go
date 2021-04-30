@@ -80,7 +80,6 @@ type FetchUniqueOrgIdsQuery struct {
 type ListAlertInstancesQueryResult struct {
 	RuleOrgID         int64             `xorm:"def_org_id" json:"definitionOrgId"`
 	RuleDefinitionUID string            `xorm:"def_uid" json:"definitionUid"`
-	DefinitionTitle   string            `xorm:"def_title" json:"definitionTitle"`
 	Labels            InstanceLabels    `json:"labels"`
 	LabelsHash        string            `json:"labeHash"`
 	CurrentState      InstanceStateType `json:"currentState"`
