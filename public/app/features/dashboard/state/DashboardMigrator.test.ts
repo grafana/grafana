@@ -162,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(28);
+      expect(model.schemaVersion).toBe(29);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -923,6 +923,149 @@ describe('DashboardModel', () => {
         datasource: null,
         allFormat: '',
       });
+    });
+  });
+
+  describe('when migrating variable refresh to on dashboard load', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              name: 'variable_with_never_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 0,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_never_refresh_without_options',
+              options: [],
+              refresh: 0,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_dashboard_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 1,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_dashboard_refresh_without_options',
+              options: [],
+              refresh: 1,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_timerange_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 2,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_timerange_refresh_without_options',
+              options: [],
+              refresh: 2,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_no_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+            },
+            {
+              type: 'query',
+              name: 'variable_with_no_refresh_without_options',
+              options: [],
+            },
+            {
+              type: 'query',
+              name: 'variable_with_unknown_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 2001,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_unknown_refresh_without_options',
+              options: [],
+              refresh: 2001,
+            },
+            {
+              type: 'custom',
+              name: 'custom',
+              options: [{ text: 'custom', value: 'custom' }],
+            },
+            {
+              type: 'textbox',
+              name: 'textbox',
+              options: [{ text: 'Hello', value: 'World' }],
+            },
+            {
+              type: 'datasource',
+              name: 'datasource',
+              options: [{ text: 'ds', value: 'ds' }], // fake example doesn't exist
+            },
+            {
+              type: 'interval',
+              name: 'interval',
+              options: [{ text: '1m', value: '1m' }],
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have 11 variables after migration', () => {
+      expect(model.templating.list.length).toBe(14);
+    });
+
+    it('should not affect custom variable types', () => {
+      const custom = model.templating.list[10];
+      expect(custom.type).toEqual('custom');
+      expect(custom.options).toEqual([{ text: 'custom', value: 'custom' }]);
+    });
+
+    it('should not affect textbox variable types', () => {
+      const textbox = model.templating.list[11];
+      expect(textbox.type).toEqual('textbox');
+      expect(textbox.options).toEqual([{ text: 'Hello', value: 'World' }]);
+    });
+
+    it('should not affect datasource variable types', () => {
+      const datasource = model.templating.list[12];
+      expect(datasource.type).toEqual('datasource');
+      expect(datasource.options).toEqual([{ text: 'ds', value: 'ds' }]);
+    });
+
+    it('should not affect interval variable types', () => {
+      const interval = model.templating.list[13];
+      expect(interval.type).toEqual('interval');
+      expect(interval.options).toEqual([{ text: '1m', value: '1m' }]);
+    });
+
+    it('should removed options from all query variables', () => {
+      const queryVariables = model.templating.list.filter((v) => v.type === 'query');
+      expect(queryVariables).toHaveLength(10);
+      const noOfOptions = queryVariables.reduce((all, variable) => all + variable.options.length, 0);
+      expect(noOfOptions).toBe(0);
+    });
+
+    it('should set the refresh prop to on dashboard load for all query variables that have never or unknown', () => {
+      expect(model.templating.list[0].refresh).toBe(1);
+      expect(model.templating.list[1].refresh).toBe(1);
+      expect(model.templating.list[2].refresh).toBe(1);
+      expect(model.templating.list[3].refresh).toBe(1);
+      expect(model.templating.list[4].refresh).toBe(2);
+      expect(model.templating.list[5].refresh).toBe(2);
+      expect(model.templating.list[6].refresh).toBe(1);
+      expect(model.templating.list[7].refresh).toBe(1);
+      expect(model.templating.list[8].refresh).toBe(1);
+      expect(model.templating.list[9].refresh).toBe(1);
+      expect(model.templating.list[10].refresh).toBeUndefined();
+      expect(model.templating.list[11].refresh).toBeUndefined();
+      expect(model.templating.list[12].refresh).toBeUndefined();
+      expect(model.templating.list[13].refresh).toBeUndefined();
     });
   });
 });

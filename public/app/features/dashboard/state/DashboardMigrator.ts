@@ -45,7 +45,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 28;
+    this.dashboard.schemaVersion = 29;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -590,6 +590,22 @@ export class DashboardMigrator {
 
         if (variable.useTags) {
           delete variable.useTags;
+        }
+      }
+    }
+
+    if (oldVersion < 29) {
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.type !== 'query') {
+          continue;
+        }
+
+        if (variable.refresh !== 1 && variable.refresh !== 2) {
+          variable.refresh = 1;
+        }
+
+        if (variable.options?.length) {
+          variable.options = [];
         }
       }
     }

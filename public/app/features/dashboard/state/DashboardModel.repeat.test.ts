@@ -19,6 +19,7 @@ describe('given dashboard with panel repeat', () => {
         list: [
           {
             name: 'apps',
+            type: 'custom',
             current: {
               text: 'se1, se2, se3',
               value: ['se1', 'se2', 'se3'],
@@ -74,6 +75,7 @@ describe('given dashboard with panel repeat in horizontal direction', () => {
         list: [
           {
             name: 'apps',
+            type: 'custom',
             current: {
               text: 'se1, se2, se3',
               value: ['se1', 'se2', 'se3'],
@@ -204,6 +206,7 @@ describe('given dashboard with panel repeat in vertical direction', () => {
         list: [
           {
             name: 'apps',
+            type: 'custom',
             current: {
               text: 'se1, se2, se3',
               value: ['se1', 'se2', 'se3'],
@@ -246,6 +249,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
         list: [
           {
             name: 'region',
+            type: 'custom',
             current: {
               text: 'reg1, reg2',
               value: ['reg1', 'reg2'],
@@ -257,6 +261,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
           },
           {
             name: 'app',
+            type: 'custom',
             current: {
               text: 'se1, se2, se3, se4, se5, se6',
               value: ['se1', 'se2', 'se3', 'se4', 'se5', 'se6'],
@@ -339,6 +344,7 @@ describe('given dashboard with row repeat', () => {
         list: [
           {
             name: 'apps',
+            type: 'custom',
             current: {
               text: 'se1, se2',
               value: ['se1', 'se2'],
@@ -435,6 +441,7 @@ describe('given dashboard with row repeat', () => {
     ];
     dashboardJSON.templating.list.push({
       name: 'hosts',
+      type: 'custom',
       current: {
         text: 'backend01, backend02',
         value: ['backend01', 'backend02'],
@@ -543,6 +550,7 @@ describe('given dashboard with row and panel repeat', () => {
         list: [
           {
             name: 'region',
+            type: 'custom',
             current: {
               text: 'reg1, reg2',
               value: ['reg1', 'reg2'],
@@ -555,6 +563,7 @@ describe('given dashboard with row and panel repeat', () => {
           },
           {
             name: 'app',
+            type: 'custom',
             current: {
               text: 'se1, se2',
               value: ['se1', 'se2'],
@@ -690,6 +699,7 @@ describe('given panel is in view mode', () => {
         list: [
           {
             name: 'apps',
+            type: 'custom',
             current: {
               text: 'se1, se2, se3',
               value: ['se1', 'se2', 'se3'],
