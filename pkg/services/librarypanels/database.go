@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -400,28 +401,46 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 	if len(strings.TrimSpace(query.panelFilter)) > 0 {
 		panelFilter = strings.Split(query.panelFilter, ",")
 	}
-
+	includeGeneralFolder := false
+	var folderFilter []string
+	if len(strings.TrimSpace(query.folderFilter)) == 0 {
+		includeGeneralFolder = true
+	} else {
+		folderFilter = strings.Split(query.folderFilter, ",")
+		for _, filter := range folderFilter {
+			folderID, err := strconv.ParseInt(filter, 10, 64)
+			if err != nil {
+				return LibraryPanelSearchResult{}, err
+			}
+			if isGeneralFolder(folderID) {
+				includeGeneralFolder = true
+				break
+			}
+		}
+	}
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
-		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
-		builder.Write(` WHERE lp.org_id=? AND lp.folder_id=0`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(query.searchString)) > 0 {
-			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-			builder.Write(" OR lp.description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-		}
-		if len(strings.TrimSpace(query.excludeUID)) > 0 {
-			builder.Write(" AND lp.uid <> ?", query.excludeUID)
-		}
-		if len(panelFilter) > 0 {
-			var sql bytes.Buffer
-			params := make([]interface{}, 0)
-			sql.WriteString(` AND lp.type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
-			for _, v := range panelFilter {
-				params = append(params, v)
+		if includeGeneralFolder {
+			builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+			builder.Write(` WHERE lp.org_id=?  AND lp.folder_id=0`, c.SignedInUser.OrgId)
+			if len(strings.TrimSpace(query.searchString)) > 0 {
+				builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
+				builder.Write(" OR lp.description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
 			}
-			builder.Write(sql.String(), params...)
+			if len(strings.TrimSpace(query.excludeUID)) > 0 {
+				builder.Write(" AND lp.uid <> ?", query.excludeUID)
+			}
+			if len(panelFilter) > 0 {
+				var sql bytes.Buffer
+				params := make([]interface{}, 0)
+				sql.WriteString(` AND lp.type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
+				for _, v := range panelFilter {
+					params = append(params, v)
+				}
+				builder.Write(sql.String(), params...)
+			}
+			builder.Write(" UNION ")
 		}
-		builder.Write(" UNION ")
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
@@ -440,6 +459,23 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 				params = append(params, v)
 			}
 			builder.Write(sql.String(), params...)
+		}
+		if len(folderFilter) > 0 {
+			var sql bytes.Buffer
+			params := make([]interface{}, 0)
+			for _, filter := range folderFilter {
+				folderID, err := strconv.ParseInt(filter, 10, 64)
+				if err != nil {
+					return err
+				}
+				if !isGeneralFolder(folderID) {
+					params = append(params, filter)
+				}
+			}
+			if len(params) > 0 {
+				sql.WriteString(` AND lp.folder_Id IN (?` + strings.Repeat(",?", len(params)-1) + ")")
+				builder.Write(sql.String(), params...)
+			}
 		}
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
@@ -504,6 +540,15 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 			params := make([]interface{}, 0)
 			sql.WriteString(` AND type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
 			for _, v := range panelFilter {
+				params = append(params, v)
+			}
+			countBuilder.Write(sql.String(), params...)
+		}
+		if len(folderFilter) > 0 {
+			var sql bytes.Buffer
+			params := make([]interface{}, 0)
+			sql.WriteString(` AND folder_Id IN (?` + strings.Repeat(",?", len(folderFilter)-1) + ")")
+			for _, v := range folderFilter {
 				params = append(params, v)
 			}
 			countBuilder.Write(sql.String(), params...)
