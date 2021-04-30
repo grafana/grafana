@@ -2,6 +2,9 @@ import { css } from '@emotion/react';
 import { GrafanaThemeV2 } from '@grafana/data';
 
 export function getPageStyles(theme: GrafanaThemeV2) {
+  const maxWidthBreakpoint =
+    theme.breakpoints.values.xxl + theme.spacing.gridSize * 2 + theme.components.sidemenu.width;
+
   return css`
     .grafana-app {
       display: flex;
@@ -47,7 +50,7 @@ export function getPageStyles(theme: GrafanaThemeV2) {
         margin: ${theme.spacing(0, 2)};
       }
 
-      @media (min-width: ${theme.breakpoints.values.xxl + theme.spacing.gridSize * 2}px) {
+      @media (min-width: ${maxWidthBreakpoint}px) {
         max-width: ${theme.breakpoints.values.xxl}px;
         margin-left: auto;
         margin-right: auto;
