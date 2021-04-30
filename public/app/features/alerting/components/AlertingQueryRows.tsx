@@ -142,7 +142,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                   return (
                     <div
                       className={css`
-                        width: 85%;
+                        max-width: 1100px;
                       `}
                       key={`query row - ${query.refId}-${index}`}
                     >
