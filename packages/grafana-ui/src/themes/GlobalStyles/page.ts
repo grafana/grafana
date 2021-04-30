@@ -47,8 +47,8 @@ export function getPageStyles(theme: GrafanaThemeV2) {
         margin: ${theme.spacing(0, 2)};
       }
 
-      ${theme.breakpoints.up('xxl')} {
-        max-width: ${theme.breakpoints.values.xl}px;
+      @media (min-width: ${theme.breakpoints.values.xxl + theme.spacing.gridSize * 2}px) {
+        max-width: ${theme.breakpoints.values.xxl}px;
         margin-left: auto;
         margin-right: auto;
         width: 100%;
