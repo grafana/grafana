@@ -141,7 +141,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
-    timeZone: timeZone,
+    timeZone,
     theme,
   });
 

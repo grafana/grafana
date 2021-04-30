@@ -50,7 +50,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
       direction: ScaleDirection.Right,
       isTime: true,
       range: () => {
-        let timeRange = getTimeRange();
+        const timeRange = getTimeRange();
         return [timeRange.from.valueOf(), timeRange.to.valueOf()];
       },
     });
@@ -59,7 +59,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
       scaleKey: 'x',
       isTime: true,
       placement: AxisPlacement.Bottom,
-      timeZone: timeZone,
+      timeZone,
       theme,
     });
   } else {
