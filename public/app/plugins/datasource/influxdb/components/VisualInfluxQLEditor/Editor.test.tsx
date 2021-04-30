@@ -48,7 +48,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
       'from[default][]where+' +
         'select[field]([value])[mean]()+' +
         'group by[time]([$__interval])[fill]([null])+' +
-        'tz[(optional)]order by time[ASC]' +
+        'timezone[(optional)]order by time[ASC]' +
         'limit[(optional)]slimit[(optional)]' +
         'format as[time_series]alias[Naming pattern]'
     );
@@ -126,9 +126,9 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
       query,
       'from[default][cpu]where[cpu][=][cpu1][AND][cpu][<][cpu3]+' +
         'select[field]([usage_idle])[mean]()+' +
-        '[field]([usage_guest])[median]()[holt_winters_with_fit]([10][2])+' +
+        '[field]([usage_guest])[median]()[holt_winters_with_fit]([10],[2])+' +
         'group by[time]([$__interval])[tag]([cpu])[tag]([host])[fill]([null])+' +
-        'tz[UTC]order by time[DESC]' +
+        'timezone[UTC]order by time[DESC]' +
         'limit[4]slimit[5]' +
         'format as[table]alias[all i as]'
     );
