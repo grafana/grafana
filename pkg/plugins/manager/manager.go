@@ -711,7 +711,7 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 }
 
 func (pm *PluginManager) Install(pluginID, version string) error {
-	i := installer.New(true, pm.Cfg.BuildVersion, NewInstallerLogger("installer.logger", true))
+	i := installer.New(true, pm.Cfg.BuildVersion, installerLog)
 
 	plugin := pm.plugins[pluginID]
 	if plugin != nil {
