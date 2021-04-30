@@ -5,7 +5,7 @@ describe('processNodes', () => {
   const theme = createTheme();
 
   it('handles empty args', async () => {
-    expect(processNodes(undefined, undefined, theme.v1)).toEqual({ nodes: [], edges: [] });
+    expect(processNodes(undefined, undefined, theme)).toEqual({ nodes: [], edges: [] });
   });
 
   it('returns proper nodes and edges', async () => {
@@ -17,7 +17,7 @@ describe('processNodes', () => {
           [0, 2],
           [1, 2],
         ]),
-        theme.v1
+        theme
       )
     ).toEqual({
       nodes: [

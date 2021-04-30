@@ -5,10 +5,9 @@ import { QueryVariableModel } from '../types';
 import { ThunkDispatch } from '../../../types';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { validateVariableSelectionState } from '../state/actions';
-import { DataSourceApi, FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
-import { updateVariableOptions, updateVariableTags } from './reducer';
-import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
+import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
+import { updateVariableOptions } from './reducer';
+import { getTemplatedRegex } from '../utils';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
@@ -106,46 +105,6 @@ export function updateOptionsState(args: {
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
         dispatch(updateVariableOptions(payload));
-      })
-    );
-}
-
-export function runUpdateTagsRequest(
-  args: {
-    variable: QueryVariableModel;
-    datasource: DataSourceApi;
-    searchFilter?: string;
-  },
-  timeSrv: TimeSrv = getTimeSrv()
-): OperatorFunction<void, MetricFindValue[]> {
-  return (source) =>
-    source.pipe(
-      mergeMap(() => {
-        const { datasource, searchFilter, variable } = args;
-
-        if (variable.useTags && datasource.metricFindQuery) {
-          return from(
-            datasource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter, timeSrv))
-          );
-        }
-
-        return of([]);
-      })
-    );
-}
-
-export function updateTagsState(args: {
-  variable: QueryVariableModel;
-  dispatch: ThunkDispatch;
-}): OperatorFunction<MetricFindValue[], void> {
-  return (source) =>
-    source.pipe(
-      map((tagResults) => {
-        const { dispatch, variable } = args;
-
-        if (variable.useTags) {
-          dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
-        }
       })
     );
 }

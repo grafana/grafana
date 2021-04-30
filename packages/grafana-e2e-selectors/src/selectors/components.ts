@@ -1,4 +1,7 @@
 export const Components = {
+  TimePicker: {
+    openButton: 'TimePicker Open Button',
+  },
   DataSource: {
     TestData: {
       QueryTab: {

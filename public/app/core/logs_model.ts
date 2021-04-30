@@ -32,6 +32,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
+import { config } from '@grafana/runtime';
 
 export const LIMIT_LABEL = 'Line limit';
 
@@ -146,6 +147,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
+      theme: config.theme2,
     });
 
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
@@ -155,7 +157,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     };
 
     valueField.name = series.alias;
-    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone, theme: config.theme2 });
     valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
 
     const points = getFlotPairs({

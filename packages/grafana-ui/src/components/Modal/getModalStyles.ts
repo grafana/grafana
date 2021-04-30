@@ -3,7 +3,7 @@ import { GrafanaThemeV2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
-  const borderRadius = theme.shape.borderRadius(2);
+  const borderRadius = theme.shape.borderRadius(1);
 
   return {
     modal: css`
@@ -12,6 +12,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       border-radius: ${borderRadius};
+      border: 1px solid ${theme.colors.border.weak};
       background-clip: padding-box;
       outline: none;
       width: 750px;
@@ -34,17 +35,21 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
     `,
     modalHeader: css`
       label: modalHeader;
-      background: ${theme.colors.background.secondary};
-      border-radius: ${borderRadius} ${borderRadius} 0 0;
       display: flex;
-      height: 42px;
+      align-items: center;
+      min-height: 42px;
+      margin: ${theme.spacing(1, 2, 0, 2)};
+    `,
+    modalHeaderWithTabs: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.size.lg};
-      margin: 0 ${theme.spacing(2)};
+      margin: ${theme.spacing(0, 4, 0, 1)};
       display: flex;
       align-items: center;
-      line-height: 42px;
+      position: relative;
+      top: 2px;
     `,
     modalHeaderIcon: css`
       margin-right: ${theme.spacing(2)};
@@ -57,15 +62,18 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       height: 100%;
       display: flex;
       align-items: center;
+      color: ${theme.colors.text.secondary};
       flex-grow: 1;
       justify-content: flex-end;
-      padding-right: ${theme.spacing(1)};
     `,
     modalContent: css`
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(3)};
       overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing(2)});
+      max-height: calc(90vh - ${theme.spacing(4)});
+    `,
+    modalButtonRow: css`
+      padding-top: ${theme.spacing(3)};
     `,
   };
 });

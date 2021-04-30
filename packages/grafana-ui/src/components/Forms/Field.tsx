@@ -12,7 +12,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
-  description?: string;
+  description?: React.ReactNode;
   /** Indicates if field is in invalid state */
   invalid?: boolean;
   /** Indicates if field is in loading state */
