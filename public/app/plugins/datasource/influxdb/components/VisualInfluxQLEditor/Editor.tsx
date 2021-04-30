@@ -158,7 +158,7 @@ export const Editor = (props: Props): JSX.Element => {
           }}
         />
       </SectionWrap>
-      <SectionWrap initialName="tz">
+      <SectionWrap initialName="timezone">
         <InputSection
           placeholder="(optional)"
           value={query.tz}
