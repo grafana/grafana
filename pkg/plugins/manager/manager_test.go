@@ -227,7 +227,7 @@ type fakeBackendPluginManager struct {
 	registeredPlugins []string
 }
 
-func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (f *fakeBackendPluginManager) RegisterAndStart(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
 }

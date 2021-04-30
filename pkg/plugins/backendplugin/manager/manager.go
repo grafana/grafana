@@ -47,14 +47,13 @@ func (m *manager) Init() error {
 }
 
 func (m *manager) Run(ctx context.Context) error {
-	m.start(ctx)
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
 }
 
-// Register registers a backend plugin
-func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+// RegisterAndStart registers and starts a backend plugin
+func (m *manager) RegisterAndStart(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -93,6 +92,9 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 
 	m.plugins[pluginID] = plugin
 	m.logger.Debug("Backend plugin registered", "pluginId", pluginID)
+
+	m.start(context.Background(), plugin)
+
 	return nil
 }
 
@@ -153,19 +155,14 @@ func (m *manager) GetDataPlugin(pluginID string) interface{} {
 	return nil
 }
 
-// start starts all managed backend plugins
-func (m *manager) start(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
-		if !p.IsManaged() {
-			continue
-		}
+// start starts a managed backend plugin
+func (m *manager) start(ctx context.Context, p backendplugin.Plugin) {
+	if !p.IsManaged() {
+		return
+	}
 
-		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
-			p.Logger().Error("Failed to start plugin", "error", err)
-			continue
-		}
+	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+		p.Logger().Error("Failed to start plugin", "error", err)
 	}
 }
 

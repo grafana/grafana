@@ -48,14 +48,14 @@ func TestManager(t *testing.T) {
 			ctx.cfg.BuildVersion = "7.0.0"
 
 			t.Run("Should be able to register plugin", func(t *testing.T) {
-				err := ctx.manager.Register(testPluginID, ctx.factory)
+				err := ctx.manager.RegisterAndStart(testPluginID, ctx.factory)
 				require.NoError(t, err)
 				require.NotNil(t, ctx.plugin)
 				require.Equal(t, testPluginID, ctx.plugin.pluginID)
 				require.NotNil(t, ctx.plugin.logger)
 
 				t.Run("Should not be able to register an already registered plugin", func(t *testing.T) {
-					err := ctx.manager.Register(testPluginID, ctx.factory)
+					err := ctx.manager.RegisterAndStart(testPluginID, ctx.factory)
 					require.Error(t, err)
 				})
 
@@ -202,7 +202,7 @@ func TestManager(t *testing.T) {
 			ctx.cfg.BuildVersion = "7.0.0"
 
 			t.Run("Should be able to register plugin", func(t *testing.T) {
-				err := ctx.manager.Register(testPluginID, ctx.factory)
+				err := ctx.manager.RegisterAndStart(testPluginID, ctx.factory)
 				require.NoError(t, err)
 				require.False(t, ctx.plugin.managed)
 
@@ -259,7 +259,7 @@ func TestManager(t *testing.T) {
 			ctx.cfg.BuildVersion = "7.0.0"
 			ctx.cfg.EnterpriseLicensePath = "/license.txt"
 
-			err := ctx.manager.Register(testPluginID, ctx.factory)
+			err := ctx.manager.RegisterAndStart(testPluginID, ctx.factory)
 			require.NoError(t, err)
 
 			t.Run("Should provide expected host environment variables", func(t *testing.T) {

@@ -53,7 +53,6 @@ type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	SQLStore             *sqlstore.SQLStore    `inject:""`
-	Loader               *Loader               `inject:""`
 	log                  log.Logger
 	scanningErrors       []error
 
@@ -281,11 +280,6 @@ func (pm *PluginManager) scanPluginPaths() error {
 
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
-	existingPlugins := make(map[string]struct{})
-	for k := range pm.plugins {
-		existingPlugins[k] = struct{}{}
-	}
-
 	scanner := &PluginScanner{
 		pluginPath:                    pluginDir,
 		backendPluginManager:          pm.BackendPluginManager,
@@ -530,7 +524,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 		return err
 	}
 
-	signatureState, err := GetPluginSignatureState(s.log, &pluginCommon)
+	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
 	if err != nil {
 		s.log.Warn("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
 		return err
@@ -721,14 +715,9 @@ func (pm *PluginManager) Install(pluginID string) error {
 	version := ""
 	pluginZipURL := ""
 
-	var pluginJSONPaths []string
-	err := i.Install(&pluginJSONPaths, pluginID, version, pm.Cfg.PluginsPath, pluginZipURL, grafanaComURL)
+	err := i.Install(pluginID, version, pm.Cfg.PluginsPath, pluginZipURL, grafanaComURL)
 	if err != nil {
 		return err
-	}
-
-	if pluginJSONPaths == nil {
-		return fmt.Errorf("no plugin.json files returned")
 	}
 
 	err = pm.initExternalPlugins()

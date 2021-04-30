@@ -59,10 +59,8 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 
-	var result *[]string
-
 	i := installer.New(skipTLSVerify, services.GrafanaVersion, services.Logger)
-	return i.Install(result, pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
+	return i.Install(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API

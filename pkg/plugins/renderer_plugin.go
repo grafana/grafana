@@ -36,14 +36,9 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase,
 		OnLegacyStart: r.onLegacyPluginStart,
 		OnStart:       r.onPluginStart,
 	})
-	if err := backendPluginManager.Register(r.Id, factory); err != nil {
+	if err := backendPluginManager.RegisterAndStart(r.Id, factory); err != nil {
 		return nil, errutil.Wrapf(err, "failed to register backend plugin")
 	}
-
-	r.PluginDir = base.PluginDir
-	r.Signature = base.Signature
-	r.SignatureType = base.SignatureType
-	r.SignatureOrg = base.SignatureOrg
 
 	return r, nil
 }
