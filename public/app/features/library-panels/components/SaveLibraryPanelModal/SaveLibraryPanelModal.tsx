@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { Button, Icon, Input, Modal, useStyles } from '@grafana/ui';
 import { useAsync, useDebounce } from 'react-use';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import { usePanelSave } from '../../utils/usePanelSave';
-import { getLibraryPanelConnectedDashboards } from '../../state/api';
+import { getConnectedDashboards } from '../../state/api';
 import { PanelModelWithLibraryPanel } from '../../types';
 import { getModalStyles } from '../../styles';
 
@@ -25,20 +24,14 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   onDiscard,
 }) => {
   const [searchString, setSearchString] = useState('');
-  const connectedDashboardsState = useAsync(async () => {
-    const connectedDashboards = await getLibraryPanelConnectedDashboards(panel.libraryPanel.uid);
-    return connectedDashboards;
-  }, []);
-
   const dashState = useAsync(async () => {
-    const connectedDashboards = connectedDashboardsState.value;
-    if (connectedDashboards && connectedDashboards.length > 0) {
-      const dashboardDTOs = await getBackendSrv().search({ dashboardIds: connectedDashboards });
-      return dashboardDTOs.map((dash) => dash.title);
+    const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
+    if (searchHits.length > 0) {
+      return searchHits.map((dash) => dash.title);
     }
 
     return [];
-  }, [connectedDashboardsState.value]);
+  }, [panel.libraryPanel.uid]);
 
   const [filteredDashboards, setFilteredDashboards] = useState<string[]>([]);
   useDebounce(
