@@ -2,7 +2,6 @@ import {
   GraphSeriesValue,
   Field,
   formattedValueToString,
-  getDisplayProcessor,
   getFieldDisplayName,
   TimeZone,
   dateTimeFormat,
@@ -85,8 +84,7 @@ export const getMultiSeriesGraphHoverInfo = (
       minTime = time.display ? formattedValueToString(time.display(pointTime)) : pointTime;
     }
 
-    const display = field.display ?? getDisplayProcessor({ field, timeZone });
-    const disp = display(field.values.get(hoverIndex));
+    const disp = field.display!(field.values.get(hoverIndex));
 
     results.push({
       value: formattedValueToString(disp),

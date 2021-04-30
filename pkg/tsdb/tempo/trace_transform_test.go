@@ -19,8 +19,7 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := ioutil.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace := ot_pdata.NewTraces()
-		err = otTrace.FromOtlpProtoBytes(proto)
+		otTrace, err := ot_pdata.TracesFromOtlpProtoBytes(proto)
 		require.NoError(t, err)
 
 		frame, err := TraceToFrame(otTrace)
