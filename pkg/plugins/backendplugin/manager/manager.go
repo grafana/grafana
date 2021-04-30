@@ -98,7 +98,8 @@ func (m *manager) RegisterAndStart(pluginID string, factory backendplugin.Plugin
 	return nil
 }
 
-func (m *manager) Unregister(pluginID string) error {
+// UnregisterAndStop unregisters and stops a backend plugin
+func (m *manager) UnregisterAndStop(pluginID string) error {
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
 

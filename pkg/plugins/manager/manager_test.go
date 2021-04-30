@@ -232,7 +232,7 @@ func (f *fakeBackendPluginManager) RegisterAndStart(pluginID string, factory bac
 	return nil
 }
 
-func (f *fakeBackendPluginManager) Unregister(pluginID string) error {
+func (f *fakeBackendPluginManager) UnregisterAndStop(pluginID string) error {
 	var result []string
 
 	for _, existingPlugin := range f.registeredPlugins {

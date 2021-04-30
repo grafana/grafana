@@ -308,10 +308,10 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	pm.log.Debug("Initial plugin loading done")
 
-	for key, p := range scanner.plugins {
-		if existing, exists := pm.plugins[p.Id]; exists && p.Info.Version == existing.Info.Version {
-			pm.log.Info("Can skip this plugin as it's already registered", "plugin", p.Id)
-			delete(scanner.plugins, key)
+	for foundPluginPath, foundPlugin := range scanner.plugins {
+		if existing, exists := pm.plugins[foundPlugin.Id]; exists && foundPlugin.Info.Version == existing.Info.Version {
+			pm.log.Info("Can skip this plugin as it's already registered", "plugin", foundPlugin.Id)
+			delete(scanner.plugins, foundPluginPath)
 		}
 	}
 
@@ -735,7 +735,7 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 	}
 
 	if pm.BackendPluginManager.Registered(pluginID) {
-		err := pm.BackendPluginManager.Unregister(pluginID)
+		err := pm.BackendPluginManager.UnregisterAndStop(pluginID)
 		if err != nil {
 			return err
 		}
