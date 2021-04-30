@@ -174,6 +174,12 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				return err
 			}
 		}
+
+		// create entry in alert_rule_version
+		_, err = m.sess.Insert(rule.makeVersion())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
