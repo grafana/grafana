@@ -55,7 +55,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
         allowCustomValue
         options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
         onChange={({ value: key = '' }) =>
-          onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter]))
+          onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' }]))
         }
         menuPlacement="bottom"
         renderControl={FilterButton}
