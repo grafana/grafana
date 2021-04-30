@@ -30,7 +30,9 @@ const MatchersField: FC<Props> = ({ className }) => {
   return (
     <div className={cx(className, styles.wrapper)}>
       <Label>Matchers</Label>
-      <AlertLabels matchers={matchers} onRemoveLabel={onRemoveLabel} />
+      <div className={styles.matchers}>
+        <AlertLabels matchers={matchers} onRemoveLabel={onRemoveLabel} />
+      </div>
       {/* Hide the fields from the form but they need to be registered in order to be in the form state */}
       <div className={styles.displayNone}>
         {matchers.map((matcher, index) => {
@@ -44,7 +46,7 @@ const MatchersField: FC<Props> = ({ className }) => {
         })}
       </div>
 
-      <div className={cx(styles.flexRow)}>
+      <div className={cx(styles.row)}>
         <Field className={styles.labelInput} label="Name">
           <Input {...register('matcherName')} placeholder="name" />
         </Field>
@@ -72,10 +74,14 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
     `,
-    flexRow: css`
+    row: css`
       display: flex;
       flex-direction: row;
       align-items: flex-end;
+      background-color: ${theme.colors.bg2};
+      max-width: 585px;
+      padding: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing.md};
     `,
     equalSign: css`
       width: 28px;
@@ -94,6 +100,10 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     displayNone: css`
       display: none;
+    `,
+    matchers: css`
+      min-height: ${theme.spacing.lg};
+      margin: ${theme.spacing.md} 0;
     `,
   };
 };

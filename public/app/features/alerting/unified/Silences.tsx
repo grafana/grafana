@@ -52,8 +52,6 @@ const Silences: FC = () => {
           <Button icon="plus">New Silence</Button>
         </a>
       )}
-      <br />
-      <br />
       {error && !loading && (
         <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}

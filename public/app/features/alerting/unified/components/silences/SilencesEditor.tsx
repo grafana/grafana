@@ -1,14 +1,16 @@
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC } from 'react';
-import { Button, Field, FieldSet, Input, TextArea } from '@grafana/ui';
-import { DefaultTimeZone } from '@grafana/data';
+import { Button, Field, FieldSet, Input, TextArea, useStyles } from '@grafana/ui';
+import { DefaultTimeZone, GrafanaTheme } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { pickBy } from 'lodash';
 import MatchersField from './MatchersField';
 import { useForm, FormProvider } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { useDispatch } from 'react-redux';
 import { createSilence } from '../../state/actions';
-import { pickBy } from 'lodash';
 import { SilencePeriod } from './SilencePeriod';
+import { css } from '@emotion/css';
 
 interface Props {
   silence?: Silence;
@@ -37,7 +39,7 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       startsAt: new Date().toISOString(),
       endsAt: '',
       comment: '',
-      createdBy: '',
+      createdBy: config.bootData.user.name,
       duration: '',
       isRegex: false,
       matchers: [],
@@ -51,6 +53,7 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
 export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) => {
   const formAPI = useForm({ defaultValues: getDefaultFormValues(silence) });
   const dispatch = useDispatch();
+  const styles = useStyles(getStyles);
 
   const { register, handleSubmit } = formAPI;
 
@@ -72,13 +75,13 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet label="Edit silence">
+        <FieldSet label={`${silence ? 'Edit silence' : 'Silence alert'}`}>
           <SilencePeriod />
           <MatchersField />
-          <Field label="Comment" required>
+          <Field className={styles.field} label="Comment" required>
             <TextArea {...register('comment', { required: true })} />
           </Field>
-          <Field label="Created by" required>
+          <Field className={styles.field} label="Created by" required>
             <Input {...register('createdBy', { required: true })} />
           </Field>
         </FieldSet>
@@ -87,5 +90,11 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
     </FormProvider>
   );
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  field: css`
+    margin: ${theme.spacing.sm} 0;
+  `,
+});
 
 export default SilencesEditor;

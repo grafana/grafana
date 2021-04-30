@@ -1,11 +1,13 @@
-import { dateTime } from '@grafana/data';
-import { Field, TimeRangeInput } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { dateTime, GrafanaTheme } from '@grafana/data';
+import { Field, TimeRangeInput, useStyles } from '@grafana/ui';
 import React from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 
 export const SilencePeriod = () => {
   const { control, getValues } = useFormContext<Pick<SilenceFormFields, 'startsAt' | 'endsAt' | 'timeZone'>>();
+  const styles = useStyles(getStyles);
   const {
     field: { onChange: onChangeStartsAt, value: startsAt },
     fieldState: { invalid: startsAtInvalid },
@@ -41,7 +43,12 @@ export const SilencePeriod = () => {
   const to = dateTime(endsAt);
 
   return (
-    <Field label="Silence period" error={invalid ? 'To is before or the same as from' : ''} invalid={invalid}>
+    <Field
+      className={styles.timeRange}
+      label="Silence start and end"
+      error={invalid ? 'To is before or the same as from' : ''}
+      invalid={invalid}
+    >
       <TimeRangeInput
         value={{
           from,
@@ -63,3 +70,9 @@ export const SilencePeriod = () => {
     </Field>
   );
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  timeRange: css`
+    width: 400px;
+  `,
+});
