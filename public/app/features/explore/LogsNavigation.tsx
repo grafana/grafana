@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useRef } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { css } from 'emotion';
@@ -39,13 +39,43 @@ function LogsNavigation({
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [requestRange, setRequestRange] = useState(0);
-  // These are to determine, if we want to clear up logs navigation when totally new query is run
-  const [expectedRange, setExpectedRange] = useState<AbsoluteTimeRange>();
-  const [expectedQueries, setExpectedQueries] = useState<DataQuery[]>([]);
+
+  // These refs are to determine, if we want to clear up logs navigation when totally new query is run
+  const expectedQueriesRef = useRef<DataQuery[]>();
+  const expectedRangeRef = useRef<AbsoluteTimeRange>();
+  // This ref is to store range span for future queres based on firstly selected time range
+  // e.g. if last 5 min selected, always run 5 min range
+  const rangeSpanRef = useRef(0);
+
+  // Main effect to set pages and index
+  useEffect(() => {
+    const newPage = { logsRange: visibleRange, queryRange: absoluteRange };
+    let newPages: LogsPage[] = [];
+    // We want to start new pagination if queries change or if absolute range is different than expected
+    if (!isEqual(expectedRangeRef.current, absoluteRange) || !isEqual(expectedQueriesRef.current, queries)) {
+      setPages([newPage]);
+      setCurrentPageIndex(0);
+      expectedQueriesRef.current = queries;
+      rangeSpanRef.current = absoluteRange.to - absoluteRange.from;
+    } else {
+      setPages((pages) => {
+        // Remove duplicates with new query
+        newPages = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
+        // Sort pages based on logsOrder so they visually align with displayed logs
+        newPages = [...newPages, newPage].sort((a, b) => sortPages(a, b, logsSortOrder));
+        // Set new pages
+
+        return newPages;
+      });
+
+      // Set current page index
+      const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
+      setCurrentPageIndex(index);
+    }
+  }, [visibleRange, absoluteRange, logsSortOrder, queries]);
 
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
-    setExpectedRange({ from, to });
+    expectedRangeRef.current = { from, to };
     onChangeTime({ from, to });
   };
 
@@ -72,41 +102,6 @@ function LogsNavigation({
     return `${topContent} — ${bottomContent}`;
   };
 
-  // Main effect to set pages and index
-  useEffect(() => {
-    const newPage = { logsRange: visibleRange, queryRange: absoluteRange };
-    let newPages: LogsPage[] = [];
-
-    // We want to start new pagination if queries change or if absolute range is different than expected
-    if (!isEqual(expectedRange, absoluteRange) || !isEqual(expectedQueries, queries)) {
-      setPages([newPage]);
-      setExpectedQueries(queries);
-      setCurrentPageIndex(0);
-    } else {
-      setPages((pages) => {
-        // Remove duplicates with new query
-        newPages = pages.filter((page) => !isEqual(newPage.queryRange, page.queryRange));
-        // Sort pages based on logsOrder so they visually align with displayed logs
-        newPages = [...newPages, newPage].sort((a, b) => sortPages(a, b, logsSortOrder));
-        // Set new pages
-        return newPages;
-      });
-
-      // Set current page index
-      const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
-      setCurrentPageIndex(index);
-    }
-    // We don't want to add expectedRange as we want to run this only is absolute and visible range changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visibleRange, absoluteRange, logsSortOrder]);
-
-  useEffect(() => {
-    const initialRange = absoluteRange.to - absoluteRange.from;
-    setRequestRange(initialRange);
-    // We want to set requestRange only when the first query is run
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const theme = useTheme();
   const styles = getStyles(theme, oldestLogsFirst, loading);
@@ -123,7 +118,7 @@ function LogsNavigation({
           variant="secondary"
           onClick={() => {
             // the range is based on initally selected range
-            changeTime({ from: visibleRange.from - requestRange, to: visibleRange.from });
+            changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
           }}
           disabled={loading}
         >
@@ -160,7 +155,7 @@ function LogsNavigation({
           variant="secondary"
           onClick={() => {
             // the range is based on initally selected range
-            changeTime({ from: visibleRange.from - requestRange, to: visibleRange.from });
+            changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
           }}
           disabled={loading}
         >
@@ -179,7 +174,7 @@ export default memo(LogsNavigation);
 const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, loading: boolean) => {
   return {
     navContainer: css`
-      height: 95vh;
+      max-height: 95vh;
       display: flex;
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};

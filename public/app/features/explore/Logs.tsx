@@ -326,37 +326,39 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           onEscapeNewlines={this.onEscapeNewlines}
           clearDetectedFields={this.clearDetectedFields}
         />
-        <CustomScrollbar autoHide>
-          <LogRows
-            logRows={logRows}
-            deduplicatedRows={dedupedRows}
-            dedupStrategy={dedupStrategy}
-            getRowContext={this.props.getRowContext}
-            highlighterExpressions={highlighterExpressions}
-            onClickFilterLabel={onClickFilterLabel}
-            onClickFilterOutLabel={onClickFilterOutLabel}
-            showContextToggle={showContextToggle}
-            showLabels={showLabels}
-            showTime={showTime}
-            forceEscape={forceEscape}
-            wrapLogMessage={wrapLogMessage}
-            timeZone={timeZone}
-            getFieldLinks={getFieldLinks}
+        <div className={styles.logsSection}>
+          <CustomScrollbar autoHide>
+            <LogRows
+              logRows={logRows}
+              deduplicatedRows={dedupedRows}
+              dedupStrategy={dedupStrategy}
+              getRowContext={this.props.getRowContext}
+              highlighterExpressions={highlighterExpressions}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              showContextToggle={showContextToggle}
+              showLabels={showLabels}
+              showTime={showTime}
+              forceEscape={forceEscape}
+              wrapLogMessage={wrapLogMessage}
+              timeZone={timeZone}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={logsSortOrder}
+              showDetectedFields={showDetectedFields}
+              onClickShowDetectedField={this.showDetectedField}
+              onClickHideDetectedField={this.hideDetectedField}
+            />
+          </CustomScrollbar>
+          <LogsNavigation
             logsSortOrder={logsSortOrder}
-            showDetectedFields={showDetectedFields}
-            onClickShowDetectedField={this.showDetectedField}
-            onClickHideDetectedField={this.hideDetectedField}
+            visibleRange={visibleRange}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={onChangeTime}
+            loading={loading}
+            queries={queries}
           />
-        </CustomScrollbar>
-        <LogsNavigation
-          logsSortOrder={logsSortOrder}
-          visibleRange={visibleRange}
-          absoluteRange={absoluteRange}
-          timeZone={timeZone}
-          onChangeTime={onChangeTime}
-          loading={loading}
-          queries={queries}
-        />
+        </div>
         {!loading && !hasData && !scanning && (
           <div className={styles.noData}>
             No logs found.
