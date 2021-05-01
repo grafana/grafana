@@ -7,7 +7,7 @@ import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { css } from '@emotion/css';
 import { withTheme2, stylesFactory } from '../../themes';
-import { ColorPickerTrigger } from './ColorPickerTrigger';
+import { ColorSwatch } from './ColorSwatch';
 
 /**
  * If you need custom trigger for the color picker you can do that with a render prop pattern and supply a function
@@ -71,7 +71,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     hideColorPicker: hidePopper,
                   })
                 ) : (
-                  <ColorPickerTrigger
+                  <ColorSwatch
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}

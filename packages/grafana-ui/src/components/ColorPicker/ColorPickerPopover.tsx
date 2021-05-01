@@ -149,6 +149,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
         padding: ${theme.spacing(1, 0)};
         background: ${theme.colors.background.secondary};
         color: ${theme.colors.text.secondary};
+        cursor: pointer;
       }
 
       .ColorPickerPopover__tab--active {
