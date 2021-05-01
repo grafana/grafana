@@ -1,9 +1,7 @@
 import React from 'react';
 import { getNamedColorPalette } from '@grafana/data';
 import { Themeable } from '../../types/index';
-import NamedColorsGroup, { ColorSwatch, ColorSwatchVariant } from './NamedColorsGroup';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
-import { useTheme2 } from '../../themes/ThemeContext';
+import NamedColorsGroup from './NamedColorsGroup';
 
 export interface NamedColorsPaletteProps extends Themeable {
   color?: string;
