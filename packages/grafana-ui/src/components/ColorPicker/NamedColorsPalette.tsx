@@ -1,9 +1,9 @@
 import React from 'react';
 import { getNamedColorPalette } from '@grafana/data';
-import { Themeable } from '../../types/index';
+import { Themeable2 } from '../../types/index';
 import NamedColorsGroup from './NamedColorsGroup';
 
-export interface NamedColorsPaletteProps extends Themeable {
+export interface NamedColorsPaletteProps extends Themeable2 {
   color?: string;
   onChange: (colorName: string) => void;
 }

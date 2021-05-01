@@ -16,6 +16,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     const ctx = u.ctx;
     const { scaleKey, thresholds, theme, config } = options;
     const { min: xMin, max: xMax } = u.scales.x;
+    const { min: yMin } = u.scales[scaleKey];
 
     if (xMin === undefined || xMax === undefined) {
       return;
@@ -48,23 +49,28 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
         for (let idx = 0; idx + 1 < thresholds.steps.length; idx++) {
           const step = thresholds.steps[idx];
           const nextStep = thresholds.steps[idx + 1];
+          let color = tinycolor(getColorForTheme(step.color, theme.v1));
 
-          if (step.value === -Infinity) {
-            continue;
-          }
-
-          const alpha = tinycolor(step.color).getAlpha();
+          // Ignore fully transparent colors
+          const alpha = color.getAlpha();
           if (alpha === 0) {
             continue;
           }
 
+          /// if no alpha set automatic alpha
+          if (alpha === 1) {
+            color = color.setAlpha(0.15);
+          }
+
+          let value = step.value === -Infinity ? yMin : step.value;
+
           let x0 = u.valToPos(xMin, 'x', true);
-          let y0 = u.valToPos(step.value, scaleKey, true);
+          let y0 = u.valToPos(value ?? 0, scaleKey, true);
           let x1 = u.valToPos(xMax, 'x', true);
           let y1 = u.valToPos(nextStep.value, scaleKey, true);
 
           ctx.save();
-          ctx.fillStyle = colorManipulator.alpha(getColorForTheme(step.color, theme.v1), 0.15);
+          ctx.fillStyle = color.toString();
           ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
           ctx.restore();
         }

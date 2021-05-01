@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 import { ColorDefinition } from '@grafana/data';
 import { Color } from 'csstype';
 import { upperFirst, find } from 'lodash';
@@ -11,7 +11,7 @@ export enum ColorSwatchVariant {
   Large = 'large',
 }
 
-interface ColorSwatchProps extends Themeable, React.DOMAttributes<HTMLDivElement> {
+interface ColorSwatchProps extends Themeable2, React.DOMAttributes<HTMLDivElement> {
   color: string;
   label?: string;
   variant?: ColorSwatchVariant;
@@ -35,7 +35,7 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
     borderRadius: '50%',
     background: `${color}`,
     marginRight: isSmall ? '0px' : '8px',
-    boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${theme.colors.bg1}` : 'none',
+    boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 2px ${theme.colors.getContrastText(color)}` : 'none',
   };
 
   return (
@@ -53,7 +53,7 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
   );
 };
 
-interface NamedColorsGroupProps extends Themeable {
+interface NamedColorsGroupProps extends Themeable2 {
   colors: ColorDefinition[];
   selectedColor?: Color;
   onColorSelect: ColorChangeHandler;
@@ -76,7 +76,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
           key={primaryColor.name}
           isSelected={primaryColor.name === selectedColor}
           variant={ColorSwatchVariant.Large}
-          color={primaryColor.variants[theme.type]}
+          color={primaryColor.variants[theme.colors.mode]}
           label={upperFirst(primaryColor.hue)}
           onClick={() => onColorSelect(primaryColor)}
           theme={theme}
@@ -95,7 +95,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                 <ColorSwatch
                   key={color.name}
                   isSelected={color.name === selectedColor}
-                  color={color.variants[theme.type]}
+                  color={color.variants[theme.colors.mode]}
                   onClick={() => onColorSelect(color)}
                   theme={theme}
                 />
