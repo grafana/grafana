@@ -46,7 +46,8 @@ export function ReceiverForm<R extends ChannelValues>({
   };
 
   const formAPI = useForm<ReceiverFormValues<R>>({
-    defaultValues,
+    // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
+    defaultValues: JSON.parse(JSON.stringify(defaultValues)),
   });
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
