@@ -199,6 +199,8 @@ export enum GraphTresholdsDisplayMode {
   None = 'none',
   Line = 'line',
   Area = 'area',
+  LineAndArea = 'line+area',
+  Series = 'series',
 }
 
 /**
@@ -276,5 +278,6 @@ export const graphFieldOptions = {
     { label: 'Off', value: GraphTresholdsDisplayMode.None },
     { label: 'Line', value: GraphTresholdsDisplayMode.Line },
     { label: 'Area', value: GraphTresholdsDisplayMode.Area },
+    { label: 'Line + Area', value: GraphTresholdsDisplayMode.LineAndArea },
   ] as Array<SelectableValue<GraphTresholdsDisplayMode>>,
 };
