@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
 import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
@@ -12,6 +13,7 @@ import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
 
 interface Props<R extends ChannelValues> {
+  config: AlertManagerCortexConfig;
   notifiers: NotifierDTO[];
   defaultItem: R;
   alertManagerSourceName: string;
@@ -22,6 +24,7 @@ interface Props<R extends ChannelValues> {
 }
 
 export function ReceiverForm<R extends ChannelValues>({
+  config,
   initialValues,
   defaultItem,
   notifiers,
@@ -57,7 +60,7 @@ export function ReceiverForm<R extends ChannelValues>({
     getValues,
   } = formAPI;
 
-  const { fields, append, remove } = useControlledFieldArray<R>('items', formAPI);
+  const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
   const validateNameIsAvailable: Validate<string> = useCallback(
     (name: string) =>
@@ -67,9 +70,21 @@ export function ReceiverForm<R extends ChannelValues>({
     [takenReceiverNames]
   );
 
+  const submitCallback = (values: ReceiverFormValues<R>) => {
+    onSubmit({
+      ...values,
+      items: values.items.filter((item) => !item.__deleted),
+    });
+  };
+
   return (
     <FormProvider {...formAPI}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      {!config.alertmanager_config.route && (
+        <Alert severity="warning" title="Attention">
+          Because there is no default policy configured yet, this contact point will automatically be set as default.
+        </Alert>
+      )}
+      <form onSubmit={handleSubmit(submitCallback)}>
         <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
         {error && (
           <Alert severity="error" title="Error saving receiver">
@@ -85,7 +100,10 @@ export function ReceiverForm<R extends ChannelValues>({
             width={39}
           />
         </Field>
-        {(fields ?? []).map((field, index) => {
+        {fields.map((field, index) => {
+          if (field.__deleted) {
+            return null;
+          }
           const initialItem = initialValues?.items.find(({ __id }) => __id === field.__id);
           return (
             <ChannelSubForm<R>
@@ -104,7 +122,12 @@ export function ReceiverForm<R extends ChannelValues>({
             />
           );
         })}
-        <Button type="button" icon="plus" onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}>
+        <Button
+          type="button"
+          icon="plus"
+          variant="secondary"
+          onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
+        >
           New contact point type
         </Button>
         <div className={styles.buttons}>
@@ -116,6 +139,7 @@ export function ReceiverForm<R extends ChannelValues>({
           {!loading && <Button type="submit">Save contact point</Button>}
           <LinkButton
             disabled={loading}
+            fill="outline"
             variant="secondary"
             fill="outline"
             href={makeAMLink('alerting/notifications', alertManagerSourceName)}

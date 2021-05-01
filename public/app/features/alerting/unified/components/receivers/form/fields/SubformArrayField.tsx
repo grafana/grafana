@@ -20,7 +20,7 @@ export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors, defau
   const styles = useStyles2(getStyles);
   const path = `${pathPrefix}${option.propertyName}`;
   const formAPI = useFormContext();
-  const { fields, append, remove } = useControlledFieldArray(path, formAPI, defaultValues);
+  const { fields, append, remove } = useControlledFieldArray({ name: path, formAPI, defaults: defaultValues });
 
   return (
     <div className={styles.wrapper}>

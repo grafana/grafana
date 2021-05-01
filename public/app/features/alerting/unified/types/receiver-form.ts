@@ -1,6 +1,7 @@
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { CloudNotifierType, NotifierType } from 'app/types';
 import React from 'react';
+import { ControlledField } from '../hooks/useControlledFieldArray';
 
 export interface ChannelValues {
   __id: string; // used to correllate form values to original DTOs
@@ -12,7 +13,7 @@ export interface ChannelValues {
 
 export interface ReceiverFormValues<R extends ChannelValues> {
   name: string;
-  items: R[];
+  items: Array<ControlledField<R>>;
 }
 
 export interface CloudChannelValues extends ChannelValues {

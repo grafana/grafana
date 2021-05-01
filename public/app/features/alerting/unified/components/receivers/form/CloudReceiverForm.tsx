@@ -47,7 +47,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
         newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
         oldConfig: config,
         alertManagerSourceName,
-        successMessage: existing ? 'Receiver updated.' : 'Receiver created',
+        successMessage: existing ? 'Contact point updated.' : 'Contact point created.',
         redirectPath: makeAMLink('/alerting/notifications', alertManagerSourceName),
       })
     );
@@ -61,9 +61,10 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
   return (
     <>
       <Alert title="Info" severity="info">
-        Note that empty values will be replaced with global defaults were appropriate.
+        Note that empty string values will be replaced with global defaults were appropriate.
       </Alert>
       <ReceiverForm<CloudChannelValues>
+        config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}
         notifiers={cloudNotifierTypes}
