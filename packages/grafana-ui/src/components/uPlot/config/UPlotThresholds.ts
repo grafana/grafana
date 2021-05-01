@@ -1,11 +1,12 @@
-import { colorManipulator, getColorForTheme, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
+import { colorManipulator, getColorForTheme, GrafanaThemeV2, ThresholdsConfig } from '@grafana/data';
+import tinycolor from 'tinycolor2';
 import { GraphThresholdsConfig, GraphTresholdsDisplayMode } from '../config';
 
 export interface UPlotThresholdOptions {
   scaleKey: string;
   thresholds: ThresholdsConfig;
   config: GraphThresholdsConfig;
-  theme: GrafanaTheme;
+  theme: GrafanaThemeV2;
 }
 
 export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
@@ -36,7 +37,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
           ctx.beginPath();
           ctx.lineWidth = 2;
-          ctx.strokeStyle = colorManipulator.alpha(getColorForTheme(step.color, theme), 0.3);
+          ctx.strokeStyle = colorManipulator.alpha(getColorForTheme(step.color, theme.v1), 0.3);
           ctx.moveTo(x0, y0);
           ctx.lineTo(x1, y1);
           ctx.stroke();
@@ -52,13 +53,18 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
             continue;
           }
 
+          const alpha = tinycolor(step.color).getAlpha();
+          if (alpha === 0) {
+            continue;
+          }
+
           let x0 = u.valToPos(xMin, 'x', true);
           let y0 = u.valToPos(step.value, scaleKey, true);
           let x1 = u.valToPos(xMax, 'x', true);
           let y1 = u.valToPos(nextStep.value, scaleKey, true);
 
           ctx.save();
-          ctx.fillStyle = colorManipulator.alpha(getColorForTheme(step.color, theme), 0.15);
+          ctx.fillStyle = colorManipulator.alpha(getColorForTheme(step.color, theme.v1), 0.15);
           ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
           ctx.restore();
         }

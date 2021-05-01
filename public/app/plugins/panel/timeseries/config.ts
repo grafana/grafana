@@ -194,7 +194,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       builder.addRadio({
         path: 'thresholds.mode',
         name: 'Show thresholds',
-        category: categoryStyles,
+        category: ['Thresholds'],
         defaultValue: graphFieldOptions.thresholdsMode[0].value,
         settings: {
           options: graphFieldOptions.thresholdsMode,
