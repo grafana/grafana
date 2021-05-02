@@ -223,7 +223,7 @@ export class PanelChrome extends Component<Props, State> {
       panel.getQueryRunner().run({
         datasource: panel.datasource,
         queries: panel.targets,
-        panelId: panel.id,
+        panelId: panel.editSourceId || panel.id,
         dashboardId: this.props.dashboard.id,
         timezone: this.props.dashboard.getTimezone(),
         timeRange: timeData.timeRange,
