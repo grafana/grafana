@@ -313,6 +313,8 @@ export class PanelChrome extends Component<Props, State> {
     // Update the event filter (dashboard settings may have changed)
     // Yes this is called ever render for a function that is triggered on every mouse move
     this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
+    // eslint-disable-next-line react/no-direct-mutation-state
+    this.state.context.sync = dashboard.graphTooltip;
 
     return (
       <>
@@ -335,7 +337,6 @@ export class PanelChrome extends Component<Props, State> {
               onFieldConfigChange={this.onFieldConfigChange}
               onChangeTimeRange={this.onChangeTimeRange}
               eventBus={dashboard.events}
-              sync={dashboard.graphTooltip}
             />
           </PanelContextProvider>
         </div>

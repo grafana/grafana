@@ -1,14 +1,6 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import {
-  DashboardCursorSync,
-  DataFrame,
-  DataHoverEvent,
-  FieldMatcherID,
-  fieldMatchers,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, DataHoverEvent, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
 import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
@@ -39,7 +31,6 @@ export interface GraphNGProps extends Themeable2 {
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   onSeriesColorChange?: (label: string, color: string) => void;
   children?: (builder: UPlotConfigBuilder, alignedDataFrame: DataFrame) => React.ReactNode;
-  sync?: DashboardCursorSync;
 }
 
 /**

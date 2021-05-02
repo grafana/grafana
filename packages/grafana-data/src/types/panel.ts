@@ -11,7 +11,6 @@ import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
 import { AlertStateInfo } from './alerts';
-import { DashboardCursorSync } from './dashboard';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -95,9 +94,6 @@ export interface PanelProps<T = any> {
 
   /** EventBus  */
   eventBus: EventBus;
-
-  /** Dashboard panels sync */
-  sync?: DashboardCursorSync;
 
   /** Panel options change handler */
   onOptionsChange: (options: T) => void;

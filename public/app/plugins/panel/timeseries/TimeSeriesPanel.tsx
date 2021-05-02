@@ -1,5 +1,12 @@
 import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
-import { GraphNG, GraphNGLegendEvent, TooltipDisplayMode, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import {
+  GraphNG,
+  GraphNGLegendEvent,
+  TooltipDisplayMode,
+  TooltipPlugin,
+  usePanelContext,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useCallback } from 'react';
 import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
@@ -23,7 +30,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   onFieldConfigChange,
   replaceVariables,
-  sync,
 }) => {
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
@@ -42,6 +48,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     },
     [fieldConfig, onFieldConfigChange]
   );
+
+  const { sync } = usePanelContext();
 
   if (!data || !data.series?.length) {
     return (
@@ -62,7 +70,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       legend={options.legend}
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
-      sync={sync}
     >
       {(config, alignedDataFrame) => {
         return (
