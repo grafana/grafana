@@ -9,6 +9,7 @@ import {
   ScaleDistribution,
   ScaleOrientation,
   ScaleDirection,
+  GraphTresholdsDisplayMode,
 } from '../config';
 import { createTheme, ThresholdsMode } from '@grafana/data';
 
@@ -671,6 +672,9 @@ describe('UPlotConfigBuilder', () => {
           mode: ThresholdsMode.Absolute,
           steps: [],
         },
+        config: {
+          mode: GraphTresholdsDisplayMode.Area,
+        },
         theme: darkTheme,
       });
       builder.addThresholds({
@@ -678,6 +682,9 @@ describe('UPlotConfigBuilder', () => {
         thresholds: {
           mode: ThresholdsMode.Absolute,
           steps: [],
+        },
+        config: {
+          mode: GraphTresholdsDisplayMode.Area,
         },
         theme: darkTheme,
       });

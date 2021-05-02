@@ -1,4 +1,4 @@
-import { colorManipulator, getColorForTheme, GrafanaThemeV2, ThresholdsConfig } from '@grafana/data';
+import { getColorForTheme, GrafanaThemeV2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { GraphThresholdsConfig, GraphTresholdsDisplayMode } from '../config';
 
@@ -17,26 +17,32 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     const { min: xMin, max: xMax } = u.scales.x;
     const { min: yMin, max: yMax } = u.scales[scaleKey];
 
-    if (xMin === undefined || xMax === undefined) {
+    if (xMin === undefined || xMax === undefined || yMin === undefined || yMax === undefined) {
       return;
     }
 
     function addLines() {
       for (let idx = 0; idx < steps.length; idx++) {
         const step = steps[idx];
+        const color = tinycolor(getColorForTheme(step.color, theme.v1));
 
         if (step.value === -Infinity) {
           continue;
         }
 
-        let x0 = u.valToPos(xMin ?? 0, 'x', true);
+        // if we hit a transparent threshold skip it
+        if (color.getAlpha() < 0.05) {
+          continue;
+        }
+
+        let x0 = u.valToPos(xMin!, 'x', true);
         let y0 = u.valToPos(step.value, scaleKey, true);
-        let x1 = u.valToPos(xMax ?? 1, 'x', true);
+        let x1 = u.valToPos(xMax!, 'x', true);
         let y1 = u.valToPos(step.value, scaleKey, true);
 
         ctx.beginPath();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = colorManipulator.alpha(getColorForTheme(step.color, theme.v1), 0.3);
+        ctx.strokeStyle = color.setAlpha(0.3).toString();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
         ctx.stroke();
@@ -47,6 +53,11 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     function addAreas() {
       for (let idx = 0; idx < steps.length; idx++) {
         const step = steps[idx];
+
+        // skip thresholds that cannot be seen
+        if (step.value > yMax!) {
+          continue;
+        }
 
         // if this is the last step make the next step the same color but +Infinity
         const nextStep =
@@ -71,7 +82,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
         }
 
         let value = step.value === -Infinity ? yMin : step.value;
-        let nextValue = nextStep.value === Infinity ? yMax : nextStep.value;
+        let nextValue = nextStep.value === Infinity || nextStep.value > yMax! ? yMax : nextStep.value;
 
         let x0 = u.valToPos(xMin ?? 0, 'x', true);
         let y0 = u.valToPos(value ?? 0, scaleKey, true);

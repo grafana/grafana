@@ -1,9 +1,9 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { ColorSwatch } from './NamedColorsGroup';
 import { flatten } from 'lodash';
 import { getNamedColorPalette, getColorFromHexRgbOrName } from '@grafana/data';
+import { ColorSwatch } from './ColorSwatch';
 
 const allColors = flatten(Array.from(getNamedColorPalette().values()));
 
