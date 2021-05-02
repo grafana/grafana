@@ -1,11 +1,10 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { NotificationChannelOption } from 'app/types';
-import { FieldError, DeepMap } from 'react-hook-form';
+import { FieldError, DeepMap, useFormContext } from 'react-hook-form';
 import { OptionField } from './OptionField';
-import { GrafanaThemeV2 } from '@grafana/data';
-import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
-import { CollapsibleSection } from '../CollapsibleSection';
+import { Button, useStyles2 } from '@grafana/ui';
+import { ActionIcon } from '../../../rules/ActionIcon';
+import { getReceiverFormFieldStyles } from './styles';
 
 interface Props {
   defaultValue: any;
@@ -15,35 +14,46 @@ interface Props {
 }
 
 export const SubformField: FC<Props> = ({ option, pathPrefix, errors, defaultValue }) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getReceiverFormFieldStyles);
+  const name = `${pathPrefix}${option.propertyName}`;
+  const { watch } = useFormContext();
+  const _watchValue = watch(name);
+  const value = _watchValue === undefined ? defaultValue : _watchValue;
+
+  const [show, setShow] = useState(!!value);
+
   return (
     <div className={styles.wrapper}>
-      <CollapsibleSection className={styles.collapsibleSection} label={option.label} description={option.description}>
-        {(option.subformOptions ?? []).map((subOption) => {
-          return (
-            <OptionField
-              defaultValue={defaultValue?.[option.propertyName]}
-              key={subOption.propertyName}
-              option={subOption}
-              pathPrefix={`${pathPrefix}${option.propertyName}.`}
-              error={errors?.[subOption.propertyName]}
-            />
-          );
-        })}
-      </CollapsibleSection>
+      <h6>{option.label}</h6>
+      {option.description && <p className={styles.description}>{option.description}</p>}
+      {show && (
+        <>
+          <ActionIcon icon="trash-alt" tooltip="delete" onClick={() => setShow(false)} className={styles.deleteIcon} />
+          {(option.subformOptions ?? []).map((subOption) => {
+            return (
+              <OptionField
+                defaultValue={defaultValue?.[subOption.propertyName]}
+                key={subOption.propertyName}
+                option={subOption}
+                pathPrefix={`${name}.`}
+                error={errors?.[subOption.propertyName]}
+              />
+            );
+          })}
+        </>
+      )}
+      {!value && (
+        <Button
+          className={styles.addButton}
+          type="button"
+          variant="secondary"
+          icon="plus"
+          size="sm"
+          onClick={() => setShow(true)}
+        >
+          Add
+        </Button>
+      )}
     </div>
   );
 };
-
-const getStyles = (theme: GrafanaThemeV2) => ({
-  collapsibleSection: css`
-    margin: 0;
-    padding: 0;
-  `,
-  wrapper: css`
-    margin: ${theme.spacing(2, 0)};
-    padding: ${theme.spacing(1)};
-    border: solid 1px ${theme.colors.border.medium};
-    border-radius: ${theme.shape.borderRadius(1)};
-  `,
-});
