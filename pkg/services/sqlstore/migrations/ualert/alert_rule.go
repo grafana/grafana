@@ -14,6 +14,7 @@ type alertRule struct {
 	Condition       string
 	Data            []alertQuery
 	IntervalSeconds int64
+	Version         int64
 	Uid             string
 	NamespaceUid    string
 	RuleGroup       string
@@ -22,7 +23,53 @@ type alertRule struct {
 	For             duration
 	Updated         time.Time
 	Annotations     map[string]string
-	// Labels map[string]string (Labels are not Created in the migration)
+	Labels          map[string]string // (Labels are not Created in the migration)
+}
+
+type alertRuleVersion struct {
+	RuleOrgID        int64  `xorm:"rule_org_id"`
+	RuleUID          string `xorm:"rule_uid"`
+	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
+	RuleGroup        string
+	ParentVersion    int64
+	RestoredFrom     int64
+	Version          int64
+
+	Created         time.Time
+	Title           string
+	Condition       string
+	Data            []alertQuery
+	IntervalSeconds int64
+	NoDataState     string
+	ExecErrState    string
+	// ideally this field should have been apimodels.ApiDuration
+	// but this is currently not possible because of circular dependencies
+	For         duration
+	Annotations map[string]string
+	Labels      map[string]string
+}
+
+func (a *alertRule) makeVersion() *alertRuleVersion {
+	return &alertRuleVersion{
+		RuleOrgID:        a.OrgId,
+		RuleUID:          a.Uid,
+		RuleNamespaceUID: a.NamespaceUid,
+		RuleGroup:        a.RuleGroup,
+		ParentVersion:    0,
+		RestoredFrom:     0,
+		Version:          1,
+
+		Created:         time.Now().UTC(),
+		Title:           a.Title,
+		Condition:       a.Condition,
+		Data:            a.Data,
+		IntervalSeconds: a.IntervalSeconds,
+		NoDataState:     a.NoDataState,
+		ExecErrState:    a.ExecErrState,
+		For:             a.For,
+		Annotations:     a.Annotations,
+		Labels:          map[string]string{},
+	}
 }
 
 func getMigrationInfo(da dashAlert) string {
@@ -41,15 +88,17 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	ar := &alertRule{
 		OrgId:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
+		Uid:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            cond.Data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
+		Version:         1,
 		NamespaceUid:    folderUID, // Folder already created, comes from env var.
 		RuleGroup:       da.Name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
-		Uid:             util.GenerateShortUID(),
+		Labels:          map[string]string{},
 	}
 
 	var err error
