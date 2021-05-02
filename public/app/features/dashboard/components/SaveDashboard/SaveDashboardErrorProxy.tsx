@@ -81,30 +81,28 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
 
   return (
     <Modal className={styles.modal} title="Plugin dashboard" icon="copy" isOpen={true} onDismiss={onDismiss}>
-      <div className={styles.modalContent}>
-        <div className={styles.modalText}>
-          Your changes will be lost when you update the plugin.
-          <br />
-          <small>
-            Use <strong>Save As</strong> to create custom version.
-          </small>
-        </div>
-        <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss} fill="outline">
-            Cancel
-          </Button>
-          <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
-              onDismiss();
-            }}
-          >
-            Overwrite
-          </Button>
-        </Modal.ButtonRow>
+      <div className={styles.modalText}>
+        Your changes will be lost when you update the plugin.
+        <br />
+        <small>
+          Use <strong>Save As</strong> to create custom version.
+        </small>
       </div>
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          Cancel
+        </Button>
+        <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
+        <Button
+          variant="destructive"
+          onClick={async () => {
+            await onDashboardSave(dashboard.getSaveModelClone(), { overwrite: true }, dashboard);
+            onDismiss();
+          }}
+        >
+          Overwrite
+        </Button>
+      </Modal.ButtonRow>
     </Modal>
   );
 };
@@ -124,9 +122,6 @@ const isHandledError = (errorStatus: string) => {
 const getConfirmPluginDashboardSaveModalStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
     width: 500px;
-  `,
-  modalContent: css`
-    text-align: center;
   `,
   modalText: css`
     font-size: ${theme.typography.heading.h4};
