@@ -126,7 +126,6 @@ func (db *MySQLDialect) CleanDB() error {
 
 	for _, table := range tables {
 		switch table.Name {
-		case "migration_log":
 		default:
 			if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
 				return errutil.Wrap("failed to disable foreign key checks", err)
