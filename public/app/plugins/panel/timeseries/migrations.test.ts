@@ -139,7 +139,7 @@ describe('Graph Migrations', () => {
 
       const panel = {} as PanelModel;
       panel.options = graphPanelChangedHandler(panel, 'graph', old);
-      expect(panel.fieldConfig.defaults.custom.thresholds.mode).toBe('line+area');
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
         Array [
           Object {
@@ -176,7 +176,7 @@ describe('Graph Migrations', () => {
 
       const panel = {} as PanelModel;
       panel.options = graphPanelChangedHandler(panel, 'graph', old);
-      expect(panel.fieldConfig.defaults.custom.thresholds.mode).toBe('line+area');
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
         Array [
           Object {

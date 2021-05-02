@@ -159,8 +159,8 @@
               "group": "A",
               "mode": "none"
             },
-            "thresholds": {
-              "mode": "line+area"
+            "thresholdsStyle": {
+              "mode": "off"
             }
           },
           "mappings": [],
@@ -358,7 +358,7 @@
               "group": "A",
               "mode": "none"
             },
-            "thresholds": {
+            "thresholdsStyle": {
               "mode": "area"
             }
           },
@@ -556,7 +556,7 @@
               "group": "A",
               "mode": "none"
             },
-            "thresholds": {
+            "thresholdsStyle": {
               "mode": "line+area"
             }
           },
@@ -575,7 +575,7 @@
                 "value": 20
               },
               {
-                "color": "orange",
+                "color": "transparent",
                 "value": 60
               }
             ]
@@ -757,7 +757,7 @@
               "group": "A",
               "mode": "none"
             },
-            "thresholds": {
+            "thresholdsStyle": {
               "mode": "line"
             }
           },
@@ -959,7 +959,7 @@
               "group": "A",
               "mode": "none"
             },
-            "thresholds": {
+            "thresholdsStyle": {
               "mode": "line+area"
             }
           },
@@ -1134,6 +1134,97 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(184, 119, 217, 0.23)",
+                "value": null
+              },
+              {
+                "color": "transparent",
+                "value": 40
+              },
+              {
+                "color": "rgba(50, 161, 230, 0.13)",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 15,
+      "maxDataPoints": 30,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "max": 80,
+          "min": 40,
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Time series custom colors",
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 29,
@@ -1151,7 +1242,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Panel Tests - GraphNG Thresholds",
+  "title": "Panel Tests - GraphNG Thresholds2",
   "uid": "6HMMh4rMz",
-  "version": 22
+  "version": 5
 }

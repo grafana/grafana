@@ -195,8 +195,8 @@ export interface StackingConfig {
 /**
  * @alpha
  */
-export enum GraphTresholdsDisplayMode {
-  None = 'none',
+export enum GraphTresholdsStyleMode {
+  Off = 'off',
   Line = 'line',
   Area = 'area',
   LineAndArea = 'line+area',
@@ -206,8 +206,8 @@ export enum GraphTresholdsDisplayMode {
 /**
  * @alpha
  */
-export interface GraphThresholdsConfig {
-  mode: GraphTresholdsDisplayMode;
+export interface GraphThresholdsStyleConfig {
+  mode: GraphTresholdsStyleMode;
 }
 
 /**
@@ -223,7 +223,7 @@ export interface GraphFieldConfig
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
   stacking?: StackingConfig;
-  thresholds?: GraphThresholdsConfig;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
 }
 
 /**
@@ -274,10 +274,10 @@ export const graphFieldOptions = {
     { label: 'Normal', value: StackingMode.Normal },
   ] as Array<SelectableValue<StackingMode>>,
 
-  thresholdsMode: [
-    { label: 'Off', value: GraphTresholdsDisplayMode.None },
-    { label: 'Line', value: GraphTresholdsDisplayMode.Line },
-    { label: 'Area', value: GraphTresholdsDisplayMode.Area },
-    { label: 'Line + Area', value: GraphTresholdsDisplayMode.LineAndArea },
-  ] as Array<SelectableValue<GraphTresholdsDisplayMode>>,
+  thresholdsDisplayModes: [
+    { label: 'Off', value: GraphTresholdsStyleMode.Off },
+    { label: 'As lines', value: GraphTresholdsStyleMode.Line },
+    { label: 'As filled regions', value: GraphTresholdsStyleMode.Area },
+    { label: 'As lines and filled regions', value: GraphTresholdsStyleMode.LineAndArea },
+  ] as Array<SelectableValue<GraphTresholdsStyleMode>>,
 };

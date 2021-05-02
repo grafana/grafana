@@ -17,7 +17,7 @@ import {
   DrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
-  GraphTresholdsDisplayMode,
+  GraphTresholdsStyleMode,
   LegendDisplayMode,
   LineInterpolation,
   LineStyle,
@@ -378,13 +378,13 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       });
     }
 
-    let mode = area ? GraphTresholdsDisplayMode.Area : GraphTresholdsDisplayMode.Line;
+    let displayMode = area ? GraphTresholdsStyleMode.Area : GraphTresholdsStyleMode.Line;
     if (line && area) {
-      mode = GraphTresholdsDisplayMode.LineAndArea;
+      displayMode = GraphTresholdsStyleMode.LineAndArea;
     }
 
     // TODO move into standard ThresholdConfig ?
-    y1.custom.thresholds = { mode };
+    y1.custom.thresholdsStyle = { mode: displayMode };
 
     y1.thresholds = {
       mode: ThresholdsMode.Absolute,

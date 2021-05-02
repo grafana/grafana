@@ -1,11 +1,11 @@
 import { getColorForTheme, GrafanaThemeV2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
-import { GraphThresholdsConfig, GraphTresholdsDisplayMode } from '../config';
+import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '../config';
 
 export interface UPlotThresholdOptions {
   scaleKey: string;
   thresholds: ThresholdsConfig;
-  config: GraphThresholdsConfig;
+  config: GraphThresholdsStyleConfig;
   theme: GrafanaThemeV2;
 }
 
@@ -22,17 +22,27 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     function addLines() {
+      // Thresholds below a transparent threshold is treated like "less then", and line drawn previous threshold
+      let transparentIndex = 0;
+
       for (let idx = 0; idx < steps.length; idx++) {
         const step = steps[idx];
-        const color = tinycolor(getColorForTheme(step.color, theme.v1));
-
-        if (step.value === -Infinity) {
-          continue;
+        if (step.color === 'transparent') {
+          transparentIndex = idx;
+          break;
         }
+      }
 
-        // if we hit a transparent threshold skip it
-        if (color.getAlpha() < 0.05) {
-          continue;
+      // Ignore the base -Infinity threshold by always starting on index 1
+      for (let idx = 1; idx < steps.length; idx++) {
+        const step = steps[idx];
+        let color: tinycolor.Instance;
+
+        // if we are below a transparent index treat this a less then threshold, use previous thresholds color
+        if (transparentIndex >= idx && idx > 0) {
+          color = tinycolor(getColorForTheme(steps[idx - 1].color, theme.v1));
+        } else {
+          color = tinycolor(getColorForTheme(step.color, theme.v1));
         }
 
         let x0 = u.valToPos(xMin!, 'x', true);
@@ -97,13 +107,13 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     switch (config.mode) {
-      case GraphTresholdsDisplayMode.Line:
+      case GraphTresholdsStyleMode.Line:
         addLines();
         break;
-      case GraphTresholdsDisplayMode.Area:
+      case GraphTresholdsStyleMode.Area:
         addAreas();
         break;
-      case GraphTresholdsDisplayMode.LineAndArea:
+      case GraphTresholdsStyleMode.LineAndArea:
         addLines();
         addAreas();
     }

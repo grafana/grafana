@@ -191,13 +191,13 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       addAxisConfig(builder, cfg);
       addHideFrom(builder);
 
-      builder.addRadio({
-        path: 'thresholds.mode',
+      builder.addSelect({
+        path: 'thresholdsStyle.mode',
         name: 'Show thresholds',
         category: ['Thresholds'],
-        defaultValue: graphFieldOptions.thresholdsMode[0].value,
+        defaultValue: graphFieldOptions.thresholdsDisplayModes[0].value,
         settings: {
-          options: graphFieldOptions.thresholdsMode,
+          options: graphFieldOptions.thresholdsDisplayModes,
         },
       });
     },

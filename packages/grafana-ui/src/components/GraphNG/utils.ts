@@ -22,7 +22,7 @@ import {
   AxisPlacement,
   DrawStyle,
   GraphFieldConfig,
-  GraphTresholdsDisplayMode,
+  GraphTresholdsStyleMode,
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
@@ -226,11 +226,11 @@ export function preparePlotConfigBuilder(
     });
 
     // Render thresholds in graph
-    if (customConfig.thresholds && config.thresholds) {
-      const mode = customConfig.thresholds.mode ?? GraphTresholdsDisplayMode.None;
-      if (mode !== GraphTresholdsDisplayMode.None) {
+    if (customConfig.thresholdsStyle && config.thresholds) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
         builder.addThresholds({
-          config: customConfig.thresholds,
+          config: customConfig.thresholdsStyle,
           thresholds: config.thresholds,
           scaleKey,
           theme,
