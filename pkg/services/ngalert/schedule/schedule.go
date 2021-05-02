@@ -373,6 +373,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 			ruleForEntry, ok := ruleByUID[entry.RuleDefinitionUID]
 			if !ok {
 				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleDefinitionUID)
+				continue
 			}
 
 			lbs := map[string]string(entry.Labels)
