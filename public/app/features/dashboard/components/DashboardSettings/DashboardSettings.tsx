@@ -14,7 +14,7 @@ import { AnnotationsSettings } from './AnnotationsSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 export interface Props {
@@ -145,7 +145,7 @@ export class DashboardSettings extends PureComponent<Props> {
     const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
     const canSaveAs = contextSrv.hasEditPermissionInFolders;
     const canSave = dashboard.meta.canSave;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     return (
       <div className="dashboard-settings">
@@ -183,23 +183,24 @@ export class DashboardSettings extends PureComponent<Props> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaThemeV2) => ({
   scrollInner: css`
     min-width: 100%;
     min-height: 100%;
+    display: flex;
   `,
   settingsWrapper: css`
-    background: ${theme.colors.bg1};
+    margin: ${theme.spacing(2)};
     display: flex;
-    min-height: 100%;
-    width: 100%;
+    flex-grow: 1;
   `,
   settingsContent: css`
     flex-grow: 1;
-    min-width: 0;
     height: 100%;
     padding: 32px;
-    max-width: 1100px;
+    border: 1px solid ${theme.colors.border.weak};
+    background: ${theme.colors.background.primary};
+    border-radius: ${theme.shape.borderRadius()};
   `,
   settingsContentFullWidth: css`
     flex-grow: 1;
