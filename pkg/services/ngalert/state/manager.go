@@ -1,25 +1,29 @@
 package state
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type Manager struct {
-	cache *cache
-	quit  chan struct{}
-	Log   log.Logger
+	cache   *cache
+	quit    chan struct{}
+	Log     log.Logger
+	metrics *metrics.Metrics
 }
 
-func NewManager(logger log.Logger) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.Metrics) *Manager {
 	manager := &Manager{
-		cache: newCache(logger),
-		quit:  make(chan struct{}),
-		Log:   logger,
+		cache:   newCache(logger, metrics),
+		quit:    make(chan struct{}),
+		Log:     logger,
+		metrics: metrics,
 	}
 	go manager.cleanUp()
 	return manager
@@ -95,8 +99,11 @@ func (st *Manager) GetStatesByRuleUID() map[string][]*State {
 }
 
 func (st *Manager) cleanUp() {
-	ticker := time.NewTicker(time.Duration(60) * time.Minute)
-	st.Log.Debug("starting cleanup process", "intervalMinutes", 60)
+	// TODO: parameterize?
+	// Setting to a reasonable default scrape interval for Prometheus.
+	dur := time.Duration(15) * time.Second
+	ticker := time.NewTicker(dur)
+	st.Log.Debug("starting cleanup process", "dur", fmt.Sprint(dur))
 	for {
 		select {
 		case <-ticker.C:

@@ -11,7 +11,6 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
-  EventBus,
   EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
@@ -170,12 +169,17 @@ export class PanelModel implements DataConfigSource {
   isInView = false;
   configRev = 0; // increments when configs change
   hasRefreshed?: boolean;
-  events: EventBus;
   cacheTimeout?: any;
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
   dataSupport?: PanelPluginDataSupport;
+
+  /**
+   * The PanelModel event bus only used for internal and legacy angular support.
+   * The EventBus passed to panels is based on the dashboard event model.
+   */
+  events: EventBusSrv;
 
   private queryRunner?: PanelQueryRunner;
 

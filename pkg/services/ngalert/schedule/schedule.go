@@ -341,27 +341,49 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 	st.ResetCache()
 
 	orgIdsCmd := models.FetchUniqueOrgIdsQuery{}
+
 	if err := sch.store.FetchOrgIds(&orgIdsCmd); err != nil {
 		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
 	var states []*state.State
 	for _, orgIdResult := range orgIdsCmd.Result {
+		// Get Rules
+		ruleCmd := models.ListAlertRulesQuery{
+			OrgID: orgIdResult.DefinitionOrgID,
+		}
+		if err := sch.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
+			sch.log.Error("unable to fetch previous state", "msg", err.Error())
+		}
+
+		ruleByUID := make(map[string]*models.AlertRule, len(ruleCmd.Result))
+		for _, rule := range ruleCmd.Result {
+			ruleByUID[rule.UID] = rule
+		}
+
+		// Get Instances
 		cmd := models.ListAlertInstancesQuery{
 			DefinitionOrgID: orgIdResult.DefinitionOrgID,
 		}
-		if err := sch.store.ListAlertInstances(&cmd); err != nil {
+		if err := sch.ruleStore.ListAlertInstances(&cmd); err != nil {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
+
 		for _, entry := range cmd.Result {
+			ruleForEntry, ok := ruleByUID[entry.RuleDefinitionUID]
+			if !ok {
+				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleDefinitionUID)
+				continue
+			}
+
 			lbs := map[string]string(entry.Labels)
 			cacheId, err := entry.Labels.StringKey()
 			if err != nil {
 				sch.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
 			stateForEntry := &state.State{
-				AlertRuleUID:       entry.DefinitionUID,
-				OrgID:              entry.DefinitionOrgID,
+				AlertRuleUID:       entry.RuleDefinitionUID,
+				OrgID:              entry.RuleOrgID,
 				CacheId:            cacheId,
 				Labels:             lbs,
 				State:              translateInstanceState(entry.CurrentState),
@@ -369,6 +391,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 				StartsAt:           entry.CurrentStateSince,
 				EndsAt:             entry.CurrentStateEnd,
 				LastEvaluationTime: entry.LastEvalTime,
+				Annotations:        ruleForEntry.Annotations,
 			}
 			states = append(states, stateForEntry)
 		}
