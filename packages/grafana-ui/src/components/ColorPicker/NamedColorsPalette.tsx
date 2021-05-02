@@ -1,22 +1,23 @@
 import React from 'react';
 import { getNamedColorPalette } from '@grafana/data';
-import { Themeable2 } from '../../types/index';
 import NamedColorsGroup from './NamedColorsGroup';
 import { VerticalGroup } from '../Layout/Layout';
 import { ColorSwatch } from './ColorSwatch';
+import { useTheme2 } from '../../themes/ThemeContext';
 
-export interface NamedColorsPaletteProps extends Themeable2 {
+export interface NamedColorsPaletteProps {
   color?: string;
   onChange: (colorName: string) => void;
 }
 
-export const NamedColorsPalette = ({ color, onChange, theme }: NamedColorsPaletteProps) => {
+export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps) => {
+  const theme = useTheme2();
+
   const swatches: JSX.Element[] = [];
   getNamedColorPalette().forEach((colors, hue) => {
     swatches.push(
       <NamedColorsGroup
         key={hue}
-        theme={theme}
         selectedColor={color}
         colors={colors}
         onColorSelect={(color) => {

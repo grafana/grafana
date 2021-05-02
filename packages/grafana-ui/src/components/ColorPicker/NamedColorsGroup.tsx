@@ -1,13 +1,13 @@
 import React, { FunctionComponent } from 'react';
-import { Themeable2 } from '../../types';
 import { ColorDefinition } from '@grafana/data';
 import { Color } from 'csstype';
 import { upperFirst, find } from 'lodash';
 import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 type ColorChangeHandler = (color: ColorDefinition) => void;
 
-interface NamedColorsGroupProps extends Themeable2 {
+interface NamedColorsGroupProps {
   colors: ColorDefinition[];
   selectedColor?: Color;
   onColorSelect: ColorChangeHandler;
@@ -18,9 +18,9 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   colors,
   selectedColor,
   onColorSelect,
-  theme,
   ...otherProps
 }) => {
+  const theme = useTheme2();
   const primaryColor = find(colors, (color) => !!color.isPrimary);
 
   return (

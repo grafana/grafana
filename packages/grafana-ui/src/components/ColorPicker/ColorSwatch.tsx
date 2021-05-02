@@ -32,7 +32,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
       background: `${color}`,
       marginRight: hasLabel ? '8px' : '0px',
       boxShadow: isSelected
-        ? `inset 0 0 0 2px ${color}, inset 0 0 0 2px ${theme.colors.getContrastText(color)}`
+        ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${theme.colors.getContrastText(color)}`
         : 'none',
     };
 

@@ -68,13 +68,13 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
 
   renderPicker = () => {
     const { activePicker } = this.state;
-    const { color, theme } = this.props;
+    const { color } = this.props;
 
     switch (activePicker) {
       case 'spectrum':
         return <SpectrumPalette color={color} onChange={this.handleChange} />;
       case 'palette':
-        return <NamedColorsPalette color={color} onChange={this.handleChange} theme={theme} />;
+        return <NamedColorsPalette color={color} onChange={this.handleChange} />;
       default:
         return this.renderCustomPicker(activePicker);
     }
