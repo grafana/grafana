@@ -32,13 +32,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     [fieldConfig, onFieldConfigChange, data.series]
   );
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
@@ -70,7 +63,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       width={width}
       height={height}
       onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
       {...options}
       orientation={orientation}
     />

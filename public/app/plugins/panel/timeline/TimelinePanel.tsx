@@ -26,13 +26,6 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     [fieldConfig, onFieldConfigChange, data.series]
   );
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
@@ -50,7 +43,6 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
       width={width}
       height={height}
       onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
       {...options}
     />
   );

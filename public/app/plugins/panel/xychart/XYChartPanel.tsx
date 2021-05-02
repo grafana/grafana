@@ -29,13 +29,6 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
     [fieldConfig, onFieldConfigChange, frames]
   );
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
   if (dims.error) {
     return (
       <div>
@@ -61,7 +54,6 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       height={height}
       legend={options.legend}
       onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
     >
       {(config, alignedDataFrame) => {
         return (
