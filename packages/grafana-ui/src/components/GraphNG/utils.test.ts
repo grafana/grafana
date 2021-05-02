@@ -2,6 +2,7 @@ import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import {
   createTheme,
   DefaultTimeZone,
+  EventBusSrv,
   FieldConfig,
   FieldMatcherID,
   fieldMatchers,
@@ -192,7 +193,8 @@ describe('GraphNG utils', () => {
       frame!,
       createTheme(),
       getDefaultTimeRange,
-      () => DefaultTimeZone
+      () => DefaultTimeZone,
+      new EventBusSrv()
     ).getConfig();
     expect(result).toMatchSnapshot();
   });
