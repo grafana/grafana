@@ -15,7 +15,7 @@ describe('ColorPickerPopover', () => {
       const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere((node) => node.prop('isSelected') === false);
 
       expect(selectedSwatch.length).toBe(1);
-      expect(notSelectedSwatches.length).toBe(allColors.length - 1);
+      expect(notSelectedSwatches.length).toBe(allColors.length + 1);
       expect(selectedSwatch.prop('isSelected')).toBe(true);
     });
 
@@ -26,7 +26,7 @@ describe('ColorPickerPopover', () => {
       const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere((node) => node.prop('isSelected') === false);
 
       expect(selectedSwatch.length).toBe(1);
-      expect(notSelectedSwatches.length).toBe(allColors.length - 1);
+      expect(notSelectedSwatches.length).toBe(allColors.length + 1);
       expect(selectedSwatch.prop('isSelected')).toBe(true);
     });
   });

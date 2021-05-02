@@ -1,8 +1,9 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { getColorDefinitionByName } from '@grafana/data';
+import { createTheme, getColorDefinitionByName } from '@grafana/data';
 import { ColorSwatch } from './ColorSwatch';
+import { ThemeContext } from '../../themes';
 
 describe('NamedColorsPalette', () => {
   const BasicGreen = getColorDefinitionByName('green');
@@ -20,15 +21,16 @@ describe('NamedColorsPalette', () => {
       expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.dark);
 
       wrapper.unmount();
-      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} onChange={() => {}} />);
+
+      const withLightTheme = (
+        <ThemeContext.Provider value={createTheme({ colors: { mode: 'light' } })}>
+          <NamedColorsPalette color={BasicGreen.name} onChange={() => {}} />
+        </ThemeContext.Provider>
+      );
+
+      wrapper = mount(withLightTheme);
       selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === BasicGreen.name);
       expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.light);
-    });
-
-    it('should render dar variant of provided color when theme not provided', () => {
-      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} onChange={() => {}} />);
-      selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === BasicGreen.name);
-      expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.dark);
     });
   });
 });
