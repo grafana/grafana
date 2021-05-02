@@ -4,31 +4,46 @@ package tests
 
 import (
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/stretchr/testify/require"
 )
 
+const baseIntervalSeconds = 10
+
+func mockTimeNow() {
+	var timeSeed int64
+	store.TimeNow = func() time.Time {
+		fakeNow := time.Unix(timeSeed, 0).UTC()
+		timeSeed++
+		return fakeNow
+	}
+}
+
 func TestAlertInstanceOperations(t *testing.T) {
 	dbstore := setupTestEnv(t, baseIntervalSeconds)
+	t.Cleanup(registry.ClearOverrides)
 
-	alertDefinition1 := createTestAlertDefinition(t, dbstore, 60)
-	orgID := alertDefinition1.OrgID
+	alertRule1 := createTestAlertRule(t, dbstore, 60)
+	orgID := alertRule1.OrgID
 
-	alertDefinition2 := createTestAlertDefinition(t, dbstore, 60)
-	require.Equal(t, orgID, alertDefinition2.OrgID)
+	alertRule2 := createTestAlertRule(t, dbstore, 60)
+	require.Equal(t, orgID, alertRule2.OrgID)
 
-	alertDefinition3 := createTestAlertDefinition(t, dbstore, 60)
-	require.Equal(t, orgID, alertDefinition3.OrgID)
+	alertRule3 := createTestAlertRule(t, dbstore, 60)
+	require.Equal(t, orgID, alertRule3.OrgID)
 
-	alertDefinition4 := createTestAlertDefinition(t, dbstore, 60)
-	require.Equal(t, orgID, alertDefinition4.OrgID)
+	alertRule4 := createTestAlertRule(t, dbstore, 60)
+	require.Equal(t, orgID, alertRule4.OrgID)
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {
 		saveCmd := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertDefinition1.OrgID,
-			DefinitionUID:   alertDefinition1.UID,
+			DefinitionOrgID: alertRule1.OrgID,
+			DefinitionUID:   alertRule1.UID,
 			State:           models.InstanceStateFiring,
 			Labels:          models.InstanceLabels{"test": "testValue"},
 		}
@@ -45,14 +60,14 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
-		require.Equal(t, alertDefinition1.OrgID, getCmd.Result.DefinitionOrgID)
-		require.Equal(t, alertDefinition1.UID, getCmd.Result.DefinitionUID)
+		require.Equal(t, alertRule1.OrgID, getCmd.Result.RuleOrgID)
+		require.Equal(t, alertRule1.UID, getCmd.Result.RuleUID)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
 		saveCmd := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertDefinition2.OrgID,
-			DefinitionUID:   alertDefinition2.UID,
+			DefinitionOrgID: alertRule2.OrgID,
+			DefinitionUID:   alertRule2.UID,
 			State:           models.InstanceStateNormal,
 			Labels:          models.InstanceLabels{},
 		}
@@ -67,15 +82,15 @@ func TestAlertInstanceOperations(t *testing.T) {
 		err = dbstore.GetAlertInstance(getCmd)
 		require.NoError(t, err)
 
-		require.Equal(t, alertDefinition2.OrgID, getCmd.Result.DefinitionOrgID)
-		require.Equal(t, alertDefinition2.UID, getCmd.Result.DefinitionUID)
+		require.Equal(t, alertRule2.OrgID, getCmd.Result.RuleOrgID)
+		require.Equal(t, alertRule2.UID, getCmd.Result.RuleUID)
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
 	})
 
 	t.Run("can save two instances with same org_id, uid and different labels", func(t *testing.T) {
 		saveCmdOne := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertDefinition3.OrgID,
-			DefinitionUID:   alertDefinition3.UID,
+			DefinitionOrgID: alertRule3.OrgID,
+			DefinitionUID:   alertRule3.UID,
 			State:           models.InstanceStateFiring,
 			Labels:          models.InstanceLabels{"test": "testValue"},
 		}
@@ -128,8 +143,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("update instance with same org_id, uid and different labels", func(t *testing.T) {
 		saveCmdOne := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertDefinition4.OrgID,
-			DefinitionUID:   alertDefinition4.UID,
+			DefinitionOrgID: alertRule4.OrgID,
+			DefinitionUID:   alertRule4.UID,
 			State:           models.InstanceStateFiring,
 			Labels:          models.InstanceLabels{"test": "testValue"},
 		}
@@ -147,8 +162,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{
-			DefinitionOrgID: alertDefinition4.OrgID,
-			DefinitionUID:   alertDefinition4.UID,
+			DefinitionOrgID: alertRule4.OrgID,
+			DefinitionUID:   alertRule4.UID,
 		}
 
 		err = dbstore.ListAlertInstances(listQuery)
@@ -156,11 +171,9 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 		require.Len(t, listQuery.Result, 1)
 
-		require.Equal(t, saveCmdTwo.DefinitionOrgID, listQuery.Result[0].DefinitionOrgID)
-		require.Equal(t, saveCmdTwo.DefinitionUID, listQuery.Result[0].DefinitionUID)
+		require.Equal(t, saveCmdTwo.DefinitionOrgID, listQuery.Result[0].RuleOrgID)
+		require.Equal(t, saveCmdTwo.DefinitionUID, listQuery.Result[0].RuleDefinitionUID)
 		require.Equal(t, saveCmdTwo.Labels, listQuery.Result[0].Labels)
 		require.Equal(t, saveCmdTwo.State, listQuery.Result[0].CurrentState)
-		require.NotEmpty(t, listQuery.Result[0].DefinitionTitle)
-		require.Equal(t, alertDefinition4.Title, listQuery.Result[0].DefinitionTitle)
 	})
 }

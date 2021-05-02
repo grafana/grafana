@@ -551,10 +551,7 @@
               "=",
               "$backend"
             ],
-            "groupBys": [
-              "resource.label.url_map_name",
-              "resource.label.backend_target_name"
-            ],
+            "groupBys": ["resource.label.url_map_name", "resource.label.backend_target_name"],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
             "perSeriesAligner": "ALIGN_DELTA",
@@ -842,10 +839,7 @@
               "=",
               "$backend"
             ],
-            "groupBys": [
-              "resource.label.url_map_name",
-              "resource.label.backend_target_name"
-            ],
+            "groupBys": ["resource.label.url_map_name", "resource.label.backend_target_name"],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_request_bytes_count",
             "perSeriesAligner": "ALIGN_RATE",
@@ -1083,10 +1077,7 @@
               "=",
               "$backend"
             ],
-            "groupBys": [
-              "resource.label.url_map_name",
-              "resource.label.backend_target_name"
-            ],
+            "groupBys": ["resource.label.url_map_name", "resource.label.backend_target_name"],
             "metricKind": "DELTA",
             "metricType": "loadbalancing.googleapis.com/https/backend_response_bytes_count",
             "perSeriesAligner": "ALIGN_RATE",
@@ -1263,11 +1254,7 @@
   ],
   "schemaVersion": 27,
   "style": "dark",
-  "tags": [
-    "Networking",
-    "Cloud Monitoring",
-    "GCP"
-  ],
+  "tags": ["Networking", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [
       {

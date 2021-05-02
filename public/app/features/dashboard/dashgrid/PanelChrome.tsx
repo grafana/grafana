@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelContextProvider } from '@grafana/ui';
+import { ErrorBoundary, PanelContextProvider, PanelContext } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -15,7 +15,8 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
-  EventBusWithSource,
+  EventBusSrv,
+  EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -47,22 +48,34 @@ export interface State {
   renderCounter: number;
   errorMessage?: string;
   refreshWhenInView: boolean;
-  eventBus: EventBusWithSource;
+  context: PanelContext;
   data: PanelData;
 }
 
 export class PanelChrome extends Component<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
+  private eventFilter: EventFilterOptions = { onlyLocal: true };
 
   constructor(props: Props) {
     super(props);
+
+    // Can this eventBus be on PanelModel?
+    // when we have more complex event filtering, that may be a better option
+    const eventBus = props.dashboard.events
+      ? props.dashboard.events.newScopedBus(
+          `panel:${props.panel.id}`, // panelID
+          this.eventFilter
+        )
+      : new EventBusSrv();
 
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
       refreshWhenInView: false,
-      eventBus: new EventBusWithSource(props.dashboard.events, `panel-${props.panel.id}`),
+      context: {
+        eventBus,
+      },
       data: this.getInitialPanelDataState(),
     };
   }
@@ -297,10 +310,14 @@ export class PanelChrome extends Component<Props, State> {
     });
     const panelOptions = panel.getOptions();
 
+    // Update the event filter (dashboard settings may have changed)
+    // Yes this is called ever render for a function that is triggered on every mouse move
+    this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
+
     return (
       <>
         <div className={panelContentClassNames}>
-          <PanelContextProvider value={{ eventBus: this.state.eventBus }}>
+          <PanelContextProvider value={this.state.context}>
             <PanelComponent
               id={panel.id}
               data={data}

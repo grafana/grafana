@@ -18,15 +18,19 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
   const onCancel = () => getDashboardQueryRunner().cancel(annotation);
 
   useEffect(() => {
-    const started = events.subscribe(AnnotationQueryStarted, (event) => {
-      if (event.payload === annotation) {
-        setLoading(true);
-      }
+    const started = events.getStream(AnnotationQueryStarted).subscribe({
+      next: (event) => {
+        if (event.payload === annotation) {
+          setLoading(true);
+        }
+      },
     });
-    const stopped = events.subscribe(AnnotationQueryFinished, (event) => {
-      if (event.payload === annotation) {
-        setLoading(false);
-      }
+    const stopped = events.getStream(AnnotationQueryFinished).subscribe({
+      next: (event) => {
+        if (event.payload === annotation) {
+          setLoading(false);
+        }
+      },
     });
 
     return () => {
