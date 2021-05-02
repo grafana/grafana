@@ -349,7 +349,6 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           });
         }
 
-        let color = getThresholdColor(threshold);
         // next op is gt and there is a gap set color to transparent
         if (next && next.op === 'gt' && next.value > threshold.value) {
           steps.push({
@@ -365,7 +364,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
         } else {
           steps.push({
             value: threshold.value,
-            color: color,
+            color: 'transparent',
           });
         }
       }

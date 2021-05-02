@@ -113,7 +113,7 @@ describe('Graph Migrations', () => {
       `);
     });
 
-    test('Only gt & lt thresholds', () => {
+    test('gt & lt thresholds', () => {
       const old: any = {
         angular: {
           thresholds: [
@@ -153,6 +153,39 @@ describe('Graph Migrations', () => {
           Object {
             "color": "red",
             "value": 80,
+          },
+        ]
+      `);
+    });
+
+    test('Only lt thresholds', () => {
+      const old: any = {
+        angular: {
+          thresholds: [
+            {
+              colorMode: 'warning',
+              fill: true,
+              line: true,
+              op: 'lt',
+              value: 40,
+              yaxis: 'left',
+            },
+          ],
+        },
+      };
+
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      expect(panel.fieldConfig.defaults.custom.thresholds.mode).toBe('line+area');
+      expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "color": "orange",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "transparent",
+            "value": 40,
           },
         ]
       `);
