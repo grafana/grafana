@@ -278,6 +278,6 @@ export const graphFieldOptions = {
     { label: 'Off', value: GraphTresholdsStyleMode.Off },
     { label: 'As lines', value: GraphTresholdsStyleMode.Line },
     { label: 'As filled regions', value: GraphTresholdsStyleMode.Area },
-    { label: 'As lines and filled regions', value: GraphTresholdsStyleMode.LineAndArea },
+    { label: 'As filled regions and lines', value: GraphTresholdsStyleMode.LineAndArea },
   ] as Array<SelectableValue<GraphTresholdsStyleMode>>,
 };
