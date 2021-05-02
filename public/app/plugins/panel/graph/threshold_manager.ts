@@ -87,7 +87,8 @@ export class ThresholdManager {
 
   renderHandle(handleIndex: number, defaultHandleTopPos: number) {
     const model = this.thresholds[handleIndex];
-    if (!model.visible) {
+    // alerting defines
+    if (!model.visible && (this.panelCtrl as any).alert) {
       return;
     }
 
