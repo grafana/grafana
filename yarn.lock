@@ -2893,14 +2893,6 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@leeoniya/react-inlinesvg@2.2.4":
-  version "2.2.4"
-  resolved "https://registry.yarnpkg.com/@leeoniya/react-inlinesvg/-/react-inlinesvg-2.2.4.tgz#b1f226136945fc692ea37f5a889e6545c9334336"
-  integrity sha512-6zaOOjYjrTC/D6tQKIPmoh+T+8d7h2kCZYbbSjEYt2Sz0OtPZw44v+MKVXiRHVYrlODgT1viJbrUmrSH0k7wOA==
-  dependencies:
-    exenv "^1.2.2"
-    react-from-dom "^0.6.0"
-
 "@lerna/add@3.21.0":
   version "3.21.0"
   resolved "https://registry.yarnpkg.com/@lerna/add/-/add-3.21.0.tgz#27007bde71cc7b0a2969ab3c2f0ae41578b4577b"
@@ -20791,6 +20783,14 @@ react-immutable-proptypes@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/react-immutable-proptypes/-/react-immutable-proptypes-2.1.0.tgz#023d6f39bb15c97c071e9e60d00d136eac5fa0b4"
   integrity sha1-Aj1vObsVyXwHHp5g0A0TbqxfoLQ=
+
+react-inlinesvg@2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/react-inlinesvg/-/react-inlinesvg-2.3.0.tgz#62283c0ce7e9d11d8190ec3e89589102288830fd"
+  integrity sha512-fEGOdDf4k4bcveArbEpj01pJcH8pOCKLxmSj2POFdGvEk5YK0NZVnH6BXpW/PzACHPRsuh1YKAhNZyFnD28oxg==
+  dependencies:
+    exenv "^1.2.2"
+    react-from-dom "^0.6.0"
 
 react-input-autosize@^3.0.0:
   version "3.0.0"
