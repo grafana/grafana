@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { PanelProps } from '@grafana/data';
 import { GraphNGLegendEvent, TimelineChart, TimelineOptions } from '@grafana/ui';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}

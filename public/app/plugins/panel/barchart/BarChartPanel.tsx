@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { FieldType, PanelProps, VizOrientation } from '@grafana/data';
 import { BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 
 interface Props extends PanelProps<BarChartOptions> {}
