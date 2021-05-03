@@ -57,17 +57,18 @@ export class AlertingQueryRunner {
 
     this.subscription = runRequest(this.backendSrv, queries).subscribe({
       next: (dataPerQuery) => {
-        const nextResult: Record<string, PanelData> = {};
-
-        for (const [refId, data] of Object.entries(dataPerQuery)) {
+        const nextResult = applyChange(dataPerQuery, (refId, data) => {
           const previous = this.lastResult[refId];
-          nextResult[refId] = setStructureRevision(data, previous);
-        }
+          return setStructureRevision(data, previous);
+        });
 
         this.lastResult = nextResult;
         this.subject.next(this.lastResult);
       },
-      error: (error) => console.error('PanelQueryRunner Error', error),
+      error: (error: Error) => {
+        this.lastResult = mapErrorToPanelData(this.lastResult, error);
+        this.subject.next(this.lastResult);
+      },
     });
   }
 
@@ -77,21 +78,20 @@ export class AlertingQueryRunner {
     }
     this.subscription.unsubscribe();
 
-    const nextResult: Record<string, PanelData> = {};
-    let loading = false;
+    let requestIsRunning = false;
 
-    for (const [refId, data] of Object.entries(this.lastResult)) {
+    const nextResult = applyChange(this.lastResult, (refId, data) => {
       if (data.state === LoadingState.Loading) {
-        loading = true;
+        requestIsRunning = true;
       }
 
-      nextResult[refId] = {
+      return {
         ...data,
         state: LoadingState.Done,
       };
-    }
+    });
 
-    if (loading) {
+    if (requestIsRunning) {
       this.subject.next(nextResult);
     }
   }
@@ -100,10 +100,7 @@ export class AlertingQueryRunner {
     if (this.subject) {
       this.subject.complete();
     }
-
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    this.cancel();
   }
 }
 
@@ -120,7 +117,7 @@ const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable
     .fetch<AlertingQueryResponse>(request)
     .pipe(
       mapToPanelData(initial),
-      catchAndMapError(initial),
+      catchError((error) => of(mapErrorToPanelData(initial, error))),
       cancelNetworkRequestsOnUnsubscribe(backendSrv, request),
       share()
     );
@@ -173,22 +170,15 @@ const mapToPanelData = (
   });
 };
 
-const catchAndMapError = (
-  dataByQuery: Record<string, PanelData>
-): OperatorFunction<Error | Record<string, PanelData>, Error | Record<string, PanelData>> => {
-  return catchError((error) => {
-    const results: Record<string, PanelData> = {};
-    const queryError = toDataQueryError(error);
+const mapErrorToPanelData = (lastResult: Record<string, PanelData>, error: Error): Record<string, PanelData> => {
+  const queryError = toDataQueryError(error);
 
-    for (const [refId, data] of Object.entries(dataByQuery)) {
-      results[refId] = {
-        ...data,
-        state: LoadingState.Error,
-        error: queryError,
-      };
-    }
-
-    return of(results);
+  return applyChange(lastResult, (refId, data) => {
+    return {
+      ...data,
+      state: LoadingState.Error,
+      error: queryError,
+    };
   });
 };
 
@@ -217,4 +207,17 @@ const setStructureRevision = (data: PanelData, lastResult: PanelData) => {
 
   result.structureRev = structureRev;
   return result;
+};
+
+const applyChange = (
+  initial: Record<string, PanelData>,
+  change: (refId: string, data: PanelData) => PanelData
+): Record<string, PanelData> => {
+  const nextResult: Record<string, PanelData> = {};
+
+  for (const [refId, data] of Object.entries(initial)) {
+    nextResult[refId] = change(refId, data);
+  }
+
+  return nextResult;
 };
