@@ -168,7 +168,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	}
 
 	var summary string
-	if pn.MessageInDetails {
+	if pn.MessageInDetails || evalContext.Rule.Message == "" {
 		summary = evalContext.Rule.Name
 	} else {
 		summary = evalContext.Rule.Name + " - " + evalContext.Rule.Message
