@@ -55,6 +55,13 @@ const noLeftPaddingClass = css({
   paddingLeft: '0',
 });
 
+const noHorizMarginPaddingClass = css({
+  paddingLeft: '0',
+  paddingRight: '0',
+  marginLeft: '0',
+  marginRight: '0',
+});
+
 const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
   const onParamChange = (par: string, i: number) => {
     const newParams = params.map((p) => p.value);
@@ -74,6 +81,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
                 <Seg
                   allowCustomValue
                   value={value}
+                  buttonClassName={noHorizMarginPaddingClass}
                   loadOptions={() => options().then((items) => items.map(toSelectableValue))}
                   onChange={(v) => {
                     onParamChange(unwrap(v.value), i);
@@ -83,6 +91,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
                 <SegmentInput
                   allowCustomValue
                   value={value}
+                  className={noHorizMarginPaddingClass}
                   onChange={(v) => {
                     onParamChange(v.toString(), i);
                   }}

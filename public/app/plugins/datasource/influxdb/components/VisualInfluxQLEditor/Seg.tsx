@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import cx from 'classnames';
 import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { useClickAway, useAsyncFn } from 'react-use';
@@ -26,6 +27,7 @@ type SharedProps = {
 
 type Props = SharedProps & {
   value: string;
+  buttonClassName?: string;
 };
 
 const selectClass = css({
@@ -51,20 +53,21 @@ export const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelPro
   );
 };
 
-const buttonClass = css({
+const defaultButtonClass = css({
   width: 'auto',
   cursor: 'pointer',
 });
 
-export const Seg = ({ value, loadOptions, allowCustomValue, onChange }: Props): JSX.Element => {
+export const Seg = ({ value, buttonClassName, loadOptions, allowCustomValue, onChange }: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
   if (!isOpen) {
+    const className = cx(defaultButtonClass, buttonClassName);
     // this should not be a label, this should be a button,
     // but this is what is used inside a Segment, and i just
     // want the same look
     return (
       <InlineLabel
-        className={buttonClass}
+        className={className}
         onClick={() => {
           setOpen(true);
         }}
