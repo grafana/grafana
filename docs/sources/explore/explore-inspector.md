@@ -79,4 +79,4 @@ Explore and export data and data frame JSON models.
 1. Open the panel inspector and then click the **Query** tab.
 1. Click **Refresh**.
 
-Grafana sends a query to the server to collect information and then displays the result. You can now drill down on specific portions of the query, expand or collapse all of it, or copy the data to the clipboard to use in other applications.
+Grafana sends the query to the server and displays the result. You can drill down on specific portions of the query, expand or collapse all of it, or copy the data to the clipboard to use in other applications.
