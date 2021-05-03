@@ -29,6 +29,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
+import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -75,10 +76,15 @@ export class PanelChrome extends Component<Props, State> {
       refreshWhenInView: false,
       context: {
         eventBus,
+        onSeriesColorChange: this.onSeriesColorChange,
       },
       data: this.getInitialPanelDataState(),
     };
   }
+
+  onSeriesColorChange = (label: string, color: string) => {
+    this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
+  };
 
   getInitialPanelDataState(): PanelData {
     return {
@@ -223,7 +229,7 @@ export class PanelChrome extends Component<Props, State> {
       panel.getQueryRunner().run({
         datasource: panel.datasource,
         queries: panel.targets,
-        panelId: panel.id,
+        panelId: panel.editSourceId || panel.id,
         dashboardId: this.props.dashboard.id,
         timezone: this.props.dashboard.getTimezone(),
         timeRange: timeData.timeRange,
@@ -364,11 +370,14 @@ export class PanelChrome extends Component<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
+    let alertState = data.alertState?.state;
+
     const containerClassNames = classNames({
       'panel-container': true,
       'panel-container--absolute': true,
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
+      [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
     return (
@@ -382,6 +391,7 @@ export class PanelChrome extends Component<Props, State> {
           error={errorMessage}
           isEditing={isEditing}
           isViewing={isViewing}
+          alertState={alertState}
           data={data}
         />
         <ErrorBoundary>
