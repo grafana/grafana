@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import {
   DataQuery,
   getDefaultRelativeTimeRange,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   LoadingState,
   PanelData,
   RelativeTimeRange,
@@ -200,7 +200,7 @@ const defaultTimeRange = (model: DataQuery): RelativeTimeRange | undefined => {
   return getDefaultRelativeTimeRange();
 };
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
       background-color: ${theme.colors.background.primary};
