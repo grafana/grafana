@@ -115,7 +115,7 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 // AddMigration defines database migrations.
 // This is an implementation of registry.DatabaseMigrator.
 func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
-	if !g.Cfg.IsLiveConfigEnabled() {
+	if g == nil || !g.Cfg.IsLiveConfigEnabled() {
 		return
 	}
 	database.AddLiveChannelMigrations(mg)
