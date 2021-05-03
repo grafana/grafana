@@ -270,9 +270,11 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
-	err = hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
-	if err != nil {
-		hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
+	if hs.Live != nil {
+		err = hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
+		if err != nil {
+			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
+		}
 	}
 
 	return response.JSON(200, util.DynMap{
