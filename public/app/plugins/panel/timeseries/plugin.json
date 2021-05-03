@@ -4,6 +4,7 @@
   "id": "timeseries",
 
   "info": {
+    "description": "Time based line, area and bar charts",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

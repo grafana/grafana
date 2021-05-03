@@ -93,6 +93,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     itemContent: css`
       position: relative;
       width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     `,
     current: css`
       label: currentVisualizationItem;

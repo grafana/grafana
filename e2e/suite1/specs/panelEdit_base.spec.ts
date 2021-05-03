@@ -66,7 +66,7 @@ e2e.scenario({
 
     // Check that Graph is chosen
     e2e.components.PanelEditor.toggleVizPicker().click();
-    e2e.components.PluginVisualization.item('Graph').should('be.visible');
+    e2e.components.PluginVisualization.item('Time series').should('be.visible');
     e2e.components.PluginVisualization.current().within((div: JQuery<HTMLDivElement>) => {
       expect(div.text()).equals('Graph');
     });
