@@ -3,9 +3,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
 import { GrafanaTheme, PanelData, VizOrientation } from '@grafana/data';
 import { config, PanelRenderer } from '@grafana/runtime';
-import { HorizontalGroup, LegendDisplayMode, SingleStatBaseOptions, TooltipDisplayMode, useStyles } from '@grafana/ui';
+import { LegendDisplayMode, SingleStatBaseOptions, TooltipDisplayMode, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { Options } from 'app/plugins/panel/timeseries/types';
-import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
 
 interface Props {
   data: PanelData;
@@ -16,9 +15,9 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
   const [pluginId, changePluginId] = useState<string>(defaultPanel ?? 'timeseries');
   const options = { ...getOptionsForPanelPlugin(pluginId) };
   const styles = useStyles(getStyles);
-  const panels = Object.values(config.panels).filter(
-    (p) => p.id === 'timeseries' || p.id === 'table' || p.id === 'stat'
-  );
+  const panels = Object.values(config.panels)
+    .filter((p) => p.id === 'timeseries' || p.id === 'table' || p.id === 'stat')
+    .map((panel) => ({ value: panel.id, label: panel.name, imgUrl: panel.info.logos.small }));
 
   if (!options || !data) {
     return null;
@@ -26,7 +25,10 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
 
   return (
     <div className={styles.wrapper}>
-      <div style={{ height: '200px', width: '75%' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <RadioButtonGroup options={panels} value={pluginId} onChange={changePluginId} />
+      </div>
+      <div style={{ height: '200px', width: '100%' }}>
         <AutoSizer style={{ width: '100%', height: '100%' }}>
           {({ width, height }) => {
             if (width === 0 || height === 0) {
@@ -45,21 +47,6 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
             );
           }}
         </AutoSizer>
-      </div>
-      <div style={{ height: '55px' }}>
-        <HorizontalGroup>
-          {panels.map((panel, index) => {
-            return (
-              <PanelTypeCard
-                key={`${panel.id}-${index}`}
-                plugin={panel}
-                isCurrent={panel.id === pluginId}
-                onClick={() => changePluginId(panel.id)}
-                title={panel.name}
-              />
-            );
-          })}
-        </HorizontalGroup>
       </div>
     </div>
   );
@@ -104,9 +91,6 @@ const singleStatOptions: SingleStatBaseOptions = {
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     margin-left: ${theme.spacing.lg};
-    height: 225px;
-    display: flex;
-    justify-content: space-between;
   `,
   buttonGroup: css`
     margin-bottom: ${theme.spacing.md};

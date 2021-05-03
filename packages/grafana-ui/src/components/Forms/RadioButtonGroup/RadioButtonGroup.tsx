@@ -59,6 +59,7 @@ export function RadioButtonGroup<T>({
             fullWidth={fullWidth}
           >
             {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
+            {o.imgUrl && <img src={o.imgUrl} alt={o.label} className={styles.img} />}
             {o.label}
           </RadioButton>
         );
@@ -84,6 +85,11 @@ const getStyles = (theme: GrafanaThemeV2) => {
     }),
     icon: css`
       margin-right: 6px;
+    `,
+    img: css`
+      width: 16px;
+      height: 16px;
+      margin-right: ${theme.spacing(1)};
     `,
   };
 };

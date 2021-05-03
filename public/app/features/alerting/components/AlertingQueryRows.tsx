@@ -1,12 +1,9 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { css } from '@emotion/css';
 import { DataQuery, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { AlertingQueryWrapper } from './AlertingQueryWrapper';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
-import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 
 interface Props {
   // The query configuration
@@ -34,7 +31,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange(timeRange: TimeRange, index: number) {
+  onChangeTimeRange = (timeRange: TimeRange, index: number) => {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -47,9 +44,9 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         };
       })
     );
-  }
+  };
 
-  onChangeDataSource(settings: DataSourceInstanceSettings, index: number) {
+  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
     onQueriesChange(
@@ -76,9 +73,9 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         };
       })
     );
-  }
+  };
 
-  onChangeQuery(query: DataQuery, index: number) {
+  onChangeQuery = (query: DataQuery, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
     onQueriesChange(
@@ -96,7 +93,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         };
       })
     );
-  }
+  };
 
   onDragEnd = (result: DropResult) => {
     const { queries, onQueriesChange } = this.props;
@@ -122,7 +119,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
   };
 
   render() {
-    const { queries } = this.props;
+    const { onDuplicateQuery, onRunQueries, queries } = this.props;
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -133,49 +130,26 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                 {queries.map((query, index) => {
                   const data = this.props.data ? this.props.data[query.refId] : ({} as PanelData);
                   const dsSettings = this.getDataSourceSettings(query);
-                  const isExpression = isExpressionQuery(query.model);
 
                   if (!dsSettings) {
                     return null;
                   }
 
                   return (
-                    <div
-                      className={css`
-                        max-width: 1100px;
-                      `}
-                      key={`query row - ${query.refId}-${index}`}
-                    >
-                      <QueryEditorRow
-                        dataSource={dsSettings}
-                        onChangeDataSource={
-                          !isExpressionQuery(query.model)
-                            ? (settings) => this.onChangeDataSource(settings, index)
-                            : undefined
-                        }
-                        id={query.refId}
-                        index={index}
-                        key={query.refId}
-                        data={data}
-                        query={query.model}
-                        onChange={(query) => this.onChangeQuery(query, index)}
-                        timeRange={
-                          !isExpressionQuery(query.model) && query.relativeTimeRange
-                            ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
-                            : undefined
-                        }
-                        onChangeTimeRange={
-                          !isExpressionQuery(query.model)
-                            ? (timeRange) => this.onChangeTimeRange(timeRange, index)
-                            : undefined
-                        }
-                        onRemoveQuery={this.onRemoveQuery}
-                        onAddQuery={this.props.onDuplicateQuery}
-                        onRunQuery={this.props.onRunQueries}
-                        queries={queries}
-                      />
-                      {data && <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} />}
-                    </div>
+                    <AlertingQueryWrapper
+                      key={`${query.refId}-${index}`}
+                      data={data}
+                      dsSettings={dsSettings}
+                      index={index}
+                      query={query}
+                      queries={queries}
+                      onChangeDataSource={this.onChangeDataSource}
+                      onDuplicateQuery={onDuplicateQuery}
+                      onRunQueries={onRunQueries}
+                      onChangeTimeRange={this.onChangeTimeRange}
+                      onChangeQuery={this.onChangeQuery}
+                      onRemoveQuery={this.onRemoveQuery}
+                    />
                   );
                 })}
                 {provided.placeholder}

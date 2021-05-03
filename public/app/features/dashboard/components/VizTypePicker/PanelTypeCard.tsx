@@ -95,7 +95,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
     `,
     current: css`
       label: currentVisualizationItem;
-      border-color: ${theme.colors.primary.border};
+      border: 1px solid ${theme.colors.primary.border};
     `,
     disabled: css`
       opacity: 0.2;

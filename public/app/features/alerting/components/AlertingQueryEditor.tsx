@@ -204,6 +204,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       background-color: ${theme.colors.panelBg};
+      width: ${theme.breakpoints.lg};
       height: 100%;
     `,
     runWrapper: css`
