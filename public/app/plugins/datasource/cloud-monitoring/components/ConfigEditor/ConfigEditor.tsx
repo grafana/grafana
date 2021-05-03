@@ -7,20 +7,6 @@ import { JWTConfig } from './JWTConfig';
 export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, CloudMonitoringSecureJsonData>;
 
 export class ConfigEditor extends PureComponent<Props> {
-  onResetApiKey = () => {
-    const { options } = this.props;
-    this.props.onOptionsChange({
-      ...options,
-      jsonData: {
-        authenticationType: options.jsonData.authenticationType,
-      },
-      secureJsonData: {},
-      secureJsonFields: {
-        ...options.secureJsonFields,
-      },
-    });
-  };
-
   render() {
     const { options, onOptionsChange } = this.props;
     const { secureJsonFields, jsonData } = options;
