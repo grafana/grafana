@@ -25,62 +25,32 @@ var ldapAdminEditRole = RoleDTO{
 	}),
 }
 
-var orgsAdminReadRole = RoleDTO{
-	Name:    orgsAdminRead,
+var usersOrgReadRole = RoleDTO{
+	Name:    usersOrgRead,
 	Version: 1,
 	Permissions: []Permission{
 		{
 			Action: ActionOrgUsersRead,
-			Scope:  ScopeOrgAllUsersAll,
+			Scope:  ScopeUsersAll,
 		},
 	},
 }
 
-var orgsAdminEditRole = RoleDTO{
-	Name:    orgsAdminEdit,
+var usersOrgEditRole = RoleDTO{
+	Name:    usersOrgEdit,
 	Version: 1,
-	Permissions: ConcatPermissions(orgsAdminReadRole.Permissions, []Permission{
+	Permissions: ConcatPermissions(usersOrgReadRole.Permissions, []Permission{
 		{
 			Action: ActionOrgUsersAdd,
-			Scope:  ScopeOrgAllUsersAll,
-		},
-		{
-			Action: ActionOrgUsersRemove,
-			Scope:  ScopeOrgAllUsersAll,
+			Scope:  ScopeUsersAll,
 		},
 		{
 			Action: ActionOrgUsersRoleUpdate,
-			Scope:  ScopeOrgAllUsersAll,
-		},
-	}),
-}
-
-var orgsCurrentReadRole = RoleDTO{
-	Name:    orgsCurrentRead,
-	Version: 1,
-	Permissions: []Permission{
-		{
-			Action: ActionOrgUsersRead,
-			Scope:  ScopeOrgCurrentUsersAll,
-		},
-	},
-}
-
-var orgsCurrentEditRole = RoleDTO{
-	Name:    orgsCurrentEdit,
-	Version: 1,
-	Permissions: ConcatPermissions(orgsCurrentReadRole.Permissions, []Permission{
-		{
-			Action: ActionOrgUsersAdd,
-			Scope:  ScopeOrgCurrentUsersAll,
-		},
-		{
-			Action: ActionOrgUsersRoleUpdate,
-			Scope:  ScopeOrgCurrentUsersAll,
+			Scope:  ScopeUsersAll,
 		},
 		{
 			Action: ActionOrgUsersRemove,
-			Scope:  ScopeOrgCurrentUsersAll,
+			Scope:  ScopeUsersAll,
 		},
 	}),
 }
@@ -91,19 +61,19 @@ var usersAdminReadRole = RoleDTO{
 	Permissions: []Permission{
 		{
 			Action: ActionUsersRead,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersTeamRead,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersAuthTokenList,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersQuotasList,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 	},
 }
@@ -114,42 +84,42 @@ var usersAdminEditRole = RoleDTO{
 	Permissions: ConcatPermissions(usersAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionUsersPasswordUpdate,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersCreate,
 		},
 		{
 			Action: ActionUsersWrite,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersDelete,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersEnable,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersDisable,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersPermissionsUpdate,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersLogout,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersAuthTokenUpdate,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 		{
 			Action: ActionUsersQuotasUpdate,
-			Scope:  ScopeUsersAll,
+			Scope:  ScopeGlobalUsersAll,
 		},
 	}),
 }
@@ -164,11 +134,8 @@ var PredefinedRoles = map[string]RoleDTO{
 	usersAdminRead: usersAdminReadRole,
 	usersAdminEdit: usersAdminEditRole,
 
-	orgsAdminRead: orgsAdminReadRole,
-	orgsAdminEdit: orgsAdminEditRole,
-
-	orgsCurrentRead: orgsCurrentReadRole,
-	orgsCurrentEdit: orgsCurrentEditRole,
+	usersOrgRead: usersOrgReadRole,
+	usersOrgEdit: usersOrgEditRole,
 
 	ldapAdminRead: ldapAdminReadRole,
 	ldapAdminEdit: ldapAdminEditRole,
@@ -178,11 +145,8 @@ const (
 	usersAdminEdit = "grafana:roles:users:admin:edit"
 	usersAdminRead = "grafana:roles:users:admin:read"
 
-	orgsAdminEdit = "grafana:roles:orgs:admin:edit"
-	orgsAdminRead = "grafana:roles:orgs:admin:read"
-
-	orgsCurrentEdit = "grafana:roles:orgs:current:edit"
-	orgsCurrentRead = "grafana:roles:orgs:current:read"
+	usersOrgEdit = "grafana:roles:users:org:edit"
+	usersOrgRead = "grafana:roles:users:org:read"
 
 	ldapAdminEdit = "grafana:roles:ldap:admin:edit"
 	ldapAdminRead = "grafana:roles:ldap:admin:read"
@@ -194,14 +158,14 @@ var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
 		ldapAdminEdit,
 		ldapAdminRead,
-		orgsAdminEdit,
-		orgsAdminRead,
 		usersAdminEdit,
 		usersAdminRead,
+		usersOrgEdit,
+		usersOrgRead,
 	},
 	string(models.ROLE_ADMIN): {
-		orgsCurrentEdit,
-		orgsCurrentRead,
+		usersOrgEdit,
+		usersOrgRead,
 	},
 }
 
