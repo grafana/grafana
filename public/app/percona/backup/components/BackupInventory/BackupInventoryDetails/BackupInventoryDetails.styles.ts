@@ -6,7 +6,7 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     display: flex;
 
     & > span {
-      flex: 0 1 33.33%;
+      flex: 0 1 50%;
     }
   `,
   detailLabel: css`
