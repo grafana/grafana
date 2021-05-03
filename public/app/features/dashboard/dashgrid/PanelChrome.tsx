@@ -29,6 +29,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
+import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -75,10 +76,15 @@ export class PanelChrome extends Component<Props, State> {
       refreshWhenInView: false,
       context: {
         eventBus,
+        onSeriesColorChange: this.onSeriesColorChange,
       },
       data: this.getInitialPanelDataState(),
     };
   }
+
+  onSeriesColorChange = (label: string, color: string) => {
+    this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
+  };
 
   getInitialPanelDataState(): PanelData {
     return {

@@ -20,7 +20,6 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
-  onSeriesColorChange,
 }) => {
   const styles = useStyles(getStyles);
 
@@ -57,7 +56,6 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
       <LegendTableItem
         key={`${item.label}-${index}`}
         item={item}
-        onSeriesColorChange={onSeriesColorChange}
         onLabelClick={onLabelClick}
         onLabelMouseEnter={onLabelMouseEnter}
         onLabelMouseOut={onLabelMouseOut}

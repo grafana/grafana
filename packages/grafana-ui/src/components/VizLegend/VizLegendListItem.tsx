@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem, SeriesColorChangeHandler } from './types';
+import { VizLegendItem } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
@@ -10,7 +10,6 @@ export interface Props {
   item: VizLegendItem;
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onSeriesColorChange?: SeriesColorChangeHandler;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
 }
@@ -20,7 +19,6 @@ export interface Props {
  */
 export const VizLegendListItem: React.FunctionComponent<Props> = ({
   item,
-  onSeriesColorChange,
   onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
@@ -54,18 +52,9 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({
     [item, onLabelClick]
   );
 
-  const onColorChange = useCallback(
-    (color: string) => {
-      if (onSeriesColorChange) {
-        onSeriesColorChange(item.label, color);
-      }
-    },
-    [item, onSeriesColorChange]
-  );
-
   return (
     <div className={styles.itemWrapper}>
-      <VizLegendSeriesIcon disabled={!onSeriesColorChange} color={item.color} onColorChange={onColorChange} />
+      <VizLegendSeriesIcon seriesName={item.label} color={item.color} />
       <div
         onMouseEnter={onMouseEnter}
         onMouseOut={onMouseOut}

@@ -4,7 +4,6 @@ import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { getXYDimensions } from './dims';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 
 interface XYChartPanelProps extends PanelProps<Options> {}
 
@@ -27,13 +26,6 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frames));
     },
     [fieldConfig, onFieldConfigChange, frames]
-  );
-
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
   );
 
   if (dims.error) {
@@ -61,7 +53,6 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       height={height}
       legend={options.legend}
       onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
     >
       {(config, alignedDataFrame) => {
         return (

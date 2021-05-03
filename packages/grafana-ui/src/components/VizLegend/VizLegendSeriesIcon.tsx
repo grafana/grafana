@@ -1,32 +1,41 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
+import { usePanelContext } from '../PanelChrome';
 import { SeriesIcon } from './SeriesIcon';
 
 interface Props {
-  disabled: boolean;
+  seriesName: string;
   color: string;
-  onColorChange: (color: string) => void;
 }
 
 /**
  * @internal
  */
-export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ disabled, color, onColorChange }) => {
-  return disabled ? (
-    <SeriesIcon color={color} />
-  ) : (
-    <SeriesColorPicker color={color} onChange={onColorChange} enableNamedColors>
-      {({ ref, showColorPicker, hideColorPicker }) => (
-        <SeriesIcon
-          color={color}
-          className="pointer"
-          ref={ref}
-          onClick={showColorPicker}
-          onMouseLeave={hideColorPicker}
-        />
-      )}
-    </SeriesColorPicker>
+export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color }) => {
+  const { onSeriesColorChange } = usePanelContext();
+  const onChange = useCallback(
+    (color: string) => {
+      return onSeriesColorChange!(seriesName, color);
+    },
+    [seriesName, onSeriesColorChange]
   );
+
+  if (seriesName && onSeriesColorChange) {
+    return (
+      <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
+        {({ ref, showColorPicker, hideColorPicker }) => (
+          <SeriesIcon
+            color={color}
+            className="pointer"
+            ref={ref}
+            onClick={showColorPicker}
+            onMouseLeave={hideColorPicker}
+          />
+        )}
+      </SeriesColorPicker>
+    );
+  }
+  return <SeriesIcon color={color} />;
 };
 
 VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';

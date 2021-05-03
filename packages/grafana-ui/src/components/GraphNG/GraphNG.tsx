@@ -27,7 +27,6 @@ export interface GraphNGProps extends Themeable2 {
   timeZone: TimeZone;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
-  onSeriesColorChange?: (label: string, color: string) => void;
   children?: (builder: UPlotConfigBuilder, alignedDataFrame: DataFrame) => React.ReactNode;
 }
 
@@ -114,7 +113,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   };
 
   renderLegend() {
-    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
+    const { legend, onLegendClick, data } = this.props;
     const { config } = this.state;
 
     if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
@@ -125,7 +124,6 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       <PlotLegend
         data={data}
         config={config}
-        onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
         maxHeight="35%"
         maxWidth="60%"

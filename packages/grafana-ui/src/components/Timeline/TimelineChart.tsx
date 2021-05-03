@@ -100,7 +100,7 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
   };
 
   renderLegend() {
-    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
+    const { legend, onLegendClick, data } = this.props;
     const { config } = this.state;
 
     if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
@@ -111,7 +111,6 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
       <PlotLegend
         data={data}
         config={config}
-        onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
         maxHeight="35%"
         maxWidth="60%"
