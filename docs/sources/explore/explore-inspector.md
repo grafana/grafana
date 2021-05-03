@@ -72,7 +72,7 @@ Explore and export data and data frame JSON models.
 1. In Select source, choose one of the following options:
    - **Data -** Displays a JSON object representing the data that was passed to Explore.
    - **DataFrame structure -** Displays the raw result set.
-1. You can expand or collapse portions of the JSON to explore it, or you can click **Copy to clipboard** and paste the JSON in another application.
+1. You can expand or collapse portions of the JSON to view separate sections. You can also click the **Copy to clipboard** option to copy JSON body and paste it into another application.
 
 ### View raw request and response to data source
 
