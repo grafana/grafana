@@ -50,9 +50,9 @@ func (st *Manager) ResetCache() {
 	st.cache.reset()
 }
 
-// RemoveByRuleUID deletes all entries in the state manager that match the given UID.
-func (st *Manager) RemoveByRuleUID(orgID int64, uid string) {
-	st.cache.removeByRuleUID(orgID, uid)
+// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
+	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {

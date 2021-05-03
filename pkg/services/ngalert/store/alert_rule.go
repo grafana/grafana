@@ -119,7 +119,7 @@ func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([
 	return ruleUIDs, err
 }
 
-// DeleteRuleGroupAlertRules is a handler for deleting rule group alert rules.
+// DeleteRuleGroupAlertRules is a handler for deleting rule group alert rules. A list of deleted rule UIDs are returned.
 func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) ([]string, error) {
 	ruleUIDs := []string{}
 
@@ -339,20 +339,6 @@ func (st DBstore) GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRules
 		return nil
 	})
 }
-
-// GetNamespaceAlertRuleUIDs is a handler for retrieving namespace alert rules UIDs of specific organisation.
-// func (st DBstore) GetNamespaceAlertRuleUIDs(orgID string, namespace string) ([]string, error) {
-// 	alertRuleUIDs := make([]*ngmodels.AlertRule, 0)
-// 	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-// 		// TODO rewrite using group by namespace_uid, rule_group
-// 		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ?"
-// 		if err := sess.SQL(q, orgID, query.NamespaceUID).Find(&alertRules); err != nil {
-// 			return err
-// 		}
-
-// 		return nil
-// 	})
-// }
 
 // GetRuleGroupAlertRules is a handler for retrieving rule group alert rules of specific organisation.
 func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error {
