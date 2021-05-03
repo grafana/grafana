@@ -18,7 +18,7 @@ The inspector has four tabs:
 
 ## Inspector tasks
 
-Tasks you can perform in the inspector are described below.
+You can perform a variety of tasks in the Explore inspector.
 
 ### Open the Inspector
 
