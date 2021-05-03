@@ -119,7 +119,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   isRunning() {
-    const data = Object.values(this.state.panelDataByRefId).find((d) => !!d);
+    const data = Object.values(this.state.panelDataByRefId).find((d) => Boolean(d));
     return data?.state === LoadingState.Loading;
   }
 
