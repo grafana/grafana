@@ -4,7 +4,7 @@ import {
   ArrayVector,
   DataFrame,
   FieldType,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   outerJoinDataFrames,
   TimeRange,
   TimeZone,
@@ -12,7 +12,7 @@ import {
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 export interface PrepConfigOpts {
   frame: DataFrame;
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
   timeZone: TimeZone;
   getTimeRange: () => TimeRange;
   [prop: string]: any;

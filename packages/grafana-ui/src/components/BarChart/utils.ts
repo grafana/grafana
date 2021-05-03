@@ -6,7 +6,7 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
@@ -19,7 +19,7 @@ import { Select } from 'uplot';
 /** @alpha */
 export function preparePlotConfigBuilder(
   data: DataFrame,
-  theme: GrafanaThemeV2,
+  theme: GrafanaTheme2,
   { orientation, showValue, groupWidth, barWidth }: BarChartOptions
 ) {
   const builder = new UPlotConfigBuilder();

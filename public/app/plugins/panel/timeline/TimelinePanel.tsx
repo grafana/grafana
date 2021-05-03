@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { PanelProps } from '@grafana/data';
 import { GraphNGLegendEvent, TimelineChart, TimelineOptions } from '@grafana/ui';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
@@ -26,13 +25,6 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     [fieldConfig, onFieldConfigChange, data.series]
   );
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
@@ -50,7 +42,6 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
       width={width}
       height={height}
       onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
       {...options}
     />
   );

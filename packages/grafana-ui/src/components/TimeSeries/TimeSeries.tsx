@@ -21,7 +21,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {
-    const { legend, onSeriesColorChange, onLegendClick, frames } = this.props;
+    const { legend, onLegendClick, frames } = this.props;
 
     if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
       return;
@@ -31,7 +31,6 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
       <PlotLegend
         data={frames}
         config={config}
-        onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
         maxHeight="35%"
         maxWidth="60%"

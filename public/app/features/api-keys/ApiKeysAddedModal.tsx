@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { css } from '@emotion/css';
 import { Alert, Field, Modal, useStyles2 } from '@grafana/ui';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
   onDismiss: () => void;
@@ -29,7 +29,7 @@ export function ApiKeysAddedModal({ onDismiss, apiKey, rootPath }: Props): JSX.E
   );
 }
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     label: css`
       padding: ${theme.spacing(1)};
