@@ -55,7 +55,12 @@ export const LibraryPanelsSearch = ({
     return (
       <div className={styles.container}>
         <VerticalGroup spacing="lg">
-          <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={'Search by name'} width={0} />
+          <FilterInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={'Search by name or description'}
+            width={0}
+          />
           <HorizontalGroup
             spacing="sm"
             justify={(showSort && showPanelFilter) || showFolderFilter ? 'space-between' : 'flex-end'}

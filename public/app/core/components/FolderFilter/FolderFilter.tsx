@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
+import debounce from 'debounce-promise';
 import { AsyncMultiSelect, Icon, resetSelectStyles, useStyles2 } from '@grafana/ui';
 import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
 
@@ -15,10 +15,8 @@ export interface FolderFilterProps {
 export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderFilterProps): JSX.Element {
   const styles = useStyles2(getStyles);
   const [loading, setLoading] = useState(false);
-  const loadOptions = useCallback((searchString: string) => loadOptionsAsync(searchString, setLoading), []);
-  const debouncedLoadOptions = useMemo(() => debounce(loadOptions, 300, { leading: true, trailing: true }), [
-    loadOptions,
-  ]);
+  const getOptions = useCallback((searchString: string) => getFoldersAsOptions(searchString, setLoading), []);
+  const debouncedLoadOptions = useMemo(() => debounce(getOptions, 300), [getOptions]);
   const [value, setValue] = useState<Array<SelectableValue<FolderInfo>>>([]);
   const onChange = useCallback(
     (folders: Array<SelectableValue<FolderInfo>>) => {
@@ -63,7 +61,7 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
   );
 }
 
-async function loadOptionsAsync(searchString: string, setLoading: (loading: boolean) => void) {
+async function getFoldersAsOptions(searchString: string, setLoading: (loading: boolean) => void) {
   setLoading(true);
 
   const params = {
