@@ -410,7 +410,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     logsSection: css`
       display: flex;
       flex-direction: row;
-      height: 95vh;
+      max-height: 95vh;
     `,
   };
 });
