@@ -118,7 +118,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
             <Switch {...register('copyTags')} />
           </Field>
           <Modal.ButtonRow>
-            <Button variant="secondary" onClick={onCancel} fill="outline">
+            <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
             <Button type="submit" aria-label="Save dashboard button">
