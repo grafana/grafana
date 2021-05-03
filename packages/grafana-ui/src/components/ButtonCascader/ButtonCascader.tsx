@@ -8,7 +8,7 @@ import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 import { stylesFactory, useTheme2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
@@ -23,7 +23,7 @@ export interface ButtonCascaderProps {
   className?: string;
 }
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     popup: css`
       label: popup;

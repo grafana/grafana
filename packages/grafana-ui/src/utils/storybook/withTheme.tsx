@@ -1,11 +1,11 @@
 import React from 'react';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { createTheme, GrafanaThemeV2 } from '@grafana/data';
+import { createTheme, GrafanaTheme2 } from '@grafana/data';
 import { RenderFunction } from '../../types';
 import { useDarkMode } from 'storybook-dark-mode';
 import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
 
-type SassThemeChangeHandler = (theme: GrafanaThemeV2) => void;
+type SassThemeChangeHandler = (theme: GrafanaTheme2) => void;
 const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassThemeChangeHandler }> = ({
   children,
   handleSassThemeChange,

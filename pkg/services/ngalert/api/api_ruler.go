@@ -258,25 +258,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 	return gettableExtendedRuleNode
 }
 
-func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
-	postableExtendedRuleNode := apimodels.PostableExtendedRuleNode{
-		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-			Title:        r.Title,
-			Condition:    r.Condition,
-			Data:         r.Data,
-			UID:          r.UID,
-			NoDataState:  apimodels.NoDataState(r.NoDataState),
-			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
-		},
-	}
-	postableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         model.Duration(r.For),
-		Annotations: r.Annotations,
-		Labels:      r.Labels,
-	}
-	return postableExtendedRuleNode
-}
-
 func toNamespaceErrorResponse(err error) response.Response {
 	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
 		return response.Error(http.StatusForbidden, err.Error(), err)

@@ -104,7 +104,7 @@ describe('Table', () => {
       getTestContext({ data: toDataFrame([]) });
       expect(getTable()).toBeInTheDocument();
       expect(screen.queryByRole('row')).not.toBeInTheDocument();
-      expect(screen.getByText(/no data to show/i)).toBeInTheDocument();
+      expect(screen.getByText(/No data/i)).toBeInTheDocument();
     });
   });
 
