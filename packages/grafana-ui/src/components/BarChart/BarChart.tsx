@@ -22,7 +22,6 @@ export interface BarChartProps extends Themeable2, BarChartOptions {
   data: DataFrame[];
   structureRev?: number; // a number that will change when the data[] structure changes
   onLegendClick?: (event: GraphNGLegendEvent) => void;
-  onSeriesColorChange?: (label: string, color: string) => void;
 }
 
 interface BarChartState {
@@ -87,7 +86,7 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
   }
 
   renderLegend() {
-    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
+    const { legend, onLegendClick, data } = this.props;
     const { config } = this.state;
 
     if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
@@ -97,7 +96,6 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
       <PlotLegend
         data={data}
         config={config}
-        onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
         maxHeight="35%"
         maxWidth="60%"
