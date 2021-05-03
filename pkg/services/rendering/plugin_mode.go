@@ -101,5 +101,5 @@ func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey str
 		return nil, fmt.Errorf("rendering failed: %s", rsp.Error)
 	}
 
-	return &RenderResult{FilePath: filePath}, err
+	return &RenderResult{FilePath: filePath, FileName: rsp.FileName}, err
 }

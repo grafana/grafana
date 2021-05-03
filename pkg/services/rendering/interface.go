@@ -36,6 +36,7 @@ type Opts struct {
 
 type RenderResult struct {
 	FilePath string
+	FileName string
 }
 
 type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)

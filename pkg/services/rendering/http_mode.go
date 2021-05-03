@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net"
 	"net/http"
 	"net/url"
@@ -88,6 +89,12 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 		}
 	}()
 
+	var downloadFileName string
+	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
+	if err == nil {
+		downloadFileName = params["filename"]
+	}
+
 	// check for timeout first
 	if errors.Is(reqContext.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
@@ -125,5 +132,5 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 		return nil, fmt.Errorf("failed to write to %q: %w", filePath, err)
 	}
 
-	return &RenderResult{FilePath: filePath}, err
+	return &RenderResult{FilePath: filePath, FileName: downloadFileName}, err
 }

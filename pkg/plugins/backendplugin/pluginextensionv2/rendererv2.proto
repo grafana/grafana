@@ -23,6 +23,7 @@ message RenderRequest {
 
 message RenderResponse {
   string error = 1;
+  string fileName = 2;
 }
 
 service Renderer {
