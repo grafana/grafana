@@ -10,9 +10,9 @@ import (
 
 // Manager manages backend plugins.
 type Manager interface {
-	// Register registers a backend plugin
+	// RegisterAndStart registers and starts a backend plugin
 	RegisterAndStart(pluginID string, factory PluginFactoryFunc) error
-	// UnregisterAndStop unregisters a backend plugin
+	// UnregisterAndStop unregisters and stops backend plugin
 	UnregisterAndStop(pluginID string) error
 	// Registered checks if plugin is registered with the manager
 	Registered(pluginID string) bool
