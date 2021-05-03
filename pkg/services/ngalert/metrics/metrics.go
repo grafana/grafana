@@ -1,4 +1,4 @@
-package api
+package metrics
 
 import (
 	"fmt"
@@ -6,9 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/api/metrics"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -20,57 +23,42 @@ const (
 	ProxyBackend   = "proxy"
 )
 
+var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
+
 type Metrics struct {
-	alerts              *prometheus.GaugeVec
-	alertsInvalid       prometheus.Counter
-	alertsReceived      prometheus.Counter
-	notificationLatency prometheus.Histogram
-	notifications       *prometheus.CounterVec
-	notificationsFailed *prometheus.CounterVec
-	requestDuration     *prometheus.HistogramVec
-	silences            *prometheus.GaugeVec
+	*metrics.Alerts
+	AlertState *prometheus.GaugeVec
+	// Registerer is for use by subcomponents which register their own metrics.
+	Registerer      prometheus.Registerer
+	RequestDuration *prometheus.HistogramVec
+}
+
+func init() {
+	registry.RegisterService(GlobalMetrics)
+}
+
+func (m *Metrics) Init() error {
+	return nil
+}
+
+// SwapRegisterer overwrites the prometheus register used by a *Metrics in place.
+// It's used by tests to prevent duplicate registration errors
+func (m *Metrics) SwapRegisterer(r prometheus.Registerer) {
+	next := NewMetrics(r)
+	*m = *next
 }
 
 func NewMetrics(r prometheus.Registerer) *Metrics {
 	return &Metrics{
-		alerts: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+		Alerts: metrics.NewAlerts("v2", r),
+		AlertState: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "grafana",
 			Subsystem: "alerting",
 			Name:      "alerts",
 			Help:      "How many alerts by state.",
 		}, []string{"state"}),
-		alertsInvalid: promauto.With(r).NewCounter(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "alerts_invalid_total",
-			Help:      "The total number of invalid received alerts.",
-		}),
-		alertsReceived: promauto.With(r).NewCounter(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "alerts_received_total",
-			Help:      "The total number of received alerts.",
-		}),
-		notificationLatency: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "notification_latency_seconds",
-			Help:      "Histogram of notification deliveries",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		notifications: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "notifications_total",
-			Help:      "The total number of attempted notfications by integration.",
-		}, []string{"integration"}),
-		notificationsFailed: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "notifications_failed_total",
-			Help:      "The total number of failed notfications by integration.",
-		}, []string{"integration"}),
-		requestDuration: promauto.With(r).NewHistogramVec(
+		Registerer: r,
+		RequestDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
 				Subsystem: "alerting",
@@ -80,12 +68,6 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			},
 			[]string{"method", "route", "status_code", "backend"},
 		),
-		silences: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "silences",
-			Help:      "The total number of silences by state.",
-		}, []string{"state"}),
 	}
 }
 
@@ -124,7 +106,7 @@ func Instrument(
 			"backend":     backend,
 		}
 		res.WriteTo(c)
-		metrics.requestDuration.With(ls).Observe(time.Since(start).Seconds())
+		metrics.RequestDuration.With(ls).Observe(time.Since(start).Seconds())
 	}
 }
 

@@ -1,8 +1,8 @@
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
+export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     menu: css`
       label: grafana-select-menu;

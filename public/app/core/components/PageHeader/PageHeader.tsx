@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { Tab, TabsBar, Icon, IconName, useStyles2 } from '@grafana/ui';
-import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaThemeV2 } from '@grafana/data';
+import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
 
 export interface Props {
@@ -137,10 +137,9 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
   return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   headerCanvas: css`
     background: ${theme.colors.background.canvas};
-    border-bottom: 1px solid ${theme.colors.border.weak};
   `,
 });
 

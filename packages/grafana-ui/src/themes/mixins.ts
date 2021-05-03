@@ -1,5 +1,5 @@
 import { CSSObject } from '@emotion/css';
-import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 
 export function cardChrome(theme: GrafanaTheme): string {
@@ -46,14 +46,14 @@ export const focusCss = (theme: GrafanaTheme) => `
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
-export function getMouseFocusStyles(theme: GrafanaThemeV2): CSSObject {
+export function getMouseFocusStyles(theme: GrafanaTheme2): CSSObject {
   return {
     outline: 'none',
     boxShadow: `none`,
   };
 }
 
-export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
+export function getFocusStyles(theme: GrafanaTheme2): CSSObject {
   return {
     outline: '2px dotted transparent',
     outlineOffset: '2px',
@@ -63,9 +63,11 @@ export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
 }
 
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
-export const getTooltipContainerStyles = (theme: GrafanaThemeV2) => `
+export const getTooltipContainerStyles = (theme: GrafanaTheme2) => `
+  pointer-events: none;
   overflow: hidden;
-  background: ${theme.components.tooltip.background};
+  background: ${theme.colors.background.secondary};
+  box-shadow: ${theme.shadows.z2};
   max-width: 800px;
   padding: ${theme.spacing(1)};
   border-radius: ${theme.shape.borderRadius()};

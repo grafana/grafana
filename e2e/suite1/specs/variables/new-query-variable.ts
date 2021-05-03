@@ -48,7 +48,7 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect()
       .should('be.visible')
       .within((select) => {
-        e2e.components.Select.singleValue().should('have.text', 'Never');
+        e2e.components.Select.singleValue().should('have.text', 'On dashboard load');
       });
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
       .should('be.visible')

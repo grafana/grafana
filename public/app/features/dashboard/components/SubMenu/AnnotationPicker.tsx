@@ -1,4 +1,4 @@
-import { AnnotationQuery, EventBus, GrafanaThemeV2 } from '@grafana/data';
+import { AnnotationQuery, EventBus, GrafanaTheme2 } from '@grafana/data';
 import React, { useEffect, useState } from 'react';
 import { getDashboardQueryRunner } from '../../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
@@ -18,15 +18,19 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
   const onCancel = () => getDashboardQueryRunner().cancel(annotation);
 
   useEffect(() => {
-    const started = events.subscribe(AnnotationQueryStarted, (event) => {
-      if (event.payload === annotation) {
-        setLoading(true);
-      }
+    const started = events.getStream(AnnotationQueryStarted).subscribe({
+      next: (event) => {
+        if (event.payload === annotation) {
+          setLoading(true);
+        }
+      },
     });
-    const stopped = events.subscribe(AnnotationQueryFinished, (event) => {
-      if (event.payload === annotation) {
-        setLoading(false);
-      }
+    const stopped = events.getStream(AnnotationQueryFinished).subscribe({
+      next: (event) => {
+        if (event.payload === annotation) {
+          setLoading(false);
+        }
+      },
     });
 
     return () => {
@@ -49,7 +53,7 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
   );
 };
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     annotation: css`
       display: inline-block;
