@@ -23,7 +23,7 @@ import {
   fetchAlerts,
   fetchSilences,
   createOrUpdateSilence,
-  updateAlertmanagerConfig,
+  updateAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -351,9 +351,9 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
           );
         }
 
-        await updateAlertmanagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
+        await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
         if (successMessage) {
-          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+          appEvents?.emit(AppEvents.alertSuccess, [successMessage]);
         }
         if (redirectPath) {
           locationService.push(makeAMLink(redirectPath, alertManagerSourceName));

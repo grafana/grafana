@@ -32,6 +32,7 @@ export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors, defau
           return (
             <div key={itemIndex} className={styles.wrapper}>
               <ActionIcon
+                data-testid={`${path}.${itemIndex}.delete-button`}
                 icon="trash-alt"
                 tooltip="delete"
                 onClick={() => remove(itemIndex)}
@@ -50,6 +51,7 @@ export const SubformArrayField: FC<Props> = ({ option, pathPrefix, errors, defau
           );
         })}
         <Button
+          data-testid={`${path}.add-button`}
           className={styles.addButton}
           type="button"
           variant="secondary"

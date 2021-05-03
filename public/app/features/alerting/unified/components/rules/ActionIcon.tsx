@@ -3,6 +3,7 @@ import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
 import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip/PopoverController';
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
+import { Link } from 'react-router-dom';
 
 interface Props {
   tooltip: PopoverContent;
@@ -10,30 +11,32 @@ interface Props {
 
   className?: string;
   tooltipPlacement?: TooltipPlacement;
-  href?: string;
+  to?: string;
   target?: string;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
+  onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  'data-testid'?: string;
 }
 
 export const ActionIcon: FC<Props> = ({
   tooltip,
   icon,
-  href,
+  to,
   target,
   onClick,
   className,
   tooltipPlacement = 'top',
+  ...rest
 }) => {
-  const iconEl = <Icon className={cx(useStyles(getStyle), className)} name={icon} />;
+  const iconEl = <Icon className={cx(useStyles(getStyle), className)} onClick={onClick} name={icon} {...rest} />;
 
   return (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
       {(() => {
-        if (href || onClick) {
+        if (to) {
           return (
-            <a href={href} onClick={onClick} target={target}>
+            <Link to={to} target={target}>
               {iconEl}
-            </a>
+            </Link>
           );
         }
         return iconEl;

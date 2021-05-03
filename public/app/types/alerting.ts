@@ -130,7 +130,7 @@ export interface NotificationChannelOption {
   propertyName: string;
   required: boolean;
   secure: boolean;
-  selectOptions?: Array<SelectableValue<string>>;
+  selectOptions?: Array<SelectableValue<string>> | null;
   showWhen: { field: string; is: string };
   validationRule: string;
   subformOptions?: NotificationChannelOption[];

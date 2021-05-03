@@ -11,6 +11,7 @@ import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSel
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
+import { DeletedSubForm } from './fields/DeletedSubform';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
@@ -94,6 +95,7 @@ export function ReceiverForm<R extends ChannelValues>({
         )}
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
           <Input
+            id="name"
             {...register('name', {
               required: 'Name is required',
               validate: { nameIsAvailable: validateNameIsAvailable },
@@ -102,8 +104,9 @@ export function ReceiverForm<R extends ChannelValues>({
           />
         </Field>
         {fields.map((field, index) => {
+          const pathPrefix = `items.${index}.`;
           if (field.__deleted) {
-            return null;
+            return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
           }
           const initialItem = initialValues?.items.find(({ __id }) => __id === field.__id);
           return (
@@ -115,7 +118,7 @@ export function ReceiverForm<R extends ChannelValues>({
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
               onDelete={() => remove(index)}
-              pathPrefix={`items.${index}.`}
+              pathPrefix={pathPrefix}
               notifiers={notifiers}
               secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as FieldErrors<R>}

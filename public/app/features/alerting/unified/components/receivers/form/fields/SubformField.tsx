@@ -23,12 +23,18 @@ export const SubformField: FC<Props> = ({ option, pathPrefix, errors, defaultVal
   const [show, setShow] = useState(!!value);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} data-testid={`${name}.container`}>
       <h6>{option.label}</h6>
       {option.description && <p className={styles.description}>{option.description}</p>}
       {show && (
         <>
-          <ActionIcon icon="trash-alt" tooltip="delete" onClick={() => setShow(false)} className={styles.deleteIcon} />
+          <ActionIcon
+            data-testid={`${name}.delete-button`}
+            icon="trash-alt"
+            tooltip="delete"
+            onClick={() => setShow(false)}
+            className={styles.deleteIcon}
+          />
           {(option.subformOptions ?? []).map((subOption) => {
             return (
               <OptionField
@@ -42,7 +48,7 @@ export const SubformField: FC<Props> = ({ option, pathPrefix, errors, defaultVal
           })}
         </>
       )}
-      {!value && (
+      {!show && (
         <Button
           className={styles.addButton}
           type="button"
@@ -50,6 +56,7 @@ export const SubformField: FC<Props> = ({ option, pathPrefix, errors, defaultVal
           icon="plus"
           size="sm"
           onClick={() => setShow(true)}
+          data-testid={`${name}.add-button`}
         >
           Add
         </Button>

@@ -26,7 +26,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
       addButtonLabel="New template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
     >
-      <table className={tableStyles.table}>
+      <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
           <col className={tableStyles.colExpand} />
           <col />
@@ -59,7 +59,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                   <td>{name}</td>
                   <td className={tableStyles.actionsCell}>
                     <ActionIcon
-                      href={makeAMLink(
+                      to={makeAMLink(
                         `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
                         alertManagerName
                       )}

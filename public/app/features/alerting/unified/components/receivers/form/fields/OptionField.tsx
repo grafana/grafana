@@ -44,12 +44,18 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
       invalid={!!error}
       error={error?.message}
     >
-      <OptionInput defaultValue={defaultValue} option={option} invalid={invalid} pathPrefix={pathPrefix} />
+      <OptionInput
+        id={`${pathPrefix}${option.propertyName}`}
+        defaultValue={defaultValue}
+        option={option}
+        invalid={invalid}
+        pathPrefix={pathPrefix}
+      />
     </Field>
   );
 };
 
-const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
+const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPrefix = '' }) => {
   const { control, register, unregister } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
@@ -64,6 +70,7 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
     case 'checkbox':
       return (
         <Checkbox
+          id={id}
           className={styles.checkbox}
           {...register(name)}
           label={option.label}
@@ -73,6 +80,7 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
     case 'input':
       return (
         <Input
+          id={id}
           invalid={invalid}
           type={option.inputType}
           {...register(name, {
@@ -89,7 +97,7 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
               {...field}
-              options={option.selectOptions}
+              options={option.selectOptions ?? undefined}
               invalid={invalid}
               onChange={(value) => onChange(value.value)}
             />
@@ -102,6 +110,7 @@ const OptionInput: FC<Props> = ({ option, invalid, pathPrefix = '' }) => {
     case 'textarea':
       return (
         <TextArea
+          id={id}
           invalid={invalid}
           {...register(name, {
             required: option.required ? 'Required' : false,

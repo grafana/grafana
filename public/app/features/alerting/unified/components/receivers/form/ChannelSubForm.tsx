@@ -61,7 +61,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   const optionalOptions = notifier?.options.filter((o) => !o.required);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
           <InputControl
@@ -70,7 +70,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             defaultValue={defaultValues.__id}
             control={control}
           />
-          <Field label="Contact point type">
+          <Field label="Contact point type" data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
               defaultValue={defaultValues.type}
@@ -87,7 +87,14 @@ export function ChannelSubForm<R extends ChannelValues>({
             Duplicate
           </Button>
           {onDelete && (
-            <Button size="xs" variant="secondary" type="button" onClick={() => onDelete()} icon="trash-alt">
+            <Button
+              data-testid={`${pathPrefix}delete-button`}
+              size="xs"
+              variant="secondary"
+              type="button"
+              onClick={() => onDelete()}
+              icon="trash-alt"
+            >
               Delete
             </Button>
           )}
