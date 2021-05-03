@@ -1,4 +1,13 @@
-import { merge, Observable, of, ReplaySubject, timer, Unsubscribable } from 'rxjs';
+import {
+  merge,
+  MonoTypeOperatorFunction,
+  Observable,
+  of,
+  OperatorFunction,
+  ReplaySubject,
+  timer,
+  Unsubscribable,
+} from 'rxjs';
 import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -110,9 +119,9 @@ const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable
   const runningRequest = getBackendSrv()
     .fetch<AlertingQueryResponse>(request)
     .pipe(
-      map(mapToPanelData(initial)),
-      catchError(mapToError(initial)),
-      finalize(cancelNetworkRequestsOnUnsubscribe(backendSrv, request)),
+      mapToPanelData(initial),
+      catchAndMapError(initial),
+      cancelNetworkRequestsOnUnsubscribe(backendSrv, request),
       share()
     );
 
@@ -147,8 +156,8 @@ const getTimeRange = (query: GrafanaQuery, queries: GrafanaQuery[]): TimeRange =
 
 const mapToPanelData = (
   dataByQuery: Record<string, PanelData>
-): ((response: FetchResponse<AlertingQueryResponse>) => Record<string, PanelData>) => {
-  return (response) => {
+): OperatorFunction<FetchResponse<AlertingQueryResponse>, Record<string, PanelData>> => {
+  return map((response) => {
     const { data } = response;
     const results: Record<string, PanelData> = {};
 
@@ -161,13 +170,13 @@ const mapToPanelData = (
     }
 
     return results;
-  };
+  });
 };
 
-const mapToError = (
+const catchAndMapError = (
   dataByQuery: Record<string, PanelData>
-): ((err: Error) => Observable<Record<string, PanelData>>) => {
-  return (error) => {
+): OperatorFunction<Error | Record<string, PanelData>, Error | Record<string, PanelData>> => {
+  return catchError((error) => {
     const results: Record<string, PanelData> = {};
     const queryError = toDataQueryError(error);
 
@@ -180,15 +189,18 @@ const mapToError = (
     }
 
     return of(results);
-  };
+  });
 };
 
-const cancelNetworkRequestsOnUnsubscribe = (backendSrv: BackendSrv, request: BackendSrvRequest): (() => void) => {
-  return () => {
+const cancelNetworkRequestsOnUnsubscribe = (
+  backendSrv: BackendSrv,
+  request: BackendSrvRequest
+): MonoTypeOperatorFunction<Record<string, PanelData>> => {
+  return finalize(() => {
     if (request.requestId) {
       backendSrv.resolveCancelerIfExists(request.requestId);
     }
-  };
+  });
 };
 
 const setStructureRevision = (data: PanelData, lastResult: PanelData) => {

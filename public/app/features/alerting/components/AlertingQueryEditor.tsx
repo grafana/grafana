@@ -1,6 +1,13 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataQuery, GrafanaTheme, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  getDefaultRelativeTimeRange,
+  GrafanaTheme,
+  LoadingState,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config } from '@grafana/runtime';
@@ -190,11 +197,7 @@ const defaultTimeRange = (model: DataQuery): RelativeTimeRange | undefined => {
   if (isExpressionQuery(model)) {
     return;
   }
-
-  return {
-    from: 21600,
-    to: 0,
-  };
+  return getDefaultRelativeTimeRange();
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
