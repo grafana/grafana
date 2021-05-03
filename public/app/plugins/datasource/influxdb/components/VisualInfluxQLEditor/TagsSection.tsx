@@ -1,6 +1,6 @@
 import React from 'react';
-import { SegmentAsync, Segment } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { Seg } from './Seg';
 import { InfluxQueryTag } from '../../types';
 import { toSelectableValue } from './toSelectableValue';
 import { adjustOperatorIfNeeded, getCondition, getOperator } from './tagUtils';
@@ -31,6 +31,10 @@ type TagProps = {
   getTagValueOptions: (key: string) => Promise<string[]>;
 };
 
+const loadConditionOptions = () => Promise.resolve(condititonOptions);
+
+const loadOperatorOptions = () => Promise.resolve(operatorOptions);
+
 const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions }: TagProps): JSX.Element => {
   const operator = getOperator(tag);
   const condition = getCondition(tag, isFirst);
@@ -49,15 +53,15 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
   return (
     <div className="gf-form">
       {condition != null && (
-        <Segment
+        <Seg
           value={condition}
-          options={condititonOptions}
+          loadOptions={loadConditionOptions}
           onChange={(v) => {
             onChange({ ...tag, condition: v.value });
           }}
         />
       )}
-      <SegmentAsync
+      <Seg
         allowCustomValue
         value={tag.key}
         loadOptions={getTagKeySegmentOptions}
@@ -70,14 +74,14 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
           }
         }}
       />
-      <Segment
+      <Seg
         value={operator}
-        options={operatorOptions}
+        loadOptions={loadOperatorOptions}
         onChange={(op) => {
           onChange({ ...tag, operator: op.value });
         }}
       />
-      <SegmentAsync
+      <Seg
         allowCustomValue
         value={tag.value}
         loadOptions={getTagValueSegmentOptions}

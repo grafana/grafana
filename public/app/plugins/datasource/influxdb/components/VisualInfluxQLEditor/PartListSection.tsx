@@ -1,8 +1,9 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { SegmentAsync, SegmentInput, MenuItem, WithContextMenu, MenuGroup } from '@grafana/ui';
+import { SegmentInput, MenuItem, WithContextMenu, MenuGroup } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { Seg } from './Seg';
 import { unwrap } from './unwrap';
 import { toSelectableValue } from './toSelectableValue';
 import { AddButton } from './AddButton';
@@ -70,7 +71,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
           return (
             <React.Fragment key={i}>
               {options !== null ? (
-                <SegmentAsync
+                <Seg
                   allowCustomValue
                   value={value}
                   loadOptions={() => options().then((items) => items.map(toSelectableValue))}

@@ -1,12 +1,8 @@
 import React from 'react';
-import { SegmentAsync } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { Seg } from './Seg';
 import { toSelectableValue } from './toSelectableValue';
 
-const DEFAULT_POLICY: SelectableValue<string> = {
-  label: 'using default policy',
-  value: 'default',
-};
+const DEFAULT_POLICY = 'default';
 
 // we use the value "default" as a magic-value, it means
 // we use the default retention-policy.
@@ -18,9 +14,6 @@ const DEFAULT_POLICY: SelectableValue<string> = {
 // and show an error message or something.
 // unfortunately, currently the ResponseParser does not return the
 // is-default info for the retention-policies, so that should change first.
-const isDefaultPolicy = (policy: string | undefined) => {
-  return policy == null || policy === 'default';
-};
 
 type Props = {
   onChange: (policy: string | undefined, measurement: string | undefined) => void;
@@ -39,12 +32,12 @@ export const FromSection = ({
 }: Props): JSX.Element => {
   const handlePolicyLoadOptions = async () => {
     const allPolicies = await getPolicyOptions();
-    const allPoliciesOptions = allPolicies.map(toSelectableValue);
-
     // if `default` does not exist in the list of policies, we add it
-    return allPoliciesOptions.some((p) => p.value === 'default')
-      ? allPoliciesOptions
-      : [DEFAULT_POLICY, allPoliciesOptions];
+    const allPoliciesWithDefault = allPolicies.some((p) => p === 'default')
+      ? allPolicies
+      : [DEFAULT_POLICY, allPolicies];
+
+    return allPoliciesWithDefault.map(toSelectableValue);
   };
 
   const handleMeasurementLoadOptions = async () => {
@@ -52,21 +45,19 @@ export const FromSection = ({
     return allMeasurements.map(toSelectableValue);
   };
 
-  const policyValue = isDefaultPolicy(policy) ? DEFAULT_POLICY.value : policy;
   return (
     <>
-      <SegmentAsync
+      <Seg
         allowCustomValue
-        value={policyValue}
+        value={policy ?? 'using default policy'}
         loadOptions={handlePolicyLoadOptions}
         onChange={(v) => {
           onChange(v.value, measurement);
         }}
       />
-      <SegmentAsync
+      <Seg
         allowCustomValue
-        placeholder="select measurement"
-        value={measurement}
+        value={measurement ?? 'select measurement'}
         loadOptions={handleMeasurementLoadOptions}
         onChange={(v) => {
           onChange(policy, v.value);
