@@ -13,146 +13,36 @@ import { getBackendSrv, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
-import { makePromiseCancelable, CancelablePromise } from 'app/core/utils/CancelablePromise';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
-export interface State {
-  subscriptions: SelectableValue[];
-  logAnalyticsSubscriptions: SelectableValue[];
-  logAnalyticsWorkspaces: SelectableValue[];
-  subscriptionId: string;
-  logAnalyticsSubscriptionId: string;
-}
-
-export class ConfigEditor extends PureComponent<Props, State> {
-  initPromise: CancelablePromise<any> | null = null;
+export class ConfigEditor extends PureComponent<Props> {
   templateSrv: TemplateSrv = getTemplateSrv();
 
   constructor(props: Props) {
     super(props);
-
-    this.state = {
-      subscriptions: [],
-      logAnalyticsSubscriptions: [],
-      logAnalyticsWorkspaces: [],
-      subscriptionId: '',
-      logAnalyticsSubscriptionId: '',
-    };
 
     if (this.props.options.id) {
       updateDatasourcePluginOption(this.props, 'url', '/api/datasources/proxy/' + this.props.options.id);
     }
   }
 
-  componentDidMount() {
-    this.initPromise = makePromiseCancelable(this.init());
-    this.initPromise.promise.catch(({ isCanceled }) => {
-      if (isCanceled) {
-        console.warn('Azure Monitor ConfigEditor has unmounted, intialization was canceled');
-      }
-    });
-  }
-
-  componentWillUnmount() {
-    this.initPromise!.cancel();
-  }
-
-  init = async () => {
-    await this.getSubscriptions();
-
-    if (!this.props.options.jsonData.azureLogAnalyticsSameAs) {
-      await this.getLogAnalyticsSubscriptions();
-    }
-  };
-
-  updateJsonDataOption = (key: keyof AzureDataSourceJsonData, val: any) => {
+  private updateJsonDataOption = (key: keyof AzureDataSourceJsonData, val: any) => {
     updateDatasourcePluginJsonDataOption(this.props, key, val);
   };
 
-  updateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData, val: any) => {
+  private updateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData, val: any) => {
     updateDatasourcePluginSecureJsonDataOption(this.props, key, val);
   };
 
-  resetSecureKey = (key: keyof AzureDataSourceSecureJsonData) => {
-    updateDatasourcePluginResetOption(this.props, key);
-  };
-
-  onUpdateJsonDataOption = (key: keyof AzureDataSourceJsonData) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    this.updateJsonDataOption(key, event.currentTarget.value);
-  };
-
-  onUpdateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    this.updateSecureJsonDataOption(key, event.currentTarget.value);
-  };
-
-  makeSameAs = (updatedClientSecret?: string) => {
-    const { options } = this.props;
-    const clientSecret = updatedClientSecret || options.secureJsonData!.clientSecret;
-
-    this.props.onOptionsChange({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        azureLogAnalyticsSameAs: true,
-        logAnalyticsSubscriptionId: options.jsonData.subscriptionId,
-        logAnalyticsTenantId: options.jsonData.tenantId,
-        logAnalyticsClientId: options.jsonData.clientId,
-      },
-      secureJsonData: {
-        ...options.secureJsonData,
-        clientSecret,
-        logAnalyticsClientSecret: clientSecret,
-      },
-    });
-  };
-
-  hasNecessaryCredentials = () => {
-    if (!this.props.options.secureJsonFields.clientSecret && !this.props.options.secureJsonData!.clientSecret) {
-      return false;
-    }
-
-    if (!this.props.options.jsonData.clientId || !this.props.options.jsonData.tenantId) {
-      return false;
-    }
-
-    return true;
-  };
-
-  logAnalyticsHasNecessaryCredentials = () => {
-    if (
-      !this.props.options.secureJsonFields.logAnalyticsClientSecret &&
-      !this.props.options.secureJsonData!.logAnalyticsClientSecret
-    ) {
-      return false;
-    }
-
-    if (!this.props.options.jsonData.logAnalyticsClientId || !this.props.options.jsonData.logAnalyticsTenantId) {
-      return false;
-    }
-
-    return true;
-  };
-
-  onLoadSubscriptions = async (type?: string) => {
+  private getSubscriptions = async (route?: string): Promise<Array<SelectableValue<string>>> => {
+    // TODO: Save credentials only if changed
     await getBackendSrv()
       .put(`/api/datasources/${this.props.options.id}`, this.props.options)
-      .then((result: AzureDataSourceSettings) => {
-        updateDatasourcePluginOption(this.props, 'version', result.version);
+      .then((result: { datasource: AzureDataSourceSettings }) => {
+        updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
       });
 
-    if (type && type === 'workspacesloganalytics') {
-      this.getLogAnalyticsSubscriptions();
-    } else {
-      this.getSubscriptions();
-    }
-  };
-
-  loadSubscriptions = async (route?: string) => {
     const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
 
     const result = await getBackendSrv().datasourceRequest({
@@ -163,16 +53,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return ResponseParser.parseSubscriptionsForSelect(result);
   };
 
-  loadWorkspaces = async (subscription: string) => {
-    const { azureLogAnalyticsSameAs, cloudName, logAnalyticsSubscriptionId } = this.props.options.jsonData;
-    let azureMonitorUrl = '',
-      subscriptionId = this.templateSrv.replace(subscription || this.props.options.jsonData.subscriptionId);
+  private getWorkspaces = async (subscriptionId: string): Promise<Array<SelectableValue<string>>> => {
+    // TODO: Make sure credentials saved
+    const { azureLogAnalyticsSameAs, cloudName } = this.props.options.jsonData;
 
+    let azureMonitorUrl;
     if (azureLogAnalyticsSameAs) {
       const azureCloud = cloudName || 'azuremonitor';
       azureMonitorUrl = `/${azureCloud}/subscriptions`;
     } else {
-      subscriptionId = logAnalyticsSubscriptionId!;
       azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
     }
 
@@ -188,70 +77,28 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return ResponseParser.parseWorkspacesForSelect(result);
   };
 
-  getSubscriptions = async () => {
-    if (!this.hasNecessaryCredentials()) {
-      return;
-    }
-
-    const subscriptions = ((await this.loadSubscriptions()) || []) as SelectableValue[];
-
-    if (subscriptions && subscriptions.length > 0) {
-      this.setState({ subscriptions });
-
-      this.updateJsonDataOption('subscriptionId', this.props.options.jsonData.subscriptionId || subscriptions[0].value);
-    }
-
-    if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureLogAnalyticsSameAs) {
-      await this.getWorkspaces();
-    }
+  // TODO: Used only by InsightsConfig
+  private onUpdateJsonDataOption = (key: keyof AzureDataSourceJsonData) => (
+    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    this.updateJsonDataOption(key, event.currentTarget.value);
   };
 
-  getLogAnalyticsSubscriptions = async () => {
-    if (!this.logAnalyticsHasNecessaryCredentials()) {
-      return;
-    }
-
-    const logAnalyticsSubscriptions = ((await this.loadSubscriptions('workspacesloganalytics')) ||
-      []) as SelectableValue[];
-
-    if (logAnalyticsSubscriptions && logAnalyticsSubscriptions.length > 0) {
-      this.setState({ logAnalyticsSubscriptions });
-
-      this.updateJsonDataOption(
-        'logAnalyticsSubscriptionId',
-        this.props.options.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value
-      );
-    }
-
-    if (this.props.options.jsonData.logAnalyticsSubscriptionId) {
-      await this.getWorkspaces();
-    }
+  // TODO: Used only by InsightsConfig
+  private onUpdateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData) => (
+    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    this.updateSecureJsonDataOption(key, event.currentTarget.value);
   };
 
-  getWorkspaces = async () => {
-    const { subscriptionId, azureLogAnalyticsSameAs, logAnalyticsSubscriptionId } = this.props.options.jsonData;
-    const subscriptionIdToUse = azureLogAnalyticsSameAs ? subscriptionId : logAnalyticsSubscriptionId;
-
-    if (!subscriptionIdToUse) {
-      return;
-    }
-
-    const logAnalyticsWorkspaces = await this.loadWorkspaces(subscriptionIdToUse);
-
-    if (logAnalyticsWorkspaces.length > 0) {
-      this.setState({ logAnalyticsWorkspaces });
-
-      this.updateJsonDataOption(
-        'logAnalyticsDefaultWorkspace',
-        this.props.options.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value
-      );
-    }
+  // TODO: Used only by InsightsConfig
+  private resetSecureKey = (key: keyof AzureDataSourceSecureJsonData) => {
+    updateDatasourcePluginResetOption(this.props, key);
   };
 
   render() {
-    const { subscriptions, logAnalyticsSubscriptions, logAnalyticsWorkspaces } = this.state;
+    // TODO: Clean up
     const { options } = this.props;
-
     options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
     // This is bad, causes so many messy typing issues everwhere..
     options.secureJsonData = (options.secureJsonData || {}) as AzureDataSourceSecureJsonData;
@@ -260,25 +107,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
       <>
         <MonitorConfig
           options={options}
-          subscriptions={subscriptions}
-          makeSameAs={this.makeSameAs}
-          onLoadSubscriptions={this.onLoadSubscriptions}
-          onUpdateJsonDataOption={this.updateJsonDataOption}
-          onUpdateSecureJsonDataOption={this.updateSecureJsonDataOption}
-          onResetOptionKey={this.resetSecureKey}
+          onOptionsChange={this.props.onOptionsChange}
+          updateJsonDataOption={this.updateJsonDataOption}
+          getSubscriptions={this.getSubscriptions}
         />
 
         <AnalyticsConfig
           options={options}
-          workspaces={logAnalyticsWorkspaces}
-          subscriptions={logAnalyticsSubscriptions}
-          makeSameAs={this.makeSameAs}
-          onUpdateDatasourceOptions={this.props.onOptionsChange}
-          onUpdateJsonDataOption={this.updateJsonDataOption}
-          onUpdateSecureJsonDataOption={this.updateSecureJsonDataOption}
-          onResetOptionKey={this.resetSecureKey}
-          onLoadSubscriptions={this.onLoadSubscriptions}
-          onLoadWorkspaces={this.getWorkspaces}
+          onOptionsChange={this.props.onOptionsChange}
+          updateJsonDataOption={this.updateJsonDataOption}
+          getSubscriptions={this.getSubscriptions}
+          getWorkspaces={this.getWorkspaces}
         />
 
         <InsightsConfig

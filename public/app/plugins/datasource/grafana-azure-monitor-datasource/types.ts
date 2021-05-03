@@ -23,19 +23,26 @@ export interface AzureMonitorQuery extends DataQuery {
   insightsAnalytics: InsightsAnalyticsQuery;
 }
 
+export interface AzureCredentials {
+  azureCloud?: string;
+  tenantId?: string;
+  clientId?: string;
+  clientSecret?: string | object;
+}
+
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
-  subscriptionId: string;
   cloudName: string;
 
   // monitor
   tenantId?: string;
   clientId?: string;
+  subscriptionId: string;
 
   // logs
-  logAnalyticsSubscriptionId?: string;
+  azureLogAnalyticsSameAs?: boolean;
   logAnalyticsTenantId?: string;
   logAnalyticsClientId?: string;
-  azureLogAnalyticsSameAs?: boolean;
+  logAnalyticsSubscriptionId?: string;
   logAnalyticsDefaultWorkspace?: string;
 
   // App Insights

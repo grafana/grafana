@@ -37,15 +37,10 @@ const setup = (propOverrides?: object) => {
       version: 1,
       readOnly: false,
     },
-    subscriptions: [],
-    workspaces: [],
-    makeSameAs: jest.fn(),
-    onUpdateDatasourceOptions: jest.fn(),
-    onUpdateJsonDataOption: jest.fn(),
-    onUpdateSecureJsonDataOption: jest.fn(),
-    onResetOptionKey: jest.fn(),
-    onLoadSubscriptions: jest.fn(),
-    onLoadWorkspaces: jest.fn(),
+    onOptionsChange: jest.fn(),
+    updateJsonDataOption: jest.fn(),
+    getSubscriptions: jest.fn(),
+    getWorkspaces: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
