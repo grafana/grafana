@@ -35,7 +35,7 @@ You can view raw query results, that is the data returned by the query in a tabl
 For multiple queries or for queries multiple nodes, there are additional options.
 
 - **Show data frame:** Select the result set data you want to view.
-  - **Series joined by time -** View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.
+- **Series joined by time:** View the raw data from all of your queries at once, one result set per column. You can click a column heading to sort the data.
 
 ### Download raw query results as CSV
 
