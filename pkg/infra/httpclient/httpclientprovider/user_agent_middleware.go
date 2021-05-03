@@ -6,10 +6,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
-// SetUserAgentMiddlewareName the middleware name used by SetUserAgentMiddleware.
+// SetUserAgentMiddlewareName is the middleware name used by SetUserAgentMiddleware.
 const SetUserAgentMiddlewareName = "user-agent"
 
-// SetUserAgentMiddleware middleware that sets the HTTP header User-Agent on the outgoing request.
+// SetUserAgentMiddleware is middleware that sets the HTTP header User-Agent on the outgoing request.
 // If User-Agent already set, it will not be overridden by this middleware.
 func SetUserAgentMiddleware(userAgent string) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(SetUserAgentMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {

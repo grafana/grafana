@@ -84,14 +84,16 @@ func DataSourceMetricsMiddleware() httpclient.Middleware {
 				promhttp.InstrumentRoundTripperCounter(requestCounter,
 					promhttp.InstrumentRoundTripperInFlight(requestInFlight, next))).
 				RoundTrip(r)
-
+			if err != nil {
+				return next
+			}
 			// we avoid measuring contentlength less than zero because it indicates
 			// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
 			if res != nil && res.ContentLength > 0 {
 				responseSizeSummary.Observe(float64(res.ContentLength))
 			}
 
-			return res, err
+			return res, nil
 		})
 	})
 }
