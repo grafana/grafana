@@ -154,7 +154,7 @@ func TestPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
-	if !sqlstore.IsTestDbPostgres() && !runPostgresTests {
+	if !(sqlstore.IsTestDbPostgres() || runPostgresTests) {
 		t.Skip()
 	}
 
