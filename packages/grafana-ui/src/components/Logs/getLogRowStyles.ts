@@ -49,10 +49,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       font-size: ${theme.typography.size.sm};
       width: 100%;
     `,
-    logsRowsHorizontalScroll: css`
-      label: logs-rows__horizontal-scroll;
-      overflow: auto;
-    `,
     context: css`
       label: context;
       visibility: hidden;

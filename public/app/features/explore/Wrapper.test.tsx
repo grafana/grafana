@@ -64,7 +64,7 @@ describe('Wrapper', () => {
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
-    await screen.findByText(/^Logs$/i);
+    await screen.findByText(/^Logs$/);
 
     // Make sure we render the log line
     await screen.findByText(/custom log line/i);
@@ -169,7 +169,7 @@ describe('Wrapper', () => {
 
     // Make sure we render the logs panel
     await waitFor(() => {
-      const logsPanels = screen.getAllByText(/^Logs$/i);
+      const logsPanels = screen.getAllByText(/^Logs$/);
       expect(logsPanels.length).toBe(2);
     });
 

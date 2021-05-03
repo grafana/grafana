@@ -18,6 +18,7 @@ import {
   LinkModel,
   Field,
   GrafanaTheme,
+  DataQuery,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -28,11 +29,13 @@ import {
   InlineSwitch,
   withTheme,
   stylesFactory,
+  CustomScrollbar,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { LogsMetaRow } from './LogsMetaRow';
+import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
 const SETTINGS_KEYS = {
@@ -54,6 +57,7 @@ interface Props {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
+  queries: DataQuery[];
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -237,6 +241,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       onChangeTime,
       getFieldLinks,
       theme,
+      queries,
     } = this.props;
 
     const {
@@ -310,7 +315,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             {isFlipping ? 'Flipping...' : 'Flip results order'}
           </Button>
         </div>
-
         <LogsMetaRow
           logRows={logRows}
           meta={logsMeta || []}
@@ -322,28 +326,39 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           onEscapeNewlines={this.onEscapeNewlines}
           clearDetectedFields={this.clearDetectedFields}
         />
-
-        <LogRows
-          logRows={logRows}
-          deduplicatedRows={dedupedRows}
-          dedupStrategy={dedupStrategy}
-          getRowContext={this.props.getRowContext}
-          highlighterExpressions={highlighterExpressions}
-          onClickFilterLabel={onClickFilterLabel}
-          onClickFilterOutLabel={onClickFilterOutLabel}
-          showContextToggle={showContextToggle}
-          showLabels={showLabels}
-          showTime={showTime}
-          forceEscape={forceEscape}
-          wrapLogMessage={wrapLogMessage}
-          timeZone={timeZone}
-          getFieldLinks={getFieldLinks}
-          logsSortOrder={logsSortOrder}
-          showDetectedFields={showDetectedFields}
-          onClickShowDetectedField={this.showDetectedField}
-          onClickHideDetectedField={this.hideDetectedField}
-        />
-
+        <div className={styles.logsSection}>
+          <CustomScrollbar autoHide>
+            <LogRows
+              logRows={logRows}
+              deduplicatedRows={dedupedRows}
+              dedupStrategy={dedupStrategy}
+              getRowContext={this.props.getRowContext}
+              highlighterExpressions={highlighterExpressions}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              showContextToggle={showContextToggle}
+              showLabels={showLabels}
+              showTime={showTime}
+              forceEscape={forceEscape}
+              wrapLogMessage={wrapLogMessage}
+              timeZone={timeZone}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={logsSortOrder}
+              showDetectedFields={showDetectedFields}
+              onClickShowDetectedField={this.showDetectedField}
+              onClickHideDetectedField={this.hideDetectedField}
+            />
+          </CustomScrollbar>
+          <LogsNavigation
+            logsSortOrder={logsSortOrder}
+            visibleRange={visibleRange}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={onChangeTime}
+            loading={loading}
+            queries={queries}
+          />
+        </div>
         {!loading && !hasData && !scanning && (
           <div className={styles.noData}>
             No logs found.
@@ -391,6 +406,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     radioButtons: css`
       margin: 0 ${theme.spacing.sm};
+    `,
+    logsSection: css`
+      display: flex;
+      flex-direction: row;
+      max-height: 95vh;
     `,
   };
 });
