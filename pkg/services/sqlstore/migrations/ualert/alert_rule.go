@@ -85,13 +85,7 @@ func addMigrationInfo(da *dashAlert) map[string]string {
 	return annotations
 }
 
-type migInfo struct {
-	dashboardUid string
-	panelId      int
-	alertId      int
-}
-
-func getMigrationString(da *dashAlert) string {
+func getMigrationString(da dashAlert) string {
 	return fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
 }
 
