@@ -1,6 +1,5 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import cx from 'classnames';
+import { cx, css } from '@emotion/css';
 import { SegmentInput, MenuItem, WithContextMenu, MenuGroup } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { Seg } from './Seg';

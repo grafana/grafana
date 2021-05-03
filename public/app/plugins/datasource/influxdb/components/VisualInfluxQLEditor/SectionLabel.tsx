@@ -1,6 +1,5 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import cx from 'classnames';
+import { cx, css } from '@emotion/css';
 
 type Props = {
   name: string;

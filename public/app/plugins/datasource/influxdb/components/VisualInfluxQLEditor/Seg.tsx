@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import cx from 'classnames';
-import { css } from '@emotion/css';
+import { cx, css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { useClickAway, useAsyncFn } from 'react-use';
 import { InlineLabel, Select } from '@grafana/ui';

@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import { InfluxQuery } from '../types';
 import { SelectableValue } from '@grafana/data';
-import { css } from '@emotion/css';
-import cx from 'classnames';
+import { cx, css } from '@emotion/css';
 import {
   InlineFormLabel,
   LinkButton,
