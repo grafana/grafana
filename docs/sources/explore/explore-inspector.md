@@ -34,7 +34,7 @@ You can view raw query results, that is the data returned by the query in a tabl
 1. In the **Inspector** tab, click the **Data** tab.
 For multiple queries or for queries multiple nodes, there are additional options.
 
-- **Show data frame -** Choose which result set data you want to view.
+- **Show data frame:** Select the result set data you want to view.
   - **Series joined by time -** View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.
 
 ### Download raw query results as CSV
