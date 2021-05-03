@@ -1,5 +1,5 @@
 import React, { HTMLProps } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
@@ -16,7 +16,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>(({ invalid,
   return <textarea {...props} className={cx(styles.textarea, className)} ref={ref} />;
 });
 
-const getTextAreaStyle = stylesFactory((theme: GrafanaThemeV2, invalid = false) => {
+const getTextAreaStyle = stylesFactory((theme: GrafanaTheme2, invalid = false) => {
   return {
     textarea: cx(
       sharedInputStyle(theme),

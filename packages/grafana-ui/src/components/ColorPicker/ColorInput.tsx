@@ -5,7 +5,7 @@ import { debounce } from 'lodash';
 import { ColorPickerProps } from './ColorPickerPopover';
 import { Input } from '../Input/Input';
 import { useStyles2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { cx, css } from '@emotion/css';
 
 interface ColorInputState {
@@ -102,7 +102,7 @@ const ColorPreview = ({ color }: ColorPreviewProps) => {
   );
 };
 
-const getColorPreviewStyles = (theme: GrafanaThemeV2) => css`
+const getColorPreviewStyles = (theme: GrafanaTheme2) => css`
   height: 100%;
   width: ${theme.spacing.gridSize * 4}px;
   border-radius: ${theme.shape.borderRadius()} 0 0 ${theme.shape.borderRadius()};

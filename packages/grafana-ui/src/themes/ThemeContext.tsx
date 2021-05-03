@@ -1,7 +1,7 @@
-import { createTheme, GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
+import { createTheme, GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import React, { useContext } from 'react';
-import { Themeable } from '../types/theme';
+import { Themeable, Themeable2 } from '../types/theme';
 import { stylesFactory } from './stylesFactory';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
@@ -10,7 +10,7 @@ type Subtract<T, K> = Omit<T, keyof K>;
 /**
  * Mock used in tests
  */
-let ThemeContextMock: React.Context<GrafanaThemeV2> | null = null;
+let ThemeContextMock: React.Context<GrafanaTheme2> | null = null;
 
 // Used by useStyles()
 export const memoizedStyleCreators = new WeakMap();
@@ -42,8 +42,8 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
 };
 
 /** @alpha */
-export const withTheme2 = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
-  const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = (props) => {
+export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: React.ComponentType<P>) => {
+  const WithTheme: React.FunctionComponent<Subtract<P, Themeable2>> = (props) => {
     /**
      * If theme context is mocked, let's use it instead of the original context
      * This is used in tests when mocking theme using mockThemeContext function defined below
@@ -66,7 +66,7 @@ export function useTheme(): GrafanaTheme {
   return useContext(ThemeContextMock || ThemeContext).v1;
 }
 
-export function useTheme2(): GrafanaThemeV2 {
+export function useTheme2(): GrafanaTheme2 {
   return useContext(ThemeContextMock || ThemeContext);
 }
 
@@ -96,7 +96,7 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
  * you pass in doesn't change, or only if it needs to. (i.e. declare
  * your style creator outside of a function component or use `useCallback()`.)
  * */
-export function useStyles2<T>(getStyles: (theme: GrafanaThemeV2) => T) {
+export function useStyles2<T>(getStyles: (theme: GrafanaTheme2) => T) {
   const theme = useTheme2();
 
   let memoizedStyleCreator = memoizedStyleCreators.get(getStyles) as typeof getStyles;
@@ -111,8 +111,8 @@ export function useStyles2<T>(getStyles: (theme: GrafanaThemeV2) => T) {
 /**
  * Enables theme context  mocking
  */
-export const mockThemeContext = (theme: Partial<GrafanaThemeV2>) => {
-  ThemeContextMock = React.createContext(theme as GrafanaThemeV2);
+export const mockThemeContext = (theme: Partial<GrafanaTheme2>) => {
+  ThemeContextMock = React.createContext(theme as GrafanaTheme2);
 
   return () => {
     ThemeContextMock = null;

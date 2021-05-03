@@ -23,7 +23,7 @@ export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, au
       autoFocus={autoFocus ?? false}
       prefix={<Icon name="search" />}
       suffix={suffix}
-      width={width ?? 40}
+      width={width}
       type="text"
       value={value ? unEscapeStringFromRegex(value) : ''}
       onChange={(event) => onChange(escapeStringForRegex(event.currentTarget.value))}

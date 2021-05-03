@@ -2,12 +2,12 @@ import React from 'react';
 import { AlignedData } from 'uplot';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent } from '../GraphNG/types';
 import { BarChartOptions } from './types';
-import { withTheme } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { pluginLog, preparePlotData } from '../uPlot/utils';
 import { LegendDisplayMode } from '../VizLegend/models.gen';
@@ -16,13 +16,12 @@ import { PlotLegend } from '../uPlot/PlotLegend';
 /**
  * @alpha
  */
-export interface BarChartProps extends Themeable, BarChartOptions {
+export interface BarChartProps extends Themeable2, BarChartOptions {
   height: number;
   width: number;
   data: DataFrame[];
   structureRev?: number; // a number that will change when the data[] structure changes
   onLegendClick?: (event: GraphNGLegendEvent) => void;
-  onSeriesColorChange?: (label: string, color: string) => void;
 }
 
 interface BarChartState {
@@ -87,7 +86,7 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
   }
 
   renderLegend() {
-    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
+    const { legend, onLegendClick, data } = this.props;
     const { config } = this.state;
 
     if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
@@ -97,7 +96,6 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
       <PlotLegend
         data={data}
         config={config}
-        onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
         maxHeight="35%"
         maxWidth="60%"
@@ -130,5 +128,5 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
   }
 }
 
-export const BarChart = withTheme(UnthemedBarChart);
+export const BarChart = withTheme2(UnthemedBarChart);
 BarChart.displayName = 'GraphNG';

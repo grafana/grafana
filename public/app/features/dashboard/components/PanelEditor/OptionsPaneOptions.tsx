@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaThemeV2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
@@ -32,7 +32,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev]
+    [panel.configRev, props.data]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
@@ -143,7 +143,7 @@ function renderSearchHits(
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     height: 100%;
     display: flex;

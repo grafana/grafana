@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { DataFrame, DataLink, GrafanaThemeV2 } from '@grafana/data';
+import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 import { IconButton } from '../../IconButton/IconButton';
@@ -43,7 +43,7 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
   );
 };
 
-const getDataLinkListItemStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing(2)};
