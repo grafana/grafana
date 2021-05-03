@@ -61,6 +61,8 @@ import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
+import { LoadingState } from '@grafana/data';
+import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -148,6 +150,13 @@ describe('shared actions', () => {
       };
       const locationService: any = { getSearchObject: () => ({}) };
       setLocationService(locationService);
+      const variableQueryRunner: any = {
+        cancelRequest: jest.fn(),
+        queueRequest: jest.fn(),
+        getResponse: () => toAsyncOfResult({ state: LoadingState.Done, identifier: toVariableIdentifier(query) }),
+        destroy: jest.fn(),
+      };
+      setVariableQueryRunner(variableQueryRunner);
 
       const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
         .givenRootReducer(getTemplatingRootReducer())
@@ -156,10 +165,10 @@ describe('shared actions', () => {
         .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        expect(dispatchedActions.length).toEqual(4);
+        expect(dispatchedActions.length).toEqual(5);
 
         expect(dispatchedActions[0]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
+          variableStateFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
 
         expect(dispatchedActions[1]).toEqual(
@@ -172,6 +181,10 @@ describe('shared actions', () => {
 
         expect(dispatchedActions[3]).toEqual(
           variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
+        );
+
+        expect(dispatchedActions[4]).toEqual(
+          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
         );
 
         return true;

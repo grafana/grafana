@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import React, { FC, useState } from 'react';
 
@@ -24,7 +24,7 @@ export const CollapsibleSection: FC<Props> = ({ label, children }) => {
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     margin-top: ${theme.spacing(1)};
     padding-bottom: ${theme.spacing(1)};
