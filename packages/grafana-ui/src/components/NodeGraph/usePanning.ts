@@ -1,6 +1,6 @@
 import { useEffect, useRef, RefObject, useState, useMemo } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
-import { Bounds } from './layout';
+import { Bounds } from './utils';
 import usePrevious from 'react-use/lib/usePrevious';
 
 export interface State {

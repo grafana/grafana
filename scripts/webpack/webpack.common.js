@@ -3,6 +3,7 @@ const path = require('path');
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const getBabelConfig = require('./babel.config');
+// const WorkerPlugin = require('worker-plugin');
 
 class CopyUniconsPlugin {
   apply(compiler) {
@@ -122,6 +123,7 @@ module.exports = {
         '!wordPartOperations',
       ],
     }),
+    // new WorkerPlugin(),
   ],
   module: {
     rules: [

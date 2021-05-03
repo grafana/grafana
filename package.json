@@ -205,6 +205,7 @@
     "webpack-cli": "3.3.10",
     "webpack-dev-server": "3.11.1",
     "webpack-merge": "4.2.2",
+    "worker-loader": "^3.0.8",
     "zone.js": "0.7.8"
   },
   "dependencies": {
@@ -306,7 +307,8 @@
     "tinycolor2": "1.4.1",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.1.0"
+    "whatwg-fetch": "3.1.0",
+    "worker-plugin": "^5.0.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"

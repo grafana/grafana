@@ -284,3 +284,53 @@ function getColor(field: Field, index: number, theme: GrafanaTheme): string {
 
   return getFieldColorModeForField(field).getCalculator(field, theme)(0, field.values.get(index));
 }
+
+export interface Bounds {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+  center: {
+    x: number;
+    y: number;
+  };
+}
+
+/**
+ * Get bounds of the graph meaning the extent of the nodes in all directions.
+ */
+export function graphBounds(nodes: NodeDatum[]): Bounds {
+  if (nodes.length === 0) {
+    return { top: 0, right: 0, bottom: 0, left: 0, center: { x: 0, y: 0 } };
+  }
+
+  const bounds = nodes.reduce(
+    (acc, node) => {
+      if (node.x! > acc.right) {
+        acc.right = node.x!;
+      }
+      if (node.x! < acc.left) {
+        acc.left = node.x!;
+      }
+      if (node.y! > acc.bottom) {
+        acc.bottom = node.y!;
+      }
+      if (node.y! < acc.top) {
+        acc.top = node.y!;
+      }
+      return acc;
+    },
+    { top: Infinity, right: -Infinity, bottom: -Infinity, left: Infinity }
+  );
+
+  const y = bounds.top + (bounds.bottom - bounds.top) / 2;
+  const x = bounds.left + (bounds.right - bounds.left) / 2;
+
+  return {
+    ...bounds,
+    center: {
+      x,
+      y,
+    },
+  };
+}
