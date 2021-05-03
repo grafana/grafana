@@ -30,7 +30,7 @@ export const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelPro
 
   useEffect(() => {
     doLoad();
-  }, [loadOptions]);
+  }, [doLoad, loadOptions]);
   return (
     <div ref={ref} className={selectClass}>
       <Select autoFocus isOpen allowCustomValue options={loadState.value ?? []} onChange={onChange} />
