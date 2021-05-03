@@ -10,7 +10,6 @@ describe('BackupInventoryDetails', () => {
       <BackupInventoryDetails name="backup" status={BackupStatus.BACKUP_STATUS_PAUSED} dataModel={DataModel.LOGICAL} />
     );
     expect(wrapper.find(dataQa('backup-artifact-details-name')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('backup-artifact-details-status')).exists()).toBeTruthy();
     expect(wrapper.find(dataQa('backup-artifact-details-data-model')).exists()).toBeTruthy();
   });
 });
