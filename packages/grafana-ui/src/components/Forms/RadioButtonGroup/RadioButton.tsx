@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme2, stylesFactory } from '../../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
@@ -52,7 +52,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
 
 RadioButton.displayName = 'RadioButton';
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaThemeV2, size: RadioButtonSize, fullWidth?: boolean) => {
+const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
   const textColor = theme.colors.text.secondary;
