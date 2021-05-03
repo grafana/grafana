@@ -1,4 +1,4 @@
-import { getColorForTheme, GrafanaThemeV2, ThresholdsConfig } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '../config';
 
@@ -6,7 +6,7 @@ export interface UPlotThresholdOptions {
   scaleKey: string;
   thresholds: ThresholdsConfig;
   config: GraphThresholdsStyleConfig;
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
 }
 
 export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
@@ -45,6 +45,11 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
           color = tinycolor(getColorForTheme(step.color, theme.v1));
         }
 
+        // Unless alpha specififed set to default value
+        if (color.getAlpha() === 1) {
+          color.setAlpha(0.7);
+        }
+
         let x0 = u.valToPos(xMin!, 'x', true);
         let y0 = u.valToPos(step.value, scaleKey, true);
         let x1 = u.valToPos(xMax!, 'x', true);
@@ -52,7 +57,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
         ctx.beginPath();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = color.setAlpha(0.3).toString();
+        ctx.strokeStyle = color.toString();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
         ctx.stroke();

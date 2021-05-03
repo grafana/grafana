@@ -2,7 +2,7 @@ import React, { Component, createRef } from 'react';
 import { PopoverController } from '../Tooltip/PopoverController';
 import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { getColorForTheme, GrafanaThemeV2 } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme2 } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { css } from '@emotion/css';
@@ -90,7 +90,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
 export const ColorPicker = withTheme2(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
 export const SeriesColorPicker = withTheme2(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     colorPicker: css`
       position: absolute;

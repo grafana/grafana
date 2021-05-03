@@ -5,7 +5,7 @@ import SpectrumPalette from './SpectrumPalette';
 import { Themeable2 } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2, getColorForTheme } from '@grafana/data';
+import { GrafanaTheme2, getColorForTheme } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '../../themes';
 
 export type ColorPickerChangeHandler = (color: string) => void;
@@ -136,7 +136,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
 export const ColorPickerPopover = withTheme2(UnThemedColorPickerPopover);
 ColorPickerPopover.displayName = 'ColorPickerPopover';
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     colorPickerPopover: css`
       border-radius: ${theme.shape.borderRadius()};

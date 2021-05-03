@@ -42,7 +42,7 @@ export class UPlotConfigBuilder {
   addThresholds(options: UPlotThresholdOptions) {
     if (!this.thresholds[options.scaleKey]) {
       this.thresholds[options.scaleKey] = options;
-      this.addHook('draw', getThresholdsDrawHook(options));
+      this.addHook('drawClear', getThresholdsDrawHook(options));
     }
   }
 

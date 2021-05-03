@@ -160,7 +160,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line+area"
             }
           },
           "mappings": [],
@@ -771,11 +771,11 @@
                 "value": null
               },
               {
-                "color": "red",
+                "color": "orange",
                 "value": 60
               },
               {
-                "color": "#EAB839",
+                "color": "red",
                 "value": 80
               }
             ]
@@ -1242,7 +1242,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Panel Tests - GraphNG Thresholds2",
+  "title": "Panel Tests - GraphNG Thresholds",
   "uid": "6HMMh4rMz",
-  "version": 5
+  "version": 2
 }
