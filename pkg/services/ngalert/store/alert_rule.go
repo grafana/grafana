@@ -38,8 +38,8 @@ type UpsertRule struct {
 // Store is the interface for persisting alert rules and instances
 type RuleStore interface {
 	DeleteAlertRuleByUID(orgID int64, ruleUID string) error
-	DeleteNamespaceAlertRules(orgID int64, namespaceUID string) error
-	DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) error
+	DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([]string, error)
+	DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) ([]string, error)
 	GetAlertRuleByUID(*ngmodels.GetAlertRuleByUIDQuery) error
 	GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery) error
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
@@ -87,9 +87,19 @@ func (st DBstore) DeleteAlertRuleByUID(orgID int64, ruleUID string) error {
 	})
 }
 
-// DeleteNamespaceAlertRules is a handler for deleting namespace alert rules.
-func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+// DeleteNamespaceAlertRules is a handler for deleting namespace alert rules. A list of deleted rule UIDs are returned.
+func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([]string, error) {
+	ruleUIDs := []string{}
+
+	err := st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if err := sess.SQL("SELECT uid FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID).Find(&ruleUIDs); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID); err != nil {
+			return err
+		}
+
 		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID); err != nil {
 			return err
 		}
@@ -106,11 +116,18 @@ func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) er
 
 		return nil
 	})
+	return ruleUIDs, err
 }
 
 // DeleteRuleGroupAlertRules is a handler for deleting rule group alert rules.
-func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) ([]string, error) {
+	ruleUIDs := []string{}
+
+	err := st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if err := sess.SQL("SELECT uid FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?",
+			orgID, namespaceUID, ruleGroup).Find(&ruleUIDs); err != nil {
+			return err
+		}
 		exist, err := sess.Exist(&ngmodels.AlertRule{OrgID: orgID, NamespaceUID: namespaceUID, RuleGroup: ruleGroup})
 		if err != nil {
 			return err
@@ -136,6 +153,8 @@ func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ru
 
 		return nil
 	})
+
+	return ruleUIDs, err
 }
 
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
@@ -320,6 +339,20 @@ func (st DBstore) GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRules
 		return nil
 	})
 }
+
+// GetNamespaceAlertRuleUIDs is a handler for retrieving namespace alert rules UIDs of specific organisation.
+// func (st DBstore) GetNamespaceAlertRuleUIDs(orgID string, namespace string) ([]string, error) {
+// 	alertRuleUIDs := make([]*ngmodels.AlertRule, 0)
+// 	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+// 		// TODO rewrite using group by namespace_uid, rule_group
+// 		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ?"
+// 		if err := sess.SQL(q, orgID, query.NamespaceUID).Find(&alertRules); err != nil {
+// 			return err
+// 		}
+
+// 		return nil
+// 	})
+// }
 
 // GetRuleGroupAlertRules is a handler for retrieving rule group alert rules of specific organisation.
 func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error {

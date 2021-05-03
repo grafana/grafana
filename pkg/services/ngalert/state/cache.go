@@ -113,6 +113,17 @@ func (c *cache) getStatesByRuleUID() map[string][]*State {
 	return ruleMap
 }
 
+// removeByRuleUID deletes all entries in the state cache that match the given UID.
+func (c *cache) removeByRuleUID(orgID int64, uid string) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	for k, state := range c.states {
+		if state.AlertRuleUID == uid && state.OrgID == orgID {
+			delete(c.states, k)
+		}
+	}
+}
+
 func (c *cache) reset() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()

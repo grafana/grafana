@@ -45,9 +45,14 @@ func (st *Manager) Get(id string) (*State, error) {
 	return st.cache.get(id)
 }
 
-//Used to ensure a clean cache on startup
+// ResetCache is used to ensure a clean cache on startup.
 func (st *Manager) ResetCache() {
 	st.cache.reset()
+}
+
+// RemoveByRuleUID deletes all entries in the state manager that match the given UID.
+func (st *Manager) RemoveByRuleUID(orgID int64, uid string) {
+	st.cache.removeByRuleUID(orgID, uid)
 }
 
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
