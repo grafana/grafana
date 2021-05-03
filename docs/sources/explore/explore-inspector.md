@@ -66,7 +66,7 @@ Statistics are displayed in read-only format.
 
 ### View JSON model
 
-Explore and export data and data frame JSON models.
+You can explore and export data as well as data frame JSON models.
 
 1. In the Inspector panel, click the **JSON** tab.
 1. From the Select source dropdown, choose one of the following options:
