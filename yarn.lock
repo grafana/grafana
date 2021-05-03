@@ -2893,14 +2893,6 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@leeoniya/react-inlinesvg@2.2.4":
-  version "2.2.4"
-  resolved "https://registry.yarnpkg.com/@leeoniya/react-inlinesvg/-/react-inlinesvg-2.2.4.tgz#b1f226136945fc692ea37f5a889e6545c9334336"
-  integrity sha512-6zaOOjYjrTC/D6tQKIPmoh+T+8d7h2kCZYbbSjEYt2Sz0OtPZw44v+MKVXiRHVYrlODgT1viJbrUmrSH0k7wOA==
-  dependencies:
-    exenv "^1.2.2"
-    react-from-dom "^0.6.0"
-
 "@lerna/add@3.21.0":
   version "3.21.0"
   resolved "https://registry.yarnpkg.com/@lerna/add/-/add-3.21.0.tgz#27007bde71cc7b0a2969ab3c2f0ae41578b4577b"
@@ -12478,15 +12470,10 @@ fd-slicer@~1.1.0:
   dependencies:
     pend "~1.2.0"
 
-figgy-pudding@^3.4.1:
+figgy-pudding@^3.4.1, figgy-pudding@^3.5.1:
   version "3.5.2"
   resolved "https://registry.yarnpkg.com/figgy-pudding/-/figgy-pudding-3.5.2.tgz#b4eee8148abb01dcf1d1ac34367d59e12fa61d6e"
   integrity sha512-0btnI/H8f2pavGMN8w40mlSKOfTK2SVJmBfBeVIj3kNw0swwgzyRq0d5TJVOwodFmtvpPeWPN/MCcfuWF0Ezbw==
-
-figgy-pudding@^3.5.1:
-  version "3.5.1"
-  resolved "https://registry.yarnpkg.com/figgy-pudding/-/figgy-pudding-3.5.1.tgz#862470112901c727a0e495a80744bd5baa1d6790"
-  integrity sha512-vNKxJHTEKNThjfrdJwHc7brvM6eVevuO5nTj6ez8ZQ1qbXTvGthucRF7S4vf2cr71QVnT70V34v0S1DyQsti0w==
 
 figures@^1.3.5, figures@^1.7.0:
   version "1.7.0"
@@ -20792,6 +20779,14 @@ react-immutable-proptypes@^2.1.0:
   resolved "https://registry.yarnpkg.com/react-immutable-proptypes/-/react-immutable-proptypes-2.1.0.tgz#023d6f39bb15c97c071e9e60d00d136eac5fa0b4"
   integrity sha1-Aj1vObsVyXwHHp5g0A0TbqxfoLQ=
 
+react-inlinesvg@2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/react-inlinesvg/-/react-inlinesvg-2.3.0.tgz#62283c0ce7e9d11d8190ec3e89589102288830fd"
+  integrity sha512-fEGOdDf4k4bcveArbEpj01pJcH8pOCKLxmSj2POFdGvEk5YK0NZVnH6BXpW/PzACHPRsuh1YKAhNZyFnD28oxg==
+  dependencies:
+    exenv "^1.2.2"
+    react-from-dom "^0.6.0"
+
 react-input-autosize@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-3.0.0.tgz#6b5898c790d4478d69420b55441fcc31d5c50a85"
@@ -23100,9 +23095,9 @@ sshpk@^1.7.0:
     tweetnacl "~0.14.0"
 
 ssri@^6.0.0, ssri@^6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/ssri/-/ssri-6.0.1.tgz#2a3c41b28dd45b62b63676ecb74001265ae9edd8"
-  integrity sha512-3Wge10hNcT1Kur4PDFwEieXSCMCJs/7WvSACcrMYrNp+b8kDL1/0wJch5Ni2WrtwEa2IO8OsVfeKIciKCDx/QA==
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/ssri/-/ssri-6.0.2.tgz#157939134f20464e7301ddba3e90ffa8f7728ac5"
+  integrity sha512-cepbSq/neFK7xB6A50KHN0xHDotYzq58wWCa5LeWqnPrHG8GzfEjO/4O8kpmcGW+oaxkvhEJCWgbgNk4/ZV93Q==
   dependencies:
     figgy-pudding "^3.5.1"
 
@@ -24746,10 +24741,10 @@ update-notifier@^2.5.0:
     semver-diff "^2.0.0"
     xdg-basedir "^3.0.0"
 
-uplot@1.6.8:
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.8.tgz#0a7920018de24fa9aa0ba78ab59c99b4a23f8322"
-  integrity sha512-Hqg7iv/3fJlD9nockD7heaUj28RhrIwzugXglnoX//W27wgRAJIJMV2VFMZ5oRVM0RIchByAle1ylf/GdnXgjA==
+uplot@1.6.9:
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.9.tgz#0f10e10b5882cb80eb58d63f870b8a77e8d95962"
+  integrity sha512-uWIegRdqbqJwnB5SDBt29lyJIgHLIqt5AnwlLGxuA3gKKXGtY7d68RR6oDF2u5pK9jpIb1djrQnm5n0BiAnUgA==
 
 upper-case@^1.1.1:
   version "1.1.3"
