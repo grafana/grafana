@@ -95,6 +95,7 @@ export {
   PanelChromeErrorIndicator,
   PanelChromeErrorIndicatorProps,
   PanelContextProvider,
+  PanelContext,
   usePanelContext,
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
