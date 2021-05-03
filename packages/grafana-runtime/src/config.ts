@@ -6,7 +6,7 @@ import {
   FeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   LicenseInfo,
   PanelPluginMeta,
   systemDateFormats,
@@ -50,7 +50,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
   theme: GrafanaTheme;
-  theme2: GrafanaThemeV2;
+  theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     live: false,

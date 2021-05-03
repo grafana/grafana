@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme2, stylesFactory } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { Icon } from '../Icon/Icon';
 
@@ -10,7 +10,7 @@ export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> 
   category?: string[];
 }
 
-export const getLabelStyles = stylesFactory((theme: GrafanaThemeV2) => {
+export const getLabelStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     label: css`
       label: Label;

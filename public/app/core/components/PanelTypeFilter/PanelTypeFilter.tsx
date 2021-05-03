@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { GrafanaThemeV2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { getAllPanelPluginMeta } from '../../../features/dashboard/components/VizTypePicker/VizTypePicker';
 import { Icon, resetSelectStyles, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -61,7 +61,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
   );
 };
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css`
       label: container;

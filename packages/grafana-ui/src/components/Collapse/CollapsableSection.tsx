@@ -2,7 +2,7 @@ import React, { FC, ReactNode, useState } from 'react';
 import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes';
 import { Icon } from '..';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
   label: string;
@@ -27,7 +27,7 @@ export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
   );
 };
 
-const collapsableSectionStyles = (theme: GrafanaThemeV2) => {
+const collapsableSectionStyles = (theme: GrafanaTheme2) => {
   const header = css({
     display: 'flex',
     justifyContent: 'space-between',

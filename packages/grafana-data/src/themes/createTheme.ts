@@ -7,7 +7,7 @@ import { createSpacing, ThemeSpacingOptions } from './createSpacing';
 import { createTransitions } from './createTransitions';
 import { createTypography, ThemeTypographyInput } from './createTypography';
 import { createV1Theme } from './createV1Theme';
-import { GrafanaThemeV2 } from './types';
+import { GrafanaTheme2 } from './types';
 import { zIndex } from './zIndex';
 
 /** @internal */
@@ -20,7 +20,7 @@ export interface NewThemeOptions {
 }
 
 /** @internal */
-export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
+export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const {
     name = 'Dark',
     colors: colorsInput = {},

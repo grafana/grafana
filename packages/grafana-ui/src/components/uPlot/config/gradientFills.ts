@@ -1,4 +1,4 @@
-import { FieldColorMode, GrafanaThemeV2, ThresholdsConfig } from '@grafana/data';
+import { FieldColorMode, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 import { getCanvasContext } from '../../../utils/measureText';
@@ -20,7 +20,7 @@ export function getOpacityGradientFn(
 export function getHueGradientFn(
   color: string,
   opacity: number,
-  theme: GrafanaThemeV2
+  theme: GrafanaTheme2
 ): (self: uPlot, seriesIdx: number) => CanvasGradient {
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();

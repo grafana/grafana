@@ -2,10 +2,10 @@ import React, { memo } from 'react';
 import { EdgeDatum, NodeDatum } from './types';
 import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { shortenLine } from './utils';
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     mainGroup: css`
       pointer-events: none;

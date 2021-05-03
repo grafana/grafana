@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { Button, useStyles2, VerticalGroup } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state';
@@ -109,7 +109,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     libraryPanelsView: css`
       width: 100%;

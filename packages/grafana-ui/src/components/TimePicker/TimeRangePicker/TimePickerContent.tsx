@@ -1,4 +1,4 @@
-import { GrafanaThemeV2, isDateTime, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, isDateTime, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import React, { memo, useState } from 'react';
 import { useMedia } from 'react-use';
@@ -11,7 +11,7 @@ import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed, hideQuickRanges, isContainerTall) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
     container: css`
       background: ${theme.colors.background.primary};
@@ -54,7 +54,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed, hideQuickRan
   };
 });
 
-const getNarrowScreenStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     header: css`
       display: flex;
@@ -73,7 +73,7 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaThemeV2) => {
   };
 });
 
-const getFullScreenStyles = stylesFactory((theme: GrafanaThemeV2, hideQuickRanges?: boolean) => {
+const getFullScreenStyles = stylesFactory((theme: GrafanaTheme2, hideQuickRanges?: boolean) => {
   return {
     container: css`
       padding-top: 9px;
@@ -93,7 +93,7 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaThemeV2, hideQuickRange
   };
 });
 
-const getEmptyListStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getEmptyListStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
       padding: 12px;

@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
-import { GrafanaThemeV2, ThemeTypographyVariant } from '@grafana/data';
+import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
-export function getElementStyles(theme: GrafanaThemeV2) {
+export function getElementStyles(theme: GrafanaTheme2) {
   return css`
     html {
       -ms-overflow-style: scrollbar;

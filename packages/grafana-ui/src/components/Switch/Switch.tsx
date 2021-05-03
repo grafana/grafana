@@ -1,7 +1,7 @@
 import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { GrafanaThemeV2, deprecationWarning } from '@grafana/data';
+import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
@@ -55,7 +55,7 @@ export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>(({ transpa
 
 InlineSwitch.displayName = 'Switch';
 
-const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: boolean) => {
+const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boolean) => {
   return {
     switch: css`
       width: 32px;

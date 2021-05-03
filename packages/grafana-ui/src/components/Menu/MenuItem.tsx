@@ -1,6 +1,6 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2, LinkTarget } from '@grafana/data';
+import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
@@ -55,7 +55,7 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
 MenuItem.displayName = 'MenuItem';
 
 /** @internal */
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     link: css`
       color: ${theme.colors.text.primary};

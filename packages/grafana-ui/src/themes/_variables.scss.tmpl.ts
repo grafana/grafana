@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
-export const commonThemeVarsTemplate = (theme: GrafanaThemeV2) =>
+export const commonThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/default.ts', 'grafana-ui/src/themes/_variables.scss.tmpl.ts')}
 // Options
 //

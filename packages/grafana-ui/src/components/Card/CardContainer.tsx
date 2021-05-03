@@ -1,6 +1,6 @@
 import React, { HTMLAttributes, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { styleMixins, stylesFactory, useTheme2 } from '../../themes';
 
 /**
@@ -52,7 +52,7 @@ export const CardContainer = ({
   );
 };
 
-const getCardContainerStyles = stylesFactory((theme: GrafanaThemeV2, disabled = false, disableHover = false) => {
+const getCardContainerStyles = stylesFactory((theme: GrafanaTheme2, disabled = false, disableHover = false) => {
   return {
     container: css({
       display: 'flex',

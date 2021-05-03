@@ -1,9 +1,9 @@
 import { stylesFactory } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css as cssCore } from '@emotion/react';
 import { css } from '@emotion/css';
 
-export const getStyles = stylesFactory((theme: GrafanaThemeV2, isHorizontal: boolean) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean) => {
   const { spacing } = theme;
   const railColor = theme.colors.border.strong;
   const trackColor = theme.colors.primary.main;

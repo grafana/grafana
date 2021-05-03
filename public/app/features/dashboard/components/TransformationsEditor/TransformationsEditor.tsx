@@ -15,7 +15,7 @@ import {
   DataFrame,
   DataTransformerConfig,
   DocsId,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   PanelData,
   SelectableValue,
   standardTransformersRegistry,
@@ -368,7 +368,7 @@ const TransformationCard: React.FC<CardProps> = (props) => {
   return <Card {...props} className={styles.card} />;
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css`
       background: ${theme.colors.background.secondary};

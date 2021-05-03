@@ -6,7 +6,7 @@ import { EdgeDatum, NodeDatum } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
-import { DataFrame, GrafanaThemeV2, LinkModel } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
@@ -19,7 +19,7 @@ import { processNodes } from './utils';
 import { Icon } from '..';
 import { useNodeLimit } from './useNodeLimit';
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrapper: css`
     height: 100%;
     width: 100%;

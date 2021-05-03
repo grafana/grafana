@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 
@@ -9,7 +9,7 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
   }
 `;
 
-export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
+export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
   const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
   const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
   const background = theme.components.input.background;
@@ -93,7 +93,7 @@ export const inputSizesPixels = (size: string) => {
   }
 };
 
-export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaThemeV2) {
+export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme2) {
   switch (size) {
     case 'sm':
       return {

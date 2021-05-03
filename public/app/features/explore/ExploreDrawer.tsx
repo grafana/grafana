@@ -7,7 +7,7 @@ import { css, cx, keyframes } from '@emotion/css';
 import { stylesFactory, useTheme2 } from '@grafana/ui';
 
 // Types
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 const drawerSlide = keyframes`
   0% {
@@ -19,7 +19,7 @@ const drawerSlide = keyframes`
   }
 `;
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
       position: fixed !important;

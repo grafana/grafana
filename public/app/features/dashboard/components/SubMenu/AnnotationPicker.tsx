@@ -1,4 +1,4 @@
-import { AnnotationQuery, EventBus, GrafanaThemeV2 } from '@grafana/data';
+import { AnnotationQuery, EventBus, GrafanaTheme2 } from '@grafana/data';
 import React, { useEffect, useState } from 'react';
 import { getDashboardQueryRunner } from '../../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
@@ -53,7 +53,7 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
   );
 };
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     annotation: css`
       display: inline-block;

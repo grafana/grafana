@@ -16,7 +16,7 @@ import { css, cx } from '@emotion/css';
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { useStyles2 } from '../../themes';
-import { DataLinkBuiltInVars, GrafanaThemeV2, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 import { getInputStyles } from '../Input/Input';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
@@ -45,7 +45,7 @@ const plugins = [
   ),
 ];
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   input: getInputStyles({ theme, invalid: false }).input,
   editor: css`
     .token.builtInVariable {

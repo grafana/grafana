@@ -1,4 +1,4 @@
-import { DataFrameFieldIndex, FALLBACK_COLOR, FieldColorMode, GrafanaThemeV2, ThresholdsConfig } from '@grafana/data';
+import { DataFrameFieldIndex, FALLBACK_COLOR, FieldColorMode, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
 import {
@@ -30,7 +30,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   hideInLegend?: boolean;
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { MenuItemProps } from './MenuItem';
 
@@ -37,7 +37,7 @@ export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children, ariaLabel
 MenuGroup.displayName = 'MenuGroup';
 
 /** @internal */
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     groupLabel: css`
       color: ${theme.colors.text.secondary};

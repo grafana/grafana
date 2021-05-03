@@ -1,5 +1,5 @@
 import React, { HTMLProps, useCallback } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { getLabelStyles } from './Label';
 import { useTheme2, stylesFactory } from '../../themes';
 import { css, cx } from '@emotion/css';
@@ -11,7 +11,7 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   value?: boolean;
 }
 
-export const getCheckboxStyles = stylesFactory((theme: GrafanaThemeV2) => {
+export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = '16px';
   return {

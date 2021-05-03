@@ -1,7 +1,7 @@
 import { GrafanaTheme, GrafanaThemeCommons, GrafanaThemeType } from '../types';
-import { GrafanaThemeV2 } from './types';
+import { GrafanaTheme2 } from './types';
 
-export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
+export function createV1Theme(theme: Omit<GrafanaTheme2, 'v1'>): GrafanaTheme {
   const oldCommon: GrafanaThemeCommons = {
     name: 'Grafana Default',
     typography: {

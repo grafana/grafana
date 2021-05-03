@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export function getPageStyles(theme: GrafanaThemeV2) {
+export function getPageStyles(theme: GrafanaTheme2) {
   const maxWidthBreakpoint =
     theme.breakpoints.values.xxl + theme.spacing.gridSize * 2 + theme.components.sidemenu.width;
 

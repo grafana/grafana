@@ -5,14 +5,14 @@ import { interpolateRgbBasis } from 'd3-interpolate';
 import { fallBackTreshold } from './thresholds';
 import { getScaleCalculator, ColorScaleValue } from './scale';
 import { reduceField } from '../transformations/fieldReducer';
-import { GrafanaThemeV2 } from '../themes/types';
+import { GrafanaTheme2 } from '../themes/types';
 
 /** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
 
 /** @beta */
 export interface FieldColorMode extends RegistryItem {
-  getCalculator: (field: Field, theme: GrafanaThemeV2) => FieldValueColorCalculator;
+  getCalculator: (field: Field, theme: GrafanaTheme2) => FieldValueColorCalculator;
   colors?: string[];
   isContinuous?: boolean;
   isByValue?: boolean;
@@ -167,7 +167,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
     this.isByValue = options.isByValue;
   }
 
-  private getColors(theme: GrafanaThemeV2) {
+  private getColors(theme: GrafanaTheme2) {
     if (this.colorCache) {
       return this.colorCache;
     }
@@ -184,7 +184,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
     return this.interpolator;
   }
 
-  getCalculator(field: Field, theme: GrafanaThemeV2) {
+  getCalculator(field: Field, theme: GrafanaTheme2) {
     const colors = this.getColors(theme);
 
     if (this.isByValue) {
@@ -222,7 +222,7 @@ export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorM
  * Function that will return a series color for any given color mode. If the color mode is a by value color
  * mode it will use the field.config.color.seriesBy property to figure out which value to use
  */
-export function getFieldSeriesColor(field: Field, theme: GrafanaThemeV2): ColorScaleValue {
+export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorScaleValue {
   const mode = getFieldColorModeForField(field);
 
   if (!mode.isByValue) {
@@ -241,7 +241,7 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaThemeV2): ColorS
   return scale(value);
 }
 
-function getFixedColor(field: Field, theme: GrafanaThemeV2) {
+function getFixedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
     return getColorForTheme(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme.v1);
   };

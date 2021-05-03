@@ -8,7 +8,7 @@ import { PanelEditorTab, PanelEditorTabId } from './types';
 import { Subscription } from 'rxjs';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 import { PanelEditorQueries } from './PanelEditorQueries';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -75,7 +75,7 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
   return null;
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       display: flex;

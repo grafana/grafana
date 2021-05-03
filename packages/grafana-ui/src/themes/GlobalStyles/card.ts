@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export function getCardStyles(theme: GrafanaThemeV2) {
+export function getCardStyles(theme: GrafanaTheme2) {
   return css`
     .card-section {
       margin-bottom: ${theme.spacing(4)};

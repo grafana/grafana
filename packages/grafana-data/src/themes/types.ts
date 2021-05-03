@@ -9,8 +9,11 @@ import { ThemeTransitions } from './createTransitions';
 import { ThemeTypography } from './createTypography';
 import { ThemeZIndices } from './zIndex';
 
-/** @beta */
-export interface GrafanaThemeV2 {
+/**
+ * @beta
+ * Next gen theme model introduced in Grafana v8.
+ */
+export interface GrafanaTheme2 {
   name: string;
   isDark: boolean;
   isLight: boolean;

@@ -7,7 +7,7 @@ import PageHeader from '../PageHeader/PageHeader';
 import { Footer } from '../Footer/Footer';
 import { PageContents } from './PageContents';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { GrafanaThemeV2, NavModel } from '@grafana/data';
+import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { Branding } from '../Branding/Branding';
 import { css, cx } from '@emotion/css';
 
@@ -47,7 +47,7 @@ Page.Contents = PageContents;
 
 export default Page;
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     bottom: 0;
     position: absolute;

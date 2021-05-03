@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
 
@@ -128,7 +128,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     buttonSpinner: css`
       margin-right: ${theme.spacing(1)};

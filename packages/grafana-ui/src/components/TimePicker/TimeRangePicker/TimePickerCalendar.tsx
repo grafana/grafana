@@ -1,7 +1,7 @@
 import React, { FormEvent, memo, useCallback } from 'react';
 import { css } from '@emotion/css';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { dateTime, DateTime, dateTimeParse, GrafanaThemeV2, TimeZone } from '@grafana/data';
+import { dateTime, DateTime, dateTimeParse, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
@@ -9,7 +9,7 @@ import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed = false) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
   return {
     container: css`
       top: -1px;
@@ -57,7 +57,7 @@ const getStyles = stylesFactory((theme: GrafanaThemeV2, isReversed = false) => {
   };
 });
 
-const getFooterStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getFooterStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
       background-color: ${theme.colors.background.primary};
@@ -74,7 +74,7 @@ const getFooterStyles = stylesFactory((theme: GrafanaThemeV2) => {
   };
 });
 
-const getBodyStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getBodyStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     title: css`
       color: ${theme.colors.text};
@@ -171,7 +171,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaThemeV2) => {
   };
 });
 
-const getHeaderStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getHeaderStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
       background-color: ${theme.colors.background.primary};

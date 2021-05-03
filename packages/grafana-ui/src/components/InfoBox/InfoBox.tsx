@@ -1,6 +1,6 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { Alert, AlertVariant } from '../Alert/Alert';
 import { stylesFactory, useStyles2 } from '../../themes';
@@ -43,7 +43,7 @@ export const InfoBox = React.memo(
 
 InfoBox.displayName = 'InfoBox';
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     docsLink: css`
       display: inline-block;

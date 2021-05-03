@@ -1,6 +1,6 @@
 import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Icon } from '../Icon/Icon';
@@ -52,7 +52,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
 
 Tab.displayName = 'Tab';
 
-const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     item: css`
       list-style: none;

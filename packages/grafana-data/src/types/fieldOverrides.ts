@@ -4,7 +4,7 @@ import { InterpolateFunction } from './panel';
 import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
-import { GrafanaThemeV2 } from '../themes';
+import { GrafanaTheme2 } from '../themes';
 
 export interface DynamicConfigValue {
   id: string;
@@ -114,7 +114,7 @@ export interface ApplyFieldOverrideOptions {
   fieldConfig: FieldConfigSource;
   fieldConfigRegistry?: FieldConfigOptionsRegistry;
   replaceVariables: InterpolateFunction;
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
   timeZone?: TimeZone;
 }
 

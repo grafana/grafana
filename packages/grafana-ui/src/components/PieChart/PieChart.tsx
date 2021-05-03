@@ -6,7 +6,7 @@ import {
   FieldDisplay,
   formattedValueToString,
   getFieldDisplayValues,
-  GrafanaThemeV2,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
@@ -414,14 +414,14 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
   return [Math.cos(a) * r, Math.sin(a) * r];
 }
 
-function getGradientColorFrom(color: string, theme: GrafanaThemeV2) {
+function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
     .spin(8)
     .toRgbString();
 }
 
-function getGradientColorTo(color: string, theme: GrafanaThemeV2) {
+function getGradientColorTo(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
     .spin(-8)
@@ -453,7 +453,7 @@ function getPieLayout(height: number, width: number, pieType: PieChartType, marg
   };
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       width: 100%;

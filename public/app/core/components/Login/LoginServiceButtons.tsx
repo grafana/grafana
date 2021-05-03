@@ -2,7 +2,7 @@ import React from 'react';
 import config from 'app/core/config';
 import { css, cx } from '@emotion/css';
 import { Icon, IconName, LinkButton, useStyles, useTheme2, VerticalGroup } from '@grafana/ui';
-import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import { pickBy } from 'lodash';
 
 export interface LoginService {
@@ -124,7 +124,7 @@ const LoginDivider = () => {
   );
 };
 
-function getButtonStyleFor(service: LoginService, styles: ReturnType<typeof getServiceStyles>, theme: GrafanaThemeV2) {
+function getButtonStyleFor(service: LoginService, styles: ReturnType<typeof getServiceStyles>, theme: GrafanaTheme2) {
   return cx(
     styles.button,
     css`

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, useStyles2, VerticalGroup } from '@grafana/ui';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
 export interface UpdatePluginModalProps {
@@ -34,7 +34,7 @@ export function UpdatePluginModal({ onDismiss, id, name }: UpdatePluginModalProp
   );
 }
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     small: css`
       font-size: ${theme.typography.bodySmall.fontSize};

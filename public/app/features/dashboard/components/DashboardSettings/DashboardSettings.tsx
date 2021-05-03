@@ -14,7 +14,7 @@ import { AnnotationsSettings } from './AnnotationsSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 export interface Props {
@@ -183,7 +183,7 @@ export class DashboardSettings extends PureComponent<Props> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   scrollInner: css`
     min-width: 100%;
     min-height: 100%;

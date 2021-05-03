@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
-import { GrafanaThemeV2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
 import { FilterInput } from '../../../../core/components/FilterInput/FilterInput';
 import { SortPicker } from '../../../../core/components/Select/SortPicker';
@@ -93,7 +93,7 @@ export const LibraryPanelsSearch = ({
   );
 };
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css`
       width: 100%;

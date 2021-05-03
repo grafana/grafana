@@ -1,5 +1,5 @@
 import React from 'react';
-import { GrafanaThemeV2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
+import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
@@ -65,7 +65,7 @@ export const PanelTypeCard: React.FC<Props> = ({
 
 PanelTypeCard.displayName = 'PanelTypeCard';
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css`
       position: relative;

@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { stylesFactory, useStyles2 } from '../../themes';
-import { GrafanaThemeV2, locale } from '@grafana/data';
+import { GrafanaTheme2, locale } from '@grafana/data';
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     counter: css`
       label: counter;

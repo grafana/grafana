@@ -1,4 +1,4 @@
-import { dateTimeFormat, GrafanaThemeV2, systemDateFormats, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
@@ -7,7 +7,7 @@ import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
   scaleKey: string;
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
   label?: string;
   show?: boolean;
   size?: number | null;

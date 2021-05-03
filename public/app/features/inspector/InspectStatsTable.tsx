@@ -3,7 +3,7 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   QueryResultMetaStat,
   TimeZone,
 } from '@grafana/data';
@@ -43,7 +43,7 @@ export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ timeZone, 
   );
 };
 
-function formatStat(stat: QueryResultMetaStat, timeZone: TimeZone, theme: GrafanaThemeV2): string {
+function formatStat(stat: QueryResultMetaStat, timeZone: TimeZone, theme: GrafanaTheme2): string {
   const display = getDisplayProcessor({
     field: {
       type: FieldType.number,
@@ -55,7 +55,7 @@ function formatStat(stat: QueryResultMetaStat, timeZone: TimeZone, theme: Grafan
   return formattedValueToString(display(stat.value));
 }
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       padding-bottom: ${theme.spacing(2)};

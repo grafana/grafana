@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes';
 
@@ -12,7 +12,7 @@ const EmptySearchResult: FC<Props> = ({ children }) => {
   return <div className={styles.container}>{children}</div>;
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       border-left: 3px solid ${theme.colors.info.main};

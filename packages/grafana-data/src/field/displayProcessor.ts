@@ -9,7 +9,7 @@ import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
-import { GrafanaThemeV2 } from '../themes/types';
+import { GrafanaTheme2 } from '../themes/types';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -20,7 +20,7 @@ interface DisplayProcessorOptions {
   /**
    * Will pick 'dark' if not defined
    */
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
 }
 
 // Reasonable units for time
