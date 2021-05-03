@@ -31,7 +31,7 @@ The inspector pane opens on the bottom of the screen.
 
 You can view raw query results, that is the data returned by the query in a table. 
 
-1. Open the inspector and then click the **Data** tab.
+1. In the **Inspector** tab, click the **Data** tab.
 1. If you have run multiple queries or queries multiple nodes, then you have additional options.
 
 - **Show data frame -** Choose which result set data you want to view.
