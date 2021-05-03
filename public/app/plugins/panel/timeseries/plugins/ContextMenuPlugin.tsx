@@ -14,7 +14,6 @@ import {
   CartesianCoords2D,
   DataFrame,
   DataFrameView,
-  getDisplayProcessor,
   getFieldDisplayName,
   InterpolateFunction,
   TimeZone,
@@ -198,7 +197,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
 
   if (selection.point) {
     const { seriesIdx, dataIdx } = selection.point;
-    const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone });
+    const xFieldFmt = xField.display!;
 
     if (seriesIdx && dataIdx) {
       const field = data.fields[seriesIdx];
