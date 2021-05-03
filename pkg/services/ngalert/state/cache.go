@@ -122,9 +122,7 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 func (c *cache) removeByRuleUID(orgID int64, uid string) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	if _, ok := c.states[orgID][uid]; ok {
-		delete(c.states[orgID], uid)
-	}
+	delete(c.states[orgID], uid)
 }
 
 func (c *cache) reset() {
