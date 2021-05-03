@@ -16,7 +16,7 @@ func (pm *PluginManager) GetPluginSettings(orgID int64) (map[string]*models.Plug
 		pluginMap[plug.PluginId] = plug
 	}
 
-	for _, pluginDef := range pm.plugins {
+	for _, pluginDef := range pm.Plugins() {
 		// ignore entries that exists
 		if _, ok := pluginMap[pluginDef.Id]; ok {
 			continue
@@ -63,8 +63,8 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 		return enabledPlugins, err
 	}
 
-	for pluginID, app := range pm.apps {
-		if b, ok := pluginSettingMap[pluginID]; ok {
+	for _, app := range pm.Apps() {
+		if b, ok := pluginSettingMap[app.Id]; ok {
 			app.Pinned = b.Pinned
 			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
 		}

@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -71,6 +72,7 @@ type PluginManager struct {
 	panels       map[string]*plugins.PanelPlugin
 	apps         map[string]*plugins.AppPlugin
 	staticRoutes []*plugins.PluginStaticRoute
+	pluginsMu    sync.RWMutex
 }
 
 func init() {
@@ -152,29 +154,28 @@ func (pm *PluginManager) initExternalPlugins() error {
 	}
 
 	var staticRoutesList []*plugins.PluginStaticRoute
-	for _, panel := range pm.panels {
+	for _, panel := range pm.Panels() {
 		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
 		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
 
-	for _, ds := range pm.dataSources {
+	for _, ds := range pm.DataSources() {
 		staticRoutes := ds.InitFrontendPlugin(pm.Cfg)
 		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
 
-	for _, app := range pm.apps {
+	for _, app := range pm.Apps() {
 		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
 		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
 
-	if pm.renderer != nil {
+	if pm.Renderer() != nil {
 		staticRoutes := pm.renderer.InitFrontendPlugin(pm.Cfg)
 		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
-
 	pm.staticRoutes = staticRoutesList
 
-	for _, p := range pm.plugins {
+	for _, p := range pm.Plugins() {
 		if p.IsCorePlugin {
 			p.Signature = plugins.PluginSignatureInternal
 		} else {
@@ -204,14 +205,23 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 }
 
 func (pm *PluginManager) Renderer() *plugins.RendererPlugin {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	return pm.renderer
 }
 
 func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	return pm.dataSources[id]
 }
 
 func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	var rslt []*plugins.DataSourcePlugin
 	for _, ds := range pm.dataSources {
 		rslt = append(rslt, ds)
@@ -221,18 +231,30 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 }
 
 func (pm *PluginManager) DataSourceCount() int {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	return len(pm.dataSources)
 }
 
 func (pm *PluginManager) PanelCount() int {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	return len(pm.panels)
 }
 
 func (pm *PluginManager) AppCount() int {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	return len(pm.apps)
 }
 
 func (pm *PluginManager) Plugins() []*plugins.PluginBase {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	var rslt []*plugins.PluginBase
 	for _, p := range pm.plugins {
 		rslt = append(rslt, p)
@@ -242,6 +264,9 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 }
 
 func (pm *PluginManager) Apps() []*plugins.AppPlugin {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	var rslt []*plugins.AppPlugin
 	for _, p := range pm.apps {
 		rslt = append(rslt, p)
@@ -250,11 +275,29 @@ func (pm *PluginManager) Apps() []*plugins.AppPlugin {
 	return rslt
 }
 
+func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
+	var rslt []*plugins.PanelPlugin
+	for _, p := range pm.panels {
+		rslt = append(rslt, p)
+	}
+
+	return rslt
+}
+
 func (pm *PluginManager) GetPlugin(id string) *plugins.PluginBase {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	return pm.plugins[id]
 }
 
 func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
 	return pm.apps[id]
 }
 
@@ -313,7 +356,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	pm.log.Debug("Initial plugin loading done")
 
 	for foundPluginPath, foundPlugin := range scanner.plugins {
-		if existing, exists := pm.plugins[foundPlugin.Id]; exists && foundPlugin.Info.Version == existing.Info.Version {
+		if existing := pm.GetPlugin(foundPlugin.Id); existing != nil && foundPlugin.Info.Version == existing.Info.Version {
 			pm.log.Debug("Skipping plugin as it's already installed", "plugin", foundPlugin.Id)
 			delete(scanner.plugins, foundPluginPath)
 		}
@@ -414,6 +457,15 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		return err
 	}
 
+	if p := pm.GetPlugin(pluginBase.Id); p != nil {
+		pm.log.Warn("Plugin is duplicate", "id", p.Id)
+		scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{PluginID: p.Id, ExistingPluginDir: p.PluginDir})
+		return nil
+	}
+
+	pm.pluginsMu.Lock()
+	defer pm.pluginsMu.Unlock()
+
 	var pb *plugins.PluginBase
 	switch p := plug.(type) {
 	case *plugins.DataSourcePlugin:
@@ -430,12 +482,6 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		pb = &p.PluginBase
 	default:
 		panic(fmt.Sprintf("Unrecognized plugin type %T", plug))
-	}
-
-	if p, exists := pm.plugins[pb.Id]; exists {
-		pm.log.Warn("Plugin is duplicate", "id", pb.Id)
-		scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{PluginID: pb.Id, ExistingPluginDir: p.PluginDir})
-		return nil
 	}
 
 	if !strings.HasPrefix(pluginBase.PluginDir, pm.Cfg.StaticRootPath) {
@@ -695,7 +741,10 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 // GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
-	if p, exists := pm.dataSources[id]; exists && p.CanHandleDataQueries() {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
+	if p := pm.GetDataSource(id); p != nil && p.CanHandleDataQueries() {
 		return p
 	}
 
@@ -714,7 +763,7 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 }
 
 func (pm *PluginManager) Install(pluginID, version string) error {
-	plugin := pm.plugins[pluginID]
+	plugin := pm.GetPlugin(pluginID)
 	if plugin != nil {
 		if version != "" && version == plugin.Info.Version {
 			return plugins.DuplicatePluginError{
@@ -744,7 +793,7 @@ func (pm *PluginManager) Install(pluginID, version string) error {
 }
 
 func (pm *PluginManager) Uninstall(pluginID string) error {
-	plugin := pm.plugins[pluginID]
+	plugin := pm.GetPlugin(pluginID)
 	if plugin == nil {
 		return plugins.PluginNotFoundError{PluginID: pluginID}
 	}
@@ -765,6 +814,9 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 }
 
 func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
+	pm.pluginsMu.Lock()
+	defer pm.pluginsMu.Unlock()
+
 	switch plugin.Type {
 	case "panel":
 		delete(pm.panels, plugin.Id)

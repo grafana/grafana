@@ -11,8 +11,9 @@ import (
 )
 
 func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	plugin, exists := pm.plugins[pluginID]
-	if !exists {
+	plugin := pm.GetPlugin(pluginID)
+
+	if plugin == nil {
 		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
 
@@ -71,8 +72,8 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 }
 
 func (pm *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
-	plugin, exists := pm.plugins[pluginID]
-	if !exists {
+	plugin := pm.GetPlugin(pluginID)
+	if plugin == nil {
 		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
 

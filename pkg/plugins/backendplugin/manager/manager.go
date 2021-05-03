@@ -100,10 +100,10 @@ func (m *manager) RegisterAndStart(pluginID string, factory backendplugin.Plugin
 
 // UnregisterAndStop unregisters and stops a backend plugin
 func (m *manager) UnregisterAndStop(pluginID string) error {
+	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
 
-	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
 	p, exists := m.plugins[pluginID]
 	if !exists {
 		return fmt.Errorf("backend plugin %s is not registered", pluginID)
@@ -125,13 +125,18 @@ func (m *manager) UnregisterAndStop(pluginID string) error {
 }
 
 func (m *manager) Registered(pluginID string) bool {
+	m.pluginsMu.RLock()
 	_, exists := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
 
 	return exists
 }
 
 func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
 	return p, ok
 }
 
@@ -149,7 +154,10 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (m *manager) GetDataPlugin(pluginID string) interface{} {
+	m.pluginsMu.RLock()
 	plugin := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
 	if plugin == nil {
 		return nil
 	}
