@@ -25,10 +25,6 @@ func (fp *FrontendPluginBase) InitFrontendPlugin(cfg *setting.Cfg) []*PluginStat
 		}
 	}
 
-	if fp.Initialized {
-		return staticRoutes
-	}
-
 	fp.handleModuleDefaults(cfg)
 
 	fp.Info.Logos.Small = getPluginLogoUrl(fp.Type, fp.Info.Logos.Small, fp.BaseUrl)
@@ -37,8 +33,6 @@ func (fp *FrontendPluginBase) InitFrontendPlugin(cfg *setting.Cfg) []*PluginStat
 	for i := 0; i < len(fp.Info.Screenshots); i++ {
 		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl)
 	}
-
-	fp.Initialized = true
 
 	return staticRoutes
 }
@@ -94,5 +88,10 @@ func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
 	if u.IsAbs() {
 		return pathStr
 	}
+
+	if strings.HasPrefix(pathStr, baseUrl) {
+		return pathStr
+	}
+
 	return path.Join(baseUrl, pathStr)
 }
