@@ -32,11 +32,16 @@ const renderRemovableNameMenuItems = (onClick: () => void) => {
   );
 };
 
+const noRightMarginPaddingClass = css({
+  paddingRight: '0',
+  marginRight: '0',
+});
+
 const RemovableName = ({ name, onRemove }: { name: string; onRemove: () => void }) => {
   return (
     <WithContextMenu renderMenuItems={() => renderRemovableNameMenuItems(onRemove)}>
       {({ openMenu }) => (
-        <button className="gf-form-label" onClick={openMenu}>
+        <button className={cx('gf-form-label', noRightMarginPaddingClass)} onClick={openMenu}>
           {name}
         </button>
       )}
