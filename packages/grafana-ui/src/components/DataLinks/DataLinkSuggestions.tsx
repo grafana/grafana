@@ -1,4 +1,4 @@
-import { VariableSuggestion, GrafanaThemeV2 } from '@grafana/data';
+import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { groupBy, capitalize } from 'lodash';
 import React, { useRef, useMemo } from 'react';
@@ -14,7 +14,7 @@ interface DataLinkSuggestionsProps {
   onClose?: () => void;
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     list: css`
       border-bottom: 1px solid ${theme.colors.border.weak};

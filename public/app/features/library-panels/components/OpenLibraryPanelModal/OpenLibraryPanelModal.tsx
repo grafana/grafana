@@ -1,7 +1,7 @@
 import React, { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
-import { GrafanaThemeV2, SelectableValue, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { LibraryPanelDTO } from '../../types';
@@ -85,7 +85,7 @@ async function loadOptionsAsync(uid: string, searchString: string, setLoading: (
   return options;
 }
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css``,
   };
