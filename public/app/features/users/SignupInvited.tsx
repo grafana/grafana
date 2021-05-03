@@ -73,8 +73,7 @@ export const SignupInvitedPage: FC<Props> = ({ match }) => {
               <Field invalid={!!errors.email} error={errors.email && errors.email.message} label="Email">
                 <Input
                   placeholder="email@example.com"
-                  name="email"
-                  ref={register({
+                  {...register('email', {
                     required: 'Email is required',
                     pattern: {
                       value: /^\S+@\S+$/,
@@ -84,17 +83,16 @@ export const SignupInvitedPage: FC<Props> = ({ match }) => {
                 />
               </Field>
               <Field invalid={!!errors.name} error={errors.name && errors.name.message} label="Name">
-                <Input placeholder="Name (optional)" name="name" ref={register} />
+                <Input placeholder="Name (optional)" {...register('name')} />
               </Field>
               <Field invalid={!!errors.username} error={errors.username && errors.username.message} label="Username">
-                <Input placeholder="Username" name="username" ref={register({ required: 'Username is required' })} />
+                <Input {...register('username', { required: 'Username is required' })} placeholder="Username" />
               </Field>
               <Field invalid={!!errors.password} error={errors.password && errors.password.message} label="Password">
                 <Input
+                  {...register('password', { required: 'Password is required' })}
                   type="password"
                   placeholder="Password"
-                  name="password"
-                  ref={register({ required: 'Password is required' })}
                 />
               </Field>
 

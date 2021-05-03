@@ -84,7 +84,8 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 	if now.IsZero() {
 		now = timeNow()
 	}
-	if err := validateQueriesAndExpressions(cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+
+	if _, err := validateQueriesAndExpressions(cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 		return response.Error(http.StatusBadRequest, "invalid queries or expressions", err)
 	}
 

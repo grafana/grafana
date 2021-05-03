@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/benbjohnson/clock"
@@ -45,9 +46,10 @@ type AlertNG struct {
 	DataService     *tsdb.Service                           `inject:""`
 	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
+	Metrics         *metrics.Metrics                        `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
-	stateTracker    *state.StateTracker
+	stateManager    *state.Manager
 }
 
 func init() {
@@ -57,7 +59,7 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-	ng.stateTracker = state.NewStateTracker(ng.Log)
+	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
@@ -85,9 +87,9 @@ func (ng *AlertNG) Init() error {
 		RuleStore:       store,
 		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
-		StateTracker:    ng.stateTracker,
+		StateManager:    ng.stateManager,
 	}
-	api.RegisterAPIEndpoints()
+	api.RegisterAPIEndpoints(ng.Metrics)
 
 	return nil
 }
@@ -95,8 +97,8 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
-	ng.schedule.WarmStateCache(ng.stateTracker)
-	return ng.schedule.Ticker(ctx, ng.stateTracker)
+	ng.schedule.WarmStateCache(ng.stateManager)
+	return ng.schedule.Ticker(ctx, ng.stateManager)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.

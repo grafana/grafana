@@ -35,12 +35,13 @@ exports[`Render should render table 1`] = `
           }
         }
       >
-        <button
-          className="btn btn-secondary btn-small"
+        <Button
           onClick={[Function]}
+          size="sm"
+          variant="secondary"
         >
           Import
-        </button>
+        </Button>
       </td>
     </tr>
     <tr
@@ -67,20 +68,19 @@ exports[`Render should render table 1`] = `
           }
         }
       >
-        <button
-          className="btn btn-secondary btn-small"
+        <Button
           onClick={[Function]}
+          size="sm"
+          variant="secondary"
         >
           Update
-        </button>
-        <button
-          className="btn btn-danger btn-small"
+        </Button>
+        <Button
+          icon="trash-alt"
           onClick={[Function]}
-        >
-          <Icon
-            name="trash-alt"
-          />
-        </button>
+          size="sm"
+          variant="destructive"
+        />
       </td>
     </tr>
   </tbody>

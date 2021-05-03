@@ -63,7 +63,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const suffix =
     searchQuery !== '' ? (
-      <Button icon="times" variant="link" size="sm" onClick={() => setSearchQuery('')}>
+      <Button icon="times" fill="text" size="sm" onClick={() => setSearchQuery('')}>
         Clear
       </Button>
     ) : null;
@@ -74,7 +74,11 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const radioOptions: Array<SelectableValue<ListMode>> = [
     { label: 'Visualizations', value: ListMode.Visualizations },
-    { label: 'Global panels', value: ListMode.Globals },
+    {
+      label: 'Library panels',
+      value: ListMode.Globals,
+      description: 'Reusable panels you can share between multiple dashboards.',
+    },
   ];
 
   return (

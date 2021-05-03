@@ -9,17 +9,16 @@ import {
   VariableQueryEditorType,
   VariableRefresh,
   VariableSort,
-  VariableTag,
 } from '../types';
 
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
   getInstanceState,
+  initialVariablesState,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
   VariablePayload,
-  initialVariablesState,
   VariablesState,
 } from '../state/types';
 
@@ -40,16 +39,12 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   query: '',
   regex: '',
   sort: VariableSort.disabled,
-  refresh: VariableRefresh.never,
+  refresh: VariableRefresh.onDashboardLoad,
   multi: false,
   includeAll: false,
   allValue: null,
   options: [],
   current: {} as VariableOption,
-  tags: [],
-  useTags: false,
-  tagsQuery: '',
-  tagValuesQuery: '',
   definition: '',
 };
 
@@ -179,19 +174,9 @@ export const queryVariableSlice = createSlice({
 
       instanceState.options = options;
     },
-    updateVariableTags: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
-      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
-      const results = action.payload.data;
-      const tags: VariableTag[] = [];
-      for (let i = 0; i < results.length; i++) {
-        tags.push({ text: results[i].text, selected: false });
-      }
-
-      instanceState.tags = tags;
-    },
   },
 });
 
 export const queryVariableReducer = queryVariableSlice.reducer;
 
-export const { updateVariableOptions, updateVariableTags } = queryVariableSlice.actions;
+export const { updateVariableOptions } = queryVariableSlice.actions;

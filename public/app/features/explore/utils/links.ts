@@ -9,7 +9,7 @@ import {
   DataFrame,
   getFieldDisplayValuesProxy,
 } from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { SplitOpen } from 'app/types/explore';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 
@@ -43,8 +43,9 @@ export const getFieldLinksForExplore = (options: {
       value: {
         name: dataFrame.name,
         refId: dataFrame.refId,
-        fields: getFieldDisplayValuesProxy(dataFrame, rowIndex, {
-          theme: config.theme,
+        fields: getFieldDisplayValuesProxy({
+          frame: dataFrame,
+          rowIndex,
         }),
       },
       text: 'Data',

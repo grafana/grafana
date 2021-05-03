@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Button, ConfirmModal, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -89,7 +89,10 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
             Use <strong>Save As</strong> to create custom version.
           </small>
         </div>
-        <HorizontalGroup justify="center">
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            Cancel
+          </Button>
           <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onDismiss} />
           <Button
             variant="destructive"
@@ -100,10 +103,7 @@ const ConfirmPluginDashboardSaveModal: React.FC<SaveDashboardModalProps> = ({ on
           >
             Overwrite
           </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
-          </Button>
-        </HorizontalGroup>
+        </Modal.ButtonRow>
       </div>
     </Modal>
   );

@@ -86,6 +86,7 @@ type DataPluginConfiguration struct {
 }
 
 // NewDataPlugin returns a new plugins.DataPlugin
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewDataPlugin(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (plugins.DataPlugin, error) {
 	plugin := dataPlugin{
@@ -135,6 +136,7 @@ func NewDataPlugin(config DataPluginConfiguration, queryResultTransformer SqlQue
 const rowLimit = 1000000
 
 // Query is the main function for the SqlQueryEndpoint
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	var timeRange plugins.DataTimeRange
@@ -251,6 +253,7 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	return sql, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *dataPlugin) transformToTable(query plugins.DataSubQuery, rows *core.Rows,
 	result *plugins.DataQueryResult, queryContext plugins.DataQuery) error {
 	columnNames, err := rows.Columns()
@@ -341,6 +344,7 @@ func newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery, r
 	return cfg, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *core.Rows,
 	result *plugins.DataQueryResult, queryContext plugins.DataQuery) error {
 	cfg, err := newProcessCfg(query, queryContext, rows)

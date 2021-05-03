@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
@@ -32,51 +34,55 @@ type evalAppliedInfo struct {
 
 func TestWarmStateCache(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
+	dbstore := setupTestEnv(t, 1)
 
-	expectedEntries := []state.AlertState{
+	rule := createTestAlertRule(t, dbstore, 600)
+
+	expectedEntries := []*state.State{
 		{
-			AlertRuleUID: "test_uid",
-			OrgID:        123,
-			CacheId:      "test_uid map[test1:testValue1]",
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheId:      `[["test1","testValue1"]]`,
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
-			Results: []state.StateEvaluation{
+			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
 			},
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 		}, {
-			AlertRuleUID: "test_uid",
-			OrgID:        123,
-			CacheId:      "test_uid map[test2:testValue2]",
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheId:      `[["test2","testValue2"]]`,
 			Labels:       data.Labels{"test2": "testValue2"},
 			State:        eval.Alerting,
-			Results: []state.StateEvaluation{
+			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
 			},
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 		},
 	}
 
-	dbstore := setupTestEnv(t, 1)
-
 	saveCmd1 := &models.SaveAlertInstanceCommand{
-		DefinitionOrgID:   123,
-		DefinitionUID:     "test_uid",
+		DefinitionOrgID:   rule.OrgID,
+		DefinitionUID:     rule.UID,
 		Labels:            models.InstanceLabels{"test1": "testValue1"},
 		State:             models.InstanceStateNormal,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
+
 	_ = dbstore.SaveAlertInstance(saveCmd1)
 
 	saveCmd2 := &models.SaveAlertInstanceCommand{
-		DefinitionOrgID:   123,
-		DefinitionUID:     "test_uid",
+		DefinitionOrgID:   rule.OrgID,
+		DefinitionUID:     rule.UID,
 		Labels:            models.InstanceLabels{"test2": "testValue2"},
 		State:             models.InstanceStateFiring,
 		LastEvalTime:      evaluationTime,
@@ -92,15 +98,21 @@ func TestWarmStateCache(t *testing.T) {
 		BaseInterval: time.Second,
 		Logger:       log.New("ngalert cache warming test"),
 		Store:        dbstore,
+		RuleStore:    dbstore,
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
-	st := state.NewStateTracker(schedCfg.Logger)
+	st := state.NewManager(schedCfg.Logger, nilMetrics)
 	sched.WarmStateCache(st)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry := st.Get(entry.CacheId)
-			assert.True(t, entry.Equals(cacheEntry))
+			cacheEntry, err := st.Get(entry.CacheId)
+			require.NoError(t, err)
+
+			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+				t.FailNow()
+			}
 		}
 	})
 }
@@ -139,7 +151,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	ctx := context.Background()
 
-	st := state.NewStateTracker(schedCfg.Logger)
+	st := state.NewManager(schedCfg.Logger, nilMetrics)
 	go func() {
 		err := sched.Ticker(ctx, st)
 		require.NoError(t, err)

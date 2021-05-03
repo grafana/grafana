@@ -14,7 +14,8 @@ func init() {
 
 // LogsService provides methods for querying CloudWatch Logs.
 type LogsService struct {
-	channelMu        sync.Mutex
+	channelMu sync.Mutex
+	// nolint:staticcheck // plugins.DataQueryResult deprecated
 	responseChannels map[string]chan plugins.DataResponse
 	queues           map[string](chan bool)
 	queueLock        sync.Mutex
@@ -22,11 +23,13 @@ type LogsService struct {
 
 // Init is called by the DI framework to initialize the instance.
 func (s *LogsService) Init() error {
+	// nolint:staticcheck // plugins.DataQueryResult deprecated
 	s.responseChannels = make(map[string]chan plugins.DataResponse)
 	s.queues = make(map[string](chan bool))
 	return nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (s *LogsService) AddResponseChannel(name string, channel chan plugins.DataResponse) error {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()
@@ -39,6 +42,7 @@ func (s *LogsService) AddResponseChannel(name string, channel chan plugins.DataR
 	return nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (s *LogsService) GetResponseChannel(name string) (chan plugins.DataResponse, error) {
 	s.channelMu.Lock()
 	defer s.channelMu.Unlock()

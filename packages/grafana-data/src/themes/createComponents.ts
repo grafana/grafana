@@ -36,6 +36,9 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  sidemenu: {
+    width: number;
+  };
 }
 
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
@@ -43,8 +46,8 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     padding: 1,
     headerHeight: 4,
     background: colors.background.primary,
-    borderColor: colors.background.primary,
-    boxShadow: shadows.z1,
+    borderColor: colors.border.weak,
+    boxShadow: 'none',
   };
 
   const input = {
@@ -66,15 +69,18 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: input.background,
     },
     tooltip: {
-      background: colors.background.secondary,
-      text: colors.text.primary,
+      background: colors.mode === 'light' ? '#555' : colors.background.secondary,
+      text: colors.mode === 'light' ? '#FFF' : colors.text.primary,
     },
     dashboard: {
       background: colors.background.canvas,
       padding: 1,
     },
     overlay: {
-      background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.27)' : 'rgba(208, 209, 211, 0.24)',
+      background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+    },
+    sidemenu: {
+      width: 60,
     },
   };
 }

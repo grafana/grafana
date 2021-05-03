@@ -21,9 +21,8 @@
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "000000002",
             "model": {
-              "datasource": "gdev-prometheus",
-              "datasourceUid": "000000002",
               "expr": "http_request_duration_microseconds_count",
               "hide": false,
               "interval": "",
@@ -40,9 +39,8 @@
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "query",
               "hide": false,
               "intervalMs": 1000,
@@ -59,9 +57,8 @@
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "-100",
               "expression": "$reduced > 10",
               "hide": false,
               "intervalMs": 1000,
@@ -87,10 +84,9 @@
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "000000004",
             "model": {
               "alias": "just-testing",
-              "datasource": "gdev-testdata",
-              "datasourceUid": "000000004",
               "intervalMs": 1000,
               "maxDataPoints": 100,
               "orgId": 0,
@@ -106,9 +102,8 @@
               "from": 18000,
               "to": 10800
             },
+            "datasourceUid": "-100",
             "model": {
-              "datasource": "__expr__",
-              "datasourceUid": "__expr__",
               "expression": "$A",
               "intervalMs": 2000,
               "maxDataPoints": 200,
