@@ -123,7 +123,15 @@ func (c *cache) trim() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	ct := make(map[eval.State]int)
+	// Set default values to zero such that gauges are reset
+	// after all values from a single state disappear.
+	ct := map[eval.State]int{
+		eval.Normal:   0,
+		eval.Alerting: 0,
+		eval.Pending:  0,
+		eval.NoData:   0,
+		eval.Error:    0,
+	}
 
 	for _, v := range c.states {
 		if len(v.Results) > 100 {
