@@ -1,4 +1,4 @@
-import { DataFrame, DataLink, GrafanaThemeV2, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Button } from '../../Button/Button';
@@ -111,7 +111,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({
   );
 };
 
-const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing(2)};

@@ -4,7 +4,7 @@ import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
 import { css, cx } from '@emotion/css';
 import { stylesFactory } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
 
 interface InputControlProps {
@@ -17,7 +17,7 @@ interface InputControlProps {
 }
 
 const getInputControlStyles = stylesFactory(
-  (theme: GrafanaThemeV2, invalid: boolean, focused: boolean, disabled: boolean, withPrefix: boolean) => {
+  (theme: GrafanaTheme2, invalid: boolean, focused: boolean, disabled: boolean, withPrefix: boolean) => {
     const styles = getInputStyles({ theme, invalid });
 
     return {

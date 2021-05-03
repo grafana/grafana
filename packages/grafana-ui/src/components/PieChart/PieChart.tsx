@@ -6,7 +6,7 @@ import {
   FieldDisplay,
   formattedValueToString,
   getFieldDisplayValues,
-  GrafanaThemeV2,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
@@ -53,7 +53,6 @@ export function PieChart(props: PieChartProps) {
     fieldConfig,
     replaceVariables,
     tooltipOptions,
-    onSeriesColorChange,
     width,
     height,
     ...restProps
@@ -128,14 +127,7 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
     };
   });
 
-  return (
-    <VizLegend
-      items={legendItems}
-      onSeriesColorChange={props.onSeriesColorChange}
-      placement={legendOptions.placement}
-      displayMode={legendOptions.displayMode}
-    />
-  );
+  return <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />;
 }
 
 function useSliceHighlightState() {
@@ -143,25 +135,17 @@ function useSliceHighlightState() {
   const { eventBus } = usePanelContext();
 
   useEffect(() => {
-    if (!eventBus) {
-      return;
-    }
-
     const setHighlightedSlice = (event: DataHoverEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(event.payload.dataId);
-      }
+      setHighlightedTitle(event.payload.dataId);
     };
 
     const resetHighlightedSlice = (event: DataHoverClearEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(undefined);
-      }
+      setHighlightedTitle(undefined);
     };
 
     const subs = new Subscription()
-      .add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice))
-      .add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
+      .add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }))
+      .add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
 
     return () => {
       subs.unsubscribe();
@@ -422,14 +406,14 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
   return [Math.cos(a) * r, Math.sin(a) * r];
 }
 
-function getGradientColorFrom(color: string, theme: GrafanaThemeV2) {
+function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
     .spin(8)
     .toRgbString();
 }
 
-function getGradientColorTo(color: string, theme: GrafanaThemeV2) {
+function getGradientColorTo(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
     .spin(-8)
@@ -461,7 +445,7 @@ function getPieLayout(height: number, width: number, pieType: PieChartType, marg
   };
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       width: 100%;
