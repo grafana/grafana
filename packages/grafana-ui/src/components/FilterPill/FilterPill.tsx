@@ -1,6 +1,6 @@
 import React from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { IconButton } from '../IconButton/IconButton';
 import { IconName } from '../../types';
@@ -13,7 +13,7 @@ export interface FilterPillProps {
 }
 
 export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick, icon = 'check' }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getFilterPillStyles(theme, selected);
   return (
     <div className={styles.wrapper} onClick={onClick}>
@@ -31,26 +31,26 @@ export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick
   );
 };
 
-const getFilterPillStyles = stylesFactory((theme: GrafanaTheme, isSelected: boolean) => {
-  const labelColor = isSelected ? theme.colors.text : theme.colors.textWeak;
+const getFilterPillStyles = stylesFactory((theme: GrafanaTheme2, isSelected: boolean) => {
+  const labelColor = isSelected ? theme.colors.text.primary : theme.colors.text.secondary;
 
   return {
     wrapper: css`
-      padding: ${theme.spacing.xxs} ${theme.spacing.sm};
-      background: ${theme.colors.bg2};
-      border-radius: ${theme.border.radius.sm};
-      padding: 0 ${theme.spacing.md} 0 ${theme.spacing.xs};
-      font-weight: ${theme.typography.weight.semibold};
+      padding: ${theme.spacing(0.25)} ${theme.spacing(1)};
+      background: ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius()};
+      padding: ${theme.spacing(0, 2, 0, 0.5)};
+      font-weight: ${theme.typography.fontWeightMedium};
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       display: flex;
       align-items: center;
       height: 32px;
       cursor: pointer;
     `,
     icon: css`
-      margin-right: ${theme.spacing.sm};
-      margin-left: ${theme.spacing.xs};
+      margin-right: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(0.5)};
       color: ${labelColor};
     `,
     label: css`
