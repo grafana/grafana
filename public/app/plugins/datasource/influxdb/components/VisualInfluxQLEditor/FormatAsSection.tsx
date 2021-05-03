@@ -11,15 +11,13 @@ type Props = {
 
 export const FormatAsSection = ({ format, onChange }: Props): JSX.Element => {
   return (
-    <>
-      <Select<ResultFormat>
-        className="width-8"
-        onChange={(v) => {
-          onChange(unwrap(v.value));
-        }}
-        value={format}
-        options={RESULT_FORMATS}
-      />
-    </>
+    <Select<ResultFormat>
+      className="width-8"
+      onChange={(v) => {
+        onChange(unwrap(v.value));
+      }}
+      value={format}
+      options={RESULT_FORMATS}
+    />
   );
 };
