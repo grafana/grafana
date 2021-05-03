@@ -12,6 +12,7 @@ import (
 const ExporterName = "grafana"
 
 var (
+
 	// MInstanceStart is a metric counter for started instances
 	MInstanceStart prometheus.Counter
 
@@ -104,6 +105,27 @@ var (
 
 	// MRenderingQueue is a metric gauge for image rendering queue size
 	MRenderingQueue prometheus.Gauge
+
+	// MAccessRoleCount is a metric gauge for total number of roles
+	MAccessRoleCount prometheus.Gauge
+
+	// MAccessBuiltinRoleCount is a metric gauge for number of role assignments to teams
+	MAccessTeamRoleCount prometheus.Gauge
+
+	// MAccessUserRoleCount is a metric gauge for number of role assignments to users
+	MAccessUserRoleCount prometheus.Gauge
+
+	// MAccessPermissionCount is a metric gauge for total number of permissions
+	MAccessPermissionCount prometheus.Gauge
+
+	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
+	MAccessEvaluationCount prometheus.Gauge
+
+	// MProvisionRolesCount is a metric gauge for total number of roles provisioned
+	MProvisionRolesCount prometheus.Gauge
+
+	// MProvisionRolesDeleteCount is a metric gauge for total number of roles provisioned
+	MProvisionRolesDeleteCount prometheus.Gauge
 )
 
 // Timers
@@ -116,6 +138,15 @@ var (
 
 	// MRenderingSummary is a metric summary for image rendering request duration
 	MRenderingSummary *prometheus.SummaryVec
+
+	// MAccessSummary is a metric summary for access request duration
+	MAccessSummary prometheus.Histogram
+
+	// MAccessSummary is a metric summary for access request duration
+	MAccessPermissionsSummary prometheus.Histogram
+
+	// MProvisionRolesSummary is a metric summary for access request duration
+	MProvisionRolesSummary *prometheus.HistogramVec
 )
 
 // StatTotals
@@ -383,9 +414,53 @@ func init() {
 		[]string{"status", "type"},
 	)
 
+	MAccessSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_request_duration",
+		Help:    "Histogram for the runtime of access functions.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	})
+
+	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_permissions_duration",
+		Help:    "Histogram for the runtime of permissions check function.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	})
+
+	MProvisionRolesSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "provision_role_duration",
+		Help:    "Histogram for the runtime of role provisioning.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	},
+		[]string{"role"},
+	)
+
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
 		Help:      "size of rendering queue",
+		Namespace: ExporterName,
+	})
+
+	MAccessPermissionCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "access_permission_count",
+		Help:      "number of permissions",
+		Namespace: ExporterName,
+	})
+
+	MAccessEvaluationCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "access_evaluation_count",
+		Help:      "number of evaluation calls",
+		Namespace: ExporterName,
+	})
+
+	MProvisionRolesCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "provision_roles_count",
+		Help:      "number of roles provisioned",
+		Namespace: ExporterName,
+	})
+
+	MProvisionRolesDeleteCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "provision_roles_delete_count",
+		Help:      "number of roles deleted",
 		Namespace: ExporterName,
 	})
 
@@ -478,6 +553,24 @@ func init() {
 	StatsTotalActiveAdmins = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_active_admins",
 		Help:      "total amount of active admins",
+		Namespace: ExporterName,
+	})
+
+	MAccessRoleCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "access_role_count",
+		Help:      "total number of roles, per org",
+		Namespace: ExporterName,
+	})
+
+	MAccessTeamRoleCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "access_team_role_count",
+		Help:      "total number of team roles",
+		Namespace: ExporterName,
+	})
+
+	MAccessUserRoleCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "access_user_role_count",
+		Help:      "total number of user roles",
 		Namespace: ExporterName,
 	})
 
@@ -582,6 +675,16 @@ func initMetricVars() {
 		MRenderingRequestTotal,
 		MRenderingSummary,
 		MRenderingQueue,
+		MAccessSummary,
+		MAccessPermissionsSummary,
+		MProvisionRolesSummary,
+		MProvisionRolesCount,
+		MProvisionRolesDeleteCount,
+		MAccessRoleCount,
+		MAccessTeamRoleCount,
+		MAccessUserRoleCount,
+		MAccessPermissionCount,
+		MAccessEvaluationCount,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,
