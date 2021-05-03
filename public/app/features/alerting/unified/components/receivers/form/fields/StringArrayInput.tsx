@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Button, Input, useStyles2 } from '@grafana/ui';
 import { ActionIcon } from '../../../rules/ActionIcon';
@@ -56,7 +56,7 @@ export const StringArrayInput: FC<Props> = ({ value, onChange }) => {
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
     display: flex;
     flex-direction: row;

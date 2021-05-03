@@ -1,7 +1,7 @@
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
-export const getReceiverFormFieldStyles = (theme: GrafanaThemeV2) => ({
+export const getReceiverFormFieldStyles = (theme: GrafanaTheme2) => ({
   collapsibleSection: css`
     margin: 0;
     padding: 0;
