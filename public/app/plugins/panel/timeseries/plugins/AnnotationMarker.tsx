@@ -1,5 +1,5 @@
 import React, { CSSProperties, useCallback, useRef, useState } from 'react';
-import { GrafanaThemeV2, dateTimeFormat, systemDateFormats, TimeZone, textUtil, getColorForTheme } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat, systemDateFormats, TimeZone, textUtil, getColorForTheme } from '@grafana/data';
 import { HorizontalGroup, Portal, Tag, VizTooltipContainer, useStyles2, useTheme2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import alertDef from 'app/features/alerting/state/alertDef';
@@ -114,7 +114,7 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
   );
 }
 
-const getAnnotationMarkerStyles = (theme: GrafanaThemeV2) => {
+const getAnnotationMarkerStyles = (theme: GrafanaTheme2) => {
   return {
     markerWrapper: css`
       padding: 0 4px 4px 4px;

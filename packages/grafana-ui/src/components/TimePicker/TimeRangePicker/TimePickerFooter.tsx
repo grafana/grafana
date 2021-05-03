@@ -1,6 +1,6 @@
 import React, { FC, useState, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
-import { TimeZone, GrafanaThemeV2, getTimeZoneInfo } from '@grafana/data';
+import { TimeZone, GrafanaTheme2, getTimeZoneInfo } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
@@ -82,7 +82,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
   );
 };
 
-const getStyle = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
       border-top: 1px solid ${theme.colors.border.weak};
