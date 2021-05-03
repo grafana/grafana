@@ -41,7 +41,7 @@ async function assertSegmentSelect(
   });
 
   // find the option and click it
-  const option = await screen.findByText(optionText, { selector: 'div' });
+  const option = await screen.findByText(optionText, { selector: 'span' });
   expect(option).toBeInTheDocument();
   act(() => {
     fireEvent.click(option);
