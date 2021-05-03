@@ -28,7 +28,10 @@ export interface InfluxSecureJsonData {
 export interface InfluxQueryPart {
   type: string;
   params?: Array<string | number>;
-  interval?: string; // FIXME: is this ever used?
+  // FIXME: `interval` does not seem to be used.
+  // check all the influxdb parts (query-generation etc.),
+  // if it is really so, and if yes, remove it
+  interval?: string;
 }
 
 export interface InfluxQueryTag {
