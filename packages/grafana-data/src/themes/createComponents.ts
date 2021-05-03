@@ -36,6 +36,9 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  sidemenu: {
+    width: number;
+  };
 }
 
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
@@ -75,6 +78,9 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     },
     overlay: {
       background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+    },
+    sidemenu: {
+      width: 60,
     },
   };
 }

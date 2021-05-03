@@ -1,6 +1,6 @@
 import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { dateMath, dateTime, getDefaultTimeRange, GrafanaThemeV2, TimeRange, TimeZone } from '@grafana/data';
+import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
@@ -106,7 +106,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const inputStyles = getInputStyles({ theme, invalid: false });
   return {
     container: css`

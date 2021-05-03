@@ -50,7 +50,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	// [orgID, dataSourceId] -> [UID, Name]
+	// [orgID, dataSourceId] -> UID
 	dsIDMap, err := m.slurpDSIDs()
 	if err != nil {
 		return err
@@ -173,6 +173,12 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			if err != nil {
 				return err
 			}
+		}
+
+		// create entry in alert_rule_version
+		_, err = m.sess.Insert(rule.makeVersion())
+		if err != nil {
+			return err
 		}
 	}
 
