@@ -22,7 +22,7 @@ Tasks you can perform in the inspector are described below.
 
 ### Open the Inspector
 
-1. In Grafana, navigate to the Explore and run the query you would like to inspect.
+1. Run the query you would like to inspect.
 1. Click the **Inspector** button.
 
 The inspector pane opens on the bottom of the screen.
