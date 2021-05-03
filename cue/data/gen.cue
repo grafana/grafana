@@ -181,7 +181,7 @@ Family: scuemata.#Family & {
                             //   nullValueMode?: NullValueMode;
 
                             //   // The behavior when clicking on a result
-                            //   links?: DataLink[];
+                            links?: [...]
 
                             // Alternative to empty string
                             noValue?: string
