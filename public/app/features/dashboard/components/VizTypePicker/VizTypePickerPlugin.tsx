@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { MouseEventHandler } from 'react';
 import { PanelPluginMeta } from '@grafana/data';
 import { PanelTypeCard } from './PanelTypeCard';
 
 interface Props {
   isCurrent: boolean;
   plugin: PanelPluginMeta;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLDivElement>;
   disabled: boolean;
 }
 

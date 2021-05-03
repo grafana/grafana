@@ -73,21 +73,15 @@ e2e.scenario({
 
     // Change to Text panel
     e2e.components.PluginVisualization.item('Text').scrollIntoView().should('be.visible').click();
-    e2e.components.PluginVisualization.current().within((div: JQuery<HTMLDivElement>) => {
-      expect(div.text()).equals('Text');
-    });
+    e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain('Text'));
 
     // Data pane should not be rendered
     e2e.components.PanelEditor.DataPane.content().should('not.exist');
 
     // Change to Table panel
-    e2e.components.PluginVisualization.item('Table').scrollIntoView().should('be.visible').click();
-    e2e.components.PluginVisualization.current().within((div: JQuery<HTMLDivElement>) => {
-      expect(div.text()).equals('Table');
-    });
-
-    // close viz picker
     e2e.components.PanelEditor.toggleVizPicker().click();
+    e2e.components.PluginVisualization.item('Table').scrollIntoView().should('be.visible').click();
+    e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain('Table'));
 
     // Data pane should be rendered
     e2e.components.PanelEditor.DataPane.content().should('be.visible');

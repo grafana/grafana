@@ -8,7 +8,7 @@ import { css } from '@emotion/css';
 
 export interface Props {
   current: PanelPluginMeta;
-  onTypeChange: (newType: PanelPluginMeta) => void;
+  onTypeChange: (newType: PanelPluginMeta, withModKey?: boolean) => void;
   searchQuery: string;
   onClose: () => void;
 }
@@ -35,21 +35,26 @@ export function filterPluginList(
       return true;
     });
   }
+
   const query = searchQuery.toLowerCase();
   const first: PanelPluginMeta[] = [];
   const match: PanelPluginMeta[] = [];
+
   for (const item of pluginsList) {
     if (item.state === PluginState.deprecated && current.id !== item.id) {
       continue;
     }
+
     const name = item.name.toLowerCase();
     const idx = name.indexOf(query);
+
     if (idx === 0) {
       first.push(item);
     } else if (idx > 0) {
       match.push(item);
     }
   }
+
   return first.concat(match);
 }
 
@@ -75,7 +80,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
         key={plugin.id}
         isCurrent={isCurrent}
         plugin={plugin}
-        onClick={() => onTypeChange(plugin)}
+        onClick={(e) => onTypeChange(plugin, e.metaKey || e.ctrlKey || e.altKey)}
       />
     );
   };
@@ -108,7 +113,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       max-width: 100%;
       display: grid;
       grid-gap: ${theme.spacing.sm};
-      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
     `,
   };
 });
