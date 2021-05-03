@@ -15,7 +15,6 @@ import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 import { githubPublishTask } from './tasks/plugin.utils';
 import { pluginUpdateTask } from './tasks/plugin.update';
-// DEPRECATED
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
