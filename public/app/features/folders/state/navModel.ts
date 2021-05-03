@@ -1,5 +1,5 @@
 import { FolderDTO } from 'app/types';
-import { NavModelItem, NavModel } from '@grafana/data';
+import { NavModel, NavModelItem } from '@grafana/data';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
   const model = {
@@ -37,6 +37,14 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       id: `folder-settings-${folder.uid}`,
       text: 'Settings',
       url: `${folder.url}/settings`,
+    });
+
+    model.children.push({
+      active: false,
+      icon: 'reusable-panel',
+      id: `folder-library-panels-${folder.uid}`,
+      text: 'Panels',
+      url: `${folder.url}/library-panels`,
     });
   }
 

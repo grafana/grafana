@@ -24,6 +24,7 @@ export interface LibraryPanelsSearchProps {
   showFolderFilter?: boolean;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
+  currentFolderId?: number;
   perPage?: number;
 }
 
@@ -31,6 +32,7 @@ export const LibraryPanelsSearch = ({
   onClick,
   variant = LibraryPanelsSearchVariant.Spacious,
   currentPanelId,
+  currentFolderId,
   perPage = DEFAULT_PER_PAGE_PAGINATION,
   showPanelFilter = false,
   showFolderFilter = false,
@@ -40,7 +42,7 @@ export const LibraryPanelsSearch = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortDirection, setSortDirection] = useState<string | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
-  const [folderFilter, setFolderFilter] = useState<string[]>([]);
+  const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderId ? [currentFolderId.toString(10)] : []);
   const styles = useStyles2(getStyles);
   const onSortChange = useCallback((sort: SelectableValue<string>) => setSortDirection(sort.value), []);
   const onFilterChange = useCallback((plugins: PanelPluginMeta[]) => setPanelFilter(plugins.map((p) => p.id)), []);
