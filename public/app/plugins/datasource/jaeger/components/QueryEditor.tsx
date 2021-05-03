@@ -10,7 +10,7 @@ type Props = QueryEditorProps<JaegerDatasource, JaegerQuery>;
 
 export function QueryEditor({ datasource, query, onChange }: Props) {
   return (
-    <div>
+    <div style={{ width: '50%' }}>
       <InlineFieldRow>
         <InlineField label="Query type">
           <RadioButtonGroup<JaegerQueryType>
@@ -33,9 +33,10 @@ export function QueryEditor({ datasource, query, onChange }: Props) {
         <SearchForm datasource={datasource} query={query} onChange={onChange} />
       ) : (
         <InlineFieldRow>
-          <InlineField label="Trace ID">
+          <InlineField label="Trace ID" labelWidth={21} grow>
             <Input
               aria-label={selectors.components.DataSource.Jaeger.traceIDInput}
+              placeholder="Eg. 4050b8060d659e52"
               value={query.query || ''}
               onChange={(v) =>
                 onChange({

@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
-
-const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
+import { AdvancedOptions } from './AdvancedOptions';
 
 type Props = {
   datasource: JaegerDatasource;
@@ -13,7 +12,7 @@ type Props = {
   onChange: (value: JaegerQuery) => void;
 };
 
-export const ALL_OPERATIONS_KEY = '[ALL]';
+export const ALL_OPERATIONS_KEY = 'All';
 const allOperationsOption: SelectableValue<string> = {
   label: ALL_OPERATIONS_KEY,
   value: undefined,
@@ -50,89 +49,54 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   }, [datasource, query.service]);
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Service">
-        <Select
-          options={serviceOptions}
-          value={serviceOptions?.find((v) => v.value === query.service) || null}
-          width={12}
-          onChange={(v) => {
-            onChange({
-              ...query,
-              service: v.value!,
-              operation: query.service !== v.value ? undefined : query.operation,
-            });
-          }}
-          menuPlacement="bottom"
-        />
-      </InlineField>
-
-      <InlineField label="Operation">
-        <Select
-          options={operationOptions}
-          value={operationOptions?.find((v) => v.value === query.operation) || null}
-          width={12}
-          onChange={(v) =>
-            onChange({
-              ...query,
-              operation: v.value!,
-            })
-          }
-          menuPlacement="bottom"
-        />
-      </InlineField>
-
-      <InlineField label="Tags">
-        <Input
-          value={transformToLogfmt(query.tags)}
-          onChange={(v) =>
-            onChange({
-              ...query,
-              tags: v.currentTarget.value,
-            })
-          }
-        />
-      </InlineField>
-
-      <InlineField label="Min Duration">
-        <Input
-          value={query.minDuration || ''}
-          placeholder={durationPlaceholder}
-          onChange={(v) =>
-            onChange({
-              ...query,
-              minDuration: v.currentTarget.value,
-            })
-          }
-        />
-      </InlineField>
-
-      <InlineField label="Max Duration">
-        <Input
-          value={query.maxDuration || ''}
-          placeholder={durationPlaceholder}
-          onChange={(v) =>
-            onChange({
-              ...query,
-              maxDuration: v.currentTarget.value,
-            })
-          }
-        />
-      </InlineField>
-
-      <InlineField label="Limit">
-        <Input
-          value={query.limit || ''}
-          type="number"
-          onChange={(v) =>
-            onChange({
-              ...query,
-              limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
-            })
-          }
-        />
-      </InlineField>
-    </InlineFieldRow>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Service" labelWidth={21} grow>
+          <Select
+            options={serviceOptions}
+            value={serviceOptions?.find((v) => v.value === query.service) || null}
+            onChange={(v) => {
+              onChange({
+                ...query,
+                service: v.value!,
+                operation: query.service !== v.value ? undefined : query.operation,
+              });
+            }}
+            menuPlacement="bottom"
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Operation" labelWidth={21} grow disabled={!query.service}>
+          <Select
+            options={operationOptions}
+            value={operationOptions?.find((v) => v.value === query.operation) || null}
+            onChange={(v) =>
+              onChange({
+                ...query,
+                operation: v.value!,
+              })
+            }
+            menuPlacement="bottom"
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Tags" labelWidth={21} grow>
+          <Input
+            value={transformToLogfmt(query.tags)}
+            placeholder="Filter by tags"
+            onChange={(v) =>
+              onChange({
+                ...query,
+                tags: v.currentTarget.value,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <AdvancedOptions query={query} onChange={onChange} />
+    </>
   );
 }
 
