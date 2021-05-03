@@ -1,6 +1,6 @@
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 import { cx, css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { styleMixins, useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -104,7 +104,7 @@ function renderIcon(icon: IconName | React.ReactNode) {
   return icon;
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 

@@ -58,6 +58,21 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
     item.color = annotation.iconColor;
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
+
+    switch (item.newState) {
+      case 'pending':
+        item.color = 'gray';
+        break;
+      case 'alerting':
+        item.color = 'red';
+        break;
+      case 'ok':
+        item.color = 'green';
+        break;
+      case 'no_data':
+        item.color = 'gray';
+        break;
+    }
   }
 
   return results;

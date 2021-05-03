@@ -137,7 +137,7 @@ function formChannelValuesToGrafanaChannelConfig(
 ): GrafanaManagedReceiverConfig {
   const channel: GrafanaManagedReceiverConfig = {
     settings: {
-      ...(existing?.settings ?? {}),
+      ...(existing && existing.type === values.type ? existing.settings ?? {} : {}),
       ...(values.settings ?? {}),
     },
     secureSettings: values.secureSettings ?? {},

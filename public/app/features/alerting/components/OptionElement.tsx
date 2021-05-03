@@ -13,13 +13,12 @@ export const OptionElement: FC<Props> = ({ control, option, register, invalid })
     case 'input':
       return (
         <Input
-          invalid={invalid}
-          type={option.inputType}
-          name={`${modelValue}`}
-          ref={register({
+          {...register(`${modelValue}`, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
+          invalid={invalid}
+          type={option.inputType}
           placeholder={option.placeholder}
         />
       );
@@ -27,11 +26,11 @@ export const OptionElement: FC<Props> = ({ control, option, register, invalid })
     case 'select':
       return (
         <InputControl
-          as={Select}
-          options={option.selectOptions}
           control={control}
           name={`${modelValue}`}
-          invalid={invalid}
+          render={({ field: { ref, ...field } }) => (
+            <Select {...field} options={option.selectOptions} invalid={invalid} />
+          )}
         />
       );
 
@@ -39,8 +38,7 @@ export const OptionElement: FC<Props> = ({ control, option, register, invalid })
       return (
         <TextArea
           invalid={invalid}
-          name={`${modelValue}`}
-          ref={register({
+          {...register(`${modelValue}`, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}

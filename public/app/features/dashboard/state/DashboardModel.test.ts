@@ -5,9 +5,14 @@ import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { createCustomVariableAdapter } from '../../variables/custom/adapter';
 
 jest.mock('app/core/services/context_srv', () => ({}));
-variableAdapters.setInit(() => [createQueryVariableAdapter(), createAdHocVariableAdapter()]);
+variableAdapters.setInit(() => [
+  createQueryVariableAdapter(),
+  createAdHocVariableAdapter(),
+  createCustomVariableAdapter(),
+]);
 
 describe('DashboardModel', () => {
   describe('when creating new dashboard model defaults only', () => {
@@ -522,6 +527,7 @@ describe('DashboardModel', () => {
           list: [
             {
               name: 'dc',
+              type: 'custom',
               current: {
                 text: 'dc1 + dc2',
                 value: ['dc1', 'dc2'],
@@ -533,6 +539,7 @@ describe('DashboardModel', () => {
             },
             {
               name: 'app',
+              type: 'custom',
               current: {
                 text: 'se1 + se2',
                 value: ['se1', 'se2'],

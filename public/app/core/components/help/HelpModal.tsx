@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, useStyles2 } from '@grafana/ui';
 
 const shortcuts = {
@@ -85,7 +85,7 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   );
 };
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     titleDescription: css`
       font-size: ${theme.typography.bodySmall.fontSize};

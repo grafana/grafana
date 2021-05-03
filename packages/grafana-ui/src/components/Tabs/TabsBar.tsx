@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { stylesFactory, useTheme2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 
 export interface Props {
@@ -11,7 +11,7 @@ export interface Props {
   hideBorder?: boolean;
 }
 
-const getTabsBarStyles = stylesFactory((theme: GrafanaThemeV2, hideBorder = false) => {
+const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false) => {
   return {
     tabsWrapper:
       !hideBorder &&

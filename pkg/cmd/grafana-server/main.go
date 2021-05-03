@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -156,7 +157,9 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		return err
 	}
 
-	go listenToSystemSignals(s)
+	ctx := context.Background()
+
+	go listenToSystemSignals(ctx, s)
 
 	if err := s.Run(); err != nil {
 		code := s.ExitCode(err)
@@ -179,7 +182,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(s *server.Server) {
+func listenToSystemSignals(ctx context.Context, s *server.Server) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 
@@ -193,7 +196,11 @@ func listenToSystemSignals(s *server.Server) {
 				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
 			}
 		case sig := <-signalChan:
-			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
+				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
+			}
 			return
 		}
 	}
