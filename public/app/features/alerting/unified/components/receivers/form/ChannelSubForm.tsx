@@ -1,6 +1,6 @@
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { NotifierDTO } from 'app/types';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { useFormContext, FieldErrors } from 'react-hook-form';
@@ -32,8 +32,12 @@ export function ChannelSubForm<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch } = useFormContext();
+  const { control, watch, register } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
+
+  useEffect(() => {
+    register(`${pathPrefix}.__id`);
+  }, [register, pathPrefix]);
 
   const [_secureFields, setSecureFields] = useState(secureFields ?? {});
 
@@ -47,10 +51,12 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const typeOptions = useMemo(
     (): SelectableValue[] =>
-      notifiers.map(({ name, type }) => ({
-        label: name,
-        value: type,
-      })),
+      notifiers
+        .map(({ name, type }) => ({
+          label: name,
+          value: type,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
     [notifiers]
   );
 
@@ -64,12 +70,6 @@ export function ChannelSubForm<R extends ChannelValues>({
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <InputControl
-            name={name('__id')}
-            render={({ field }) => <input type="hidden" {...field} />}
-            defaultValue={defaultValues.__id}
-            control={control}
-          />
           <Field label="Contact point type" data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
