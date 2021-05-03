@@ -1,14 +1,12 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../../utils/common';
-import { AzureQueryEditorFieldProps } from '../../types';
-import { useMetricDropdownOptions } from '../metrics';
+import { findOption, toOption } from '../../utils/common';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 const ERROR_SOURCE = 'metrics-metricnamespace';
-
 const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
@@ -17,28 +15,37 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   onQueryChange,
   setError,
 }) => {
-  const { resourceGroup, metricDefinition, resourceName } = query.azureMonitor;
+  const [metricNamespaces, setMetricNamespaces] = useState<AzureMonitorOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const setQueryAfterFetch = (results: Array<{ text: string; value: string }>) => {
-    if (results.length === 1) {
-      onQueryChange({
-        ...query,
-        azureMonitor: {
-          ...query.azureMonitor,
-          metricNamespace: results[0].value,
-        },
-      });
+  useEffect(() => {
+    const { resourceGroup, metricDefinition, resourceName } = query.azureMonitor;
+    if (!(subscriptionId && resourceGroup && metricDefinition && resourceName)) {
+      metricNamespaces.length > 0 && setMetricNamespaces([]);
+      return;
     }
-    return results;
-  };
 
-  const [metricNamespaces, isLoading] = useMetricDropdownOptions(
-    datasource.getMetricNamespaces.bind(datasource),
-    [subscriptionId, resourceGroup, metricDefinition, resourceName],
-    setError,
-    ERROR_SOURCE,
-    setQueryAfterFetch
-  );
+    setIsLoading(true);
+    datasource
+      .getMetricNamespaces(subscriptionId, resourceGroup, metricDefinition, resourceName)
+      .then((results) => {
+        if (results.length === 1) {
+          onQueryChange({
+            ...query,
+            azureMonitor: {
+              ...query.azureMonitor,
+              metricNamespace: results[0].value,
+            },
+          });
+        }
+        setMetricNamespaces(results.map(toOption));
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        setError(ERROR_SOURCE, err);
+        setIsLoading(false);
+      });
+  }, [datasource, metricNamespaces.length, onQueryChange, query, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
