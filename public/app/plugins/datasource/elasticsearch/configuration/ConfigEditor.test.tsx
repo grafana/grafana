@@ -31,7 +31,7 @@ describe('ConfigEditor', () => {
     mount(
       <ConfigEditor
         onOptionsChange={(options) => {
-          expect(options.jsonData.esVersion).toBe(5);
+          expect(options.jsonData.esVersion).toBe('5.0.0');
           expect(options.jsonData.timeField).toBe('@timestamp');
           expect(options.jsonData.maxConcurrentShardRequests).toBe(256);
         }}
@@ -46,7 +46,7 @@ describe('ConfigEditor', () => {
     mount(
       <ConfigEditor
         onOptionsChange={(options) => {
-          expect(options.jsonData.esVersion).toBe(70);
+          expect(options.jsonData.esVersion).toBe('7.0.0');
           expect(options.jsonData.timeField).toBe('@time');
           expect(options.jsonData.maxConcurrentShardRequests).toBe(300);
         }}
