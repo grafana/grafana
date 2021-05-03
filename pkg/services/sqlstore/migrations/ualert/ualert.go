@@ -113,7 +113,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		switch {
 		case dash.HasAcl:
 			// create folder and assign the permissions of the dashboard (included default and inherited)
-			ptr, err := m.createFolder(dash.OrgId, fmt.Sprintf(DASHBOARD_FOLDER, getMigrationInfo(da)))
+			ptr, err := m.createFolder(dash.OrgId, fmt.Sprintf(DASHBOARD_FOLDER, getMigrationString(da)))
 			if err != nil {
 				return MigrationError{
 					Err:     fmt.Errorf("failed to create folder: %w", err),
