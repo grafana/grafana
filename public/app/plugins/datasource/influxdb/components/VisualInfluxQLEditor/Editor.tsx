@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { InfluxQuery, InfluxQueryTag } from '../../types';
 import { getTemplateSrv } from '@grafana/runtime';
 import InfluxDatasource from '../../datasource';
@@ -60,15 +60,43 @@ const SectionWrap = ({ initialName, children }: { initialName: string; children:
 export const Editor = (props: Props): JSX.Element => {
   const query = normalizeQuery(props.query);
   const { datasource } = props;
+  const { measurement, policy } = query;
+
+  const selectLists = useMemo(() => {
+    const dynamicSelectPartOptions = new Map([
+      [
+        'field_0',
+        () => {
+          return measurement !== undefined
+            ? getFieldKeysForMeasurement(measurement, policy, datasource)
+            : Promise.resolve([]);
+        },
+      ],
+    ]);
+    return (query.select ?? []).map((sel) => makePartList(sel, dynamicSelectPartOptions));
+  }, [measurement, policy, query.select, datasource]);
+
+  // the following function is not complicated enough to memoize, but it's result
+  // is used in both memoized and un-memoized parts, so we have no choice
+  const getTagKeys = useMemo(() => {
+    return () => getTagKeysForMeasurementAndTags(measurement, policy, query.tags ?? [], datasource);
+  }, [measurement, policy, query.tags, datasource]);
+
+  const groupByList = useMemo(() => {
+    const dynamicGroupByPartOptions = new Map([['tag_0', getTagKeys]]);
+
+    return makePartList(query.groupBy ?? [], dynamicGroupByPartOptions);
+  }, [getTagKeys, query.groupBy]);
+
   const onAppliedChange = (newQuery: InfluxQuery) => {
     props.onChange(newQuery);
     props.onRunQuery();
   };
-  const handleFromSectionChange = (policy: string | undefined, measurement: string | undefined) => {
+  const handleFromSectionChange = (p: string | undefined, m: string | undefined) => {
     onAppliedChange({
       ...query,
-      policy,
-      measurement,
+      policy: p,
+      measurement: m,
     });
   };
 
@@ -80,32 +108,12 @@ export const Editor = (props: Props): JSX.Element => {
     });
   };
 
-  const dynamicSelectPartOptions = new Map([
-    [
-      'field_0',
-      () => {
-        const { measurement } = query;
-        return measurement !== undefined
-          ? getFieldKeysForMeasurement(measurement, query.policy, datasource)
-          : Promise.resolve([]);
-      },
-    ],
-  ]);
-  const selectLists = (query.select ?? []).map((sel) => makePartList(sel, dynamicSelectPartOptions));
-
-  const getTagKeys = () =>
-    getTagKeysForMeasurementAndTags(query.measurement, query.policy, query.tags ?? [], datasource);
-
-  const dynamicGroupByPartOptions = new Map([['tag_0', getTagKeys]]);
-
-  const groupByList = makePartList(query.groupBy ?? [], dynamicGroupByPartOptions);
-
   return (
     <div>
       <SectionWrap initialName="from">
         <FromSection
-          policy={query.policy}
-          measurement={query.measurement}
+          policy={policy}
+          measurement={measurement}
           getPolicyOptions={() => getAllPolicies(datasource)}
           getMeasurementOptions={() =>
             withTemplateVariableOptions(getAllMeasurementsForTags(query.tags ?? [], datasource))
@@ -116,11 +124,9 @@ export const Editor = (props: Props): JSX.Element => {
         <TagsSection
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
-          getTagKeyOptions={() =>
-            getTagKeysForMeasurementAndTags(query.measurement, query.policy, query.tags ?? [], datasource)
-          }
+          getTagKeyOptions={getTagKeys}
           getTagValueOptions={(key: string) =>
-            withTemplateVariableOptions(getTagValues(key, query.measurement, query.policy, datasource))
+            withTemplateVariableOptions(getTagValues(key, measurement, policy, datasource))
           }
         />
       </SectionWrap>
