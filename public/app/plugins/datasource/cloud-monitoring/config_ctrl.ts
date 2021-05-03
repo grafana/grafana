@@ -24,16 +24,19 @@ export class CloudMonitoringConfigCtrl {
   name: string;
 
   /** @ngInject */
-  constructor(datasourceSrv: DatasourceSrv) {
+  constructor(datasourceSrv: DatasourceSrv, $scope: any) {
+    this.inputDataValid = false;
+    this.jsonText = '';
     this.defaultAuthenticationType = AuthType.JWT;
     this.datasourceSrv = datasourceSrv;
-    this.name = this.meta.name;
-    this.current.jsonData = this.current.jsonData || {};
-    this.current.jsonData.authenticationType = this.current.jsonData.authenticationType
-      ? this.current.jsonData.authenticationType
+    this.name = $scope.ctrl.meta.name;
+    this.current = {};
+    this.current.jsonData = $scope.ctrl.current.jsonData || {};
+    this.current.jsonData.authenticationType = $scope.ctrl.current.jsonData.authenticationType
+      ? $scope.ctrl.current.jsonData.authenticationType
       : this.defaultAuthenticationType;
-    this.current.secureJsonData = this.current.secureJsonData || {};
-    this.current.secureJsonFields = this.current.secureJsonFields || {};
+    this.current.secureJsonData = $scope.ctrl.current.secureJsonData || {};
+    this.current.secureJsonFields = $scope.ctrl.current.secureJsonFields || {};
     this.authenticationTypes = authTypes;
   }
 

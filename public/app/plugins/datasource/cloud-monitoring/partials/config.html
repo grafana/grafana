@@ -2,15 +2,16 @@
   <div class="grafana-info-box">
     <h4>Google Cloud Monitoring Authentication</h4>
     <p>
-      There are two ways to authenticate the Google Cloud Monitoring plugin - either by uploading a Service Account key file or by
-      automatically retrieving credentials from the Google metadata server. The latter option is only available when
-      running Grafana on a GCE virtual machine.
+      There are two ways to authenticate the Google Cloud Monitoring plugin - either by uploading a Service Account key
+      file or by automatically retrieving credentials from the Google metadata server. The latter option is only
+      available when running Grafana on a GCE virtual machine.
     </p>
 
     <h5>Uploading a Service Account Key File</h5>
     <p>
-      There are two ways to authenticate the Google Cloud Monitoring plugin. You can upload a Service Account key file or automatically retrieve 
-      credentials from the Google metadata server. The latter option is only available when running Grafana on a GCE virtual machine.
+      There are two ways to authenticate the Google Cloud Monitoring plugin. You can upload a Service Account key file
+      or automatically retrieve credentials from the Google metadata server. The latter option is only available when
+      running Grafana on a GCE virtual machine.
     </p>
     <p>
       The <strong>Monitoring Viewer</strong> role provides all the permissions that Grafana needs. The following API
@@ -28,12 +29,16 @@
       If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to
       automatically retrieve the default project id and authentication token from the metadata server. In order for this
       to work, you need to make sure that you have a service account that is setup as the default account for the
-      virtual machine and that the service account has been given read access to the Google Cloud Monitoring Monitoring API.
+      virtual machine and that the service account has been given read access to the Google Cloud Monitoring Monitoring
+      API.
     </p>
 
     <p>
       Detailed instructions on how to create a Service Account can be found
-      <a class="external-link" target="_blank" href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/_index.md"
+      <a
+        class="external-link"
+        target="_blank"
+        href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/_index.md"
         >in the documentation.</a
       >
     </p>
@@ -115,13 +120,11 @@
     <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured" />
   </div>
 
-  <div class="gf-form width-18" style="margin-top: 24px;">
-    <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()"
-      >Reset Service Account Key
-    </a>
-    <info-popover mode="right-normal">
-      Reset to clear the uploaded key and upload a new file.
-    </info-popover>
+  <div class="gf-form width-18" style="margin-top: 24px">
+    <button class="btn btn-secondary gf-form-btn" ng-click="ctrl.resetValidationMessages()">
+      Reset Service Account Key
+    </button>
+    <info-popover mode="right-normal"> Reset to clear the uploaded key and upload a new file. </info-popover>
   </div>
 </div>
 
