@@ -3,9 +3,9 @@ import { css, cx } from '@emotion/css';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   collapse: css`
     label: collapse;
     margin-bottom: ${theme.spacing(1)};
