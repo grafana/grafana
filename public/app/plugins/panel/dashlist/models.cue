@@ -14,7 +14,6 @@ Family: {
                     folderId?: int
                     tags: [...string] | *[]
                 },
-                PanelFieldConfig: {}
             }
         ]
     ]
