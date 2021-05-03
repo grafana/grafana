@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import {
   DataQuery,
   getDefaultRelativeTimeRange,
-  GrafanaTheme,
+  GrafanaThemeV2,
   LoadingState,
   PanelData,
   RelativeTimeRange,
@@ -132,7 +132,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   renderRunQueryButton() {
     const isRunning = this.isRunning();
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     if (isRunning) {
       return (
@@ -155,7 +155,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { value = [] } = this.props;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     return (
       <div className={styles.container}>
@@ -200,21 +200,21 @@ const defaultTimeRange = (model: DataQuery): RelativeTimeRange | undefined => {
   return getDefaultRelativeTimeRange();
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
   return {
     container: css`
-      background-color: ${theme.colors.panelBg};
+      background-color: ${theme.colors.background.primary};
       height: 100%;
     `,
     runWrapper: css`
-      margin-top: ${theme.spacing.md};
+      margin-top: ${theme.spacing(1)};
     `,
     editorWrapper: css`
-      border: 1px solid ${theme.colors.panelBorder};
-      border-radius: ${theme.border.radius.md};
+      border: 1px solid ${theme.colors.border.medium};
+      border-radius: ${theme.shape.borderRadius()};
     `,
     expressionButton: css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(0.5)};
     `,
   };
 });
