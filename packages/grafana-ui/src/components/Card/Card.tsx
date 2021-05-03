@@ -1,6 +1,6 @@
 import React, { memo, cloneElement, FC, ReactNode, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '../../themes';
 import { CardContainer, CardContainerProps } from './CardContainer';
 
@@ -99,7 +99,7 @@ export const Card: CardInterface = ({
 /**
  * @public
  */
-export const getCardStyles = stylesFactory((theme: GrafanaThemeV2) => {
+export const getCardStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     inner: css`
       display: flex;
