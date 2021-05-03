@@ -1,5 +1,5 @@
 import { TimeRange } from '../types/time';
-import { dateMath, dateTime, rangeUtil } from './index';
+import { dateTime, rangeUtil } from './index';
 import { timeRangeToRelative } from './rangeutil';
 
 describe('Range Utils', () => {

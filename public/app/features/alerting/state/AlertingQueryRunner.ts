@@ -113,14 +113,12 @@ const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable
     requestId: uuidv4(),
   };
 
-  const runningRequest = getBackendSrv()
-    .fetch<AlertingQueryResponse>(request)
-    .pipe(
-      mapToPanelData(initial),
-      catchError((error) => of(mapErrorToPanelData(initial, error))),
-      cancelNetworkRequestsOnUnsubscribe(backendSrv, request),
-      share()
-    );
+  const runningRequest = backendSrv.fetch<AlertingQueryResponse>(request).pipe(
+    mapToPanelData(initial),
+    catchError((error) => of(mapErrorToPanelData(initial, error))),
+    cancelNetworkRequestsOnUnsubscribe(backendSrv, request),
+    share()
+  );
 
   return merge(timer(200).pipe(mapTo(initial), takeUntil(runningRequest)), runningRequest);
 };
