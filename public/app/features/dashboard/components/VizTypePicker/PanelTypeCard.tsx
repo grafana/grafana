@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MouseEventHandler } from 'react';
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
@@ -8,7 +8,7 @@ interface Props {
   isCurrent: boolean;
   plugin: PanelPluginMeta;
   title: string;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLDivElement>;
   onDelete?: () => void;
   disabled?: boolean;
   showBadge?: boolean;
@@ -75,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius()};
       box-shadow: ${theme.shadows.z1};
+      border: 1px solid ${theme.colors.background.secondary};
       align-items: center;
       padding: 8px;
       width: 100%;
@@ -95,7 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     current: css`
       label: currentVisualizationItem;
-      border-color: ${theme.colors.primary.border};
+      background: ${theme.colors.action.selected};
     `,
     disabled: css`
       opacity: 0.2;
@@ -116,6 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
+      color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.fontWeightLight};
       padding: 0 ${theme.spacing(1.25)};
