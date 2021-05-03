@@ -68,7 +68,7 @@ Statistics are displayed in read-only format.
 
 Explore and export data and data frame JSON models.
 
-1. Open the inspector and then click the **JSON** tab.
+1. In the Inspector panel, click the **JSON** tab.
 1. From the Select source dropdown, choose one of the following options:
    - **Data -** Displays a JSON object representing the data that was returned to Explore.
    - **DataFrame structure -** Displays the raw result set.
