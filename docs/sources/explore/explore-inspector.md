@@ -9,12 +9,13 @@ The inspector helps you understand and troubleshoot your queries. You can inspec
 
 ## Inspector UI
 
-The inspector has four tabs:
+The inspector has following tabs:
 
-- **Data tab -** Shows the raw data returned by the query.
 - **Stats tab -** Shows how long your query takes and how much it returns.
-- **JSON tab -** Allows you to view and copy the data JSON and data frame structure JSON.
 - **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
+- **JSON tab -** Allows you to view and copy the data JSON and data frame structure JSON.
+- **Data tab -** Shows the raw data returned by the query.
+- **Error tab -** Shows the error. Only visible when query returns error.
 
 ## Inspector tasks
 
@@ -29,10 +30,10 @@ The inspector pane opens on the bottom of the screen.
 
 ### Inspect raw query results
 
-You can view raw query results, that is the data returned by the query in a table. 
+You can view raw query results, that is the data returned by the query in a table.
 
 1. In the **Inspector** tab, click the **Data** tab.
-For multiple queries or for queries multiple nodes, there are additional options.
+   For multiple queries or for queries multiple nodes, there are additional options.
 
 - **Show data frame:** Select the result set data you want to view.
 - **Series joined by time:** View the raw data from all of your queries at once, one result set per column. You can click a column heading to sort the data.
