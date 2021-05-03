@@ -42,8 +42,8 @@ type API struct {
 	RouteRegister   routing.RouteRegister
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
-	Store           store.Store
 	RuleStore       store.RuleStore
+	InstanceStore   store.InstanceStore
 	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager

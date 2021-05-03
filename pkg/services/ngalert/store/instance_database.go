@@ -9,9 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+type InstanceStore interface {
+	GetAlertInstance(cmd *models.GetAlertInstanceQuery) error
+	ListAlertInstances(cmd *models.ListAlertInstancesQuery) error
+	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
+	FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error
+}
+
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
-// nolint:unused
 func (st DBstore) GetAlertInstance(cmd *models.GetAlertInstanceQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		instance := models.AlertInstance{}
@@ -28,11 +34,11 @@ func (st DBstore) GetAlertInstance(cmd *models.GetAlertInstanceQuery) error {
 			return err
 		}
 
-		params := append(make([]interface{}, 0), cmd.DefinitionOrgID, cmd.DefinitionUID, hash)
+		params := append(make([]interface{}, 0), cmd.RuleOrgID, cmd.RuleUID, hash)
 
 		has, err := sess.SQL(s.String(), params...).Get(&instance)
 		if !has {
-			return fmt.Errorf("instance not found for labels %v (hash: %v), alert definition %v (org %v)", cmd.Labels, hash, cmd.DefinitionUID, cmd.DefinitionOrgID)
+			return fmt.Errorf("instance not found for labels %v (hash: %v), alert definition %v (org %v)", cmd.Labels, hash, cmd.RuleUID, cmd.RuleOrgID)
 		}
 		if err != nil {
 			return err
@@ -57,10 +63,10 @@ func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error 
 			params = append(params, p...)
 		}
 
-		addToQuery("SELECT alert_instance.*, alert_definition.title AS def_title FROM alert_instance LEFT JOIN alert_definition ON alert_instance.def_org_id = alert_definition.org_id AND alert_instance.def_uid = alert_definition.uid WHERE def_org_id = ?", cmd.DefinitionOrgID)
+		addToQuery("SELECT alert_instance.*, alert_definition.title AS def_title FROM alert_instance LEFT JOIN alert_definition ON alert_instance.def_org_id = alert_definition.org_id AND alert_instance.def_uid = alert_definition.uid WHERE def_org_id = ?", cmd.RuleOrgID)
 
-		if cmd.DefinitionUID != "" {
-			addToQuery(` AND def_uid = ?`, cmd.DefinitionUID)
+		if cmd.RuleUID != "" {
+			addToQuery(` AND def_uid = ?`, cmd.RuleUID)
 		}
 
 		if cmd.State != "" {
@@ -77,7 +83,6 @@ func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error 
 }
 
 // SaveAlertInstance is a handler for saving a new alert instance.
-// nolint:unused
 func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()
@@ -86,8 +91,8 @@ func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error 
 		}
 
 		alertInstance := &models.AlertInstance{
-			RuleOrgID:         cmd.DefinitionOrgID,
-			RuleUID:           cmd.DefinitionUID,
+			RuleOrgID:         cmd.RuleOrgID,
+			RuleUID:           cmd.RuleUID,
 			Labels:            cmd.Labels,
 			LabelsHash:        labelsHash,
 			CurrentState:      cmd.State,

@@ -44,8 +44,8 @@ func (i InstanceStateType) IsValid() bool {
 
 // SaveAlertInstanceCommand is the query for saving a new alert instance.
 type SaveAlertInstanceCommand struct {
-	DefinitionOrgID   int64
-	DefinitionUID     string
+	RuleOrgID         int64
+	RuleUID           string
 	Labels            InstanceLabels
 	State             InstanceStateType
 	LastEvalTime      time.Time
@@ -56,18 +56,18 @@ type SaveAlertInstanceCommand struct {
 // GetAlertInstanceQuery is the query for retrieving/deleting an alert definition by ID.
 // nolint:unused
 type GetAlertInstanceQuery struct {
-	DefinitionOrgID int64
-	DefinitionUID   string
-	Labels          InstanceLabels
+	RuleOrgID int64
+	RuleUID   string
+	Labels    InstanceLabels
 
 	Result *AlertInstance
 }
 
 // ListAlertInstancesQuery is the query list alert Instances.
 type ListAlertInstancesQuery struct {
-	DefinitionOrgID int64 `json:"-"`
-	DefinitionUID   string
-	State           InstanceStateType
+	RuleOrgID int64 `json:"-"`
+	RuleUID   string
+	State     InstanceStateType
 
 	Result []*ListAlertInstancesQueryResult
 }

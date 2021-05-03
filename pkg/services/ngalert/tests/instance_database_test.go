@@ -42,18 +42,18 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {
 		saveCmd := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertRule1.OrgID,
-			DefinitionUID:   alertRule1.UID,
-			State:           models.InstanceStateFiring,
-			Labels:          models.InstanceLabels{"test": "testValue"},
+			RuleOrgID: alertRule1.OrgID,
+			RuleUID:   alertRule1.UID,
+			State:     models.InstanceStateFiring,
+			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 		err := dbstore.SaveAlertInstance(saveCmd)
 		require.NoError(t, err)
 
 		getCmd := &models.GetAlertInstanceQuery{
-			DefinitionOrgID: saveCmd.DefinitionOrgID,
-			DefinitionUID:   saveCmd.DefinitionUID,
-			Labels:          models.InstanceLabels{"test": "testValue"},
+			RuleOrgID: saveCmd.RuleOrgID,
+			RuleUID:   saveCmd.RuleUID,
+			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 
 		err = dbstore.GetAlertInstance(getCmd)
@@ -66,17 +66,17 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
 		saveCmd := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertRule2.OrgID,
-			DefinitionUID:   alertRule2.UID,
-			State:           models.InstanceStateNormal,
-			Labels:          models.InstanceLabels{},
+			RuleOrgID: alertRule2.OrgID,
+			RuleUID:   alertRule2.UID,
+			State:     models.InstanceStateNormal,
+			Labels:    models.InstanceLabels{},
 		}
 		err := dbstore.SaveAlertInstance(saveCmd)
 		require.NoError(t, err)
 
 		getCmd := &models.GetAlertInstanceQuery{
-			DefinitionOrgID: saveCmd.DefinitionOrgID,
-			DefinitionUID:   saveCmd.DefinitionUID,
+			RuleOrgID: saveCmd.RuleOrgID,
+			RuleUID:   saveCmd.RuleUID,
 		}
 
 		err = dbstore.GetAlertInstance(getCmd)
@@ -89,27 +89,27 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can save two instances with same org_id, uid and different labels", func(t *testing.T) {
 		saveCmdOne := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertRule3.OrgID,
-			DefinitionUID:   alertRule3.UID,
-			State:           models.InstanceStateFiring,
-			Labels:          models.InstanceLabels{"test": "testValue"},
+			RuleOrgID: alertRule3.OrgID,
+			RuleUID:   alertRule3.UID,
+			State:     models.InstanceStateFiring,
+			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 
 		err := dbstore.SaveAlertInstance(saveCmdOne)
 		require.NoError(t, err)
 
 		saveCmdTwo := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: saveCmdOne.DefinitionOrgID,
-			DefinitionUID:   saveCmdOne.DefinitionUID,
-			State:           models.InstanceStateFiring,
-			Labels:          models.InstanceLabels{"test": "meow"},
+			RuleOrgID: saveCmdOne.RuleOrgID,
+			RuleUID:   saveCmdOne.RuleUID,
+			State:     models.InstanceStateFiring,
+			Labels:    models.InstanceLabels{"test": "meow"},
 		}
 		err = dbstore.SaveAlertInstance(saveCmdTwo)
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{
-			DefinitionOrgID: saveCmdOne.DefinitionOrgID,
-			DefinitionUID:   saveCmdOne.DefinitionUID,
+			RuleOrgID: saveCmdOne.RuleOrgID,
+			RuleUID:   saveCmdOne.RuleUID,
 		}
 
 		err = dbstore.ListAlertInstances(listQuery)
@@ -120,7 +120,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can list all added instances in org", func(t *testing.T) {
 		listQuery := &models.ListAlertInstancesQuery{
-			DefinitionOrgID: orgID,
+			RuleOrgID: orgID,
 		}
 
 		err := dbstore.ListAlertInstances(listQuery)
@@ -131,8 +131,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can list all added instances in org filtered by current state", func(t *testing.T) {
 		listQuery := &models.ListAlertInstancesQuery{
-			DefinitionOrgID: orgID,
-			State:           models.InstanceStateNormal,
+			RuleOrgID: orgID,
+			State:     models.InstanceStateNormal,
 		}
 
 		err := dbstore.ListAlertInstances(listQuery)
@@ -143,27 +143,27 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("update instance with same org_id, uid and different labels", func(t *testing.T) {
 		saveCmdOne := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: alertRule4.OrgID,
-			DefinitionUID:   alertRule4.UID,
-			State:           models.InstanceStateFiring,
-			Labels:          models.InstanceLabels{"test": "testValue"},
+			RuleOrgID: alertRule4.OrgID,
+			RuleUID:   alertRule4.UID,
+			State:     models.InstanceStateFiring,
+			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 
 		err := dbstore.SaveAlertInstance(saveCmdOne)
 		require.NoError(t, err)
 
 		saveCmdTwo := &models.SaveAlertInstanceCommand{
-			DefinitionOrgID: saveCmdOne.DefinitionOrgID,
-			DefinitionUID:   saveCmdOne.DefinitionUID,
-			State:           models.InstanceStateNormal,
-			Labels:          models.InstanceLabels{"test": "testValue"},
+			RuleOrgID: saveCmdOne.RuleOrgID,
+			RuleUID:   saveCmdOne.RuleUID,
+			State:     models.InstanceStateNormal,
+			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 		err = dbstore.SaveAlertInstance(saveCmdTwo)
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{
-			DefinitionOrgID: alertRule4.OrgID,
-			DefinitionUID:   alertRule4.UID,
+			RuleOrgID: alertRule4.OrgID,
+			RuleUID:   alertRule4.UID,
 		}
 
 		err = dbstore.ListAlertInstances(listQuery)
@@ -171,8 +171,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 		require.Len(t, listQuery.Result, 1)
 
-		require.Equal(t, saveCmdTwo.DefinitionOrgID, listQuery.Result[0].RuleOrgID)
-		require.Equal(t, saveCmdTwo.DefinitionUID, listQuery.Result[0].RuleDefinitionUID)
+		require.Equal(t, saveCmdTwo.RuleOrgID, listQuery.Result[0].RuleOrgID)
+		require.Equal(t, saveCmdTwo.RuleUID, listQuery.Result[0].RuleDefinitionUID)
 		require.Equal(t, saveCmdTwo.Labels, listQuery.Result[0].Labels)
 		require.Equal(t, saveCmdTwo.State, listQuery.Result[0].CurrentState)
 	})

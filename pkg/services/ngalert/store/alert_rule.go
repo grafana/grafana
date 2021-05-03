@@ -50,9 +50,6 @@ type RuleStore interface {
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
-	GetAlertInstance(*ngmodels.GetAlertInstanceQuery) error
-	ListAlertInstances(cmd *ngmodels.ListAlertInstancesQuery) error
-	SaveAlertInstance(cmd *ngmodels.SaveAlertInstanceCommand) error
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
