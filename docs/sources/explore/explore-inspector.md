@@ -9,7 +9,7 @@ The inspector helps you understand and troubleshoot your queries. You can inspec
 
 ## Inspector UI
 
-The inspector consists of four tabs:
+The inspector has four tabs:
 
 - **Data tab -** Shows the raw data returned by the query.
 - **Stats tab -** Shows how long your query takes and how much it returns.
