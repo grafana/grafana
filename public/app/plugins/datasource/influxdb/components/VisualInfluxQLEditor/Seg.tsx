@@ -48,7 +48,13 @@ export const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelPro
   }, [doLoad, loadOptions]);
   return (
     <div ref={ref} className={selectClass}>
-      <Select autoFocus isOpen allowCustomValue options={loadState.value ?? []} onChange={onChange} />
+      <Select
+        autoFocus
+        isOpen
+        allowCustomValue={allowCustomValue}
+        options={loadState.value ?? []}
+        onChange={onChange}
+      />
     </div>
   );
 };

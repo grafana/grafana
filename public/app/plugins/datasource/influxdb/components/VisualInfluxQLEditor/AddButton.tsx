@@ -14,7 +14,7 @@ export const AddButton = ({ loadOptions, allowCustomValue, onAdd }: Props): JSX.
     <Seg
       value="+"
       loadOptions={loadOptions}
-      allowCustomValue
+      allowCustomValue={allowCustomValue}
       onChange={(v) => {
         onAdd(unwrap(v.value));
       }}
