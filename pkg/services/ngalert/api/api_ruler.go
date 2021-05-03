@@ -142,6 +142,11 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	for _, r := range q.Result {
 		folder, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
 		if err != nil {
+			if errors.Is(err, models.ErrFolderAccessDenied) {
+				// do not fail if used does not have access to a specific namespace
+				// just do not include it in the response
+				continue
+			}
 			return toNamespaceErrorResponse(err)
 		}
 		namespace := folder.Title
@@ -251,25 +256,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 		Labels:      r.Labels,
 	}
 	return gettableExtendedRuleNode
-}
-
-func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
-	postableExtendedRuleNode := apimodels.PostableExtendedRuleNode{
-		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-			Title:        r.Title,
-			Condition:    r.Condition,
-			Data:         r.Data,
-			UID:          r.UID,
-			NoDataState:  apimodels.NoDataState(r.NoDataState),
-			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
-		},
-	}
-	postableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         model.Duration(r.For),
-		Annotations: r.Annotations,
-		Labels:      r.Labels,
-	}
-	return postableExtendedRuleNode
 }
 
 func toNamespaceErrorResponse(err error) response.Response {

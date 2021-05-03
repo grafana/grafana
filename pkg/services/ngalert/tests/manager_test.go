@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
 )
+
+var nilMetrics = metrics.NewMetrics(nil)
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
@@ -51,10 +54,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
@@ -103,10 +106,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_1:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_1","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_1:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_1","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
@@ -125,10 +128,10 @@ func TestProcessEvalResults(t *testing.T) {
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
 				},
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_2:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_2","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid alertname:test_title instance_label_2:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["instance_label_2","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
@@ -181,10 +184,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_1 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_1"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_1",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_1 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_1"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_1",
@@ -239,10 +242,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -308,10 +311,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -373,10 +376,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -434,10 +437,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -495,10 +498,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -556,10 +559,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -618,10 +621,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -680,10 +683,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -742,10 +745,10 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				"map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]": {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
 					OrgID:        1,
-					CacheId:      "map[__alert_rule_namespace_uid__:test_namespace_uid __alert_rule_uid__:test_alert_rule_uid_2 alertname:test_title instance_label:test label:test]",
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid_2",
@@ -775,7 +778,7 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"))
+		st := state.NewManager(log.New("test_state_manager"), nilMetrics)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(tc.alertRule, res)

@@ -103,12 +103,13 @@ export function getDefaultState(): State {
       overrides: [],
     },
     replaceVariables: (v: string) => v,
-    theme: config.theme,
+    theme: config.theme2,
   };
 
   const dataConfig = {
     getTransformations: () => [] as DataTransformerConfig[],
     getFieldOverrideOptions: () => options,
+    getDataSupport: () => ({ annotations: false, alertStates: false }),
   };
 
   return {

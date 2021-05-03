@@ -2,11 +2,14 @@ package state
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	prometheusModel "github.com/prometheus/common/model"
 )
@@ -14,11 +17,15 @@ import (
 type cache struct {
 	states    map[string]*State
 	mtxStates sync.RWMutex
+	log       log.Logger
+	metrics   *metrics.Metrics
 }
 
-func newCache() *cache {
+func newCache(logger log.Logger, metrics *metrics.Metrics) *cache {
 	return &cache{
-		states: make(map[string]*State),
+		states:  make(map[string]*State),
+		log:     logger,
+		metrics: metrics,
 	}
 }
 
@@ -32,7 +39,12 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	lbs[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
 	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
 
-	id := fmt.Sprintf("%s", map[string]string(lbs))
+	il := ngModels.InstanceLabels(lbs)
+	id, err := il.StringKey()
+	if err != nil {
+		c.log.Error("error getting cacheId for entry", "msg", err.Error())
+	}
+
 	if state, ok := c.states[id]; ok {
 		return state
 	}
@@ -110,13 +122,23 @@ func (c *cache) reset() {
 func (c *cache) trim() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+
+	ct := make(map[eval.State]int)
+
 	for _, v := range c.states {
 		if len(v.Results) > 100 {
 			newResults := make([]Evaluation, 100)
-			copy(newResults, v.Results[100:])
+			// Keep last 100 results
+			copy(newResults, v.Results[len(v.Results)-100:])
 			v.Results = newResults
-			c.set(v)
 		}
+
+		n := ct[v.State]
+		ct[v.State] = n + 1
+	}
+
+	for k, n := range ct {
+		c.metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
 	}
 }
 

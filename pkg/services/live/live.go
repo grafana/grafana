@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -18,12 +20,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/demultiplexer"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
@@ -40,13 +45,17 @@ var (
 )
 
 func init() {
-	registry.RegisterServiceWithPriority(&GrafanaLive{
+	registry.RegisterServiceWithPriority(NewGrafanaLive(), registry.Low)
+}
+
+func NewGrafanaLive() *GrafanaLive {
+	return &GrafanaLive{
 		channels:   make(map[string]models.ChannelHandler),
 		channelsMu: sync.RWMutex{},
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
-	}, registry.Low)
+	}
 }
 
 // CoreGrafanaScope list of core features
@@ -68,7 +77,9 @@ type GrafanaLive struct {
 	RouteRegister         routing.RouteRegister    `inject:""`
 	LogsService           *cloudwatch.LogsService  `inject:""`
 	PluginManager         *manager.PluginManager   `inject:""`
+	CacheService          *localcache.CacheService `inject:""`
 	DatasourceCache       datasources.CacheService `inject:""`
+	SQLStore              *sqlstore.SQLStore       `inject:""`
 
 	node *centrifuge.Node
 
@@ -87,6 +98,7 @@ type GrafanaLive struct {
 
 	contextGetter    *pluginContextGetter
 	runStreamManager *runstream.Manager
+	storage          *database.Storage
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -99,6 +111,15 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 		return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 	}
 	return streamHandler, nil
+}
+
+// AddMigration defines database migrations.
+// This is an implementation of registry.DatabaseMigrator.
+func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
+	if !g.IsEnabled() {
+		return
+	}
+	database.AddLiveChannelMigrations(mg)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
@@ -146,9 +167,10 @@ func (g *GrafanaLive) Init() error {
 		Publisher:   g.Publish,
 		ClientCount: g.ClientCount,
 	}
+	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
+	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
 	g.ManagedStreamRunner = managedstream.NewRunner(g.Publish)
 
@@ -477,7 +499,10 @@ func (g *GrafanaLive) ClientCount(channel string) (int, error) {
 
 // IsEnabled returns true if the Grafana Live feature is enabled.
 func (g *GrafanaLive) IsEnabled() bool {
-	return g != nil && g.Cfg.IsLiveEnabled()
+	if g == nil || g.Cfg == nil {
+		return false
+	}
+	return g.Cfg.IsLiveEnabled()
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {

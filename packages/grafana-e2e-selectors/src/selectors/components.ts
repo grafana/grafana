@@ -1,4 +1,7 @@
 export const Components = {
+  TimePicker: {
+    openButton: 'TimePicker Open Button',
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -188,5 +191,8 @@ export const Components = {
   },
   DataLinksContextMenu: {
     singleLink: 'Data link',
+  },
+  CodeEditor: {
+    container: 'Code editor container',
   },
 };

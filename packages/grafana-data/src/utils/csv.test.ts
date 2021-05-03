@@ -5,6 +5,7 @@ import { getDataFrameRow, toDataFrameDTO } from '../dataframe/processDataFrame';
 import fs from 'fs';
 import { MutableDataFrame } from '../dataframe';
 import { getDisplayProcessor } from '../field';
+import { createTheme } from '../themes';
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -149,7 +150,11 @@ describe('DataFrame to CSV', () => {
       ],
     });
 
-    dataFrame.fields[1].display = getDisplayProcessor({ field: dataFrame.fields[1], timeZone: 'utc' });
+    dataFrame.fields[1].display = getDisplayProcessor({
+      field: dataFrame.fields[1],
+      timeZone: 'utc',
+      theme: createTheme(),
+    });
 
     const csv = toCSV([dataFrame]);
     expect(csv).toMatchInlineSnapshot(`

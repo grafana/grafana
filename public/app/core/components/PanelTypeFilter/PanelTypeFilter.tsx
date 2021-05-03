@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { GrafanaThemeV2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { getAllPanelPluginMeta } from '../../../features/dashboard/components/VizTypePicker/VizTypePicker';
 import { Icon, resetSelectStyles, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -41,7 +41,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
     getOptionValue: (i: any) => i.value,
     isMulti: true,
     noOptionsMessage: 'No Panel types found',
-    placeholder: 'Filter by Panel type',
+    placeholder: 'Filter by type',
     styles: resetSelectStyles(),
     maxMenuHeight: 150,
     options,
@@ -56,12 +56,12 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
           Clear types
         </span>
       )}
-      <Select {...selectOptions} prefix={<Icon name="table" />} aria-label="Panel Type filter" />
+      <Select {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
     </div>
   );
 };
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css`
       label: container;

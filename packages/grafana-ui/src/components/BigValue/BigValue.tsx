@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline, TextDisplayOptions } from '@grafana/data';
 
 // Types
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 import { buildLayout } from './BigValueLayout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
@@ -34,7 +34,7 @@ export enum BigValueTextMode {
   None = 'none',
 }
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   /** Height of the component */
   height: number;
   /** Width of the component */
