@@ -1,6 +1,6 @@
 import React, { FC, useReducer } from 'react';
 import { Icon, IconName, Tooltip } from '@grafana/ui';
-import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
+import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardLinksDashboard } from './DashboardLinksDashboard';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
