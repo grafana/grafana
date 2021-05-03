@@ -94,7 +94,7 @@ describe('Graph Migrations', () => {
       };
       const panel = {} as PanelModel;
       panel.options = graphPanelChangedHandler(panel, 'graph', old);
-      expect(panel.fieldConfig.defaults.custom.thresholds.mode).toBe('area');
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
         Array [
           Object {
