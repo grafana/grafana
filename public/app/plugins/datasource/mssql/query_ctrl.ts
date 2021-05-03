@@ -13,7 +13,7 @@ WHERE
 ORDER BY
   <time_column> ASC`;
 
-export class MssqlQueryCtrl extends QueryCtrl {
+export class MssqlQueryCtrl extends QueryCtrl<MssqlQuery> {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];

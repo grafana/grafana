@@ -5,10 +5,10 @@ import {
   AppEvents,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
+  LiveChannelAddress,
   LiveChannelConnectionState,
   LiveChannelEvent,
   LiveChannelScope,
-  toLiveChannelId,
 } from '@grafana/data';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
@@ -16,10 +16,9 @@ import { CoreGrafanaLiveFeature } from '../scopes';
 import { sessionId } from '../live';
 import { ShowModalReactEvent } from '../../../types/events';
 import { Unsubscribable } from 'rxjs';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 
 class DashboardWatcher {
-  channel?: string; // path to the channel
+  channel?: LiveChannelAddress; // path to the channel
   uid?: string;
   ignoreSave?: boolean;
   editing = false;
@@ -36,15 +35,13 @@ class DashboardWatcher {
   }
 
   private sendEditingState() {
-    if (this.channel && this.uid) {
-      getBackendSrv().post(`api/live/publish`, {
-        channel: this.channel,
-        data: {
-          sessionId,
-          uid: this.uid,
-          action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-          timestamp: Date.now(),
-        },
+    const { channel, uid } = this;
+    if (channel && uid) {
+      getGrafanaLiveSrv().publish(channel, {
+        sessionId,
+        uid,
+        action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
+        timestamp: Date.now(),
       });
     }
   }
@@ -57,17 +54,16 @@ class DashboardWatcher {
 
     // Check for changes
     if (uid !== this.uid) {
-      const addr = {
+      this.channel = {
         scope: LiveChannelScope.Grafana,
         namespace: 'dashboard',
         path: `uid/${uid}`,
       };
       this.leave();
       if (uid) {
-        this.subscription = live.getStream(addr).subscribe(this.observer);
+        this.subscription = live.getStream(this.channel).subscribe(this.observer);
       }
       this.uid = uid;
-      this.channel = toLiveChannelId(addr);
     }
   }
 

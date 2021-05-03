@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/benbjohnson/clock"
@@ -45,6 +46,7 @@ type AlertNG struct {
 	DataService     *tsdb.Service                           `inject:""`
 	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
+	Metrics         *metrics.Metrics                        `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
@@ -57,20 +59,20 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-	ng.stateManager = state.NewManager(ng.Log)
+	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:            clock.New(),
-		BaseInterval: baseInterval,
-		Logger:       ng.Log,
-		MaxAttempts:  maxAttempts,
-		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
-		Store:        store,
-		RuleStore:    store,
-		Notifier:     ng.Alertmanager,
+		C:             clock.New(),
+		BaseInterval:  baseInterval,
+		Logger:        ng.Log,
+		MaxAttempts:   maxAttempts,
+		Evaluator:     eval.Evaluator{Cfg: ng.Cfg},
+		InstanceStore: store,
+		RuleStore:     store,
+		Notifier:      ng.Alertmanager,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
@@ -81,13 +83,13 @@ func (ng *AlertNG) Init() error {
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
-		Store:           store,
+		InstanceStore:   store,
 		RuleStore:       store,
 		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
 		StateManager:    ng.stateManager,
 	}
-	api.RegisterAPIEndpoints()
+	api.RegisterAPIEndpoints(ng.Metrics)
 
 	return nil
 }
