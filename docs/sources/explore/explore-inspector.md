@@ -45,7 +45,7 @@ Grafana generates a CSV file in your default browser download location. You can 
 1. Refine query settings until you can see the raw data that you want to export.
 1. Click **Download CSV**.
 
-To download a CSV file specifically formatted for Excel, expand the **Data options** and enable the **Download for Excel** toggle before clicking **Download CSV**.
+In order to download a CSV file specifically formatted for Excel, expand **Data options** and then enable the **Download for Excel** toggle before you click the **Download CSV** option.
 
 ### Download log results as TXT
 
