@@ -14,6 +14,7 @@ export class ConfigEditor extends PureComponent<Props> {
     if (!jsonData.hasOwnProperty('authenticationType')) {
       jsonData.authenticationType = AuthType.JWT;
     }
+
     return (
       <>
         <div className="gf-form-group">
@@ -59,7 +60,7 @@ export class ConfigEditor extends PureComponent<Props> {
                 className="external-link"
                 target="_blank"
                 rel="noreferrer"
-                href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/_index.md"
+                href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/"
               >
                 in the documentation.
               </a>
