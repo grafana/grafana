@@ -51,7 +51,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
             aria-label={selectors.components.DashboardLinks.link}
           >
             <Icon name={linkIconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
-            <span>{sanitize(linkInfo.title)}</span>
+            <span>{linkInfo.title}</span>
           </a>
         );
 
