@@ -76,11 +76,10 @@ const (
 	ActionLDAPStatusRead = "ldap.status:read"
 
 	// Global Scopes
-	ScopeUsersAll  = "users:*"
-	ScopeUsersSelf = "users:self"
+	ScopeGlobalUsersAll = "global:users:*"
 
-	ScopeOrgAllUsersAll     = "org:*/users:*"
-	ScopeOrgCurrentUsersAll = "org:current/users:*"
+	ScopeUsersSelf = "users:self"
+	ScopeUsersAll  = "users:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

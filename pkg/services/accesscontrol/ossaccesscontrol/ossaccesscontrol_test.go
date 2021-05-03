@@ -58,8 +58,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: accesscontrol.ActionUsersDisable, scope: []string{accesscontrol.ScopeUsersAll}},
-				{permission: accesscontrol.ActionUsersEnable, scope: []string{accesscontrol.ScopeUsersAll}},
+				{permission: accesscontrol.ActionUsersDisable, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
+				{permission: accesscontrol.ActionUsersEnable, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
 			},
 			evalResult: true,
 		},
@@ -71,7 +71,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: accesscontrol.ActionUsersCreate, scope: []string{accesscontrol.ScopeUsersAll}},
+				{permission: accesscontrol.ActionUsersCreate, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
 			},
 			evalResult: false,
 		},

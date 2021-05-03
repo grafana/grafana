@@ -56,7 +56,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/datasources/", reqOrgAdmin, hs.Index)
 	r.Get("/datasources/new", reqOrgAdmin, hs.Index)
 	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
-	r.Get("/org/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeOrgCurrentUsersAll), hs.Index)
+	r.Get("/org/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), hs.Index)
 	r.Get("/org/teams", reqCanAccessTeams, hs.Index)
@@ -66,7 +66,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/users", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), hs.Index)
+	r.Get("/admin/users", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), hs.Index)
 	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersCreate), hs.Index)
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead), hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
@@ -161,13 +161,13 @@ func (hs *HTTPServer) registerRoutes() {
 		// users (admin permission required)
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			const userIDScope = `users:{{ index . ":id" }}`
-			usersRoute.Get("/", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(SearchUsers))
-			usersRoute.Get("/search", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(SearchUsersWithPaging))
+			usersRoute.Get("/", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(SearchUsers))
+			usersRoute.Get("/search", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, userIDScope), routing.Wrap(GetUserByID))
 			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersTeamRead, userIDScope), routing.Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, userIDScope), routing.Wrap(GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
-			usersRoute.Get("/lookup", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(GetUserByLoginOrEmail))
+			usersRoute.Get("/lookup", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(GetUserByLoginOrEmail))
 			usersRoute.Put("/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersWrite, userIDScope), bind(models.UpdateUserCommand{}), routing.Wrap(UpdateUser))
 			usersRoute.Post("/:id/using/:orgId", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersWrite, userIDScope), routing.Wrap(UpdateUserActiveOrg))
 		})
@@ -202,8 +202,8 @@ func (hs *HTTPServer) registerRoutes() {
 			const orgScope = `org:current/users:{{ index . ":userId" }}`
 			orgRoute.Put("/", reqOrgAdmin, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", reqOrgAdmin, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddressCurrent))
-			orgRoute.Get("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeOrgCurrentUsersAll), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
-			orgRoute.Post("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), quota("user"), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUserToCurrentOrg))
+			orgRoute.Get("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
+			orgRoute.Post("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeUsersAll), quota("user"), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRoleUpdate, orgScope), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUserForCurrentOrg))
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRemove, orgScope), routing.Wrap(RemoveOrgUserForCurrentOrg))
 
