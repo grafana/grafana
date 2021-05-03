@@ -109,6 +109,7 @@ export function getDefaultState(): State {
   const dataConfig = {
     getTransformations: () => [] as DataTransformerConfig[],
     getFieldOverrideOptions: () => options,
+    getDataSupport: () => ({ annotations: false, alertStates: false }),
   };
 
   return {

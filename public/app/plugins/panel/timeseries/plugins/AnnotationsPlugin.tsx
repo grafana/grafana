@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameView, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import { DataFrame, DataFrameView, getColorForTheme, TimeZone } from '@grafana/data';
 import { EventsCanvas, UPlotConfigBuilder, usePlotContext, useTheme } from '@grafana/ui';
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { AnnotationMarker } from './AnnotationMarker';
@@ -9,27 +9,11 @@ interface AnnotationsPluginProps {
   timeZone: TimeZone;
 }
 
-interface AnnotationsDataFrameViewDTO {
-  time: number;
-  text: string;
-  tags: string[];
-}
-
 export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone, config }) => {
   const theme = useTheme();
   const plotCtx = usePlotContext();
 
   const annotationsRef = useRef<Array<DataFrameView<AnnotationsDataFrameViewDTO>>>();
-
-  const timeFormatter = useCallback(
-    (value: number) => {
-      return dateTimeFormat(value, {
-        format: systemDateFormats.fullDate,
-        timeZone,
-      });
-    },
-    [timeZone]
-  );
 
   // Update annotations views when new annotations came
   useEffect(() => {
@@ -68,7 +52,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           const xpos = u.valToPos(annotation.time, 'x', true);
           ctx.beginPath();
           ctx.lineWidth = 2;
-          ctx.strokeStyle = theme.palette.red;
+          ctx.strokeStyle = getColorForTheme(annotation.color, theme);
           ctx.setLineDash([5, 5]);
           ctx.moveTo(xpos, u.bbox.top);
           ctx.lineTo(xpos, u.bbox.top + u.bbox.height);
@@ -101,9 +85,9 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     (frame: DataFrame, index: number) => {
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(index);
-      return <AnnotationMarker time={timeFormatter(annotation.time)} text={annotation.text} tags={annotation.tags} />;
+      return <AnnotationMarker annotation={annotation} timeZone={timeZone} />;
     },
-    [timeFormatter]
+    [timeZone]
   );
 
   return (

@@ -24,7 +24,6 @@ import {
   DataTransformerConfig,
   LoadingState,
   PanelData,
-  PanelPluginDataSupport,
   rangeUtil,
   ScopedVars,
   TimeRange,
@@ -67,12 +66,10 @@ export class PanelQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
-  private dataSupport?: PanelPluginDataSupport;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
     this.dataConfigSource = dataConfigSource;
-    this.dataSupport = this.dataConfigSource.dataSupport;
   }
 
   /**
@@ -249,7 +246,9 @@ export class PanelQueryRunner {
     }
 
     let panelData = observable;
-    if (this.dataSupport?.alertStates || this.dataSupport?.annotations) {
+    const dataSupport = this.dataConfigSource.getDataSupport();
+
+    if (dataSupport.alertStates || dataSupport.annotations) {
       panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
     }
 

@@ -67,6 +67,7 @@ function describeQueryRunnerScenario(
     const defaultPanelConfig: grafanaData.DataConfigSource = {
       getFieldOverrideOptions: () => undefined,
       getTransformations: () => undefined,
+      getDataSupport: () => ({ annotations: false, alertStates: false }),
     };
     const ctx: ScenarioContext = {
       maxDataPoints: 200,
@@ -251,6 +252,7 @@ describe('PanelQueryRunner', () => {
         theme: grafanaData.createTheme(),
       }),
       getTransformations: () => undefined,
+      getDataSupport: () => ({ annotations: false, alertStates: false }),
     }
   );
 
@@ -274,6 +276,7 @@ describe('PanelQueryRunner', () => {
       getFieldOverrideOptions: () => undefined,
       // @ts-ignore
       getTransformations: () => [({} as unknown) as grafanaData.DataTransformerConfig],
+      getDataSupport: () => ({ annotations: false, alertStates: false }),
     }
   );
 
@@ -316,6 +319,7 @@ describe('PanelQueryRunner', () => {
       }),
       // @ts-ignore
       getTransformations: () => [({} as unknown) as grafanaData.DataTransformerConfig],
+      getDataSupport: () => ({ annotations: false, alertStates: false }),
     }
   );
 
