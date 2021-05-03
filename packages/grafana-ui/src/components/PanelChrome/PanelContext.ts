@@ -7,6 +7,13 @@ export interface PanelContext {
 
   /** Dashboard panels sync */
   sync?: DashboardCursorSync;
+
+  /**
+   * Called when a component wants to change the color for a series
+   *
+   * @alpha -- experimental
+   */
+  onSeriesColorChange?: (label: string, color: string) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
