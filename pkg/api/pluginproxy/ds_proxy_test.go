@@ -249,7 +249,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				json, err := ioutil.ReadFile("./test-data/access-token-1.json")
 				require.NoError(t, err)
 
+				originalClient := client
 				client = newFakeHTTPClient(t, json)
+				defer func() { client = originalClient }()
+
 				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
 				require.NoError(t, err)
 				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, plugin.Routes[0], proxy.ds)
