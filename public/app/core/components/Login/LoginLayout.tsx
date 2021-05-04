@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { cx, css, keyframes } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { Branding } from '../Branding/Branding';
@@ -16,9 +16,12 @@ export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true })
 export const LoginLayout: FC = ({ children }) => {
   const loginStyles = useStyles2(getLoginStyles);
   const subTitle = Branding.GetLoginSubTitle();
+  const [startAnim, setStartAnim] = useState(false);
+
+  useEffect(() => setStartAnim(true), []);
 
   return (
-    <Branding.LoginBackground className={loginStyles.container}>
+    <Branding.LoginBackground className={cx(loginStyles.container, startAnim && loginStyles.loginAnim)}>
       <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground())}>
         <div className={loginStyles.loginLogoWrapper}>
           <Branding.LoginLogo className={loginStyles.loginLogo} />
@@ -59,11 +62,16 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      backgroundPositionY: '-500px',
+      transition: 'background-position-y 3s ease-in',
 
       [theme.breakpoints.up('md')]: {
         justifyContent: 'center',
       },
     }),
+    loginAnim: css`
+      background-position-y: 0px;
+    `,
     submitButton: css`
       justify-content: center;
       width: 100%;
