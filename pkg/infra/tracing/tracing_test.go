@@ -108,6 +108,7 @@ func TestInitJaegerCfg_EnabledViaHost(t *testing.T) {
 	}()
 
 	ts := &TracingService{Cfg: setting.NewCfg()}
+	ts.Cfg.Raw.NewSection("tracing.jaeger")
 	ts.parseSettings()
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
@@ -125,6 +126,7 @@ func TestInitJaegerCfg_EnabledViaHostPort(t *testing.T) {
 	}()
 
 	ts := &TracingService{Cfg: setting.NewCfg()}
+	ts.Cfg.Raw.NewSection("tracing.jaeger")
 	ts.parseSettings()
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)

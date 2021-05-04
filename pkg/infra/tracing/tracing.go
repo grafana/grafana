@@ -53,16 +53,11 @@ func (ts *TracingService) Init() error {
 
 func (ts *TracingService) parseSettings() {
 	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
-	if err == nil {
-		ts.address = section.Key("address").MustString("")
-		ts.customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
-		ts.samplerType = section.Key("sampler_type").MustString("")
-		ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
-		ts.zipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
-		ts.disableSharedZipkinSpans = section.Key("disable_shared_zipkin_spans").MustBool(false)
-		ts.samplingServerURL = section.Key("sampling_server_url").MustString("")
+	if err != nil {
+		return
 	}
 
+	ts.address = section.Key("address").MustString("")
 	if ts.address == "" {
 		host := os.Getenv(envJaegerAgentHost)
 		port := os.Getenv(envJaegerAgentPort)
@@ -73,6 +68,13 @@ func (ts *TracingService) parseSettings() {
 	if ts.address != "" {
 		ts.enabled = true
 	}
+
+	ts.customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
+	ts.samplerType = section.Key("sampler_type").MustString("")
+	ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
+	ts.zipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
+	ts.disableSharedZipkinSpans = section.Key("disable_shared_zipkin_spans").MustBool(false)
+	ts.samplingServerURL = section.Key("sampling_server_url").MustString("")
 }
 
 func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
