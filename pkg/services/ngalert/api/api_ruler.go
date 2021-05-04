@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	coreapi "github.com/grafana/grafana/pkg/api"
@@ -22,6 +23,7 @@ import (
 type RulerSrv struct {
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
+	manager         *state.Manager
 	log             log.Logger
 }
 
@@ -32,9 +34,15 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 		return toNamespaceErrorResponse(err)
 	}
 
-	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid); err != nil {
+	uids, err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid)
+	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to delete namespace alert rules", err)
 	}
+
+	for _, uid := range uids {
+		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+	}
+
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
 }
 
@@ -45,11 +53,17 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 		return toNamespaceErrorResponse(err)
 	}
 	ruleGroup := c.Params(":Groupname")
-	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup); err != nil {
+	uids, err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
+
+	if err != nil {
 		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
 			return response.Error(http.StatusNotFound, "failed to delete rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to delete rule group", err)
+	}
+
+	for _, uid := range uids {
+		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
