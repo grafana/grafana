@@ -63,7 +63,7 @@ export const RulesTable: FC<Props> = ({
   const wrapperClass = cx(styles.wrapper, { [styles.wrapperMargin]: showGuidelines });
 
   if (!rules.length) {
-    return <div className={wrapperClass}>{emptyMessage}</div>;
+    return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
   return (
@@ -193,6 +193,9 @@ export const RulesTable: FC<Props> = ({
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css`
     margin-left: 36px;
+  `,
+  emptyMessage: css`
+    padding: ${theme.spacing(1)};
   `,
   wrapper: css`
     margin-top: ${theme.spacing(3)};
