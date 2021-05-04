@@ -103,6 +103,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           onQueryChange={onChange}
           setError={setError}
           aggregationOptions={metricsMetadata?.aggOptions ?? []}
+          isLoading={metricsMetadata.isLoading}
         />
         <TimeGrainField
           query={query}

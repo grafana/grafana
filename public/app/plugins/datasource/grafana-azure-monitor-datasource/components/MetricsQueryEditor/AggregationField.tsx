@@ -8,6 +8,7 @@ import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 interface AggregationFieldProps extends AzureQueryEditorFieldProps {
   aggregationOptions: AzureMonitorOption[];
+  isLoading: boolean;
 }
 
 const AggregationField: React.FC<AggregationFieldProps> = ({
@@ -15,6 +16,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
   variableOptionGroup,
   onQueryChange,
   aggregationOptions,
+  isLoading,
 }) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -46,6 +48,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        isLoading={isLoading}
       />
     </Field>
   );
