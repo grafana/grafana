@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useCallback } from 'react';
-import { Alert, LoadingPlaceholder, Button, Field } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Button, Field, useStyles, Link } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
@@ -12,11 +12,14 @@ import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { initialAsyncRequestState } from './utils/redux';
 import SilencesEditor from './components/silences/SilencesEditor';
+import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
 
 const Silences: FC = () => {
   const [alertManagerSourceName = '', setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
   const location = useLocation();
+  const styles = useStyles(getStyles);
   const isRoot = location.pathname.endsWith('alerting/silences');
   const silences = useUnifiedAlertingSelector((state) => state.silences);
 
@@ -48,9 +51,11 @@ const Silences: FC = () => {
         <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       </Field>
       {isRoot && (
-        <a href={`${config.appSubUrl ?? ''}/alerting/silence/new`}>
-          <Button icon="plus">New Silence</Button>
-        </a>
+        <Link href={`${config.appSubUrl ?? ''}/alerting/silence/new`}>
+          <Button className={styles.addNewSilence} icon="plus">
+            New Silence
+          </Button>
+        </Link>
       )}
       {error && !loading && (
         <Alert severity="error" title="Error loading silences">
@@ -87,5 +92,11 @@ const Silences: FC = () => {
     </AlertingPageWrapper>
   );
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  addNewSilence: css`
+    margin-bottom: ${theme.spacing.md};
+  `,
+});
 
 export default Silences;

@@ -1,6 +1,6 @@
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC } from 'react';
-import { Button, Field, FieldSet, Input, TextArea, useStyles } from '@grafana/ui';
+import { Button, Field, FieldSet, Input, Link, TextArea, useStyles } from '@grafana/ui';
 import { DefaultTimeZone, GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { pickBy } from 'lodash';
@@ -97,7 +97,12 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             <Input {...register('createdBy', { required: true })} />
           </Field>
         </FieldSet>
-        <Button type="submit">Submit</Button>
+        <div className={styles.flexRow}>
+          <Button type="submit">Submit</Button>
+          <Link href="/alerting/silences">
+            <Button variant={'secondary'}>Cancel</Button>
+          </Link>
+        </div>
       </form>
     </FormProvider>
   );
@@ -106,6 +111,15 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
 const getStyles = (theme: GrafanaTheme) => ({
   field: css`
     margin: ${theme.spacing.sm} 0;
+  `,
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+
+    & > * {
+      margin-right: ${theme.spacing.sm};
+    }
   `,
 });
 

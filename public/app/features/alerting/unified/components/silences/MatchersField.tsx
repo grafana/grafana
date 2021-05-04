@@ -22,13 +22,15 @@ const MatchersField: FC<Props> = ({ className }) => {
       (matcher) => matcherName === matcher.name && matcherValue === matcher.value && isRegex === matcher.isRegex
     );
 
-    if (!matcherAlreadyExists) {
+    if (matcherAlreadyExists) {
+      setError('matcherName', { message: 'Matcher already exists' });
+    } else if (!matcherName || !matcherValue) {
+      setError('matcherName', { message: 'Matcher must have name and value' });
+    } else {
       append({ name: matcherName, value: matcherValue, isRegex });
       setValue('matcherName', '');
       setValue('matcherValue', '');
       setValue('isRegex', false);
-    } else {
-      setError('matcherName', { message: 'Matcher already exists' });
     }
   };
 
