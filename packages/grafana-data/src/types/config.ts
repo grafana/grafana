@@ -46,6 +46,7 @@ export interface FeatureToggles {
 
   live: boolean;
   ngalert: boolean;
+  trimDefaults: boolean;
   panelLibrary: boolean;
   accesscontrol: boolean;
 
