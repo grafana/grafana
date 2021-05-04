@@ -59,7 +59,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   onDuplicateQuery = (query: GrafanaQuery) => {
     const { onChange, value = [] } = this.props;
-    onChange([...value, query]);
+    onChange(addQuery(value, query));
   };
 
   onNewAlertingQuery = () => {
