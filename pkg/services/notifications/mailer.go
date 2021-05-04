@@ -83,7 +83,13 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
 		innerError := dialer.DialAndSend(m)
 		emailsSentTotal.Inc()
 		if innerError != nil {
-			emailsSentFailed.Inc()
+			// As gomail does not returned typed errors we have to parse the error
+			// to catch invalid error when the address is invalid.
+			// https://github.com/go-gomail/gomail/blob/81ebce5c23dfd25c6c67194b37d3dd3f338c98b1/send.go#L113
+			if !strings.HasPrefix(innerError.Error(), "gomail: invalid address") {
+				emailsSentFailed.Inc()
+			}
+
 			err = errutil.Wrapf(innerError, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
 			continue
 		}
