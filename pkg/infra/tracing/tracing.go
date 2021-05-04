@@ -66,7 +66,7 @@ func (ts *TracingService) parseSettings() {
 	if ts.address == "" {
 		host := os.Getenv(envJaegerAgentHost)
 		port := os.Getenv(envJaegerAgentPort)
-		if host != "" {
+		if host != "" || port != "" {
 			ts.address = fmt.Sprintf("%s:%s", host, port)
 		}
 	}
