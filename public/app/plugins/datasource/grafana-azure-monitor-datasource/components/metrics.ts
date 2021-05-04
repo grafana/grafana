@@ -21,7 +21,7 @@ export function useMetricsMetadata(
     aggOptions: [],
     timeGrains: [],
     dimensions: [],
-    isLoading: true,
+    isLoading: false,
   });
 
   useEffect(() => {
