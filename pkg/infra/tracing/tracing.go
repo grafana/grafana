@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,6 +14,11 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
+)
+
+const (
+	envJaegerAgentHost = "JAEGER_AGENT_HOST"
+	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
 func init() {
@@ -52,6 +58,13 @@ func (ts *TracingService) parseSettings() {
 	}
 
 	ts.address = section.Key("address").MustString("")
+	if ts.address == "" {
+		host := os.Getenv(envJaegerAgentHost)
+		port := os.Getenv(envJaegerAgentPort)
+		if host != "" && port != "" {
+			ts.address = fmt.Sprintf("%s:%s", host, port)
+		}
+	}
 	if ts.address != "" {
 		ts.enabled = true
 	}
