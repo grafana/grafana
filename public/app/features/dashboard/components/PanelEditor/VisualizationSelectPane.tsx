@@ -26,11 +26,14 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const searchRef = useRef<HTMLInputElement | null>(null);
 
   const onPluginTypeChange = useCallback(
-    (meta: PanelPluginMeta) => {
-      if (meta.id === plugin.meta.id) {
-        dispatch(toggleVizPicker(false));
-      } else {
+    (meta: PanelPluginMeta, withModKey: boolean) => {
+      if (meta.id !== plugin.meta.id) {
         dispatch(changePanelPlugin(panel, meta.id));
+      }
+
+      // close viz picker unless a mod key is pressed while clicking
+      if (!withModKey) {
+        dispatch(toggleVizPicker(false));
       }
     },
     [dispatch, panel, plugin.meta.id]
@@ -53,8 +56,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         const query = e.currentTarget.value;
         const plugins = getAllPanelPluginMeta();
         const match = filterPluginList(plugins, query, plugin.meta);
+
         if (match && match.length) {
-          onPluginTypeChange(match[0]);
+          onPluginTypeChange(match[0], true);
         }
       }
     },
