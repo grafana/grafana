@@ -2,23 +2,19 @@ package commands
 
 import (
 	"fmt"
-	"github.com/grafana/grafana"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
 )
 
-var p = load.BaseLoadPaths{
-	BaseCueFS:       grafana.CoreSchema,
-	DistPluginCueFS: grafana.PluginSchema,
-}
-
 func (cmd Command) validateScuemataBasics(c utils.CommandLine) error {
-	if err := validate(p, load.BaseDashboardFamily); err != nil {
+	paths := load.GetDefaultLoadPaths()
+	if err := validate(paths, load.BaseDashboardFamily); err != nil {
 		return err
 	}
 
-	if err := validate(p, load.DistDashboardFamily); err != nil {
+	if err := validate(paths, load.DistDashboardFamily); err != nil {
 		return err
 	}
 
