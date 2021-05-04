@@ -82,6 +82,8 @@ func (c *cache) set(entry *State) {
 	defer c.mtxStates.Unlock()
 	if _, ok := c.states[entry.OrgID]; !ok {
 		c.states[entry.OrgID] = make(map[string]map[string]*State)
+	}
+	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
 		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*State)
 	}
 	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheId] = entry
