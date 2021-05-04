@@ -19,7 +19,13 @@ export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart } from './PieChart/PieChart';
-export { PieChartType, PieChartLabels, PieChartLegendOptions, PieChartLegendValues } from './PieChart/types';
+export {
+  PieChartType,
+  PieChartProps,
+  PieChartLabels,
+  PieChartLegendOptions,
+  PieChartLegendValues,
+} from './PieChart/types';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
