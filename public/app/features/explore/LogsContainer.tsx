@@ -78,6 +78,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       width,
       isLive,
       exploreId,
+      queries,
     } = this.props;
 
     if (!logRows) {
@@ -124,6 +125,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              queries={queries}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -146,6 +148,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    queries,
   } = item;
   const timeZone = getTimeZone(state.user);
 
@@ -163,6 +166,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    queries,
   };
 }
 

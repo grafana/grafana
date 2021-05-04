@@ -168,10 +168,10 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon: "camera",
 		})
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Global panels",
+			Text: "Library panels",
 			Id:   "library-panels",
 			Url:  hs.Cfg.AppSubURL + "/library-panels",
-			Icon: "reusable-panel",
+			Icon: "library-panel",
 		})
 	}
 
@@ -254,7 +254,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.ActionOrgUsersRead, ac.ScopeOrgCurrentUsersAll) {
+	if hasAccess(ac.ReqOrgAdmin, ac.ActionOrgUsersRead, ac.ScopeUsersAll) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Users",
 			Id:          "users",
@@ -349,7 +349,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	adminNavLinks := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionUsersRead, ac.ScopeUsersAll) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionUsersRead, ac.ScopeGlobalUsersAll) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Users", Id: "global-users", Url: hs.Cfg.AppSubURL + "/admin/users", Icon: "user",
 		})
