@@ -4,7 +4,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { StateTag } from '../StateTag';
 import { ActionIcon } from '../rules/ActionIcon';
 import { getAlertTableStyles } from '../../styles/table';
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { dateTimeAsMoment, toDuration } from '@grafana/data';
 import { AlertLabels } from '../AlertLabels';
 
@@ -15,7 +15,7 @@ interface Props {
 
 export const SilencedAlertsTableRow: FC<Props> = ({ alert, className }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const tableStyles = useStyles(getAlertTableStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
   const alertDuration = toDuration(dateTimeAsMoment(alert.endsAt).diff(alert.startsAt)).asSeconds();
   const alertName = Object.entries(alert.labels).reduce((name, [labelKey, labelValue]) => {
     if (labelKey === 'alertname' || labelKey === '__alert_rule_title__') {

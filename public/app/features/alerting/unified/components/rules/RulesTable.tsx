@@ -1,5 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
-import { ConfirmModal, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -32,8 +32,8 @@ export const RulesTable: FC<Props> = ({
 
   const hasRuler = useHasRuler();
 
-  const styles = useStyles(getStyles);
-  const tableStyles = useStyles(getAlertTableStyles);
+  const styles = useStyles2(getStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
@@ -190,28 +190,28 @@ export const RulesTable: FC<Props> = ({
   );
 };
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css`
     margin-left: 36px;
   `,
   wrapper: css`
-    margin-top: ${theme.spacing.md};
+    margin-top: ${theme.spacing(3)};
     width: auto;
-    padding: ${theme.spacing.sm};
-    background-color: ${theme.colors.bg2};
-    border-radius: 3px;
+    background-color: ${theme.colors.background.secondary};
+    border-radius: ${theme.shape.borderRadius()};
   `,
   table: css`
     width: 100%;
-    border-radius: 3px;
-    border: solid 1px ${theme.colors.border3};
+    border-radius: ${theme.shape.borderRadius()};
+    border: solid 1px ${theme.colors.border.weak};
+    background-color: ${theme.colors.background.secondary};
 
     th {
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
     }
 
     td + td {
-      padding: 0 ${theme.spacing.sm};
+      padding: ${theme.spacing(0, 1)};
     }
 
     tr {
@@ -219,7 +219,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
     }
   `,
   evenRow: css`
-    background-color: ${theme.colors.bodyBg};
+    background-color: ${theme.colors.background.primary};
   `,
   colState: css`
     width: 110px;
@@ -228,13 +228,13 @@ export const getStyles = (theme: GrafanaTheme) => ({
     position: relative;
   `,
   guideline: css`
-    left: -27px;
-    border-left: 1px solid ${theme.colors.border3};
+    left: -19px;
+    border-left: 1px solid ${theme.colors.border.medium};
     position: absolute;
   `,
   ruleTopGuideline: css`
     width: 18px;
-    border-bottom: 1px solid ${theme.colors.border3};
+    border-bottom: 1px solid ${theme.colors.border.medium};
     top: 0;
     bottom: 50%;
   `,

@@ -1,4 +1,4 @@
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
-  const tableStyles = useStyles(getAlertTableStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 

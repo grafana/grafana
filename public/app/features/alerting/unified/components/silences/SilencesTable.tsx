@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
 import SilenceTableRow from './SilenceTableRow';
@@ -14,8 +14,8 @@ interface Props {
 }
 
 const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSourceName }) => {
-  const styles = useStyles(getStyles);
-  const tableStyles = useStyles(getAlertTableStyles);
+  const styles = useStyles2(getStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const findSilencedAlerts = (id: string) => {
     return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
@@ -62,7 +62,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
   }
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   colState: css`
     width: 110px;
   `,
