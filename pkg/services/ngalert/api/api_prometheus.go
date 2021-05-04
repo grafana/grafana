@@ -100,7 +100,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
-				Query:       queryStr, // TODO: don't escape <>& etc
+				Query:       queryStr,
 				Duration:    rule.For.Seconds(),
 				Annotations: rule.Annotations,
 			}
@@ -143,6 +143,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 					newRule.Health = "error"
 				case eval.NoData:
 					newRule.Health = "nodata"
+				}
+
+				if alertState.Error != nil {
+					newRule.LastError = alertState.Error.Error()
+					newRule.Health = "error"
 				}
 				alertingRule.Alerts = append(alertingRule.Alerts, alert)
 			}
