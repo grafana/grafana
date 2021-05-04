@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { getScrollbarWidth } from '../../utils';
 
-export const getTableStyles = (theme: GrafanaThemeV2) => {
+export const getTableStyles = (theme: GrafanaTheme2) => {
   const { colors } = theme;
   const headerBg = theme.colors.background.secondary;
   const borderColor = theme.colors.border.weak;
