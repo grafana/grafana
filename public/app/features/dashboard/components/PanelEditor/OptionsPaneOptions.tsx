@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaThemeV2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
@@ -143,7 +143,7 @@ function renderSearchHits(
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     height: 100%;
     display: flex;

@@ -1,9 +1,9 @@
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2, TimeOption } from '@grafana/data';
+import { GrafanaTheme2, TimeOption } from '@grafana/data';
 import { useStyles2 } from '../../../themes/ThemeContext';
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;

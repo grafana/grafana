@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
-export const darkThemeVarsTemplate = (theme: GrafanaThemeV2) =>
+export const darkThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
 // Global values
 // --------------------------------------------------
@@ -284,9 +284,9 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: ${theme.colors.background.secondary};
-$tooltipColor: ${theme.colors.text.primary};
-$tooltipArrowColor: ${theme.colors.background.secondary};
+$tooltipBackground: ${theme.components.tooltip.background};
+$tooltipColor: ${theme.components.tooltip.text};
+$tooltipArrowColor: ${theme.components.tooltip.background};
 $tooltipBackgroundError: ${theme.colors.error.main};
 $tooltipShadow: ${theme.shadows.z2};
 
