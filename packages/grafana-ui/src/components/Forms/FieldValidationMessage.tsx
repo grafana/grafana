@@ -1,6 +1,6 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import { palette, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { stylesFactory, useTheme2 } from '../../themes';
 
@@ -16,7 +16,7 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
       padding: ${theme.spacing(0.5, 1)};
-      color: ${palette.white};
+      color: ${theme.colors.error.text};
       background: ${theme.colors.error.main};
       border-radius: ${theme.shape.borderRadius()};
       position: relative;
