@@ -71,7 +71,9 @@ export const LibraryPanelsSearch = ({
             spacing="sm"
             justify={(showSort && showPanelFilter) || showFolderFilter ? 'space-between' : 'flex-end'}
           >
-            {showSort && <SortPicker value={sortDirection} onChange={onSortChange} />}
+            {showSort && (
+              <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />
+            )}
             <HorizontalGroup spacing="sm" justify={showFolderFilter && showPanelFilter ? 'space-between' : 'flex-end'}>
               {showFolderFilter && <FolderFilter onChange={onFolderFilterChange} />}
               {showPanelFilter && <PanelTypeFilter onChange={onPanelFilterChange} />}
