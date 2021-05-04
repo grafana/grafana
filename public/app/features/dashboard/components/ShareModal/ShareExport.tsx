@@ -65,7 +65,7 @@ let mounted = true;
         }
       });
     } else {
-      if (trimDefaults) {
+      if (trimDefaults && mounted) {
         getBackendSrv()
           .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
           .then((resp: any) => {
@@ -84,7 +84,7 @@ let mounted = true;
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        if (trimDefaults) {
+        if (trimDefaults && mounted) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
             .then((resp: any) => {
@@ -95,7 +95,7 @@ let mounted = true;
         }
       });
     } else {
-      if (trimDefaults) {
+      if (trimDefaults && mounted) {
         getBackendSrv()
           .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
           .then((resp: any) => {
