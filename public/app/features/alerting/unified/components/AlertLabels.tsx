@@ -27,8 +27,8 @@ export const AlertLabels = ({ labels, matchers, onRemoveLabel }: Props) => {
 
     return (
       <div className={styles.wrapper}>
-        {pairs.map(([key, value]) => (
-          <AlertLabel key={`${key}-${value}`} labelKey={key} value={value} />
+        {pairs.map(([key, value], index) => (
+          <AlertLabel key={`${key}-${value}-${index}`} labelKey={key} value={value} />
         ))}
       </div>
     );
@@ -39,7 +39,7 @@ export const AlertLabels = ({ labels, matchers, onRemoveLabel }: Props) => {
         {matchers.map(({ name, value, isRegex }: SilenceMatcher, index) => {
           return (
             <AlertLabel
-              key={`${name}-${value}`}
+              key={`${name}-${value}-${index}`}
               labelKey={name}
               value={value}
               isRegex={isRegex}

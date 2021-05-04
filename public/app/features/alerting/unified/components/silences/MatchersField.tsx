@@ -1,8 +1,8 @@
-import React, { FC, Fragment } from 'react';
-import { Button, Field, Input, InlineLabel, Label, useStyles, Checkbox } from '@grafana/ui';
+import React, { FC, Fragment, useCallback } from 'react';
+import { Button, Field, Input, InlineLabel, useStyles, Checkbox } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { AlertLabels } from '../AlertLabels';
 
@@ -13,48 +13,83 @@ interface Props {
 const MatchersField: FC<Props> = ({ className }) => {
   const styles = useStyles(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
-  const { register, getValues, setValue } = formApi;
+  const { register, getValues, setValue, control, setError, clearErrors, formState } = formApi;
   const { fields: matchers = [], append, remove } = useFieldArray<SilenceFormFields>({ name: 'matchers' });
 
   const addMatcher = () => {
     const { matcherName, matcherValue, isRegex } = getValues();
-    append({ name: matcherName, value: matcherValue, isRegex });
-    setValue('matcherName', '');
-    setValue('matcherValue', '');
-    setValue('isRegex', false);
+    const matcherAlreadyExists = matchers.some(
+      (matcher) => matcherName === matcher.name && matcherValue === matcher.value && isRegex === matcher.isRegex
+    );
+
+    if (!matcherAlreadyExists) {
+      append({ name: matcherName, value: matcherValue, isRegex });
+      setValue('matcherName', '');
+      setValue('matcherValue', '');
+      setValue('isRegex', false);
+    } else {
+      setError('matcherName', { message: 'Matcher already exists' });
+    }
   };
 
   const onRemoveLabel = (index: number) => {
     remove(index);
   };
+
+  const clearErrorsOnFocus = useCallback(() => {
+    if (formState.errors.matcherName) {
+      clearErrors('matcherName');
+    }
+  }, [formState.errors.matcherName, clearErrors]);
+
   return (
     <div className={cx(className, styles.wrapper)}>
-      <Label>Matchers</Label>
-      <div className={styles.matchers}>
-        <AlertLabels matchers={matchers} onRemoveLabel={onRemoveLabel} />
-      </div>
-      {/* Hide the fields from the form but they need to be registered in order to be in the form state */}
-      <div className={styles.displayNone}>
-        {matchers.map((matcher, index) => {
-          return (
-            <Fragment key={`${matcher.name}-${matcher.value}-${index}`}>
-              <Input {...register(`matchers.${index}.name` as const)} defaultValue={matcher.name} />
-              <Input {...register(`matchers.${index}.value` as const)} defaultValue={matcher.value} />
-              <Checkbox {...register(`matchers.${index}.isRegex` as const)} defaultChecked={matcher.isRegex} />
-            </Fragment>
-          );
-        })}
-      </div>
+      <Field
+        label="Matchers"
+        required
+        invalid={!!formState.errors.matcherName}
+        error={formState.errors.matcherName?.message}
+      >
+        <div>
+          <div className={styles.matchers}>
+            <AlertLabels matchers={matchers} onRemoveLabel={onRemoveLabel} />
+          </div>
+          {matchers.map((matcher, index) => {
+            return (
+              <Fragment key={`${matcher.id}`}>
+                <Controller
+                  name={`matchers.${index}.name` as const}
+                  defaultValue={matcher.name}
+                  control={control}
+                  render={() => <></>}
+                />
+                <Controller
+                  name={`matchers.${index}.value` as const}
+                  defaultValue={matcher.value}
+                  control={control}
+                  render={() => <></>}
+                />
+                <Controller
+                  name={`matchers.${index}.isRegex` as const}
+                  defaultValue={matcher.isRegex}
+                  control={control}
+                  render={() => <></>}
+                />
+              </Fragment>
+            );
+          })}
+        </div>
+      </Field>
 
       <div className={cx(styles.row)}>
         <Field className={styles.labelInput} label="Name">
-          <Input {...register('matcherName')} placeholder="name" />
+          <Input {...register('matcherName')} placeholder="name" onFocus={clearErrorsOnFocus} />
         </Field>
         <InlineLabel className={styles.equalSign}>=</InlineLabel>
         <Field className={styles.labelInput} label="Value">
-          <Input {...register('matcherValue')} placeholder="value" />
+          <Input {...register('matcherValue')} placeholder="value" onFocus={clearErrorsOnFocus} />
         </Field>
-        <Field label="Regex" className={styles.regexCheckbox}>
+        <Field label="Regex" className={styles.regexCheckbox} onFocus={clearErrorsOnFocus}>
           <Checkbox {...register('isRegex')} />
         </Field>
       </div>
