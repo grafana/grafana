@@ -235,7 +235,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: build-main
+name: build-master
 
 platform:
   os: linux
@@ -551,14 +551,14 @@ services:
 
 trigger:
   branch:
-  - main
+  - master
   event:
   - push
 
 ---
 kind: pipeline
 type: docker
-name: windows-main
+name: windows-master
 
 platform:
   os: windows
@@ -589,8 +589,8 @@ steps:
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads/oss/main/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
+  - gsutil cp $$fname gs://grafana-downloads/oss/master/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/master/
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -599,17 +599,17 @@ steps:
 
 trigger:
   branch:
-  - main
+  - master
   event:
   - push
 
 depends_on:
-- build-main
+- build-master
 
 ---
 kind: pipeline
 type: docker
-name: publish-main
+name: publish-master
 
 platform:
   os: linux
@@ -652,18 +652,18 @@ steps:
 
 trigger:
   branch:
-  - main
+  - master
   event:
   - push
 
 depends_on:
-- build-main
-- windows-main
+- build-master
+- windows-master
 
 ---
 kind: pipeline
 type: docker
-name: notify-main
+name: notify-master
 
 platform:
   os: linux
@@ -680,16 +680,16 @@ steps:
 
 trigger:
   branch:
-  - main
+  - master
   event:
   - push
   status:
   - failure
 
 depends_on:
-- build-main
-- windows-main
-- publish-main
+- build-master
+- windows-master
+- publish-master
 
 ---
 kind: pipeline
@@ -1988,7 +1988,7 @@ steps:
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout main
+  - git checkout master
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2395,7 +2395,7 @@ steps:
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout main
+  - git checkout master
   environment:
     GITHUB_TOKEN:
       from_secret: github_token

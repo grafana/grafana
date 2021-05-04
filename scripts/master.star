@@ -36,7 +36,7 @@ load(
     'upload_cdn'
 )
 
-ver_mode = 'main'
+ver_mode = 'master'
 
 def get_steps(edition, is_downstream=False):
     publish = edition != 'enterprise' or is_downstream
@@ -109,11 +109,11 @@ def get_steps(edition, is_downstream=False):
 
     return steps, windows_steps, publish_steps
 
-def main_pipelines(edition):
+def master_pipelines(edition):
     services = integration_test_services(edition)
     trigger = {
         'event': ['push',],
-        'branch': 'main',
+        'branch': 'master',
     }
     steps, windows_steps, publish_steps = get_steps(edition=edition)
 
@@ -123,23 +123,23 @@ def main_pipelines(edition):
 
     pipelines = [
         pipeline(
-            name='build-main', edition=edition, trigger=trigger, services=services, steps=steps,
+            name='build-master', edition=edition, trigger=trigger, services=services, steps=steps,
             ver_mode=ver_mode,
         ),
         pipeline(
-            name='windows-main', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
-            depends_on=['build-main'], ver_mode=ver_mode,
+            name='windows-master', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
+            depends_on=['build-master'], ver_mode=ver_mode,
         ),
     ]
     if edition != 'enterprise':
         pipelines.append(pipeline(
-            name='publish-main', edition=edition, trigger=trigger, steps=publish_steps,
-            depends_on=['build-main', 'windows-main',], install_deps=False, ver_mode=ver_mode,
+            name='publish-master', edition=edition, trigger=trigger, steps=publish_steps,
+            depends_on=['build-master', 'windows-master',], install_deps=False, ver_mode=ver_mode,
         ))
 
         pipelines.append(notify_pipeline(
-            name='notify-main', slack_channel='grafana-ci-notifications', trigger=trigger,
-            depends_on=['build-main', 'windows-main', 'publish-main'],
+            name='notify-master', slack_channel='grafana-ci-notifications', trigger=trigger,
+            depends_on=['build-master', 'windows-master', 'publish-master'],
         ))
     else:
         # Add downstream enterprise pipelines triggerable from OSS builds
@@ -148,22 +148,22 @@ def main_pipelines(edition):
         }
         steps, windows_steps, publish_steps = get_steps(edition=edition, is_downstream=True)
         pipelines.append(pipeline(
-            name='build-main-downstream', edition=edition, trigger=trigger, services=services, steps=steps,
+            name='build-master-downstream', edition=edition, trigger=trigger, services=services, steps=steps,
             is_downstream=True, ver_mode=ver_mode,
         ))
         pipelines.append(pipeline(
-            name='windows-main-downstream', edition=edition, trigger=trigger, steps=windows_steps,
-            platform='windows', depends_on=['build-main-downstream'], is_downstream=True, ver_mode=ver_mode,
+            name='windows-master-downstream', edition=edition, trigger=trigger, steps=windows_steps,
+            platform='windows', depends_on=['build-master-downstream'], is_downstream=True, ver_mode=ver_mode,
         ))
         pipelines.append(pipeline(
-            name='publish-main-downstream', edition=edition, trigger=trigger, steps=publish_steps,
-            depends_on=['build-main-downstream', 'windows-main-downstream'], is_downstream=True, install_deps=False,
+            name='publish-master-downstream', edition=edition, trigger=trigger, steps=publish_steps,
+            depends_on=['build-master-downstream', 'windows-master-downstream'], is_downstream=True, install_deps=False,
             ver_mode=ver_mode,
         ))
 
         pipelines.append(notify_pipeline(
-            name='notify-main-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=trigger,
-            depends_on=['build-main-downstream', 'windows-main-downstream', 'publish-main-downstream'],
+            name='notify-master-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=trigger,
+            depends_on=['build-master-downstream', 'windows-master-downstream', 'publish-master-downstream'],
         ))
 
     return pipelines

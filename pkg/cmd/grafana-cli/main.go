@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var version = "main"
+var version = "master"
 
 func main() {
 	setupLogging()
