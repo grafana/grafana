@@ -45,15 +45,20 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
         {instances.map((instance, idx) => {
           const key = alertInstanceKey(instance);
           const isExpanded = expandedKeys.includes(key);
+
+          // don't allow expanding if there's nothing to show
+          const isExpandable = instance.value || !!Object.keys(instance.annotations ?? {}).length;
           return (
             <Fragment key={key}>
               <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                 <td>
-                  <CollapseToggle
-                    isCollapsed={!isExpanded}
-                    onToggle={() => toggleExpandedState(key)}
-                    data-testid="alert-collapse-toggle"
-                  />
+                  {isExpandable && (
+                    <CollapseToggle
+                      isCollapsed={!isExpanded}
+                      onToggle={() => toggleExpandedState(key)}
+                      data-testid="alert-collapse-toggle"
+                    />
+                  )}
                 </td>
                 <td>
                   <StateTag status={instance.state} />
@@ -61,9 +66,11 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
                 <td className={styles.labelsCell}>
                   <AlertLabels labels={instance.labels} />
                 </td>
-                <td className={styles.createdCell}>{instance.activeAt.substr(0, 19).replace('T', ' ')}</td>
+                <td className={styles.createdCell}>
+                  {instance.activeAt.startsWith('0001') ? '-' : instance.activeAt.substr(0, 19).replace('T', ' ')}
+                </td>
               </tr>
-              {isExpanded && (
+              {isExpanded && isExpandable && (
                 <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                   <td></td>
                   <td colSpan={3}>
