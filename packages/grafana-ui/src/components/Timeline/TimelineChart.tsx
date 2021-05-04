@@ -1,6 +1,6 @@
 import React from 'react';
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
-import { withTheme } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
 import { GraphNGState } from '../GraphNG/GraphNG';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils'; // << preparePlotConfigBuilder is really the only change vs GraphNG
 import { pluginLog, preparePlotData } from '../uPlot/utils';
@@ -100,7 +100,7 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
   };
 
   renderLegend() {
-    const { legend, onSeriesColorChange, onLegendClick, data } = this.props;
+    const { legend, onLegendClick, data } = this.props;
     const { config } = this.state;
 
     if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
@@ -111,7 +111,6 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
       <PlotLegend
         data={data}
         config={config}
-        onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
         maxHeight="35%"
         maxWidth="60%"
@@ -146,5 +145,5 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
   }
 }
 
-export const TimelineChart = withTheme(UnthemedTimelineChart);
+export const TimelineChart = withTheme2(UnthemedTimelineChart);
 TimelineChart.displayName = 'TimelineChart';

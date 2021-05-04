@@ -51,7 +51,6 @@ func TestGenerate(t *testing.T) {
 		})
 	}
 
-	t.Skip()
 	for _, c := range cases {
 		t.Run(c.Name+" trim default value", func(t *testing.T) {
 			var r cue.Runtime

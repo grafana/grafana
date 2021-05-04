@@ -1,6 +1,7 @@
 package testinfra
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -9,12 +10,15 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -24,6 +28,10 @@ import (
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
 	t.Helper()
+	ctx := context.Background()
+	// Prevent duplicate registration errors between tests by replacing
+	// the registry used.
+	metrics.GlobalMetrics.SwapRegisterer(prometheus.NewRegistry())
 
 	origSQLStore := registry.GetService(sqlstore.ServiceName)
 	t.Cleanup(func() {
@@ -58,7 +66,11 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 		}
 	}()
 	t.Cleanup(func() {
-		go server.Shutdown("test cleanup")
+		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx, "test cleanup"); err != nil {
+			t.Error("Timed out waiting on server to shut down")
+		}
 	})
 
 	// Wait for Grafana to be ready

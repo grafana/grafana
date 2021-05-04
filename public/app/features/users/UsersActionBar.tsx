@@ -44,19 +44,18 @@ export class UsersActionBar extends PureComponent<Props> {
             onChange={setUsersSearchQuery}
             placeholder="Search user by login, email or name"
           />
-          {pendingInvitesCount > 0 && (
-            <div style={{ marginLeft: '1rem' }}>
-              <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
-            </div>
-          )}
-          <div className="page-action-bar__spacer" />
-          {canInvite && canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
-          {externalUserMngLinkUrl && (
-            <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
-              {externalUserMngLinkName}
-            </LinkButton>
-          )}
         </div>
+        {pendingInvitesCount > 0 && (
+          <div style={{ marginLeft: '1rem' }}>
+            <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
+          </div>
+        )}
+        {canInvite && canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
+        {externalUserMngLinkUrl && (
+          <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
+            {externalUserMngLinkName}
+          </LinkButton>
+        )}
       </div>
     );
   }

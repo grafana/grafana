@@ -3,12 +3,10 @@ import { CustomScrollbar } from '@grafana/ui';
 import {
   BusEvent,
   CircularVector,
-  DataHoverPayload,
   DataHoverEvent,
   DataHoverClearEvent,
   DataSelectEvent,
   EventBus,
-  BusEventHandler,
 } from '@grafana/data';
 import { PartialObserver, Unsubscribable } from 'rxjs';
 
@@ -24,22 +22,25 @@ interface State {
 interface BusEventEx {
   key: number;
   type: string;
-  payload: DataHoverPayload;
+  path: string;
+  payload: any;
 }
 let counter = 100;
 
 export class EventBusLoggerPanel extends PureComponent<Props, State> {
   history = new CircularVector<BusEventEx>({ capacity: 40, append: 'head' });
-  subs: Unsubscribable[] = [];
+  subs: Unsubscribable[];
 
   constructor(props: Props) {
     super(props);
 
     this.state = { counter };
 
-    this.subs.push(props.eventBus.subscribe(DataHoverEvent, this.hoverHandler));
-    props.eventBus.getStream(DataHoverClearEvent).subscribe(this.eventObserver);
-    props.eventBus.getStream(DataSelectEvent).subscribe(this.eventObserver);
+    const subs: Unsubscribable[] = [];
+    subs.push(props.eventBus.getStream(DataHoverEvent).subscribe(this.eventObserver));
+    subs.push(props.eventBus.getStream(DataHoverClearEvent).subscribe(this.eventObserver));
+    subs.push(props.eventBus.getStream(DataSelectEvent).subscribe(this.eventObserver));
+    this.subs = subs;
   }
 
   componentWillUnmount() {
@@ -48,17 +49,17 @@ export class EventBusLoggerPanel extends PureComponent<Props, State> {
     }
   }
 
-  hoverHandler: BusEventHandler<DataHoverEvent> = (event: DataHoverEvent) => {
-    this.history.add({
-      key: counter++,
-      type: event.type,
-      payload: event.payload,
-    });
-    this.setState({ counter });
-  };
-
   eventObserver: PartialObserver<BusEvent> = {
-    next: (v: BusEvent) => {},
+    next: (event: BusEvent) => {
+      const origin = event.origin as any;
+      this.history.add({
+        key: counter++,
+        type: event.type,
+        path: origin?.path,
+        payload: event.payload,
+      });
+      this.setState({ counter });
+    },
   };
 
   render() {
@@ -66,7 +67,7 @@ export class EventBusLoggerPanel extends PureComponent<Props, State> {
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         {this.history.map((v, idx) => (
           <div key={v.key}>
-            {v.key} {v.type} / X:{JSON.stringify(v.payload.x)} / Y:{JSON.stringify(v.payload.y)}
+            {JSON.stringify(v.path)} {v.type} / X:{JSON.stringify(v.payload.x)} / Y:{JSON.stringify(v.payload.y)}
           </div>
         ))}
       </CustomScrollbar>

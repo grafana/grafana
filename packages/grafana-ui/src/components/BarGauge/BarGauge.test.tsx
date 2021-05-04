@@ -1,6 +1,14 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { DisplayValue, VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import {
+  DisplayValue,
+  VizOrientation,
+  ThresholdsMode,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  createTheme,
+} from '@grafana/data';
 import {
   BarGauge,
   Props,
@@ -12,7 +20,6 @@ import {
   BarGaugeDisplayMode,
   calculateBarAndValueDimensions,
 } from './BarGauge';
-import { getTheme } from '../../themes';
 
 const green = '#73BF69';
 const orange = '#FF9830';
@@ -33,7 +40,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
       },
     },
   };
-  const theme = getTheme();
+  const theme = createTheme();
   field.display = getDisplayProcessor({ field, theme });
 
   const props: Props = {

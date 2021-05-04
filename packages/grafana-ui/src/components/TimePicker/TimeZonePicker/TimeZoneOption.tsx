@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { stylesFactory } from '../../../themes/stylesFactory';
 import { Icon } from '../../Icon/Icon';
@@ -93,7 +93,7 @@ export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props,
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
