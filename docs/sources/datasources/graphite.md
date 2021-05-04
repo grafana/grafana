@@ -141,7 +141,7 @@ For more details, see the [Graphite docs on the autocomplete API for tags](http:
 The query you specify in the query field should be a metric find type of query. For example, a query like `prod.servers.*` will fill the
 variable with all possible values that exist in the wildcard position.
 
-The results will contain all possible values occurring only at the last level of the query. To get full metric names matching the query 
+The results contain all possible values occurring only at the last level of the query. To get full metric names matching the query 
 use expand function (`expand(*.servers.*)`). 
 
 #### Comparison between expanded and non-expanded metric search results
