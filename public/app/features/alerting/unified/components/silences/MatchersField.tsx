@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
-import { AlertLabels } from '../AlertLabels';
+import { Matchers } from './Matchers';
 
 interface Props {
   className?: string;
@@ -54,7 +54,7 @@ const MatchersField: FC<Props> = ({ className }) => {
       >
         <div>
           <div className={styles.matchers}>
-            <AlertLabels matchers={matchers} onRemoveLabel={onRemoveLabel} />
+            <Matchers matchers={matchers} onRemoveLabel={onRemoveLabel} />
           </div>
           {matchers.map((matcher, index) => {
             return (

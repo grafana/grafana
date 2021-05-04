@@ -1,6 +1,6 @@
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC } from 'react';
-import { Button, Field, FieldSet, Input, Link, TextArea, useStyles } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
 import { DefaultTimeZone, GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { pickBy } from 'lodash';
@@ -8,9 +8,10 @@ import MatchersField from './MatchersField';
 import { useForm, FormProvider } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { useDispatch } from 'react-redux';
-import { createSilence } from '../../state/actions';
+import { createOrUpdateSilenceAction } from '../../state/actions';
 import { SilencePeriod } from './SilencePeriod';
 import { css } from '@emotion/css';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 
 interface Props {
   silence?: Silence;
@@ -55,6 +56,8 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
 
+  const { loading, error } = useUnifiedAlertingSelector((state) => state.updateSilence);
+
   const { register, handleSubmit, formState } = formAPI;
 
   const onSubmit = (data: SilenceFormFields) => {
@@ -69,13 +72,25 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
         matchers,
       },
       (value) => !!value
+    ) as SilenceCreatePayload;
+    dispatch(
+      createOrUpdateSilenceAction({
+        alertManagerSourceName,
+        payload,
+        exitOnSave: true,
+        successMessage: `Silence ${payload.id ? 'updated' : 'created'}`,
+      })
     );
-    dispatch(createSilence(alertManagerSourceName, payload as SilenceCreatePayload, true));
   };
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label={`${silence ? 'Edit silence' : 'Silence alert'}`}>
+          {error && (
+            <Alert severity="error" title="Error saving template">
+              {error.message || (error as any)?.data?.message || String(error)}
+            </Alert>
+          )}
           <SilencePeriod />
           <MatchersField />
           <Field
@@ -98,10 +113,15 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
           </Field>
         </FieldSet>
         <div className={styles.flexRow}>
-          <Button type="submit">Submit</Button>
-          <Link href="/alerting/silences">
-            <Button variant={'secondary'}>Cancel</Button>
-          </Link>
+          {loading && (
+            <Button disabled={true} icon="fa fa-spinner" variant="primary">
+              Saving...
+            </Button>
+          )}
+          {!loading && <Button type="submit">Submit</Button>}
+          <LinkButton href="/alerting/silences" variant={'secondary'}>
+            Cancel
+          </LinkButton>
         </div>
       </form>
     </FormProvider>

@@ -373,16 +373,25 @@ export const expireSilenceAction = (alertManagerSourceName: string, silenceId: s
   };
 };
 
-export const createSilence = async (
-  alertManagerName: string,
-  payload: SilenceCreatePayload,
-  exitOnSave: boolean
-): Promise<void> =>
-  withSerializedError(
-    (async () => {
-      await createOrUpdateSilence(alertManagerName, payload);
-      if (exitOnSave) {
-        locationService.push('/alerting/silences');
-      }
-    })()
-  );
+type UpdateSilenceActionOptions = {
+  alertManagerSourceName: string;
+  payload: SilenceCreatePayload;
+  exitOnSave: boolean;
+  successMessage?: string;
+};
+
+export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceActionOptions, {}>(
+  'unifiedalerting/updateSilence',
+  ({ alertManagerSourceName, payload, exitOnSave, successMessage }): Promise<void> =>
+    withSerializedError(
+      (async () => {
+        await createOrUpdateSilence(alertManagerSourceName, payload);
+        if (successMessage) {
+          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+        }
+        if (exitOnSave) {
+          locationService.push('/alerting/silences');
+        }
+      })()
+    )
+);

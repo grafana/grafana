@@ -6,7 +6,7 @@ import { useController, useFormContext } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 
 export const SilencePeriod = () => {
-  const { control, getValues } = useFormContext<Pick<SilenceFormFields, 'startsAt' | 'endsAt' | 'timeZone'>>();
+  const { control, getValues } = useFormContext<SilenceFormFields>();
   const styles = useStyles(getStyles);
   const {
     field: { onChange: onChangeStartsAt, value: startsAt },
