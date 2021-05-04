@@ -10,10 +10,9 @@ import { useStyles2 } from '../../themes/ThemeContext';
 
 // Types
 import { RelativeTimeRange, GrafanaThemeV2 } from '@grafana/data';
-import { Themeable } from '../../types';
 import { ToolbarButton } from '../Button';
 
-export interface RelativeTimeRangePickerProps extends Themeable {
+export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
 }
