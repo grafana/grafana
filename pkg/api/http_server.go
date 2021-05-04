@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -100,6 +101,7 @@ type HTTPServer struct {
 	PluginDashboardService *plugindashboards.Service               `inject:""`
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
 	LoadSchemaService      *schemaloader.SchemaLoaderService       `inject:""`
+	Alertmanager           *notifier.Alertmanager                  `inject:""`
 	Listener               net.Listener
 }
 

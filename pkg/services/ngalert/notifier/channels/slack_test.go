@@ -140,7 +140,7 @@ func TestSlackNotifier(t *testing.T) {
 						Title:      "2 firing, 0 resolved",
 						TitleLink:  "TODO: rule URL",
 						Text:       "",
-						Fallback:   "[FIRING:2]  ",
+						Fallback:   "2 firing, 0 resolved",
 						Fields:     nil,
 						Footer:     "Grafana v",
 						FooterIcon: "https://grafana.com/assets/img/fav32.png",
