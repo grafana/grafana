@@ -11,6 +11,7 @@ import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 
 export const extraRoutes: RouteDescriptor[] = [];
+export const featureToggledRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
   return [
@@ -147,12 +148,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboards/f/:uid',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
-      ),
-    },
-    {
-      path: '/dashboards/f/:uid/:slug/library-panels',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
       ),
     },
     {
@@ -472,18 +467,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/library-panels',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
-      ),
-    },
-    {
       path: '/sandbox/benchmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
       ),
     },
     ...extraRoutes,
+    ...featureToggledRoutes,
     {
       path: '/*',
       component: ErrorPage,
