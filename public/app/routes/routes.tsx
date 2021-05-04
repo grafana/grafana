@@ -151,12 +151,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboards/f/:uid/:slug/library-panels',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
-      ),
-    },
-    {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
