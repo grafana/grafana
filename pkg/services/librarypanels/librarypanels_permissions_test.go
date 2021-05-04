@@ -337,6 +337,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 					result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 					result.Result.Meta.UpdatedBy.Name = UserInDbName
 					result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.FolderName = folder.Title
 					results = append(results, result.Result)
 				}
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
@@ -382,6 +383,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = UserInDbName
 				result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.FolderName = "General"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				resp = sc.service.getAllHandler(sc.reqContext)

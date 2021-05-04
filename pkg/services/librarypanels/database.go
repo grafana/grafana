@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	sqlStatmentLibrayPanelDTOWithMeta = `
+	selectLibrayPanelDTOWithMeta = `
 SELECT DISTINCT
 	lp.name, lp.id, lp.org_id, lp.folder_id, lp.uid, lp.type, lp.description, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
 	, 0 AS can_edit
@@ -23,10 +23,13 @@ SELECT DISTINCT
 	, u2.login AS updated_by_name
 	, u2.email AS updated_by_email
 	, (SELECT COUNT(dashboard_id) FROM library_panel_dashboard WHERE librarypanel_id = lp.id) AS connected_dashboards
+`
+	fromLibrayPanelDTOWithMeta = `
 FROM library_panel AS lp
 	LEFT JOIN user AS u1 ON lp.created_by = u1.id
 	LEFT JOIN user AS u2 ON lp.updated_by = u2.id
 `
+	sqlStatmentLibrayPanelDTOWithMeta = selectLibrayPanelDTOWithMeta + fromLibrayPanelDTOWithMeta
 )
 
 func syncFieldsWithModel(libraryPanel *LibraryPanel) error {
@@ -405,14 +408,18 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
 		if folderFilter.includeGeneralFolder {
-			builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+			builder.Write(selectLibrayPanelDTOWithMeta)
+			builder.Write(", 'General' as folder_name ")
+			builder.Write(fromLibrayPanelDTOWithMeta)
 			builder.Write(` WHERE lp.org_id=?  AND lp.folder_id=0`, c.SignedInUser.OrgId)
 			writeSearchStringSQL(query, lps.SQLStore, &builder)
 			writeExcludeSQL(query, &builder)
 			writePanelFilterSQL(panelFilter, &builder)
 			builder.Write(" UNION ")
 		}
-		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(selectLibrayPanelDTOWithMeta)
+		builder.Write(", dashboard.title as folder_name ")
+		builder.Write(fromLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
 		writeSearchStringSQL(query, lps.SQLStore, &builder)
@@ -448,6 +455,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 				Version:     panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             true,
+					FolderName:          panel.FolderName,
 					ConnectedDashboards: panel.ConnectedDashboards,
 					Created:             panel.Created,
 					Updated:             panel.Updated,

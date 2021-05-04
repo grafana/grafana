@@ -71,6 +71,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -104,6 +105,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[1].Meta.Created,
 								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
@@ -166,6 +168,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -199,6 +202,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[1].Meta.Created,
 								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
@@ -281,6 +285,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -314,6 +319,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[1].Meta.Created,
 								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
@@ -414,6 +420,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "NewFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -507,6 +514,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -540,6 +548,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[1].Meta.Created,
 								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
@@ -602,6 +611,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -664,6 +674,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -727,6 +738,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -799,6 +811,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -869,6 +882,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -902,6 +916,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[1].Meta.Created,
 								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
@@ -966,6 +981,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
