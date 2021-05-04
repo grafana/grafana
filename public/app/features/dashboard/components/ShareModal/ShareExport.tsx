@@ -22,7 +22,6 @@ interface State {
 
 export class ShareExport extends PureComponent<Props, State> {
   private exporter: DashboardExporter;
-
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -33,7 +32,7 @@ export class ShareExport extends PureComponent<Props, State> {
     this.exporter = new DashboardExporter();
   }
 
-mounted = true;
+  mounted = true;
 
   onShareExternallyChange = () => {
     this.setState({
@@ -129,9 +128,9 @@ mounted = true;
     this.props.onDismiss();
   };
 
-componentWillUnmount() {
-this.mounted = false;
-}
+  componentWillUnmount() {
+    this.mounted = false;
+  }
 
   render() {
     const { onDismiss } = this.props;
