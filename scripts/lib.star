@@ -215,6 +215,7 @@ def lint_backend_step(edition):
         },
         'depends_on': [
             'initialize',
+            'test-backend' + enterprise2_sfx(edition),
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
@@ -451,7 +452,6 @@ def test_backend_step(edition):
         'image': build_image,
         'depends_on': [
             'initialize',
-            'lint-backend' + enterprise2_sfx(edition),
         ],
         'commands': [
             # First make sure that there are no tests with FocusConvey
