@@ -19,7 +19,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   if (isPanelModelLibraryPanel(panel)) {
     descriptor.addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Global panel information',
+        title: 'Library panel information',
         render: function renderLibraryPanelInformation() {
           return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
         },
