@@ -2,6 +2,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import image from '@rollup/plugin-image';
 import { terser } from 'rollup-plugin-terser';
+import webWorkerLoader from 'rollup-plugin-web-worker-loader';
 
 const pkg = require('./package.json');
 
@@ -44,6 +45,10 @@ const buildCjsPackage = ({ env }) => {
       resolve(),
       image(),
       env === 'production' && terser(),
+      webWorkerLoader({
+        // This needs to be changed so it matches the webpack pattern
+        pattern: /worker-loader!(.+)/,
+      }),
     ],
   };
 };

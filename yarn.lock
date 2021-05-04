@@ -22400,6 +22400,11 @@ rollup-plugin-visualizer@4.2.0:
     source-map "^0.7.3"
     yargs "^16.0.3"
 
+rollup-plugin-web-worker-loader@1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-web-worker-loader/-/rollup-plugin-web-worker-loader-1.6.1.tgz#9d7a27575b64b0780fe4e8b3bc87470d217e485f"
+  integrity sha512-4QywQSz1NXFHKdyiou16mH3ijpcfLtLGOrAqvAqu1Gx+P8+zj+3gwC2BSL/VW1d+LW4nIHC8F7d7OXhs9UdR2A==
+
 rollup@2.33.3:
   version "2.33.3"
   resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.33.3.tgz#ae72ce31f992b09a580072951bfea76e9df17342"
