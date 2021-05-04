@@ -103,7 +103,7 @@ export type Route = {
   match_re?: Record<string, string>;
   group_wait?: string;
   group_interval?: string;
-  repeat_itnerval?: string;
+  repeat_interval?: string;
   routes?: Route[];
 };
 

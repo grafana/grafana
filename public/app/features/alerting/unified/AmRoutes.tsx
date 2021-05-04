@@ -1,28 +1,94 @@
-import { Alert, Field, LoadingPlaceholder } from '@grafana/ui';
-import React, { FC, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useCleanup } from '../../../core/hooks/useCleanup';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
+import { AmRootRoute } from './components/amroutes/AmRootRoute';
+import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction } from './state/actions';
+import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
+import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
+import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AmRoutes: FC = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
+  const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
 
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
-  useEffect(() => {
+  const fetchConfig = useCallback(() => {
     if (alertManagerSourceName) {
       dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
     }
   }, [alertManagerSourceName, dispatch]);
 
-  const { result, loading, error } =
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+
+  const { result, loading: resultLoading, error: resultError } =
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+
+  const config = result?.alertmanager_config;
+  const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+
+  const receivers = stringsToSelectableValues(
+    (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
+  ) as AmRouteReceiver[];
+
+  const enterRootRouteEditMode = () => {
+    setIsRootRouteEditMode(true);
+  };
+
+  const exitRootRouteEditMode = () => {
+    setIsRootRouteEditMode(false);
+  };
+
+  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  const { loading: saving, error: savingError, dispatched: savingDispatched } = useUnifiedAlertingSelector(
+    (state) => state.saveAMConfig
+  );
+
+  const handleSave = (data: Partial<FormAmRoute>) => {
+    const newData = formAmRouteToAmRoute({
+      ...routes,
+      ...data,
+    });
+
+    if (isRootRouteEditMode) {
+      exitRootRouteEditMode();
+    }
+
+    dispatch(
+      updateAlertManagerConfigAction({
+        newConfig: {
+          ...result,
+          alertmanager_config: {
+            ...result.alertmanager_config,
+            route: newData,
+          },
+        },
+        oldConfig: result,
+        alertManagerSourceName: alertManagerSourceName!,
+        successMessage: 'Saved',
+      })
+    );
+  };
+
+  useEffect(() => {
+    if (savingDispatched && !saving && !savingError) {
+      fetchConfig();
+    }
+  }, [fetchConfig, savingDispatched, saving, savingError]);
 
   if (!alertManagerSourceName) {
     return <Redirect to="/alerting/routes" />;
@@ -33,17 +99,49 @@ const AmRoutes: FC = () => {
       <Field label="Choose alert manager">
         <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       </Field>
-      <br />
-      <br />
-      {error && !loading && (
-        <Alert severity="error" title="Error loading alert manager config">
-          {error.message || 'Unknown error.'}
+      {savingError && !saving && (
+        <Alert severity="error" title="Error saving alert manager config">
+          {savingError.message || 'Unknown error.'}
         </Alert>
       )}
-      {loading && <LoadingPlaceholder text="loading alert manager config..." />}
-      {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}
+      {resultError && !resultLoading && (
+        <Alert severity="error" title="Error loading alert manager config">
+          {resultError.message || 'Unknown error.'}
+        </Alert>
+      )}
+      {resultLoading && <LoadingPlaceholder text="Loading alert manager config..." />}
+      {result && !resultLoading && !resultError && (
+        <>
+          <div className={styles.break} />
+          <AmRootRoute
+            alertManagerSourceName={alertManagerSourceName}
+            isEditMode={isRootRouteEditMode}
+            onSave={handleSave}
+            onEnterEditMode={enterRootRouteEditMode}
+            onExitEditMode={exitRootRouteEditMode}
+            receivers={receivers}
+            routes={routes}
+          />
+          <div className={styles.break} />
+          <AmSpecificRouting
+            onChange={handleSave}
+            onRootRouteEdit={enterRootRouteEditMode}
+            receivers={receivers}
+            routes={routes}
+          />
+        </>
+      )}
     </AlertingPageWrapper>
   );
 };
 
 export default AmRoutes;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  break: css`
+    width: 100%;
+    height: 0;
+    margin-bottom: ${theme.spacing(2)};
+    border-bottom: solid 1px ${theme.colors.border.medium};
+  `,
+});

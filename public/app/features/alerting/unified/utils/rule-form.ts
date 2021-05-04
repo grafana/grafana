@@ -11,6 +11,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
+import { parseInterval } from './time';
 
 export const defaultFormValues: RuleFormValues = Object.freeze({
   name: '',
@@ -44,14 +45,6 @@ export function formValuesToRulerAlertingRuleDTO(values: RuleFormValues): RulerA
     labels: arrayToRecord(values.labels || []),
     expr: expression,
   };
-}
-
-function parseInterval(value: string): [number, string] {
-  const match = value.match(/(\d+)(\w+)/);
-  if (match) {
-    return [Number(match[1]), match[2]];
-  }
-  throw new Error(`Invalid interval description: ${value}`);
 }
 
 function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Array<{ key: string; value: string }> {

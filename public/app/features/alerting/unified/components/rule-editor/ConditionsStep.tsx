@@ -1,30 +1,21 @@
 import React, { FC, useState } from 'react';
-import { Field, Input, Select, useStyles, InputControl, InlineLabel, Switch } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { RuleEditorSection } from './RuleEditorSection';
+import { Field, InlineLabel, Input, InputControl, Select, Switch, useStyles } from '@grafana/ui';
 import { useFormContext, RegisterOptions } from 'react-hook-form';
-import { RuleFormType, RuleFormValues, TimeOptions } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { timeOptions, timeValidationPattern } from '../../utils/time';
 import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
+import { RuleEditorSection } from './RuleEditorSection';
 
 const timeRangeValidationOptions: RegisterOptions = {
   required: {
     value: true,
     message: 'Required.',
   },
-  pattern: {
-    value: new RegExp(`^\\d+(${Object.values(TimeOptions).join('|')})$`),
-    message: `Must be of format "(number)(unit)", for example "1m". Available units: ${Object.values(TimeOptions).join(
-      ', '
-    )}`,
-  },
+  pattern: timeValidationPattern,
 };
-
-const timeOptions = Object.entries(TimeOptions).map(([key, value]) => ({
-  label: key[0].toUpperCase() + key.slice(1),
-  value: value,
-}));
 
 export const ConditionsStep: FC = () => {
   const styles = useStyles(getStyles);
