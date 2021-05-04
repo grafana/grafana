@@ -98,11 +98,13 @@ export function localTimeFormat(
 
   // https://momentjs.com/docs/#/displaying/format/
   const parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
+  const hour12 = !!parts.filter((part) => part.type === 'dayPeriod').pop();
+
   const mapping: { [key: string]: string } = {
     year: 'YYYY',
     month: 'MM',
     day: 'DD',
-    hour: 'HH',
+    hour: hour12 ? 'hh' : 'HH',
     minute: 'mm',
     second: 'ss',
     weekday: 'ddd',
