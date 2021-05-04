@@ -783,8 +783,8 @@ func TestProcessEvalResults(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(tc.alertRule, res)
 			}
-			for id, s := range tc.expectedStates {
-				cachedState, err := st.Get(id)
+			for _, s := range tc.expectedStates {
+				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				require.NoError(t, err)
 				assert.Equal(t, s, cachedState)
 			}

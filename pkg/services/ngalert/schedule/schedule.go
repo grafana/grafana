@@ -306,7 +306,13 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
-			sch.saveAlertStates(stateManager.GetAll())
+			orgIdsCmd := models.FetchUniqueOrgIdsQuery{}
+			if err := sch.instanceStore.FetchOrgIds(&orgIdsCmd); err != nil {
+				sch.log.Error("unable to fetch orgIds", "msg", err.Error())
+			}
+			for _, v := range orgIdsCmd.Result {
+				sch.saveAlertStates(stateManager.GetAll(v.DefinitionOrgID))
+			}
 			stateManager.Close()
 			return err
 		}

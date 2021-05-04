@@ -15,7 +15,7 @@ import (
 )
 
 type cache struct {
-	states    map[string]*State
+	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
 	log       log.Logger
 	metrics   *metrics.Metrics
@@ -23,7 +23,7 @@ type cache struct {
 
 func newCache(logger log.Logger, metrics *metrics.Metrics) *cache {
 	return &cache{
-		states:  make(map[string]*State),
+		states:  make(map[int64]map[string]map[string]*State),
 		log:     logger,
 		metrics: metrics,
 	}
@@ -45,7 +45,12 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 		c.log.Error("error getting cacheId for entry", "msg", err.Error())
 	}
 
-	if state, ok := c.states[id]; ok {
+	if _, ok := c.states[alertRule.OrgID]; !ok {
+		c.states[alertRule.OrgID] = make(map[string]map[string]*State)
+		c.states[alertRule.OrgID][alertRule.UID] = make(map[string]*State)
+	}
+
+	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
 		return state
 	}
 
@@ -68,66 +73,64 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
 	}
-	c.states[id] = newState
+	c.states[alertRule.OrgID][alertRule.UID][id] = newState
 	return newState
 }
 
 func (c *cache) set(entry *State) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	c.states[entry.CacheId] = entry
+	if _, ok := c.states[entry.OrgID]; !ok {
+		c.states[entry.OrgID] = make(map[string]map[string]*State)
+	}
+	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
+		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*State)
+	}
+	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheId] = entry
 }
 
-func (c *cache) get(id string) (*State, error) {
+func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	if state, ok := c.states[id]; ok {
+	if state, ok := c.states[orgID][alertRuleUID][stateId]; ok {
 		return state, nil
 	}
-	return nil, fmt.Errorf("no entry for id: %s", id)
+	return nil, fmt.Errorf("no entry for %s:%s was found", alertRuleUID, stateId)
 }
 
-func (c *cache) getAll() []*State {
+func (c *cache) getAll(orgID int64) []*State {
 	var states []*State
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	for _, v := range c.states {
-		states = append(states, v)
+	for _, v1 := range c.states[orgID] {
+		for _, v2 := range v1 {
+			states = append(states, v2)
+		}
 	}
 	return states
 }
 
-func (c *cache) getStatesByRuleUID() map[string][]*State {
-	ruleMap := make(map[string][]*State)
+func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+	var ruleStates []*State
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	for _, state := range c.states {
-		if ruleStates, ok := ruleMap[state.AlertRuleUID]; ok {
-			ruleStates = append(ruleStates, state)
-			ruleMap[state.AlertRuleUID] = ruleStates
-		} else {
-			ruleStates := []*State{state}
-			ruleMap[state.AlertRuleUID] = ruleStates
-		}
+	for _, state := range c.states[orgID][alertRuleUID] {
+		ruleStates = append(ruleStates, state)
 	}
-	return ruleMap
+	return ruleStates
 }
 
 // removeByRuleUID deletes all entries in the state cache that match the given UID.
 func (c *cache) removeByRuleUID(orgID int64, uid string) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	for k, state := range c.states {
-		if state.AlertRuleUID == uid && state.OrgID == orgID {
-			delete(c.states, k)
-		}
-	}
+	delete(c.states[orgID], uid)
 }
 
 func (c *cache) reset() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-	c.states = make(map[string]*State)
+	c.states = make(map[int64]map[string]map[string]*State)
 }
 
 func (c *cache) trim() {
@@ -144,16 +147,20 @@ func (c *cache) trim() {
 		eval.Error:    0,
 	}
 
-	for _, v := range c.states {
-		if len(v.Results) > 100 {
-			newResults := make([]Evaluation, 100)
-			// Keep last 100 results
-			copy(newResults, v.Results[len(v.Results)-100:])
-			v.Results = newResults
-		}
+	for _, org := range c.states {
+		for _, rule := range org {
+			for _, state := range rule {
+				if len(state.Results) > 100 {
+					newResults := make([]Evaluation, 100)
+					// Keep last 100 results
+					copy(newResults, state.Results[len(state.Results)-100:])
+					state.Results = newResults
+				}
 
-		n := ct[v.State]
-		ct[v.State] = n + 1
+				n := ct[state.State]
+				ct[state.State] = n + 1
+			}
+		}
 	}
 
 	for k, n := range ct {
