@@ -1,5 +1,5 @@
 import { Field, DataFrame, FieldType } from '../types/dataFrame';
-import { QueryResultMeta } from '../types';
+import { Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './processDataFrame';
@@ -82,11 +82,15 @@ export class StreamingDataFrame implements DataFrame {
 
   // raw field buffers
   fields: Array<Field<any, ArrayVector<any>>> = [];
+  byKey = new Map<string, Field<any, ArrayVector<any>>>(); // name+labels
+  fieldSchemas?: Field[];
 
   options: StreamingFrameOptions;
 
   length = 0;
   private timeFieldIndex = -1;
+  private labelsFieldIndex = -1;
+  private appendFn: (data: any[][]) => void;
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -95,6 +99,7 @@ export class StreamingDataFrame implements DataFrame {
       ...opts,
     };
 
+    this.appendFn = this.appendTable;
     this.push(frame);
   }
 
@@ -124,28 +129,55 @@ export class StreamingDataFrame implements DataFrame {
       this.name = schema.name;
       this.refId = schema.refId;
       this.meta = schema.meta;
+      this.byKey.clear();
 
       // Create new fields from the schema
       this.fields = schema.fields.map((f, idx) => {
-        return {
+        const field = {
           config: f.config ?? {},
           name: f.name,
           labels: f.labels,
           type: f.type ?? FieldType.other,
           values: oldValues ? oldValues[idx] : new ArrayVector(),
         };
+        return field;
       });
 
+      this.appendFn = this.appendTable;
       this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
+      this.labelsFieldIndex = this.fields.findIndex((f) => f.name === 'labels' && f.type === FieldType.string);
+      if (this.labelsFieldIndex > 0) {
+        this.fieldSchemas = this.fields;
+        if (this.timeFieldIndex < 0) {
+          console.error('Label fields require a time index');
+          return;
+        }
+        for (const field of this.fields) {
+          if (field.labels) {
+            console.log('invalid field, sholud not have labels when labels field exists', field);
+          }
+          field.labels = undefined;
+        }
+        this.fields = [this.fields[this.timeFieldIndex]];
+        this.timeFieldIndex = 0;
+        this.appendFn = this.appendWithLabels;
+      }
     }
 
     if (data && data.values.length && data.values[0].length) {
       const { values, entities } = data;
-      if (values.length !== this.fields.length) {
+
+      // Field length changed
+      if (this.labelsFieldIndex >= 0) {
+        if (values.length !== this.fieldSchemas!.length) {
+          throw new Error(`push message mismatch.  Expected: ${this.fieldSchemas!.length}, recieved: ${values.length}`);
+        }
+      } else if (values.length !== this.fields.length) {
         if (this.fields.length) {
           throw new Error(`push message mismatch.  Expected: ${this.fields.length}, recieved: ${values.length}`);
         }
 
+        this.byKey.clear();
         this.fields = values.map((vals, idx) => {
           let name = `Field ${idx}`;
           let type = guessFieldTypeFromValue(vals[0]);
@@ -155,12 +187,13 @@ export class StreamingDataFrame implements DataFrame {
             name = 'Time';
           }
 
-          return {
+          const field = {
             name,
             type,
             config: {},
             values: new ArrayVector([]),
           };
+          return field;
         });
       }
 
@@ -168,25 +201,98 @@ export class StreamingDataFrame implements DataFrame {
         entities.forEach((ents, i) => {
           if (ents) {
             decodeFieldValueEntities(ents, values[i]);
-            // TODO: append replacements to field
+            // append replacements to field?
           }
         });
       }
 
-      let curValues = this.fields.map((f) => f.values.buffer);
-
-      let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
-
-      appended.forEach((v, i) => {
-        const { state, values } = this.fields[i];
-        values.buffer = v;
-        if (state) {
-          state.calcs = undefined;
-        }
-      });
-
-      // Update the frame length
-      this.length = appended[0].length;
+      this.appendFn(values);
     }
+  }
+
+  /**
+   * When the input values is a simple table we can assume
+   */
+  private appendTable(values: any[][]) {
+    let curValues = this.fields.map((f) => f.values.buffer);
+
+    let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
+
+    appended.forEach((v, i) => {
+      const { state, values } = this.fields[i];
+      values.buffer = v;
+      if (state) {
+        state.calcs = undefined;
+      }
+    });
+
+    // Update the frame length
+    this.length = appended[0].length;
+  }
+
+  private appendWithLabels(values: any[][]) {
+    const fields = this.fieldSchemas!;
+    const timeValues = values[this.timeFieldIndex];
+    const labelValues = values[this.labelsFieldIndex];
+
+    const timeField = this.fields[0]; // always zero
+    const indexToValue = new Map<number, any>();
+
+    let lastTime = timeValues[0];
+    indexToValue.set(0, lastTime);
+    for (let row = 0; row < timeValues.length; row++) {
+      const time = timeValues[row];
+      if (time !== lastTime) {
+        this.appendFieldsByIndex(indexToValue);
+
+        lastTime = time;
+        indexToValue.clear();
+        indexToValue.set(0, lastTime);
+      }
+
+      const labels = labelValues[row] as string; // string
+      if (!labels) {
+        console.log('No labels row?', row, values);
+        continue;
+      }
+      for (let i = 0; i < fields.length; i++) {
+        if (i === this.timeFieldIndex || i === this.labelsFieldIndex) {
+          continue;
+        }
+        const key = fields[i].name + '/' + labels;
+        let f = this.byKey.get(key)!;
+        if (!f) {
+          const parsed: Labels = {};
+          labels.split(',').forEach((s) => {
+            const [key, val] = s.trim().split('=');
+            parsed[key] = val;
+          });
+
+          f = {
+            ...this.fieldSchemas![i],
+            labels: parsed,
+            values: new ArrayVector(Array(timeField.values.length).fill(undefined)),
+            __index: this.fields.length,
+          } as any;
+          this.byKey.set(key, f);
+          this.fields.push(f);
+        }
+        indexToValue.set((f as any).__index as number, values[i][row]);
+      }
+    }
+
+    this.appendFieldsByIndex(indexToValue);
+    this.length = this.fields[0].values.buffer.length;
+
+    console.log('DONE', this.name, this.length);
+  }
+
+  // Only grows for now!!!!
+  private appendFieldsByIndex(indexToValue: Map<number, any>) {
+    for (let i = 0; i < this.fields.length; i++) {
+      const value = indexToValue.get(i);
+      this.fields[i].values.buffer.push(value);
+    }
+    // console.log('APPEND/Z', this.fields.length, indexToValue);
   }
 }
