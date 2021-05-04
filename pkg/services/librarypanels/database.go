@@ -539,8 +539,12 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 	libraryPanelMap := make(map[string]LibraryPanelDTO)
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		var libraryPanels []LibraryPanelWithMeta
-		sql := sqlStatmentLibrayPanelDTOWithMeta + "INNER JOIN library_panel_dashboard AS lpd ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?"
-		sess := session.SQL(sql, dashboardID)
+		sql := selectLibrayPanelDTOWithMeta + ", coalesce(dashboard.title, 'General') AS folder_name" + fromLibrayPanelDTOWithMeta + `
+LEFT JOIN dashboard AS dashboard ON dashboard.id = lp.folder_id AND dashboard.id=?
+INNER JOIN library_panel_dashboard AS lpd ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?
+`
+
+		sess := session.SQL(sql, dashboardID, dashboardID)
 		err := sess.Find(&libraryPanels)
 		if err != nil {
 			return err
@@ -559,6 +563,7 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 				Version:     panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             panel.CanEdit,
+					FolderName:          panel.FolderName,
 					ConnectedDashboards: panel.ConnectedDashboards,
 					Created:             panel.Created,
 					Updated:             panel.Updated,

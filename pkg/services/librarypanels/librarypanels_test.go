@@ -94,6 +94,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"version":     sc.initialResult.Result.Version,
 							"meta": map[string]interface{}{
 								"canEdit":             false,
+								"folderName":          "ScenarioFolder",
 								"connectedDashboards": int64(1),
 								"created":             sc.initialResult.Result.Meta.Created,
 								"updated":             sc.initialResult.Result.Meta.Updated,
