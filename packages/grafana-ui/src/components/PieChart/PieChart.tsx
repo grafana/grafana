@@ -56,6 +56,7 @@ export function PieChart(props: PieChartProps) {
     onSeriesColorChange,
     width,
     height,
+    onLabelClick,
     ...restProps
   } = props;
 
@@ -94,31 +95,41 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
   if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
     return undefined;
   }
-  const values = displayValues.map((v) => v.display);
-  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+  const total = displayValues
+    .filter((item) => {
+      return !item.field.custom.hideFrom.graph;
+    })
+    .reduce((acc, item) => item.display.numeric + acc, 0);
 
-  const legendItems = values.map<VizLegendItem>((value, idx) => {
+  const vizLegendClick = (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    props.onLabelClick(item.label);
+  };
+
+  const legendItems = displayValues.map<VizLegendItem>((value, idx) => {
+    const hidden = value.field.custom.hideFrom.graph;
+    const display = value.display;
     return {
-      label: value.title ?? '',
-      color: value.color ?? FALLBACK_COLOR,
+      label: display.title ?? '',
+      color: display.color ?? FALLBACK_COLOR,
       yAxis: 1,
-      getItemKey: () => (value.title ?? '') + idx,
+      disabled: hidden,
+      getItemKey: () => (display.title ?? '') + idx,
       getDisplayValues: () => {
         const valuesToShow = legendOptions.values ?? [];
         let displayValues = [];
 
         if (valuesToShow.includes(PieChartLegendValues.Value)) {
-          displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
+          displayValues.push({ numeric: display.numeric, text: formattedValueToString(display), title: 'Value' });
         }
 
         if (valuesToShow.includes(PieChartLegendValues.Percent)) {
-          const fractionOfTotal = value.numeric / total;
+          const fractionOfTotal = hidden ? 0 : display.numeric / total;
           const percentOfTotal = fractionOfTotal * 100;
 
           displayValues.push({
             numeric: fractionOfTotal,
             percent: percentOfTotal,
-            text: percentOfTotal.toFixed(0) + '%',
+            text: hidden ? '-' : percentOfTotal.toFixed(0) + '%',
             title: valuesToShow.length > 1 ? 'Percent' : undefined,
           });
         }
@@ -131,6 +142,7 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
   return (
     <VizLegend
       items={legendItems}
+      onLabelClick={vizLegendClick}
       onSeriesColorChange={props.onSeriesColorChange}
       placement={legendOptions.placement}
       displayMode={legendOptions.displayMode}
@@ -189,7 +201,11 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
     scroll: true,
   });
 
-  if (fieldDisplayValues.length < 0) {
+  const filteredFieldDisplayValues = fieldDisplayValues.filter((dv) => {
+    return !dv.field.custom.hideFrom.graph;
+  });
+
+  if (filteredFieldDisplayValues.length < 0) {
     return <div>No data</div>;
   }
 
@@ -201,10 +217,12 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
 
   const showLabel = displayLabels.length > 0;
   const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
-  const total = fieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
+  const total = filteredFieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
   const colors = [
-    ...new Set(fieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)),
+    ...new Set(
+      filteredFieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)
+    ),
   ];
 
   return (
@@ -228,7 +246,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             );
           })}
           <Pie
-            data={fieldDisplayValues}
+            data={filteredFieldDisplayValues}
             pieValue={getValue}
             outerRadius={layout.outerRadius}
             innerRadius={layout.innerRadius}

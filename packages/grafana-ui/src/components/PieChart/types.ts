@@ -27,6 +27,7 @@ export interface PieChartProps {
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
   onSeriesColorChange?: (label: string, color: string) => void;
+  onLabelClick: (label: string) => void;
   legendOptions?: PieChartLegendOptions;
   tooltipOptions: VizTooltipOptions;
   reduceOptions: ReduceDataOptions;
