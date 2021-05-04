@@ -346,7 +346,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		// This will broadcast all save requets only if a `gitops` observer exists.
 		// gitops is useful when trying to save dashboards in an environment where the user can not save
 		channel := hs.Live.GrafanaScope.Dashboards
-		liveerr := channel.DashboardSaved(c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
+		liveerr := channel.DashboardSaved(c.SignedInUser.OrgId, c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
 
 		// When an error exists, but the value broadcast to a gitops listener return 202
 		if liveerr == nil && err != nil && channel.HasGitOpsObserver() {

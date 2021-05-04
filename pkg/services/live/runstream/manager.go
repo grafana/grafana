@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -257,7 +259,7 @@ func (s *Manager) SubmitStream(ctx context.Context, channel string, path string,
 	req := submitRequest{
 		responseCh: make(chan submitResponse, 1),
 		streamRequest: streamRequest{
-			Channel:       channel,
+			Channel:       orgchannel.PrependOrgID(pCtx.OrgID, channel),
 			Path:          path,
 			PluginContext: pCtx,
 			StreamRunner:  streamRunner,
