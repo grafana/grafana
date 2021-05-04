@@ -75,6 +75,7 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
+        sync: props.dashboard.graphTooltip,
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
       },
@@ -133,6 +134,11 @@ export class PanelChrome extends Component<Props, State> {
   componentDidUpdate(prevProps: Props) {
     const { isInView } = this.props;
 
+    if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
+      this.setState((s) => {
+        return { context: { ...s.context, sync: this.props.dashboard.graphTooltip } };
+      });
+    }
     // View state has changed
     if (isInView !== prevProps.isInView) {
       if (isInView) {
@@ -320,7 +326,8 @@ export class PanelChrome extends Component<Props, State> {
     // Yes this is called ever render for a function that is triggered on every mouse move
     this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
     // eslint-disable-next-line react/no-direct-mutation-state
-    this.state.context.sync = dashboard.graphTooltip;
+    // this.state.context.sync = dashboard.graphTooltip;
+    console.log('renderPanel', this.state.context);
 
     return (
       <>
