@@ -191,7 +191,6 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 		Labels: map[string]string{
 			"datasource_name": ds.Name,
 			"datasource_uid":  ds.Uid,
-			"kind":            "datasource",
 		},
 		TLS: &tlsOptions,
 	}
