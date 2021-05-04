@@ -27,15 +27,6 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -59,7 +50,16 @@ steps:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -273,15 +273,6 @@ steps:
     token:
       from_secret: drone_token
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -305,7 +296,16 @@ steps:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -721,15 +721,6 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -753,7 +744,16 @@ steps:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1089,15 +1089,6 @@ steps:
   depends_on:
   - clone
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -1121,7 +1112,16 @@ steps:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition enterprise
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1163,15 +1163,6 @@ steps:
   - initialize
   - lint-backend
 
-- name: lint-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -1180,7 +1171,16 @@ steps:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - initialize
-  - lint-backend-enterprise2
+
+- name: lint-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition enterprise2
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend-enterprise2
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -1656,15 +1656,6 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -1688,7 +1679,16 @@ steps:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2013,15 +2013,6 @@ steps:
   depends_on:
   - clone
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -2045,7 +2036,16 @@ steps:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition enterprise
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2087,15 +2087,6 @@ steps:
   - initialize
   - lint-backend
 
-- name: lint-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -2104,7 +2095,16 @@ steps:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - initialize
-  - lint-backend-enterprise2
+
+- name: lint-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition enterprise2
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend-enterprise2
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -2573,15 +2573,6 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -2605,7 +2596,16 @@ steps:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2901,15 +2901,6 @@ steps:
   depends_on:
   - clone
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
@@ -2933,7 +2924,16 @@ steps:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
   - initialize
-  - lint-backend
+
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition enterprise
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2972,15 +2972,6 @@ steps:
   - initialize
   - lint-backend
 
-- name: lint-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -2989,7 +2980,16 @@ steps:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
   - initialize
-  - lint-backend-enterprise2
+
+- name: lint-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/grabpl lint-backend --edition enterprise2
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+  - test-backend-enterprise2
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
