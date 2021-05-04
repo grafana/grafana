@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import { AsyncMultiSelect, Icon, resetSelectStyles, useStyles2 } from '@grafana/ui';
-import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { FolderInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -81,7 +81,7 @@ async function getFoldersAsOptions(searchString: string, setLoading: (loading: b
   return options;
 }
 
-function getStyles(theme: GrafanaThemeV2) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css`
       label: container;
