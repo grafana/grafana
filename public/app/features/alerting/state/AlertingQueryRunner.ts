@@ -1,18 +1,7 @@
-import {
-  merge,
-  MonoTypeOperatorFunction,
-  Observable,
-  of,
-  OperatorFunction,
-  ReplaySubject,
-  timer,
-  Unsubscribable,
-} from 'rxjs';
-import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
+import { merge, Observable, of, OperatorFunction, ReplaySubject, timer, Unsubscribable } from 'rxjs';
+import { catchError, map, mapTo, share, takeUntil } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  compareArrayValues,
-  compareDataFrameStructures,
   dataFrameFromJSON,
   DataFrameJSON,
   getDefaultTimeRange,
@@ -21,12 +10,14 @@ import {
   rangeUtil,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, toDataQueryError } from '@grafana/runtime';
+import { FetchResponse, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 import { getTimeRangeForExpression } from '../unified/utils/timeRange';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { setStructureRevision } from 'app/features/query/state/processing/revision';
+import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
 
 export interface AlertingQueryResult {
   frames: DataFrameJSON[];
@@ -59,7 +50,8 @@ export class AlertingQueryRunner {
       next: (dataPerQuery) => {
         const nextResult = applyChange(dataPerQuery, (refId, data) => {
           const previous = this.lastResult[refId];
-          return setStructureRevision(data, previous);
+          const preProcessed = preProcessPanelData(data, previous);
+          return setStructureRevision(preProcessed, previous);
         });
 
         this.lastResult = nextResult;
@@ -116,7 +108,7 @@ const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable
   const runningRequest = backendSrv.fetch<AlertingQueryResponse>(request).pipe(
     mapToPanelData(initial),
     catchError((error) => of(mapErrorToPanelData(initial, error))),
-    cancelNetworkRequestsOnUnsubscribe(backendSrv, request),
+    cancelNetworkRequestsOnUnsubscribe(backendSrv, request.requestId),
     share()
   );
 
@@ -178,33 +170,6 @@ const mapErrorToPanelData = (lastResult: Record<string, PanelData>, error: Error
       error: queryError,
     };
   });
-};
-
-const cancelNetworkRequestsOnUnsubscribe = (
-  backendSrv: BackendSrv,
-  request: BackendSrvRequest
-): MonoTypeOperatorFunction<Record<string, PanelData>> => {
-  return finalize(() => {
-    if (request.requestId) {
-      backendSrv.resolveCancelerIfExists(request.requestId);
-    }
-  });
-};
-
-const setStructureRevision = (data: PanelData, lastResult: PanelData) => {
-  const result = preProcessPanelData(data, lastResult);
-  let structureRev = 1;
-
-  if (lastResult?.structureRev && lastResult.series) {
-    structureRev = lastResult.structureRev;
-    const sameStructure = compareArrayValues(result.series, lastResult.series, compareDataFrameStructures);
-    if (!sameStructure) {
-      structureRev++;
-    }
-  }
-
-  result.structureRev = structureRev;
-  return result;
 };
 
 const applyChange = (
