@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	_ "github.com/grafana/grafana/pkg/services/authtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"

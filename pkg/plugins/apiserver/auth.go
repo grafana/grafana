@@ -4,13 +4,17 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/authtoken"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
-// Authenticator exposes a function for authenticating requests.
-type Authenticator struct{}
+// Authenticator can authenticate GRPC requests.
+type Authenticator struct {
+	JWT *authtoken.JWT
+}
 
 // Authenticate checks that a token exists and is valid. It stores the user
 // metadata in the returned context and removes the token from the context.
@@ -32,17 +36,15 @@ func (a Authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
 
 	token := strings.TrimPrefix(auth, tokenPrefix)
 	if token == "" {
-		return ctx, status.Error(codes.Unauthenticated, "invalid token")
+		return ctx, status.Error(codes.Unauthenticated, "token required")
 	}
 
 	newCtx := purgeHeader(ctx, "authorization")
 
-	// TODO: hardcoded identity for now if token is not empty.
-	identity := &Identity{
-		Type: IdentityTypePlugin,
-		PluginIdentity: &PluginIdentity{
-			PluginID: "TODO",
-		},
+	identity, err := a.JWT.ValidateToken(token)
+	if err != nil {
+		logger.Warn("request with invalid token", "error", err, "token", token)
+		return ctx, status.Error(codes.Unauthenticated, "invalid token")
 	}
 	return SetIdentity(newCtx, identity), nil
 }

@@ -1357,12 +1357,12 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 
 func (cfg *Cfg) readGRPCAPIServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("plugin_grpc_api")
+	errPrefix := "plugin_grpc_api:"
 	cfg.PluginGRPCUseTLS = server.Key("use_tls").MustBool(false)
 	cfg.PluginGRPCCertFile = server.Key("cert_file").String()
 	cfg.PluginGRPCKeyFile = server.Key("cert_key").String()
 	cfg.PluginGRPCNetwork = valueAsString(server, "network", "unix")
 	cfg.PluginGRPCAddress = valueAsString(server, "address", "")
-	errPrefix := "plugin_grpc_api:"
 	switch cfg.PluginGRPCNetwork {
 	case "unix":
 		if cfg.PluginGRPCAddress != "" {

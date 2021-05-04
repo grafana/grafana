@@ -3,23 +3,26 @@ package apiserver
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
+	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/authtoken"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/server"
-	liveChannel "github.com/grafana/grafana-plugin-sdk-go/live"
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -32,8 +35,10 @@ func init() {
 
 // GRPCAPIServer ...
 type GRPCAPIServer struct {
-	Cfg         *setting.Cfg      `inject:""`
-	GrafanaLive *live.GrafanaLive `inject:""`
+	Cfg             *setting.Cfg             `inject:""`
+	GrafanaLive     *live.GrafanaLive        `inject:""`
+	DatasourceCache datasources.CacheService `inject:""`
+	JWT             *authtoken.JWT           `inject:""`
 
 	server *grpc.Server
 }
@@ -64,7 +69,7 @@ func (s *GRPCAPIServer) Init() error {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
-	authenticator := &Authenticator{}
+	authenticator := &Authenticator{JWT: s.JWT}
 
 	opts := []grpc.ServerOption{
 		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.Authenticate)),
@@ -106,43 +111,62 @@ func (s *GRPCAPIServer) IsEnabled() bool {
 	return s.Cfg.IsPluginAPIServerEnabled()
 }
 
-func (s GRPCAPIServer) PublishStream(ctx context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
+func (s *GRPCAPIServer) PublishStream(ctx context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
 	// TODO: permission checks still need to be improved.
 	// For now we don't apply any scope or namespace rules here.
 	identity, ok := GetIdentity(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "no authentication found")
 	}
-	if identity.Type != IdentityTypePlugin {
+	if identity.Type != authtoken.IdentityTypePlugin {
 		return nil, status.Error(codes.Unauthenticated, "unsupported identity type")
 	}
-	channel := liveChannel.ParseChannel(request.Channel)
+
+	pluginIdentity := identity.PluginIdentity
+	logger.Debug("plugin publishes data to a channel", "pluginId", pluginIdentity.PluginID, "orgId", pluginIdentity.OrgID, "channel", request.Channel)
+
+	channel := liveDto.ParseChannel(request.Channel)
 	if !channel.IsValid() {
 		return nil, status.Error(codes.InvalidArgument, `invalid channel`)
 	}
-	if channel.Scope == liveChannel.ScopeStream {
-		// Special handling for stream scope.
-		// We can avoid unmarshal here, but in that case frame will be sent to WS with schema.
-		var frame data.Frame
-		err := json.Unmarshal(request.Data, &frame)
-		if err != nil {
-			// stream scope only deals with data frames.
-			return nil, status.Error(codes.InvalidArgument, `invalid frame data`)
+
+	switch channel.Scope {
+	case liveDto.ScopePlugin:
+		if channel.Namespace != pluginIdentity.PluginID {
+			return nil, status.Error(codes.PermissionDenied, `can not publish to another plugin namespace`)
 		}
-		stream, err := s.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(channel.Namespace)
+	case liveDto.ScopeDatasource:
+		var ds *models.DataSource
+		numericID, err := strconv.ParseInt(channel.Namespace, 10, 64)
+		// TODO: Need to refactor DatasourceCache? We use fake SignedInUser here,
+		// but DatasourceCache internally only uses OrgID field.
+		user := &models.SignedInUser{OrgId: pluginIdentity.OrgID}
 		if err != nil {
-			return nil, status.Error(codes.Internal, `internal error`)
+			ds, err = s.DatasourceCache.GetDatasourceByUID(channel.Namespace, user, false)
+		} else {
+			ds, err = s.DatasourceCache.GetDatasource(numericID, user, false)
 		}
-		err = stream.Push(channel.Path, &frame, false)
 		if err != nil {
-			return nil, status.Error(codes.Internal, `internal error`)
+			if errors.Is(err, models.ErrDataSourceNotFound) {
+				return nil, status.Error(codes.NotFound, `datasource not found`)
+			}
+			logger.Error("Error getting datasource", "error", err)
+			return nil, status.Error(codes.Internal, `internal server error`)
 		}
-	} else {
-		// No special handling for other scopes.
-		err := s.GrafanaLive.Publish(request.Channel, request.Data)
-		if err != nil {
-			return nil, status.Error(codes.Internal, `internal error`)
+		if ds.Type != pluginIdentity.PluginID {
+			return nil, status.Error(codes.PermissionDenied, `can not publish to another plugin namespace`)
 		}
+	default:
+		return nil, status.Error(codes.PermissionDenied, `can not publish to scope`)
 	}
+
+	// Permission checks passed, let message be published.
+
+	err := s.GrafanaLive.Publish(request.Channel, request.Data)
+	if err != nil {
+		logger.Error("Error publishing into channel", "error", err, "channel", request.Channel, "data", string(request.Data))
+		return nil, status.Error(codes.Internal, `internal error`)
+	}
+
 	return &server.PublishStreamResponse{}, nil
 }
