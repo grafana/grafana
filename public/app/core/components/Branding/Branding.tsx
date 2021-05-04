@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
 import { useTheme2 } from '@grafana/ui';
+import { colorManipulator } from '@grafana/data';
 
 export interface BrandComponentProps {
   className?: string;
@@ -27,8 +28,10 @@ const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
 
 const LoginBoxBackground = () => {
   const theme = useTheme2();
+  const color = theme.isLight ? 'rgba(6, 30, 200, 0.1 )' : colorManipulator.alpha(theme.colors.background.primary, 0.7);
+
   return css`
-    background: ${theme.isLight ? 'rgba(6, 30, 200, 0.1 )' : theme.colors.background.primary};
+    background: ${color};
     background-size: cover;
   `;
 };

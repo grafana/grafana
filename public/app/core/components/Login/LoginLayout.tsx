@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { cx, css, keyframes } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { Branding } from '../Branding/Branding';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
@@ -45,7 +45,7 @@ to{
   transform: translate(0px, 0px);
 }`;
 
-export const getLoginStyles = (theme: GrafanaThemeV2) => {
+export const getLoginStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.isDark ? '#000' : theme.colors.background.canvas;
 
   return {
@@ -97,7 +97,7 @@ export const getLoginStyles = (theme: GrafanaThemeV2) => {
       justify-content: center;
       z-index: 1;
       min-height: 320px;
-      border-radius: 3px;
+      border-radius: ${theme.shape.borderRadius(4)};
       padding: ${theme.spacing(4, 0)};
     `,
     loginOuterBox: css`
