@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,10 +23,15 @@ func TestAlertRulePermissions(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
-		AnonymousUserRole:    models.ROLE_EDITOR,
+		DisableAnonymous:     true,
 	})
 	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create a user to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
 
 	// Create the namespace we'll save our alerts to.
 	require.NoError(t, createFolder(t, store, 0, "folder1"))
@@ -41,7 +47,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 	// With the rules created, let's make sure that rule definitions are stored.
 	{
-		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
 		resp, err := http.Get(u)
 		require.NoError(t, err)
@@ -73,7 +79,7 @@ func TestAlertRulePermissions(t *testing.T) {
 					   },
 					   "grafana_alert":{
 						  "id":1,
-						  "orgId":2,
+						  "orgId":1,
 						  "title":"rule under folder folder1",
 						  "condition":"A",
 						  "data":[
@@ -123,7 +129,7 @@ func TestAlertRulePermissions(t *testing.T) {
 					 },
 					 "grafana_alert":{
 						"id":2,
-						"orgId":2,
+						"orgId":1,
 						"title":"rule under folder folder2",
 						"condition":"A",
 						"data":[
@@ -195,7 +201,7 @@ func TestAlertRulePermissions(t *testing.T) {
 					   },
 					   "grafana_alert":{
 						  "id":1,
-						  "orgId":2,
+						  "orgId":1,
 						  "title":"rule under folder folder1",
 						  "condition":"A",
 						  "data":[
@@ -276,7 +282,7 @@ func createRule(t *testing.T, grafanaListedAddr string, folder string) {
 	err = enc.Encode(&rules)
 	require.NoError(t, err)
 
-	u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/%s", grafanaListedAddr, folder)
+	u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/%s", grafanaListedAddr, folder)
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", &buf)
 	require.NoError(t, err)

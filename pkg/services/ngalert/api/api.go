@@ -3,6 +3,8 @@ package api
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/quota"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
@@ -41,6 +43,7 @@ type API struct {
 	DatasourceCache datasources.CacheService
 	RouteRegister   routing.RouteRegister
 	DataService     *tsdb.Service
+	QuotaService    *quota.QuotaService
 	Schedule        schedule.ScheduleService
 	RuleStore       store.RuleStore
 	InstanceStore   store.InstanceStore
@@ -73,7 +76,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerSrv{DatasourceCache: api.DatasourceCache, manager: api.StateManager, store: api.RuleStore, log: logger},
+		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, manager: api.StateManager, store: api.RuleStore, log: logger},
 	), m)
 	api.RegisterTestingApiEndpoints(TestingApiSrv{
 		AlertingProxy:   proxy,
