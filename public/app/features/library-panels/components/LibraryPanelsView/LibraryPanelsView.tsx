@@ -17,6 +17,7 @@ interface LibraryPanelViewProps {
   searchString: string;
   sortDirection?: string;
   panelFilter?: string[];
+  folderFilter?: string[];
   perPage?: number;
 }
 
@@ -26,6 +27,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   searchString,
   sortDirection,
   panelFilter,
+  folderFilter,
   showSecondaryActions,
   currentPanelId: currentPanel,
   perPage: propsPerPage = 40,
@@ -43,10 +45,18 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   useDebounce(
     () =>
       asyncDispatch(
-        searchForLibraryPanels({ searchString, sortDirection, panelFilter, page, perPage, currentPanelId })
+        searchForLibraryPanels({
+          searchString,
+          sortDirection,
+          panelFilter,
+          folderFilter,
+          page,
+          perPage,
+          currentPanelId,
+        })
       ),
     300,
-    [searchString, sortDirection, panelFilter, page, asyncDispatch]
+    [searchString, sortDirection, panelFilter, folderFilter, page, asyncDispatch]
   );
   const onDelete = ({ uid }: LibraryPanelDTO) =>
     asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));

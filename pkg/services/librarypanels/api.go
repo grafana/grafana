@@ -88,6 +88,7 @@ func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) response.Res
 		sortDirection: c.Query("sortDirection"),
 		panelFilter:   c.Query("panelFilter"),
 		excludeUID:    c.Query("excludeUid"),
+		folderFilter:  c.Query("folderFilter"),
 	}
 	libraryPanels, err := lps.getAllLibraryPanels(c, query)
 	if err != nil {

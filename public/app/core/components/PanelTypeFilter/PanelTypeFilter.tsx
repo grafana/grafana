@@ -6,9 +6,10 @@ import { css } from '@emotion/css';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;
+  maxMenuHeight?: number;
 }
 
-export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element => {
+export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
   const plugins = useMemo<PanelPluginMeta[]>(() => {
     return getAllPanelPluginMeta();
   }, []);
@@ -43,7 +44,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange }: Props): JSX.Element
     noOptionsMessage: 'No Panel types found',
     placeholder: 'Filter by type',
     styles: resetSelectStyles(),
-    maxMenuHeight: 150,
+    maxMenuHeight,
     options,
     value,
     onChange,

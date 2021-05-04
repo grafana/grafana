@@ -57,6 +57,7 @@ export const PanelTypeCard: React.FC<Props> = ({
             e.stopPropagation();
             onDelete();
           }}
+          aria-label="Delete button on panel type card"
         />
       )}
     </div>

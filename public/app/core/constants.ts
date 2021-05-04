@@ -13,4 +13,4 @@ export const PANEL_BORDER = 2;
 
 export const EDIT_PANEL_ID = 23763571993;
 
-export const DEFAULT_PER_PAGE_PAGINATION = 8;
+export const DEFAULT_PER_PAGE_PAGINATION = 40;

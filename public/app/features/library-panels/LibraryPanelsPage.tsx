@@ -25,7 +25,7 @@ export const LibraryPanelsPage: FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <LibraryPanelsSearch onClick={setSelected} showSecondaryActions showSort showFilter />
+        <LibraryPanelsSearch onClick={setSelected} showSecondaryActions showSort showPanelFilter showFolderFilter />
         {selected ? <OpenLibraryPanelModal onDismiss={() => setSelected(undefined)} libraryPanel={selected} /> : null}
       </Page.Contents>
     </Page>
