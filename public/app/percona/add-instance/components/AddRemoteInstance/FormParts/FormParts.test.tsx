@@ -58,7 +58,7 @@ describe('ExternalServiceConnectionDetails ::', () => {
 
     const fields = root.find('input');
 
-    expect(fields.length).toBe(11);
+    expect(fields.length).toBe(5);
   });
 });
 
