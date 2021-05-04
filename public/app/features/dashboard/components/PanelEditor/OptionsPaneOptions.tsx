@@ -189,7 +189,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-top: none;
     flex-grow: 1;
   `,
-  overridesHeading: css`
-    padding: ${theme.spacing(1)};
-  `,
 });
