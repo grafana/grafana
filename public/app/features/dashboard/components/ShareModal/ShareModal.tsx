@@ -8,7 +8,7 @@ import { ShareExport } from './ShareExport';
 import { ShareEmbed } from './ShareEmbed';
 import { ShareModalTabModel } from './types';
 import { contextSrv } from 'app/core/core';
-import { ShareGlobalPanel } from './ShareGlobalPanel';
+import { ShareLibraryPanel } from './ShareLibraryPanel';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -42,7 +42,7 @@ function getTabs(props: Props) {
     tabs.push({ label: 'Embed', value: 'embed', component: ShareEmbed });
 
     if (!isPanelModelLibraryPanel(panel)) {
-      tabs.push({ label: 'Global panel', value: 'global_panel', component: ShareGlobalPanel });
+      tabs.push({ label: 'Library panel', value: 'library_panel', component: ShareLibraryPanel });
     }
     tabs.push(...customPanelTabs);
   } else {
