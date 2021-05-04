@@ -14,9 +14,6 @@ exports[`Render should render component 1`] = `
         value=""
       />
     </div>
-    <div
-      className="page-action-bar__spacer"
-    />
     <Button
       className="pull-right"
       disabled={false}
@@ -101,9 +98,6 @@ exports[`Render should render team members 1`] = `
         value=""
       />
     </div>
-    <div
-      className="page-action-bar__spacer"
-    />
     <Button
       className="pull-right"
       disabled={false}

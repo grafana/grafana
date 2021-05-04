@@ -169,7 +169,7 @@ export enum NullValueMode {
  */
 export interface DataConfigSource {
   configRev?: number;
-  dataSupport?: PanelPluginDataSupport;
+  getDataSupport: () => PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
 }

@@ -223,7 +223,7 @@ export const Table: FC<Props> = memo((props: Props) => {
             </FixedSizeList>
           ) : (
             <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
-              No data to show
+              No data
             </div>
           )}
         </div>

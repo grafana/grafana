@@ -192,4 +192,7 @@ export const Components = {
   DataLinksContextMenu: {
     singleLink: 'Data link',
   },
+  CodeEditor: {
+    container: 'Code editor container',
+  },
 };
