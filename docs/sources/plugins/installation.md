@@ -30,3 +30,5 @@ After the user has downloaded the archive containing the plugin assets, they can
 ```
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
+
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../administration/configuration.md#plugins" >}}).
