@@ -14,9 +14,20 @@ const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
 
 const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
   const theme = useTheme2();
+
   const background = css`
-    background: url(public/img/g8_login_${theme.isDark ? 'dark' : 'light'}.svg);
-    background-size: cover;
+    &:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 0;
+      background: url(public/img/g8_login_${theme.isDark ? 'dark' : 'light'}.svg);
+      background-size: cover;
+      opacity: 0;
+      transition: opacity 3.5s ease-in-out;
+    }
   `;
 
   return <div className={cx(background, className)}>{children}</div>;
