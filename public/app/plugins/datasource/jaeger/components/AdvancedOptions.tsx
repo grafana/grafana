@@ -63,11 +63,10 @@ export function AdvancedOptions({ query, onChange }: Props) {
             </InlineField>
           </InlineFieldRow>
           <InlineFieldRow>
-            <InlineField label="Limit" labelWidth={21} grow>
+            <InlineField label="Limit" labelWidth={21} grow tooltip="Maximum numbers of returned results">
               <Input
                 value={query.limit || ''}
                 type="number"
-                placeholder="Maximum numbers of returned results"
                 onChange={(v) =>
                   onChange({
                     ...query,

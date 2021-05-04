@@ -84,7 +84,8 @@ export function createTableFrame(data: TraceResponse[], instanceSettings: DataSo
       preferredVisualisationType: 'table',
     },
   });
-  const traceData = data.map(transformToTraceData);
+  // Show the most recent traces
+  const traceData = data.map(transformToTraceData).sort((a, b) => b?.startTime! - a?.startTime!);
 
   for (const trace of traceData) {
     frame.add(trace);

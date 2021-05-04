@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { QueryEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input, RadioButtonGroup } from '@grafana/ui';
@@ -10,7 +11,7 @@ type Props = QueryEditorProps<JaegerDatasource, JaegerQuery>;
 
 export function QueryEditor({ datasource, query, onChange }: Props) {
   return (
-    <div style={{ width: '50%' }}>
+    <div className={css({ width: '50%' })}>
       <InlineFieldRow>
         <InlineField label="Query type">
           <RadioButtonGroup<JaegerQueryType>
