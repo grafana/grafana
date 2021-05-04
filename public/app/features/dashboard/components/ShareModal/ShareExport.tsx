@@ -33,7 +33,7 @@ export class ShareExport extends PureComponent<Props, State> {
     this.exporter = new DashboardExporter();
   }
 
-let mounted = true;
+mounted = true;
 
   onShareExternallyChange = () => {
     this.setState({
@@ -54,7 +54,7 @@ let mounted = true;
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        if (trimDefaults && mounted) {
+        if (trimDefaults && this.mounted) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
             .then((resp: any) => {
@@ -65,7 +65,7 @@ let mounted = true;
         }
       });
     } else {
-      if (trimDefaults && mounted) {
+      if (trimDefaults && this.mounted) {
         getBackendSrv()
           .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
           .then((resp: any) => {
@@ -84,7 +84,7 @@ let mounted = true;
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        if (trimDefaults && mounted) {
+        if (trimDefaults && this.mounted) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
             .then((resp: any) => {
@@ -95,7 +95,7 @@ let mounted = true;
         }
       });
     } else {
-      if (trimDefaults && mounted) {
+      if (trimDefaults && this.mounted) {
         getBackendSrv()
           .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
           .then((resp: any) => {
@@ -130,7 +130,7 @@ let mounted = true;
   };
 
 componentWillUnmount() {
-mounted = false;
+this.mounted = false;
 }
 
   render() {
