@@ -48,8 +48,11 @@ export function cloudReceiverToFormValues(
   let idCounter = 1;
   const items: CloudChannelValues[] = Object.entries(receiver)
     .filter(([type]) => type.endsWith('_configs') && type !== 'grafana_managed_receiver_configs') // filter out only config items
-    .map(([type, configs]) => [type.replace('_configs', ''), configs]) // coerce name into notifier type
-    .map(([type, configs]: [CloudNotifierType, CloudChannelConfig[]]) =>
+    .map(([type, configs]): [CloudNotifierType, CloudChannelConfig[]] => [
+      type.replace('_configs', '') as CloudNotifierType,
+      configs as CloudChannelConfig[],
+    ]) // coerce name into notifier type
+    .map(([type, configs]) =>
       configs.map((config) => {
         const id = String(idCounter++);
         channelMap[id] = { type, config };

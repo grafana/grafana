@@ -33,7 +33,7 @@ export function ReceiverForm<R extends ChannelValues>({
   onSubmit,
   takenReceiverNames,
   commonSettingsComponent,
-}: Props<ChannelValues>): JSX.Element {
+}: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
 
   const defaultValues = initialValues || {
