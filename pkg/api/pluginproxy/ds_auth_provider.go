@@ -66,9 +66,14 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 
 func getTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
 	data templateData) accessTokenProvider {
-	authenticationType := ds.JsonData.Get("authenticationType").MustString()
+	authType := pluginRoute.AuthType
 
-	switch authenticationType {
+	// Plugin can override authentication type specified in route configuration
+	if authTypeOverride := ds.JsonData.Get("authenticationType").MustString(); authTypeOverride != "" {
+		authType = authTypeOverride
+	}
+
+	switch authType {
 	case "gce":
 		return newGceAccessTokenProvider(ctx, ds, pluginRoute)
 	case "jwt":
