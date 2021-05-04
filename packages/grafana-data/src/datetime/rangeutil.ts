@@ -439,10 +439,9 @@ export function roundInterval(interval: number) {
  *
  * @internal
  */
-export function timeRangeToRelative(timeRange: TimeRange): RelativeTimeRange {
-  const now = dateTime().unix();
-  const from = (now - timeRange.from.unix()) / 1000;
-  const to = (now - timeRange.to.unix()) / 1000;
+export function timeRangeToRelative(timeRange: TimeRange, now: DateTime = dateTime()): RelativeTimeRange {
+  const from = now.unix() - timeRange.from.unix();
+  const to = now.unix() - timeRange.to.unix();
 
   return {
     from,

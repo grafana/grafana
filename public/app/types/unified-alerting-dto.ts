@@ -95,7 +95,7 @@ export enum GrafanaAlertState {
 export interface GrafanaQuery {
   refId: string;
   queryType: string;
-  relativeTimeRange: RelativeTimeRange;
+  relativeTimeRange?: RelativeTimeRange;
   datasourceUid: string;
   model: DataQuery;
 }

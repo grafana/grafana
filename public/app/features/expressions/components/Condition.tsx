@@ -122,7 +122,7 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
         />
       ) : null}
 
-      <Button variant="secondary" onClick={() => onRemoveCondition(index)}>
+      <Button variant="secondary" type="button" onClick={() => onRemoveCondition(index)}>
         <Icon name="trash-alt" />
       </Button>
     </InlineFieldRow>

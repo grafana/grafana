@@ -1,7 +1,7 @@
 // Libraries
 import { from, merge, Observable, of, timer } from 'rxjs';
 import { isString, map as isArray } from 'lodash';
-import { catchError, finalize, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
+import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
 // Utils & Services
 import { backendSrv } from 'app/core/services/backend_srv';
 // Types
@@ -28,6 +28,7 @@ import {
   ExpressionDatasourceUID,
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
+import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -155,7 +156,7 @@ export function runRequest(
     tap(emitDataRequestEvent(datasource)),
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
-    finalize(cancelNetworkRequestsOnUnsubscribe(request)),
+    cancelNetworkRequestsOnUnsubscribe(backendSrv, request.requestId),
     // this makes it possible to share this observable in takeUntil
     share()
   );
@@ -164,12 +165,6 @@ export function runRequest(
   // mapTo will translate the timer event into state.panelData (which has state set to loading)
   // takeUntil will cancel the timer emit when first response packet is received on the dataObservable
   return merge(timer(200).pipe(mapTo(state.panelData), takeUntil(dataObservable)), dataObservable);
-}
-
-function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
-  return () => {
-    backendSrv.resolveCancelerIfExists(req.requestId);
-  };
 }
 
 export function callQueryMethod(

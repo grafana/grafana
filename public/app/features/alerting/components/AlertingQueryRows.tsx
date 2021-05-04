@@ -76,6 +76,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
@@ -110,6 +111,13 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
+  };
+
+  onDuplicateQuery = (query: DataQuery, source: GrafanaQuery): void => {
+    this.props.onDuplicateQuery({
+      ...source,
+      model: query,
+    });
   };
 
   getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
@@ -148,7 +156,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       timeRange={
-                        !isExpressionQuery(query.model)
+                        !isExpressionQuery(query.model) && query.relativeTimeRange
                           ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
                           : undefined
                       }
@@ -158,7 +166,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                           : undefined
                       }
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onDuplicateQuery}
+                      onAddQuery={(duplicate) => this.onDuplicateQuery(duplicate, query)}
                       onRunQuery={this.props.onRunQueries}
                       queries={queries}
                     />

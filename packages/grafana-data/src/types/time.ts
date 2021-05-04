@@ -60,3 +60,15 @@ export function getDefaultTimeRange(): TimeRange {
     raw: { from: 'now-6h', to: 'now' },
   };
 }
+
+/**
+ * Returns the default realtive time range.
+ *
+ * @public
+ */
+export function getDefaultRelativeTimeRange(): RelativeTimeRange {
+  return {
+    from: 21600,
+    to: 0,
+  };
+}
