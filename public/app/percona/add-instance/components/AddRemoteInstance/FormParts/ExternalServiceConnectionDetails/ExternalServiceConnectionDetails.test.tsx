@@ -3,7 +3,6 @@ import React from 'react';
 import { dataQa } from '@percona/platform-core';
 import { Form } from 'react-final-form';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails';
-import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 describe('Add remote instance:: ', () => {
   it('should render correct for mysql and highlight empty mandatory fields on submit', async () => {
@@ -19,11 +18,17 @@ describe('Add remote instance:: ', () => {
       />
     );
 
+    root.find(dataQa('metricsParameters-radio-state')).simulate('change', { target: { value: 'parsed' } });
+
+    root.update();
+
     root
       .find(dataQa('url-text-input'))
       .simulate('change', { target: { value: 'https://admin:admin@localhost/metrics' } });
 
-    await asyncAct(() => root.find('button#parseUrl').simulate('click'));
+    root.update();
+
+    root.find(dataQa('metricsParameters-radio-state')).simulate('change', { target: { value: 'manually' } });
 
     root.update();
 

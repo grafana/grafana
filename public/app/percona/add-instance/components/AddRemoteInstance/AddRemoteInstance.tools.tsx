@@ -2,6 +2,7 @@ import { InstanceData } from './AddRemoteInstance.types';
 import { INSTANCE_TYPES_LABELS, InstanceTypes } from '../../panel.types';
 import { DEFAULT_PORTS } from './AddRemoteInstance.constants';
 import { logger } from '@percona/platform-core';
+import { MetricsParameters, Schema } from './FormParts/FormParts.types';
 
 const getAzureCredentials = (credentials: any, instanceType: string) => {
   const instance: InstanceData = {
@@ -107,7 +108,12 @@ export const getInstanceData = (instanceType: InstanceTypes, credentials: any): 
       return getAzureCredentials(credentials, instanceType);
     }
 
-    const instance: any = { remoteInstanceCredentials: {} };
+    const instance: any = {
+      remoteInstanceCredentials: {
+        metricsParameters: MetricsParameters.manually,
+        schema: Schema.HTTPS,
+      },
+    };
 
     switch (instanceType) {
       case InstanceTypes.postgresql:

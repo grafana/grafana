@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { Messages } from '../AddRemoteInstance.messages';
 import { TrackingOptions } from '../AddRemoteInstance.types';
+import { MetricsParameters, Schema } from './FormParts.types';
 
 export const trackingOptions = [
   { value: TrackingOptions.none, label: Messages.form.trackingOptions.none },
@@ -14,6 +15,11 @@ export const rdsTrackingOptions = [
 ];
 
 export const schemaOptions: SelectableValue[] = [
-  { value: 'https', label: 'HTTPS' },
-  { value: 'http', label: 'HTTP' },
+  { value: Schema.HTTPS, label: Messages.form.schemaOptions.https },
+  { value: Schema.HTTP, label: Messages.form.schemaOptions.http },
+];
+
+export const metricsParametersOptions: SelectableValue[] = [
+  { value: MetricsParameters.manually, label: Messages.form.metricsParametersOptions.manually },
+  { value: MetricsParameters.parsed, label: Messages.form.metricsParametersOptions.parsed },
 ];

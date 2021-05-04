@@ -8,7 +8,8 @@ export const Messages = {
     labels: {
       trackingOptions: 'Stat tracking options',
       externalService: {
-        url: 'URL string',
+        url: 'External service endpoint',
+        connectionParameters: 'External service connection parameters',
         schema: 'Schema',
         metricsPath: 'Metrics path',
         group: 'Group',
