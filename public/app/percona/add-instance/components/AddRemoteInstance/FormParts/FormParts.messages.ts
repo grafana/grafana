@@ -36,6 +36,10 @@ export const Messages = {
       additionalOptions: {
         skipConnectionCheck: 'Skip connection check',
         tls: 'Use TLS for database connections',
+        tlsCertificateFilePassword: 'TLS certificate password',
+        tlsCertificateKey: 'TLS certificate key',
+        tlsCertificate: 'TLS certificate',
+        tlsCA: 'TLS CA',
         tlsSkipVerify: 'Skip TLS certificate and hostname validation',
         qanMysqlPerfschema: 'Use performance schema',
         qanMongodbProfiler: 'Use QAN MongoDB Profiler',
