@@ -1,6 +1,6 @@
 import React, { FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useMedia } from 'react-use';
 
@@ -28,6 +28,7 @@ export interface DynamicTableProps<T = unknown> {
   onCollapse?: (id: DynamicTableItemProps<T>) => void;
   onExpand?: (id: DynamicTableItemProps<T>) => void;
   renderExpandedContent?: (item: DynamicTableItemProps, index: number) => ReactNode;
+  testIdGenerator?: (item: DynamicTableItemProps<T>) => string;
 }
 
 export const DynamicTable: FC<DynamicTableProps> = ({
@@ -37,6 +38,7 @@ export const DynamicTable: FC<DynamicTableProps> = ({
   onCollapse,
   onExpand,
   renderExpandedContent,
+  testIdGenerator,
 }) => {
   const styles = useStyles2(getStyles(cols, isExpandable));
   const theme = useTheme2();
@@ -54,7 +56,7 @@ export const DynamicTable: FC<DynamicTableProps> = ({
       </div>
 
       {items.map((item, index) => (
-        <div className={styles.row} key={item.id}>
+        <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item)}>
           {isExpandable && (
             <div className={cx(styles.cell, styles.expandCell)}>
               <IconButton
@@ -99,7 +101,7 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
     sizes.unshift('calc(1em + 16px)');
   }
 
-  return (theme: GrafanaThemeV2) => ({
+  return (theme: GrafanaTheme2) => ({
     container: css`
       border: 1px solid ${theme.colors.border.strong};
       border-radius: 2px;

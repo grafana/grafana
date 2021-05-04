@@ -23,11 +23,15 @@ export const AmRootRouteRead: FC<AmRootRouteReadProps> = ({ routes }) => {
   return (
     <div className={styles.container}>
       <div className={styles.titleCell}>Contact point</div>
-      <div className={styles.valueCell}>{receiver}</div>
+      <div className={styles.valueCell} data-testid="am-routes-root-receiver">
+        {receiver}
+      </div>
       <div className={styles.titleCell}>Group by</div>
-      <div className={styles.valueCell}>{groupBy}</div>
+      <div className={styles.valueCell} data-testid="am-routes-root-group-by">
+        {groupBy}
+      </div>
       <div className={styles.titleCell}>Timings</div>
-      <div className={styles.valueCell}>
+      <div className={styles.valueCell} data-testid="am-routes-root-timings">
         Group wait: {groupWait} | Group interval: {groupInterval} | Repeat interval: {repeatInterval}
       </div>
     </div>

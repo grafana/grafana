@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getGridStyles = (theme: GrafanaThemeV2) => {
+export const getGridStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: grid;

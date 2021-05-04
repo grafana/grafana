@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import React, { FC, useState } from 'react';
 import { Button, useStyles2 } from '@grafana/ui';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
@@ -81,7 +81,7 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({ onChange, 
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     addNestedRoutingBtn: css`
       margin-top: ${theme.spacing(2)};

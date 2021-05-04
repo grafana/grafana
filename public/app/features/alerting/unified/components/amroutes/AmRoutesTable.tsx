@@ -159,6 +159,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, 
       items={items}
       onCollapse={(item: RouteTableItemProps) => setItems((items) => collapseItem(items, item.id))}
       onExpand={(item: RouteTableItemProps) => setItems((items) => expandItem(items, item.id))}
+      testIdGenerator={() => 'am-routes-row'}
       renderExpandedContent={(item: RouteTableItemProps, index) => (
         <AmRoutesExpandedRead
           onChange={(data) => {

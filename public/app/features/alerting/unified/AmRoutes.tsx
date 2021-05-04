@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
@@ -137,7 +137,7 @@ const AmRoutes: FC = () => {
 
 export default AmRoutes;
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   break: css`
     width: 100%;
     height: 0;

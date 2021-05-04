@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   Checkbox,
@@ -267,7 +267,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const commonSpacing = theme.spacing(3.5);
 
   return {

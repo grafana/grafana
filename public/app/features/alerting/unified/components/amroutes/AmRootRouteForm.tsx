@@ -34,7 +34,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, errors, setValue, register }) => (
+      {({ control, errors, setValue }) => (
         <>
           <Field label="Default contact point">
             <div className={styles.container}>
