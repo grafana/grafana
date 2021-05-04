@@ -129,35 +129,35 @@ describe('AzureLogAnalyticsDatasource', () => {
       });
     });
 
-    it('should return a schema to use with monaco-kusto', () => {
-      return ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace').then((result: any) => {
-        expect(result.database.tables).toHaveLength(2);
-        expect(result.database.tables[0].name).toBe('Alert');
-        expect(result.database.tables[0].timespanColumn).toBe('TimeGenerated');
-        expect(result.database.tables[1].name).toBe('AzureActivity');
+    it('should return a schema to use with monaco-kusto', async () => {
+      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
 
-        expect(result.database.tables[0].columns).toHaveLength(69);
-        expect(result.database.functions[1].inputParameters).toEqual([
-          {
-            name: 'RangeStart',
-            type: 'datetime',
-            defaultValue: 'datetime(null)',
-            cslDefaultValue: 'datetime(null)',
-          },
-          {
-            name: 'VaultSubscriptionList',
-            type: 'string',
-            defaultValue: '"*"',
-            cslDefaultValue: '"*"',
-          },
-          {
-            name: 'ExcludeLegacyEvent',
-            type: 'bool',
-            defaultValue: 'True',
-            cslDefaultValue: 'True',
-          },
-        ]);
-      });
+      expect(result.database.tables).toHaveLength(2);
+      expect(result.database.tables[0].name).toBe('Alert');
+      expect(result.database.tables[0].timespanColumn).toBe('TimeGenerated');
+      expect(result.database.tables[1].name).toBe('AzureActivity');
+      expect(result.database.tables[0].columns).toHaveLength(69);
+
+      expect(result.database.functions[1].inputParameters).toEqual([
+        {
+          name: 'RangeStart',
+          type: 'datetime',
+          defaultValue: 'datetime(null)',
+          cslDefaultValue: 'datetime(null)',
+        },
+        {
+          name: 'VaultSubscriptionList',
+          type: 'string',
+          defaultValue: '"*"',
+          cslDefaultValue: '"*"',
+        },
+        {
+          name: 'ExcludeLegacyEvent',
+          type: 'bool',
+          defaultValue: 'True',
+          cslDefaultValue: 'True',
+        },
+      ]);
     });
   });
 

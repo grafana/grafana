@@ -60,7 +60,6 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
         this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
       }
 
-      console.log('Calling loadCustomLanguage in componentDidUpdate');
       this.loadCustomLanguage();
     }
   }

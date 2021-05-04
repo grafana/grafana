@@ -22,7 +22,6 @@ interface MonacoLanguages {
 
 const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
   const monacoPromiseRef = useRef<Deferred<MonacoPromise>>();
-
   function getPromise() {
     if (!monacoPromiseRef.current) {
       monacoPromiseRef.current = new Deferred<MonacoPromise>();
@@ -37,12 +36,13 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
       getPromise(),
     ] as const;
 
+    // the kusto schema call might fail, but its okay for that to happen silently
     Promise.all(promises).then(([schema, { monaco, editor }]) => {
       const languages = (monaco.languages as unknown) as MonacoLanguages;
 
       languages.kusto.getKustoWorker().then((kusto) => {
         const model = editor.getModel();
-        if (!model || !schema) {
+        if (!model) {
           return;
         }
         kusto(model.uri).then((worker) => {

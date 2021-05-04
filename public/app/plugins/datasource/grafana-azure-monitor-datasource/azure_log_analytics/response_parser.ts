@@ -149,7 +149,12 @@ export default class ResponseParser {
   }
 }
 
-const PARAM_RE = /([\w\W]+):([\w]+)(?:\s?=\s?([\w\W]+))?/;
+// matches (name):(type) = (defaultValue)
+// e.g. fromRangeStart:datetime = datetime(null)
+//  - name: fromRangeStart
+//  - type: datetime
+//  - defaultValue: datetime(null)
+const METADATA_FUNCTION_PARAMS = /([\w\W]+):([\w]+)(?:\s?=\s?([\w\W]+))?/;
 
 function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
   if (!sourceSchema.functions) {
@@ -162,7 +167,7 @@ function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
       fn.parameters
         .split(', ')
         .map((arg) => {
-          const match = arg.match(PARAM_RE);
+          const match = arg.match(METADATA_FUNCTION_PARAMS);
           if (!match) {
             return;
           }

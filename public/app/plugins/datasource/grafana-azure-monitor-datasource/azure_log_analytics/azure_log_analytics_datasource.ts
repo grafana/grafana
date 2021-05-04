@@ -104,29 +104,24 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     const workspaceListUrl =
       this.azureMonitorUrl +
-      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
+      `/${subscriptionId}/providers/Micfrosoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
     return this.doRequest(workspaceListUrl, true);
   }
 
   async getMetadata(workspace: string) {
-    if (!workspace) {
-      return Promise.resolve(undefined);
-    }
-
     const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
-
     const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
 
     if (!resp.ok) {
-      return Promise.resolve(undefined);
+      throw new Error('Unable to get metadata for workspace');
     }
 
-    return resp.ok ? resp.data : undefined;
+    return resp.data;
   }
 
   async getKustoSchema(workspace: string) {
     const metadata = await this.getMetadata(workspace);
-    return metadata && transformMetadataToKustoSchema(metadata, workspace);
+    return transformMetadataToKustoSchema(metadata, workspace);
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
