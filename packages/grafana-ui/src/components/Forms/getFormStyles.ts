@@ -16,7 +16,7 @@ export const getFormStyles = stylesFactory(
     return {
       label: getLabelStyles(theme),
       legend: getLegendStyles(theme.v1),
-      fieldValidationMessage: getFieldValidationMessageStyles(theme.v1),
+      fieldValidationMessage: getFieldValidationMessageStyles(theme),
       button: getButtonStyles({
         theme,
         variant: options.variant,

@@ -1,8 +1,8 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
-import { useTheme, stylesFactory } from '../../themes';
+import { stylesFactory, useTheme2 } from '../../themes';
 
 export interface FieldValidationMessageProps {
   children: string;
@@ -11,14 +11,14 @@ export interface FieldValidationMessageProps {
   horizontal?: boolean;
 }
 
-export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaTheme2) => {
   const baseStyle = `
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
-      padding: ${theme.spacing.formValidationMessagePadding};
-      color: ${theme.colors.formValidationMessageText};
-      background: ${theme.colors.formValidationMessageBg};
-      border-radius: ${theme.border.radius.sm};
+      font-weight: ${theme.typography.fontWeightMedium};
+      padding: ${theme.spacing(0.5, 1)};
+      color: ${theme.colors.error.text};
+      background: ${theme.colors.error.main};
+      border-radius: ${theme.shape.borderRadius()};
       position: relative;
       display: inline-block;
     `;
@@ -26,7 +26,7 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
   return {
     vertical: css`
       ${baseStyle}
-      margin: ${theme.spacing.formValidationMessageMargin};
+      margin: ${theme.spacing(0.5, 0, 0, 0)};
 
       &:before {
         content: '';
@@ -36,7 +36,7 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
         width: 0;
         height: 0;
         border-width: 0 4px 5px 4px;
-        border-color: transparent transparent ${theme.colors.formValidationMessageBg} transparent;
+        border-color: transparent transparent ${theme.colors.error.main} transparent;
         border-style: solid;
       }
     `,
@@ -57,13 +57,13 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       }
     `,
     fieldValidationMessageIcon: css`
-      margin-right: ${theme.spacing.formSpacingBase}px;
+      margin-right: ${theme.spacing()};
     `,
   };
 });
 
 export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({ children, horizontal, className }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getFieldValidationMessageStyles(theme);
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
 
