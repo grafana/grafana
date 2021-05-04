@@ -22,7 +22,7 @@ export const LoginLayout: FC = ({ children }) => {
 
   return (
     <Branding.LoginBackground className={cx(loginStyles.container, startAnim && loginStyles.loginAnim)}>
-      <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground())}>
+      <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground(), 'login-content-box')}>
         <div className={loginStyles.loginLogoWrapper}>
           <Branding.LoginLogo className={loginStyles.loginLogo} />
           <div className={loginStyles.titleWrapper}>
@@ -71,6 +71,10 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     }),
     loginAnim: css`
       background-position-y: 0px;
+
+      .login-content-box {
+        opacity: 1;
+      }
     `,
     submitButton: css`
       justify-content: center;
@@ -110,6 +114,8 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       min-height: 320px;
       border-radius: ${theme.shape.borderRadius(4)};
       padding: ${theme.spacing(2, 0)};
+      opacity: 0;
+      transition: opacity 3.5s ease;
     `,
     loginOuterBox: css`
       display: flex;
