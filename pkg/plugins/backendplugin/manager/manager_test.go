@@ -53,9 +53,11 @@ func TestManager(t *testing.T) {
 				require.NotNil(t, ctx.plugin)
 				require.Equal(t, testPluginID, ctx.plugin.pluginID)
 				require.NotNil(t, ctx.plugin.logger)
+				require.Equal(t, 1, ctx.plugin.startCount)
 
 				t.Run("Should not be able to register an already registered plugin", func(t *testing.T) {
 					err := ctx.manager.RegisterAndStart(testPluginID, ctx.factory)
+					require.Equal(t, 1, ctx.plugin.startCount)
 					require.Error(t, err)
 				})
 
@@ -113,7 +115,7 @@ func TestManager(t *testing.T) {
 					wgRun.Wait()
 					require.Equal(t, context.Canceled, runErr)
 					require.Equal(t, 1, ctx.plugin.stopCount)
-					require.Equal(t, 2, ctx.plugin.startCount)
+					require.Equal(t, 1, ctx.plugin.startCount)
 				})
 
 				t.Run("Shouldn't be able to start managed plugin", func(t *testing.T) {
@@ -372,7 +374,7 @@ func (tp *testPlugin) Decommission() error {
 	return nil
 }
 
-func (tp *testPlugin) Decommissioned(ctx context.Context) bool {
+func (tp *testPlugin) IsDecommissioned() bool {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 	return tp.decommissioned
