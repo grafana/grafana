@@ -7,8 +7,8 @@ import { getAlertTableStyles } from '../../styles/table';
 import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
-import { StateTag } from '../StateTag';
 import { AlertInstanceDetails } from './AlertInstanceDetails';
+import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   instances: AlertingRule['alerts'];
@@ -61,7 +61,7 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
                   )}
                 </td>
                 <td>
-                  <StateTag status={instance.state} />
+                  <AlertStateTag state={instance.state} />
                 </td>
                 <td className={styles.labelsCell}>
                   <AlertLabels labels={instance.labels} />

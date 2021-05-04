@@ -4,7 +4,6 @@ import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
-import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
 import { ActionIcon } from './ActionIcon';
@@ -14,6 +13,7 @@ import { useDispatch } from 'react-redux';
 import { deleteRuleAction } from '../../state/actions';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
+import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   rules: CombinedRule[];
@@ -126,7 +126,7 @@ export const RulesTable: FC<Props> = ({
                         data-testid="rule-collapse-toggle"
                       />
                     </td>
-                    <td>{promRule && isAlertingRule(promRule) ? <StateTag status={promRule.state} /> : 'n/a'}</td>
+                    <td>{promRule && isAlertingRule(promRule) ? <AlertStateTag state={promRule.state} /> : 'n/a'}</td>
                     <td>{rule.name}</td>
                     {showGroupColumn && (
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
