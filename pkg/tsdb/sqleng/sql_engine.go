@@ -188,11 +188,12 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			e.log.Error("executeQuery panic", "error", r, "stack", log.Stack(1))
 			if theErr, ok := r.(error); ok {
 				queryResult.Error = theErr
-				ch <- queryResult
 			} else if theErrString, ok := r.(string); ok {
 				queryResult.Error = fmt.Errorf(theErrString)
-				ch <- queryResult
+			} else {
+				queryResult.Error = fmt.Errorf("unexpected error, see the server log for details")
 			}
+			ch <- queryResult
 		}
 	}()
 
