@@ -14,6 +14,7 @@ import (
 // Evaluate evaluates access to the given resource, using provided AccessControl instance.
 // Scopes are evaluated with an `OR` relationship.
 func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, scope ...string) (bool, error) {
+	timer := prometheus.NewTimer(metrics.MAccessSummary)
 	userPermissions, err := ac.GetUserPermissions(ctx, user)
 	if err != nil {
 		return false, err
@@ -24,7 +25,9 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 		return false, nil
 	}
 
-	return evaluateScope(dbScopes, scope...)
+	res, err := evaluateScope(dbScopes, scope...)
+	timer.ObserveDuration()
+	return res, err
 }
 
 func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {
