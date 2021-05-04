@@ -62,8 +62,8 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      backgroundPositionY: '-500px',
-      transition: 'background-position-y 3s ease-in',
+      backgroundPositionY: '-800px',
+      transition: 'background-position-y 3.5s ease-in-out',
 
       [theme.breakpoints.up('md')]: {
         justifyContent: 'center',
