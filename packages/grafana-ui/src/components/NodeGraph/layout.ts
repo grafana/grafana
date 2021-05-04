@@ -128,10 +128,20 @@ function defaultLayout(
   done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
 ) {
   console.log('starting worker');
-  // const worker = new Worker('./layout.worker.js', { type: 'module' });
   const worker = new LayoutWorker();
-  worker.onmessage = (event: MessageEvent) => {
-    console.log('on data');
+  worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
+    for (let i = 0; i < nodes.length; i++) {
+      // We lose the Field class as the data is stringified over the worker boundary
+      if (event.data.nodes[i].id !== nodes[i].id) {
+        console.log('fuuuuu');
+      }
+      event.data.nodes[i] = {
+        ...event.data.nodes[i],
+        mainStat: nodes[i].mainStat,
+        secondaryStat: nodes[i].secondaryStat,
+        arcSections: nodes[i].arcSections,
+      };
+    }
     done(event.data);
   };
 
