@@ -171,7 +171,7 @@ export const Components = {
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
-    button: 'Value picker add button',
+    button: (name: string) => `Value picker button ${name}`,
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {

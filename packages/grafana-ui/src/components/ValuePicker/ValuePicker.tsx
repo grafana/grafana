@@ -44,7 +44,7 @@ export function ValuePicker<T>({
       icon={icon || 'plus'}
       onClick={() => setIsPicking(true)}
       variant={variant}
-      aria-label={selectors.components.ValuePicker.button}
+      aria-label={selectors.components.ValuePicker.button(label)}
     >
       {label}
     </Button>
