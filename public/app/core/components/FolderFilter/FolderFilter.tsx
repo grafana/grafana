@@ -51,7 +51,6 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
       )}
       <AsyncMultiSelect
         {...selectOptions}
-        isClearable
         isLoading={loading}
         loadOptions={debouncedLoadOptions}
         prefix={<Icon name="filter" />}
