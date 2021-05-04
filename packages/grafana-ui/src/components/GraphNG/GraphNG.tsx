@@ -1,11 +1,19 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import { DataFrame, DataHoverEvent, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  FieldMatcherID,
+  fieldMatchers,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { pluginLog, preparePlotData } from '../uPlot/utils';
+import { findMidPointYPosition, pluginLog, preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
@@ -43,13 +51,16 @@ export interface GraphNGState {
 
 class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
+  private plotInstance: React.RefObject<uPlot>;
   panelContext: PanelContext = {} as PanelContext;
   subscriptions: Unsubscribable[] = [];
 
   constructor(props: GraphNGProps) {
     super(props);
+    this.plotInstance = React.createRef();
 
     pluginLog('GraphNG', false, 'constructor, data aligment');
+
     const alignedData = preparePlotFrame(props.data, {
       x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
       y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
@@ -80,23 +91,54 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     );
     this.setState({ config });
 
-    // Something like this will be required to get external events *into* uPlot...
     this.subscriptions.push(
       eventBus
-        .getStream(DataHoverEvent)
+        .getStream(LegacyGraphHoverEvent)
         .pipe(
-          throttleTime(100),
+          throttleTime(50),
           filter((e) => e.origin !== eventBus)
         )
         .subscribe({
           next: (evt) => {
-            const scales = this.state.config?.scaleKeys;
-            if (scales) {
-              const x = evt.payload.point[scales[0]];
-              const y = evt.payload.point[scales[1]];
+            const u = this.plotInstance?.current;
+            if (u) {
+              // Try finding left position on time axis
+              const left = u.valToPos(evt.payload.point.time, 'time');
+              let top;
+              if (left) {
+                // find midpoint between points at current idx
+                top = findMidPointYPosition(u, u.posToIdx(left));
+              }
 
-              // const pX = (x==null) ? -10 : client.valToPos(x, scales[0]);
-              console.log('DataHoverEvent //', x, y);
+              if (!top || !left) {
+                return;
+              }
+
+              u.setCursor({
+                left,
+                top,
+              });
+            }
+          },
+        })
+    );
+
+    this.subscriptions.push(
+      eventBus
+        .getStream(LegacyGraphHoverClearEvent)
+        .pipe(
+          throttleTime(50),
+          filter((e) => e.origin !== eventBus)
+        )
+        .subscribe({
+          next: (evt) => {
+            const u = this.plotInstance?.current;
+
+            if (u) {
+              u.setCursor({
+                left: -10,
+                top: -10,
+              });
             }
           },
         })
@@ -203,6 +245,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}
+            plotRef={this.plotInstance as React.MutableRefObject<uPlot>}
           >
             {children ? children(config, alignedDataFrame) : null}
           </UPlotChart>

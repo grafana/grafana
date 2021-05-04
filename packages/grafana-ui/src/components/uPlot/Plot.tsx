@@ -58,6 +58,9 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (!plotInstance.current || !prevProps) {
       plotInstance.current = initializePlot(props.data, config, plotContainer.current);
+      if (props.plotRef) {
+        props.plotRef.current = plotInstance.current;
+      }
       return;
     }
 
@@ -68,6 +71,9 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
         plotInstance.current.destroy();
       }
       plotInstance.current = initializePlot(props.data, config, plotContainer.current);
+      if (props.plotRef) {
+        props.plotRef.current = plotInstance.current;
+      }
       return;
     }
 

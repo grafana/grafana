@@ -117,12 +117,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           label="Graph tooltip"
           description="Controls tooltip and hover highlight behavior across different panels"
         >
-          <RadioButtonGroup
-            onChange={onTooltipChange}
-            options={GRAPH_TOOLTIP_OPTIONS}
-            // width={40}
-            value={dashboard.graphTooltip}
-          />
+          <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={dashboard.graphTooltip} />
         </Field>
       </CollapsableSection>
 

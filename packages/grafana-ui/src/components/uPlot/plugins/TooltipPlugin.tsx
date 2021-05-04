@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { pluginLog } from '../utils';
+import { findMidPointYPosition, pluginLog } from '../utils';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import uPlot from 'uplot';
 
@@ -162,62 +162,21 @@ function isCursourOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
 /**
  * Given uPlot cursor position, figure out position of the tooltip withing the canvas bbox
  * Tooltip is positioned relatively to a viewport
+ * @internal
  **/
-function positionTooltip(u: uPlot, bbox: DOMRect) {
+export function positionTooltip(u: uPlot, bbox: DOMRect) {
   let x, y;
   const cL = u.cursor.left || 0;
   const cT = u.cursor.top || 0;
 
   if (isCursourOutsideCanvas(u.cursor, bbox)) {
     const idx = u.posToIdx(cL);
-    let sMaxIdx = 1;
-    let sMinIdx = 1;
-
     // when cursor outside of uPlot's canvas
     if (cT < 0 || cT > bbox.height) {
-      // assume min/max being values of 1st series
-      let max = u.data[1][idx];
-      let min = u.data[1][idx];
+      let pos = findMidPointYPosition(u, idx);
 
-      // find min max values AND ids of the corresponding series to get the scales
-      for (let i = 1; i < u.data.length; i++) {
-        const sData = u.data[i];
-        const sVal = sData[idx];
-        if (sVal !== null) {
-          if (max === null) {
-            max = sVal;
-          } else {
-            if (sVal > max) {
-              max = u.data[i][idx];
-              sMaxIdx = i;
-            }
-          }
-          if (min === null) {
-            min = sVal;
-          } else {
-            if (sVal < min) {
-              min = u.data[i][idx];
-              sMinIdx = i;
-            }
-          }
-        }
-      }
-
-      if (min === null && max === null) {
-        // no tooltip to show
-        y = undefined;
-      } else if (min !== null && max !== null) {
-        // find median position
-        y =
-          -TOOLTIP_OFFSET +
-          bbox.top +
-          (u.valToPos(min, u.series[sMinIdx].scale!) + u.valToPos(max, u.series[sMaxIdx].scale!)) / 2;
-      } else {
-        // snap tooltip to min OR max point, one of thos is not null :)
-        y = bbox.top + u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
-      }
-
-      if (y) {
+      if (pos) {
+        y = bbox.top + pos;
         if (cL >= 0 && cL <= bbox.width) {
           // find x-scale position for a current cursor left position
           x = bbox.left + u.valToPos(u.data[0][u.posToIdx(cL)], u.series[0].scale!);
