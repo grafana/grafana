@@ -104,6 +104,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
             if (u) {
               // Try finding left position on time axis
               const left = u.valToPos(evt.payload.point.time, 'time');
+              console.log(left);
               let top;
               if (left) {
                 // find midpoint between points at current idx
@@ -245,7 +246,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}
-            plotRef={this.plotInstance as React.MutableRefObject<uPlot>}
+            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
           >
             {children ? children(config, alignedDataFrame) : null}
           </UPlotChart>

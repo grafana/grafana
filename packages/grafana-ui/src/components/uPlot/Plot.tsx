@@ -59,7 +59,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
     if (!plotInstance.current || !prevProps) {
       plotInstance.current = initializePlot(props.data, config, plotContainer.current);
       if (props.plotRef) {
-        props.plotRef.current = plotInstance.current;
+        props.plotRef(plotInstance.current);
       }
       return;
     }
@@ -72,7 +72,7 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
       }
       plotInstance.current = initializePlot(props.data, config, plotContainer.current);
       if (props.plotRef) {
-        props.plotRef.current = plotInstance.current;
+        props.plotRef(plotInstance.current);
       }
       return;
     }

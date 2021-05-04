@@ -20,7 +20,7 @@ export interface PlotProps {
   timeRange: TimeRange;
   children?: React.ReactNode;
   // Reference to uPlot instance
-  plotRef?: React.MutableRefObject<uPlot>;
+  plotRef?: (u: uPlot) => void;
 }
 
 export abstract class PlotConfigBuilder<P, T> {
