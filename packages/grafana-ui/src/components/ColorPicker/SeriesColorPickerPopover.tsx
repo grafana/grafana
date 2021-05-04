@@ -4,7 +4,7 @@ import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { css } from '@emotion/css';
-import { withTheme, useStyles } from '../../themes';
+import { withTheme2, useStyles } from '../../themes';
 import { Button } from '../Button';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
@@ -89,7 +89,7 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
 }
 
 // This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
-export const SeriesColorPickerPopoverWithTheme = withTheme(SeriesColorPickerPopover);
+export const SeriesColorPickerPopoverWithTheme = withTheme2(SeriesColorPickerPopover);
 
 const getStyles = () => {
   return {

@@ -190,6 +190,16 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       addStackingConfig(builder, cfg.stacking);
       addAxisConfig(builder, cfg);
       addHideFrom(builder);
+
+      builder.addSelect({
+        path: 'thresholdsStyle.mode',
+        name: 'Show thresholds',
+        category: ['Thresholds'],
+        defaultValue: graphFieldOptions.thresholdsDisplayModes[0].value,
+        settings: {
+          options: graphFieldOptions.thresholdsDisplayModes,
+        },
+      });
     },
   };
 }

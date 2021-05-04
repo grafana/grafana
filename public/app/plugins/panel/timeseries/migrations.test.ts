@@ -67,6 +67,130 @@ describe('Graph Migrations', () => {
       expect(panel).toMatchSnapshot();
     });
   });
+
+  describe('thresholds', () => {
+    test('Only gt thresholds', () => {
+      const old: any = {
+        angular: {
+          thresholds: [
+            {
+              colorMode: 'critical',
+              fill: true,
+              line: false,
+              op: 'gt',
+              value: 80,
+              yaxis: 'left',
+            },
+            {
+              colorMode: 'warning',
+              fill: true,
+              line: false,
+              op: 'gt',
+              value: 50,
+              yaxis: 'left',
+            },
+          ],
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('area');
+      expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "color": "transparent",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "orange",
+            "value": 50,
+          },
+          Object {
+            "color": "red",
+            "value": 80,
+          },
+        ]
+      `);
+    });
+
+    test('gt & lt thresholds', () => {
+      const old: any = {
+        angular: {
+          thresholds: [
+            {
+              colorMode: 'critical',
+              fill: true,
+              line: true,
+              op: 'gt',
+              value: 80,
+              yaxis: 'left',
+            },
+            {
+              colorMode: 'warning',
+              fill: true,
+              line: true,
+              op: 'lt',
+              value: 40,
+              yaxis: 'left',
+            },
+          ],
+        },
+      };
+
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
+      expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "color": "orange",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "transparent",
+            "value": 40,
+          },
+          Object {
+            "color": "red",
+            "value": 80,
+          },
+        ]
+      `);
+    });
+
+    test('Only lt thresholds', () => {
+      const old: any = {
+        angular: {
+          thresholds: [
+            {
+              colorMode: 'warning',
+              fill: true,
+              line: true,
+              op: 'lt',
+              value: 40,
+              yaxis: 'left',
+            },
+          ],
+        },
+      };
+
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
+      expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "color": "orange",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "transparent",
+            "value": 40,
+          },
+        ]
+      `);
+    });
+  });
 });
 
 const stairscase = {

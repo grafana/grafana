@@ -193,7 +193,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-suffix;
         padding-left: ${theme.spacing(1)};
-        padding-right: ${theme.spacing(0.5)};
+        padding-right: ${theme.spacing(1)};
         margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;

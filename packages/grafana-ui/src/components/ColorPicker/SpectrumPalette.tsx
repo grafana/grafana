@@ -5,7 +5,7 @@ import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
 import { GrafanaTheme, getColorForTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { useStyles, useTheme } from '../../themes';
+import { useStyles, useTheme2 } from '../../themes';
 import { useThrottleFn } from 'react-use';
 
 export interface SpectrumPaletteProps {
@@ -17,25 +17,27 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
   const [currentColor, setColor] = useState(color);
   useThrottleFn(onChange, 500, [currentColor]);
 
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = useStyles(getStyles);
 
   const rgbaString = useMemo(() => {
     return currentColor.startsWith('rgba')
       ? currentColor
-      : tinycolor(getColorForTheme(currentColor, theme)).toRgbString();
+      : tinycolor(getColorForTheme(currentColor, theme.v1)).toRgbString();
   }, [currentColor, theme]);
 
   return (
-    <>
+    <div className={styles.wrapper}>
       <RgbaStringColorPicker className={cx(styles.root)} color={rgbaString} onChange={setColor} />
-
       <ColorInput theme={theme} color={currentColor} onChange={setColor} className={styles.colorInput} />
-    </>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  wrapper: css`
+    flex-grow: 1;
+  `,
   root: css`
     &.react-colorful {
       width: auto;

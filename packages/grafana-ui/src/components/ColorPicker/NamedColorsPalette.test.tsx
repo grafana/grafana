@@ -1,9 +1,9 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { ColorSwatch } from './NamedColorsGroup';
-import { getColorDefinitionByName, GrafanaThemeType } from '@grafana/data';
-import { getTheme } from '../../themes';
+import { createTheme, getColorDefinitionByName } from '@grafana/data';
+import { ColorSwatch } from './ColorSwatch';
+import { ThemeContext } from '../../themes';
 
 describe('NamedColorsPalette', () => {
   const BasicGreen = getColorDefinitionByName('green');
@@ -16,22 +16,21 @@ describe('NamedColorsPalette', () => {
     });
 
     it('should render provided color variant specific for theme', () => {
-      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} theme={getTheme()} onChange={() => {}} />);
+      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} onChange={() => {}} />);
       selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === BasicGreen.name);
       expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.dark);
 
       wrapper.unmount();
-      wrapper = mount(
-        <NamedColorsPalette color={BasicGreen.name} theme={getTheme(GrafanaThemeType.Light)} onChange={() => {}} />
+
+      const withLightTheme = (
+        <ThemeContext.Provider value={createTheme({ colors: { mode: 'light' } })}>
+          <NamedColorsPalette color={BasicGreen.name} onChange={() => {}} />
+        </ThemeContext.Provider>
       );
+
+      wrapper = mount(withLightTheme);
       selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === BasicGreen.name);
       expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.light);
-    });
-
-    it('should render dar variant of provided color when theme not provided', () => {
-      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} onChange={() => {}} theme={getTheme()} />);
-      selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === BasicGreen.name);
-      expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.dark);
     });
   });
 });

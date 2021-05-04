@@ -2,15 +2,15 @@ import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
-import { Themeable } from '../../types/theme';
+import { Themeable2 } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
-import { css, cx } from '@emotion/css';
-import { GrafanaTheme, GrafanaThemeType, getColorForTheme } from '@grafana/data';
-import { stylesFactory, withTheme } from '../../themes';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, getColorForTheme } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '../../themes';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 
-export interface ColorPickerProps extends Themeable {
+export interface ColorPickerProps extends Themeable2 {
   color: string;
   onChange: ColorPickerChangeHandler;
 
@@ -59,7 +59,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     if (enableNamedColors) {
       return changeHandler(color);
     }
-    changeHandler(getColorForTheme(color, theme));
+    changeHandler(getColorForTheme(color, theme.v1));
   };
 
   onTabChange = (tab: PickerType | keyof T) => {
@@ -68,13 +68,13 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
 
   renderPicker = () => {
     const { activePicker } = this.state;
-    const { color, theme } = this.props;
+    const { color } = this.props;
 
     switch (activePicker) {
       case 'spectrum':
         return <SpectrumPalette color={color} onChange={this.handleChange} />;
       case 'palette':
-        return <NamedColorsPalette color={color} onChange={this.handleChange} theme={theme} />;
+        return <NamedColorsPalette color={color} onChange={this.handleChange} />;
       default:
         return this.renderCustomPicker(activePicker);
     }
@@ -117,12 +117,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     const { theme } = this.props;
     const styles = getStyles(theme);
     return (
-      <div
-        className={cx(
-          styles.colorPickerPopover,
-          theme.type === GrafanaThemeType.Light ? styles.colorPickerPopoverLight : styles.colorPickerPopoverDark
-        )}
-      >
+      <div className={styles.colorPickerPopover}>
         <div className={styles.colorPickerPopoverTabs}>
           <div className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
             Colors
@@ -132,62 +127,50 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
           </div>
           {this.renderCustomPickerTabs()}
         </div>
-
         <div className={styles.colorPickerPopoverContent}>{this.renderPicker()}</div>
       </div>
     );
   }
 }
 
-export const ColorPickerPopover = withTheme(UnThemedColorPickerPopover);
+export const ColorPickerPopover = withTheme2(UnThemedColorPickerPopover);
 ColorPickerPopover.displayName = 'ColorPickerPopover';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     colorPickerPopover: css`
-      border-radius: ${theme.border.radius.md};
-    `,
-    colorPickerPopoverLight: css`
-      color: ${theme.palette.black};
-      background: linear-gradient(180deg, ${theme.palette.white} 0%, #f7f8fa 104.25%);
-      box-shadow: 0px 2px 4px #dde4ed, 0px 0px 2px #dde4ed;
+      border-radius: ${theme.shape.borderRadius()};
+      box-shadow: ${theme.shadows.z3};
+      background: ${theme.colors.background.primary};
 
       .ColorPickerPopover__tab {
         width: 50%;
         text-align: center;
-        padding: ${theme.spacing.sm} 0;
-        background: #dde4ed;
-      }
-      .ColorPickerPopover__tab--active {
-        background: ${theme.palette.white};
-      }
-    `,
-    colorPickerPopoverDark: css`
-      color: #d8d9da;
-      background: linear-gradient(180deg, #1e2028 0%, #161719 104.25%);
-      box-shadow: 0px 2px 4px ${theme.palette.black}, 0px 0px 2px ${theme.palette.black};
-
-      .ColorPickerPopover__tab {
-        width: 50%;
-        text-align: center;
-        padding: ${theme.spacing.sm} 0;
-        background: #303133;
-        color: ${theme.palette.white};
+        padding: ${theme.spacing(1, 0)};
+        background: ${theme.colors.background.secondary};
+        color: ${theme.colors.text.secondary};
         cursor: pointer;
       }
+
       .ColorPickerPopover__tab--active {
-        background: none;
+        color: ${theme.colors.text.primary};
+        font-weight: ${theme.typography.fontWeightMedium};
+        background: ${theme.colors.background.primary};
       }
     `,
     colorPickerPopoverContent: css`
       width: 336px;
+      font-size: ${theme.typography.bodySmall.fontSize};
       min-height: 184px;
-      padding: ${theme.spacing.lg};
+      padding: ${theme.spacing(2)};
+      display: flex;
+      align-items: center;
+      justify-content: center;
     `,
     colorPickerPopoverTabs: css`
       display: flex;
       width: 100%;
-      border-radius: ${theme.border.radius.md} ${theme.border.radius.md} 0 0;
+      border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
       overflow: hidden;
     `,
   };
