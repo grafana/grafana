@@ -21,7 +21,7 @@ var (
 // Runner keeps ManagedStream per streamID.
 type Runner struct {
 	mu        sync.RWMutex
-	streams   map[string]*ManagedStream
+	streams   map[int64]map[string]*ManagedStream
 	publisher models.ChannelPublisher
 }
 
@@ -29,7 +29,7 @@ type Runner struct {
 func NewRunner(publisher models.ChannelPublisher) *Runner {
 	return &Runner{
 		publisher: publisher,
-		streams:   map[string]*ManagedStream{},
+		streams:   map[int64]map[string]*ManagedStream{},
 	}
 }
 
@@ -37,8 +37,11 @@ func NewRunner(publisher models.ChannelPublisher) *Runner {
 func (r *Runner) Streams(orgID int64) map[string]*ManagedStream {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	streams := make(map[string]*ManagedStream, len(r.streams))
-	for k, v := range r.streams {
+	if _, ok := r.streams[orgID]; !ok {
+		return map[string]*ManagedStream{}
+	}
+	streams := make(map[string]*ManagedStream, len(r.streams[orgID]))
+	for k, v := range r.streams[orgID] {
 		streams[k] = v
 	}
 	return streams
@@ -49,10 +52,14 @@ func (r *Runner) Streams(orgID int64) map[string]*ManagedStream {
 func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	s, ok := r.streams[streamID]
+	_, ok := r.streams[orgID]
+	if !ok {
+		r.streams[orgID] = map[string]*ManagedStream{}
+	}
+	s, ok := r.streams[orgID][streamID]
 	if !ok {
 		s = NewManagedStream(streamID, r.publisher)
-		r.streams[streamID] = s
+		r.streams[orgID][streamID] = s
 	}
 	return s, nil
 }
@@ -62,7 +69,7 @@ type ManagedStream struct {
 	mu        sync.RWMutex
 	id        string
 	start     time.Time
-	last      map[string]json.RawMessage
+	last      map[int64]map[string]json.RawMessage
 	publisher models.ChannelPublisher
 }
 
@@ -71,7 +78,7 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 	return &ManagedStream{
 		id:        id,
 		start:     time.Now(),
-		last:      map[string]json.RawMessage{},
+		last:      map[int64]map[string]json.RawMessage{},
 		publisher: publisher,
 	}
 }
@@ -81,8 +88,12 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	info := make([]util.DynMap, 0, len(s.last))
-	for k, v := range s.last {
+	if _, ok := s.last[orgID]; !ok {
+		return []util.DynMap{}
+	}
+
+	info := make([]util.DynMap, 0, len(s.last[orgID]))
+	for k, v := range s.last[orgID] {
 		ch := util.DynMap{}
 		ch["channel"] = prefix + k
 		ch["data"] = v
@@ -105,8 +116,11 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame, unstab
 		// If schema is stable we can safely cache it, and only send values if
 		// stream already has schema cached.
 		s.mu.Lock()
-		_, exists := s.last[path]
-		s.last[path] = frameJSON
+		if _, ok := s.last[orgID]; !ok {
+			s.last[orgID] = map[string]json.RawMessage{}
+		}
+		_, exists := s.last[orgID][path]
+		s.last[orgID][path] = frameJSON
 		s.mu.Unlock()
 
 		// When the packet already exits, only send the data.
@@ -125,7 +139,9 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame, unstab
 		// And we don't want to cache schema for unstable case. But we still need to
 		// set path to a map to make stream visible in UI stream select widget.
 		s.mu.Lock()
-		s.last[path] = nil
+		if _, ok := s.last[orgID]; ok {
+			s.last[orgID][path] = nil
+		}
 		s.mu.Unlock()
 	}
 	// The channel this will be posted into.
@@ -138,7 +154,11 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame, unstab
 func (s *ManagedStream) getLastPacket(orgId int64, path string) (json.RawMessage, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	schema, ok := s.last[path]
+	_, ok := s.last[orgId]
+	if !ok {
+		return nil, false
+	}
+	schema, ok := s.last[orgId][path]
 	return schema, ok && schema != nil
 }
 
