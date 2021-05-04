@@ -1,7 +1,7 @@
 +++
 title = "Managing roles and permissions"
 description = "Understand how to manage roles and permissions"
-keywords = ["grafana", "access-control", "roles", "permissions" "enterprise"]
+keywords = ["grafana", "access-control", "roles", "permissions", "enterprise"]
 weight = 191
 +++
 

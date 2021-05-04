@@ -7,9 +7,11 @@ aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 
 # Access Control API
 
-> The Access Control is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> The Access Control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-This API can be used to create, update, get and list roles, and add or revoke role assignments for built-in roles. By default, the API assumes that the requests are done for the organization that users is signed in. Refer to [Access Control Roles]({{< relref "../enterprise/access-control/concepts" >}}) to learn more about how you can use access control.
+> Only available in Grafana Enterprise v8.0+.
+
+The API can be used to create, update, get and list roles, and add or revoke role assignments for built-in roles. By default, the API assumes that the requests are done for the organization that users is signed in. Refer to [Access Control Roles]({{< relref "../enterprise/access-control/concepts" >}}) to learn more about how you can use access control.
 
 ## Create and manage custom roles
 
@@ -19,13 +21,13 @@ This API can be used to create, update, get and list roles, and add or revoke ro
 
 Gets all existing roles.
 
-**Required Permissions**
+#### Required Permissions
 
 Action | Scope 
 --- | --- | 
 roles:list | roles:* 
 
-**Example request:**
+#### Example request
 
 ```http
 GET /api/access-control/roles
@@ -34,15 +36,15 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
-Content-Length: 551
 
 [
     {
+        "orgId": 1,
         "version": 1,
         "uid": "PYnDO3rMk",
         "name": "grafana:roles:ldap:admin:edit",
@@ -51,6 +53,7 @@ Content-Length: 551
         "created": "0001-01-01T00:00:00Z"
     },
     {
+        "orgId": 1,
         "version": 1,
         "uid": "PYnDO3rMk1",
         "name": "grafana:roles:users:admin:read",
@@ -61,11 +64,13 @@ Content-Length: 551
 ]
 ```
 
-Status codes:
+#### Status codes
 
-- **200** - Ok
-- **403** - Access denied for the operation, Forbidden
-- **500** - Internal Server Error
+Code | Description
+--- | --- | 
+200 | Roles are returned.
+403 | Access denied
+500 | Unexpected error. Refer to body and/or server logs for more details.
 
 ### Get a role
 
@@ -73,13 +78,13 @@ Status codes:
 
 Get a role for the given UID.
 
-**Required Permissions**
+#### Required Permissions
 
 Action | Scope
 --- | --- | 
 roles:read | roles:* OR roles:<uid>/roles:<uid>
 
-**Example request:**
+#### Example request
 
 ```http
 GET /api/access-control/roles/PYnDO3rMk
@@ -88,14 +93,14 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
-Content-Length: 35
 
 {
+    "orgId": 1,
     "version": 2,
     "uid": "PYnDO3rMk",
     "name": "custom:role:new",
@@ -113,13 +118,21 @@ Content-Length: 35
 }
 ```
 
+#### Status codes
+
+Code | Description
+--- | --- | 
+200 | Role is returned.
+403 | Access denied
+500 | Unexpected error. Refer to body and/or server logs for more details.
+
 ### Create a new custom role
 
 `POST /api/access-control/roles`
 
 Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Predefined Roles](({{< relref "../enterprise/access-control/concepts/roles" >}})) can't be created.
 
-**Required Permissions**
+#### Required permissions
 
 User will be able to create a role only with permissions they themselves have.
 
@@ -127,7 +140,7 @@ Action | Scope
 --- | --- | 
 roles:write | permissions:delegate
 
-**Example request:**
+#### Example request
 
 ```http
 POST /api/access-control/roles
@@ -154,9 +167,9 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-JSON Body schema:
+#### JSON body schema
 
-Field | Type | Required | Description
+Field Name | Date Type | Required | Description
 --- | --- | --- | ---
 uid | string | No | UID of the role. If not present, the UID will be automatically created for you and returned in response.
 global | boolean | No | A flag indicating if the role is global or not. See [Access Control Global Roles]({{< relref "../enterprise/access-control/concepts" >}}) for more information.
@@ -167,19 +180,19 @@ permissions | Permission | No | If not present, the role will be created without
 
 Permission
 
-Field | Type | Required | Description
+Field Name | Data   Type | Required | Description
 --- | --- | --- | ---
 action | string | Yes | For full list of available actions see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
 scope | string | No | If not present, no scope will be mapped to the permission. For full list of available scopes see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
-Content-Length: 35
 
 {
+    "orgId": 1,
     "version": 1,
     "uid": "PYnDO3rMk",
     "name": "custom:role:new",
@@ -203,12 +216,14 @@ Content-Length: 35
 }
 ```
 
-Status codes:
+#### Status codes
 
-- **200** - Role is successfully created, Ok
-- **400** - Roles with the same prefix as predefined roles can't be created, Bad Request
-- **403** - Access denied for the operation, Forbidden
-- **500** - Internal Server Error
+Code | Description
+--- | --- | 
+200 | Role is updated.
+400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
+403 | Access denied
+500 | Unexpected error. Refer to body and/or server logs for more details.
 
 ### Update a custom role
 
@@ -216,7 +231,7 @@ Status codes:
 
 Update the role with the given UID, and it's permissions with the given UID. The operation is idempotent and all permissions of the role will be replaced with what is in the request. You would need to increment the version of the role with each update, otherwise the request will fail.
 
-**Required Permissions**
+#### Required permissions
 
 User will be able to create a role only with permissions they themselves have.
 
@@ -224,7 +239,7 @@ Action | Scope
 --- | --- | 
 roles:write | permissions:delegate
 
-**Example request:**
+#### Example request
 
 ```http
 PUT /api/access-control/roles/PYnDO3rMk
@@ -233,6 +248,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
+    "orgId": 1,
     "version": 2,    
     "uid": "PYnDO3rMk",
     "name": "custom:role:new",
@@ -245,14 +261,15 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
             "created": "2021-05-04T13:25:43.994903+02:00"
         }
     ],
+    "global": false,
     "updated": "2021-05-04T13:25:43.99269+02:00",
     "created": "2021-05-04T13:25:43.992689+02:00"
 }
 ```
 
-JSON Body schema:
+#### JSON body schema
 
-Field | Type | Required | Description
+Field Name | Data Type | Required | Description
 --- | --- | --- | ---
 uid | string | No | UID of the role. If not present, the UID will be automatically created for you and returned in response.
 global | boolean | No | A flag indicating if the role is global or not. See [Access Control Global Roles]({{< relref "../enterprise/access-control/concepts" >}}) for more information.
@@ -263,19 +280,19 @@ permissions | Permission | No | If not present, the role will be created without
 
 Permission
 
-Field | Type | Required | Description
+Field Name | Data Type | Required | Description
 --- | --- | --- | ---
 action | string | Yes | For full list of available actions see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
 scope | string | No | If not present, no scope will be mapped to the permission. For full list of available scopes see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
-Content-Length: 711
 
 {
+    "orgId": 1,
     "version": 2,
     "uid": "PYnDO3rMk",
     "name": "custom:role:new",
@@ -289,16 +306,19 @@ Content-Length: 711
         }
     ],
     "updated": "2021-05-04T13:36:11.141936+02:00",
-    "created": "0001-01-01T00:00:00Z"
+    "created": "2021-05-04T13:36:11.141936+02:00",
 }
 ```
 
-Status codes:
+#### Status codes
 
-- **200** - Role is successfully updated, Ok
-- **400** - Roles with the same prefix as predefined roles can't be updated, Bad Request
-- **403** - Access denied for the operation, Forbidden
-- **500** - Internal Server Error
+Code | Description
+--- | --- | 
+200 | Role is updated.
+400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
+403 | Access denied
+404 | Role was not found to  update.
+500 | Unexpected error. Refer to body and/or server logs for more details.
 
 ### Delete a custom role
 
@@ -306,7 +326,7 @@ Status codes:
 
 Delete a role with the given UID, and it's permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless `force` query param is set to `true`, and in that case all assignments will also be deleted.
 
-**Required Permissions**
+#### Required permissions
 
 User will be able to delete a role only with permissions they themselves have.
 
@@ -314,7 +334,7 @@ Action | Scope
 --- | --- | 
 roles:delete | permissions:delegate
 
-**Example request:**
+#### Example request
 
 ```http
 DELETE /api/access-control/roles/PYnDO3rMk?force=true
@@ -329,24 +349,25 @@ Param | Type | Required | Description
 --- | --- | --- | ---
 force | boolean | No | When set to `true`, the role will be deleted with all it's assignments.
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
-Content-Length: 711
 
 {
     "message": "Role deleted"
 }
 ```
 
-Status codes:
+#### Status codes
 
-- **200** - Role is successfully deleted, Ok
-- **400** - Roles with the same prefix as predefined roles can't be deleted, Bad Request
-- **403** - Access denied for the operation, Forbidden
-- **500** - Internal Server Error
+Code | Description
+--- | --- | 
+200 | Role is deleted.
+400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
+403 | Access denied
+500 | Unexpected error. Refer to body and/or server logs for more details.
 
 ## Grant and revoke roles to built-in roles
 
@@ -359,7 +380,7 @@ Refer to [Access Control Roles]({{< relref "../enterprise/access-control/concept
 
 Gets all built-in role grants.
 
-**Required Permissions**
+#### Required permissions
 
 User will be able to create a role only with permissions they themselves have.
 
@@ -367,7 +388,7 @@ Action | Scope
 --- | --- | 
 roles.builtin:list | roles:*
 
-**Example request:**
+#### Example request
 
 ```http
 GET /api/access-control/builtin-roles
@@ -376,12 +397,11 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
-Content-Length: 551
 
 {
     "Admin": [
@@ -409,11 +429,13 @@ Content-Length: 551
 }
 ```
 
-Status codes:
+#### Status codes
 
-- **200** - Ok
-- **403** - Access denied for the operation, Forbidden
-- **500** - Internal Server Error
+Code | Description
+--- | --- | 
+200 | Built-in roles with assignments are returned.
+403 | Access denied
+500 | Unexpected error. Refer to body and/or server logs for more details.
 
 ### Create a built-in role grant
 
@@ -421,7 +443,7 @@ Status codes:
 
 Creates a new grant for the given built-in role.
 
-**Required Permissions**
+#### Required permissions
 
 User will be able to add a role only with permissions they themselves have.
 
@@ -429,7 +451,7 @@ Action | Scope
 --- | --- | 
 roles.builtin:add | permissions:delegate
 
-**Example request:**
+#### Example request
 
 ```http
 POST /api/access-control/builtin-roles
@@ -443,7 +465,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -454,13 +476,15 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
-Status codes:
+#### Status codes
 
-- **200** - Ok
-- **400** - Role is already assigned or the request is invalid, Bad Request
-- **404** - Role not found, Not Found  
-- **403** - Access denied for the operation, Forbidden
-- **500** - Internal Server Error
+Code | Description
+--- | --- | 
+200 | Role was assigned to built-in role.
+400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
+403 | Access denied
+404 | Role not found
+500 | Unexpected error. Refer to body and/or server logs for more details.
 
 ### Delete a built-in role grant
 
@@ -468,7 +492,7 @@ Status codes:
 
 Revokes a grant for the given built-in role.
 
-**Required Permissions**
+#### Required permissions
 
 User will be able to delete a role only with permissions they themselves have.
 
@@ -476,7 +500,7 @@ Action | Scope
 --- | --- | 
 roles.builtin:remove | permissions:delegate
 
-**Example request:**
+#### Example request
 
 ```http
 DELETE /api/access-control/builtin-roles
@@ -490,7 +514,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-**Example response:**
+#### Example response
 
 ```http
 HTTP/1.1 200 OK
@@ -501,12 +525,12 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
-Status codes:
+#### Status codes
 
-- **200** - Ok
-- **400** - Bad Request
-- **404** - Role not found, Not Found
-- **403** - Access denied for the operation, Forbidden
-- **500** - Internal Server Error
-
-
+Code | Description
+--- | --- | 
+200 | Role was unassigned from built-in role.
+400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
+403 | Access denied
+404 | Role not found
+500 | Unexpected error. Refer to body and/or server logs for more details.
