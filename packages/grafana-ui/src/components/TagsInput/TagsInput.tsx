@@ -1,5 +1,5 @@
 import React, { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Button } from '../Button';
 import { TagItem } from './TagItem';
 import { useStyles } from '../../themes/ThemeContext';
@@ -10,9 +10,10 @@ export interface Props {
   placeholder?: string;
   tags?: string[];
   onChange: (tags: string[]) => void;
+  width?: number;
 }
 
-export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange }) => {
+export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange, width }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
 
@@ -39,27 +40,26 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
   };
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.tags}>
+    <div className={cx(styles.wrapper, width ? css({ width: `${8 * width}px` }) : '')}>
+      <div className={tags?.length ? styles.tags : undefined}>
         {tags?.map((tag: string, index: number) => {
           return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
         })}
       </div>
-      <div>
-        <Input
-          placeholder={placeholder}
-          onChange={onNameChange}
-          value={newTagName}
-          onKeyUp={onKeyboardAdd}
-          suffix={
-            newTagName.length > 0 && (
-              <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
-                Add
-              </Button>
-            )
-          }
-        />
-      </div>
+
+      <Input
+        placeholder={placeholder}
+        onChange={onNameChange}
+        value={newTagName}
+        onKeyUp={onKeyboardAdd}
+        suffix={
+          newTagName.length > 0 && (
+            <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
+              Add
+            </Button>
+          )
+        }
+      />
     </div>
   );
 };
