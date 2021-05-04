@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 type AlertmanagerApiService interface {
@@ -32,99 +33,99 @@ type AlertmanagerApiService interface {
 	RoutePostAlertingConfig(*models.ReqContext, apimodels.PostableUserConfig) response.Response
 }
 
-func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, metrics *Metrics) {
+func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *metrics.Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
 			binding.Bind(apimodels.PostableSilence{}),
-			Instrument(
+			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/silences",
 				srv.RouteCreateSilence,
-				metrics,
+				m,
 			),
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodDelete,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
 				srv.RouteDeleteAlertingConfig,
-				metrics,
+				m,
 			),
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodDelete,
 				"/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}",
 				srv.RouteDeleteSilence,
-				metrics,
+				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts/groups"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/alerts/groups",
 				srv.RouteGetAMAlertGroups,
-				metrics,
+				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/alerts",
 				srv.RouteGetAMAlerts,
-				metrics,
+				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
 				srv.RouteGetAlertingConfig,
-				metrics,
+				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}",
 				srv.RouteGetSilence,
-				metrics,
+				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
-			Instrument(
+			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/silences",
 				srv.RouteGetSilences,
-				metrics,
+				m,
 			),
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"),
 			binding.Bind(apimodels.PostableAlerts{}),
-			Instrument(
+			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/alerts",
 				srv.RoutePostAMAlerts,
-				metrics,
+				m,
 			),
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
 			binding.Bind(apimodels.PostableUserConfig{}),
-			Instrument(
+			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
 				srv.RoutePostAlertingConfig,
-				metrics,
+				m,
 			),
 		)
 	}, middleware.ReqSignedIn)

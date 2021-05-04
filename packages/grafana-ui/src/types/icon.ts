@@ -112,7 +112,7 @@ export type IconName =
   | 'power'
   | 'question-circle'
   | 'repeat'
-  | 'reusable-panel'
+  | 'library-panel'
   | 'rocket'
   | 'save'
   | 'search-minus'
@@ -120,6 +120,7 @@ export type IconName =
   | 'search'
   | 'share-alt'
   | 'shield'
+  | 'shield-exclamation'
   | 'sign-in-alt'
   | 'signal'
   | 'signin'
@@ -247,7 +248,7 @@ export const getAvailableIcons = (): IconName[] => [
   'power',
   'question-circle',
   'repeat',
-  'reusable-panel',
+  'library-panel',
   'rocket',
   'save',
   'search-minus',
@@ -255,6 +256,7 @@ export const getAvailableIcons = (): IconName[] => [
   'search',
   'share-alt',
   'shield',
+  'shield-exclamation',
   'sign-in-alt',
   'signal',
   'signin',

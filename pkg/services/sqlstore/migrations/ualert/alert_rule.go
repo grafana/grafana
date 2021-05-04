@@ -14,6 +14,7 @@ type alertRule struct {
 	Condition       string
 	Data            []alertQuery
 	IntervalSeconds int64
+	Version         int64
 	Uid             string
 	NamespaceUid    string
 	RuleGroup       string
@@ -22,40 +23,92 @@ type alertRule struct {
 	For             duration
 	Updated         time.Time
 	Annotations     map[string]string
-	// Labels map[string]string (Labels are not Created in the migration)
+	Labels          map[string]string // (Labels are not Created in the migration)
 }
 
-func getMigrationInfo(da dashAlert) string {
+type alertRuleVersion struct {
+	RuleOrgID        int64  `xorm:"rule_org_id"`
+	RuleUID          string `xorm:"rule_uid"`
+	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
+	RuleGroup        string
+	ParentVersion    int64
+	RestoredFrom     int64
+	Version          int64
+
+	Created         time.Time
+	Title           string
+	Condition       string
+	Data            []alertQuery
+	IntervalSeconds int64
+	NoDataState     string
+	ExecErrState    string
+	// ideally this field should have been apimodels.ApiDuration
+	// but this is currently not possible because of circular dependencies
+	For         duration
+	Annotations map[string]string
+	Labels      map[string]string
+}
+
+func (a *alertRule) makeVersion() *alertRuleVersion {
+	return &alertRuleVersion{
+		RuleOrgID:        a.OrgId,
+		RuleUID:          a.Uid,
+		RuleNamespaceUID: a.NamespaceUid,
+		RuleGroup:        a.RuleGroup,
+		ParentVersion:    0,
+		RestoredFrom:     0,
+		Version:          1,
+
+		Created:         time.Now().UTC(),
+		Title:           a.Title,
+		Condition:       a.Condition,
+		Data:            a.Data,
+		IntervalSeconds: a.IntervalSeconds,
+		NoDataState:     a.NoDataState,
+		ExecErrState:    a.ExecErrState,
+		For:             a.For,
+		Annotations:     a.Annotations,
+		Labels:          map[string]string{},
+	}
+}
+
+func addMigrationInfo(da *dashAlert) map[string]string {
+	annotations := da.ParsedSettings.AlertRuleTags
+	if annotations == nil {
+		annotations = make(map[string]string, 3)
+	}
+
+	annotations["__dashboardUid__"] = da.DashboardUID
+	annotations["__panelId__"] = fmt.Sprintf("%v", da.PanelId)
+	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
+
+	return annotations
+}
+
+func getMigrationString(da dashAlert) string {
 	return fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
 }
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
-	migAnnotation := getMigrationInfo(da)
-
-	annotations := da.ParsedSettings.AlertRuleTags
-	if annotations == nil {
-		annotations = make(map[string]string, 1)
-	}
-	annotations["__migration__info__"] = migAnnotation
+	annotations := addMigrationInfo(&da)
 
 	ar := &alertRule{
 		OrgId:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
+		Uid:             util.GenerateShortUID(),
 		Condition:       cond.Condition,
 		Data:            cond.Data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
+		Version:         1,
 		NamespaceUid:    folderUID, // Folder already created, comes from env var.
 		RuleGroup:       da.Name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
-	}
-	var err error
-	ar.Uid, err = m.generateAlertRuleUID(ar.OrgId)
-	if err != nil {
-		return nil, err
+		Labels:          map[string]string{},
 	}
 
+	var err error
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
 	if err != nil {
 		return nil, err
@@ -68,25 +121,6 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	return ar, nil
 }
-
-func (m *migration) generateAlertRuleUID(orgId int64) (string, error) {
-	for i := 0; i < 20; i++ {
-		uid := util.GenerateShortUID()
-
-		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&alertRule{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", fmt.Errorf("could not generate unique uid for alert rule")
-}
-
-// TODO: Do I need to create an initial alertRuleVersion as well?
 
 type alertQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.

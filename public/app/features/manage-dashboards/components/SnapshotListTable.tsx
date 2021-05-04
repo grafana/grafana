@@ -40,7 +40,7 @@ export const SnapshotListTable: FC = () => {
   );
 
   return (
-    <div className="page-container page-body">
+    <div>
       <table className="filter-table">
         <thead>
           <tr>

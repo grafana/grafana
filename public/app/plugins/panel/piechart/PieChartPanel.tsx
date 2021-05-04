@@ -9,7 +9,6 @@ import {
   PanelProps,
   SystemConfigOverrideRule,
 } from '@grafana/data';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 
 interface Props extends PanelProps<PieChartOptions> {}
 
@@ -47,14 +46,6 @@ export const PieChartPanel: React.FC<Props> = ({
     },
     [fieldConfig, onFieldConfigChange]
   );
-
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
   return (
     <PieChart
       width={width}
@@ -65,7 +56,6 @@ export const PieChartPanel: React.FC<Props> = ({
       replaceVariables={replaceVariables}
       onLabelClick={onLabelClick}
       data={data.series}
-      onSeriesColorChange={onSeriesColorChange}
       pieType={options.pieType}
       displayLabels={options.displayLabels}
       legendOptions={options.legend}

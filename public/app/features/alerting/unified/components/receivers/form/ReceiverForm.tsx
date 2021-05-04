@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { NotifierDTO } from 'app/types';
@@ -130,7 +130,7 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   heading: css`
     margin: ${theme.spacing(4, 0)};
   `,
