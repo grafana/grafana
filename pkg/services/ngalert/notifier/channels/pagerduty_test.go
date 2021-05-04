@@ -59,9 +59,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Summary:   "[FIRING:1]  (val1)",
 					Source:    hostname,
 					Severity:  "critical",
-					Class:     "todo_class",
+					Class:     "default",
 					Component: "Grafana",
-					Group:     "todo_group",
+					Group:     "default",
 					CustomDetails: map[string]string{
 						"firing":       "Labels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n",
 						"num_firing":   "1",

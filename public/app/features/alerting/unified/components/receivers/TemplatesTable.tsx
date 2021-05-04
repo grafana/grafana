@@ -1,4 +1,4 @@
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, Fragment, useMemo, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
@@ -15,7 +15,7 @@ interface Props {
 
 export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
-  const tableStyles = useStyles(getAlertTableStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const templateRows = useMemo(() => Object.entries(config.template_files), [config]);
 
