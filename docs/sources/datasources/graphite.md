@@ -141,6 +141,26 @@ For more details, see the [Graphite docs on the autocomplete API for tags](http:
 The query you specify in the query field should be a metric find type of query. For example, a query like `prod.servers.*` will fill the
 variable with all possible values that exist in the wildcard position.
 
+The wildcard should be used at the end of the query because search results will contain all possible values occurring only at the last level of the query.
+If you need to capture other parts of the metric name use expand function (`expand(*.servers.*)`). The result of expand will return all full names
+for metrics matching the query.
+
+Example results for metrics:
+
+- `prod.servers.001.cpu`
+- `prod.servers.002.cpu`
+- `test.servers.001.cpu`
+- `test.servers.002.cpu`
+- `test.servers.003.cpu`
+
+| query| results |
+|------|---------|
+| prod.servers.\* | 001, 002 |
+| \*.servers.\* | 001, 002, 003 |
+| expand(\*.servers.001) | prod.servers.001, test.servers.001 |
+
+If you use `expand` you can  with regex to match specific part of the metric name path.
+
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
