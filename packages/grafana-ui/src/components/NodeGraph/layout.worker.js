@@ -1,17 +1,15 @@
 import { forceSimulation, forceLink, forceCollide, forceX } from 'd3-force';
 
-console.log('worke');
 addEventListener('message', (event) => {
-  console.log('on message worker');
   const { nodes, edges, config } = event.data;
   layout(nodes, edges, config);
-
-  console.log('after layout');
-
-  // @ts-ignore
   postMessage({ nodes, edges });
 });
 
+/**
+ * Use d3 force layout to lay the nodes in a sensible way. This function modifies the nodes adding the x,y positions
+ * and also fills in node references in edges instead of node ids.
+ */
 function layout(nodes, edges, config) {
   // Start withs some hardcoded positions so it starts laid out from left to right
   let { roots, secondLevelRoots } = initializePositions(nodes, edges);
@@ -65,13 +63,14 @@ function initializePositions(nodes, edges) {
   // To prevent going in cycles
   const alreadyPositioned = {};
 
-  const nodesMap = nodes.reduce((acc, node) => ({ ...acc, [node.id]: node }), {});
+  const nodesMap = nodes.reduce((acc, node) => {
+    acc[node.id] = node;
+    return acc;
+  }, {});
   const edgesMap = edges.reduce((acc, edge) => {
     const sourceId = edge.source;
-    return {
-      ...acc,
-      [sourceId]: [...(acc[sourceId] || []), edge],
-    };
+    acc[sourceId] = [...(acc[sourceId] || []), edge];
+    return acc;
   }, {});
 
   let roots = nodes.filter((n) => n.incoming === 0);
@@ -82,10 +81,10 @@ function initializePositions(nodes, edges) {
     roots = [nodes[0]];
   }
 
-  let secondLevelRoots = roots.reduce(
-    (acc, r) => [...acc, ...(edgesMap[r.id] ? edgesMap[r.id].map((e) => nodesMap[e.target]) : [])],
-    []
-  );
+  let secondLevelRoots = roots.reduce((acc, r) => {
+    acc.push(...(edgesMap[r.id] ? edgesMap[r.id].map((e) => nodesMap[e.target]) : []));
+    return acc;
+  }, []);
 
   const rootYSpacing = 300;
   const nodeYSpacing = 200;

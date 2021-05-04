@@ -52,6 +52,8 @@ export function useLayout(
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
 
+  const [loading, setLoading] = useState(false);
+
   const isMounted = useMountedState();
 
   // Also we compute both layouts here. Grid layout should not add much time and we can more easily just cache both
@@ -69,28 +71,29 @@ export function useLayout(
       return;
     }
 
-    // Give time to render loading state.
-    setTimeout(() => {
-      if (!isMounted) {
-        return;
-      }
+    setLoading(true);
 
-      // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
-      let rawNodesCopy = rawNodes.map((n) => ({ ...n }));
-      let rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
+    // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
+    let rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+    let rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
 
-      defaultLayout(rawNodesCopy, rawEdgesCopy, ({ nodes, edges }) => {
+    // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect having
+    // callback seem ok here.
+    defaultLayout(rawNodesCopy, rawEdgesCopy, ({ nodes, edges }) => {
+      // TODO: it would be better to cancel the worker somehow but probably not super important right now.
+      if (isMounted()) {
         setNodesGraph(nodes);
         setEdgesGraph(edges as EdgeDatumLayout[]);
-      });
+        setLoading(false);
+      }
+    });
 
-      rawNodesCopy = rawNodes.map((n) => ({ ...n }));
-      rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
-      gridLayout(rawNodesCopy, config.sort);
+    rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+    rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
+    gridLayout(rawNodesCopy, config.sort);
 
-      setNodesGrid(rawNodesCopy);
-      setEdgesGrid(rawEdgesCopy as EdgeDatumLayout[]);
-    }, 50);
+    setNodesGrid(rawNodesCopy);
+    setEdgesGrid(rawEdgesCopy as EdgeDatumLayout[]);
   }, [config.sort, rawNodes, rawEdges, isMounted]);
 
   // Limit the nodes so we don't show all for performance reasons. Here we don't compute both at the same time so
@@ -115,26 +118,22 @@ export function useLayout(
     markers,
     bounds,
     hiddenNodesCount: rawNodes.length - nodesWithLimit.length,
+    loading,
   };
 }
 
 /**
- * Use d3 force layout to lay the nodes in a sensible way. This function modifies the nodes adding the x,y positions
- * and also fills in node references in edges instead of node ids.
+ * Wraps the layout code in a worker as it can take long and we don't want to block the main thread.
  */
 function defaultLayout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
   done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
 ) {
-  console.log('starting worker');
   const worker = new LayoutWorker();
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
     for (let i = 0; i < nodes.length; i++) {
-      // We lose the Field class as the data is stringified over the worker boundary
-      if (event.data.nodes[i].id !== nodes[i].id) {
-        console.log('fuuuuu');
-      }
+      // These stats needs to be Field class but the data is stringified over the worker boundary
       event.data.nodes[i] = {
         ...event.data.nodes[i],
         mainStat: nodes[i].mainStat,
@@ -145,7 +144,6 @@ function defaultLayout(
     done(event.data);
   };
 
-  console.log('post message');
   worker.postMessage({ nodes, edges, config: defaultConfig });
 }
 

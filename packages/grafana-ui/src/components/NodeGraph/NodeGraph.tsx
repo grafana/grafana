@@ -128,7 +128,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   // May seem weird that we do layout first and then limit the nodes shown but the problem is we want to keep the node
   // position stable which means we need the full layout first and then just visually hide the nodes. As hiding/showing
   // nodes should not have effect on layout it should not be recalculated.
-  const { nodes, edges, markers, bounds, hiddenNodesCount } = useLayout(
+  const { nodes, edges, markers, bounds, hiddenNodesCount, loading } = useLayout(
     processed.nodes,
     processed.edges,
     config,
@@ -167,7 +167,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
-      {nodes.length === 0 && firstNodesDataFrame.length > 0 ? (
+      {loading ? (
         <div className={styles.loadingWrapper}>
           Computing layout&nbsp;
           <Spinner />
