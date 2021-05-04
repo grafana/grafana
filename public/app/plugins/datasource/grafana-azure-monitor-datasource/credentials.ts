@@ -133,6 +133,15 @@ export function updateLogAnalyticsSameAs(options: AzureDataSourceSettings, sameA
 
       // Synchronize the Log Analytics credentials with primary credentials
       options = updateLogAnalyticsCredentials(options, credentials);
+
+      // Synchronize default subscription
+      options = {
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          logAnalyticsSubscriptionId: options.jsonData.subscriptionId,
+        },
+      };
     }
   }
 

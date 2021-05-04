@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
-import { AzureDataSourceSettings, AzureCredentials, AzureDataSourceJsonData } from '../types';
+import { AzureDataSourceSettings, AzureCredentials } from '../types';
 import {
   getCredentials,
   getLogAnalyticsCredentials,
@@ -14,13 +14,13 @@ import {
 
 export interface Props {
   options: AzureDataSourceSettings;
-  onOptionsChange: (options: AzureDataSourceSettings) => void;
-  updateJsonDataOption: (key: keyof AzureDataSourceJsonData, val: any) => void;
+  updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
   getSubscriptions: (route?: string) => Promise<Array<SelectableValue<string>>>;
   getWorkspaces: (subscriptionId: string) => Promise<Array<SelectableValue<string>>>;
 }
 
 export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
+  const { updateOptions, getSubscriptions, getWorkspaces } = props;
   const primaryCredentials = useMemo(() => getCredentials(props.options), [props.options]);
   const logAnalyticsCredentials = useMemo(() => getLogAnalyticsCredentials(props.options), [props.options]);
   const subscriptionId = logAnalyticsCredentials
@@ -38,7 +38,6 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const [workspaces, setWorkspaces] = useState<SelectableValue[]>([]);
   const [loadWorkspaces, onLoadWorkspaces] = useReducer((val) => val + 1, 0);
   useEffect(() => {
-    const { getWorkspaces, updateJsonDataOption } = props;
     if (!hasRequiredFields || !subscriptionId) {
       return;
     }
@@ -47,7 +46,15 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
       if (!canceled) {
         setWorkspaces(result);
         if (!defaultWorkspace && result.length > 0) {
-          updateJsonDataOption('logAnalyticsDefaultWorkspace', result[0].value);
+          updateOptions((options) => {
+            return {
+              ...options,
+              jsonData: {
+                ...options.jsonData,
+                logAnalyticsDefaultWorkspace: result[0].value,
+              },
+            };
+          });
         }
       }
     });
@@ -60,23 +67,37 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const [sameAsSwitched, setSameAsSwitched] = useState(false);
 
   const onCredentialsChange = (updatedCredentials: AzureCredentials) => {
-    const { options, onOptionsChange } = props;
-    onOptionsChange(updateLogAnalyticsCredentials(options, updatedCredentials));
+    updateOptions((options) => updateLogAnalyticsCredentials(options, updatedCredentials));
   };
 
   const onLogAnalyticsSameAsChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const { options, onOptionsChange } = props;
     const sameAs = event.currentTarget.checked;
-    onOptionsChange(updateLogAnalyticsSameAs(options, sameAs));
+    updateOptions((options) => updateLogAnalyticsSameAs(options, sameAs));
     setSameAsSwitched(true);
   };
 
   const onLogAnalyticsDefaultSubscriptionChange = (subscriptionId: string | undefined) => {
-    props.updateJsonDataOption('logAnalyticsSubscriptionId', subscriptionId || '');
+    updateOptions((options) => {
+      return {
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          logAnalyticsSubscriptionId: subscriptionId || '',
+        },
+      };
+    });
   };
 
   const onDefaultWorkspaceChange = (selected: SelectableValue<string>) => {
-    props.updateJsonDataOption('logAnalyticsDefaultWorkspace', selected.value || '');
+    updateOptions((options) => {
+      return {
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          logAnalyticsDefaultWorkspace: selected.value || '',
+        },
+      };
+    });
   };
 
   const tooltipAttribute = {
@@ -109,7 +130,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
           defaultSubscription={subscriptionId}
           onCredentialsChange={onCredentialsChange}
           onDefaultSubscriptionChange={onLogAnalyticsDefaultSubscriptionChange}
-          getSubscriptions={() => props.getSubscriptions('workspacesloganalytics')}
+          getSubscriptions={() => getSubscriptions('workspacesloganalytics')}
         />
       )}
       <div className="gf-form-group">

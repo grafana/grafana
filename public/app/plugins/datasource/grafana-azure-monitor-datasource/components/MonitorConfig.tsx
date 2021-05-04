@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { AzureDataSourceSettings, AzureCredentials, AzureDataSourceJsonData } from '../types';
+import { AzureDataSourceSettings, AzureCredentials } from '../types';
 import { getCredentials, updateCredentials, isLogAnalyticsSameAs } from '../credentials';
 
 const azureClouds = [
@@ -13,26 +13,39 @@ const azureClouds = [
 
 export interface Props {
   options: AzureDataSourceSettings;
-  onOptionsChange: (options: AzureDataSourceSettings) => void;
-  updateJsonDataOption: (key: keyof AzureDataSourceJsonData, val: any) => void;
+  updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
   getSubscriptions: (route?: string) => Promise<Array<SelectableValue<string>>>;
 }
 
 export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
+  const { updateOptions, getSubscriptions } = props;
   const credentials = useMemo(() => getCredentials(props.options), [props.options]);
   const subscriptionId = props.options.jsonData.subscriptionId;
 
-  const onCredentialsChange = (updatedCredentials: AzureCredentials): void => {
-    const { options, onOptionsChange } = props;
-    onOptionsChange(updateCredentials(options, updatedCredentials));
+  const onCredentialsChange = (credentials: AzureCredentials): void => {
+    updateOptions((options) => updateCredentials(options, credentials));
   };
 
   const onDefaultSubscriptionChange = (subscriptionId: string | undefined) => {
-    const { options, updateJsonDataOption } = props;
-    updateJsonDataOption('subscriptionId', subscriptionId || '');
-    if (isLogAnalyticsSameAs(options)) {
-      updateJsonDataOption('logAnalyticsSubscriptionId', subscriptionId || '');
-    }
+    updateOptions((options) => {
+      options = {
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          subscriptionId: subscriptionId || '',
+        },
+      };
+      if (isLogAnalyticsSameAs(options)) {
+        options = {
+          ...options,
+          jsonData: {
+            ...options.jsonData,
+            logAnalyticsSubscriptionId: subscriptionId || '',
+          },
+        };
+      }
+      return options;
+    });
   };
 
   return (
@@ -44,7 +57,7 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
         azureCloudOptions={azureClouds}
         onCredentialsChange={onCredentialsChange}
         onDefaultSubscriptionChange={onDefaultSubscriptionChange}
-        getSubscriptions={() => props.getSubscriptions()}
+        getSubscriptions={getSubscriptions}
       />
     </>
   );

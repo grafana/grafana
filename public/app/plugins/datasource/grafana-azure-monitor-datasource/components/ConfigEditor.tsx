@@ -1,15 +1,15 @@
 import React, { PureComponent } from 'react';
 import {
-  SelectableValue,
   DataSourcePluginOptionsEditorProps,
+  SelectableValue,
+  updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginOption,
   updateDatasourcePluginResetOption,
-  updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginSecureJsonDataOption,
 } from '@grafana/data';
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
-import { getBackendSrv, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
@@ -27,12 +27,9 @@ export class ConfigEditor extends PureComponent<Props> {
     }
   }
 
-  private updateJsonDataOption = (key: keyof AzureDataSourceJsonData, val: any) => {
-    updateDatasourcePluginJsonDataOption(this.props, key, val);
-  };
-
-  private updateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData, val: any) => {
-    updateDatasourcePluginSecureJsonDataOption(this.props, key, val);
+  private updateOptions = (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings): void => {
+    const updated = optionsFunc(this.props.options);
+    this.props.onOptionsChange(updated);
   };
 
   private getSubscriptions = async (route?: string): Promise<Array<SelectableValue<string>>> => {
@@ -81,14 +78,14 @@ export class ConfigEditor extends PureComponent<Props> {
   private onUpdateJsonDataOption = (key: keyof AzureDataSourceJsonData) => (
     event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    this.updateJsonDataOption(key, event.currentTarget.value);
+    updateDatasourcePluginJsonDataOption(this.props, key, event.currentTarget.value);
   };
 
   // TODO: Used only by InsightsConfig
   private onUpdateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData) => (
     event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    this.updateSecureJsonDataOption(key, event.currentTarget.value);
+    updateDatasourcePluginSecureJsonDataOption(this.props, key, event.currentTarget.value);
   };
 
   // TODO: Used only by InsightsConfig
@@ -105,17 +102,11 @@ export class ConfigEditor extends PureComponent<Props> {
 
     return (
       <>
-        <MonitorConfig
-          options={options}
-          onOptionsChange={this.props.onOptionsChange}
-          updateJsonDataOption={this.updateJsonDataOption}
-          getSubscriptions={this.getSubscriptions}
-        />
+        <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
 
         <AnalyticsConfig
           options={options}
-          onOptionsChange={this.props.onOptionsChange}
-          updateJsonDataOption={this.updateJsonDataOption}
+          updateOptions={this.updateOptions}
           getSubscriptions={this.getSubscriptions}
           getWorkspaces={this.getWorkspaces}
         />

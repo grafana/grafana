@@ -37,8 +37,7 @@ const setup = (propOverrides?: object) => {
       version: 1,
       readOnly: false,
     },
-    onOptionsChange: jest.fn(),
-    updateJsonDataOption: jest.fn(),
+    updateOptions: jest.fn(),
     getSubscriptions: jest.fn(),
     getWorkspaces: jest.fn(),
   };
