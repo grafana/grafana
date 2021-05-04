@@ -169,12 +169,12 @@ export function getPanelMenu(
 
     if (isPanelModelLibraryPanel(panel)) {
       subMenu.push({
-        text: 'Unlink global panel',
+        text: 'Unlink library panel',
         onClick: onUnlinkLibraryPanel,
       });
     } else {
       subMenu.push({
-        text: 'To global panel',
+        text: 'Create library panel',
         onClick: onAddLibraryPanel,
       });
     }

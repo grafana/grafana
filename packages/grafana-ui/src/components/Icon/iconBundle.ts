@@ -140,7 +140,7 @@ import u1131 from '!!raw-loader!../../../../../public/img/icons/mono/grafana.svg
 import u1132 from '!!raw-loader!../../../../../public/img/icons/mono/heart.svg';
 import u1133 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break.svg';
 import u1134 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
-import u1135 from '!!raw-loader!../../../../../public/img/icons/mono/reusable-panel.svg';
+import u1135 from '!!raw-loader!../../../../../public/img/icons/mono/library-panel.svg';
 
 function cacheItem(content: string, path: string) {
   cacheStore[iconRoot + path] = { content, status: 'loaded', queue: [] };
@@ -290,5 +290,5 @@ export function initIconCache() {
   cacheItem(u1132, 'mono/heart.svg');
   cacheItem(u1133, 'mono/heart-break.svg');
   cacheItem(u1134, 'mono/panel-add.svg');
-  cacheItem(u1135, 'mono/reusable-panel.svg');
+  cacheItem(u1135, 'mono/library-panel.svg');
 }
