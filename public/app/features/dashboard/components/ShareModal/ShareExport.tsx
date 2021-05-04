@@ -33,6 +33,8 @@ export class ShareExport extends PureComponent<Props, State> {
     this.exporter = new DashboardExporter();
   }
 
+let mounted = true;
+
   onShareExternallyChange = () => {
     this.setState({
       shareExternally: !this.state.shareExternally,
@@ -52,7 +54,7 @@ export class ShareExport extends PureComponent<Props, State> {
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        if (trimDefaults) {
+        if (trimDefaults && mounted) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
             .then((resp: any) => {
@@ -126,6 +128,10 @@ export class ShareExport extends PureComponent<Props, State> {
 
     this.props.onDismiss();
   };
+
+componentWillUnmount() {
+mounted = false;
+}
 
   render() {
     const { onDismiss } = this.props;
