@@ -123,6 +123,11 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, plugins.GrafanaType, pm.plugins[pluginID].SignatureType)
 		assert.Equal(t, "Grafana Labs", pm.plugins[pluginID].SignatureOrg)
 		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+
+		ds := pm.GetDataSource(pluginID)
+		assert.NotNil(t, ds)
+		assert.Equal(t, pluginID, ds.Id)
+		assert.Equal(t, pm.plugins[pluginID], &ds.FrontendPluginBase.PluginBase)
 	})
 
 	t.Run("With back-end plugin with invalid v2 private signature (mismatched root URL)", func(t *testing.T) {
