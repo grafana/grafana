@@ -193,6 +193,21 @@ func TestManager(t *testing.T) {
 						require.Equal(t, http.StatusOK, w.Code)
 					})
 				})
+
+				t.Run("Should be able to decommission a running plugin", func(t *testing.T) {
+					require.True(t, ctx.manager.Registered(testPluginID))
+
+					err := ctx.manager.UnregisterAndStop(testPluginID)
+					require.NoError(t, err)
+
+					require.Equal(t, 2, ctx.plugin.stopCount)
+					require.False(t, ctx.manager.Registered(testPluginID))
+					p := ctx.manager.plugins[testPluginID]
+					require.Nil(t, p)
+
+					err = ctx.manager.StartPlugin(context.Background(), testPluginID)
+					require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
+				})
 			})
 		})
 	})
