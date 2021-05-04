@@ -94,7 +94,7 @@ export default class ResponseParser {
     const timeField = frame.fields.find((f) => f.name === 'time');
 
     if (!timeField) {
-      return Promise.reject({ message: 'Missing mandatory time column (with time column alias) in annotation query.' });
+      throw new Error('Missing mandatory time column (with time column alias) in annotation query');
     }
 
     const timeEndField = frame.fields.find((f) => f.name === 'timeend');

@@ -324,7 +324,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
-		return sql, err
+		return "", err
 	}
 	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 
@@ -426,10 +426,10 @@ const (
 )
 
 type dataQueryModel struct {
-	InterpolatedQuery string // property non set until after Interpolate()
+	InterpolatedQuery string // property not set until after Interpolate()
 	Format            dataQueryFormat
 	TimeRange         backend.TimeRange
-	FillMissing       *data.FillMissing // property non set until after Interpolate()
+	FillMissing       *data.FillMissing // property not set until after Interpolate()
 	Interval          time.Duration
 	columnNames       []string
 	columnTypes       []*sql.ColumnType

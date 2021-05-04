@@ -91,13 +91,11 @@ export default class ResponseParser {
     const timeField = frame.fields.find((f) => f.name === 'time' || f.name === 'time_sec');
 
     if (!timeField) {
-      return Promise.reject({ message: 'Missing mandatory time column (with time column alias) in annotation query.' });
+      throw new Error('Missing mandatory time column (with time column alias) in annotation query');
     }
 
     if (frame.fields.find((f) => f.name === 'title')) {
-      return Promise.reject({
-        message: 'The title column for annotations is deprecated, now only a column named text is returned',
-      });
+      throw new Error('The title column for annotations is deprecated, now only a column named text is returned');
     }
 
     const timeEndField = frame.fields.find((f) => f.name === 'timeend');

@@ -73,10 +73,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
   }
 
   filterQuery(query: PostgresQuery): boolean {
-    if (query.hide) {
-      return false;
-    }
-    return true;
+    return !query.hide;
   }
 
   applyTemplateVariables(target: PostgresQuery, scopedVars: ScopedVars): Record<string, any> {
