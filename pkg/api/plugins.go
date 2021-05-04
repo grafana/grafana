@@ -206,8 +206,17 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 }
 
 func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
+	var err error
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
 		return response.Error(422, "Dashboard must be set", nil)
+	}
+
+	trimDefaults := c.QueryBoolWithDefault("trimdefaults", true)
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
+		apiCmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(apiCmd.Dashboard)
+		if err != nil {
+			return response.Error(500, "Error while applying default value to the dashboard json", err)
+		}
 	}
 
 	dashInfo, err := hs.PluginManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
