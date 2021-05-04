@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 import { MetricEditor } from './MetricEditor';
-import React, { ReactNode } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { ElasticDatasource } from '../../../datasource';
 import { getDefaultTimeRange } from '@grafana/data';
 import { ElasticsearchQuery } from '../../../types';
@@ -25,7 +25,7 @@ describe('Metric Editor', () => {
 
     const getFields: ElasticDatasource['getFields'] = jest.fn(() => from([[]]));
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: PropsWithChildren<{}>) => (
       <ElasticsearchProvider
         datasource={{ getFields } as ElasticDatasource}
         query={query}
@@ -61,7 +61,7 @@ describe('Metric Editor', () => {
 
     const getFields: ElasticDatasource['getFields'] = jest.fn(() => from([[]]));
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: PropsWithChildren<{}>) => (
       <ElasticsearchProvider
         datasource={{ getFields } as ElasticDatasource}
         query={query}

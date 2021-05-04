@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync } from '@grafana/ui';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { useFields } from '../../../hooks/useFields';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { segmentStyles } from '../styles';
@@ -26,7 +26,7 @@ interface QueryMetricEditorProps {
   value: BucketAggregation;
 }
 
-export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value }) => {
+export const BucketAggregationEditor = ({ value }: QueryMetricEditorProps) => {
   const dispatch = useDispatch<BucketAggregationAction>();
   const getFields = useFields(value.type);
 

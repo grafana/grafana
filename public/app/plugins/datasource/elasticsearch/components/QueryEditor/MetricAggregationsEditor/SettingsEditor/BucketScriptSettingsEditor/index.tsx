@@ -1,4 +1,4 @@
-import React, { Fragment, FunctionComponent, useEffect } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
 import { MetricAggregationAction } from '../../state/types';
 import { changeMetricAttribute } from '../../state/actions';
@@ -22,7 +22,7 @@ interface Props {
   previousMetrics: MetricAggregation[];
 }
 
-export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, previousMetrics }) => {
+export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) => {
   const upperStateDispatch = useDispatch<MetricAggregationAction<BucketScript>>();
 
   const dispatch = useStatelessReducer(

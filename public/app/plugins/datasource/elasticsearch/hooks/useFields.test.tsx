@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { ElasticDatasource } from '../datasource';
 import { from } from 'rxjs';
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
@@ -24,7 +24,7 @@ describe('useFields hook', () => {
 
     const getFields: ElasticDatasource['getFields'] = jest.fn(() => from([[]]));
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const wrapper = ({ children }: PropsWithChildren<{}>) => (
       <ElasticsearchProvider
         datasource={{ getFields } as ElasticDatasource}
         query={query}

@@ -1,5 +1,5 @@
 import { InlineField, Input, InlineSwitch } from '@grafana/ui';
-import React, { FunctionComponent, ComponentProps, useState } from 'react';
+import React, { ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
@@ -28,7 +28,7 @@ interface Props {
   previousMetrics: MetricAggregation[];
 }
 
-export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
+export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
   const query = useQuery();
@@ -124,7 +124,7 @@ interface ExtendedStatSettingProps {
   onChange: (checked: boolean) => void;
   value: boolean;
 }
-const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat, onChange, value }) => {
+const ExtendedStatSetting = ({ stat, onChange, value }: ExtendedStatSettingProps) => {
   // this is needed for the htmlFor prop in the label so that clicking the label will toggle the switch state.
   const [id] = useState(uniqueId(`es-field-id-`));
 

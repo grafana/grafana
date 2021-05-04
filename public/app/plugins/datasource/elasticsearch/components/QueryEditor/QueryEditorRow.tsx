@@ -2,7 +2,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { FunctionComponent } from 'react';
+import React, { PropsWithChildren } from 'react';
 
 interface Props {
   label: string;
@@ -11,13 +11,13 @@ interface Props {
   hidden?: boolean;
 }
 
-export const QueryEditorRow: FunctionComponent<Props> = ({
+export const QueryEditorRow = ({
   children,
   label,
   onRemoveClick,
   onHideClick,
   hidden = false,
-}) => {
+}: PropsWithChildren<Props>) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
