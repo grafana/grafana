@@ -42,13 +42,13 @@ class AddRemoteInstanceService {
   static addRemote(type: InstanceTypes, data: any, token?: CancelToken) {
     switch (type) {
       case InstanceTypes.mongodb:
-        return AddRemoteInstanceService.addMongodb(toPayload(data), token);
+        return AddRemoteInstanceService.addMongodb(toPayload(data, '', type), token);
       case InstanceTypes.mysql:
-        return AddRemoteInstanceService.addMysql(toPayload(data), token);
+        return AddRemoteInstanceService.addMysql(toPayload(data, '', type), token);
       case InstanceTypes.postgresql:
-        return AddRemoteInstanceService.addPostgresql(toPayload(data), token);
+        return AddRemoteInstanceService.addPostgresql(toPayload(data, '', type), token);
       case InstanceTypes.proxysql:
-        return AddRemoteInstanceService.addProxysql(toPayload(data), token);
+        return AddRemoteInstanceService.addProxysql(toPayload(data, '', type), token);
       case InstanceTypes.haproxy:
         return AddRemoteInstanceService.addHaproxy(toExternalServicePayload(data), token);
       case InstanceTypes.external:
@@ -61,7 +61,7 @@ class AddRemoteInstanceService {
 
 export default AddRemoteInstanceService;
 
-export const toPayload = (values: any, discoverName?: string): RemoteInstancePayload => {
+export const toPayload = (values: any, discoverName?: string, type?: InstanceTypes): RemoteInstancePayload => {
   const data = { ...values };
 
   if (values.custom_labels) {
@@ -123,6 +123,10 @@ export const toPayload = (values: any, discoverName?: string): RemoteInstancePay
     if (data.tracking === TrackingOptions.pgStatements || data.qan_mysql_perfschema) {
       data.qan = true;
     }
+  }
+
+  if (type === InstanceTypes.mongodb && values.tls) {
+    data.authentication_mechanism = 'MONGODB-X509';
   }
 
   data.metrics_mode = 1;

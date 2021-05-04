@@ -5,7 +5,7 @@ export interface MainDetailsFormPartProps {
   remoteInstanceCredentials: RemoteInstanceCredentials;
 }
 
-export interface ExternalServiceConnectionDetailsFormPartProps {
+export interface FormPartProps {
   form: FormApi;
 }
 

@@ -3,12 +3,12 @@ import { PasswordInputField, RadioButtonGroupField, TextInputField, validators }
 import Validators from 'app/percona/shared/helpers/validators';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { Button, useTheme } from '@grafana/ui';
-import { ExternalServiceConnectionDetailsFormPartProps } from '../FormParts.types';
+import { FormPartProps } from '../FormParts.types';
 import { getStyles } from '../FormParts.styles';
 import { Messages } from '../FormParts.messages';
 import { schemaOptions } from '../FormParts.constants';
 
-export const ExternalServiceConnectionDetails: FC<ExternalServiceConnectionDetailsFormPartProps> = ({ form }) => {
+export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
