@@ -22,7 +22,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     function addLines() {
-      // Thresholds below a transparent threshold is treated like "less then", and line drawn previous threshold
+      // Thresholds below a transparent threshold is treated like "less than", and line drawn previous threshold
       let transparentIndex = 0;
 
       for (let idx = 0; idx < steps.length; idx++) {
