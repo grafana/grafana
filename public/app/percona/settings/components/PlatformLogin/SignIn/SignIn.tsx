@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
-import { useTheme } from '@grafana/ui';
+import { LinkButton, useTheme } from '@grafana/ui';
 import validators from 'app/percona/shared/helpers/validators';
 import { LoginCredentials, LoginFormProps } from '../types';
 import { Messages } from '../PlatformLogin.messages';
@@ -9,6 +9,7 @@ import { PlatformLoginService } from '../PlatformLogin.service';
 import { LoaderButton, PasswordInputField, TextInputField } from '@percona/platform-core';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
+import { RESET_PASSWORD_URL } from '../PlatformLogin.constants';
 
 export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
   const theme = useTheme();
@@ -41,6 +42,18 @@ export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         label={Messages.passwordLabel}
         validators={[validators.required]}
       />
+      <LinkButton
+        data-qa="sign-in-forgot-password-button"
+        type="button"
+        size="md"
+        variant="link"
+        disabled={submitting}
+        href={RESET_PASSWORD_URL}
+        target="_blank"
+        className={styles.forgotPasswordButton}
+      >
+        {Messages.forgotPassword}
+      </LinkButton>
       <LoaderButton
         data-qa="sign-in-submit-button"
         type="submit"
