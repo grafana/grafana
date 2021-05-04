@@ -13,7 +13,7 @@ import { VizLayout } from '../VizLayout/VizLayout';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { Unsubscribable } from 'rxjs';
-
+import { filter, throttleTime } from 'rxjs/operators';
 /**
  * @internal -- not a public API
  */
@@ -69,7 +69,6 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     const { alignedDataFrame } = this.state;
 
     this.panelContext = this.context as PanelContext;
-    console.log('PANEL Context', this.panelContext);
     const { eventBus } = this.panelContext;
 
     const config = preparePlotConfigBuilder(
@@ -83,21 +82,24 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     // Something like this will be required to get external events *into* uPlot...
     this.subscriptions.push(
-      eventBus.subscribe(DataHoverEvent, (evt) => {
-        if (evt.origin === eventBus) {
-          console.log('skip self?');
-          return;
-        }
+      eventBus
+        .getStream(DataHoverEvent)
+        .pipe(
+          throttleTime(100),
+          filter((e) => e.origin !== eventBus)
+        )
+        .subscribe({
+          next: (evt) => {
+            const scales = this.state.config?.scaleKeys;
+            if (scales) {
+              const x = evt.payload.point[scales[0]];
+              const y = evt.payload.point[scales[1]];
 
-        const scales = this.state.config?.scaleKeys;
-        if (scales) {
-          const x = evt.payload.point[scales[0]];
-          const y = evt.payload.point[scales[1]];
-
-          // const pX = (x==null) ? -10 : client.valToPos(x, scales[0]);
-          console.log('DataHoverEvent //', x, y);
-        }
-      })
+              // const pX = (x==null) ? -10 : client.valToPos(x, scales[0]);
+              console.log('DataHoverEvent //', x, y);
+            }
+          },
+        })
     );
   }
 
