@@ -16,11 +16,19 @@ import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSource
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
-export class ConfigEditor extends PureComponent<Props> {
+export interface State {
+  unsaved: boolean;
+}
+
+export class ConfigEditor extends PureComponent<Props, State> {
   templateSrv: TemplateSrv = getTemplateSrv();
 
   constructor(props: Props) {
     super(props);
+
+    this.state = {
+      unsaved: false,
+    };
 
     if (this.props.options.id) {
       updateDatasourcePluginOption(this.props, 'url', '/api/datasources/proxy/' + this.props.options.id);
@@ -30,15 +38,24 @@ export class ConfigEditor extends PureComponent<Props> {
   private updateOptions = (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings): void => {
     const updated = optionsFunc(this.props.options);
     this.props.onOptionsChange(updated);
+
+    this.setState({ unsaved: true });
+  };
+
+  private saveOptions = async (): Promise<void> => {
+    if (this.state.unsaved) {
+      await getBackendSrv()
+        .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+        .then((result: { datasource: AzureDataSourceSettings }) => {
+          updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
+        });
+
+      this.setState({ unsaved: false });
+    }
   };
 
   private getSubscriptions = async (route?: string): Promise<Array<SelectableValue<string>>> => {
-    // TODO: Save credentials only if changed
-    await getBackendSrv()
-      .put(`/api/datasources/${this.props.options.id}`, this.props.options)
-      .then((result: { datasource: AzureDataSourceSettings }) => {
-        updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
-      });
+    await this.saveOptions();
 
     const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
 
@@ -51,7 +68,8 @@ export class ConfigEditor extends PureComponent<Props> {
   };
 
   private getWorkspaces = async (subscriptionId: string): Promise<Array<SelectableValue<string>>> => {
-    // TODO: Make sure credentials saved
+    await this.saveOptions();
+
     const { azureLogAnalyticsSameAs, cloudName } = this.props.options.jsonData;
 
     let azureMonitorUrl;

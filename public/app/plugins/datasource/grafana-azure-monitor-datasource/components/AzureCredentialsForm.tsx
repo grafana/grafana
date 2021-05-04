@@ -28,7 +28,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
   const [loadSubscriptions, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
   useEffect(() => {
-    if (!getSubscriptions || !hasRequiredFields || loadSubscriptions === 0) {
+    if (!getSubscriptions || !hasRequiredFields) {
       return;
     }
     let canceled = false;
@@ -43,6 +43,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
     return () => {
       canceled = true;
     };
+    // This effect is intended to be called only once initially and on Load Subscriptions click
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadSubscriptions]);
 

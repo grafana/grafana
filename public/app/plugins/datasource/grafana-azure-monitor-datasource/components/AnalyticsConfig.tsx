@@ -61,6 +61,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     return () => {
       canceled = true;
     };
+    // This effect is intended to be called only once initially and on Load Workspaces click
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadWorkspaces, subscriptionId]);
 
