@@ -23,8 +23,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 	Convey("Test execute time series query", t, func() {
 		Convey("With defaults on es 2", func() {
-			version2, _ := semver.NewVersion("2.0.0")
-			c := newFakeClient(version2)
+			c := newFakeClient("2.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
@@ -45,8 +44,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With defaults on es 5", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
@@ -61,8 +59,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With multiple bucket aggs", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -84,8 +81,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With select field", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -105,8 +101,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With term agg and order by metric agg", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -136,8 +131,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With term agg and order by count metric agg", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -161,8 +155,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With term agg and order by percentiles agg", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -187,8 +180,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With term agg and order by extended stats agg", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -213,8 +205,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With term agg and order by term", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -241,8 +232,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With term agg and order by term with es6.x", func() {
-			version6, _ := semver.NewVersion("6.0.0")
-			c := newFakeClient(version6)
+			c := newFakeClient("6.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -269,8 +259,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With metric percentiles", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -303,8 +292,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With filters aggs on es 2", func() {
-			version2, _ := semver.NewVersion("2.0.0")
-			c := newFakeClient(version2)
+			c := newFakeClient("2.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -335,8 +323,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With filters aggs on es 5", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -367,8 +354,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With raw document metric", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [],
@@ -381,8 +367,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With raw document metric size set", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [],
@@ -395,8 +380,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With date histogram agg", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -422,8 +406,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With histogram agg", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -450,8 +433,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With geo hash grid agg", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -476,8 +458,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With moving average", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -515,8 +496,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With moving average doc count", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -548,8 +528,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With broken moving average", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -585,8 +564,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With cumulative sum", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -624,8 +602,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With cumulative sum doc count", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -657,8 +634,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With broken cumulative sum", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -694,8 +670,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With derivative", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -724,8 +699,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With derivative doc count", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -754,8 +728,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With serial_diff", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -784,8 +757,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With serial_diff doc count", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -814,8 +786,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With bucket_script", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -852,8 +823,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		})
 
 		Convey("With bucket_script doc count", func() {
-			version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+			c := newFakeClient("5.0.0")
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
@@ -893,8 +863,7 @@ func TestSettingsCasting(t *testing.T) {
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 
 	t.Run("Correctly transforms moving_average settings", func(t *testing.T) {
-		version5, _ := semver.NewVersion("5.0.0")
-			c := newFakeClient(version5)
+		c := newFakeClient("5.0.0")
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
 			"bucketAggs": [
@@ -938,8 +907,7 @@ func TestSettingsCasting(t *testing.T) {
 	})
 
 	t.Run("Correctly transforms serial_diff settings", func(t *testing.T) {
-		version5, _ := semver.NewVersion("5.0.0")
-		c := newFakeClient(version5)
+		c := newFakeClient("5.0.0")
 		_, err := executeTsdbQuery(c, `{
 			"timeField": "@timestamp",
 			"bucketAggs": [
@@ -976,7 +944,8 @@ type fakeClient struct {
 	multisearchRequests []*es.MultiSearchRequest
 }
 
-func newFakeClient(version *semver.Version) *fakeClient {
+func newFakeClient(versionString string) *fakeClient {
+	version, _ := semver.NewVersion(versionString)
 	return &fakeClient{
 		version:             version,
 		timeField:           "@timestamp",
