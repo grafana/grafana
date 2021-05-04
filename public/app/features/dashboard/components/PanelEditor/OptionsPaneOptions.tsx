@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
@@ -12,7 +12,6 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
-
 interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
@@ -38,20 +37,8 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
+  const optionRadioFilters = useMemo(getOptionRadioFilters, []);
   const allOptions = [panelFrameOptions, ...vizOptions];
-
-  const optionRadioFilters = useMemo(() => {
-    const list = [
-      { label: OptionFilter.All, value: OptionFilter.All },
-      { label: OptionFilter.Recent, value: OptionFilter.Recent },
-    ];
-
-    if (!plugin.meta.skipDataQuery) {
-      list.push({ label: OptionFilter.Overrides, value: OptionFilter.Overrides });
-    }
-
-    return list;
-  }, [plugin]);
 
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
@@ -79,6 +66,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
         }
+
         for (const item of justOverrides) {
           mainBoxElements.push(item.render());
         }
@@ -98,13 +86,16 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     }
   }
 
+  // only show radio buttons if we are searching or if the plugin has field config
+  const showSearchRadioButtons = !isSearching && !plugin.fieldConfigRegistry.isEmpty();
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>
-        {!isSearching && (
+        {showSearchRadioButtons && (
           <div className={styles.formRow}>
             <RadioButtonGroup options={optionRadioFilters} value={listMode} fullWidth onChange={setListMode} />
           </div>
@@ -118,6 +109,13 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     </div>
   );
 };
+
+function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
+  return [
+    { label: OptionFilter.All, value: OptionFilter.All },
+    { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
+  ];
+}
 
 export enum OptionFilter {
   All = 'All',
@@ -190,5 +188,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.components.panel.borderColor};
     border-top: none;
     flex-grow: 1;
+  `,
+  overridesHeading: css`
+    padding: ${theme.spacing(1)};
   `,
 });
