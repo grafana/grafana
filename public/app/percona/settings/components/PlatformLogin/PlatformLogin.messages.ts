@@ -14,4 +14,5 @@ export const Messages = {
   emailLabel: 'Email',
   firstNameLabel: 'First name',
   lastNameLabel: 'Last name',
+  forgotPassword: 'Forgot password',
 };

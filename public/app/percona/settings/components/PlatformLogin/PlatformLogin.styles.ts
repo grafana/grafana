@@ -56,4 +56,8 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     ${centeredButton}
     margin-bottom: ${theme.spacing.formInputMargin};
   `,
+  forgotPasswordButton: css`
+    padding: 0;
+    margin-bottom: ${theme.spacing.xl};
+  `,
 }));
