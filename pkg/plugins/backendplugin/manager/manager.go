@@ -78,7 +78,8 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 		}
 		hostEnv = append(hostEnv, fmt.Sprintf("GF_GRPC_API_ADDRESS=%s", grpcAddress))
 
-		token, err := m.JWTService.IssuePluginToken(pluginID, 1)
+		var orgID int64 = 1 // TODO: hard-coded default org ID here, need to find a way to deal with orgs properly.
+		token, err := m.JWTService.IssuePluginToken(pluginID, orgID)
 		if err != nil {
 			return err
 		}
