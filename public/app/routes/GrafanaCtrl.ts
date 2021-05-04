@@ -57,10 +57,7 @@ export class GrafanaCtrl {
 
     setLocationSrv(locationService);
 
-    // Initialize websocket event streaming
-    if (config.featureToggles.live) {
-      initGrafanaLive();
-    }
+    initGrafanaLive();
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;

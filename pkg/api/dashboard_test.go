@@ -78,6 +78,14 @@ type testState struct {
 	dashQueries []*models.GetDashboardQuery
 }
 
+func newTestLive(t *testing.T) *live.GrafanaLive {
+	gLive := live.NewGrafanaLive()
+	gLive.RouteRegister = routing.NewRouteRegister()
+	err := gLive.Init()
+	require.NoError(t, err)
+	return gLive
+}
+
 // This tests three main scenarios.
 // If a user has access to execute an action on a dashboard:
 //   1. and the dashboard is in a folder which does not have an acl
@@ -263,7 +271,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 	t.Run("Given a dashboard with a parent folder which has an ACL", func(t *testing.T) {
 		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg:  setting.NewCfg(),
+			Live: newTestLive(t),
 		}
 
 		setUp := func() *testState {
@@ -1172,7 +1181,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(),
-			Live:                &live.GrafanaLive{Cfg: setting.NewCfg()},
+			Live:                newTestLive(t),
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
@@ -1236,7 +1245,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Cfg:                 cfg,
 			Bus:                 bus.GetBus(),
 			ProvisioningService: provisioning.NewProvisioningServiceMock(),
-			Live:                &live.GrafanaLive{Cfg: cfg},
+			Live:                newTestLive(t),
 			QuotaService:        &quota.QuotaService{Cfg: cfg},
 		}
 

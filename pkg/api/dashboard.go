@@ -270,8 +270,8 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
-	if hs.Live.IsEnabled() {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
+	if hs.Live != nil {
+		err = hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
 		if err != nil {
 			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
 		}
@@ -337,8 +337,8 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	dashSvc := dashboards.NewService(hs.SQLStore)
 	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
 
-	// Tell everyone listening that the dashboard changed
-	if hs.Live.IsEnabled() {
+	if hs.Live != nil {
+		// Tell everyone listening that the dashboard changed
 		if dashboard == nil {
 			dashboard = dash // the original request
 		}
@@ -360,6 +360,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
 		}
 	}
+
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}
