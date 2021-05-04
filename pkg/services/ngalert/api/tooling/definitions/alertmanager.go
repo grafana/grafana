@@ -266,6 +266,11 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 type GettableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+
+	// amSimple stores a map[string]interface of the decoded alertmanager config.
+	// This enables circumventing the underlying alertmanager secret type
+	// which redacts itself during encoding.
+	amSimple map[string]interface{} `yaml:"-" json:"-"`
 }
 
 func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
@@ -285,8 +290,26 @@ func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
+	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.amSimple); err != nil {
+		return err
+	}
+
 	c.TemplateFiles = tmp.TemplateFiles
 	return nil
+}
+
+func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
+	type plain struct {
+		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	tmp := plain{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: c.amSimple,
+	}
+
+	return json.Marshal(tmp)
 }
 
 type GettableApiAlertingConfig struct {
