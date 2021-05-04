@@ -379,7 +379,9 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(GetAlertNotifiers))
+		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
+			GetAlertNotifiers(hs.Alertmanager != nil && !hs.Alertmanager.IsDisabled())),
+		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
 			alertNotifications.Get("/", routing.Wrap(GetAlertNotifications))
