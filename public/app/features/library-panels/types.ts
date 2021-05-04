@@ -24,6 +24,7 @@ export interface LibraryPanelDTO {
 
 export interface LibraryPanelDTOMeta {
   canEdit: boolean;
+  folderName: string;
   connectedDashboards: number;
   created: string;
   updated: string;

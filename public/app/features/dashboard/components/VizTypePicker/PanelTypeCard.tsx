@@ -24,6 +24,7 @@ export const PanelTypeCard: React.FC<Props> = ({
   disabled,
   showBadge,
   description,
+  children,
 }) => {
   const styles = useStyles2(getStyles);
   const cssClass = cx({
@@ -44,6 +45,7 @@ export const PanelTypeCard: React.FC<Props> = ({
       <div className={styles.itemContent}>
         <div className={styles.name}>{title}</div>
         {description ? <span className={styles.description}>{description}</span> : null}
+        {children}
       </div>
       {showBadge && (
         <div className={cx(styles.badge, disabled && styles.disabled)}>
@@ -82,7 +84,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       position: relative;
       overflow: hidden;
-      height: 55px;
       transition: ${theme.transitions.create(['background'], {
         duration: theme.transitions.duration.short,
       })};
