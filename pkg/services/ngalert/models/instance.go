@@ -39,6 +39,7 @@ func (i InstanceStateType) IsValid() bool {
 	return i == InstanceStateFiring ||
 		i == InstanceStateNormal ||
 		i == InstanceStateNoData ||
+		i == InstanceStatePending ||
 		i == InstanceStateError
 }
 
