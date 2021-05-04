@@ -1,14 +1,6 @@
 import { concat, find, flattenDeep, forEach, map } from 'lodash';
 import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
-import {
-  AzureLogsTableData,
-  AzureLogsVariable,
-  KustoColumn,
-  KustoDatabase,
-  KustoFunction,
-  KustoSchema,
-  KustoTable,
-} from '../types';
+import { AzureLogsTableData, AzureLogsVariable } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class ResponseParser {
@@ -140,73 +132,6 @@ export default class ResponseParser {
     });
 
     return list;
-  }
-
-  parseSchemaResult(): KustoSchema {
-    return {
-      Plugins: [
-        {
-          Name: 'pivot',
-        },
-      ],
-      Databases: this.createSchemaDatabaseWithTables(),
-    };
-  }
-
-  createSchemaDatabaseWithTables(): { [key: string]: KustoDatabase } {
-    const databases = {
-      Default: {
-        Name: 'Default',
-        Tables: this.createSchemaTables(),
-        Functions: this.createSchemaFunctions(),
-      },
-    };
-
-    return databases;
-  }
-
-  createSchemaTables(): { [key: string]: KustoTable } {
-    const tables: { [key: string]: KustoTable } = {};
-
-    for (const table of this.results.tables) {
-      tables[table.name] = {
-        Name: table.name,
-        OrderedColumns: [],
-      };
-      for (const col of table.columns) {
-        tables[table.name].OrderedColumns.push(this.convertToKustoColumn(col));
-      }
-    }
-
-    return tables;
-  }
-
-  convertToKustoColumn(col: any): KustoColumn {
-    return {
-      Name: col.name,
-      Type: col.type,
-    };
-  }
-
-  createSchemaFunctions(): { [key: string]: KustoFunction } {
-    const functions: { [key: string]: KustoFunction } = {};
-    if (!this.results.functions) {
-      return functions;
-    }
-
-    for (const func of this.results.functions) {
-      functions[func.name] = {
-        Name: func.name,
-        Body: func.body,
-        DocString: func.displayName,
-        Folder: func.category,
-        FunctionKind: 'Unknown',
-        InputParameters: [],
-        OutputColumns: [],
-      };
-    }
-
-    return functions;
   }
 
   static findOrCreateBucket(data: TimeSeries[], target: any): TimeSeries {
