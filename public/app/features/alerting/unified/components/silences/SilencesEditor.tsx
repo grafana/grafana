@@ -55,7 +55,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
 
-  const { register, handleSubmit } = formAPI;
+  const { register, handleSubmit, formState } = formAPI;
 
   const onSubmit = (data: SilenceFormFields) => {
     const { id, startsAt, endsAt, comment, createdBy, matchers } = data;
@@ -78,10 +78,22 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
         <FieldSet label={`${silence ? 'Edit silence' : 'Silence alert'}`}>
           <SilencePeriod />
           <MatchersField />
-          <Field className={styles.field} label="Comment" required>
+          <Field
+            className={styles.field}
+            label="Comment"
+            required
+            error={formState.errors.comment?.message}
+            invalid={!!formState.errors.comment}
+          >
             <TextArea {...register('comment', { required: true })} />
           </Field>
-          <Field className={styles.field} label="Created by" required>
+          <Field
+            className={styles.field}
+            label="Created by"
+            required
+            error={formState.errors.createdBy?.message}
+            invalid={!!formState.errors.createdBy}
+          >
             <Input {...register('createdBy', { required: true })} />
           </Field>
         </FieldSet>
