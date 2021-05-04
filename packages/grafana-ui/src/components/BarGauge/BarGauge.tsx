@@ -168,6 +168,7 @@ export class BarGauge extends PureComponent<Props> {
       wrapperWidth,
       wrapperHeight,
     } = calculateBarAndValueDimensions(this.props);
+    // what do use here?
     const minValue = field.min!;
     const maxValue = field.max!;
 
