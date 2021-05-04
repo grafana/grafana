@@ -15,7 +15,7 @@ import (
 )
 
 type cache struct {
-	states    map[int64]map[string]map[string]*State
+	states    map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
 	log       log.Logger
 	metrics   *metrics.Metrics
