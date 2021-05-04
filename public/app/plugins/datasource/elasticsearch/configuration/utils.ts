@@ -24,15 +24,15 @@ export const coerceOptions = (
 };
 
 export const isValidOptions = (options: DataSourceSettings<ElasticsearchOptions, {}>): boolean => {
-  if (
-    !valid(options.jsonData.esVersion) ||
-    !!options.jsonData.timeField ||
-    !!options.jsonData.maxConcurrentShardRequests ||
-    options.jsonData.logMessageField === undefined ||
-    options.jsonData.logLevelField === undefined
-  ) {
-    return false;
-  }
-
-  return true;
+  return (
+    // esVersion should be a valid semver string
+    !!valid(options.jsonData.esVersion) &&
+    // timeField should not be empty or nullish
+    !!options.jsonData.timeField &&
+    // maxConcurrentShardRequests should be a number AND greater than 0
+    !!options.jsonData.maxConcurrentShardRequests &&
+    // message & level fields should be defined
+    options.jsonData.logMessageField !== undefined &&
+    options.jsonData.logLevelField !== undefined
+  );
 };
