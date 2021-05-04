@@ -475,7 +475,7 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
   let logsModelMeta = [...logsModel.meta!];
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
-  const limit = limitIndex && logsModelMeta[limitIndex]?.value;
+  const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
 
   if (limit && limit > 0) {
     let metaLimitValue;

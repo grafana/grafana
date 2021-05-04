@@ -53,7 +53,6 @@ export function PieChart(props: PieChartProps) {
     fieldConfig,
     replaceVariables,
     tooltipOptions,
-    onSeriesColorChange,
     width,
     height,
     ...restProps
@@ -128,14 +127,7 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
     };
   });
 
-  return (
-    <VizLegend
-      items={legendItems}
-      onSeriesColorChange={props.onSeriesColorChange}
-      placement={legendOptions.placement}
-      displayMode={legendOptions.displayMode}
-    />
-  );
+  return <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />;
 }
 
 function useSliceHighlightState() {

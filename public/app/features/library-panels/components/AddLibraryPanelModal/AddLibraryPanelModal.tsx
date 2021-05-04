@@ -33,7 +33,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
             saveLibraryPanel(panel, folderId!).then(() => onDismiss());
           }}
         >
-          Add panel to the panel library
+          Create library panel
         </Button>
       </Modal.ButtonRow>
     </>
@@ -46,7 +46,7 @@ interface Props extends AddLibraryPanelContentsProps {
 
 export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, initialFolderId, ...props }) => {
   return (
-    <Modal title="Add this panel to the panel library" isOpen={isOpen} onDismiss={props.onDismiss}>
+    <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
       <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={props.onDismiss} />
     </Modal>
   );

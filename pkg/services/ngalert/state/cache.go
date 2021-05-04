@@ -113,6 +113,17 @@ func (c *cache) getStatesByRuleUID() map[string][]*State {
 	return ruleMap
 }
 
+// removeByRuleUID deletes all entries in the state cache that match the given UID.
+func (c *cache) removeByRuleUID(orgID int64, uid string) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	for k, state := range c.states {
+		if state.AlertRuleUID == uid && state.OrgID == orgID {
+			delete(c.states, k)
+		}
+	}
+}
+
 func (c *cache) reset() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
@@ -123,7 +134,15 @@ func (c *cache) trim() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	ct := make(map[eval.State]int)
+	// Set default values to zero such that gauges are reset
+	// after all values from a single state disappear.
+	ct := map[eval.State]int{
+		eval.Normal:   0,
+		eval.Alerting: 0,
+		eval.Pending:  0,
+		eval.NoData:   0,
+		eval.Error:    0,
+	}
 
 	for _, v := range c.states {
 		if len(v.Results) > 100 {

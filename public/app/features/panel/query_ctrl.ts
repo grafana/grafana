@@ -1,8 +1,8 @@
 import { indexOf } from 'lodash';
 import { auto } from 'angular';
 
-export class QueryCtrl {
-  target!: any;
+export class QueryCtrl<T = any> {
+  target!: T;
   datasource!: any;
   panelCtrl!: any;
   panel: any;

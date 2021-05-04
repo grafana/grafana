@@ -2,7 +2,6 @@ import { Field, PanelProps } from '@grafana/data';
 import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useCallback } from 'react';
-import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
@@ -34,13 +33,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
@@ -59,7 +51,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       height={height}
       legend={options.legend}
       onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
     >
       {(config, alignedDataFrame) => {
         return (
