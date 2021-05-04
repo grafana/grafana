@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
@@ -12,6 +12,7 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
+
 interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
@@ -37,8 +38,20 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
-  const optionRadioFilters = useMemo(getOptionRadioFilters, []);
   const allOptions = [panelFrameOptions, ...vizOptions];
+
+  const optionRadioFilters = useMemo(() => {
+    const list = [
+      { label: OptionFilter.All, value: OptionFilter.All },
+      { label: OptionFilter.Recent, value: OptionFilter.Recent },
+    ];
+
+    if (!plugin.meta.skipDataQuery) {
+      list.push({ label: OptionFilter.Overrides, value: OptionFilter.Overrides });
+    }
+
+    return list;
+  }, [plugin]);
 
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
@@ -105,14 +118,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     </div>
   );
 };
-
-function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
-  return [
-    { label: OptionFilter.All, value: OptionFilter.All },
-    { label: OptionFilter.Recent, value: OptionFilter.Recent },
-    { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
-  ];
-}
 
 export enum OptionFilter {
   All = 'All',
