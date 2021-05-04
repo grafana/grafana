@@ -15,7 +15,10 @@ import {
 import { getStyles } from './DBClusterAdvancedOptions.styles';
 import { EditDBClusterFields } from '../EditDBClusterModal.types';
 import { DBClusterTopology, DBClusterResources, DBClusterAdvancedOptionsProps } from './DBClusterAdvancedOptions.types';
-import { resourceValidator } from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.utils';
+import {
+  canGetExpectedResources,
+  resourceValidator,
+} from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.utils';
 import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
 import { DBClusterService } from '../../DBCluster.service';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
@@ -132,7 +135,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   }, [selectedCluster]);
 
   useEffect(() => {
-    if (selectedCluster && memory > 0 && cpu > 0 && disk > 0) {
+    if (canGetExpectedResources(selectedCluster, values)) {
       if (expectedTimer) {
         clearTimeout(expectedTimer);
       }

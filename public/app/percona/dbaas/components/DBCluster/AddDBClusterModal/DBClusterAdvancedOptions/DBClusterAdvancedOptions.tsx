@@ -20,7 +20,7 @@ import {
 import { getStyles } from './DBClusterAdvancedOptions.styles';
 import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { DBClusterTopology, DBClusterResources } from './DBClusterAdvancedOptions.types';
-import { resourceValidator } from './DBClusterAdvancedOptions.utils';
+import { canGetExpectedResources, resourceValidator } from './DBClusterAdvancedOptions.utils';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
 import { CPU, Disk, Memory } from '../../../DBaaSIcons';
 import { DBClusterService } from '../../DBCluster.service';
@@ -137,7 +137,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   }, [kubernetesCluster]);
 
   useEffect(() => {
-    if (kubernetesCluster && memory > 0 && cpu > 0 && disk > 0) {
+    if (canGetExpectedResources(kubernetesCluster, values)) {
       if (expectedTimer) {
         clearTimeout(expectedTimer);
       }
