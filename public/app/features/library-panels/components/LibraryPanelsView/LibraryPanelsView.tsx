@@ -62,7 +62,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
         ) : (
           libraryPanels?.map((item, i) => (
             <LibraryPanelCard
-              key={`shared-panel=${i}`}
+              key={`library-panel=${i}`}
               libraryPanel={item}
               onDelete={onDelete}
               onClick={onClickCard}

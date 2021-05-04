@@ -80,7 +80,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
     { label: 'Visualizations', value: ListMode.Visualizations },
     {
       label: 'Library panels',
-      value: ListMode.Globals,
+      value: ListMode.LibraryPanels,
       description: 'Reusable panels you can share between multiple dashboards.',
     },
   ];
@@ -124,7 +124,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === ListMode.Globals && (
+            {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
@@ -136,7 +136,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
 enum ListMode {
   Visualizations,
-  Globals,
+  LibraryPanels,
 }
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';
