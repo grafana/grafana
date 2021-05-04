@@ -6,7 +6,6 @@ declare global {
 
 const monacoPath = (window.__grafana_public_path__ ?? 'public/') + 'lib/monaco/min/vs';
 
-// TODO: can these all be loaded in parallel?
 const scripts = [
   [`${monacoPath}/language/kusto/bridge.min.js`],
   [
