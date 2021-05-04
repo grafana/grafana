@@ -12,9 +12,6 @@ import (
 const ExporterName = "grafana"
 
 var (
-	// MUserPermission is a metric counter for user permission queries
-	MUserPermission prometheus.Counter
-
 	// MInstanceStart is a metric counter for started instances
 	MInstanceStart prometheus.Counter
 
@@ -108,9 +105,6 @@ var (
 	// MRenderingQueue is a metric gauge for image rendering queue size
 	MRenderingQueue prometheus.Gauge
 
-	// MAccessUserCount is a metric gauge for image rendering queue size
-	MAccessUserCount prometheus.Gauge
-
 	// MAccessRoleCount is a metric gauge for image rendering queue size
 	MAccessRoleCount prometheus.Gauge
 
@@ -201,12 +195,6 @@ var (
 func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
-
-	MUserPermission = prometheus.NewCounter(prometheus.CounterOpts{
-		Name:      "user_permission_total",
-		Help:      "counter for user permission requests",
-		Namespace: ExporterName,
-	})
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -414,7 +402,7 @@ func init() {
 	)
 
 	MAccessSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "access",
+		Name:    "access_request_duration",
 		Help:    "Histogram for the runtime of access functions.",
 		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
 	})
@@ -422,12 +410,6 @@ func init() {
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
 		Help:      "size of image rendering queue",
-		Namespace: ExporterName,
-	})
-
-	MAccessUserCount = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "access_user_count",
-		Help:      "number of users",
 		Namespace: ExporterName,
 	})
 
@@ -620,7 +602,6 @@ func SetPluginBuildInformation(pluginID, pluginType, version string) {
 
 func initMetricVars() {
 	prometheus.MustRegister(
-		MUserPermission,
 		MInstanceStart,
 		MPageStatus,
 		MApiStatus,
@@ -659,7 +640,6 @@ func initMetricVars() {
 		MAccessRoleCount,
 		MAccessTeamRoleCount,
 		MAccessTeamCount,
-		MAccessUserCount,
 		MAccessPermissionCount,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
