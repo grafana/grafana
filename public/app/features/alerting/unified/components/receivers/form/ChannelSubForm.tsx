@@ -1,4 +1,4 @@
-import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { NotifierDTO } from 'app/types';
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
@@ -127,7 +127,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   buttons: css`
     & > * + * {
       margin-left: ${theme.spacing(1)};

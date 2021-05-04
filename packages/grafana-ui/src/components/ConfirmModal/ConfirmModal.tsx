@@ -4,7 +4,7 @@ import { Modal } from '../Modal/Modal';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button';
 import { useStyles2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { HorizontalGroup, Input } from '..';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -90,7 +90,7 @@ export const ConfirmModal = ({
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`
     width: 500px;
   `,

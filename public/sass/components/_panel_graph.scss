@@ -273,8 +273,9 @@
 
   .graph-annotation__header {
     background: $popover-header-bg;
-    padding: 6px 10px;
+    padding: 4px 8px;
     display: flex;
+    flex-wrap: nowrap;
   }
 
   .graph-annotation__title {

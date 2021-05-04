@@ -173,7 +173,6 @@ export class PanelModel implements DataConfigSource {
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
-  dataSupport?: PanelPluginDataSupport;
 
   /**
    * The PanelModel event bus only used for internal and legacy angular support.
@@ -355,7 +354,6 @@ export class PanelModel implements DataConfigSource {
       }
     }
 
-    this.dataSupport = plugin.dataSupport;
     this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
   }
@@ -482,6 +480,10 @@ export class PanelModel implements DataConfigSource {
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme2,
     };
+  }
+
+  getDataSupport(): PanelPluginDataSupport {
+    return this.plugin?.dataSupport ?? { annotations: false, alertStates: false };
   }
 
   getQueryRunner(): PanelQueryRunner {
