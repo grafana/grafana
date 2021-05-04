@@ -184,6 +184,7 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 			ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
 			MaxIdleConns:          setting.DataProxyMaxIdleConns,
+			MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConnsPerHost,
 			IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
 		},
 		Headers: ds.getCustomHeaders(),
