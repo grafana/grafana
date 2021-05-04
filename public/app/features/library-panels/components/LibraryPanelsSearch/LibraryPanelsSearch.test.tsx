@@ -62,7 +62,7 @@ async function getTestContext(
   };
   const getSpy = jest
     .spyOn(backendSrv, 'get')
-    .mockResolvedValue({ sortOptions: [{ displaName: 'Desc', name: 'dummy-desc' }] });
+    .mockResolvedValue({ sortOptions: [{ displaName: 'Desc', name: 'alpha-desc' }] });
   const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels').mockResolvedValue(searchResult);
   const getAllPanelPluginMetaSpy = jest
     .spyOn(viztypepicker, 'getAllPanelPluginMeta')
@@ -127,7 +127,7 @@ describe('LibraryPanelsSearch', () => {
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
         expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
           searchString: '',
-          sortDirection: 'dummy-desc',
+          sortDirection: 'alpha-desc',
           folderFilter: [],
           page: 0,
           panelFilter: [],

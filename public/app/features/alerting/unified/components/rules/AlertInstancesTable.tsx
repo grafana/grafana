@@ -1,5 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { AlertingRule } from 'app/types/unified-alerting';
 import { css, cx } from '@emotion/css';
 import React, { FC, Fragment, useState } from 'react';
@@ -15,8 +15,8 @@ interface Props {
 }
 
 export const AlertInstancesTable: FC<Props> = ({ instances }) => {
-  const styles = useStyles(getStyles);
-  const tableStyles = useStyles(getAlertTableStyles);
+  const styles = useStyles2(getStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
@@ -79,7 +79,7 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
   );
 };
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   colExpand: css`
     width: 36px;
   `,
@@ -87,8 +87,8 @@ export const getStyles = (theme: GrafanaTheme) => ({
     width: 110px;
   `,
   labelsCell: css`
-    padding-top: ${theme.spacing.xs} !important;
-    padding-bottom: ${theme.spacing.xs} !important;
+    padding-top: ${theme.spacing(0.5)} !important;
+    padding-bottom: ${theme.spacing(0.5)} !important;
   `,
   createdCell: css`
     white-space: nowrap;
@@ -96,8 +96,8 @@ export const getStyles = (theme: GrafanaTheme) => ({
   table: css`
     td {
       vertical-align: top;
-      padding-top: ${theme.spacing.sm};
-      padding-bottom: ${theme.spacing.sm};
+      padding-top: ${theme.spacing(1)};
+      padding-bottom: ${theme.spacing(1)};
     }
   `,
 });
