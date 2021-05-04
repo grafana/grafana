@@ -1,6 +1,7 @@
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
+import { MssqlQuery } from './types';
 
 const defaultQuery = `SELECT
   $__timeEpoch(<time_column>),
@@ -25,7 +26,6 @@ export class MssqlQueryCtrl extends QueryCtrl<MssqlQuery> {
   constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
 
-    this.target = this.target;
     this.target.format = this.target.format || 'time_series';
     this.target.alias = '';
     this.formats = [
