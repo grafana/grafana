@@ -73,6 +73,8 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
+{{< docs/shared "visualizations/tooltip-mode.md" >}}
+
 {{< docs/shared "visualizations/legend-mode.md" >}}
 
 ### Legend values

@@ -8,6 +8,7 @@ export interface MetricMetadata {
   aggOptions: Array<{ label: string; value: string }>;
   timeGrains: Array<{ label: string; value: string }>;
   dimensions: Array<{ label: string; value: string }>;
+  isLoading: boolean;
 }
 
 export function useMetricsMetadata(
@@ -20,6 +21,7 @@ export function useMetricsMetadata(
     aggOptions: [],
     timeGrains: [],
     dimensions: [],
+    isLoading: false,
   });
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function useMetricsMetadata(
     ) {
       return;
     }
-
+    setMetricMetadata((prevState) => ({ ...prevState, isLoading: true }));
     datasource
       .getMetricMetadata(
         subscriptionId,
@@ -69,6 +71,7 @@ export function useMetricsMetadata(
           aggOptions: aggregations,
           timeGrains: metadata.supportedTimeGrains,
           dimensions: metadata.dimensions,
+          isLoading: false,
         });
       })
       .catch((err) => {
