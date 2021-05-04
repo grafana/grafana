@@ -337,26 +337,28 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	dashSvc := dashboards.NewService(hs.SQLStore)
 	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
 
-	// Tell everyone listening that the dashboard changed
-	if dashboard == nil {
-		dashboard = dash // the original request
-	}
+	if hs.Live != nil {
+		// Tell everyone listening that the dashboard changed
+		if dashboard == nil {
+			dashboard = dash // the original request
+		}
 
-	// This will broadcast all save requets only if a `gitops` observer exists.
-	// gitops is useful when trying to save dashboards in an environment where the user can not save
-	channel := hs.Live.GrafanaScope.Dashboards
-	liveerr := channel.DashboardSaved(c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
+		// This will broadcast all save requets only if a `gitops` observer exists.
+		// gitops is useful when trying to save dashboards in an environment where the user can not save
+		channel := hs.Live.GrafanaScope.Dashboards
+		liveerr := channel.DashboardSaved(c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
 
-	// When an error exists, but the value broadcast to a gitops listener return 202
-	if liveerr == nil && err != nil && channel.HasGitOpsObserver() {
-		return response.JSON(202, util.DynMap{
-			"status":  "pending",
-			"message": "changes were broadcast to the gitops listener",
-		})
-	}
+		// When an error exists, but the value broadcast to a gitops listener return 202
+		if liveerr == nil && err != nil && channel.HasGitOpsObserver() {
+			return response.JSON(202, util.DynMap{
+				"status":  "pending",
+				"message": "changes were broadcast to the gitops listener",
+			})
+		}
 
-	if liveerr != nil {
-		hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		if liveerr != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
 	}
 
 	if err != nil {
