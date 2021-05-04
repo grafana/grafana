@@ -8,9 +8,9 @@ import Validators from 'app/percona/shared/helpers/validators';
 import { schemaOptions } from '../FormParts.constants';
 import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
-import { ExternalServiceConnectionDetailsFormPartProps } from '../FormParts.types';
+import { FormPartProps } from '../FormParts.types';
 
-export const ExternalServiceConnectionDetails: FC<ExternalServiceConnectionDetailsFormPartProps> = ({ form }) => {
+export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
