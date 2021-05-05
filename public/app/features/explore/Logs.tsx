@@ -57,7 +57,7 @@ interface Props {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  queries: DataQuery[];
+  logsQueries?: DataQuery[];
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange, checkForCaching?: boolean) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -241,7 +241,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       onChangeTime,
       getFieldLinks,
       theme,
-      queries,
+      logsQueries,
     } = this.props;
 
     const {
@@ -356,7 +356,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             timeZone={timeZone}
             onChangeTime={onChangeTime}
             loading={loading}
-            queries={queries}
+            queries={logsQueries || []}
           />
         </div>
         {!loading && !hasData && !scanning && (

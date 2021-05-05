@@ -357,7 +357,7 @@ export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolea
         map((data: PanelData) => preProcessPanelData(data, queryResponse)),
         map(decorateWithFrameTypeMetadata),
         map(decorateWithGraphResult),
-        map(decorateWithLogsResult({ absoluteRange, refreshInterval })),
+        map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
         mergeMap(decorateWithTableResult)
       )
       .subscribe(

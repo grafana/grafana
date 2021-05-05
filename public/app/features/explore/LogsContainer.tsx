@@ -44,36 +44,41 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
   }
 
   componentDidMount() {
-    const { logsResult, absoluteRange, queries } = this.props;
-    if (logsResult && absoluteRange && queries) {
-      this.setCacheLogResults(logsResult, absoluteRange, queries);
+    const { logsResult, absoluteRange } = this.props;
+    if (logsResult && absoluteRange) {
+      this.setCacheLogResults(logsResult, absoluteRange);
     }
   }
 
   componentDidUpdate(prevProps: LogsContainerProps) {
-    const { logsResult, absoluteRange, queries } = this.props;
+    const { logsResult, absoluteRange } = this.props;
+    // If new results, update cache
     if (logsResult && !isEqual(logsResult, prevProps.logsResult)) {
+      // If queries were changed, reset cache and start fresh
+      if (!isEqual(logsResult.queries, prevProps.logsResult?.queries)) {
+        this.logRowsCache.reset();
+      }
+      // Update state and add to logResults and absolutRange to chache
       this.setState({ logsToShow: this.props.logsResult, absoluteRangeToShow: this.props.absoluteRange });
-      this.setCacheLogResults(logsResult, absoluteRange, queries);
+      this.setCacheLogResults(logsResult, absoluteRange);
     }
   }
 
-  setCacheLogResults(logsResult: LogsModel, absoluteRange: AbsoluteTimeRange, queries: DataQuery[]) {
-    const cacheKey = this.createCacheKey(absoluteRange, queries);
+  setCacheLogResults(logsResult: LogsModel, absoluteRange: AbsoluteTimeRange) {
+    const cacheKey = this.createCacheKey(absoluteRange);
     this.logRowsCache.set(cacheKey, { cacheLogsResult: logsResult, cacheAbsoluteRange: absoluteRange });
   }
 
-  getCacheLogResults(absoluteRange: AbsoluteTimeRange, queries: DataQuery[]) {
-    const cacheKey = this.createCacheKey(absoluteRange, queries);
+  getCacheLogResults(absoluteRange: AbsoluteTimeRange) {
+    const cacheKey = this.createCacheKey(absoluteRange);
     const { cacheLogsResult, cacheAbsoluteRange } = this.logRowsCache.get(cacheKey) || {};
     return { cacheLogsResult, cacheAbsoluteRange };
   }
 
-  createCacheKey(absRange: AbsoluteTimeRange, queries: DataQuery[]) {
+  createCacheKey(absRange: AbsoluteTimeRange) {
     const params = {
       from: absRange.from,
       to: absRange.to,
-      queries: queries.map((q) => q.key),
     };
 
     const cacheKey = Object.entries(params)
@@ -83,11 +88,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
   }
 
   onChangeTime = (absoluteRange: AbsoluteTimeRange, checkForCaching?: boolean) => {
-    const { exploreId, updateTimeRange, queries } = this.props;
+    const { exploreId, updateTimeRange } = this.props;
     if (!checkForCaching) {
       updateTimeRange({ exploreId, absoluteRange });
     } else {
-      const { cacheAbsoluteRange, cacheLogsResult } = this.getCacheLogResults(absoluteRange, queries);
+      const { cacheAbsoluteRange, cacheLogsResult } = this.getCacheLogResults(absoluteRange);
       if (!cacheAbsoluteRange || !cacheLogsResult) {
         updateTimeRange({ exploreId, absoluteRange });
       } else {
@@ -135,12 +140,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
       width,
       isLive,
       exploreId,
-      queries,
     } = this.props;
 
     const { logsToShow, absoluteRangeToShow } = this.state;
 
-    const { rows: logRows, meta: logsMeta, series: logsSeries, visibleRange } = logsToShow || {};
+    const { rows: logRows, meta: logsMeta, series: logsSeries, queries: logsQueries, visibleRange } = logsToShow || {};
 
     if (!logRows) {
       return null;
@@ -170,6 +174,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
+              logsQueries={logsQueries}
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
@@ -186,7 +191,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
-              queries={queries}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -209,7 +213,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    queries,
   } = item;
   const timeZone = getTimeZone(state.user);
 
@@ -224,7 +227,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    queries,
   };
 }
 

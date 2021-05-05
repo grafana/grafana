@@ -30,6 +30,7 @@ import {
   AbsoluteTimeRange,
   sortInAscendingOrder,
   rangeUtil,
+  DataQuery,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { config } from '@grafana/runtime';
@@ -202,7 +203,8 @@ export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
   timeZone: TimeZone,
-  absoluteRange?: AbsoluteTimeRange
+  absoluteRange?: AbsoluteTimeRange,
+  queries?: DataQuery[]
 ): LogsModel {
   const { logSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
@@ -218,6 +220,7 @@ export function dataFrameToLogsModel(
       );
       logsModel.visibleRange = visibleRange;
       logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
+      logsModel.queries = queries;
 
       if (logsModel.meta) {
         logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
