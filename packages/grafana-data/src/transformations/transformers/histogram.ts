@@ -7,7 +7,7 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { AlignedData, join } from './joinDataFrames';
 
 /* eslint-disable */
-const bucketSizes = [
+export const histogramBucketSizes = [
     .001, .002, .0025, .005,
      .01,  .02,  .025,  .05,
       .1,   .2,   .25,   .5,
@@ -22,7 +22,7 @@ const histFilter = [null];
 const histSort = (a: number, b: number) => a - b;
 
 export interface HistogramTransformerOptions {
-  bucketSize?: number;
+  bucketSize?: number; // 0 is auto
 }
 
 export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptions> = {
@@ -43,7 +43,7 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
-        return [buildHistogram(data, options.bucketSize)];
+        return [buildHistogram(data, options)];
       })
     ),
 };
@@ -83,12 +83,15 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
-export function buildHistogram(frames: DataFrame[], bucketSize?: number | null): DataFrame {
+export function buildHistogram(frames: DataFrame[], options?: HistogramTransformerOptions): DataFrame {
+  let { bucketSize } = options ?? { bucketSize: 0 };
+
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize) {
     let min = Infinity,
       max = -Infinity;
 
+    // TODO: include field configs!
     for (const frame of frames) {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
@@ -103,7 +106,7 @@ export function buildHistogram(frames: DataFrame[], bucketSize?: number | null):
     let range = Math.abs(max - min);
 
     // choose bucket
-    for (const size of bucketSizes) {
+    for (const size of histogramBucketSizes) {
       if (range / 10 < size) {
         bucketSize = size;
         break;

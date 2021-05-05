@@ -1,55 +1,23 @@
-//import React, { useCallback, useMemo } from 'react';
-import React from 'react';
-import { FieldConfig, FieldType, PanelProps } from '@grafana/data';
-import { Histogram, HistogramOptions } from '@grafana/ui';
+import React, { useMemo } from 'react';
+import { PanelProps, HistogramTransformerOptions } from '@grafana/data';
+import { buildHistogram } from '@grafana/data/src/transformations/transformers/histogram';
 
-interface HistogramPanelProps extends PanelProps<HistogramOptions> {}
+interface HistogramPanelOptions extends HistogramTransformerOptions {
+  // anything else?
+}
 
-/**
- * @alpha
- */
-export const HistogramPanel: React.FC<HistogramPanelProps> = ({
-  data,
-  options,
-  width,
-  height,
-  //fieldConfig,
-  //eventBus,
+type Props = PanelProps<HistogramPanelOptions>;
 
-  //timeRange,
-  //timeZone,
+export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
+  const alignedFrame = useMemo(() => {
+    if (!data?.series?.length) {
+      return undefined;
+    }
 
-  // /** Panel options change handler */
-  // onOptionsChange: (options: T) => void;
+    return buildHistogram(data.series, options);
+  }, [data.series, options]);
 
-  // /** Field config change handler */
-  // onFieldConfigChange: (config: FieldConfigSource) => void;
-
-  // /** Template variables interpolation function */
-  // replaceVariables: InterpolateFunction;
-
-  // /** Time range change handler */
-  // onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
-}) => {
-  /*
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-  */
-
-  const {
-    //structureRev,
-    series: frames,
-    //annotations,
-    //timeRange
-  } = data;
-
-  const { bucketSize } = options;
-
-  if (!data.series.length) {
+  if (!alignedFrame) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
@@ -57,25 +25,5 @@ export const HistogramPanel: React.FC<HistogramPanelProps> = ({
     );
   }
 
-  const firstFrame = data.series[0];
-
-  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
-    return (
-      <div className="panel-empty">
-        <p>No numeric fields found</p>
-      </div>
-    );
-  }
-
-  return (
-    <Histogram
-      width={width}
-      height={height}
-      frames={frames}
-      bucketSize={bucketSize}
-      //fieldConfig={fieldConfig}
-      //onLegendClick={onLegendClick}
-      //onSeriesColorChange={onSeriesColorChange}
-    />
-  );
+  return <div>SHOW HISTOGRAM</div>;
 };
