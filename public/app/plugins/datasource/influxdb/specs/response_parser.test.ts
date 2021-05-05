@@ -121,6 +121,39 @@ describe('influxdb response parser', () => {
     });
   });
 
+  describe('SELECT response where ordering matters', () => {
+    const query = 'SELECT "val" from "num"';
+    const response = {
+      results: [
+        {
+          series: [
+            {
+              name: 'num',
+              columns: ['time', 'val'],
+              values: [
+                [1620041231000, 2],
+                [1620041233000, 3],
+                [1620041235000, 4],
+                [1620041238000, 5],
+                [1620041239000, 1],
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    it('should keep the order returned by influxdb, even for numbers', () => {
+      expect(parser.parse(query, response)).toStrictEqual([
+        { text: '2' },
+        { text: '3' },
+        { text: '4' },
+        { text: '5' },
+        { text: '1' },
+      ]);
+    });
+  });
+
   describe('SHOW FIELD response', () => {
     const query = 'SHOW FIELD KEYS FROM "cpu"';
 
