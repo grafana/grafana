@@ -20,7 +20,7 @@ The access control work with the following main parts:
 1. _who_ has access (`identity`). 
 1. _what access_ they have and for which _Grafana resource_ (`role`).
 
-Learn more about [Concepts]({{< relref "./concepts/_index.md" >}}) and understand how to [Managing roles and permissions]({{< relref "./managing-roles-permissions.md" >}}).
+Learn more about [Concepts]({{< relref "./concepts/_index.md" >}}) and understand how to [Manage roles and permissions]({{< relref "./managing-roles-permissions.md" >}}).
 
 ### Identity
 
@@ -34,8 +34,7 @@ When an authenticated user tries to access a Grafana resource, access control ch
 ### Resources
 
 If a user needs access to a specific Grafana resource, you can assign a role with required permissions to the relevant Organization role or Grafana Server Admin role.
-Currently, only subset of resources can be controlled by fine-grained permissions. See [permissions]({{< relref "./concepts/permissions.md" >}}) for the full list of resources.
-Refer to [Managing roles and permissions]({{< relref "./managing-roles-permissions.md" >}}) to understand how to do that.
+Currently, only subset of resources can be controlled by fine-grained permissions. Refer to [Managing roles and permissions]({{< relref "./managing-roles-permissions.md" >}}) for more information.
 
 ## Turn off access control
 
