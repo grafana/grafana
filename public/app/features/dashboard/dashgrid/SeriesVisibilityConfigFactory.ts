@@ -34,7 +34,7 @@ function createOverride(names: string[], property?: DynamicConfigValue): SystemC
   property = property ?? {
     id: 'custom.hideFrom',
     value: {
-      graph: true,
+      viz: true,
       legend: false,
       tooltip: false,
     },
@@ -54,7 +54,7 @@ function createOverride(names: string[], property?: DynamicConfigValue): SystemC
       {
         ...property,
         value: {
-          graph: true,
+          viz: true,
           legend: false,
           tooltip: false,
         },

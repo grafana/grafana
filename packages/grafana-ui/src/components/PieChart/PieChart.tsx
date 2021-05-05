@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
+  ByNamesMatcherMode,
   DataHoverClearEvent,
   DataHoverEvent,
   FALLBACK_COLOR,
@@ -95,12 +96,12 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
   }
   const total = displayValues
     .filter((item) => {
-      return !item.field.custom.hideFrom.graph;
+      return !item.field.custom.hideFrom.viz;
     })
     .reduce((acc, item) => item.display.numeric + acc, 0);
 
   const legendItems = displayValues.map<VizLegendItem>((value, idx) => {
-    const hidden = value.field.custom.hideFrom.graph;
+    const hidden = value.field.custom.hideFrom.viz;
     const display = value.display;
     return {
       label: display.title ?? '',
@@ -133,7 +134,14 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
     };
   });
 
-  return <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />;
+  return (
+    <VizLegend
+      items={legendItems}
+      seriesToggleMode={ByNamesMatcherMode.include}
+      placement={legendOptions.placement}
+      displayMode={legendOptions.displayMode}
+    />
+  );
 }
 
 function useSliceHighlightState() {
@@ -180,7 +188,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   });
 
   const filteredFieldDisplayValues = fieldDisplayValues.filter((dv) => {
-    return !dv.field.custom.hideFrom.graph;
+    return !dv.field.custom.hideFrom.viz;
   });
 
   if (filteredFieldDisplayValues.length < 0) {

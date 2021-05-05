@@ -14,6 +14,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   displayMode,
   sortBy: sortKey,
   sortDesc,
+  seriesToggleMode = ByNamesMatcherMode.exclude,
   onToggleSort,
   placement,
   className,
@@ -53,7 +54,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   const onLabelClick = useCallback(
     (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
       if (onToggleSeriesVisibility) {
-        onToggleSeriesVisibility(item.label, { viz: true, legend: false, tooltip: false }, ByNamesMatcherMode.include);
+        onToggleSeriesVisibility(item.label, seriesToggleMode);
       }
     },
     [onToggleSeriesVisibility]
