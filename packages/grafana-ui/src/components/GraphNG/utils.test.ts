@@ -1,12 +1,13 @@
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { preparePlotFrame } from './utils';
+import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import {
+  createTheme,
   DefaultTimeZone,
   FieldConfig,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
   getDefaultTimeRange,
-  GrafanaTheme,
   MutableDataFrame,
 } from '@grafana/data';
 import {
@@ -188,13 +189,12 @@ jest.mock('@grafana/data', () => ({
 describe('GraphNG utils', () => {
   test('preparePlotConfigBuilder', () => {
     const frame = mockDataFrame();
-    expect(
-      preparePlotConfigBuilder(
-        frame!,
-        { colors: { panelBg: '#000000' } } as GrafanaTheme,
-        getDefaultTimeRange,
-        () => DefaultTimeZone
-      )
-    ).toMatchSnapshot();
+    const result = preparePlotConfigBuilder({
+      frame: frame!,
+      theme: createTheme(),
+      timeZone: DefaultTimeZone,
+      getTimeRange: getDefaultTimeRange,
+    }).getConfig();
+    expect(result).toMatchSnapshot();
   });
 });

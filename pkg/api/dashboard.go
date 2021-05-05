@@ -46,9 +46,32 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(403, "Access denied to this dashboard", nil)
 }
 
+func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboardCommand) response.Response {
+	var err error
+	dash := cmd.Dashboard
+	meta := cmd.Meta
+
+	trimedResult := *dash
+	if !hs.LoadSchemaService.IsDisabled() {
+		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
+		if err != nil {
+			return response.Error(500, "Error while trim default value from dashboard json", err)
+		}
+	}
+
+	dto := dtos.TrimDashboardFullWithMeta{
+		Dashboard: &trimedResult,
+		Meta:      meta,
+	}
+
+	c.TimeRequest(metrics.MApiDashboardGet)
+	return response.JSON(200, dto)
+}
+
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
+	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -154,6 +177,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 			return response.Error(500, "Error while loading library panels", err)
 		}
 	}
+	var trimedJson simplejson.Json
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
+		trimedJson, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
+		if err != nil {
+			return response.Error(500, "Error while trim default value from dashboard json", err)
+		}
+		dash.Data = &trimedJson
+	}
 
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
@@ -239,6 +270,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
+	if hs.Live != nil {
+		err = hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
+		if err != nil {
+			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
+		}
+	}
+
 	return response.JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
@@ -247,11 +285,17 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
-
+	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
+		cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
+		if err != nil {
+			return response.Error(500, "Error while applying default value to the dashboard json", err)
+		}
+	}
 	dash := cmd.GetDashboardModel()
-
 	newDashboard := dash.Id == 0 && dash.Uid == ""
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
@@ -292,6 +336,31 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	dashSvc := dashboards.NewService(hs.SQLStore)
 	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
+
+	if hs.Live != nil {
+		// Tell everyone listening that the dashboard changed
+		if dashboard == nil {
+			dashboard = dash // the original request
+		}
+
+		// This will broadcast all save requets only if a `gitops` observer exists.
+		// gitops is useful when trying to save dashboards in an environment where the user can not save
+		channel := hs.Live.GrafanaScope.Dashboards
+		liveerr := channel.DashboardSaved(c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
+
+		// When an error exists, but the value broadcast to a gitops listener return 202
+		if liveerr == nil && err != nil && channel.HasGitOpsObserver() {
+			return response.JSON(202, util.DynMap{
+				"status":  "pending",
+				"message": "changes were broadcast to the gitops listener",
+			})
+		}
+
+		if liveerr != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
+
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}
@@ -301,17 +370,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
-		}
-	}
-
-	// Tell everyone listening that the dashboard changed
-	if hs.Live.IsEnabled() {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
-			dashboard.Uid,
-			c.UserId,
-		)
-		if err != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
 		}
 	}
 

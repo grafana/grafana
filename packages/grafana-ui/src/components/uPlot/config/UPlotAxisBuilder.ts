@@ -1,4 +1,4 @@
-import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
@@ -7,7 +7,7 @@ import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
   scaleKey: string;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   label?: string;
   show?: boolean;
   size?: number | null;
@@ -50,14 +50,14 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
     } = this.props;
 
-    const font = `12px ${theme.v2.typography.fontFamily}`;
+    const font = `12px ${theme.typography.fontFamily}`;
 
-    const gridColor = theme.v2.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+    const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
 
     let config: Axis = {
       scale: scaleKey,
       show,
-      stroke: theme.v2.palette.text.primary,
+      stroke: theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
       labelFont: font,

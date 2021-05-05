@@ -3,11 +3,13 @@ import { Icon, getSvgSize } from '../Icon/Icon';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';
-import { useTheme } from '../../themes/ThemeContext';
-import { GrafanaTheme } from '@grafana/data';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TooltipPlacement } from '../Tooltip/PopoverController';
-import { focusCss, getMouseFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+
+export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
@@ -22,14 +24,16 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tooltip?: string;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
+  /** Variant to change the color of the Icon */
+  variant?: IconButtonVariant;
 }
 
 type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, ...restProps }, ref) => {
-    const theme = useTheme();
-    const styles = getStyles(theme, size);
+  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, variant = 'secondary', ...restProps }, ref) => {
+    const theme = useTheme2();
+    const styles = getStyles(theme, size, variant);
 
     const button = (
       <button ref={ref} {...restProps} className={cx(styles.button, className)}>
@@ -51,10 +55,16 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 
 IconButton.displayName = 'IconButton';
 
-const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
-  const hoverColor = theme.v2.palette.action.hover;
+const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: IconButtonVariant) => {
   const pixelSize = getSvgSize(size);
-  const hoverSize = pixelSize / 2;
+  const hoverSize = Math.max(pixelSize / 3, 8);
+  let iconColor = theme.colors.text.primary;
+
+  if (variant === 'primary') {
+    iconColor = theme.colors.primary.main;
+  } else if (variant === 'destructive') {
+    iconColor = theme.colors.error.main;
+  }
 
   return {
     button: css`
@@ -62,6 +72,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
       height: ${pixelSize}px;
       background: transparent;
       border: none;
+      color: ${iconColor};
       padding: 0;
       margin: 0;
       outline: none;
@@ -70,13 +81,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
       align-items: center;
       justify-content: center;
       position: relative;
-      border-radius: ${theme.v2.shape.borderRadius()};
+      border-radius: ${theme.shape.borderRadius()};
       z-index: 0;
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
 
       &[disabled],
       &:disabled {
         cursor: not-allowed;
+        color: ${theme.colors.action.disabledText};
         opacity: 0.65;
         box-shadow: none;
       }
@@ -102,18 +114,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
 
       &:focus,
       &:focus-visible {
-        ${focusCss(theme)}
+        ${getFocusStyles(theme)}
       }
 
       &:focus:not(:focus-visible) {
-        ${getMouseFocusStyles(theme.v2)}
+        ${getMouseFocusStyles(theme)}
       }
 
       &:hover {
-        color: ${theme.colors.linkHover};
+        color: ${iconColor};
 
         &:before {
-          background-color: ${hoverColor};
+          background-color: ${variant === 'secondary'
+            ? theme.colors.action.hover
+            : colorManipulator.alpha(iconColor, 0.12)};
           border: none;
           box-shadow: none;
           opacity: 1;

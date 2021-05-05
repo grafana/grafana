@@ -1,32 +1,32 @@
 import React, { MouseEvent, memo } from 'react';
 import cx from 'classnames';
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme2 } from '@grafana/data';
 import { NodeDatum } from './types';
-import { stylesFactory, useTheme } from '../../themes';
+import { useStyles2, useTheme } from '../../themes';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { statToString } from './utils';
 
 const nodeR = 40;
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   mainGroup: css`
     cursor: pointer;
     font-size: 10px;
   `,
 
   mainCircle: css`
-    fill: ${theme.colors.panelBg};
+    fill: ${theme.components.panel.background};
   `,
 
   hoverCircle: css`
     opacity: 0.5;
     fill: transparent;
-    stroke: ${theme.colors.textBlue};
+    stroke: ${theme.colors.primary.text};
   `,
 
   text: css`
-    fill: ${theme.colors.text};
+    fill: ${theme.colors.text.primary};
   `,
 
   titleText: css`
@@ -34,7 +34,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    background-color: ${tinycolor(theme.v2.palette.background.primary).setAlpha(0.6).toHex8String()};
+    background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.6).toHex8String()};
     width: 100px;
   `,
 
@@ -49,10 +49,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   textHovering: css`
     width: 200px;
     & span {
-      background-color: ${tinycolor(theme.v2.palette.background.primary).setAlpha(0.8).toHex8String()};
+      background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.8).toHex8String()};
     }
   `,
-}));
+});
 
 export const Node = memo(function Node(props: {
   node: NodeDatum;
@@ -62,7 +62,7 @@ export const Node = memo(function Node(props: {
   hovering: boolean;
 }) {
   const { node, onMouseEnter, onMouseLeave, onClick, hovering } = props;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
 
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;

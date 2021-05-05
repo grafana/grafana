@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import sumBy from 'lodash/sumBy';
-import { Modal, ConfirmModal, HorizontalGroup, Button } from '@grafana/ui';
+import { sumBy } from 'lodash';
+import { Modal, ConfirmModal, Button } from '@grafana/ui';
 import { DashboardModel, PanelModel } from '../../state';
 import { useDashboardDelete } from './useDashboardDelete';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
@@ -64,7 +64,6 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
     icon="trash-alt"
     onDismiss={hideModal}
     className={css`
-      text-align: center;
       width: 500px;
     `}
   >
@@ -88,10 +87,10 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
       <br />
       File path: {provisionedId}
     </p>
-    <HorizontalGroup justify="center">
-      <Button variant="secondary" onClick={hideModal}>
+    <Modal.ButtonRow>
+      <Button variant="primary" onClick={hideModal}>
         OK
       </Button>
-    </HorizontalGroup>
+    </Modal.ButtonRow>
   </Modal>
 );

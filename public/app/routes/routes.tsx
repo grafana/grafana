@@ -11,6 +11,7 @@ import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 
 export const extraRoutes: RouteDescriptor[] = [];
+export const featureToggledRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
   return [
@@ -376,6 +377,30 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/notifications/templates/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/templates/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
       path: '/alerting/notification/new',
       component: SafeDynamicImport(
         () =>
@@ -442,18 +467,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/library-panels',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
-      ),
-    },
-    {
       path: '/sandbox/benchmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
       ),
     },
     ...extraRoutes,
+    ...featureToggledRoutes,
     {
       path: '/*',
       component: ErrorPage,

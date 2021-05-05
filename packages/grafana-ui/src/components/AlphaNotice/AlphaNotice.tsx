@@ -17,12 +17,12 @@ export const AlphaNotice: FC<Props> = ({ state, text, className }) => {
   const styles = cx(
     className,
     css`
-      background: ${theme.v2.palette.primary.transparent};
-      color: ${theme.v2.palette.text.secondary};
+      background: ${theme.colors.primary.transparent};
+      color: ${theme.colors.text.secondary};
       white-space: nowrap;
       border-radius: 3px;
       text-shadow: none;
-      font-size: ${theme.v2.typography.size.sm};
+      font-size: ${theme.typography.size.sm};
       padding: 0 8px;
       cursor: help;
       display: inline-block;

@@ -1,4 +1,5 @@
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
+import React from 'react';
 import { LegendDisplayMode, LegendPlacement } from './models.gen';
 
 export interface VizLegendBaseProps<T> {
@@ -6,8 +7,9 @@ export interface VizLegendBaseProps<T> {
   className?: string;
   items: Array<VizLegendItem<T>>;
   itemRenderer?: (item: VizLegendItem<T>, index: number) => JSX.Element;
-  onSeriesColorChange?: SeriesColorChangeHandler;
   onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLElement>) => void;
+  onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
@@ -31,6 +33,3 @@ export interface VizLegendItem<T = any> {
   fieldIndex?: DataFrameFieldIndex;
   data?: T;
 }
-
-export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
-export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;

@@ -6,11 +6,11 @@ import { EdgeDatum, NodeDatum, NodesMarker } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
-import { DataFrame, GrafanaTheme, LinkModel } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
-import { stylesFactory, useTheme } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { css } from '@emotion/css';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
@@ -22,7 +22,7 @@ import { Legend } from './Legend';
 import { useHighlight } from './useHighlight';
 import { useFocusPositiononLayout } from './useFocusPositionOnLayout';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     label: wrapper;
     height: 100%;
@@ -62,8 +62,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   legend: css`
     label: legend;
-    background: ${theme.v2.palette.background.secondary};
-    box-shadow: ${theme.v2.shadows.z2};
+    background: ${theme.colors.background.secondary};
+    box-shadow: ${theme.shadows.z1};
     padding-bottom: 5px;
   `,
   alert: css`
@@ -71,13 +71,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     padding: 5px 8px;
     font-size: 10px;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-radius: ${theme.border.radius.md};
+    border-radius: ${theme.shape.borderRadius()};
     align-items: center;
     position: absolute;
     top: 0;
     right: 0;
-    background: ${theme.palette.warn};
-    color: ${theme.palette.white};
+    background: ${theme.colors.warning.main};
+    color: ${theme.colors.warning.contrastText};
   `,
   loadingWrapper: css`
     label: loadingWrapper;
@@ -86,7 +86,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     align-items: center;
     justify-content: center;
   `,
-}));
+});
 
 // Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible be expanding
 // parts of the graph. The specific number is arbitrary but should be a number of nodes where panning, zooming and other
@@ -112,7 +112,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
 
-  const theme = useTheme();
+  const theme = useTheme2();
 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
@@ -152,7 +152,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     setConfig,
     setFocusedNodeId
   );
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   // This cannot be inline func or it will create infinite render cycle.
   const topLevelRef = useCallback(

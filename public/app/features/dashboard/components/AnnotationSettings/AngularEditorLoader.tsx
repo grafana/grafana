@@ -8,9 +8,18 @@ export interface Props {
   onChange: (annotation: AnnotationQuery) => void;
 }
 
+interface ScopeProps {
+  ctrl: {
+    currentDatasource: DataSourceApi;
+    currentAnnotation: AnnotationQuery;
+    ignoreNextWatcherFiring: boolean;
+  };
+}
+
 export class AngularEditorLoader extends React.PureComponent<Props> {
   ref: HTMLDivElement | null = null;
   angularComponent?: AngularComponent;
+  scopeProps?: ScopeProps;
 
   componentWillUnmount() {
     if (this.angularComponent) {
@@ -29,16 +38,17 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
       this.loadAngular();
     }
 
-    if (this.angularComponent && prevProps.annotation !== this.props.annotation) {
-      const scope = this.angularComponent.getScope();
-      scope.ctrl.ignoreNextWatcherFiring = true;
-      scope.ctrl.currentAnnotation = this.props.annotation;
+    if (this.scopeProps && this.scopeProps.ctrl.currentAnnotation !== this.props.annotation) {
+      this.scopeProps.ctrl.ignoreNextWatcherFiring = true;
+      this.scopeProps.ctrl.currentAnnotation = this.props.annotation;
+      this.angularComponent?.digest();
     }
   }
 
   loadAngular() {
     if (this.angularComponent) {
       this.angularComponent.destroy();
+      this.scopeProps = undefined;
     }
 
     const loader = getAngularLoader();
@@ -60,10 +70,10 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
         return;
       }
 
-      this.props.onChange({
-        ...scopeProps.ctrl.currentAnnotation,
-      });
+      this.props.onChange(scopeProps.ctrl.currentAnnotation);
     });
+
+    this.scopeProps = scopeProps;
   }
 
   render() {

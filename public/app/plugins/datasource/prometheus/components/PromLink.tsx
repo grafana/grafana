@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map } from 'lodash';
 import React, { FC, useEffect, useState, memo } from 'react';
 
 import { PrometheusDatasource } from '../datasource';
@@ -43,7 +43,7 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
           'g0.tab': 0,
         };
 
-        const args = _.map(expr, (v: string, k: string) => {
+        const args = map(expr, (v: string, k: string) => {
           return k + '=' + encodeURIComponent(v);
         }).join('&');
         return `${datasource.directUrl}/graph?${args}`;

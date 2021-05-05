@@ -1,13 +1,18 @@
-import _ from 'lodash';
+import { keys as _keys } from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { createCustomVariableAdapter } from '../../variables/custom/adapter';
 
 jest.mock('app/core/services/context_srv', () => ({}));
-variableAdapters.setInit(() => [createQueryVariableAdapter(), createAdHocVariableAdapter()]);
+variableAdapters.setInit(() => [
+  createQueryVariableAdapter(),
+  createAdHocVariableAdapter(),
+  createCustomVariableAdapter(),
+]);
 
 describe('DashboardModel', () => {
   describe('when creating new dashboard model defaults only', () => {
@@ -49,7 +54,7 @@ describe('DashboardModel', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
       const saveModel = model.getSaveModelClone();
-      const keys = _.keys(saveModel);
+      const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');
@@ -522,6 +527,7 @@ describe('DashboardModel', () => {
           list: [
             {
               name: 'dc',
+              type: 'custom',
               current: {
                 text: 'dc1 + dc2',
                 value: ['dc1', 'dc2'],
@@ -533,6 +539,7 @@ describe('DashboardModel', () => {
             },
             {
               name: 'app',
+              type: 'custom',
               current: {
                 text: 'se1 + se2',
                 value: ['se1', 'se2'],

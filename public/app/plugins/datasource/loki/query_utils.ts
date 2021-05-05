@@ -1,4 +1,4 @@
-import escapeRegExp from 'lodash/escapeRegExp';
+import { escapeRegExp } from 'lodash';
 
 export function formatQuery(selector: string | undefined): string {
   return `${selector || ''}`.trim();

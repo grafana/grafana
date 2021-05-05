@@ -16,7 +16,7 @@ import (
 	"github.com/timberio/go-datemath"
 )
 
-// DataSubQuery represents a data sub-query.
+// DataSubQuery represents a data sub-query.  New work should use the plugin SDK.
 type DataSubQuery struct {
 	RefID         string             `json:"refId"`
 	Model         *simplejson.Json   `json:"model,omitempty"`
@@ -26,7 +26,7 @@ type DataSubQuery struct {
 	QueryType     string             `json:"queryType"`
 }
 
-// DataQuery contains all information about a data query request.
+// DataQuery contains all information about a data query request.  New work should use the plugin SDK.
 type DataQuery struct {
 	TimeRange *DataTimeRange
 	Queries   []DataSubQuery
@@ -55,6 +55,7 @@ type DataTimeSeriesPoints []DataTimePoint
 type DataTimeSeriesSlice []DataTimeSeries
 type DataRowValues []interface{}
 
+// Deprecated: DataQueryResult should use backend.QueryDataResponse
 type DataQueryResult struct {
 	Error       error               `json:"-"`
 	ErrorString string              `json:"error,omitempty"`
@@ -179,12 +180,14 @@ func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK
 type DataTimeSeries struct {
 	Name   string               `json:"name"`
 	Points DataTimeSeriesPoints `json:"points"`
 	Tags   map[string]string    `json:"tags,omitempty"`
 }
 
+// Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse
 type DataResponse struct {
 	Results map[string]DataQueryResult `json:"results"`
 	Message string                     `json:"message,omitempty"`
@@ -228,6 +231,7 @@ func (r DataResponse) ToBackendDataResponse() (*backend.QueryDataResponse, error
 	return qdr, nil
 }
 
+// Deprecated: use the plugin SDK
 type DataPlugin interface {
 	DataQuery(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error)
 }

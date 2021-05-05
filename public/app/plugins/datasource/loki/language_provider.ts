@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 
 // Services & Utils
@@ -69,9 +69,9 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
   logLabelFetchTs: number;
-  started: boolean;
+  started = false;
   datasource: LokiDatasource;
-  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
+  lookupsDisabled = false; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -200,7 +200,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const suggestions = [];
 
     if (history?.length) {
-      const historyItems = _.chain(history)
+      const historyItems = chain(history)
         .map((h) => h.query.expr)
         .filter()
         .uniq()
@@ -319,7 +319,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       // Label keys
       const labelKeys = labelValues ? Object.keys(labelValues) : DEFAULT_KEYS;
       if (labelKeys) {
-        const possibleKeys = _.difference(labelKeys, existingKeys);
+        const possibleKeys = difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
           const newItems = possibleKeys.map((key) => ({ label: key }));
           const newSuggestion: CompletionItemGroup = { label: `Labels`, items: newItems };

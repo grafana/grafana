@@ -1,8 +1,10 @@
-import React from 'react';
-import { LegendProps } from './types';
+import React, { useCallback } from 'react';
+import { LegendProps, VizLegendItem } from './types';
 import { LegendDisplayMode } from './models.gen';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
+import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
+import { usePanelContext } from '../PanelChrome';
 
 /**
  * @public
@@ -14,11 +16,42 @@ export function VizLegend<T>({
   sortDesc,
   onToggleSort,
   onLabelClick,
-  onSeriesColorChange,
   placement,
   className,
   itemRenderer,
 }: LegendProps<T>) {
+  const { eventBus } = usePanelContext();
+
+  const onMouseEnter = useCallback(
+    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      eventBus?.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: item.label,
+        },
+      });
+    },
+    [eventBus]
+  );
+
+  const onMouseOut = useCallback(
+    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      eventBus?.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: item.label,
+        },
+      });
+    },
+    [eventBus]
+  );
+
   switch (displayMode) {
     case LegendDisplayMode.Table:
       return (
@@ -30,7 +63,8 @@ export function VizLegend<T>({
           sortDesc={sortDesc}
           onLabelClick={onLabelClick as any}
           onToggleSort={onToggleSort}
-          onSeriesColorChange={onSeriesColorChange}
+          onLabelMouseEnter={onMouseEnter}
+          onLabelMouseOut={onMouseOut}
           itemRenderer={itemRenderer}
         />
       );
@@ -40,8 +74,9 @@ export function VizLegend<T>({
           className={className}
           items={items}
           placement={placement}
-          onLabelClick={onLabelClick as any}
-          onSeriesColorChange={onSeriesColorChange}
+          onLabelMouseEnter={onMouseEnter}
+          onLabelMouseOut={onMouseOut}
+          onLabelClick={onLabelClick}
           itemRenderer={itemRenderer}
         />
       );

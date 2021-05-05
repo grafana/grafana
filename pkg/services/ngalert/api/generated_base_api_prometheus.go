@@ -4,13 +4,17 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
+
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 type PrometheusApiService interface {
@@ -18,9 +22,25 @@ type PrometheusApiService interface {
 	RouteGetRuleStatuses(*models.ReqContext) response.Response
 }
 
-func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService) {
+func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService, m *metrics.Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
-		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
+		group.Get(
+			toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/prometheus/{Recipient}/api/v1/alerts",
+				srv.RouteGetAlertStatuses,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/prometheus/{Recipient}/api/v1/rules",
+				srv.RouteGetRuleStatuses,
+				m,
+			),
+		)
 	}, middleware.ReqSignedIn)
 }
