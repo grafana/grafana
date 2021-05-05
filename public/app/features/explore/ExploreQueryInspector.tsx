@@ -55,13 +55,6 @@ export function ExploreQueryInspector(props: Props) {
     ),
   };
 
-  const errorTab: TabConfig = {
-    label: 'Error',
-    value: 'error',
-    icon: 'exclamation-triangle',
-    content: <InspectErrorTab error={error} />,
-  };
-
   const queryTab: TabConfig = {
     label: 'Query',
     value: 'query',
@@ -71,6 +64,12 @@ export function ExploreQueryInspector(props: Props) {
 
   const tabs = [statsTab, queryTab, jsonTab, dataTab];
   if (error) {
+    const errorTab: TabConfig = {
+      label: 'Error',
+      value: 'error',
+      icon: 'exclamation-triangle',
+      content: <InspectErrorTab error={error} />,
+    };
     tabs.push(errorTab);
   }
   return (
