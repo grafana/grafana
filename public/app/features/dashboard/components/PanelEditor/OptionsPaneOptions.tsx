@@ -139,9 +139,9 @@ function renderSearchHits(
         key="Normal options"
         forceOpen={1}
       >
-        {optionHits.map((hit) => hit.render(true))}
+        {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => override.render(true))}
+      {overrideHits.map((override) => override.render(searchQuery))}
     </div>
   );
 }
@@ -152,6 +152,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
+
+    .search-fragment-highlight {
+      color: ${theme.colors.warning.text};
+      background: transparent;
+    }
   `,
   searchBox: css`
     display: flex;
