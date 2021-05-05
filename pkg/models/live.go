@@ -79,3 +79,22 @@ type DashboardActivityChannel interface {
 	// someone is subscribed to the `grafana/dashboards/gitops` channel
 	HasGitOpsObserver() bool
 }
+
+type LiveMessage struct {
+	Id        int64
+	OrgId     int64
+	Channel   string
+	Data      json.RawMessage
+	Published time.Time
+}
+
+type SaveLiveMessageQuery struct {
+	OrgId   int64
+	Channel string
+	Data    json.RawMessage
+}
+
+type GetLiveMessageQuery struct {
+	OrgId   int64
+	Channel string
+}

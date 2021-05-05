@@ -1,5 +1,5 @@
 import React, { HTMLProps, ReactNode } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { stylesFactory, useTheme2 } from '../../themes';
@@ -24,7 +24,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 }
 
 interface StyleDeps {
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
   invalid: boolean;
   width?: number;
 }
@@ -193,7 +193,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-suffix;
         padding-left: ${theme.spacing(1)};
-        padding-right: ${theme.spacing(0.5)};
+        padding-right: ${theme.spacing(1)};
         margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;

@@ -1,5 +1,5 @@
 import React, { CSSProperties, FC, ReactNode, useState } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
@@ -30,7 +30,7 @@ export interface Props {
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2, scrollableContent: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, scrollableContent: boolean) => {
   return {
     drawer: css`
       .drawer-content {

@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
 import { Icon } from '../../Icon/Icon';
 import { IconName } from '../../../types/icon';
@@ -69,7 +69,7 @@ export function RadioButtonGroup<T>({
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     radioGroup: css({
       display: 'inline-flex',

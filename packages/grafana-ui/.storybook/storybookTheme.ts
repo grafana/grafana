@@ -1,9 +1,9 @@
-import { GrafanaThemeV2, createTheme } from '@grafana/data';
+import { GrafanaTheme2, createTheme } from '@grafana/data';
 //@ts-ignore
 import { create } from '@storybook/theming/create';
 import '../src/components/Icon/iconBundle';
 
-const createStorybookTheme = (theme: GrafanaThemeV2) => {
+const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({
     base: theme.name.includes('Light') ? 'light' : 'dark',
 

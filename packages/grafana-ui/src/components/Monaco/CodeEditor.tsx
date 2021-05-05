@@ -1,4 +1,6 @@
 import React from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { Monaco, MonacoEditor as MonacoEditorType, CodeEditorProps, MonacoOptions } from './types';
@@ -124,7 +126,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
 
     return (
-      <div onBlur={this.onBlur}>
+      <div onBlur={this.onBlur} aria-label={selectors.components.CodeEditor.container}>
         <MonacoEditor
           width={width}
           height={height}

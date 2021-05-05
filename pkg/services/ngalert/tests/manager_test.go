@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
 )
+
+var nilMetrics = metrics.NewMetrics(nil)
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
@@ -265,7 +268,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:00 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -338,7 +341,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:20 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -460,7 +463,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -521,7 +524,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -582,7 +585,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -644,7 +647,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -706,7 +709,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -768,20 +771,20 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"))
+		st := state.NewManager(log.New("test_state_manager"), nilMetrics)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(tc.alertRule, res)
 			}
-			for id, s := range tc.expectedStates {
-				cachedState, err := st.Get(id)
+			for _, s := range tc.expectedStates {
+				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				require.NoError(t, err)
 				assert.Equal(t, s, cachedState)
 			}

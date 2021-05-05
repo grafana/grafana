@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 type TestingApiService interface {
@@ -25,36 +26,36 @@ type TestingApiService interface {
 	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, metrics *Metrics) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
 			binding.Bind(apimodels.EvalQueriesPayload{}),
-			Instrument(
+			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/eval",
 				srv.RouteEvalQueries,
-				metrics,
+				m,
 			),
 		)
 		group.Post(
 			toMacaronPath("/api/v1/receiver/test/{Recipient}"),
 			binding.Bind(apimodels.ExtendedReceiver{}),
-			Instrument(
+			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/receiver/test/{Recipient}",
 				srv.RouteTestReceiverConfig,
-				metrics,
+				m,
 			),
 		)
 		group.Post(
 			toMacaronPath("/api/v1/rule/test/{Recipient}"),
 			binding.Bind(apimodels.TestRulePayload{}),
-			Instrument(
+			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/test/{Recipient}",
 				srv.RouteTestRuleConfig,
-				metrics,
+				m,
 			),
 		)
 	}, middleware.ReqSignedIn)
