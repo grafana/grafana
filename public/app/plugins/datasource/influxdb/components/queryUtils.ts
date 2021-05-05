@@ -9,7 +9,7 @@ import { InfluxQuery } from '../types';
 // to this place
 
 export function buildRawQuery(query: InfluxQuery): string {
-  const queryCopy = { ...query }; // the query-model mutates the query
+  const queryCopy = cloneDeep(query); // the query-model mutates the query
   const model = new InfluxQueryModel(queryCopy);
   return model.render(false);
 }
@@ -20,8 +20,6 @@ export function normalizeQuery(query: InfluxQuery): InfluxQuery {
 }
 
 export function addNewSelectPart(query: InfluxQuery, type: string, index: number): InfluxQuery {
-  // the cloneDeep call is slow, but this function should not be called so often,
-  // so the performance should be fine
   const queryCopy = cloneDeep(query); // the query-model mutates the query
   const model = new InfluxQueryModel(queryCopy);
   model.addSelectPart(model.selectModels[index], type);
@@ -29,8 +27,6 @@ export function addNewSelectPart(query: InfluxQuery, type: string, index: number
 }
 
 export function removeSelectPart(query: InfluxQuery, partIndex: number, index: number): InfluxQuery {
-  // the cloneDeep call is slow, but this function should not be called so often,
-  // so the performance should be fine
   const queryCopy = cloneDeep(query); // the query-model mutates the query
   const model = new InfluxQueryModel(queryCopy);
   const selectModel = model.selectModels[index];
@@ -39,8 +35,6 @@ export function removeSelectPart(query: InfluxQuery, partIndex: number, index: n
 }
 
 export function addNewGroupByPart(query: InfluxQuery, type: string): InfluxQuery {
-  // the cloneDeep call is slow, but this function should not be called so often,
-  // so the performance should be fine
   const queryCopy = cloneDeep(query); // the query-model mutates the query
   const model = new InfluxQueryModel(queryCopy);
   model.addGroupBy(type);
@@ -48,8 +42,6 @@ export function addNewGroupByPart(query: InfluxQuery, type: string): InfluxQuery
 }
 
 export function removeGroupByPart(query: InfluxQuery, partIndex: number): InfluxQuery {
-  // the cloneDeep call is slow, but this function should not be called so often,
-  // so the performance should be fine
   const queryCopy = cloneDeep(query); // the query-model mutates the query
   const model = new InfluxQueryModel(queryCopy);
   model.removeGroupByPart(model.groupByParts[partIndex], partIndex);
