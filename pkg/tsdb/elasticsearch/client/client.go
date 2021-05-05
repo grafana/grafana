@@ -340,7 +340,7 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
-	if c.version.Major() >= 70 {
+	if c.version.Major() >= 7 {
 		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
 		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
 	}
