@@ -34,28 +34,14 @@ type Gateway struct {
 func (g *Gateway) Init() error {
 	logger.Info("Telemetry Gateway initialization")
 
-	if !g.IsEnabled() {
-		logger.Debug("Telemetry Gateway not enabled, skipping initialization")
-		return nil
-	}
-
 	g.converter = convert.NewConverter()
 	return nil
 }
 
 // Run Gateway.
 func (g *Gateway) Run(ctx context.Context) error {
-	if !g.IsEnabled() {
-		logger.Debug("GrafanaLive feature not enabled, skipping initialization of Telemetry Gateway")
-		return nil
-	}
 	<-ctx.Done()
 	return ctx.Err()
-}
-
-// IsEnabled returns true if the Grafana Live feature is enabled.
-func (g *Gateway) IsEnabled() bool {
-	return g.Cfg.IsLiveEnabled() // turn on when Live on for now.
 }
 
 func (g *Gateway) Handle(ctx *models.ReqContext) {

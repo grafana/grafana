@@ -16,6 +16,7 @@ import {
   AxisPlacement,
   DrawStyle,
   GraphFieldConfig,
+  GraphTresholdsStyleMode,
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
@@ -169,6 +170,19 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
       fieldName: getFieldDisplayName(field, frame),
       hideInLegend: customConfig.hideFrom?.legend,
     });
+
+    // Render thresholds in graph
+    if (customConfig.thresholdsStyle && config.thresholds) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+        builder.addThresholds({
+          config: customConfig.thresholdsStyle,
+          thresholds: config.thresholds,
+          scaleKey,
+          theme,
+        });
+      }
+    }
 
     collectStackingGroups(field, stackingGroups, seriesIndex);
   }

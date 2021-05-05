@@ -354,7 +354,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                     isOpen: true,
                   });
                 }}
-                title="Disconnects this panel from the reusable panel so that you can edit it regularly."
+                title="Disconnects this panel from the library panel so that you can edit it regularly."
                 key="unlink"
               >
                 Unlink
