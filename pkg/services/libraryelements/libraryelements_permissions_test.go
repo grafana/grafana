@@ -62,6 +62,19 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext, command)
 				require.Equal(t, testCase.status, resp.Status())
 			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to delete a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+			func(t *testing.T, sc scenarioContext) {
+				folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
+				cmd := getCreatePanelCommand(folder.Id, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.deleteHandler(sc.reqContext)
+				require.Equal(t, testCase.status, resp.Status())
+			})
 	}
 
 	var generalFolderCases = []struct {
@@ -80,6 +93,18 @@ func TestLibraryPanelPermissions(t *testing.T) {
 
 				command := getCreatePanelCommand(0, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, command)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to delete a library panel in the General folder, it should return correct status", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreatePanelCommand(0, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.deleteHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
 			})
 	}
