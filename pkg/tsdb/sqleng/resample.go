@@ -7,6 +7,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// getRowFillValues populates a slice of values corresponding to the provided data.Frame fields.
+// Uses data.FillMissing settings to fill in values that are missing. Values are normally missing
+// due to that the selected query interval doesn't match the intervals of the data returned from
+// the query and therefore needs to be resampled.
 func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime time.Time,
 	fillMissing *data.FillMissing, intermediateRows []int, lastSeenRowIdx int) []interface{} {
 	vals := make([]interface{}, 0, len(f.Fields))
@@ -58,6 +62,10 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 	return vals
 }
 
+// resample resample provided time-series data.Frame.
+// This is needed in the case of the selected query interval doesn't
+// match the intervals of the time-series field in the data.Frame and
+// therefore needs to be resampled.
 func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 	tsSchema := f.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {

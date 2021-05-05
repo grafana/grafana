@@ -23,33 +23,27 @@ export default class ResponseParser {
       return { data: data };
     }
 
-    for (const key in res.data.results) {
-      const queryRes = res.data.results[key];
+    const frame = frames[0];
 
-      if (queryRes.series) {
-        for (const series of queryRes.series) {
-          data.push({
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          });
-        }
+    const values: MetricFindValue[] = [];
+    const textField = frame.fields.find((f) => f.name === '__text');
+    const valueField = frame.fields.find((f) => f.name === '__value');
+
+    if (textField && valueField) {
+      for (let i = 0; i < textField.values.length; i++) {
+        values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
       }
-
-      if (queryRes.tables) {
-        for (const table of queryRes.tables) {
-          table.type = 'table';
-          table.refId = queryRes.refId;
-          table.meta = queryRes.meta;
-          data.push(table);
-        }
+    } else {
+      const textFields = frame.fields.filter((f) => f.type === FieldType.string);
+      if (textFields) {
+        values.push(
+          ...textFields
+            .flatMap((f) => f.values.toArray())
+            .map((v) => ({
+              text: '' + v,
+            }))
+        );
       }
-    }
-
-    return { data: data };
-  }
-
   transformAnnotationResponse(options: any, data: any) {
     const table = data.data.results[options.annotation.name].tables[0];
 

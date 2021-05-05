@@ -200,6 +200,14 @@ func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 					if err == nil {
 						return &v, nil
 					}
+					v, err = time.Parse(dateTimeFormat1, *in)
+					if err == nil {
+						return &v, nil
+					}
+					v, err = time.Parse(dateTimeFormat2, *in)
+					if err == nil {
+						return &v, nil
+					}
 					return nil, err
 				},
 			},
@@ -216,6 +224,10 @@ func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 						return nil, nil
 					}
 					v, err := time.Parse(dateTimeFormat1, *in)
+					if err == nil {
+						return &v, nil
+					}
+					v, err = time.Parse(dateTimeFormat2, *in)
 					if err == nil {
 						return &v, nil
 					}

@@ -112,16 +112,22 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     };
 
     return getBackendSrv()
-      .fetch({
-        url: '/api/tsdb/query',
+      .fetch<BackendDataSourceResponse>({
+        url: '/api/ds/query',
         method: 'POST',
         data: {
           from: options.range.from.valueOf().toString(),
           to: options.range.to.valueOf().toString(),
           queries: [query],
         },
+        requestId: options.annotation.name,
       })
-      .pipe(map((data: any) => this.responseParser.transformAnnotationResponse(options, data)))
+      .pipe(
+        map(
+          async (res: FetchResponse<BackendDataSourceResponse>) =>
+            await this.responseParser.transformAnnotationResponse(options, res.data)
+        )
+      )
       .toPromise();
   }
 

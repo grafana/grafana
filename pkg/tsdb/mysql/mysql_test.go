@@ -1095,7 +1095,7 @@ func TestMySQL(t *testing.T) {
 func InitMySQLTestDB(t *testing.T) *xorm.Engine {
 	testDB := sqlutil.MySQLTestDB()
 	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "/grafana_tests",
-		"/grafana_ds_tests", 1))
+		"/grafana_ds_tests", 1)+"&parseTime=true&loc=UTC")
 	if err != nil {
 		t.Fatalf("Failed to init mysql db %v", err)
 	}

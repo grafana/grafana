@@ -173,6 +173,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
+//nolint: staticcheck // plugins.DataQueryResult deprecated
 func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
 	ch chan plugins.DataQueryResult) {
 	defer wg.Done()
@@ -181,6 +182,20 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		Meta:  simplejson.New(),
 		RefID: query.RefID,
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			e.log.Error("executeQuery panic", "error", r, "stack", log.Stack(1))
+			if theErr, ok := r.(error); ok {
+				queryResult.Error = theErr
+			} else if theErrString, ok := r.(string); ok {
+				queryResult.Error = fmt.Errorf(theErrString)
+			} else {
+				queryResult.Error = fmt.Errorf("unexpected error, see the server log for details")
+			}
+			ch <- queryResult
+		}
+	}()
 
 	rawSQL := query.Model.Get("rawSql").MustString()
 	if rawSQL == "" {
@@ -243,7 +258,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	myCs := e.queryResultTransformer.GetConverterList()
 	frame, _, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
 	if err != nil {
-		errAppendDebug("db query error", err)
+		errAppendDebug("convert frame from rows error", err)
 		return
 	}
 
@@ -277,7 +292,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			}
 
 			var err error
-			if frame, err = convertSQLValueColumnToFloat(e.log, frame, i); err != nil {
+			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err)
 				return
 			}
@@ -298,11 +313,11 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			var err error
 			frame, err = resample(frame, *qm)
 			if err != nil {
-				e.log.Debug("Failed to resample dataframe", "err", err)
+				e.log.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
 			if err := trim(frame, *qm); err != nil {
-				e.log.Debug("Failed to trim dataframe", "err", err)
+				e.log.Error("Failed to trim dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
 			}
 		}
@@ -316,7 +331,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
-		return sql, err
+		return "", err
 	}
 	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 
@@ -418,10 +433,10 @@ const (
 )
 
 type dataQueryModel struct {
-	InterpolatedQuery string // property non set until after Interpolate()
+	InterpolatedQuery string // property not set until after Interpolate()
 	Format            dataQueryFormat
 	TimeRange         backend.TimeRange
-	FillMissing       *data.FillMissing // property non set until after Interpolate()
+	FillMissing       *data.FillMissing // property not set until after Interpolate()
 	Interval          time.Duration
 	columnNames       []string
 	columnTypes       []*sql.ColumnType
@@ -807,7 +822,7 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 
 // convertSQLValueColumnToFloat converts timeseries value column to float.
 //nolint: gocyclo
-func convertSQLValueColumnToFloat(logger log.Logger, frame *data.Frame, Index int) (*data.Frame, error) {
+func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
 	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
 	}

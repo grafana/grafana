@@ -6,6 +6,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { TimeSrvStub } from 'test/specs/helpers';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -44,16 +45,16 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         MyAnno: {
-          refId: annotationName,
-          tables: [
-            {
-              columns: [{ text: 'time' }, { text: 'text' }, { text: 'tags' }],
-              rows: [
-                [1521545610656, 'some text', 'TagA,TagB'],
-                [1521546251185, 'some text2', ' TagB , TagC'],
-                [1521546501378, 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'time', values: [1521545610656, 1521546251185, 1521546501378] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
+                ],
+              })
+            ),
           ],
         },
       },
