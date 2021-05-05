@@ -42,7 +42,7 @@ describe('Azure Monitor QueryEditor', () => {
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
   });
 
-  it('renders the Metrics query editor when the query type is Metrics', async () => {
+  it('renders the Logs query editor when the query type is Logs', async () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = {
       ...createMockQuery(),
@@ -58,6 +58,41 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     await waitFor(() => expect(screen.queryByTestId('azure-monitor-logs-query-editor')).toBeInTheDocument());
+  });
+
+  it('renders the ApplicationInsights query editor when the query type is Application Insights and renders values in disabled inputs', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.ApplicationInsights,
+      appInsights: {
+        metricName: 'requests/count',
+        timeGrain: 'PT1H',
+        timeGrainCount: '1',
+        timeGrainType: 'specific',
+        timeGrainUnit: 'hour',
+        aggregation: 'average',
+        dimension: ['request/name'],
+        dimensionFilter: "request/name eq 'GET Home/Index'",
+        alias: '{{ request/name }}',
+      },
+    };
+
+    render(
+      <QueryEditor
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
+    );
+
+    const metricInput = await screen.getByLabelText('Metric');
+    expect(metricInput).toBeDisabled();
+    expect(metricInput).toHaveValue('requests/count');
   });
 
   it('changes the query type when selected', async () => {

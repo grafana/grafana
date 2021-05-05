@@ -77,9 +77,10 @@ export interface AzureLogsQuery {
 
 export interface ApplicationInsightsQuery {
   metricName: string;
-  timeGrainUnit: string;
   timeGrain: string;
-  allowedTimeGrainsMs: number[];
+  timeGrainCount: string;
+  timeGrainType: string;
+  timeGrainUnit: string;
   aggregation: string;
   dimension: string[]; // Was string before 7.1
   // dimensions: string[]; why is this metadata stored on the object!

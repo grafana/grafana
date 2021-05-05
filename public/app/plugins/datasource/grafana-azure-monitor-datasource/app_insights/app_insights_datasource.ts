@@ -110,7 +110,6 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
       queryType: AzureQueryType.ApplicationInsights,
       appInsights: {
         timeGrain: templateSrv.replace((item.timeGrain || '').toString(), scopedVars),
-        allowedTimeGrainsMs: item.allowedTimeGrainsMs,
         metricName: templateSrv.replace(item.metricName, scopedVars),
         aggregation: templateSrv.replace(item.aggregation, scopedVars),
         dimension: item.dimension.map((d) => templateSrv.replace(d, scopedVars)),
