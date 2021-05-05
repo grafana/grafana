@@ -2,7 +2,7 @@ import { InfluxQueryTag } from './types';
 import InfluxDatasource from './datasource';
 import { InfluxQueryBuilder } from './query_builder';
 
-const runExploreQuery = async (
+const runExploreQuery = (
   type: string,
   withKey: string | undefined,
   target: { measurement: string | undefined; tags: InfluxQueryTag[]; policy: string | undefined },
@@ -10,7 +10,7 @@ const runExploreQuery = async (
 ): Promise<Array<{ text: string }>> => {
   const builder = new InfluxQueryBuilder(target, datasource.database);
   const q = builder.buildExploreQuery(type, withKey);
-  return await datasource.metricFindQuery(q);
+  return datasource.metricFindQuery(q);
 };
 
 export async function getAllPolicies(datasource: InfluxDatasource): Promise<string[]> {
