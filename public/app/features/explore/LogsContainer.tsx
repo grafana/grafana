@@ -32,7 +32,7 @@ type LogsContainerState = {
   absoluteRangeToShow: AbsoluteTimeRange;
 };
 export class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
-  private logRowsCache = new LRU<string, { cacheLogsResult: LogsModel; cacheAbsoluteRange: AbsoluteTimeRange }>(10);
+  private logRowsCache = new LRU<string, { cacheLogsResult: LogsModel; cacheAbsoluteRange: AbsoluteTimeRange }>(5);
 
   constructor(props: LogsContainerProps) {
     super(props);
