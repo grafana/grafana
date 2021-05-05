@@ -217,6 +217,7 @@ describe('LibraryPanelsSearch', () => {
               meta: {
                 canEdit: true,
                 folderName: 'General',
+                folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
                 createdBy: { id: 1, name: 'Admin', avatarUrl: '' },
@@ -260,6 +261,7 @@ describe('LibraryPanelsSearch', () => {
               meta: {
                 canEdit: true,
                 folderName: 'General',
+                folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
                 createdBy: { id: 1, name: 'Admin', avatarUrl: '' },

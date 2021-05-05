@@ -111,6 +111,7 @@ function mockLibraryPanel({
   meta = {
     canEdit: true,
     folderName: 'General',
+    folderUid: '',
     connectedDashboards: 0,
     created: '2021-01-01T00:00:00',
     createdBy: { id: 1, name: 'User X', avatarUrl: '/avatar/abc' },

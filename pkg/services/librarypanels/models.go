@@ -42,6 +42,7 @@ type LibraryPanelWithMeta struct {
 
 	CanEdit             bool
 	FolderName          string
+	FolderUID           string `xorm:"folder_uid"`
 	ConnectedDashboards int64
 	CreatedBy           int64
 	UpdatedBy           int64
@@ -77,6 +78,7 @@ type LibraryPanelSearchResult struct {
 type LibraryPanelDTOMeta struct {
 	CanEdit             bool   `json:"canEdit"`
 	FolderName          string `json:"folderName"`
+	FolderUID           string `json:"folderUid"`
 	ConnectedDashboards int64  `json:"connectedDashboards"`
 
 	Created time.Time `json:"created"`

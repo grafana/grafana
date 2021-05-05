@@ -42,6 +42,7 @@ func TestGetLibraryPanel(t *testing.T) {
 					Meta: LibraryPanelDTOMeta{
 						CanEdit:             true,
 						FolderName:          "ScenarioFolder",
+						FolderUID:           sc.folder.Uid,
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,

@@ -333,11 +333,13 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(selectLibrayPanelDTOWithMeta)
 		builder.Write(", 'General' as folder_name ")
+		builder.Write(", '' as folder_uid ")
 		builder.Write(fromLibrayPanelDTOWithMeta)
 		builder.Write(` WHERE lp.uid=? AND lp.org_id=? AND lp.folder_id=0`, uid, c.SignedInUser.OrgId)
 		builder.Write(" UNION ")
 		builder.Write(selectLibrayPanelDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
+		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(fromLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id <> 0")
 		builder.Write(` WHERE lp.uid=? AND lp.org_id=?`, uid, c.SignedInUser.OrgId)
@@ -373,6 +375,7 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			FolderName:          libraryPanel.FolderName,
+			FolderUID:           libraryPanel.FolderUID,
 			ConnectedDashboards: libraryPanel.ConnectedDashboards,
 			Created:             libraryPanel.Created,
 			Updated:             libraryPanel.Updated,
@@ -415,6 +418,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibrayPanelDTOWithMeta)
 			builder.Write(", 'General' as folder_name ")
+			builder.Write(", '' as folder_uid ")
 			builder.Write(fromLibrayPanelDTOWithMeta)
 			builder.Write(` WHERE lp.org_id=?  AND lp.folder_id=0`, c.SignedInUser.OrgId)
 			writeSearchStringSQL(query, lps.SQLStore, &builder)
@@ -424,6 +428,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		}
 		builder.Write(selectLibrayPanelDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
+		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(fromLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
@@ -461,6 +466,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             true,
 					FolderName:          panel.FolderName,
+					FolderUID:           panel.FolderUID,
 					ConnectedDashboards: panel.ConnectedDashboards,
 					Created:             panel.Created,
 					Updated:             panel.Updated,
@@ -539,7 +545,7 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 	libraryPanelMap := make(map[string]LibraryPanelDTO)
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		var libraryPanels []LibraryPanelWithMeta
-		sql := selectLibrayPanelDTOWithMeta + ", coalesce(dashboard.title, 'General') AS folder_name" + fromLibrayPanelDTOWithMeta + `
+		sql := selectLibrayPanelDTOWithMeta + ", coalesce(dashboard.title, 'General') AS folder_name, coalesce(dashboard.uid, '') AS folder_uid " + fromLibrayPanelDTOWithMeta + `
 LEFT JOIN dashboard AS dashboard ON dashboard.id = lp.folder_id AND dashboard.id=?
 INNER JOIN library_panel_dashboard AS lpd ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?
 `
@@ -564,6 +570,7 @@ INNER JOIN library_panel_dashboard AS lpd ON lpd.librarypanel_id = lp.id AND lpd
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             panel.CanEdit,
 					FolderName:          panel.FolderName,
+					FolderUID:           panel.FolderUID,
 					ConnectedDashboards: panel.ConnectedDashboards,
 					Created:             panel.Created,
 					Updated:             panel.Updated,
