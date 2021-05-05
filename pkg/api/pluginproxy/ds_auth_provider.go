@@ -54,7 +54,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	if tokenProvider, err := getTokenProvider(ctx, ds, route, data); err != nil {
-		logger.Error("Failed resolve auth token provider", "error", err)
+		logger.Error("Failed to resolve auth token provider", "error", err)
 	} else if tokenProvider != nil {
 		if token, err := tokenProvider.getAccessToken(); err != nil {
 			logger.Error("Failed to get access token", "error", err)
