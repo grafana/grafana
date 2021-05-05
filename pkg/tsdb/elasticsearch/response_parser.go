@@ -638,7 +638,7 @@ func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg, field str
 		if hasMetrics {
 			metrics := _metrics.(map[string]interface{})
 			_metricValue, hasMetricValue := metrics[field]
-			if hasMetricValue {
+			if hasMetricValue && _metricValue != nil {
 				metricValue := _metricValue.(float64)
 				metricValues = append(metricValues, metricValue)
 			}

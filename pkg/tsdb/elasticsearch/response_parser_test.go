@@ -354,7 +354,7 @@ func TestResponseParser(t *testing.T) {
                     "1": {
                       "top": [
                       { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } },
-                      { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } }
+                      { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1, "@anotherValue": null } }
                       ]
                     }
                   },
@@ -395,7 +395,7 @@ func TestResponseParser(t *testing.T) {
 			seriesTwo := queryRes.Series[1]
 			So(seriesTwo.Name, ShouldEqual, "Sum @anotherValue")
 			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 4)
+			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 2)
 			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1609459200000)
 			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 4)
 			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 1609459210000)
