@@ -63,7 +63,6 @@ var extendedStats = map[string]string{
 	"std_deviation":              "Std Dev",
 	"std_deviation_bounds_upper": "Std Dev Upper",
 	"std_deviation_bounds_lower": "Std Dev Lower",
-	"rate":                       "Rate",
 }
 
 var pipelineAggType = map[string]string{
