@@ -20,6 +20,8 @@ import {
   removeSelectPart,
   addNewGroupByPart,
   removeGroupByPart,
+  changeSelectPart,
+  changeGroupByPart,
 } from '../queryUtils';
 import { FormatAsSection } from './FormatAsSection';
 import { SectionLabel } from './SectionLabel';
@@ -136,13 +138,8 @@ export const Editor = (props: Props): JSX.Element => {
             parts={sel}
             getNewPartOptions={() => Promise.resolve(getNewSelectPartOptions())}
             onChange={(partIndex, newParams) => {
-              const newSel = [...(query.select ?? [])];
-              newSel[index] = [...newSel[index]];
-              newSel[index][partIndex] = {
-                ...newSel[index][partIndex],
-                params: newParams,
-              };
-              onAppliedChange({ ...query, select: newSel });
+              const newQuery = changeSelectPart(query, index, partIndex, newParams);
+              onAppliedChange(newQuery);
             }}
             onAddNewPart={(type) => {
               onAppliedChange(addNewSelectPart(query, type, index));
@@ -158,12 +155,8 @@ export const Editor = (props: Props): JSX.Element => {
           parts={groupByList}
           getNewPartOptions={() => getNewGroupByPartOptions(query, getTagKeys)}
           onChange={(partIndex, newParams) => {
-            const newGroupBy = [...(query.groupBy ?? [])];
-            newGroupBy[partIndex] = {
-              ...newGroupBy[partIndex],
-              params: newParams,
-            };
-            onAppliedChange({ ...query, groupBy: newGroupBy });
+            const newQuery = changeGroupByPart(query, partIndex, newParams);
+            onAppliedChange(newQuery);
           }}
           onAddNewPart={(type) => {
             onAppliedChange(addNewGroupByPart(query, type));

@@ -50,6 +50,22 @@ export function removeSelectPart(query: InfluxQuery, partIndex: number, index: n
   return model.target;
 }
 
+export function changeSelectPart(
+  query: InfluxQuery,
+  listIndex: number,
+  partIndex: number,
+  newParams: string[]
+): InfluxQuery {
+  // we need to make shallow copy of `query.select` down to `query.select[listIndex][partIndex]`
+  const newSel = [...(query.select ?? [])];
+  newSel[listIndex] = [...newSel[listIndex]];
+  newSel[listIndex][partIndex] = {
+    ...newSel[listIndex][partIndex],
+    params: newParams,
+  };
+  return { ...query, select: newSel };
+}
+
 export function addNewGroupByPart(query: InfluxQuery, type: string): InfluxQuery {
   const queryCopy = cloneDeep(query); // the query-model mutates the query
   const model = new InfluxQueryModel(queryCopy);
@@ -62,4 +78,14 @@ export function removeGroupByPart(query: InfluxQuery, partIndex: number): Influx
   const model = new InfluxQueryModel(queryCopy);
   model.removeGroupByPart(model.groupByParts[partIndex], partIndex);
   return model.target;
+}
+
+export function changeGroupByPart(query: InfluxQuery, partIndex: number, newParams: string[]): InfluxQuery {
+  // we need to make shallow copy of `query.groupBy` down to `query.groupBy[partIndex]`
+  const newGroupBy = [...(query.groupBy ?? [])];
+  newGroupBy[partIndex] = {
+    ...newGroupBy[partIndex],
+    params: newParams,
+  };
+  return { ...query, groupBy: newGroupBy };
 }
