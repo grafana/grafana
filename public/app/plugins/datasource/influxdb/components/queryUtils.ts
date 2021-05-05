@@ -15,7 +15,23 @@ export function buildRawQuery(query: InfluxQuery): string {
 }
 
 export function normalizeQuery(query: InfluxQuery): InfluxQuery {
-  const queryCopy = { ...query }; // the query-model mutates the query
+  // we return the original query if there is no need to update it
+  if (
+    query.policy !== undefined &&
+    query.resultFormat !== undefined &&
+    query.orderByTime !== undefined &&
+    query.tags !== undefined &&
+    query.groupBy !== undefined &&
+    query.select !== undefined
+  ) {
+    return query;
+  }
+
+  // FIXME: we should move the whole normalizeQuery logic here,
+  // and then have influxQueryModel call this function,
+  // to concentrate the whole logic here
+
+  const queryCopy = cloneDeep(query); // the query-model mutates the query
   return new InfluxQueryModel(queryCopy).target;
 }
 
