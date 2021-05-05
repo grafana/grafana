@@ -2,7 +2,7 @@ import React, { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Button } from '../Button';
 import { TagItem } from './TagItem';
-import { useStyles } from '../../themes/ThemeContext';
+import { useStyles, useTheme2 } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
 import { Input } from '../Input/Input';
 
@@ -16,6 +16,7 @@ export interface Props {
 export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange, width }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
+  const theme = useTheme2();
 
   const onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewName(event.target.value);
@@ -40,7 +41,7 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
   };
 
   return (
-    <div className={cx(styles.wrapper, width ? css({ width: `${8 * width}px` }) : '')}>
+    <div className={cx(styles.wrapper, width ? css({ width: theme.spacing(width) }) : '')}>
       <div className={tags?.length ? styles.tags : undefined}>
         {tags?.map((tag: string, index: number) => {
           return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
