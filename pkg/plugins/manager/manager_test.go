@@ -300,7 +300,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		// mock installer
 		installer := &fakePluginInstaller{}
-		pm.PluginInstaller = installer
+		pm.pluginInstaller = installer
 
 		// Set plugin location (we do this after manager Init() so that
 		// it doesn't install the plugin automatically)

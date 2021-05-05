@@ -89,6 +89,7 @@ func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
 		return pathStr
 	}
 
+	// already has been prefixed with base path
 	if strings.HasPrefix(pathStr, baseUrl) {
 		return pathStr
 	}

@@ -55,7 +55,7 @@ type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	SQLStore             *sqlstore.SQLStore    `inject:""`
-	PluginInstaller      plugins.PluginInstaller
+	pluginInstaller      plugins.PluginInstaller
 	log                  log.Logger
 	scanningErrors       []error
 
@@ -97,7 +97,7 @@ func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	plog = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
-	pm.PluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
+	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
 
 	pm.log.Info("Starting plugin search")
 
@@ -355,9 +355,17 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	pm.log.Debug("Initial plugin loading done")
 
 	for scannedPluginPath, scannedPlugin := range scanner.plugins {
-		if existing := pm.GetPlugin(scannedPlugin.Id); existing != nil && scannedPlugin.Info.Version == existing.Info.Version {
-			pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
-			delete(scanner.plugins, scannedPluginPath)
+		if existing := pm.GetPlugin(scannedPlugin.Id); existing != nil {
+			if scannedPlugin.Info.Version == existing.Info.Version {
+				pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
+				delete(scanner.plugins, scannedPluginPath)
+			} else {
+				// remove existing installation of plugin
+				err := pm.Uninstall(existing.Id)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -763,22 +771,14 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 
 func (pm *PluginManager) Install(pluginID, version string) error {
 	plugin := pm.GetPlugin(pluginID)
-	if plugin != nil {
-		if version != "" && version == plugin.Info.Version {
-			return plugins.DuplicatePluginError{
-				PluginID:          pluginID,
-				ExistingPluginDir: plugin.PluginDir,
-			}
-		}
-
-		// Remove existing installation of plugin
-		err := pm.Uninstall(pluginID)
-		if err != nil {
-			return err
+	if plugin != nil && plugin.Info.Version == version {
+		return plugins.DuplicatePluginError{
+			PluginID:          pluginID,
+			ExistingPluginDir: plugin.PluginDir,
 		}
 	}
 
-	err := pm.PluginInstaller.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
+	err := pm.pluginInstaller.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
 	if err != nil {
 		return err
 	}
@@ -809,7 +809,7 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 		return err
 	}
 
-	return pm.PluginInstaller.Uninstall(pluginID, pm.Cfg.PluginsPath)
+	return pm.pluginInstaller.Uninstall(pluginID, pm.Cfg.PluginsPath)
 }
 
 func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
