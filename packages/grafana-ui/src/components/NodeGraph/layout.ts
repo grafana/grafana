@@ -5,7 +5,7 @@ import { useNodeLimit } from './useNodeLimit';
 import useMountedState from 'react-use/lib/useMountedState';
 import { graphBounds } from './utils';
 // @ts-ignore
-import LayoutWorker from 'worker-loader!./layout.worker.js';
+import LayoutWorker from './layout.worker.js';
 
 export interface Config {
   linkDistance: number;

@@ -46,8 +46,7 @@ const buildCjsPackage = ({ env }) => {
       image(),
       env === 'production' && terser(),
       webWorkerLoader({
-        // This needs to be changed so it matches the webpack pattern
-        pattern: /worker-loader!(.+)/,
+        pattern: /(.+\.worker\.js$)/,
       }),
     ],
   };

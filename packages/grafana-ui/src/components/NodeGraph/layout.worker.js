@@ -10,7 +10,7 @@ addEventListener('message', (event) => {
  * Use d3 force layout to lay the nodes in a sensible way. This function modifies the nodes adding the x,y positions
  * and also fills in node references in edges instead of node ids.
  */
-function layout(nodes, edges, config) {
+export function layout(nodes, edges, config) {
   // Start withs some hardcoded positions so it starts laid out from left to right
   let { roots, secondLevelRoots } = initializePositions(nodes, edges);
 
