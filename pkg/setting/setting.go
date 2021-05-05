@@ -374,9 +374,9 @@ type Cfg struct {
 	ImageUploadProvider string
 }
 
-// IsLiveEnabled returns if grafana live should be enabled
-func (cfg Cfg) IsLiveEnabled() bool {
-	return cfg.FeatureToggles["live"]
+// IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
+func (cfg Cfg) IsLiveConfigEnabled() bool {
+	return cfg.FeatureToggles["live-config"]
 }
 
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
