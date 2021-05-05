@@ -9,9 +9,9 @@ import (
 var baseLoadPaths = load.GetDefaultLoadPaths()
 
 func TestValidateScuemataBasics(t *testing.T) {
-	err := validate(baseLoadPaths, load.BaseDashboardFamily)
+	err := validateCUE(nil, baseLoadPaths, load.BaseDashboardFamily)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
 
-	err = validate(baseLoadPaths, load.DistDashboardFamily)
+	err = validateCUE(nil, baseLoadPaths, load.DistDashboardFamily)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
 }
