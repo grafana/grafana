@@ -105,6 +105,17 @@ function preparePlotFrame(frames: DataFrame[], bucketSize?: number | null) {
     // align histograms
     let joinedHists = join(histograms);
 
+    // zero-fill all undefined values (missing buckets -> 0 counts) to prevent stepped spanning
+    for (let histIdx = 1; histIdx < joinedHists.length; histIdx++) {
+      let hist = joinedHists[histIdx];
+
+      for (let bucketIdx = 0; bucketIdx < hist.length; bucketIdx++) {
+        if (hist[bucketIdx] == null) {
+          hist[bucketIdx] = 0;
+        }
+      }
+    }
+
     // number of buckets
     histFrame.length = joinedHists[0].length;
 
