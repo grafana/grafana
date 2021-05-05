@@ -21,7 +21,7 @@ The API can be used to create, update, get and list roles, and add or revoke rol
 
 Gets all existing roles.
 
-#### Required Permissions
+#### Required permissions
 
 Action | Scope 
 --- | --- | 
@@ -78,7 +78,7 @@ Code | Description
 
 Get a role for the given UID.
 
-#### Required Permissions
+#### Required permissions
 
 Action | Scope
 --- | --- | 
