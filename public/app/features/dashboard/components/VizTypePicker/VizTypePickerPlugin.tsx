@@ -14,6 +14,7 @@ export const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClic
     <PanelTypeCard
       title={plugin.name}
       plugin={plugin}
+      description={plugin.info.description}
       onClick={onClick}
       isCurrent={isCurrent}
       disabled={disabled}

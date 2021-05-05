@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { BucketAggregationEditor } from './BucketAggregationEditor';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { addBucketAggregation, removeBucketAggregation } from './state/actions';
@@ -12,7 +12,7 @@ interface Props {
   nextId: BucketAggregation['id'];
 }
 
-export const BucketAggregationsEditor: FunctionComponent<Props> = ({ nextId }) => {
+export const BucketAggregationsEditor = ({ nextId }: Props) => {
   const dispatch = useDispatch<BucketAggregationAction>();
   const { bucketAggs } = useQuery();
   const totalBucketAggs = bucketAggs?.length || 0;
