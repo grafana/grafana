@@ -19,21 +19,21 @@ func (cmd Command) validateScuemataBasics(c utils.CommandLine) error {
 		return err
 	}
 
-	if err := validateCUE(b, paths, load.BaseDashboardFamily); err != nil {
+	if err := validate(b, paths, load.BaseDashboardFamily); err != nil {
 		return err
 	}
 
-	if err := validateCUE(b, paths, load.DistDashboardFamily); err != nil {
+	if err := validate(b, paths, load.DistDashboardFamily); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateCUE(resource *os.File, p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {
+func validate(resource interface{}, p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {
 	dash, err := loader(p)
 	if err != nil {
-		return fmt.Errorf("error while loading dashboard scuemata")
+		return fmt.Errorf("error while loading dashboard scuemata, err: %w", err)
 	}
 
 	// Check that a CUE value exists.
@@ -51,7 +51,7 @@ func validateCUE(resource *os.File, p load.BaseLoadPaths, loader func(p load.Bas
 	if resource != nil {
 		err = dash.Validate(schema.Resource{Value: resource})
 		if err != nil {
-			return fmt.Errorf("ivalid resource with respect to the schema, err: %w", err)
+			return fmt.Errorf("invalid resource with respect to the schema, err: %w", err)
 		}
 	}
 
