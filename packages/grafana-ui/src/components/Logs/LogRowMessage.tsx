@@ -106,7 +106,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             {needsHighlighter ? (
               <Highlighter
                 textToHighlight={entry}
-                searchWords={highlights}
+                searchWords={highlights ?? []}
                 findChunks={findHighlightChunksInText}
                 highlightClassName={highlightClassName}
               />

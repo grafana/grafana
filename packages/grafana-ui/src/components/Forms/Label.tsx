@@ -7,7 +7,7 @@ import { Icon } from '../Icon/Icon';
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: React.ReactNode;
   description?: React.ReactNode;
-  category?: string[];
+  category?: React.ReactNode[];
 }
 
 export const getLabelStyles = stylesFactory((theme: GrafanaTheme2) => {
