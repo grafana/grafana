@@ -1,15 +1,17 @@
 import React from 'react';
-
+import { withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
 import { selectors } from '@grafana/e2e-selectors';
-import { withTheme } from '../../themes';
-import { Themeable } from '../../types';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Monaco, MonacoEditor as MonacoEditorType, CodeEditorProps, MonacoOptions } from './types';
 import { registerSuggestions } from './suggestions';
 import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
 
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import defineThemes from './theme';
+import { css } from '@emotion/css';
 
-type Props = CodeEditorProps & Themeable;
+type Props = CodeEditorProps & Themeable2;
 
 let initalized = false;
 function initMonoco() {
@@ -71,7 +73,8 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   handleBeforeMount = (monaco: Monaco) => {
     this.monaco = monaco;
-    const { language, getSuggestions } = this.props;
+    const { language, theme, getSuggestions } = this.props;
+    defineThemes(monaco, theme);
 
     if (getSuggestions) {
       this.completionCancel = registerSuggestions(monaco, language, getSuggestions);
@@ -99,6 +102,8 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
+    const styles = getStyles(theme);
+
     const options: MonacoOptions = {
       wordWrap: 'off',
       tabSize: 2,
@@ -112,26 +117,29 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
       readOnly,
       lineNumbersMinChars: 4,
-      lineDecorationsWidth: 0,
+      lineDecorationsWidth: 1 * theme.spacing.gridSize,
       overviewRulerBorder: false,
       automaticLayout: true,
+      padding: {
+        top: 0.5 * theme.spacing.gridSize,
+        bottom: 0.5 * theme.spacing.gridSize,
+      },
     };
 
     if (!showLineNumbers) {
       options.glyphMargin = false;
       options.folding = false;
       options.lineNumbers = 'off';
-      options.lineDecorationsWidth = 5; // left margin when not showing line numbers
       options.lineNumbersMinChars = 0;
     }
 
     return (
-      <div onBlur={this.onBlur} aria-label={selectors.components.CodeEditor.container}>
+      <div className={styles.container} onBlur={this.onBlur} aria-label={selectors.components.CodeEditor.container}>
         <MonacoEditor
           width={width}
           height={height}
           language={language}
-          theme={theme.isDark ? 'vs-dark' : 'vs-light'}
+          theme={theme.isDark ? 'grafana-dark' : 'grafana-light'}
           value={value}
           options={{
             ...options,
@@ -145,4 +153,13 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   }
 }
 
-export default withTheme(UnthemedCodeEditor);
+export default withTheme2(UnthemedCodeEditor);
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css`
+      border-radius: ${theme.shape.borderRadius()};
+      border: 1px solid ${theme.components.input.borderColor};
+    `,
+  };
+};

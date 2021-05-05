@@ -15,7 +15,6 @@ import {
 import {
   Collapse,
   DrawStyle,
-  GraphNG,
   GraphNGLegendEvent,
   Icon,
   LegendDisplayMode,
@@ -24,6 +23,7 @@ import {
   useTheme2,
   ZoomPlugin,
   TooltipDisplayMode,
+  TimeSeries,
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { hideSeriesConfigFactory } from 'app/plugins/panel/timeseries/overrides/hideSeriesConfigFactory';
@@ -135,8 +135,8 @@ export function ExploreGraphNGPanel({
       )}
 
       <Collapse label="Graph" loading={isLoading} isOpen>
-        <GraphNG
-          data={seriesToShow}
+        <TimeSeries
+          frames={seriesToShow}
           structureRev={structureRev}
           width={width}
           height={400}
@@ -167,7 +167,7 @@ export function ExploreGraphNGPanel({
               </>
             );
           }}
-        </GraphNG>
+        </TimeSeries>
       </Collapse>
     </>
   );
