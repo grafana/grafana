@@ -57,6 +57,18 @@ export const SettingsPanel: FC = () => {
     }
   }, [generateToken]);
 
+  const getSettings = async () => {
+    try {
+      setLoading(true);
+      const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
+      setSettings(settings);
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] =>
       settings
