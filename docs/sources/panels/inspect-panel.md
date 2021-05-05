@@ -13,16 +13,18 @@ The panel inspector helps you understand and troubleshoot your panels. You can i
 
 The panel inspector displays Inspect: <NameOfPanelBeingInspected> at the top of the pane. Click the arrow in the upper right corner to expand or reduce the pane.
 
-The panel inspector consists of four tabs:
+The panel inspector consists of following tabs:
 
 - **Data tab -** Shows the raw data returned by the query with transformations applied. Field options such as overrides and value mappings are not applied by default.
 - **Stats tab -** Shows how long your query takes and how much it returns.
 - **JSON tab -** Allows you to view and copy the panel JSON, panel data JSON, and data frame structure JSON. This is useful if you are provisioning or administering Grafana.
 - **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
+- **Error tab -** Shows the error. Only visible when query returns error.
 
 > **Note:** Not all panel types include all four tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
 
 ## Panel inspector tasks
+
 Tasks you can perform in the panel inspector are described below.
 
 ### Open the panel inspector
@@ -40,13 +42,17 @@ The panel inspector pane opens on the right side of the screen.
 
 View raw query results in a table. This is the data returned by the query with transformations applied and before the panel applies field options or field option overrides.
 
-1. Open the panel inspector and then click the **Data** tab or in the panel menu click **Inspect > Data**.
-1. If your panel contains multiple queries or queries multiple nodes, then you have additional options.
+In the inspector click the **Data** tab or in the panel menu click **Inspect > Data**.
+
+If your panel contains multiple queries or queries multiple nodes, then you have additional options.
+
 - **Select result -** Choose which result set data you want to view.
 - **Transform data**
+
   - **Join by time -** View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.
 
   View raw query results in a table with field options and options overrides applied:
+
   1. Open the **Data** tab in panel inspector.
   1. Click on **Data display options** above the table.
   1. Click on **Apply field configuration** toggle button.
@@ -60,6 +66,14 @@ Grafana generates a CSV file in your default browser download location. You can 
 1. Click **Download CSV**.
 
 To download a CSV file specifically formatted for Excel, expand the **Data options** panel and enable the **Download for Excel** toggle before clicking **Download CSV**.
+
+### Download log results as TXT
+
+Grafana generates a text file in your default browser download location. You can open the log in the viewer of your choice.
+
+1. Open the panel inspector.
+1. Inspect the log query results as described above.
+1. Click **Download logs**.
 
 ### Inspect query performance
 
