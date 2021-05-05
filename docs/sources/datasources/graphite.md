@@ -159,7 +159,7 @@ The following examples show how expanded and non-expanded queries can be used to
 | `*.servers.*` | 001,002 | `expand(*.servers.*)` | prod.servers.001, prod.servers.002, test.servers.001 |
 | `test.servers.*` | 001 | `expand(test.servers.*)` | test.servers.001 |
 | `*.servers.*.cpu` | cpu | `expand(*.servers.*.cpu)` | prod.servers.001.cpu, prod.servers.002.cpu, test.servers.001.cpu |
-
+As you can see from the results, the non-expanded query is the same as an expanded query with a regex matching the last part of the name.
 You can combine `expand` with a regex to match specific part of the metric name path.
 
 You can also create nested variables that use other variables in their definition. For example
