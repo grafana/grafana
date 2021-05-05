@@ -20,7 +20,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, binding.Bind(createLibraryElementCommand{}), routing.Wrap(l.createHandler))
 		//entities.Post("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(l.connectHandler))
-		//entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
+		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		//entities.Delete("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(l.disconnectHandler))
 		//entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		//entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
@@ -29,17 +29,27 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 	})
 }
 
-// createHandler handles POST /api/entities/:kind/.
+// createHandler handles POST /api/library-elements.
 func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd createLibraryElementCommand) response.Response {
-	panel, err := l.createEntity(c, cmd)
+	panel, err := l.createLibraryElement(c, cmd)
 	if err != nil {
-		return toEntityError(err, "Failed to create library element")
+		return toLibraryElementError(err, "Failed to create library element")
 	}
 
 	return response.JSON(200, util.DynMap{"result": panel})
 }
 
-func toEntityError(err error, message string) response.Response {
+// deleteHandler handles DELETE /api/library-elements/:uid.
+func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
+	err := l.deleteLibraryElement(c, c.Params(":uid"))
+	if err != nil {
+		return toLibraryElementError(err, "Failed to delete library element")
+	}
+
+	return response.Success("Library element deleted")
+}
+
+func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, errLibraryElementAlreadyExists) {
 		return response.Error(400, errLibraryElementAlreadyExists.Error(), err)
 	}
