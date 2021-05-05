@@ -59,7 +59,7 @@ interface Props {
   scanRange?: RawTimeRange;
   queries: DataQuery[];
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onChangeTime: (range: AbsoluteTimeRange) => void;
+  onChangeTime: (range: AbsoluteTimeRange, checkForCaching?: boolean) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;

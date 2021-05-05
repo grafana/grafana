@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
+import { isEqual } from 'lodash';
+import LRU from 'lru-cache';
 import { Collapse } from '@grafana/ui';
-
-import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
-
+import { AbsoluteTimeRange, DataQuery, Field, LogRowModel, LogsModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-
 import { splitOpen } from './state/main';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
@@ -17,7 +16,7 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
 
-interface LogsContainerProps {
+interface LogsContainerProps extends PropsFromRedux {
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
   width: number;
@@ -28,10 +27,73 @@ interface LogsContainerProps {
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerProps> {
-  onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange } = this.props;
-    updateTimeRange({ exploreId, absoluteRange });
+type LogsContainerState = {
+  logsToShow: LogsModel | null;
+  absoluteRangeToShow: AbsoluteTimeRange;
+};
+export class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
+  private logRowsCache = new LRU<string, { cacheLogsResult: LogsModel; cacheAbsoluteRange: AbsoluteTimeRange }>(10);
+
+  constructor(props: LogsContainerProps) {
+    super(props);
+
+    this.state = {
+      logsToShow: props.logsResult,
+      absoluteRangeToShow: props.absoluteRange,
+    };
+  }
+
+  componentDidMount() {
+    const { logsResult, absoluteRange, queries } = this.props;
+    if (logsResult && absoluteRange && queries) {
+      this.setCacheLogResults(logsResult, absoluteRange, queries);
+    }
+  }
+
+  componentDidUpdate(prevProps: LogsContainerProps) {
+    const { logsResult, absoluteRange, queries } = this.props;
+    if (logsResult && !isEqual(logsResult, prevProps.logsResult)) {
+      this.setState({ logsToShow: this.props.logsResult, absoluteRangeToShow: this.props.absoluteRange });
+      this.setCacheLogResults(logsResult, absoluteRange, queries);
+    }
+  }
+
+  setCacheLogResults(logsResult: LogsModel, absoluteRange: AbsoluteTimeRange, queries: DataQuery[]) {
+    const cacheKey = this.createCacheKey(absoluteRange, queries);
+    this.logRowsCache.set(cacheKey, { cacheLogsResult: logsResult, cacheAbsoluteRange: absoluteRange });
+  }
+
+  getCacheLogResults(absoluteRange: AbsoluteTimeRange, queries: DataQuery[]) {
+    const cacheKey = this.createCacheKey(absoluteRange, queries);
+    const { cacheLogsResult, cacheAbsoluteRange } = this.logRowsCache.get(cacheKey) || {};
+    return { cacheLogsResult, cacheAbsoluteRange };
+  }
+
+  createCacheKey(absRange: AbsoluteTimeRange, queries: DataQuery[]) {
+    const params = {
+      from: absRange.from,
+      to: absRange.to,
+      queries: queries.map((q) => q.key),
+    };
+
+    const cacheKey = Object.entries(params)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v.toString())}`)
+      .join('&');
+    return cacheKey;
+  }
+
+  onChangeTime = (absoluteRange: AbsoluteTimeRange, checkForCaching?: boolean) => {
+    const { exploreId, updateTimeRange, queries } = this.props;
+    if (!checkForCaching) {
+      updateTimeRange({ exploreId, absoluteRange });
+    } else {
+      const { cacheAbsoluteRange, cacheLogsResult } = this.getCacheLogResults(absoluteRange, queries);
+      if (!cacheAbsoluteRange || !cacheLogsResult) {
+        updateTimeRange({ exploreId, absoluteRange });
+      } else {
+        this.setState({ logsToShow: cacheLogsResult, absoluteRangeToShow: cacheAbsoluteRange });
+      }
+    }
   };
 
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
@@ -63,16 +125,11 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
     const {
       loading,
       logsHighlighterExpressions,
-      logRows,
-      logsMeta,
-      logsSeries,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
       onStopScanning,
-      absoluteRange,
       timeZone,
-      visibleRange,
       scanning,
       range,
       width,
@@ -80,6 +137,10 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       exploreId,
       queries,
     } = this.props;
+
+    const { logsToShow, absoluteRangeToShow } = this.state;
+
+    const { rows: logRows, meta: logsMeta, series: logsSeries, visibleRange } = logsToShow || {};
 
     if (!logRows) {
       return null;
@@ -116,7 +177,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               onClickFilterOutLabel={onClickFilterOutLabel}
               onStartScanning={onStartScanning}
               onStopScanning={onStopScanning}
-              absoluteRange={absoluteRange}
+              absoluteRange={absoluteRangeToShow}
               visibleRange={visibleRange}
               timeZone={timeZone}
               scanning={scanning}
@@ -155,10 +216,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   return {
     loading,
     logsHighlighterExpressions,
-    logRows: logsResult?.rows,
-    logsMeta: logsResult?.meta,
-    logsSeries: logsResult?.series,
-    visibleRange: logsResult?.visibleRange,
+    logsResult,
     scanning,
     timeZone,
     datasourceInstance,

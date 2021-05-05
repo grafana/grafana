@@ -20,7 +20,7 @@ type Props = {
   loading: boolean;
   visibleRange?: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
-  onChangeTime: (range: AbsoluteTimeRange) => void;
+  onChangeTime: (range: AbsoluteTimeRange, runFromNavigation?: boolean) => void;
 };
 
 type LogsPage = {
@@ -76,7 +76,7 @@ function LogsNavigation({
 
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
     expectedRangeRef.current = { from, to };
-    onChangeTime({ from, to });
+    onChangeTime({ from, to }, true);
   };
 
   const sortPages = (a: LogsPage, b: LogsPage, logsSortOrder?: LogsSortOrder | null) => {
@@ -94,9 +94,6 @@ function LogsNavigation({
   };
 
   const createPageContent = (page: LogsPage, index: number) => {
-    if (currentPageIndex === index && loading) {
-      return <Spinner />;
-    }
     const topContent = formatTime(oldestLogsFirst ? page.logsRange.from : page.logsRange.to);
     const bottomContent = formatTime(oldestLogsFirst ? page.logsRange.to : page.logsRange.from);
     return `${topContent} — ${bottomContent}`;
