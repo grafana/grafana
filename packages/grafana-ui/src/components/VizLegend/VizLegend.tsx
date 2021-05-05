@@ -3,7 +3,7 @@ import { LegendProps, VizLegendItem } from './types';
 import { LegendDisplayMode } from './models.gen';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
-import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
+import { ByNamesMatcherMode, DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
 import { usePanelContext } from '../PanelChrome';
 
 /**
@@ -15,11 +15,10 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   sortBy: sortKey,
   sortDesc,
   onToggleSort,
-  onLabelClick,
   placement,
   className,
 }) => {
-  const { eventBus } = usePanelContext();
+  const { eventBus, onToggleSeriesVisibility } = usePanelContext();
 
   const onMouseEnter = useCallback(
     (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
@@ -49,6 +48,15 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
       });
     },
     [eventBus]
+  );
+
+  const onLabelClick = useCallback(
+    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      if (onToggleSeriesVisibility) {
+        onToggleSeriesVisibility(item.label, { viz: true, legend: false, tooltip: false }, ByNamesMatcherMode.include);
+      }
+    },
+    [onToggleSeriesVisibility]
   );
 
   switch (displayMode) {

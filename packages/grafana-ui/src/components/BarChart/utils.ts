@@ -116,7 +116,7 @@ export function preparePlotConfigBuilder(
       colorMode,
       pathBuilder: config.drawBars,
       pointsBuilder: config.drawPoints,
-      show: !customConfig.hideFrom?.graph,
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 

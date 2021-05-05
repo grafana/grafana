@@ -1,5 +1,5 @@
 import React from 'react';
-import { VizLegendBaseProps, VizLegendItem } from './types';
+import { VizLegendItem, VizLegendListProps } from './types';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 import { css, cx } from '@emotion/css';
@@ -7,7 +7,7 @@ import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { VizLegendListItem } from './VizLegendListItem';
 
-export interface Props extends VizLegendBaseProps {}
+export interface Props extends VizLegendListProps {}
 
 /**
  * @internal
@@ -15,9 +15,9 @@ export interface Props extends VizLegendBaseProps {}
 export const VizLegendList: React.FunctionComponent<Props> = ({
   items,
   itemRenderer,
-  onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
+  onLabelClick,
   placement,
   className,
 }) => {

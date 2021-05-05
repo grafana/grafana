@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBus } from '@grafana/data';
+import { EventBusSrv, EventBus, ByNamesMatcherMode } from '@grafana/data';
 import React from 'react';
 
 /** @alpha */
@@ -11,6 +11,8 @@ export interface PanelContext {
    * @alpha -- experimental
    */
   onSeriesColorChange?: (label: string, color: string) => void;
+
+  onToggleSeriesVisibility?: (label: string, mode: ByNamesMatcherMode) => void;
 }
 
 const PanelContextRoot = React.createContext<PanelContext>({

@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  ByNamesMatcherMode,
   EventBusSrv,
   EventFilterOptions,
   FieldConfigSource,
@@ -30,6 +31,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
+import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -77,6 +79,7 @@ export class PanelChrome extends Component<Props, State> {
       context: {
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
+        onToggleSeriesVisibility: this.onSeriesVisibilityToggle,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -84,6 +87,10 @@ export class PanelChrome extends Component<Props, State> {
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
+  };
+
+  onSeriesVisibilityToggle = (label: string, mode = ByNamesMatcherMode.exclude) => {
+    this.onFieldConfigChange(seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig));
   };
 
   getInitialPanelDataState(): PanelData {

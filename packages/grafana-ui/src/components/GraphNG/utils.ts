@@ -215,7 +215,7 @@ export function preparePlotConfigBuilder(
       pointSize: customConfig.pointSize,
       pointColor: customConfig.pointColor ?? seriesColor,
       spanNulls: customConfig.spanNulls || false,
-      show: !customConfig.hideFrom?.graph,
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
 

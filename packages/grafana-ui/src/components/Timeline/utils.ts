@@ -181,7 +181,7 @@ export function preparePlotConfigBuilder(
       //colorMode,
       fillOpacity,
       theme,
-      show: !customConfig.hideFrom?.graph,
+      show: !customConfig.hideFrom?.viz,
       thresholds: config.thresholds,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config

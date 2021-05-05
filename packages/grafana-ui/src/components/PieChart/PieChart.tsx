@@ -55,7 +55,6 @@ export function PieChart(props: PieChartProps) {
     tooltipOptions,
     width,
     height,
-    onLabelClick,
     ...restProps
   } = props;
 
@@ -100,10 +99,6 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
     })
     .reduce((acc, item) => item.display.numeric + acc, 0);
 
-  const vizLegendClick = (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-    props.onLabelClick(item.label);
-  };
-
   const legendItems = displayValues.map<VizLegendItem>((value, idx) => {
     const hidden = value.field.custom.hideFrom.graph;
     const display = value.display;
@@ -138,14 +133,7 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
     };
   });
 
-  return (
-    <VizLegend
-      items={legendItems}
-      onLabelClick={vizLegendClick}
-      placement={legendOptions.placement}
-      displayMode={legendOptions.displayMode}
-    />
-  );
+  return <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />;
 }
 
 function useSliceHighlightState() {
