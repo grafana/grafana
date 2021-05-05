@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function RawDataViewer({ width, height, panel }: Props) {
-  const { data } = usePanelLatestData(panel, { withTransforms: false, withFieldConfig: false }, true);
+  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   if (!data) {
     return null;
