@@ -10,10 +10,8 @@ export default function MappingsHelp(props: Props): JSX.Element {
     <Alert severity="info" title="How to map Graphite metrics to labels?" onRemove={props.onDismiss}>
       <p>Mappings are currently supported only between Graphite and Loki queries.</p>
       <p>
-        When you switch data source from Graphite to Loki your queries will be mapped according to mappings defined
-        below. To define a mapping write the full path of the metric and replace nodes you would like to map to labels
-        with label name in parentheses. Value of the label will be extracted from your Graphite query when you switch
-        data sources.
+        When you switch your data source from Graphite to Loki, your queries are mapped according to the mappings defined in the example below. To define a mapping, write the full path of the metric and replace nodes you want to map to label with the label name in parentheses. The value of the label is extracted from your Graphite query when you switch
+data sources.
       </p>
       <p>
         All tags are mapped automatically to labels regardless to mapping configuration. Graphite matching patterns
