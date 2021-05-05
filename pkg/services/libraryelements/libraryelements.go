@@ -1,4 +1,4 @@
-package entities
+package libraryelements
 
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// EntityService is the service for the Panel Library feature.
-type EntityService struct {
+// LibraryElementService is the service for the Library Element feature.
+type LibraryElementService struct {
 	Cfg           *setting.Cfg          `inject:""`
 	SQLStore      *sqlstore.SQLStore    `inject:""`
 	RouteRegister routing.RouteRegister `inject:""`
@@ -18,36 +18,36 @@ type EntityService struct {
 }
 
 func init() {
-	registry.RegisterService(&EntityService{})
+	registry.RegisterService(&LibraryElementService{})
 }
 
-// Init initializes the Entity service
-func (e *EntityService) Init() error {
-	e.log = log.New("librarypanels")
+// Init initializes the LibraryElement service
+func (l *LibraryElementService) Init() error {
+	l.log = log.New("library-elements")
 
-	e.registerAPIEndpoints()
+	l.registerAPIEndpoints()
 
 	return nil
 }
 
 // IsEnabled returns true if the Panel Library feature is enabled for this instance.
-func (e *EntityService) IsEnabled() bool {
-	if e.Cfg == nil {
+func (l *LibraryElementService) IsEnabled() bool {
+	if l.Cfg == nil {
 		return false
 	}
 
-	return e.Cfg.IsPanelLibraryEnabled()
+	return l.Cfg.IsPanelLibraryEnabled()
 }
 
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
-func (e *EntityService) AddMigration(mg *migrator.Migrator) {
-	if !e.IsEnabled() {
+func (l *LibraryElementService) AddMigration(mg *migrator.Migrator) {
+	if !l.IsEnabled() {
 		return
 	}
 
-	entityV1 := migrator.Table{
-		Name: "entity",
+	libraryElementsV1 := migrator.Table{
+		Name: "library_element",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
@@ -69,23 +69,23 @@ func (e *EntityService) AddMigration(mg *migrator.Migrator) {
 		},
 	}
 
-	mg.AddMigration("create entity table v1", migrator.NewAddTableMigration(entityV1))
-	mg.AddMigration("add index entity org_id & folder_id & name & kind", migrator.NewAddIndexMigration(entityV1, entityV1.Indices[0]))
+	mg.AddMigration("create library_element table v1", migrator.NewAddTableMigration(libraryElementsV1))
+	mg.AddMigration("add index library_element org_id & folder_id & name & kind", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
 
-	entityDashboardV1 := migrator.Table{
-		Name: "entity_dashboard",
+	libraryElementDashboardV1 := migrator.Table{
+		Name: "library_element_dashboard",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "entity_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "library_element_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "dashboard_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"entity_id", "dashboard_id"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"library_element_id", "dashboard_id"}, Type: migrator.UniqueIndex},
 		},
 	}
 
-	mg.AddMigration("create entity_dashboard table v1", migrator.NewAddTableMigration(entityDashboardV1))
-	mg.AddMigration("add index entity_dashboard entity_id & dashboard_id", migrator.NewAddIndexMigration(entityDashboardV1, entityDashboardV1.Indices[0]))
+	mg.AddMigration("create library_element_dashboard table v1", migrator.NewAddTableMigration(libraryElementDashboardV1))
+	mg.AddMigration("add index library_element_dashboard library_element_id & dashboard_id", migrator.NewAddIndexMigration(libraryElementDashboardV1, libraryElementDashboardV1.Indices[0]))
 }

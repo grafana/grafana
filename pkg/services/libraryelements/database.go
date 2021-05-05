@@ -1,4 +1,4 @@
-package entities
+package libraryelements
 
 import (
 	"encoding/json"
@@ -10,43 +10,43 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func syncFieldsWithModel(entity *Entity) error {
+func syncFieldsWithModel(libraryElement *LibraryElement) error {
 	var model map[string]interface{}
-	if err := json.Unmarshal(entity.Model, &model); err != nil {
+	if err := json.Unmarshal(libraryElement.Model, &model); err != nil {
 		return err
 	}
 
-	model["title"] = entity.Name
+	model["title"] = libraryElement.Name
 	if model["type"] != nil {
-		entity.Type = model["type"].(string)
+		libraryElement.Type = model["type"].(string)
 	} else {
-		model["type"] = entity.Type
+		model["type"] = libraryElement.Type
 	}
 	if model["description"] != nil {
-		entity.Description = model["description"].(string)
+		libraryElement.Description = model["description"].(string)
 	} else {
-		model["description"] = entity.Description
+		model["description"] = libraryElement.Description
 	}
 	syncedModel, err := json.Marshal(&model)
 	if err != nil {
 		return err
 	}
 
-	entity.Model = syncedModel
+	libraryElement.Model = syncedModel
 
 	return nil
 }
 
 // createEntity adds a entity.
-func (e *EntityService) createEntity(c *models.ReqContext, cmd createEntityCommand, kind int) (EntityDTO, error) {
-	entity := Entity{
+func (l *LibraryElementService) createEntity(c *models.ReqContext, cmd createLibraryElementCommand) (LibraryElementDTO, error) {
+	entity := LibraryElement{
 		OrgID:    c.SignedInUser.OrgId,
 		FolderID: cmd.FolderID,
 		UID:      util.GenerateShortUID(),
 		Name:     cmd.Name,
 		Model:    cmd.Model,
 		Version:  1,
-		Kind:     EntityKind(kind),
+		Kind:     cmd.Kind,
 
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -56,42 +56,43 @@ func (e *EntityService) createEntity(c *models.ReqContext, cmd createEntityComma
 	}
 
 	if err := syncFieldsWithModel(&entity); err != nil {
-		return EntityDTO{}, err
+		return LibraryElementDTO{}, err
 	}
 
-	err := e.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		if err := e.requirePermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
+	err := l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		if err := l.requirePermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&entity); err != nil {
-			if e.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
-				return errEntityAlreadyExists
+			if l.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+				return errLibraryElementAlreadyExists
 			}
 			return err
 		}
 		return nil
 	})
 
-	dto := EntityDTO{
+	dto := LibraryElementDTO{
 		ID:          entity.ID,
 		OrgID:       entity.OrgID,
 		FolderID:    entity.FolderID,
 		UID:         entity.UID,
 		Name:        entity.Name,
+		Kind:        entity.Kind,
 		Type:        entity.Type,
 		Description: entity.Description,
 		Model:       entity.Model,
 		Version:     entity.Version,
-		Meta: EntityDTOMeta{
+		Meta: LibraryElementDTOMeta{
 			ConnectedDashboards: 0,
 			Created:             entity.Created,
 			Updated:             entity.Updated,
-			CreatedBy: EntityDTOMetaUser{
+			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        entity.CreatedBy,
 				Name:      c.SignedInUser.Login,
 				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
 			},
-			UpdatedBy: EntityDTOMetaUser{
+			UpdatedBy: LibraryElementDTOMetaUser{
 				ID:        entity.UpdatedBy,
 				Name:      c.SignedInUser.Login,
 				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
