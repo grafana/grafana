@@ -71,10 +71,10 @@ export class ShareModal extends React.Component<Props, State> {
     this.state = getInitialState(props);
   }
 
-  onDismiss = () => {
-    this.setState(getInitialState(this.props));
-    this.props.onDismiss();
-  };
+  // onDismiss = () => {
+  //   //this.setState(getInitialState(this.props));
+  //   this.props.onDismiss();
+  // };
 
   onSelectTab = (t: any) => {
     this.setState({ activeTab: t.value });
@@ -112,9 +112,9 @@ export class ShareModal extends React.Component<Props, State> {
     const ActiveTab = activeTabModel.component;
 
     return (
-      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.onDismiss}>
+      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss}>
         <TabContent>
-          <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />
+          <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
         </TabContent>
       </Modal>
     );
