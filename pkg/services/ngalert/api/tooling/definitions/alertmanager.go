@@ -6,9 +6,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
+
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -196,15 +197,33 @@ type DatasourceReference struct {
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
+
 	type plain PostableUserConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
 		return err
 	}
 
-	return c.validate()
+	// validate first
+	if err := c.validate(); err != nil {
+		return err
+	}
+
+	type intermediate struct {
+		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	var tmp intermediate
+	if err := json.Unmarshal(b, &tmp); err != nil {
+		return err
+	}
+	// store the map[string]interface{} variant for re-encoding later without redaction
+	c.amSimple = tmp.AlertmanagerConfig
+
+	return nil
 }
 
 func (c *PostableUserConfig) validate() error {
@@ -226,7 +245,7 @@ func (c *PostableUserConfig) validate() error {
 
 // MarshalYAML implements yaml.Marshaller.
 func (c *PostableUserConfig) MarshalYAML() (interface{}, error) {
-	yml, err := yaml.Marshal(c.AlertmanagerConfig)
+	yml, err := yaml.Marshal(c.amSimple)
 	if err != nil {
 		return nil, err
 	}

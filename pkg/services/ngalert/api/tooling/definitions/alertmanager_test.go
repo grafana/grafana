@@ -2,6 +2,8 @@ package definitions
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
@@ -383,69 +385,23 @@ alertmanager_config: |
 func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
 	// the fields are not redacted.
-	raw := `
-template_files: {foo: bar}
-alertmanager_config: |
-                      route:
-                          receiver: am
-                          continue: false
-                          routes:
-                          - receiver: am
-                            continue: false
-                      templates: []
-                      receivers:
-                      - name: am
-                        email_configs:
-                        - to: foo
-                          from: bar
-                          headers:
-                            Bazz: buzz
-                          text: hi
-                          html: there
-                          auth_username: admin
-                          auth_password: shh
-`
-
-	expected := `{
- "template_files": {
-  "foo": "bar"
- },
- "alertmanager_config": {
-  "receivers": [
-   {
-    "email_configs": [
-     {
-      "auth_password": "shh",
-      "auth_username": "admin",
-      "from": "bar",
-      "headers": {
-       "Bazz": "buzz"
-      },
-      "html": "there",
-      "text": "hi",
-      "to": "foo"
-     }
-    ],
-    "name": "am"
-   }
-  ],
-  "route": {
-   "continue": false,
-   "receiver": "am",
-   "routes": [
-    {
-     "continue": false,
-     "receiver": "am"
-    }
-   ]
-  },
-  "templates": []
- }
-}`
-
-	var tmp GettableUserConfig
-	require.Nil(t, yaml.Unmarshal([]byte(raw), &tmp))
-	out, err := json.MarshalIndent(&tmp, "", " ")
+	yamlEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.yaml")
 	require.Nil(t, err)
-	require.Equal(t, expected, string(out))
+
+	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	require.Nil(t, err)
+
+	// test GettableUserConfig (yamlDecode -> jsonEncode)
+	var tmp GettableUserConfig
+	require.Nil(t, yaml.Unmarshal(yamlEncoded, &tmp))
+	out, err := json.MarshalIndent(&tmp, "", "  ")
+	require.Nil(t, err)
+	require.Equal(t, strings.TrimSpace(string(jsonEncoded)), string(out))
+
+	// test PostableUserConfig (jsonDecode -> yamlEncode)
+	var tmp2 PostableUserConfig
+	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp2))
+	out, err = yaml.Marshal(&tmp2)
+	require.Nil(t, err)
+	require.Equal(t, string(yamlEncoded), string(out))
 }
