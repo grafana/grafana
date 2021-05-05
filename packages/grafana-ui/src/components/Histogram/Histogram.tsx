@@ -223,31 +223,23 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let bucketSize = frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
 
   // splits shifter, to ensure splits always start at first bucket
-  builder.addHook('init', (u) => {
-    let _splits = u.axes[0].splits as Function;
+  let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
+    /** @ts-ignore */
+    let minSpace = u.axes[axisIdx]._space;
+    let bucketWidth = u.valToPos(u.data[0][0] + bucketSize, 'x') - u.valToPos(u.data[0][0], 'x');
 
-    let tweakedSplits: uPlot.Axis.Splits = (self, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
-      let splits: number[] = _splits(self, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace);
+    let firstSplit = u.data[0][0];
+    let lastSplit = u.data[0][u.data[0].length - 1] + bucketSize;
 
-      let shift = splits[0] - u.data[0][0];
+    let splits = [];
+    let skip = Math.ceil(minSpace / bucketWidth);
 
-      let tick = splits[1] - splits[0];
+    for (let i = 0, s = firstSplit; s <= lastSplit; i++, s += bucketSize) {
+      !(i % skip) && splits.push(s);
+    }
 
-      if (shift > 0) {
-        splits = splits.map((v) => v - shift);
-
-        let next = splits[splits.length - 1] + tick;
-
-        if (next <= scaleMax) {
-          splits.push(next);
-        }
-      }
-
-      return splits;
-    };
-
-    u.axes[0].splits = tweakedSplits;
-  });
+    return splits;
+  };
 
   builder.addScale({
     scaleKey: 'x', // bukkits
@@ -271,6 +263,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     isTime: false,
     placement: AxisPlacement.Bottom,
     incrs: bucketSizes,
+    splits: xSplits,
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,
@@ -428,8 +421,6 @@ class UnthemedHistogram extends React.Component<HistogramProps, GraphNGState> {
     if (!config) {
       return null;
     }
-
-    console.log(this.state.alignedData);
 
     return (
       <VizLayout width={width} height={height} legend={renderLegend(config)}>
