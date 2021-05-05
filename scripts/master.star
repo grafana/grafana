@@ -43,10 +43,10 @@ def get_steps(edition, is_downstream=False):
     include_enterprise2 = edition == 'enterprise'
     steps = [
         enterprise_downstream_step(edition=edition),
-        lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
         test_backend_step(edition=edition),
+        lint_backend_step(edition=edition),
         test_frontend_step(),
         frontend_metrics_step(edition=edition),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
@@ -58,8 +58,8 @@ def get_steps(edition, is_downstream=False):
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
-            lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
+            lint_backend_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
         ])
 

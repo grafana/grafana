@@ -1,5 +1,5 @@
 import { Field, PanelProps } from '@grafana/data';
-import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { TimeSeries, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useCallback } from 'react';
 import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
@@ -42,8 +42,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   }
 
   return (
-    <GraphNG
-      data={data.series}
+    <TimeSeries
+      frames={data.series}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -83,6 +83,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
           </>
         );
       }}
-    </GraphNG>
+    </TimeSeries>
   );
 };

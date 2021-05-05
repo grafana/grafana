@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -542,30 +541,4 @@ func timeoutFunc(d time.Duration) time.Duration {
 		d = notify.MinTimeout
 	}
 	return d + waitFunc()
-}
-
-// GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
-func (am *Alertmanager) GetAvailableNotifiers() []*alerting.NotifierPlugin {
-	return []*alerting.NotifierPlugin{
-		{
-			Type:        "email",
-			Name:        "Email",
-			Description: "Sends notifications using Grafana server configured SMTP settings",
-			Heading:     "Email settings",
-			Options: []alerting.NotifierOption{
-				{
-					Label:        "Single email",
-					Description:  "Send a single email to all recipients",
-					Element:      alerting.ElementTypeCheckbox,
-					PropertyName: "singleEmail",
-				}, {
-					Label:        "Addresses",
-					Description:  "You can enter multiple email addresses using a \";\" separator",
-					Element:      alerting.ElementTypeTextArea,
-					PropertyName: "addresses",
-					Required:     true,
-				},
-			},
-		},
-	}
 }
