@@ -74,7 +74,7 @@ describe('dataSourceVariableReducer', () => {
     });
   });
 
-  describe('when createDataSourceOptions is dispatched and item is default data source', () => {
+  describe('when createDataSourceOptions is dispatched with default in the regex and item is default data source', () => {
     it('then the state should include an extra default option', () => {
       const plugins = getMockPlugins(3);
       const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
@@ -99,7 +99,7 @@ describe('dataSourceVariableReducer', () => {
     });
   });
 
-  describe('when createDataSourceOptions is dispatched and item is default data source', () => {
+  describe('when createDataSourceOptions is dispatched without default in the regex and item is default data source', () => {
     it('then the state should include an extra default option', () => {
       const plugins = getMockPlugins(3);
       const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
