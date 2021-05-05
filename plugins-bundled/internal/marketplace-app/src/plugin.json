@@ -46,7 +46,7 @@
       "type": "page",
       "name": "Discover",
       "path": "/a/grafana-marketplace-app?tab=discover",
-      "role": "Viewer",
+      "role": "Admin",
       "addToNav": true,
       "defaultNav": true
     },
@@ -54,21 +54,21 @@
       "type": "page",
       "name": "Browse",
       "path": "/a/grafana-marketplace-app/?tab=browse",
-      "role": "Viewer",
+      "role": "Admin",
       "addToNav": true
     },
     {
       "type": "page",
       "name": "Library",
       "path": "/a/grafana-marketplace-app/?tab=library",
-      "role": "Viewer",
+      "role": "Admin",
       "addToNav": true
     },
     {
       "type": "page",
       "name": "View plugin",
       "path": "/a/grafana-marketplace-app?tab=plugin",
-      "role": "Viewer"
+      "role": "Admin"
     }
   ],
   "dependencies": {
