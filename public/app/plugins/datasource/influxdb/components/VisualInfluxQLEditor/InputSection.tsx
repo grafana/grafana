@@ -1,6 +1,8 @@
 import React from 'react';
+import { cx } from '@emotion/css';
 import { Input } from '@grafana/ui';
 import { useShadowedState } from '../useShadowedState';
+import { paddingRightClass } from './styles';
 
 type Props = {
   value: string | undefined;
@@ -8,6 +10,9 @@ type Props = {
   isWide?: boolean;
   placeholder?: string;
 };
+
+const wideClassName = cx('width-14', paddingRightClass);
+const notWideClassName = cx('width-8', paddingRightClass);
 
 export const InputSection = ({ value, onChange, isWide, placeholder }: Props): JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(value);
@@ -18,7 +23,7 @@ export const InputSection = ({ value, onChange, isWide, placeholder }: Props): J
     onChange(newValue);
   };
 
-  const className = isWide ?? false ? 'width-14' : 'width-8';
+  const className = isWide ?? false ? wideClassName : notWideClassName;
 
   return (
     <>
