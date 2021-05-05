@@ -145,12 +145,16 @@ The results contain all possible values occurring only at the last level of the 
 use expand function (`expand(*.servers.*)`). 
 
 #### Comparison between expanded and non-expanded metric search results
+
 The expanded query returns the full names of matching metrics. In combination with regex, it can extract any part of the metric name. By contrast, a non-expanded query only returns the last part of the metric name. It does not allow you to extract other parts of metric names. 
+
 Here are some example metrics:
 - `prod.servers.001.cpu`
 - `prod.servers.002.cpu`
 - `test.servers.001.cpu`
+
 The following examples show how expanded and non-expanded queries can be used to fetch specific parts of the metrics name.
+
 | non-expanded query | results | expanded query | expanded results |
 |--------------|---------|----------------|------------------|
 | `*` | prod, test | `expand(*)` | prod, test
@@ -159,8 +163,8 @@ The following examples show how expanded and non-expanded queries can be used to
 | `*.servers.*` | 001,002 | `expand(*.servers.*)` | prod.servers.001, prod.servers.002, test.servers.001 |
 | `test.servers.*` | 001 | `expand(test.servers.*)` | test.servers.001 |
 | `*.servers.*.cpu` | cpu | `expand(*.servers.*.cpu)` | prod.servers.001.cpu, prod.servers.002.cpu, test.servers.001.cpu |
+
 As you can see from the results, the non-expanded query is the same as an expanded query with a regex matching the last part of the name.
-You can combine `expand` with a regex to match specific part of the metric name path.
 
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
