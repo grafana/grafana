@@ -11,9 +11,6 @@ type Props = {
   placeholder?: string;
 };
 
-const wideClassName = cx('width-14', paddingRightClass);
-const notWideClassName = cx('width-8', paddingRightClass);
-
 export const InputSection = ({ value, onChange, isWide, placeholder }: Props): JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(value);
 
@@ -23,13 +20,11 @@ export const InputSection = ({ value, onChange, isWide, placeholder }: Props): J
     onChange(newValue);
   };
 
-  const className = isWide ?? false ? wideClassName : notWideClassName;
-
   return (
     <>
       <Input
         placeholder={placeholder}
-        className={className}
+        className={cx(isWide ?? false ? 'width-14' : 'width-8', paddingRightClass)}
         type="text"
         spellCheck={false}
         onBlur={onBlur}
