@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 import { MetricEditor } from './MetricEditor';
-import React, { PropsWithChildren } from 'react';
+import React, { ReactNode, PropsWithChildren } from 'react';
 import { ElasticDatasource } from '../../../datasource';
 import { getDefaultTimeRange } from '@grafana/data';
 import { ElasticsearchQuery } from '../../../types';
