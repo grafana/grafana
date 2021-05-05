@@ -12,6 +12,7 @@ import (
 const ExporterName = "grafana"
 
 var (
+
 	// MInstanceStart is a metric counter for started instances
 	MInstanceStart prometheus.Counter
 
@@ -105,19 +106,16 @@ var (
 	// MRenderingQueue is a metric gauge for image rendering queue size
 	MRenderingQueue prometheus.Gauge
 
-	// MAccessRoleCount is a metric gauge for image rendering queue size
+	// MAccessRoleCount is a metric gauge for total number of roles
 	MAccessRoleCount prometheus.Gauge
 
-	// MAccessBuiltinRoleCount is a metric gauge for image rendering queue size
+	// MAccessBuiltinRoleCount is a metric gauge for number of role assignments to teams
 	MAccessTeamRoleCount prometheus.Gauge
 
-	// MAccessUserRoleCount is a metric gauge for image rendering queue size
+	// MAccessUserRoleCount is a metric gauge for number of role assignments to users
 	MAccessUserRoleCount prometheus.Gauge
 
-	// MAccessTeamCount is a metric gauge for image rendering queue size
-	MAccessTeamCount prometheus.Gauge
-
-	// MAccessPermissionCount is a metric gauge for image rendering queue size
+	// MAccessPermissionCount is a metric gauge for total number of permissions
 	MAccessPermissionCount prometheus.Gauge
 )
 
@@ -419,12 +417,6 @@ func init() {
 		Namespace: ExporterName,
 	})
 
-	MAccessTeamCount = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "access_team_count",
-		Help:      "number of team",
-		Namespace: ExporterName,
-	})
-
 	MDataSourceProxyReqTimer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:       "api_dataproxy_request_all_milliseconds",
 		Help:       "summary for dataproxy request duration",
@@ -635,11 +627,11 @@ func initMetricVars() {
 		LDAPUsersSyncExecutionTime,
 		MRenderingRequestTotal,
 		MRenderingSummary,
-		MAccessSummary,
 		MRenderingQueue,
+		MAccessSummary,
 		MAccessRoleCount,
 		MAccessTeamRoleCount,
-		MAccessTeamCount,
+		MAccessUserRoleCount,
 		MAccessPermissionCount,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
