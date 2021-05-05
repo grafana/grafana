@@ -6,6 +6,7 @@ import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 import useLastError from '../../utils/useLastError';
 import LogsQueryEditor from '../LogsQueryEditor';
+import ApplicationInsightsEditor from '../ApplicationInsightsEditor';
 
 interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
@@ -83,6 +84,9 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
           setError={setError}
         />
       );
+
+    case AzureQueryType.ApplicationInsights:
+      return <ApplicationInsightsEditor query={query} />;
   }
 
   return null;

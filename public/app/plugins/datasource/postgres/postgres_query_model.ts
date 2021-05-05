@@ -2,7 +2,7 @@ import { find, map } from 'lodash';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
 
-export default class MysqlQuery {
+export default class PostgresQueryModel {
   target: any;
   templateSrv: any;
   scopedVars: any;
@@ -45,12 +45,12 @@ export default class MysqlQuery {
     }
   }
 
-  quoteIdentifier(value: string) {
-    return '"' + value.replace(/"/g, '""') + '"';
+  quoteIdentifier(value: any) {
+    return '"' + String(value).replace(/"/g, '""') + '"';
   }
 
-  quoteLiteral(value: string) {
-    return "'" + value.replace(/'/g, "''") + "'";
+  quoteLiteral(value: any) {
+    return "'" + String(value).replace(/'/g, "''") + "'";
   }
 
   escapeLiteral(value: any) {
@@ -65,7 +65,7 @@ export default class MysqlQuery {
     return this.target.metricColumn !== 'none';
   }
 
-  interpolateQueryStr(value: string, variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
+  interpolateQueryStr(value: any, variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return this.escapeLiteral(value);
@@ -79,7 +79,7 @@ export default class MysqlQuery {
     return escapedValues.join(',');
   }
 
-  render(interpolate?: boolean) {
+  render(interpolate?: any) {
     const target = this.target;
 
     // new query with no table set yet
@@ -99,7 +99,7 @@ export default class MysqlQuery {
   }
 
   hasUnixEpochTimecolumn() {
-    return ['int', 'bigint', 'double'].indexOf(this.target.timeColumnType) > -1;
+    return ['int4', 'int8', 'float4', 'float8', 'numeric'].indexOf(this.target.timeColumnType) > -1;
   }
 
   buildTimeColumn(alias = true) {
@@ -154,11 +154,70 @@ export default class MysqlQuery {
     const columnName: any = find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    const aggregate: any = find(column, (g: any) => g.type === 'aggregate');
+    const aggregate: any = find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+    const windows: any = find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
 
     if (aggregate) {
       const func = aggregate.params[0];
-      query = func + '(' + query + ')';
+      switch (aggregate.type) {
+        case 'aggregate':
+          if (func === 'first' || func === 'last') {
+            query = func + '(' + query + ',' + this.target.timeColumn + ')';
+          } else {
+            query = func + '(' + query + ')';
+          }
+          break;
+        case 'percentile':
+          query = func + '(' + aggregate.params[1] + ') WITHIN GROUP (ORDER BY ' + query + ')';
+          break;
+      }
+    }
+
+    if (windows) {
+      const overParts = [];
+      if (this.hasMetricColumn()) {
+        overParts.push('PARTITION BY ' + this.target.metricColumn);
+      }
+      overParts.push('ORDER BY ' + this.buildTimeColumn(false));
+
+      const over = overParts.join(' ');
+      let curr: string;
+      let prev: string;
+      switch (windows.type) {
+        case 'window':
+          switch (windows.params[0]) {
+            case 'delta':
+              curr = query;
+              prev = 'lag(' + curr + ') OVER (' + over + ')';
+              query = curr + ' - ' + prev;
+              break;
+            case 'increase':
+              curr = query;
+              prev = 'lag(' + curr + ') OVER (' + over + ')';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
+              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
+              break;
+            case 'rate':
+              let timeColumn = this.target.timeColumn;
+              if (aggregate) {
+                timeColumn = 'min(' + timeColumn + ')';
+              }
+
+              curr = query;
+              prev = 'lag(' + curr + ') OVER (' + over + ')';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
+              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
+              query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
+              break;
+            default:
+              query = windows.params[0] + '(' + query + ') OVER (' + over + ')';
+              break;
+          }
+          break;
+        case 'moving_window':
+          query = windows.params[0] + '(' + query + ') OVER (' + over + ' ROWS ' + windows.params[1] + ' PRECEDING)';
+          break;
+      }
     }
 
     const alias: any = find(column, (g: any) => g.type === 'alias');
@@ -228,7 +287,10 @@ export default class MysqlQuery {
     query += this.buildWhereClause();
     query += this.buildGroupClause();
 
-    query += '\nORDER BY ' + this.buildTimeColumn(false);
+    query += '\nORDER BY 1';
+    if (this.hasMetricColumn()) {
+      query += ',2';
+    }
 
     return query;
   }

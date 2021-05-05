@@ -3,7 +3,7 @@ import appEvents from 'app/core/app_events';
 import { MysqlMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { SqlPart } from 'app/core/components/sql_part/sql_part';
-import MysqlQuery from './mysql_query';
+import MySQLQueryModel from './mysql_query_model';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
@@ -27,7 +27,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   lastQueryError?: string;
   showHelp!: boolean;
 
-  queryModel: MysqlQuery;
+  queryModel: MySQLQueryModel;
   metaBuilder: MysqlMetaQuery;
   lastQueryMeta?: QueryResultMeta;
   tableSegment: any;
@@ -50,7 +50,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.target = this.target;
-    this.queryModel = new MysqlQuery(this.target, templateSrv, this.panel.scopedVars);
+    this.queryModel = new MySQLQueryModel(this.target, templateSrv, this.panel.scopedVars);
     this.metaBuilder = new MysqlMetaQuery(this.target, this.queryModel);
     this.updateProjection();
 

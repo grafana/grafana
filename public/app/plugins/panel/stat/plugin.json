@@ -4,7 +4,7 @@
   "id": "stat",
 
   "info": {
-    "description": "Singlestat Panel for Grafana",
+    "description": "Big stat values & sparklines",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
