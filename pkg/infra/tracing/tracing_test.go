@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -98,4 +99,40 @@ func TestInitJaegerCfg_InvalidEnvVar(t *testing.T) {
 	ts := &TracingService{}
 	_, err = ts.initJaegerCfg()
 	require.EqualError(t, err, "cannot parse env var JAEGER_DISABLED=totallybogus: strconv.ParseBool: parsing \"totallybogus\": invalid syntax")
+}
+
+func TestInitJaegerCfg_EnabledViaHost(t *testing.T) {
+	require.NoError(t, os.Setenv("JAEGER_AGENT_HOST", "example.com"))
+	defer func() {
+		require.NoError(t, os.Unsetenv("JAEGER_AGENT_HOST"))
+	}()
+
+	ts := &TracingService{Cfg: setting.NewCfg()}
+	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
+	require.NoError(t, err)
+	require.NoError(t, ts.parseSettings())
+	cfg, err := ts.initJaegerCfg()
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Disabled)
+	assert.Equal(t, "example.com:6831", cfg.Reporter.LocalAgentHostPort)
+}
+
+func TestInitJaegerCfg_EnabledViaHostPort(t *testing.T) {
+	require.NoError(t, os.Setenv("JAEGER_AGENT_HOST", "example.com"))
+	require.NoError(t, os.Setenv("JAEGER_AGENT_PORT", "12345"))
+	defer func() {
+		require.NoError(t, os.Unsetenv("JAEGER_AGENT_HOST"))
+		require.NoError(t, os.Unsetenv("JAEGER_AGENT_PORT"))
+	}()
+
+	ts := &TracingService{Cfg: setting.NewCfg()}
+	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
+	require.NoError(t, err)
+	require.NoError(t, ts.parseSettings())
+	cfg, err := ts.initJaegerCfg()
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Disabled)
+	assert.Equal(t, "example.com:12345", cfg.Reporter.LocalAgentHostPort)
 }
