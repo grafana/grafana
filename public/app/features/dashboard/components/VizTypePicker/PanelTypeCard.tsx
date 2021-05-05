@@ -95,6 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     itemContent: css`
       position: relative;
       width: 100%;
+      padding: ${theme.spacing(0, 1)};
     `,
     current: css`
       label: currentVisualizationItem;
@@ -112,7 +113,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
-      padding: 0 10px;
       width: 100%;
     `,
     description: css`
@@ -122,7 +122,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.fontWeightLight};
-      padding: 0 ${theme.spacing(1.25)};
       width: 100%;
     `,
     img: css`

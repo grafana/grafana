@@ -42,7 +42,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
         onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
       >
         <span className={styles.metaContainer}>
-          <Icon name={'folder'} />
+          <Icon name={'folder'} size="sm" />
           {libraryPanel.meta.folderName}
         </span>
       </PanelTypeCard>
@@ -62,14 +62,13 @@ function getStyles(theme: GrafanaTheme2) {
     metaContainer: css`
       display: flex;
       align-items: center;
-      margin-right: ${theme.spacing(0.5)};
-      margin-left: ${theme.spacing(1)};
       color: ${theme.colors.text.disabled};
       font-size: ${theme.typography.bodySmall.fontSize};
-      padding: ${theme.spacing(0.5)};
+      padding-top: ${theme.spacing(0.5)};
+
       svg {
-        margin-right: ${theme.spacing(0.25)};
-        margin-bottom: 0;
+        margin-right: ${theme.spacing(0.5)};
+        margin-bottom: 3px;
       }
     `,
   };
