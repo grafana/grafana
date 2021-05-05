@@ -14,9 +14,9 @@ export default function MappingsHelp(props: Props): JSX.Element {
 data sources.
       </p>
       <p>
-        All tags are mapped automatically to labels regardless to mapping configuration. Graphite matching patterns
-        (using &#123;&#125;) are converted to Loki&apos;s regular expressions matchers. You can use functions in your
-        queries, metrics and tags will be extracted to match them with defined mappings.
+        All tags are automatically mapped to labels regardless of the mapping configuration. Graphite matching patterns
+        (using &#123;&#125;) are converted to Loki&apos;s regular expressions matching patterns. When you use functions in your
+        queries, the metrics, and tags are extracted to match them with defined mappings.
       </p>
       <p>
         Example: for a mapping = <code>servers.(cluster).(server).*</code>:
