@@ -1,8 +1,8 @@
-import React, { MouseEvent, useState } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, PanelPluginMeta, urlUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Icon, Link, useStyles2 } from '@grafana/ui';
 
 import { LibraryPanelDTO } from '../../types';
 import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
@@ -59,10 +59,6 @@ interface FolderLinkProps {
 
 function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
   const styles = useStyles2(getStyles);
-  const onNavigateToFolder = (e: MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
-    e.preventDefault();
-    locationService.push(urlUtil.renderUrl(`/dashboards/f/${libraryPanel.meta.folderUid}`, {}));
-  };
 
   if (!libraryPanel.meta.folderUid) {
     return (
@@ -74,12 +70,12 @@ function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
   }
 
   return (
-    <a href="#" onClick={onNavigateToFolder}>
+    <Link href={`/dashboards/f/${libraryPanel.meta.folderUid}`}>
       <span className={styles.metaContainer}>
         <Icon name={'folder-upload'} size="sm" />
         {libraryPanel.meta.folderName}
       </span>
-    </a>
+    </Link>
   );
 }
 
