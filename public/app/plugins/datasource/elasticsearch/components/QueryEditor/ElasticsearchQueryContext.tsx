@@ -1,4 +1,4 @@
-import React, { Context, createContext, FunctionComponent, useCallback, useContext } from 'react';
+import React, { Context, createContext, PropsWithChildren, useCallback, useContext } from 'react';
 import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
 import { ElasticsearchQuery } from '../../types';
@@ -20,14 +20,14 @@ interface Props {
   range: TimeRange;
 }
 
-export const ElasticsearchProvider: FunctionComponent<Props> = ({
+export const ElasticsearchProvider = ({
   children,
   onChange,
   onRunQuery,
   query,
   datasource,
   range,
-}) => {
+}: PropsWithChildren<Props>) => {
   const onStateChange = useCallback(
     (query: ElasticsearchQuery) => {
       onChange(query);
