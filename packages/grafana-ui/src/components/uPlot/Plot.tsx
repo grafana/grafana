@@ -1,6 +1,6 @@
 import React, { createRef } from 'react';
 import uPlot, { Options } from 'uplot';
-import { PlotContext } from './context';
+import { PlotContext, PlotContextType } from './context';
 import { DEFAULT_PLOT_CONFIG } from './utils';
 import { PlotProps } from './types';
 
@@ -16,7 +16,9 @@ function sameConfig(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.config === prevProps.config;
 }
 
-type UPlotChartState = { ctx: { plot: uPlot | null } };
+type UPlotChartState = {
+  ctx: PlotContextType;
+};
 
 /**
  * @internal
@@ -56,15 +58,11 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       ...this.props.config.getConfig(),
     };
 
-    // for some reason does not invoke a re-render when called from componentDidMount or componentDidUpdate
     this.setState({
       ctx: {
         plot: new uPlot(config, this.props.data, this.plotContainer!.current!),
       },
     });
-
-    // force a re-render to update plugins' PlotContext with new instance
-    this.forceUpdate();
   }
 
   componentDidMount() {
@@ -75,8 +73,13 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     this.state.ctx.plot?.destroy();
   }
 
-  shouldComponentUpdate(nextProps: PlotProps, nextState: object) {
-    return !sameDims(this.props, nextProps) || !sameData(this.props, nextProps) || !sameConfig(this.props, nextProps);
+  shouldComponentUpdate(nextProps: PlotProps, nextState: UPlotChartState) {
+    return (
+      nextState.ctx !== this.state.ctx ||
+      !sameDims(this.props, nextProps) ||
+      !sameData(this.props, nextProps) ||
+      !sameConfig(this.props, nextProps)
+    );
   }
 
   componentDidUpdate(prevProps: PlotProps, prevState: object) {

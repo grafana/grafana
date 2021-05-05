@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import uPlot from 'uplot';
 
-interface PlotContextType {
+export interface PlotContextType {
   plot: uPlot | null;
 }
 
