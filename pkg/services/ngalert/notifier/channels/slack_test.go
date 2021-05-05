@@ -59,7 +59,7 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "TODO: rule URL",
+						TitleLink:  "http:/localhost/alerting/list",
 						Text:       "",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
@@ -95,7 +95,7 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "TODO: rule URL",
+						TitleLink:  "http:/localhost/alerting/list",
 						Text:       "",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
@@ -138,7 +138,7 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "2 firing, 0 resolved",
-						TitleLink:  "TODO: rule URL",
+						TitleLink:  "http:/localhost/alerting/list",
 						Text:       "",
 						Fallback:   "2 firing, 0 resolved",
 						Fields:     nil,
