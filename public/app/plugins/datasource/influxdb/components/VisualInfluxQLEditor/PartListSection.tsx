@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { cx, css } from '@emotion/css';
-import { SegmentInput, MenuItem, WithContextMenu, MenuGroup } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { SegmentInput, MenuItem, WithContextMenu, MenuGroup, useTheme2 } from '@grafana/ui';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Seg } from './Seg';
 import { unwrap } from './unwrap';
 import { toSelectableValue } from './toSelectableValue';
@@ -55,10 +55,6 @@ type PartProps = {
   onChange: (paramValues: string[]) => void;
 };
 
-const noLeftPaddingClass = css({
-  paddingLeft: '0',
-});
-
 const noHorizMarginPaddingClass = css({
   paddingLeft: '0',
   paddingRight: '0',
@@ -66,47 +62,61 @@ const noHorizMarginPaddingClass = css({
   marginRight: '0',
 });
 
+const getPartClass = (theme: GrafanaTheme2) => {
+  return cx(
+    'gf-form-label',
+    css({
+      paddingLeft: '0',
+      // gf-form-label class makes certain css attributes incorrect
+      // for the selectbox-dropdown, so we have to "reset" them back
+      lineHeight: theme.typography.body.lineHeight,
+      fontSize: theme.typography.body.fontSize,
+    })
+  );
+};
+
 const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
+  const theme = useTheme2();
+  const partClass = useMemo(() => getPartClass(theme), [theme]);
+
   const onParamChange = (par: string, i: number) => {
     const newParams = params.map((p) => p.value);
     newParams[i] = par;
     onChange(newParams);
   };
   return (
-    <div className="gf-form-inline">
-      <div className={cx('gf-form-label', noLeftPaddingClass)}>
-        <RemovableName name={name} onRemove={onRemove} />(
-        {params.map((p, i) => {
-          const { value, options } = p;
-          const isLast = i === params.length - 1;
-          return (
-            <React.Fragment key={i}>
-              {options !== null ? (
-                <Seg
-                  allowCustomValue
-                  value={value}
-                  buttonClassName={noHorizMarginPaddingClass}
-                  loadOptions={() => options().then((items) => items.map(toSelectableValue))}
-                  onChange={(v) => {
-                    onParamChange(unwrap(v.value), i);
-                  }}
-                />
-              ) : (
-                <SegmentInput
-                  allowCustomValue
-                  value={value}
-                  className={noHorizMarginPaddingClass}
-                  onChange={(v) => {
-                    onParamChange(v.toString(), i);
-                  }}
-                />
-              )}
-              {!isLast && ','}
-            </React.Fragment>
-          );
-        })}
-        )
-      </div>
+    <div className={partClass}>
+      <RemovableName name={name} onRemove={onRemove} />(
+      {params.map((p, i) => {
+        const { value, options } = p;
+        const isLast = i === params.length - 1;
+        return (
+          <React.Fragment key={i}>
+            {options !== null ? (
+              <Seg
+                allowCustomValue
+                value={value}
+                buttonClassName={noHorizMarginPaddingClass}
+                loadOptions={() => options().then((items) => items.map(toSelectableValue))}
+                onChange={(v) => {
+                  onParamChange(unwrap(v.value), i);
+                }}
+              />
+            ) : (
+              <SegmentInput
+                allowCustomValue
+                value={value}
+                className={noHorizMarginPaddingClass}
+                onChange={(v) => {
+                  onParamChange(v.toString(), i);
+                }}
+              />
+            )}
+            {!isLast && ','}
+          </React.Fragment>
+        );
+      })}
+      )
     </div>
   );
 };
