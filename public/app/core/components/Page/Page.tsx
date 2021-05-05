@@ -13,7 +13,7 @@ import { css, cx } from '@emotion/css';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  navModel: NavModel;
+  navModel?: NavModel;
 }
 
 export interface PageType extends FC<Props> {
@@ -25,15 +25,19 @@ export const Page: PageType = ({ navModel, children, className, ...otherProps })
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const title = getTitleFromNavModel(navModel);
-    document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
+    if (navModel) {
+      const title = getTitleFromNavModel(navModel);
+      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
+    } else {
+      document.title = Branding.AppTitle;
+    }
   }, [navModel]);
 
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          <PageHeader model={navModel} />
+          {navModel && <PageHeader model={navModel} />}
           {children}
           <Footer />
         </div>
