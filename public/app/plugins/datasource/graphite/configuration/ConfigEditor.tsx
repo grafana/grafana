@@ -23,6 +23,7 @@ const graphiteTypes = Object.entries(GraphiteType).map(([label, value]) => ({
 }));
 
 export type Props = DataSourcePluginOptionsEditorProps<GraphiteOptions>;
+
 type State = {
   showMappingsHelp: boolean;
 };
