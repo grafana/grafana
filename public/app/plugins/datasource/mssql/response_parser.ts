@@ -33,9 +33,10 @@ export default class ResponseParser {
       }
     }
 
-    return Array.from(new Set(values.map((v) => v.text))).map((text) => {
-      return { text, value: values.find((v) => v.text === text)?.value } as MetricFindValue;
-    });
+    return Array.from(new Set(values.map((v) => v.text))).map((text) => ({
+      text,
+      value: values.find((v) => v.text === text)?.value,
+    }));
   }
 
   transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number): MetricFindValue[] {
