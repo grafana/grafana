@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/schema"
@@ -12,9 +13,8 @@ import (
 var paths = load.GetDefaultLoadPaths()
 
 func (cmd Command) validateScuemataBasics(c utils.CommandLine) error {
-
 	resource := c.String("resource")
-	b, err := os.Open(resource)
+	b, err := os.Open(filepath.Clean(resource))
 	if err != nil {
 		return err
 	}

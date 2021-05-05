@@ -17,7 +17,6 @@ var base embed.FS
 var pluginSchema, _ = fs.Sub(base, "testdata/public")
 
 func TestValidateScuemataBasics(t *testing.T) {
-
 	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
 		tempDir := os.DirFS(filepath.Join("testdata", "valid_scuemata"))
 
