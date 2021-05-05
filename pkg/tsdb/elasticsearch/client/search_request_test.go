@@ -16,7 +16,7 @@ func TestSearchRequest(t *testing.T) {
 	Convey("Test elasticsearch search request", t, func() {
 		timeField := "@timestamp"
 		Convey("Given new search request builder for es version 5", func() {
-			version5, _ := semver.NewVersion("2.0.0")
+			version5, _ := semver.NewVersion("5.0.0")
 			b := NewSearchRequestBuilder(version5, interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
 			Convey("When building search request", func() {
