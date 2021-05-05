@@ -141,12 +141,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
-        <LibraryPanelsSearch
-          onClick={onAddLibraryPanel}
-          perPage={40}
-          variant={LibraryPanelsSearchVariant.Tight}
-          showFilter
-        />
+        <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>

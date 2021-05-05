@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 
 	coreapi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -23,6 +24,7 @@ import (
 type RulerSrv struct {
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
+	QuotaService    *quota.QuotaService
 	manager         *state.Manager
 	log             log.Logger
 }
@@ -209,8 +211,18 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return toNamespaceErrorResponse(err)
 	}
 
-	// TODO check permissions
-	// TODO check quota
+	// quotas are checked in advanced
+	// that is acceptable under the assumption that there will be only one alert rule under the rule group
+	// alternatively we should check the quotas after the rule group update
+	// and rollback the transaction in case of violation
+	limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to get quota", err)
+	}
+	if limitReached {
+		return response.Error(http.StatusForbidden, "quota reached", nil)
+	}
+
 	// TODO validate UID uniqueness in the payload
 
 	//TODO: Should this belong in alerting-api?

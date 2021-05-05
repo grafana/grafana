@@ -1,16 +1,14 @@
 package librarypanels
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/search"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -400,46 +398,28 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 	if len(strings.TrimSpace(query.panelFilter)) > 0 {
 		panelFilter = strings.Split(query.panelFilter, ",")
 	}
-
+	folderFilter := parseFolderFilter(query)
+	if folderFilter.parseError != nil {
+		return LibraryPanelSearchResult{}, folderFilter.parseError
+	}
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
-		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
-		builder.Write(` WHERE lp.org_id=? AND lp.folder_id=0`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(query.searchString)) > 0 {
-			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-			builder.Write(" OR lp.description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
+		if folderFilter.includeGeneralFolder {
+			builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+			builder.Write(` WHERE lp.org_id=?  AND lp.folder_id=0`, c.SignedInUser.OrgId)
+			writeSearchStringSQL(query, lps.SQLStore, &builder)
+			writeExcludeSQL(query, &builder)
+			writePanelFilterSQL(panelFilter, &builder)
+			builder.Write(" UNION ")
 		}
-		if len(strings.TrimSpace(query.excludeUID)) > 0 {
-			builder.Write(" AND lp.uid <> ?", query.excludeUID)
-		}
-		if len(panelFilter) > 0 {
-			var sql bytes.Buffer
-			params := make([]interface{}, 0)
-			sql.WriteString(` AND lp.type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
-			for _, v := range panelFilter {
-				params = append(params, v)
-			}
-			builder.Write(sql.String(), params...)
-		}
-		builder.Write(" UNION ")
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(query.searchString)) > 0 {
-			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-			builder.Write(" OR lp.description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-		}
-		if len(strings.TrimSpace(query.excludeUID)) > 0 {
-			builder.Write(" AND lp.uid <> ?", query.excludeUID)
-		}
-		if len(panelFilter) > 0 {
-			var sql bytes.Buffer
-			params := make([]interface{}, 0)
-			sql.WriteString(` AND lp.type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
-			for _, v := range panelFilter {
-				params = append(params, v)
-			}
-			builder.Write(sql.String(), params...)
+		writeSearchStringSQL(query, lps.SQLStore, &builder)
+		writeExcludeSQL(query, &builder)
+		writePanelFilterSQL(panelFilter, &builder)
+		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
+			return err
 		}
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
@@ -449,10 +429,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 		} else {
 			builder.Write(" ORDER BY 1 ASC")
 		}
-		if query.perPage != 0 {
-			offset := query.perPage * (query.page - 1)
-			builder.Write(lps.SQLStore.Dialect.LimitOffset(int64(query.perPage), int64(offset)))
-		}
+		writePerPageSQL(query, lps.SQLStore, &builder)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
 			return err
 		}
@@ -490,23 +467,13 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query 
 
 		var panels []LibraryPanel
 		countBuilder := sqlstore.SQLBuilder{}
-		countBuilder.Write("SELECT * FROM library_panel")
-		countBuilder.Write(` WHERE org_id=?`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(query.searchString)) > 0 {
-			countBuilder.Write(" AND name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-			countBuilder.Write(" OR description "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-		}
-		if len(strings.TrimSpace(query.excludeUID)) > 0 {
-			countBuilder.Write(" AND uid <> ?", query.excludeUID)
-		}
-		if len(panelFilter) > 0 {
-			var sql bytes.Buffer
-			params := make([]interface{}, 0)
-			sql.WriteString(` AND type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
-			for _, v := range panelFilter {
-				params = append(params, v)
-			}
-			countBuilder.Write(sql.String(), params...)
+		countBuilder.Write("SELECT * FROM library_panel AS lp")
+		countBuilder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
+		writeSearchStringSQL(query, lps.SQLStore, &countBuilder)
+		writeExcludeSQL(query, &countBuilder)
+		writePanelFilterSQL(panelFilter, &countBuilder)
+		if err := folderFilter.writeFolderFilterSQL(true, &countBuilder); err != nil {
+			return err
 		}
 		if err := session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&panels); err != nil {
 			return err

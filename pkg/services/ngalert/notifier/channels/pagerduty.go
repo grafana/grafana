@@ -54,31 +54,22 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
 	}
 
-	customDetails := model.Settings.Get("customDetails").MustMap(map[string]interface{}{
-		"firing":       `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
-		"resolved":     `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
-		"num_firing":   `{{ .Alerts.Firing | len }}`,
-		"num_resolved": `{{ .Alerts.Resolved | len }}`,
-	})
-
-	details := make(map[string]string, len(customDetails))
-	for k, v := range customDetails {
-		if val, ok := v.(string); ok {
-			details[k] = val
-		}
-	}
-
 	return &PagerdutyNotifier{
-		NotifierBase:  old_notifiers.NewNotifierBase(model),
-		Key:           key,
-		CustomDetails: details,
-		Severity:      model.Settings.Get("severity").MustString("critical"),
-		Class:         model.Settings.Get("class").MustString("todo_class"), // TODO
-		Component:     model.Settings.Get("component").MustString("Grafana"),
-		Group:         model.Settings.Get("group").MustString("todo_group"), // TODO
-		Summary:       model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
-		tmpl:          t,
-		log:           log.New("alerting.notifier." + model.Name),
+		NotifierBase: old_notifiers.NewNotifierBase(model),
+		Key:          key,
+		CustomDetails: map[string]string{
+			"firing":       `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
+			"resolved":     `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
+			"num_firing":   `{{ .Alerts.Firing | len }}`,
+			"num_resolved": `{{ .Alerts.Resolved | len }}`,
+		},
+		Severity:  model.Settings.Get("severity").MustString("critical"),
+		Class:     model.Settings.Get("class").MustString("default"),
+		Component: model.Settings.Get("component").MustString("Grafana"),
+		Group:     model.Settings.Get("group").MustString("default"),
+		Summary:   model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
+		tmpl:      t,
+		log:       log.New("alerting.notifier." + model.Name),
 	}, nil
 }
 
@@ -159,6 +150,11 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			Class:         tmpl(pn.Class),
 			Group:         tmpl(pn.Group),
 		},
+	}
+
+	if len(msg.Payload.Summary) > 1024 {
+		// This is the Pagerduty limit.
+		msg.Payload.Summary = msg.Payload.Summary[:1021] + "..."
 	}
 
 	if hostname, err := os.Hostname(); err == nil {
