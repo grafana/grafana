@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { cx, css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { useClickAway, useAsyncFn } from 'react-use';
-import { InlineLabel, Select } from '@grafana/ui';
+import { InlineLabel, Select, Input } from '@grafana/ui';
+import { useShadowedState } from '../useShadowedState';
 
 // this file is a simpler version of `grafana-ui / SegmentAsync.tsx`
 // with some changes:
@@ -18,26 +19,26 @@ type SelVal = SelectableValue<string>;
 // when allowCustomValue is true, there is no way to enforce the selectableValue
 // enum-type, so i just go with `string`
 
-type SharedProps = {
-  onChange: (v: SelVal) => void;
-  loadOptions: () => Promise<SelVal[]>;
-  allowCustomValue?: boolean;
-};
-
-type Props = SharedProps & {
+type Props = {
   value: string;
   buttonClassName?: string;
+  loadOptions?: () => Promise<SelVal[]>;
+  onChange: (v: SelVal) => void;
+  allowCustomValue?: boolean;
 };
 
 const selectClass = css({
   minWidth: '160px',
 });
 
-type SelProps = SharedProps & {
+type SelProps = {
+  loadOptions: () => Promise<SelVal[]>;
   onClose: () => void;
+  onChange: (v: SelVal) => void;
+  allowCustomValue?: boolean;
 };
 
-export const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelProps): JSX.Element => {
+const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelProps): JSX.Element => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
   useClickAway(ref, onClose);
@@ -55,6 +56,34 @@ export const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelPro
         onChange={onChange}
       />
     </div>
+  );
+};
+
+type InpProps = {
+  initialValue: string;
+  onChange: (newVal: string) => void;
+};
+
+const Inp = ({ initialValue, onChange }: InpProps): JSX.Element => {
+  const [currentValue, setCurrentValue] = useShadowedState(initialValue);
+
+  console.log(initialValue, currentValue);
+  const onBlur = () => {
+    // we send empty-string as undefined
+    onChange(currentValue);
+  };
+
+  return (
+    <Input
+      autoFocus
+      type="text"
+      spellCheck={false}
+      onBlur={onBlur}
+      onChange={(e) => {
+        setCurrentValue(e.currentTarget.value);
+      }}
+      value={currentValue}
+    />
   );
 };
 
@@ -81,18 +110,30 @@ export const Seg = ({ value, buttonClassName, loadOptions, allowCustomValue, onC
       </InlineLabel>
     );
   } else {
-    return (
-      <Sel
-        loadOptions={loadOptions}
-        allowCustomValue={allowCustomValue}
-        onChange={(v) => {
-          setOpen(false);
-          onChange(v);
-        }}
-        onClose={() => {
-          setOpen(false);
-        }}
-      />
-    );
+    if (loadOptions !== undefined) {
+      return (
+        <Sel
+          loadOptions={loadOptions}
+          allowCustomValue={allowCustomValue}
+          onChange={(v) => {
+            setOpen(false);
+            onChange(v);
+          }}
+          onClose={() => {
+            setOpen(false);
+          }}
+        />
+      );
+    } else {
+      return (
+        <Inp
+          initialValue={value}
+          onChange={(v) => {
+            setOpen(false);
+            onChange({ value: v, label: v });
+          }}
+        />
+      );
+    }
   }
 };

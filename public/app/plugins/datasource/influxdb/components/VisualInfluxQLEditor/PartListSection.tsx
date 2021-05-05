@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { cx, css } from '@emotion/css';
-import { SegmentInput, MenuItem, WithContextMenu, MenuGroup, useTheme2 } from '@grafana/ui';
+import { MenuItem, WithContextMenu, MenuGroup, useTheme2 } from '@grafana/ui';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Seg } from './Seg';
 import { unwrap } from './unwrap';
@@ -90,27 +90,19 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
       {params.map((p, i) => {
         const { value, options } = p;
         const isLast = i === params.length - 1;
+        const loadOptions =
+          options !== null ? () => options().then((items) => items.map(toSelectableValue)) : undefined;
         return (
           <React.Fragment key={i}>
-            {options !== null ? (
-              <Seg
-                allowCustomValue
-                value={value}
-                buttonClassName={noHorizMarginPaddingClass}
-                loadOptions={() => options().then((items) => items.map(toSelectableValue))}
-                onChange={(v) => {
-                  onParamChange(unwrap(v.value), i);
-                }}
-              />
-            ) : (
-              <SegmentInput
-                value={value}
-                className={noHorizMarginPaddingClass}
-                onChange={(v) => {
-                  onParamChange(v.toString(), i);
-                }}
-              />
-            )}
+            <Seg
+              allowCustomValue
+              value={value}
+              buttonClassName={noHorizMarginPaddingClass}
+              loadOptions={loadOptions}
+              onChange={(v) => {
+                onParamChange(unwrap(v.value), i);
+              }}
+            />
             {!isLast && ','}
           </React.Fragment>
         );
