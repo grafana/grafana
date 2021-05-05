@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/entities"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -97,6 +99,7 @@ type HTTPServer struct {
 	ContextHandler         *contexthandler.ContextHandler          `inject:""`
 	SQLStore               *sqlstore.SQLStore                      `inject:""`
 	LibraryPanelService    *librarypanels.LibraryPanelService      `inject:""`
+	EntityService          *entities.EntityService                 `inject:""`
 	DataService            *tsdb.Service                           `inject:""`
 	PluginDashboardService *plugindashboards.Service               `inject:""`
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
