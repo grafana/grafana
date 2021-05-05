@@ -52,6 +52,7 @@ $RUNDIR/bin/grafana-server \
   --homepath=$RUNDIR \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
+  cfg:server.router_logging=1 \
   cfg:app_mode=development
 
 # 2>&1 > $RUNDIR/output.log &

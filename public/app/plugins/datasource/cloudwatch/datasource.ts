@@ -65,7 +65,6 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
-import config from 'app/core/config';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -128,11 +127,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      if (config.featureToggles.live) {
-        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      } else {
-        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
-      }
+      dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
+      //  dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {

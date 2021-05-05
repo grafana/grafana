@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { getDefaultTimeRange, QueryEditorProps } from '@grafana/data';
 import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
@@ -12,13 +12,7 @@ import { useNextId } from '../../hooks/useNextId';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
-  query,
-  onChange,
-  onRunQuery,
-  datasource,
-  range,
-}) => (
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => (
   <ElasticsearchProvider
     datasource={datasource}
     onChange={onChange}
@@ -34,7 +28,7 @@ interface Props {
   value: ElasticsearchQuery;
 }
 
-const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
+const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
 

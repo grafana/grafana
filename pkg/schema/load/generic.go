@@ -3,6 +3,7 @@ package load
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
@@ -149,6 +150,7 @@ func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resou
 		return r, err
 	}
 	re, err := convertCUEValueToString(rv)
+	fmt.Println("the trimed fields would be: ", re)
 	if err != nil {
 		return r, err
 	}
@@ -171,9 +173,10 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 		if err != nil {
 			return rv, false, err
 		}
+		keySet := make(map[string]bool)
 		for iter.Next() {
 			lable, _ := iter.Value().Label()
-
+			keySet[lable] = true
 			lv := input.LookupPath(cue.MakePath(cue.Str(lable)))
 			if err != nil {
 				continue
@@ -185,6 +188,17 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 				}
 			}
 		}
+		// Get all the fields that are not defined in schema yet for panel
+		iter, err = input.Fields()
+		if err != nil {
+			return rv, false, err
+		}
+		for iter.Next() {
+			lable, _ := iter.Value().Label()
+			if exists := keySet[lable]; !exists {
+				rv = rv.FillPath(cue.MakePath(cue.Str(lable)), iter.Value())
+			}
+		}
 		return rv, false, nil
 	case cue.ListKind:
 		val, _ := inputdef.Default()
@@ -194,7 +208,6 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 			return rv, true, nil
 		}
 		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
-		fmt.Println("xxxxxxxxxxxxxxxxxxxxx ", ele.IncompleteKind())
 		if ele.IncompleteKind() == cue.BottomKind {
 			return rv, true, nil
 		}
@@ -203,17 +216,23 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 		if err != nil {
 			return rv, true, nil
 		}
-		index := 0
+		var iterlist []string
 		for iter.Next() {
 			re, isEqual, err := removeDefaultHelper(ele, iter.Value())
 			if err == nil && !isEqual {
-				rv = rv.FillPath(cue.MakePath(cue.Index(index)), re)
-				index++
+				reString, err := convertCUEValueToString(re)
+				if err != nil {
+					return rv, true, nil
+				}
+				iterlist = append(iterlist, reString)
 			}
 		}
-
-		// rv = rv.FillPath(cue.MakePath(cue.Str(lable)), rv)
-		return rv, false, nil
+		iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
+		liInstance, err := rt.Compile("resource", []byte(iterlistContent))
+		if err != nil {
+			return rv, false, err
+		}
+		return liInstance.Value(), false, nil
 	default:
 		val, _ := inputdef.Default()
 		err1 := input.Subsume(val)

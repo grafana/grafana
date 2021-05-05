@@ -69,8 +69,8 @@ func TestWarmStateCache(t *testing.T) {
 	}
 
 	saveCmd1 := &models.SaveAlertInstanceCommand{
-		DefinitionOrgID:   rule.OrgID,
-		DefinitionUID:     rule.UID,
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
 		Labels:            models.InstanceLabels{"test1": "testValue1"},
 		State:             models.InstanceStateNormal,
 		LastEvalTime:      evaluationTime,
@@ -81,8 +81,8 @@ func TestWarmStateCache(t *testing.T) {
 	_ = dbstore.SaveAlertInstance(saveCmd1)
 
 	saveCmd2 := &models.SaveAlertInstanceCommand{
-		DefinitionOrgID:   rule.OrgID,
-		DefinitionUID:     rule.UID,
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
 		Labels:            models.InstanceLabels{"test2": "testValue2"},
 		State:             models.InstanceStateFiring,
 		LastEvalTime:      evaluationTime,
@@ -97,8 +97,9 @@ func TestWarmStateCache(t *testing.T) {
 		C:            clock.NewMock(),
 		BaseInterval: time.Second,
 		Logger:       log.New("ngalert cache warming test"),
-		Store:        dbstore,
-		RuleStore:    dbstore,
+
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
 	st := state.NewManager(schedCfg.Logger, nilMetrics)
@@ -106,7 +107,7 @@ func TestWarmStateCache(t *testing.T) {
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
-			cacheEntry, err := st.Get(entry.CacheId)
+			cacheEntry, err := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheId)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "Results")); diff != "" {
@@ -143,9 +144,9 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		Store:     dbstore,
-		RuleStore: dbstore,
-		Logger:    log.New("ngalert schedule test"),
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Logger:        log.New("ngalert schedule test"),
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
 

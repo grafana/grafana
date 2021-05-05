@@ -31,15 +31,7 @@ You can also use field options to create different types of graphs or adjust you
 
 > **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, on the Panel tab, click **Time series** visualization. Grafana transfers all applicable settings. (While in beta, migration is still being refined. It will get better as time goes on!)
 
-### Tooltip mode
-
-When you hover your cursor over the graph, Grafana can display tooltips. Choose how tooltips behave.
-
-- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
-- **All -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
-- **Hidden -** Do not display the tooltip when you interact with the graph.
-
-> **Note:** Use an override to hide individual series from the tooltip.
+{{< docs/shared "visualizations/tooltip-mode.md" >}}
 
 {{< docs/shared "visualizations/legend-mode.md" >}}
 
