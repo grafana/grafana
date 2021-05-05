@@ -284,6 +284,9 @@ type Cfg struct {
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
 
+	// Azure Cloud settings
+	Azure AzureSettings
+
 	// Auth proxy settings
 	AuthProxyEnabled          bool
 	AuthProxyHeaderName       string
@@ -905,6 +908,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
+	cfg.readAzureSettings()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()

@@ -1,3 +1,4 @@
+export * from './azure';
 export * from './data';
 export * from './dataFrame';
 export * from './dataLink';

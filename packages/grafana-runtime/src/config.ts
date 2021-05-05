@@ -1,5 +1,6 @@
 import { merge } from 'lodash';
 import {
+  AzureCloud,
   BuildInfo,
   createTheme,
   DataSourceInstanceSettings,
@@ -75,6 +76,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
+  azureCloud?: AzureCloud;
+  azureManagedIdentityEnabled = false;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

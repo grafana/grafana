@@ -803,6 +803,57 @@ Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/A
 
 <hr />
 
+## [azure]
+
+Grafana supports additional integration with Azure services when hosted in Azure cloud.
+
+### cloud
+
+Azure could environment in which Grafana is hosted:
+
+| Azure Cloud                                      | Value                  |
+| ------------------------------------------------ | ---------------------- |
+| Microsoft Azure public cloud                     | AzureCloud (*default*) |
+| Microsoft Chinese national cloud                 | AzureChinaCloud        |
+| Microsoft German national cloud ("Black Forest") | AzureUSGovernment      |
+| US Government cloud                              | AzureGermanCloud       |
+
+### managed_identity_enabled
+
+Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance).
+
+If enabled, the managed identity can be used for authentication of Grafana in Azure services without a need for manual configuration of service identity via App Registration.
+
+Disabled by default, needs to be explicitly enabled.
+
+### managed_identity_token_url
+
+Azure Instance Metadata Service (IMDS) endpoint for request of access tokens on behalf of the managed identity.
+
+### managed_identity_object_id
+
+Object ID of the managed identity to use for user-assigned managed identity.
+
+Required, if the VM has multiple user-assigned managed identities.
+
+Should be empty for system-assigned managed identity.
+
+### managed_identity_client_id
+
+Client ID of the managed identity to use for user-assigned managed identity.
+
+Required, if the VM has multiple user-assigned managed identities.
+
+Should be empty for system-assigned managed identity.
+
+### managed_identity_resource_id
+
+Azure Resource ID of the managed identity to use for user-assigned managed identity.
+
+Required, if the VM has multiple user-assigned managed identities.
+
+Should be empty for system-assigned managed identity.
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
