@@ -1,5 +1,5 @@
 import React from 'react';
-import { VizLegendItem, VizLegendListProps } from './types';
+import { VizLegendBaseProps, VizLegendItem } from './types';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 import { css, cx } from '@emotion/css';
@@ -7,7 +7,7 @@ import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { VizLegendListItem } from './VizLegendListItem';
 
-export interface Props extends VizLegendListProps {}
+export interface Props extends VizLegendBaseProps {}
 
 /**
  * @internal

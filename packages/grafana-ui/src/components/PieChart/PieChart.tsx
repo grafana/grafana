@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
-  ByNamesMatcherMode,
   DataHoverClearEvent,
   DataHoverEvent,
   FALLBACK_COLOR,
@@ -137,7 +136,7 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
   return (
     <VizLegend
       items={legendItems}
-      seriesToggleMode={ByNamesMatcherMode.include}
+      disableSeriesIsolation={true}
       placement={legendOptions.placement}
       displayMode={legendOptions.displayMode}
     />

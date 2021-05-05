@@ -3,8 +3,10 @@ import { LegendProps, VizLegendItem } from './types';
 import { LegendDisplayMode } from './models.gen';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
-import { ByNamesMatcherMode, DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
 import { usePanelContext } from '../PanelChrome';
+import { mapMouseEventToMode } from '../GraphNG/utils';
+import { GraphNGLegendEventMode } from '../GraphNG/types';
 
 /**
  * @public
@@ -13,8 +15,9 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   items,
   displayMode,
   sortBy: sortKey,
+  disableSeriesIsolation,
   sortDesc,
-  seriesToggleMode = ByNamesMatcherMode.exclude,
+  onLabelClick,
   onToggleSort,
   placement,
   className,
@@ -51,13 +54,19 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
     [eventBus]
   );
 
-  const onLabelClick = useCallback(
+  const onLegendLabelClick = useCallback(
     (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      if (onLabelClick) {
+        onLabelClick(item, event);
+      }
       if (onToggleSeriesVisibility) {
-        onToggleSeriesVisibility(item.label, seriesToggleMode);
+        onToggleSeriesVisibility(
+          item.label,
+          disableSeriesIsolation ? GraphNGLegendEventMode.AppendToSelection : mapMouseEventToMode(event)
+        );
       }
     },
-    [onToggleSeriesVisibility]
+    [onToggleSeriesVisibility, onLabelClick, disableSeriesIsolation]
   );
 
   switch (displayMode) {
@@ -69,7 +78,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
           placement={placement}
           sortBy={sortKey}
           sortDesc={sortDesc}
-          onLabelClick={onLabelClick}
+          onLabelClick={onLegendLabelClick}
           onToggleSort={onToggleSort}
           onLabelMouseEnter={onMouseEnter}
           onLabelMouseOut={onMouseOut}
@@ -83,7 +92,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
           placement={placement}
           onLabelMouseEnter={onMouseEnter}
           onLabelMouseOut={onMouseOut}
-          onLabelClick={onLabelClick}
+          onLabelClick={onLegendLabelClick}
         />
       );
     default:

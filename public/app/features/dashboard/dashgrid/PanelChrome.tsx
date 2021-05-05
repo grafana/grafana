@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelContextProvider, PanelContext } from '@grafana/ui';
+import { ErrorBoundary, PanelContextProvider, PanelContext, GraphNGLegendEventMode } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -15,7 +15,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
-  ByNamesMatcherMode,
   EventBusSrv,
   EventFilterOptions,
   FieldConfigSource,
@@ -79,7 +78,7 @@ export class PanelChrome extends Component<Props, State> {
       context: {
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
-        onToggleSeriesVisibility: this.onSeriesVisibilityToggle,
+        onToggleSeriesVisibility: this.onSeriesVisibilityChange,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -89,8 +88,10 @@ export class PanelChrome extends Component<Props, State> {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
   };
 
-  onSeriesVisibilityToggle = (label: string, mode = ByNamesMatcherMode.exclude) => {
-    this.onFieldConfigChange(seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig));
+  onSeriesVisibilityChange = (label: string, mode: GraphNGLegendEventMode) => {
+    this.onFieldConfigChange(
+      seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
+    );
   };
 
   getInitialPanelDataState(): PanelData {

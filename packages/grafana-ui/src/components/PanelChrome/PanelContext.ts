@@ -1,5 +1,6 @@
-import { EventBusSrv, EventBus, ByNamesMatcherMode } from '@grafana/data';
+import { EventBusSrv, EventBus } from '@grafana/data';
 import React from 'react';
+import { GraphNGLegendEventMode } from '../GraphNG/types';
 
 /** @alpha */
 export interface PanelContext {
@@ -12,7 +13,7 @@ export interface PanelContext {
    */
   onSeriesColorChange?: (label: string, color: string) => void;
 
-  onToggleSeriesVisibility?: (label: string, mode: ByNamesMatcherMode) => void;
+  onToggleSeriesVisibility?: (label: string, mode: GraphNGLegendEventMode) => void;
 }
 
 const PanelContextRoot = React.createContext<PanelContext>({
