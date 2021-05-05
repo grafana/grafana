@@ -44,6 +44,9 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      PieChart: {
+        svgSlice: 'Pie Chart Slice',
+      },
       Text: {
         container: () => '.markdown-html',
       },
