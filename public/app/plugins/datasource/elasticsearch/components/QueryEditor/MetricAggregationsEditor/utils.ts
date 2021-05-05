@@ -121,7 +121,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         model: 'simple',
-        window: 5,
+        window: '5',
       },
     },
   },
@@ -160,7 +160,11 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
-    defaults: {},
+    defaults: {
+      settings: {
+        lag: '1',
+      },
+    },
   },
   cumulative_sum: {
     label: 'Cumulative Sum',

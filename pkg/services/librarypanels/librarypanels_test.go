@@ -94,6 +94,8 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"version":     sc.initialResult.Result.Version,
 							"meta": map[string]interface{}{
 								"canEdit":             false,
+								"folderName":          "ScenarioFolder",
+								"folderUid":           sc.folder.Uid,
 								"connectedDashboards": int64(1),
 								"created":             sc.initialResult.Result.Meta.Created,
 								"updated":             sc.initialResult.Result.Meta.Updated,
@@ -720,10 +722,7 @@ func overrideLibraryPanelServiceInRegistry(cfg *setting.Cfg) LibraryPanelService
 }
 
 func getCreateCommand(folderID int64, name string) createLibraryPanelCommand {
-	command := createLibraryPanelCommand{
-		FolderID: folderID,
-		Name:     name,
-		Model: []byte(`
+	command := getCreateCommandWithModel(folderID, name, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -731,7 +730,16 @@ func getCreateCommand(folderID int64, name string) createLibraryPanelCommand {
 			  "type": "text",
 			  "description": "A description"
 			}
-		`),
+		`))
+
+	return command
+}
+
+func getCreateCommandWithModel(folderID int64, name string, model []byte) createLibraryPanelCommand {
+	command := createLibraryPanelCommand{
+		FolderID: folderID,
+		Name:     name,
+		Model:    model,
 	}
 
 	return command

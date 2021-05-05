@@ -1,10 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ApplyFieldOverrideOptions, DataFrame, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
+import { DataFrame, dateTime } from '@grafana/data';
 import alertDef from './alertDef';
 import {
   AlertDefinition,
   AlertDefinitionDTO,
-  AlertDefinitionQueryModel,
   AlertDefinitionState,
   AlertDefinitionUiState,
   AlertRule,
@@ -13,11 +12,8 @@ import {
   NotificationChannelOption,
   NotificationChannelState,
   NotifierDTO,
-  QueryGroupOptions,
 } from 'app/types';
 import store from 'app/core/store';
-import { config } from '@grafana/runtime';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import unifiedAlertingReducer from '../unified/state/reducers';
 
 export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
@@ -35,24 +31,6 @@ export const initialChannelState: NotificationChannelState = {
   notifiers: [],
 };
 
-const options: ApplyFieldOverrideOptions = {
-  fieldConfig: {
-    defaults: {
-      color: {
-        mode: FieldColorModeId.PaletteClassic,
-      },
-    },
-    overrides: [],
-  },
-  replaceVariables: (v: string) => v,
-  theme: config.theme,
-};
-
-const dataConfig = {
-  getTransformations: () => [] as DataTransformerConfig[],
-  getFieldOverrideOptions: () => options,
-};
-
 export const initialAlertDefinitionState: AlertDefinitionState = {
   alertDefinition: {
     id: 0,
@@ -63,14 +41,12 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     data: [],
     intervalSeconds: 60,
   },
-  queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],
   alertDefinitions: [] as AlertDefinition[],
   /* These are functions as they are mutated later on and redux toolkit will Object.freeze state so
    * we need to store these using functions instead */
   getInstances: () => [] as DataFrame[],
-  getQueryOptions: () => ({ maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] }),
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -164,8 +140,6 @@ const alertDefinitionSlice = createSlice({
   initialState: initialAlertDefinitionState,
   reducers: {
     setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
-      const currentOptions = state.getQueryOptions();
-
       state.alertDefinition.title = action.payload.title;
       state.alertDefinition.id = action.payload.id;
       state.alertDefinition.uid = action.payload.uid;
@@ -173,19 +147,12 @@ const alertDefinitionSlice = createSlice({
       state.alertDefinition.intervalSeconds = action.payload.intervalSeconds;
       state.alertDefinition.data = action.payload.data;
       state.alertDefinition.description = action.payload.description;
-      state.getQueryOptions = () => ({
-        ...currentOptions,
-        queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
-      });
     },
     updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
       state.alertDefinition = { ...state.alertDefinition, ...action.payload };
     },
     setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
       state.uiState = { ...state.uiState, ...action.payload };
-    },
-    setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
-      state.getQueryOptions = () => action.payload;
     },
     setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
       state.alertDefinitions = action.payload;
@@ -194,18 +161,10 @@ const alertDefinitionSlice = createSlice({
       state.getInstances = () => action.payload;
     },
     cleanUpState: (state: AlertDefinitionState, action: PayloadAction<undefined>) => {
-      if (state.queryRunner) {
-        state.queryRunner.destroy();
-        state.queryRunner = undefined;
-        delete state.queryRunner;
-        state.queryRunner = new PanelQueryRunner(dataConfig);
-      }
-
       state.alertDefinitions = initialAlertDefinitionState.alertDefinitions;
       state.alertDefinition = initialAlertDefinitionState.alertDefinition;
       state.data = initialAlertDefinitionState.data;
       state.getInstances = initialAlertDefinitionState.getInstances;
-      state.getQueryOptions = initialAlertDefinitionState.getQueryOptions;
       state.uiState = initialAlertDefinitionState.uiState;
     },
   },
@@ -222,7 +181,6 @@ export const {
 export const {
   setUiState,
   updateAlertDefinitionOptions,
-  setQueryOptions,
   setAlertDefinitions,
   setAlertDefinition,
   setInstanceData,

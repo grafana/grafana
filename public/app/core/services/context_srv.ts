@@ -1,8 +1,8 @@
 import config from '../../core/config';
-import _ from 'lodash';
+import { extend } from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
-import { AccessControlAction, AccessControlScope, UserPermission } from 'app/types';
+import { AccessControlAction, UserPermission } from 'app/types';
 
 export class User {
   id: number;
@@ -35,7 +35,7 @@ export class User {
     this.hasEditPermissionInFolders = false;
     this.email = undefined;
     if (config.bootData.user) {
-      _.extend(this, config.bootData.user);
+      extend(this, config.bootData.user);
     }
   }
 }
@@ -77,13 +77,13 @@ export class ContextSrv {
   }
 
   // Checks whether user has required permission
-  hasPermission(action: AccessControlAction, scope?: AccessControlScope): boolean {
+  hasPermission(action: AccessControlAction): boolean {
     // Fallback if access control disabled
     if (!config.featureToggles['accesscontrol']) {
       return true;
     }
 
-    return !!(this.user.permissions?.[action] && (scope ? this.user.permissions[action][scope] : true));
+    return !!this.user.permissions?.[action];
   }
 
   isGrafanaVisible() {

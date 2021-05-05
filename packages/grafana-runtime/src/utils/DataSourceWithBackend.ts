@@ -13,9 +13,8 @@ import {
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
-import { getBackendSrv, getDataSourceSrv } from '../services';
+import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
-import { getLiveDataStream } from './liveQuery';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -45,6 +44,7 @@ export enum HealthStatus {
  * plugin.
  *
  * If the 'message' key exists, this will be displayed in the error message in DataSourceSettingsPage
+ * If the 'verboseMessage' key exists, this will be displayed in the expandable details in the error message in DataSourceSettingsPage
  *
  * @public
  */
@@ -222,6 +222,11 @@ export function toStreamingDataResponse(
   request: DataQueryRequest,
   rsp: DataQueryResponse
 ): Observable<DataQueryResponse> {
+  const live = getGrafanaLiveSrv();
+  if (!live) {
+    return of(rsp); // add warning?
+  }
+
   const buffer: StreamingFrameOptions = {
     maxLength: request.maxDataPoints ?? 500,
   };
@@ -237,7 +242,7 @@ export function toStreamingDataResponse(
     const addr = parseLiveChannelAddress(frame.meta?.channel);
     if (addr) {
       streams.push(
-        getLiveDataStream({
+        live.getDataStream({
           addr,
           buffer,
           frame: frame as DataFrame,

@@ -4,10 +4,9 @@ import {
   queryVariableReducer,
   sortVariableValues,
   updateVariableOptions,
-  updateVariableTags,
 } from './reducer';
 import { QueryVariableModel, VariableSort } from '../types';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload, VariablesState } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
@@ -257,27 +256,6 @@ describe('queryVariableReducer', () => {
           '0': ({
             ...initialState[0],
             options: [{ text: 'None', value: '', selected: false, isNone: true }],
-          } as unknown) as QueryVariableModel,
-        });
-    });
-  });
-
-  describe('when updateVariableTags is dispatched', () => {
-    it('then state should be correct', () => {
-      const { initialState } = getVariableTestContext(adapter);
-      const tags: any[] = [{ text: 'A' }, { text: 'B' }];
-      const payload = toVariablePayload({ id: '0', type: 'query' }, tags);
-      reducerTester<VariablesState>()
-        .givenReducer(queryVariableReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(updateVariableTags(payload))
-        .thenStateShouldEqual({
-          ...initialState,
-          '0': ({
-            ...initialState[0],
-            tags: [
-              { text: 'A', selected: false },
-              { text: 'B', selected: false },
-            ],
           } as unknown) as QueryVariableModel,
         });
     });

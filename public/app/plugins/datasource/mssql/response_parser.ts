@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map } from 'lodash';
 import { MetricFindValue } from '@grafana/data';
 
 interface TableResponse extends Record<string, any> {
@@ -93,7 +93,7 @@ export default class ResponseParser {
 
     const unique = Array.from(new Set(res));
 
-    return _.map(unique, (value) => {
+    return map(unique, (value) => {
       return { text: value };
     });
   }

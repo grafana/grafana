@@ -32,6 +32,18 @@ func main() {
 		log.Fatal(err)
 	}
 
+	info, ok := data["info"].(map[string]interface{})
+	if info == nil {
+		log.Fatal("expecting 'info' field")
+	}
+	if !ok {
+		log.Fatal("unable to turn info field into map[string]interface{}")
+	}
+
+	if info["title"] == nil {
+		info["title"] = "Unified Alerting API"
+	}
+
 	definitions, ok := data["definitions"]
 	if !ok {
 		log.Fatal("no definitions")

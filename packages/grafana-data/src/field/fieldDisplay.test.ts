@@ -1,10 +1,10 @@
-import merge from 'lodash/merge';
+import { merge } from 'lodash';
 import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { MappingType } from '../types';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { getTestTheme } from '../utils/testdata/testTheme';
+import { createTheme } from '../themes';
 
 describe('FieldDisplay', () => {
   beforeAll(() => {
@@ -335,7 +335,7 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
       overrides: [],
       defaults: {},
     },
-    theme: getTestTheme(),
+    theme: createTheme(),
   };
 
   return merge<GetFieldDisplayValuesOptions, any>(options, extend);

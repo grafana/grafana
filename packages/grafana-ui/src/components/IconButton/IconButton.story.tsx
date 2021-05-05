@@ -1,10 +1,11 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { IconButton } from '@grafana/ui';
+import { IconButton, IconButtonVariant } from './IconButton';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
 import mdx from './IconButton.mdx';
+import { VerticalGroup } from '../Layout/Layout';
 
 export default {
   title: 'Buttons/IconButton',
@@ -32,15 +33,16 @@ interface ScenarioProps {
 }
 
 const RenderScenario = ({ background }: ScenarioProps) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
+  const variants: IconButtonVariant[] = ['secondary', 'primary', 'destructive'];
 
   return (
     <div
       className={css`
         padding: 30px;
-        background: ${theme.v2.palette.background[background]};
+        background: ${theme.colors.background[background]};
         button {
           margin-right: 8px;
           margin-left: 8px;
@@ -48,14 +50,22 @@ const RenderScenario = ({ background }: ScenarioProps) => {
         }
       `}
     >
-      <div>{background}</div>
-      {icons.map((icon) => {
-        return sizes.map((size) => (
-          <span key={icon + size}>
-            <IconButton name={icon} size={size} />
-          </span>
-        ));
-      })}
+      <VerticalGroup spacing="md">
+        <div>{background}</div>
+        {variants.map((variant) => {
+          return (
+            <div key={variant}>
+              {icons.map((icon) => {
+                return sizes.map((size) => (
+                  <span key={icon + size}>
+                    <IconButton name={icon} size={size} variant={variant} />
+                  </span>
+                ));
+              })}
+            </div>
+          );
+        })}
+      </VerticalGroup>
     </div>
   );
 };
