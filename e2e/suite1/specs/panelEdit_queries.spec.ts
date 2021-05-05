@@ -2,6 +2,7 @@ import { e2e } from '@grafana/e2e';
 import { expect } from '../../../public/test/lib/common';
 
 const PANEL_UNDER_TEST = 'Random walk series';
+const flakyTimeout = 10000;
 
 e2e.scenario({
   describeName: 'Panel edit tests - queries',
@@ -25,31 +26,17 @@ e2e.scenario({
       expect(rows.length).equals(1);
     });
 
-    e2e().server();
-    e2e()
-      .route({
-        method: 'POST',
-        url: '/api/ds/query',
-      })
-      .as('apiPostQuery');
-
     // Add query button should be visible and clicking on it should create a new row
     e2e.components.QueryTab.addQuery().scrollIntoView().should('be.visible').click();
 
     // We expect row with refId A and B to exist and be visible
-    e2e.components.QueryEditorRows.rows().within((rows) => {
-      expect(rows.length).equals(2);
-    });
+    e2e.components.QueryEditorRows.rows({ timeout: flakyTimeout }).should('have.length', 2);
 
     // Remove refId A
     e2e.components.QueryEditorRow.actionButton('Remove query').eq(0).should('be.visible').click();
 
-    e2e().wait('@apiPostQuery');
-
     // We expect row with refId B to exist and be visible
-    e2e.components.QueryEditorRows.rows().within((rows) => {
-      expect(rows.length).equals(1);
-    });
+    e2e.components.QueryEditorRows.rows({ timeout: flakyTimeout }).should('have.length', 1);
 
     // Duplicate refId B
     e2e.components.QueryEditorRow.actionButton('Duplicate query').eq(0).should('be.visible').click();
@@ -68,8 +55,6 @@ e2e.scenario({
         cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').eq(0).click();
       });
 
-    e2e().wait('@apiPostQuery');
-
     // Disable / enable row
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
@@ -85,8 +70,6 @@ e2e.scenario({
     // Disable row with refId A
     e2e.components.QueryEditorRow.actionButton('Disable/enable query').eq(1).should('be.visible').click();
 
-    e2e().wait('@apiPostQuery');
-
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
       expect(keys[length - 1].innerText).equals('B:');
@@ -94,8 +77,6 @@ e2e.scenario({
 
     // Enable row with refId B
     e2e.components.QueryEditorRow.actionButton('Disable/enable query').eq(1).should('be.visible').click();
-
-    e2e().wait('@apiPostQuery');
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
@@ -115,9 +96,7 @@ const expectInspectorResultAndClose = (expectCallBack: (keys: any[]) => void) =>
 
   e2e.components.PanelInspector.Query.refreshButton().should('be.visible').click();
 
-  e2e().wait('@apiPostQuery');
-
-  e2e.components.PanelInspector.Query.jsonObjectKeys()
+  e2e.components.PanelInspector.Query.jsonObjectKeys({ timeout: flakyTimeout })
     .should('be.visible')
     .within((keys: any) => expectCallBack(keys));
 
