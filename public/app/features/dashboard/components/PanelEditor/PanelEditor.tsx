@@ -9,6 +9,7 @@ import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   HorizontalGroup,
+  InlineSwitch,
   ModalsController,
   PageToolbar,
   RadioButtonGroup,
@@ -38,6 +39,7 @@ import {
 } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { toggleRawDataMode } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
@@ -59,6 +61,7 @@ import {
   saveAndRefreshLibraryPanel,
 } from '../../../library-panels/utils';
 import { notifyApp } from '../../../../core/actions';
+import { RawDataViewer } from './RawDataViewer';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -75,6 +78,7 @@ const mapStateToProps = (state: StoreState) => {
     panel,
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
+    rawDataEnabled: state.panelEditor.rawDataEnabled,
     variables: getVariables(state),
   };
 };
@@ -87,6 +91,7 @@ const mapDispatchToProps = {
   discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
+  toggleRawDataMode,
   notifyApp,
 };
 
@@ -218,13 +223,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     });
   };
 
+  onTableToggleRawData = () => {
+    this.props.toggleRawDataMode();
+  };
+
   onTogglePanelOptions = () => {
     const { uiState, updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
   renderPanel = (styles: EditorStyles) => {
-    const { dashboard, panel, uiState, plugin, tab } = this.props;
+    const { dashboard, panel, uiState, plugin, tab, rawDataEnabled } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
 
     return (
@@ -236,6 +245,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               if (width < 3 || height < 3) {
                 return null;
               }
+
+              if (rawDataEnabled) {
+                return <RawDataViewer width={width} height={height} panel={panel} />;
+              }
+
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
                   <div style={calculatePanelSize(uiState.mode, width, height, panel)} data-panelid={panel.editSourceId}>
@@ -290,12 +304,20 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, uiState, variables, updateTimeZoneForSession, panel } = this.props;
+    const { dashboard, uiState, variables, updateTimeZoneForSession, panel, rawDataEnabled } = this.props;
+
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
           {this.renderTemplateVariables(styles)}
           <HorizontalGroup>
+            <InlineSwitch
+              label="Raw data"
+              showLabel={true}
+              id="show-raw-data"
+              value={rawDataEnabled}
+              onClick={this.onTableToggleRawData}
+            />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
