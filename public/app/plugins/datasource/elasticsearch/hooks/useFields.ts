@@ -24,8 +24,11 @@ const getFilter = (type: AggregationType | string[]) => {
       case 'cardinality':
         return void 0;
       case 'top_metrics':
-        // FIXME: DOUBLE CHECK THIS
-        return ['string', 'boolean', 'number', 'ip'];
+        // top_metrics was introduced in 7.7 where `metrics` only supported number:
+        // https://www.elastic.co/guide/en/elasticsearch/reference/7.7/search-aggregations-metrics-top-metrics.html#_metrics
+        // TODO: starting from 7.11 it supports ips and keywords as well:
+        // https://www.elastic.co/guide/en/elasticsearch/reference/7.11/search-aggregations-metrics-top-metrics.html#_metrics
+        return ['number'];
       default:
         return ['number'];
     }
