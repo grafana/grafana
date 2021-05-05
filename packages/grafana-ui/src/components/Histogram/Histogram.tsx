@@ -19,6 +19,10 @@ import { withTheme2 } from '../../themes';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
 
 /* eslint-disable */
+import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+/* eslint-enable */
+
+/* eslint-disable */
 const bucketSizes = [
   .001, .002, .0025, .005,
    .01,  .02,  .025,  .05,
@@ -99,7 +103,7 @@ function preparePlotFrame(frames: DataFrame[], bucketSize?: number | null) {
     }
 
     // align histograms
-    let joinedHists = uPlot.join(histograms);
+    let joinedHists = join(histograms);
 
     // number of buckets
     histFrame.length = joinedHists[0].length;
