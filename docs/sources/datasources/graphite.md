@@ -145,7 +145,7 @@ The results contain all possible values occurring only at the last level of the 
 use expand function (`expand(*.servers.*)`). 
 
 #### Comparison between expanded and non-expanded metric search results
-
+The expanded query returns the full names of matching metrics. In combination with regex, it can extract any part of the metric name. By contrast, a non-expanded query only returns the last part of the metric name. It does not allow you to extract other parts of metric names. 
 Here are some example metrics:
 - `prod.servers.001.cpu`
 - `prod.servers.002.cpu`
