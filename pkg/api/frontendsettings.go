@@ -254,34 +254,36 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
-	case "graph":
-		sort = 1
 	case "timeseries":
-		sort = 2
+		sort = 1
 	case "barchart":
-		sort = 3
+		sort = 2
 	case "stat":
-		sort = 4
+		sort = 3
 	case "gauge":
-		sort = 5
+		sort = 4
 	case "bargauge":
-		sort = 6
+		sort = 5
 	case "table":
-		sort = 7
+		sort = 6
 	case "singlestat":
-		sort = 8
+		sort = 7
 	case "piechart":
+		sort = 8
+	case "timeline":
 		sort = 9
 	case "heatmap":
 		sort = 10
-	case "text":
+	case "graph":
 		sort = 11
-	case "alertlist":
+	case "text":
 		sort = 12
-	case "dashlist":
+	case "alertlist":
 		sort = 13
-	case "news":
+	case "dashlist":
 		sort = 14
+	case "news":
+		sort = 15
 	}
 	return sort
 }

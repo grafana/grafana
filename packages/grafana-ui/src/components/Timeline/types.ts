@@ -1,4 +1,3 @@
-import { GraphNGProps } from '../GraphNG/GraphNG';
 import { GraphGradientMode, HideableFieldConfig } from '../uPlot/config';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 
@@ -46,14 +45,4 @@ export const defaultTimelineFieldConfig: TimelineFieldConfig = {
 export enum TimelineMode {
   Spans = 'spans',
   Grid = 'grid',
-}
-
-/**
- * @alpha
- */
-export interface TimelineProps extends GraphNGProps {
-  mode: TimelineMode;
-  rowHeight: number;
-  showValue: BarValueVisibility;
-  colWidth?: number;
 }
