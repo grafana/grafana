@@ -41,6 +41,8 @@ type LibraryPanelWithMeta struct {
 	Updated time.Time
 
 	CanEdit             bool
+	FolderName          string
+	FolderUID           string `xorm:"folder_uid"`
 	ConnectedDashboards int64
 	CreatedBy           int64
 	UpdatedBy           int64
@@ -74,8 +76,10 @@ type LibraryPanelSearchResult struct {
 
 // LibraryPanelDTOMeta is the meta information for LibraryPanelDTO.
 type LibraryPanelDTOMeta struct {
-	CanEdit             bool  `json:"canEdit"`
-	ConnectedDashboards int64 `json:"connectedDashboards"`
+	CanEdit             bool   `json:"canEdit"`
+	FolderName          string `json:"folderName"`
+	FolderUID           string `json:"folderUid"`
+	ConnectedDashboards int64  `json:"connectedDashboards"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`

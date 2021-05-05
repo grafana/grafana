@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useAsync } from 'react-use';
 
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { StoreState } from '../../types';
@@ -10,7 +11,6 @@ import Page from '../../core/components/Page/Page';
 import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
 import { getFolderByUid } from './state/actions';
-import { useAsync } from 'react-use';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
