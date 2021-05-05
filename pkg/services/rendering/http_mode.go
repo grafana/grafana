@@ -48,7 +48,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	queryParams.Add("encoding", opts.Encoding)
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
 
-	if opts.RenderType == RENDER_PNG {
+	if opts.RenderType == RenderPNG {
 		queryParams.Add("width", strconv.Itoa(opts.Width))
 		queryParams.Add("height", strconv.Itoa(opts.Height))
 		queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))

@@ -14,8 +14,8 @@ var ErrPhantomJSNotInstalled = errors.New("PhantomJS executable not found")
 type RenderType string
 
 const (
-	RENDER_CSV RenderType = "csv"
-	RENDER_PNG RenderType = "png"
+	RenderCSV RenderType = "csv"
+	RenderPNG RenderType = "png"
 )
 
 type Opts struct {

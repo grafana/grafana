@@ -219,7 +219,7 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 
 	ext := "png"
 	folder := rs.Cfg.ImagesDir
-	if rt == RENDER_CSV {
+	if rt == RenderCSV {
 		ext = "csv"
 		folder = rs.Cfg.CSVsDir
 	}
