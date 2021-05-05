@@ -13,7 +13,7 @@ import { min as _min, max as _max, clone, find, isUndefined, map, toNumber, sort
 import { tickStep } from 'app/core/utils/ticks';
 import { coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
-import { ThresholdManager } from './threshold_manager';
+import { DummyThresholdManager, ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
@@ -76,7 +76,12 @@ class GraphElement {
 
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
-    this.thresholdManager = new ThresholdManager(this.ctrl);
+    // unified alerting does not support threshold for graphs, at least for now
+    if (config.featureToggles.ngalert) {
+      this.thresholdManager = new DummyThresholdManager(this.ctrl);
+    } else {
+      this.thresholdManager = new ThresholdManager(this.ctrl);
+    }
     this.timeRegionManager = new TimeRegionManager(this.ctrl);
     // @ts-ignore
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {

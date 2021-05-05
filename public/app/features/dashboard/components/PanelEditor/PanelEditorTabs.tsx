@@ -1,7 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
-import { AlertTab } from 'app/features/alerting/AlertTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelEditorTab, PanelEditorTabId } from './types';
@@ -9,6 +8,8 @@ import { Subscription } from 'rxjs';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 import { PanelEditorQueries } from './PanelEditorQueries';
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -52,7 +53,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
-        {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Alert && <AlertTabIndex panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
       </TabContent>
     </div>
@@ -66,7 +67,7 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
     case PanelEditorTabId.Query:
       return panel.targets.length;
     case PanelEditorTabId.Alert:
-      return panel.alert ? 1 : 0;
+      return config.featureToggles.ngalert ? null : panel.alert ? 1 : 0;
     case PanelEditorTabId.Transform:
       const transformations = panel.getTransformations() ?? [];
       return transformations.length;

@@ -259,3 +259,9 @@ export class ThresholdManager {
     }
   }
 }
+
+export class DummyThresholdManager extends ThresholdManager {
+  prepare() {}
+  addFlotOptions() {}
+  draw() {}
+}
