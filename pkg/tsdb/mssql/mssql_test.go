@@ -142,8 +142,12 @@ func TestMSSQL(t *testing.T) {
 			resp, err := endpoint.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
+			require.NotNil(t, queryResult)
+			require.NoError(t, queryResult.Error)
+			require.NotNil(t, queryResult.Dataframes)
 
-			frames, _ := queryResult.Dataframes.Decoded()
+			frames, err := queryResult.Dataframes.Decoded()
+			require.NoError(t, err)
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 24, len(frames[0].Fields))
 
