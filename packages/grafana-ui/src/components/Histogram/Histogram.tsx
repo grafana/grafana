@@ -23,7 +23,7 @@ const bucketSizes = [
   .001, .002, .0025, .005,
    .01,  .02,  .025,  .05,
     .1,   .2,   .25,   .5,
-     1,    2,           5,
+     1,    2,     4,    5,
     10,   20,    25,   50,
    100,  200,   250,  500,
   1000, 2000,  2500, 5000,
@@ -222,12 +222,40 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
 
+  // splits shifter, to ensure splits always start at first bucket
+  builder.addHook('init', (u) => {
+    let _splits = u.axes[0].splits as Function;
+
+    let tweakedSplits: uPlot.Axis.Splits = (self, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
+      let splits: number[] = _splits(self, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace);
+
+      let shift = splits[0] - u.data[0][0];
+
+      let tick = splits[1] - splits[0];
+
+      if (shift > 0) {
+        splits = splits.map((v) => v - shift);
+
+        let next = splits[splits.length - 1] + tick;
+
+        if (next <= scaleMax) {
+          splits.push(next);
+        }
+      }
+
+      return splits;
+    };
+
+    u.axes[0].splits = tweakedSplits;
+  });
+
   builder.addScale({
     scaleKey: 'x', // bukkits
     isTime: false,
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
+    range: (u) => [u.data[0][0], u.data[0][u.data[0].length - 1] + bucketSize],
   });
 
   builder.addScale({
@@ -242,6 +270,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
+    incrs: bucketSizes,
+    //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,
     //grid: false,
