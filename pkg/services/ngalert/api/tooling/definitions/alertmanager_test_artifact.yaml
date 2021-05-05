@@ -1,0 +1,21 @@
+template_files:
+    foo: bar
+alertmanager_config: |
+    receivers:
+        - email_configs:
+            - auth_password: shh
+              auth_username: admin
+              from: bar
+              headers:
+                Bazz: buzz
+              html: there
+              text: hi
+              to: foo
+          name: am
+    route:
+        continue: false
+        receiver: am
+        routes:
+            - continue: false
+              receiver: am
+    templates: []
