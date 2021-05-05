@@ -15,6 +15,8 @@ import (
 // Scopes are evaluated with an `OR` relationship.
 func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, scope ...string) (bool, error) {
 	timer := prometheus.NewTimer(metrics.MAccessSummary)
+	defer timer.ObserveDuration()
+	metrics.MAccessEvaluationCount.Inc()
 	userPermissions, err := ac.GetUserPermissions(ctx, user)
 	if err != nil {
 		return false, err
@@ -26,7 +28,6 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 	}
 
 	res, err := evaluateScope(dbScopes, scope...)
-	timer.ObserveDuration()
 	return res, err
 }
 

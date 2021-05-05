@@ -117,6 +117,9 @@ var (
 
 	// MAccessPermissionCount is a metric gauge for total number of permissions
 	MAccessPermissionCount prometheus.Gauge
+
+	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
+	MAccessEvaluationCount prometheus.Gauge
 )
 
 // Timers
@@ -132,6 +135,9 @@ var (
 
 	// MAccessSummary is a metric summary for access request duration
 	MAccessSummary prometheus.Histogram
+
+	// MAccessSummary is a metric summary for access request duration
+	MAccessPermissionsSummary prometheus.Histogram
 )
 
 // StatTotals
@@ -405,6 +411,12 @@ func init() {
 		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
 	})
 
+	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_permissions_duration",
+		Help:    "Histogram for the runtime of permissions check function.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	})
+
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
 		Help:      "size of image rendering queue",
@@ -414,6 +426,12 @@ func init() {
 	MAccessPermissionCount = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "access_permission_count",
 		Help:      "number of permissions",
+		Namespace: ExporterName,
+	})
+
+	MAccessEvaluationCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "access_evaluation_count",
+		Help:      "number of evaluation calls",
 		Namespace: ExporterName,
 	})
 
@@ -629,10 +647,12 @@ func initMetricVars() {
 		MRenderingSummary,
 		MRenderingQueue,
 		MAccessSummary,
+		MAccessPermissionsSummary,
 		MAccessRoleCount,
 		MAccessTeamRoleCount,
 		MAccessUserRoleCount,
 		MAccessPermissionCount,
+		MAccessEvaluationCount,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,

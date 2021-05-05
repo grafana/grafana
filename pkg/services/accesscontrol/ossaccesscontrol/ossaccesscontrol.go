@@ -39,6 +39,9 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+	defer timer.ObserveDuration()
+
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
