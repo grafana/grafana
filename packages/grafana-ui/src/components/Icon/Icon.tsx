@@ -7,7 +7,7 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 import SVG from 'react-inlinesvg';
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
+const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
