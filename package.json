@@ -212,7 +212,7 @@
     "@emotion/eslint-plugin": "11.2.0",
     "@emotion/react": "11.1.5",
     "@grafana/aws-sdk": "0.0.3",
-    "@grafana/slate-react": "0.22.9-grafana",
+    "@grafana/slate-react": "0.22.10-grafana",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
     "@sentry/browser": "5.25.0",
