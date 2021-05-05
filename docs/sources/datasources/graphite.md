@@ -151,7 +151,7 @@ Here are some example metrics:
 - `prod.servers.002.cpu`
 - `test.servers.001.cpu`
 The following examples show how expanded and non-expanded queries can be used to fetch specific parts of the metrics name.
-| normal query | results | expanded query | expanded results |
+| non-expanded query | results | expanded query | expanded results |
 |--------------|---------|----------------|------------------|
 | `*` | prod, test | `expand(*)` | prod, test
 | `*.servers` | servers | `expand(*.servers)` | prod.servers, test.servers |
