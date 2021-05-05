@@ -7,19 +7,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 	"xorm.io/core"
 )
 
 func TestSQLEngine(t *testing.T) {
 	dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
-	earlyDt := time.Date(1970, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
 	t.Run("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func(t *testing.T) {
 		from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
@@ -58,56 +59,48 @@ func TestSQLEngine(t *testing.T) {
 		})
 	})
 
-	t.Run("Given row values with time.Time as time columns", func(t *testing.T) {
-		var nilPointer *time.Time
-
-		fixtures := make([]interface{}, 5)
-		fixtures[0] = dt
-		fixtures[1] = &dt
-		fixtures[2] = earlyDt
-		fixtures[3] = &earlyDt
-		fixtures[4] = nilPointer
-
-		for i := range fixtures {
-			ConvertSqlTimeColumnToEpochMs(fixtures, i)
-		}
-
-		expected := float64(dt.UnixNano()) / float64(time.Millisecond)
-		expectedEarly := float64(earlyDt.UnixNano()) / float64(time.Millisecond)
-
-		require.Equal(t, expected, fixtures[0].(float64))
-		require.Equal(t, expected, fixtures[1].(float64))
-		require.Equal(t, expectedEarly, fixtures[2].(float64))
-		require.Equal(t, expectedEarly, fixtures[3].(float64))
-		require.Nil(t, fixtures[4])
-	})
-
 	t.Run("Given row values with int64 as time columns", func(t *testing.T) {
 		tSeconds := dt.Unix()
 		tMilliseconds := dt.UnixNano() / 1e6
 		tNanoSeconds := dt.UnixNano()
 		var nilPointer *int64
 
-		fixtures := make([]interface{}, 7)
-		fixtures[0] = tSeconds
-		fixtures[1] = &tSeconds
-		fixtures[2] = tMilliseconds
-		fixtures[3] = &tMilliseconds
-		fixtures[4] = tNanoSeconds
-		fixtures[5] = &tNanoSeconds
-		fixtures[6] = nilPointer
+		originFrame := data.NewFrame("",
+			data.NewField("time1", nil, []int64{
+				tSeconds,
+			}),
+			data.NewField("time2", nil, []*int64{
+				pointer.Int64(tSeconds),
+			}),
+			data.NewField("time3", nil, []int64{
+				tMilliseconds,
+			}),
+			data.NewField("time4", nil, []*int64{
+				pointer.Int64(tMilliseconds),
+			}),
+			data.NewField("time5", nil, []int64{
+				tNanoSeconds,
+			}),
+			data.NewField("time6", nil, []*int64{
+				pointer.Int64(tNanoSeconds),
+			}),
+			data.NewField("time7", nil, []*int64{
+				nilPointer,
+			}),
+		)
 
-		for i := range fixtures {
-			ConvertSqlTimeColumnToEpochMs(fixtures, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
+			require.NoError(t, err)
 		}
 
-		require.Equal(t, tSeconds*1e3, fixtures[0].(int64))
-		require.Equal(t, tSeconds*1e3, fixtures[1].(int64))
-		require.Equal(t, tMilliseconds, fixtures[2].(int64))
-		require.Equal(t, tMilliseconds, fixtures[3].(int64))
-		require.Equal(t, tMilliseconds, fixtures[4].(int64))
-		require.Equal(t, tMilliseconds, fixtures[5].(int64))
-		require.Nil(t, fixtures[6])
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[2].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[3].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[4].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[5].At(0).(*time.Time)).Unix())
+		require.Nil(t, originFrame.Fields[6].At(0))
 	})
 
 	t.Run("Given row values with uint64 as time columns", func(t *testing.T) {
@@ -116,62 +109,91 @@ func TestSQLEngine(t *testing.T) {
 		tNanoSeconds := uint64(dt.UnixNano())
 		var nilPointer *uint64
 
-		fixtures := make([]interface{}, 7)
-		fixtures[0] = tSeconds
-		fixtures[1] = &tSeconds
-		fixtures[2] = tMilliseconds
-		fixtures[3] = &tMilliseconds
-		fixtures[4] = tNanoSeconds
-		fixtures[5] = &tNanoSeconds
-		fixtures[6] = nilPointer
+		originFrame := data.NewFrame("",
+			data.NewField("time1", nil, []uint64{
+				tSeconds,
+			}),
+			data.NewField("time2", nil, []*uint64{
+				pointer.Uint64(tSeconds),
+			}),
+			data.NewField("time3", nil, []uint64{
+				tMilliseconds,
+			}),
+			data.NewField("time4", nil, []*uint64{
+				pointer.Uint64(tMilliseconds),
+			}),
+			data.NewField("time5", nil, []uint64{
+				tNanoSeconds,
+			}),
+			data.NewField("time6", nil, []*uint64{
+				pointer.Uint64(tNanoSeconds),
+			}),
+			data.NewField("time7", nil, []*uint64{
+				nilPointer,
+			}),
+		)
 
-		for i := range fixtures {
-			ConvertSqlTimeColumnToEpochMs(fixtures, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
+			require.NoError(t, err)
 		}
 
-		require.Equal(t, int64(tSeconds*1e3), fixtures[0].(int64))
-		require.Equal(t, int64(tSeconds*1e3), fixtures[1].(int64))
-		require.Equal(t, int64(tMilliseconds), fixtures[2].(int64))
-		require.Equal(t, int64(tMilliseconds), fixtures[3].(int64))
-		require.Equal(t, int64(tMilliseconds), fixtures[4].(int64))
-		require.Equal(t, int64(tMilliseconds), fixtures[5].(int64))
-		require.Nil(t, fixtures[6])
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[2].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[3].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[4].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[5].At(0).(*time.Time)).Unix())
+		require.Nil(t, originFrame.Fields[6].At(0))
 	})
 
 	t.Run("Given row values with int32 as time columns", func(t *testing.T) {
 		tSeconds := int32(dt.Unix())
 		var nilInt *int32
 
-		fixtures := make([]interface{}, 3)
-		fixtures[0] = tSeconds
-		fixtures[1] = &tSeconds
-		fixtures[2] = nilInt
-
-		for i := range fixtures {
-			ConvertSqlTimeColumnToEpochMs(fixtures, i)
+		originFrame := data.NewFrame("",
+			data.NewField("time1", nil, []int32{
+				tSeconds,
+			}),
+			data.NewField("time2", nil, []*int32{
+				pointer.Int32(tSeconds),
+			}),
+			data.NewField("time7", nil, []*int32{
+				nilInt,
+			}),
+		)
+		for i := 0; i < 3; i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
+			require.NoError(t, err)
 		}
 
-		require.Equal(t, dt.Unix()*1e3, fixtures[0].(int64))
-		require.Equal(t, dt.Unix()*1e3, fixtures[1].(int64))
-		require.Nil(t, fixtures[2])
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
+		require.Nil(t, originFrame.Fields[2].At(0))
 	})
 
 	t.Run("Given row values with uint32 as time columns", func(t *testing.T) {
 		tSeconds := uint32(dt.Unix())
 		var nilInt *uint32
 
-		fixtures := make([]interface{}, 3)
-		fixtures[0] = tSeconds
-		fixtures[1] = &tSeconds
-		fixtures[2] = nilInt
-
-		for i := range fixtures {
-			ConvertSqlTimeColumnToEpochMs(fixtures, i)
+		originFrame := data.NewFrame("",
+			data.NewField("time1", nil, []uint32{
+				tSeconds,
+			}),
+			data.NewField("time2", nil, []*uint32{
+				pointer.Uint32(tSeconds),
+			}),
+			data.NewField("time7", nil, []*uint32{
+				nilInt,
+			}),
+		)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
+			require.NoError(t, err)
 		}
-
-		require.Equal(t, dt.Unix()*1e3, fixtures[0].(int64))
-		require.Equal(t, dt.Unix()*1e3, fixtures[1].(int64))
-		require.Nil(t, fixtures[2])
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
+		require.Nil(t, originFrame.Fields[2].At(0))
 	})
 
 	t.Run("Given row values with float64 as time columns", func(t *testing.T) {
@@ -180,137 +202,192 @@ func TestSQLEngine(t *testing.T) {
 		tNanoSeconds := float64(dt.UnixNano())
 		var nilPointer *float64
 
-		fixtures := make([]interface{}, 7)
-		fixtures[0] = tSeconds
-		fixtures[1] = &tSeconds
-		fixtures[2] = tMilliseconds
-		fixtures[3] = &tMilliseconds
-		fixtures[4] = tNanoSeconds
-		fixtures[5] = &tNanoSeconds
-		fixtures[6] = nilPointer
+		originFrame := data.NewFrame("",
+			data.NewField("time1", nil, []float64{
+				tSeconds,
+			}),
+			data.NewField("time2", nil, []*float64{
+				pointer.Float64(tSeconds),
+			}),
+			data.NewField("time3", nil, []float64{
+				tMilliseconds,
+			}),
+			data.NewField("time4", nil, []*float64{
+				pointer.Float64(tMilliseconds),
+			}),
+			data.NewField("time5", nil, []float64{
+				tNanoSeconds,
+			}),
+			data.NewField("time6", nil, []*float64{
+				pointer.Float64(tNanoSeconds),
+			}),
+			data.NewField("time7", nil, []*float64{
+				nilPointer,
+			}),
+		)
 
-		for i := range fixtures {
-			ConvertSqlTimeColumnToEpochMs(fixtures, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
+			require.NoError(t, err)
 		}
 
-		require.Equal(t, tMilliseconds, fixtures[0].(float64))
-		require.Equal(t, tMilliseconds, fixtures[1].(float64))
-		require.Equal(t, tMilliseconds, fixtures[2].(float64))
-		require.Equal(t, tMilliseconds, fixtures[3].(float64))
-		require.Equal(t, tMilliseconds, fixtures[4].(float64))
-		require.Equal(t, tMilliseconds, fixtures[5].(float64))
-		require.Nil(t, fixtures[6])
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[2].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[3].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[4].At(0).(*time.Time)).Unix())
+		require.Equal(t, dt.Unix(), (*originFrame.Fields[5].At(0).(*time.Time)).Unix())
+		require.Nil(t, originFrame.Fields[6].At(0))
 	})
 
 	t.Run("Given row values with float32 as time columns", func(t *testing.T) {
 		tSeconds := float32(dt.Unix())
 		var nilInt *float32
 
-		fixtures := make([]interface{}, 3)
-		fixtures[0] = tSeconds
-		fixtures[1] = &tSeconds
-		fixtures[2] = nilInt
-
-		for i := range fixtures {
-			ConvertSqlTimeColumnToEpochMs(fixtures, i)
+		originFrame := data.NewFrame("",
+			data.NewField("time1", nil, []float32{
+				tSeconds,
+			}),
+			data.NewField("time2", nil, []*float32{
+				pointer.Float32(tSeconds),
+			}),
+			data.NewField("time7", nil, []*float32{
+				nilInt,
+			}),
+		)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
+			require.NoError(t, err)
 		}
-
-		require.Equal(t, float64(tSeconds)*1e3, fixtures[0].(float64))
-		require.Equal(t, float64(tSeconds)*1e3, fixtures[1].(float64))
-		require.Nil(t, fixtures[2])
+		require.Equal(t, int64(tSeconds), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
+		require.Equal(t, int64(tSeconds), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
+		require.Nil(t, originFrame.Fields[2].At(0))
 	})
 
-	t.Run("Given row with value columns", func(t *testing.T) {
-		intValue := 1
-		int64Value := int64(1)
-		int32Value := int32(1)
-		int16Value := int16(1)
-		int8Value := int8(1)
-		float64Value := float64(1)
-		float32Value := float32(1)
-		uintValue := uint(1)
-		uint64Value := uint64(1)
-		uint32Value := uint32(1)
-		uint16Value := uint16(1)
-		uint8Value := uint8(1)
-
-		testCases := []struct {
-			name  string
-			value interface{}
-		}{
-			{"intValue", intValue},
-			{"&intValue", &intValue},
-			{"int64Value", int64Value},
-			{"&int64Value", &int64Value},
-			{"int32Value", int32Value},
-			{"&int32Value", &int32Value},
-			{"int16Value", int16Value},
-			{"&int16Value", &int16Value},
-			{"int8Value", int8Value},
-			{"&int8Value", &int8Value},
-			{"float64Value", float64Value},
-			{"&float64Value", &float64Value},
-			{"float32Value", float32Value},
-			{"&float32Value", &float32Value},
-			{"uintValue", uintValue},
-			{"&uintValue", &uintValue},
-			{"uint64Value", uint64Value},
-			{"&uint64Value", &uint64Value},
-			{"uint32Value", uint32Value},
-			{"&uint32Value", &uint32Value},
-			{"uint16Value", uint16Value},
-			{"&uint16Value", &uint16Value},
-			{"uint8Value", uint8Value},
-			{"&uint8Value", &uint8Value},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				value, err := ConvertSqlValueColumnToFloat("col", tc.value)
-				require.NoError(t, err)
-				require.True(t, value.Valid)
-				require.Equal(t, null.FloatFrom(1).Float64, value.Float64)
-			})
+	t.Run("Given row with value columns, would be converted to float64", func(t *testing.T) {
+		originFrame := data.NewFrame("",
+			data.NewField("value1", nil, []int64{
+				int64(1),
+			}),
+			data.NewField("value2", nil, []*int64{
+				pointer.Int64(1),
+			}),
+			data.NewField("value3", nil, []int32{
+				int32(1),
+			}),
+			data.NewField("value4", nil, []*int32{
+				pointer.Int32(1),
+			}),
+			data.NewField("value5", nil, []int16{
+				int16(1),
+			}),
+			data.NewField("value6", nil, []*int16{
+				pointer.Int16(1),
+			}),
+			data.NewField("value7", nil, []int8{
+				int8(1),
+			}),
+			data.NewField("value8", nil, []*int8{
+				pointer.Int8(1),
+			}),
+			data.NewField("value9", nil, []float64{
+				float64(1),
+			}),
+			data.NewField("value10", nil, []*float64{
+				pointer.Float64(1),
+			}),
+			data.NewField("value11", nil, []float32{
+				float32(1),
+			}),
+			data.NewField("value12", nil, []*float32{
+				pointer.Float32(1),
+			}),
+			data.NewField("value13", nil, []uint64{
+				uint64(1),
+			}),
+			data.NewField("value14", nil, []*uint64{
+				pointer.Uint64(1),
+			}),
+			data.NewField("value15", nil, []uint32{
+				uint32(1),
+			}),
+			data.NewField("value16", nil, []*uint32{
+				pointer.Uint32(1),
+			}),
+			data.NewField("value17", nil, []uint16{
+				uint16(1),
+			}),
+			data.NewField("value18", nil, []*uint16{
+				pointer.Uint16(1),
+			}),
+			data.NewField("value19", nil, []uint8{
+				uint8(1),
+			}),
+			data.NewField("value20", nil, []*uint8{
+				pointer.Uint8(1),
+			}),
+		)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			_, err := convertSQLValueColumnToFloat(originFrame, i)
+			require.NoError(t, err)
+			if i == 8 {
+				require.Equal(t, float64(1), originFrame.Fields[i].At(0).(float64))
+			} else {
+				require.NotNil(t, originFrame.Fields[i].At(0).(*float64))
+				require.Equal(t, float64(1), *originFrame.Fields[i].At(0).(*float64))
+			}
 		}
 	})
 
 	t.Run("Given row with nil value columns", func(t *testing.T) {
-		var intNilPointer *int
 		var int64NilPointer *int64
 		var int32NilPointer *int32
 		var int16NilPointer *int16
 		var int8NilPointer *int8
 		var float64NilPointer *float64
 		var float32NilPointer *float32
-		var uintNilPointer *uint
 		var uint64NilPointer *uint64
 		var uint32NilPointer *uint32
 		var uint16NilPointer *uint16
 		var uint8NilPointer *uint8
 
-		testCases := []struct {
-			name  string
-			value interface{}
-		}{
-			{"intNilPointer", intNilPointer},
-			{"int64NilPointer", int64NilPointer},
-			{"int32NilPointer", int32NilPointer},
-			{"int16NilPointer", int16NilPointer},
-			{"int8NilPointer", int8NilPointer},
-			{"float64NilPointer", float64NilPointer},
-			{"float32NilPointer", float32NilPointer},
-			{"uintNilPointer", uintNilPointer},
-			{"uint64NilPointer", uint64NilPointer},
-			{"uint32NilPointer", uint32NilPointer},
-			{"uint16NilPointer", uint16NilPointer},
-			{"uint8NilPointer", uint8NilPointer},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				value, err := ConvertSqlValueColumnToFloat("col", tc.value)
+		originFrame := data.NewFrame("",
+			data.NewField("value1", nil, []*int64{
+				int64NilPointer,
+			}),
+			data.NewField("value2", nil, []*int32{
+				int32NilPointer,
+			}),
+			data.NewField("value3", nil, []*int16{
+				int16NilPointer,
+			}),
+			data.NewField("value4", nil, []*int8{
+				int8NilPointer,
+			}),
+			data.NewField("value5", nil, []*float64{
+				float64NilPointer,
+			}),
+			data.NewField("value6", nil, []*float32{
+				float32NilPointer,
+			}),
+			data.NewField("value7", nil, []*uint64{
+				uint64NilPointer,
+			}),
+			data.NewField("value8", nil, []*uint32{
+				uint32NilPointer,
+			}),
+			data.NewField("value9", nil, []*uint16{
+				uint16NilPointer,
+			}),
+			data.NewField("value10", nil, []*uint8{
+				uint8NilPointer,
+			}),
+		)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			t.Run("", func(t *testing.T) {
+				_, err := convertSQLValueColumnToFloat(originFrame, i)
 				require.NoError(t, err)
-				require.False(t, value.Valid)
+				require.Nil(t, originFrame.Fields[i].At(0))
 			})
 		}
 	})
@@ -351,4 +428,8 @@ func (t *testQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Col
 func (t *testQueryResultTransformer) TransformQueryError(err error) error {
 	t.transformQueryErrorWasCalled = true
 	return err
+}
+
+func (t *testQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
+	return nil
 }

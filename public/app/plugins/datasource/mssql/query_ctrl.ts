@@ -1,13 +1,7 @@
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
-
-export interface MssqlQuery {
-  refId: string;
-  format: string;
-  alias: string;
-  rawSql: string;
-}
+import { MssqlQuery } from './types';
 
 const defaultQuery = `SELECT
   $__timeEpoch(<time_column>),

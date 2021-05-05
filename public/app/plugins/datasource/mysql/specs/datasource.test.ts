@@ -1,22 +1,32 @@
 import { of } from 'rxjs';
-import { dateTime, toUtc } from '@grafana/data';
+import {
+  dataFrameToJSON,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  dateTime,
+  MutableDataFrame,
+  toUtc,
+} from '@grafana/data';
 
 import { MysqlDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { FetchResponse } from '@grafana/runtime';
-
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => backendSrv,
-}));
+import { FetchResponse, setBackendSrv } from '@grafana/runtime';
+import { MySQLOptions, MySQLQuery } from './../types';
 
 describe('MySQLDatasource', () => {
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
   const setupTextContext = (response: any) => {
-    const instanceSettings = { name: 'mysql' };
+    jest.clearAllMocks();
+    setBackendSrv(backendSrv);
+    const fetchMock = jest.spyOn(backendSrv, 'fetch');
+    const instanceSettings = ({
+      jsonData: {
+        defaultProject: 'testproject',
+      },
+    } as unknown) as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
+    const variable = { ...initialCustomVariableModelState };
     const raw = {
       from: toUtc('2018-04-25 10:00'),
       to: toUtc('2018-04-25 11:00'),
@@ -28,19 +38,44 @@ describe('MySQLDatasource', () => {
         raw: raw,
       }),
     };
-    const variable = { ...initialCustomVariableModelState };
-
-    jest.clearAllMocks();
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
     const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
 
-    return { ds, variable, templateSrv };
+    return { ds, variable, templateSrv, fetchMock };
   };
 
-  describe('When performing annotationQuery', () => {
-    const annotationName = 'MyAnno';
+  describe('When performing a query with hidden target', () => {
+    it('should return empty result and backendSrv.fetch should not be called', async () => {
+      const options = ({
+        range: {
+          from: dateTime(1432288354),
+          to: dateTime(1432288401),
+        },
+        targets: [
+          {
+            format: 'table',
+            rawQuery: true,
+            rawSql: 'select time, metric, value from grafana_metric',
+            refId: 'A',
+            datasource: 'gdev-ds',
+            hide: true,
+          },
+        ],
+      } as unknown) as DataQueryRequest<MySQLQuery>;
 
+      const { ds, fetchMock } = setupTextContext({});
+
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
+        expect(received[0]).toEqual({ data: [] });
+        expect(fetchMock).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('When performing annotationQuery', () => {
+    let results: any;
+    const annotationName = 'MyAnno';
     const options = {
       annotation: {
         name: annotationName,
@@ -51,38 +86,37 @@ describe('MySQLDatasource', () => {
         to: dateTime(1432288401),
       },
     };
-
     const response = {
       results: {
         MyAnno: {
-          refId: annotationName,
-          tables: [
-            {
-              columns: [{ text: 'time_sec' }, { text: 'text' }, { text: 'tags' }],
-              rows: [
-                [1432288355, 'some text', 'TagA,TagB'],
-                [1432288390, 'some text2', ' TagB , TagC'],
-                [1432288400, 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'time_sec', values: [1432288355, 1432288390, 1432288400] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
+                ],
+              })
+            ),
           ],
         },
       },
     };
 
-    it('should return annotation list', async () => {
+    beforeEach(async () => {
       const { ds } = setupTextContext(response);
-      const results = await ds.annotationQuery(options);
+      const data = await ds.annotationQuery(options);
+      results = data;
+    });
 
+    it('should return annotation list', async () => {
       expect(results.length).toBe(3);
-
       expect(results[0].text).toBe('some text');
       expect(results[0].tags[0]).toBe('TagA');
       expect(results[0].tags[1]).toBe('TagB');
-
       expect(results[1].tags[0]).toBe('TagB');
       expect(results[1].tags[1]).toBe('TagC');
-
       expect(results[2].tags.length).toBe(0);
     });
   });
@@ -92,19 +126,19 @@ describe('MySQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
           refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                ],
+                meta: {
+                  executedQueryString: 'select * from atable',
+                },
+              })
+            ),
           ],
         },
       },
@@ -125,26 +159,26 @@ describe('MySQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
           refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                ],
+                meta: {
+                  executedQueryString: 'select * from atable',
+                },
+              })
+            ),
           ],
         },
       },
     };
 
     it('should return list of all column values', async () => {
-      const { ds } = setupTextContext(response);
+      const { ds, fetchMock } = setupTextContext(response);
       const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
@@ -160,26 +194,26 @@ describe('MySQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
           refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                ],
+                meta: {
+                  executedQueryString: 'select * from atable',
+                },
+              })
+            ),
           ],
         },
       },
     };
 
     it('should return list of all column values', async () => {
-      const { ds } = setupTextContext(response);
+      const { ds, fetchMock } = setupTextContext(response);
       const results = await ds.metricFindQuery(query, {});
 
       expect(fetchMock).toBeCalledTimes(1);
@@ -193,19 +227,19 @@ describe('MySQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
           refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [
-                ['value1', 'aTitle'],
-                ['value2', 'aTitle2'],
-                ['value3', 'aTitle3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__value', values: ['value1', 'value2', 'value3'] },
+                  { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                ],
+                meta: {
+                  executedQueryString: 'select * from atable',
+                },
+              })
+            ),
           ],
         },
       },
@@ -228,19 +262,19 @@ describe('MySQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
           refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [
-                ['aTitle', 'same'],
-                ['aTitle', 'same'],
-                ['aTitle', 'diff'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
+                  { name: '__value', values: ['same', 'same', 'diff'] },
+                ],
+                meta: {
+                  executedQueryString: 'select * from atable',
+                },
+              })
+            ),
           ],
         },
       },

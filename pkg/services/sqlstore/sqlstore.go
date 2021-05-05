@@ -510,6 +510,14 @@ func IsTestDbPostgres() bool {
 	return false
 }
 
+func IsTestDBMSSQL() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.MSSQL
+	}
+
+	return false
+}
+
 type DatabaseConfig struct {
 	Type             string
 	Host             string

@@ -1,11 +1,13 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"xorm.io/core"
 )
 
 func init() {
@@ -115,7 +116,6 @@ func (s *PostgresService) generateConnectionString(datasource *models.DataSource
 	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
 
 	// Attach root certificate if provided
-	// Attach root certificate if provided
 	if tlsSettings.RootCertFile != "" {
 		s.logger.Debug("Setting server root certificate", "tlsRootCert", tlsSettings.RootCertFile)
 		connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsSettings.RootCertFile))
@@ -137,43 +137,68 @@ type postgresQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	plugins.DataRowValues, error) {
-	values := make([]interface{}, len(columnTypes))
-	valuePtrs := make([]interface{}, len(columnTypes))
-
-	for i := 0; i < len(columnTypes); i++ {
-		valuePtrs[i] = &values[i]
-	}
-
-	if err := rows.Scan(valuePtrs...); err != nil {
-		return nil, err
-	}
-
-	// convert types not handled by lib/pq
-	// unhandled types are returned as []byte
-	for i := 0; i < len(columnTypes); i++ {
-		if value, ok := values[i].([]byte); ok {
-			switch columnTypes[i].DatabaseTypeName() {
-			case "NUMERIC":
-				if v, err := strconv.ParseFloat(string(value), 64); err == nil {
-					values[i] = v
-				} else {
-					t.log.Debug("Rows", "Error converting numeric to float", value)
-				}
-			case "UNKNOWN", "CIDR", "INET", "MACADDR":
-				// char literals have type UNKNOWN
-				values[i] = string(value)
-			default:
-				t.log.Debug("Rows", "Unknown database type", columnTypes[i].DatabaseTypeName(), "value", value)
-				values[i] = string(value)
-			}
-		}
-	}
-
-	return values, nil
-}
-
 func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
 	return err
+}
+
+func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
+	return []sqlutil.StringConverter{
+		{
+			Name:           "handle FLOAT4",
+			InputScanKind:  reflect.Interface,
+			InputTypeName:  "FLOAT4",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle FLOAT8",
+			InputScanKind:  reflect.Interface,
+			InputTypeName:  "FLOAT8",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle NUMERIC",
+			InputScanKind:  reflect.Interface,
+			InputTypeName:  "NUMERIC",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+	}
 }

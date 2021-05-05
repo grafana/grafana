@@ -1,17 +1,35 @@
 import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 import { FetchResponse } from '@grafana/runtime';
-import { dateTime, toUtc } from '@grafana/data';
+import {
+  dataFrameToJSON,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  dateTime,
+  MutableDataFrame,
+  toUtc,
+} from '@grafana/data';
 
 import { PostgresDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
+import { PostgresOptions, PostgresQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
+}));
+
+jest.mock('@grafana/runtime/src/services', () => ({
+  ...((jest.requireActual('@grafana/runtime/src/services') as unknown) as object),
+  getBackendSrv: () => backendSrv,
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => ({ id: 8674 }),
+    };
+  },
 }));
 
 describe('PostgreSQLDatasource', () => {
@@ -19,7 +37,11 @@ describe('PostgreSQLDatasource', () => {
   const setupTestContext = (data: any) => {
     jest.clearAllMocks();
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
-
+    const instanceSettings = ({
+      jsonData: {
+        defaultProject: 'testproject',
+      },
+    } as unknown) as DataSourceInstanceSettings<PostgresOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const raw = {
       from: toUtc('2018-04-25 10:00'),
@@ -33,7 +55,7 @@ describe('PostgreSQLDatasource', () => {
       }),
     } as unknown) as TimeSrv;
     const variable = { ...initialCustomVariableModelState };
-    const ds = new PostgresDatasource({ name: 'dsql' }, templateSrv, timeSrvMock);
+    const ds = new PostgresDatasource(instanceSettings, templateSrv, timeSrvMock);
 
     return { ds, templateSrv, timeSrvMock, variable };
   };
@@ -80,42 +102,66 @@ describe('PostgreSQLDatasource', () => {
           },
         ],
       };
-
-      const data = {
+      const response = {
         results: {
           A: {
             refId: 'A',
-            meta: {
-              executedQueryString: 'select time, metric from grafana_metric',
-              rowCount: 0,
-            },
-            series: [
-              {
-                name: 'America',
-                points: [[30.226249741223704, 1599643351085]],
-              },
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: 'time', values: [1599643351085] },
+                    { name: 'metric', values: [30.226249741223704], labels: { metric: 'America' } },
+                  ],
+                  meta: {
+                    executedQueryString: 'select time, metric from grafana_metric',
+                  },
+                })
+              ),
             ],
-            tables: null,
           },
         },
       };
 
-      const values = { a: createFetchResponse(data) };
+      const values = { a: createFetchResponse(response) };
       const marble = '-a|';
       const expectedMarble = '-a|';
       const expectedValues = {
         a: {
           data: [
             {
-              datapoints: [[30.226249741223704, 1599643351085]],
+              fields: [
+                {
+                  config: {},
+                  entities: {},
+                  name: 'time',
+                  type: 'time',
+                  values: {
+                    buffer: [1599643351085],
+                  },
+                },
+                {
+                  config: {},
+                  entities: {},
+                  labels: {
+                    metric: 'America',
+                  },
+                  name: 'metric',
+                  type: 'number',
+                  values: {
+                    buffer: [30.226249741223704],
+                  },
+                },
+              ],
+              length: 1,
               meta: {
                 executedQueryString: 'select time, metric from grafana_metric',
-                rowCount: 0,
               },
+              name: undefined,
               refId: 'A',
-              target: 'America',
             },
           ],
+          state: 'Done',
         },
       };
 
@@ -140,63 +186,73 @@ describe('PostgreSQLDatasource', () => {
           },
         ],
       };
-
-      const data = {
+      const response = {
         results: {
           A: {
             refId: 'A',
-            meta: {
-              executedQueryString: 'select time, metric, value from grafana_metric',
-              rowCount: 1,
-            },
-            series: null,
-            tables: [
-              {
-                columns: [
-                  {
-                    text: 'time',
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: 'time', values: [1599643351085] },
+                    { name: 'metric', values: ['America'] },
+                    { name: 'value', values: [30.226249741223704] },
+                  ],
+                  meta: {
+                    executedQueryString: 'select time, metric, value from grafana_metric',
                   },
-                  {
-                    text: 'metric',
-                  },
-                  {
-                    text: 'value',
-                  },
-                ],
-                rows: [[1599643351085, 'America', 30.226249741223704]],
-              },
+                })
+              ),
             ],
           },
         },
       };
 
-      const values = { a: createFetchResponse(data) };
+      const values = { a: createFetchResponse(response) };
       const marble = '-a|';
       const expectedMarble = '-a|';
       const expectedValues = {
         a: {
           data: [
             {
-              columns: [
+              fields: [
                 {
-                  text: 'time',
+                  config: {},
+                  entities: {},
+                  name: 'time',
+                  type: 'time',
+                  values: {
+                    buffer: [1599643351085],
+                  },
                 },
                 {
-                  text: 'metric',
+                  config: {},
+                  entities: {},
+                  name: 'metric',
+                  type: 'string',
+                  values: {
+                    buffer: ['America'],
+                  },
                 },
                 {
-                  text: 'value',
+                  config: {},
+                  entities: {},
+                  name: 'value',
+                  type: 'number',
+                  values: {
+                    buffer: [30.226249741223704],
+                  },
                 },
               ],
-              rows: [[1599643351085, 'America', 30.226249741223704]],
-              type: 'table',
-              refId: 'A',
+              length: 1,
               meta: {
                 executedQueryString: 'select time, metric, value from grafana_metric',
-                rowCount: 1,
               },
+              name: undefined,
+              refId: 'A',
             },
           ],
+          state: 'Done',
         },
       };
 
@@ -206,7 +262,7 @@ describe('PostgreSQLDatasource', () => {
 
   describe('When performing a query with hidden target', () => {
     it('should return empty result and backendSrv.fetch should not be called', async () => {
-      const options = {
+      const options = ({
         range: {
           from: dateTime(1432288354),
           to: dateTime(1432288401),
@@ -221,7 +277,7 @@ describe('PostgreSQLDatasource', () => {
             hide: true,
           },
         ],
-      };
+      } as unknown) as DataQueryRequest<PostgresQuery>;
 
       const { ds } = setupTestContext({});
 
@@ -233,40 +289,42 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When performing annotationQuery', () => {
-    it('should return annotation list', async () => {
-      const annotationName = 'MyAnno';
-      const options = {
-        annotation: {
-          name: annotationName,
-          rawQuery: 'select time, title, text, tags from table;',
-        },
-        range: {
-          from: dateTime(1432288354),
-          to: dateTime(1432288401),
-        },
-      };
-      const data = {
-        results: {
-          MyAnno: {
-            refId: annotationName,
-            tables: [
-              {
-                columns: [{ text: 'time' }, { text: 'text' }, { text: 'tags' }],
-                rows: [
-                  [1432288355, 'some text', 'TagA,TagB'],
-                  [1432288390, 'some text2', ' TagB , TagC'],
-                  [1432288400, 'some text3'],
+    let results: any;
+    const annotationName = 'MyAnno';
+    const options = {
+      annotation: {
+        name: annotationName,
+        rawQuery: 'select time, title, text, tags from table;',
+      },
+      range: {
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
+      },
+    };
+    const response = {
+      results: {
+        MyAnno: {
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'time', values: [1432288355, 1432288390, 1432288400] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
                 ],
-              },
-            ],
-          },
+              })
+            ),
+          ],
         },
-      };
+      },
+    };
 
-      const { ds } = setupTestContext(data);
+    beforeEach(async () => {
+      const { ds } = setupTestContext(response);
+      results = await ds.annotationQuery(options);
+    });
 
-      const results = await ds.annotationQuery(options);
-
+    it('should return annotation list', async () => {
       expect(results.length).toBe(3);
 
       expect(results[0].text).toBe('some text');
@@ -283,29 +341,28 @@ describe('PostgreSQLDatasource', () => {
   describe('When performing metricFindQuery', () => {
     it('should return list of all column values', async () => {
       const query = 'select * from atable';
-      const data = {
+      const response = {
         results: {
           tempvar: {
-            meta: {
-              rowCount: 3,
-            },
             refId: 'tempvar',
-            tables: [
-              {
-                columns: [{ text: 'title' }, { text: 'text' }],
-                rows: [
-                  ['aTitle', 'some text'],
-                  ['aTitle2', 'some text2'],
-                  ['aTitle3', 'some text3'],
-                ],
-              },
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                    { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                  ],
+                  meta: {
+                    executedQueryString: 'select * from atable',
+                  },
+                })
+              ),
             ],
           },
         },
       };
 
-      const { ds } = setupTestContext(data);
-
+      const { ds } = setupTestContext(response);
       const results = await ds.metricFindQuery(query, {});
 
       expect(results.length).toBe(6);
@@ -317,29 +374,28 @@ describe('PostgreSQLDatasource', () => {
   describe('When performing metricFindQuery with $__searchFilter and a searchFilter is given', () => {
     it('should return list of all column values', async () => {
       const query = "select title from atable where title LIKE '$__searchFilter'";
-      const data = {
+      const response = {
         results: {
           tempvar: {
-            meta: {
-              rowCount: 3,
-            },
             refId: 'tempvar',
-            tables: [
-              {
-                columns: [{ text: 'title' }, { text: 'text' }],
-                rows: [
-                  ['aTitle', 'some text'],
-                  ['aTitle2', 'some text2'],
-                  ['aTitle3', 'some text3'],
-                ],
-              },
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                    { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                  ],
+                  meta: {
+                    executedQueryString: 'select * from atable',
+                  },
+                })
+              ),
             ],
           },
         },
       };
 
-      const { ds } = setupTestContext(data);
-
+      const { ds } = setupTestContext(response);
       const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
@@ -348,10 +404,10 @@ describe('PostgreSQLDatasource', () => {
       );
       expect(results).toEqual([
         { text: 'aTitle' },
-        { text: 'some text' },
         { text: 'aTitle2' },
-        { text: 'some text2' },
         { text: 'aTitle3' },
+        { text: 'some text' },
+        { text: 'some text2' },
         { text: 'some text3' },
       ]);
     });
@@ -360,39 +416,38 @@ describe('PostgreSQLDatasource', () => {
   describe('When performing metricFindQuery with $__searchFilter but no searchFilter is given', () => {
     it('should return list of all column values', async () => {
       const query = "select title from atable where title LIKE '$__searchFilter'";
-      const data = {
+      const response = {
         results: {
           tempvar: {
-            meta: {
-              rowCount: 3,
-            },
             refId: 'tempvar',
-            tables: [
-              {
-                columns: [{ text: 'title' }, { text: 'text' }],
-                rows: [
-                  ['aTitle', 'some text'],
-                  ['aTitle2', 'some text2'],
-                  ['aTitle3', 'some text3'],
-                ],
-              },
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                    { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                  ],
+                  meta: {
+                    executedQueryString: 'select * from atable',
+                  },
+                })
+              ),
             ],
           },
         },
       };
 
-      const { ds } = setupTestContext(data);
-
+      const { ds } = setupTestContext(response);
       const results = await ds.metricFindQuery(query, {});
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
       expect(results).toEqual([
         { text: 'aTitle' },
-        { text: 'some text' },
         { text: 'aTitle2' },
-        { text: 'some text2' },
         { text: 'aTitle3' },
+        { text: 'some text' },
+        { text: 'some text2' },
         { text: 'some text3' },
       ]);
     });
@@ -401,29 +456,27 @@ describe('PostgreSQLDatasource', () => {
   describe('When performing metricFindQuery with key, value columns', () => {
     it('should return list of as text, value', async () => {
       const query = 'select * from atable';
-      const data = {
+      const response = {
         results: {
           tempvar: {
-            meta: {
-              rowCount: 3,
-            },
             refId: 'tempvar',
-            tables: [
-              {
-                columns: [{ text: '__value' }, { text: '__text' }],
-                rows: [
-                  ['value1', 'aTitle'],
-                  ['value2', 'aTitle2'],
-                  ['value3', 'aTitle3'],
-                ],
-              },
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: '__value', values: ['value1', 'value2', 'value3'] },
+                    { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                  ],
+                  meta: {
+                    executedQueryString: 'select * from atable',
+                  },
+                })
+              ),
             ],
           },
         },
       };
-
-      const { ds } = setupTestContext(data);
-
+      const { ds } = setupTestContext(response);
       const results = await ds.metricFindQuery(query, {});
 
       expect(results).toEqual([
@@ -437,29 +490,27 @@ describe('PostgreSQLDatasource', () => {
   describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
     it('should return list of unique keys', async () => {
       const query = 'select * from atable';
-      const data = {
+      const response = {
         results: {
           tempvar: {
-            meta: {
-              rowCount: 3,
-            },
             refId: 'tempvar',
-            tables: [
-              {
-                columns: [{ text: '__text' }, { text: '__value' }],
-                rows: [
-                  ['aTitle', 'same'],
-                  ['aTitle', 'same'],
-                  ['aTitle', 'diff'],
-                ],
-              },
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
+                    { name: '__value', values: ['same', 'same', 'diff'] },
+                  ],
+                  meta: {
+                    executedQueryString: 'select * from atable',
+                  },
+                })
+              ),
             ],
           },
         },
       };
-
-      const { ds } = setupTestContext(data);
-
+      const { ds } = setupTestContext(response);
       const results = await ds.metricFindQuery(query, {});
 
       expect(results).toEqual([{ text: 'aTitle', value: 'same' }]);
