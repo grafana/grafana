@@ -42,7 +42,9 @@ type TracingService struct {
 
 func (ts *TracingService) Init() error {
 	ts.log = log.New("tracing")
-	ts.parseSettings()
+	if err := ts.parseSettings(); err != nil {
+		return err
+	}
 
 	if ts.enabled {
 		return ts.initGlobalTracer()
@@ -51,10 +53,10 @@ func (ts *TracingService) Init() error {
 	return nil
 }
 
-func (ts *TracingService) parseSettings() {
+func (ts *TracingService) parseSettings() error {
 	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
 	if err != nil {
-		return
+		return err
 	}
 
 	ts.address = section.Key("address").MustString("")
@@ -75,6 +77,7 @@ func (ts *TracingService) parseSettings() {
 	ts.zipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
 	ts.disableSharedZipkinSpans = section.Key("disable_shared_zipkin_spans").MustBool(false)
 	ts.samplingServerURL = section.Key("sampling_server_url").MustString("")
+	return nil
 }
 
 func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
