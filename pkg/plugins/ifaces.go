@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"context"
-	"os"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -82,7 +81,6 @@ type PluginInstaller interface {
 	Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
 	Uninstall(pluginID, pluginPath string) error
-	DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) error
 }
 
 type PluginInstallerLogger interface {

@@ -55,7 +55,7 @@ type PluginManager struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	SQLStore             *sqlstore.SQLStore    `inject:""`
-	pluginInstaller      *installer.Installer
+	PluginInstaller      plugins.PluginInstaller
 	log                  log.Logger
 	scanningErrors       []error
 
@@ -98,7 +98,7 @@ func (pm *PluginManager) Init() error {
 	plog = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 
-	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
+	pm.PluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
 
 	pm.log.Info("Starting plugin search")
 
@@ -779,7 +779,7 @@ func (pm *PluginManager) Install(pluginID, version string) error {
 		}
 	}
 
-	err := pm.pluginInstaller.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
+	err := pm.PluginInstaller.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
 	if err != nil {
 		return err
 	}
@@ -810,7 +810,7 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 		return err
 	}
 
-	return pm.pluginInstaller.Uninstall(pluginID, pm.Cfg.PluginsPath)
+	return pm.PluginInstaller.Uninstall(pluginID, pm.Cfg.PluginsPath)
 }
 
 func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
@@ -830,17 +830,21 @@ func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
 
 	delete(pm.plugins, plugin.Id)
 
-	for i, route := range pm.staticRoutes {
-		if plugin.Id == route.PluginId {
-			removeStaticRoute(pm.staticRoutes, i)
-		}
-	}
+	pm.removeStaticRoute(plugin.Id)
 
 	return nil
 }
 
-func removeStaticRoute(routes []*plugins.PluginStaticRoute, i int) []*plugins.PluginStaticRoute {
-	routes[i] = routes[len(routes)-1]
+func (pm *PluginManager) removeStaticRoute(pluginID string) {
+	routes := pm.staticRoutes
 
-	return routes[:len(routes)-1]
+	for i, route := range routes {
+		if pluginID == route.PluginId {
+			r := make([]*plugins.PluginStaticRoute, 0)
+			r = append(r, routes[:i]...)
+
+			pm.staticRoutes = append(r, routes[i+1:]...)
+			break
+		}
+	}
 }

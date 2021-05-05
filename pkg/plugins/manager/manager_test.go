@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -138,13 +139,18 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, pm.scanningErrors)
 
+		// capture manager plugin state
+		datasources := pm.dataSources
+		panels := pm.panels
+		apps := pm.apps
+
 		verifyPluginManagerState := func() {
 			// verify plugin manager has loaded core plugins successfully
 			assert.Empty(t, pm.scanningErrors)
 			assert.Len(t, pm.Plugins(), 45)
-			assert.Len(t, pm.DataSources(), 21)
-			assert.Len(t, pm.Panels(), 24)
-			assert.Len(t, pm.Apps(), 0)
+			assert.Len(t, datasources, 21)
+			assert.Len(t, panels, 24)
+			assert.Len(t, apps, 0)
 
 			// verify plugin has been loaded successfully
 			const pluginID = "test"
@@ -177,6 +183,12 @@ func TestPluginManager_Init(t *testing.T) {
 			require.NoError(t, err)
 
 			verifyPluginManagerState()
+
+			// verify plugin state remains the same as previous
+			assert.Empty(t, pm.scanningErrors)
+			assert.True(t, reflect.DeepEqual(datasources, pm.dataSources))
+			assert.True(t, reflect.DeepEqual(panels, pm.panels))
+			assert.True(t, reflect.DeepEqual(apps, pm.apps))
 		})
 	})
 
@@ -276,6 +288,91 @@ func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
 	}
 }
 
+func TestPluginManager_Installer(t *testing.T) {
+	t.Run("Install plugin after manager init", func(t *testing.T) {
+		fm := &fakeBackendPluginManager{}
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.BackendPluginManager = fm
+		})
+
+		err := pm.Init()
+		require.NoError(t, err)
+
+		// mock installer
+		installer := &fakePluginInstaller{}
+		pm.PluginInstaller = installer
+
+		// Set plugin location (we do this after manager Init() so that
+		// it doesn't install the plugin automatically)
+		pm.Cfg.PluginsPath = "testdata/installer"
+
+		pluginID := "test"
+		pluginFolder := pm.Cfg.PluginsPath + "/plugin"
+
+		err = pm.Install(pluginID, "1.0.0")
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, installer.installCount)
+		assert.Equal(t, 0, installer.uninstallCount)
+
+		// verify plugin manager has loaded core plugins successfully
+		assert.Empty(t, pm.scanningErrors)
+		assert.Len(t, pm.Plugins(), 45)
+		assert.Len(t, pm.DataSources(), 21)
+		assert.Len(t, pm.Panels(), 24)
+		assert.Len(t, pm.Apps(), 0)
+
+		// verify plugin has been loaded successfully
+		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
+		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.GrafanaType, pm.plugins[pluginID].SignatureType)
+		assert.Equal(t, "Grafana Labs", pm.plugins[pluginID].SignatureOrg)
+		assert.Equal(t, pluginFolder, pm.plugins[pluginID].PluginDir)
+		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+
+		ds := pm.GetDataSource(pluginID)
+		assert.NotNil(t, ds)
+		assert.Equal(t, pluginID, ds.Id)
+		assert.Equal(t, pm.plugins[pluginID], &ds.FrontendPluginBase.PluginBase)
+
+		assert.Len(t, pm.StaticRoutes(), 1)
+		assert.Equal(t, pluginID, pm.StaticRoutes()[0].PluginId)
+		assert.Equal(t, pluginFolder, pm.StaticRoutes()[0].Directory)
+
+		t.Run("Won't install if already installed", func(t *testing.T) {
+			err := pm.Install(pluginID, "1.0.0")
+			require.Equal(t, plugins.DuplicatePluginError{
+				PluginID:          pluginID,
+				ExistingPluginDir: pluginFolder,
+			}, err)
+		})
+
+		t.Run("Uninstall base case", func(t *testing.T) {
+			err := pm.Uninstall(pluginID)
+			require.NoError(t, err)
+
+			assert.Equal(t, 1, installer.installCount)
+			assert.Equal(t, 1, installer.uninstallCount)
+
+			assert.Nil(t, pm.GetDataSource(pluginID))
+			assert.Nil(t, pm.GetPlugin(pluginID))
+			assert.Len(t, pm.StaticRoutes(), 0)
+
+			t.Run("Won't uninstall if not installed", func(t *testing.T) {
+				err := pm.Uninstall(pluginID)
+				require.Equal(t, plugins.PluginNotFoundError{
+					PluginID: pluginID,
+				}, err)
+			})
+		})
+	})
+
+}
+
 type fakeBackendPluginManager struct {
 	backendplugin.Manager
 
@@ -300,6 +397,15 @@ func (f *fakeBackendPluginManager) UnregisterAndStop(pluginID string) error {
 	return nil
 }
 
+func (f *fakeBackendPluginManager) Registered(pluginID string) bool {
+	for _, existingPlugin := range f.registeredPlugins {
+		if pluginID == existingPlugin {
+			return true
+		}
+	}
+	return false
+}
+
 func (f *fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID string) error {
 	return nil
 }
@@ -313,6 +419,21 @@ func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend
 }
 
 func (f *fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
+}
+
+type fakePluginInstaller struct {
+	installCount   int
+	uninstallCount int
+}
+
+func (f *fakePluginInstaller) Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error {
+	f.installCount++
+	return nil
+}
+
+func (f *fakePluginInstaller) Uninstall(pluginID, pluginPath string) error {
+	f.uninstallCount++
+	return nil
 }
 
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
