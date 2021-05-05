@@ -257,22 +257,6 @@ export class ElasticResponse {
             }
             break;
           }
-          case 'top_metrics': {
-            // const stats = bucket[metric.id];
-            // const topMetricValues = stats.top.map((hit: { metrics: Record<string, number> }) => {
-            //   if (hit.metrics[metric.field!]) {
-            //     return hit.metrics[metric.field!];
-            //   }
-            //   return null;
-            // });
-            // const finalValue = aggValues(
-            //   metric.settings?.aggregateBy ?? 'avg',
-            //   topMetricValues,
-            //   metric.settings?.separator
-            // );
-            // addMetricValue(values, this.getMetricName(metric.type), finalValue);
-            break;
-          }
           case 'percentiles': {
             const percentiles = bucket[metric.id].values;
 
