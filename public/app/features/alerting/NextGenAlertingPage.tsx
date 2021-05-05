@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PageToolbar, stylesFactory, ToolbarButton, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -158,7 +158,7 @@ const NextGenAlertingPageUnconnected = withTheme2(UnthemedNextGenAlertingPage);
 
 export default hot(module)(connector(NextGenAlertingPageUnconnected));
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrapper: css`
     width: calc(100% - 55px);
     height: 100%;

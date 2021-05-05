@@ -5,7 +5,7 @@ import {
   FieldCache,
   FieldType,
   getFieldColorModeForField,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   MutableDataFrame,
 } from '@grafana/data';
 import { EdgeDatum, NodeDatum } from './types';
@@ -84,7 +84,7 @@ export enum DataFrameFieldNames {
 export function processNodes(
   nodes: DataFrame | undefined,
   edges: DataFrame | undefined,
-  theme: GrafanaThemeV2
+  theme: GrafanaTheme2
 ): { nodes: NodeDatum[]; edges: EdgeDatum[] } {
   if (!nodes) {
     return { nodes: [], edges: [] };
@@ -276,7 +276,7 @@ function edgesFrame() {
   });
 }
 
-function getColor(field: Field, index: number, theme: GrafanaThemeV2): string {
+function getColor(field: Field, index: number, theme: GrafanaTheme2): string {
   if (!field.config.color) {
     return field.values.get(index);
   }

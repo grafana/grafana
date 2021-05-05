@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { VariableSuggestion, GrafanaThemeV2, DataLink } from '@grafana/data';
+import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 import { Switch } from '../Switch/Switch';
 import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes/index';
@@ -15,7 +15,7 @@ interface DataLinkEditorProps {
   onChange: (index: number, link: DataLink, callback?: () => void) => void;
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css`
     margin-bottom: ${theme.spacing()};
   `,

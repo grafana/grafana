@@ -41,13 +41,18 @@ func (st *Manager) set(entry *State) {
 	st.cache.set(entry)
 }
 
-func (st *Manager) Get(id string) (*State, error) {
-	return st.cache.get(id)
+func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-//Used to ensure a clean cache on startup
+// ResetCache is used to ensure a clean cache on startup.
 func (st *Manager) ResetCache() {
 	st.cache.reset()
+}
+
+// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
+	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
@@ -90,12 +95,12 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	return currentState
 }
 
-func (st *Manager) GetAll() []*State {
-	return st.cache.getAll()
+func (st *Manager) GetAll(orgID int64) []*State {
+	return st.cache.getAll(orgID)
 }
 
-func (st *Manager) GetStatesByRuleUID() map[string][]*State {
-	return st.cache.getStatesByRuleUID()
+func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
 }
 
 func (st *Manager) cleanUp() {

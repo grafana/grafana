@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
 
@@ -16,7 +16,7 @@ import { saveRuleFormAction } from '../../state/actions';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { rulerRuleToFormValues, defaultFormValues } from '../../utils/rule-form';
+import { rulerRuleToFormValues, defaultFormValues, getDefaultQueries } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
 
 type Props = {
@@ -31,7 +31,10 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     if (existing) {
       return rulerRuleToFormValues(existing);
     }
-    return defaultFormValues;
+    return {
+      ...defaultFormValues,
+      queries: getDefaultQueries(),
+    };
   }, [existing]);
 
   const formAPI = useForm<RuleFormValues>({
@@ -128,7 +131,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     buttonSpinner: css`
       margin-right: ${theme.spacing(1)};

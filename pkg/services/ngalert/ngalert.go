@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/quota"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
@@ -46,6 +48,7 @@ type AlertNG struct {
 	DataService     *tsdb.Service                           `inject:""`
 	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
+	QuotaService    *quota.QuotaService                     `inject:""`
 	Metrics         *metrics.Metrics                        `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
@@ -65,14 +68,14 @@ func (ng *AlertNG) Init() error {
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:            clock.New(),
-		BaseInterval: baseInterval,
-		Logger:       ng.Log,
-		MaxAttempts:  maxAttempts,
-		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
-		Store:        store,
-		RuleStore:    store,
-		Notifier:     ng.Alertmanager,
+		C:             clock.New(),
+		BaseInterval:  baseInterval,
+		Logger:        ng.Log,
+		MaxAttempts:   maxAttempts,
+		Evaluator:     eval.Evaluator{Cfg: ng.Cfg},
+		InstanceStore: store,
+		RuleStore:     store,
+		Notifier:      ng.Alertmanager,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
@@ -83,7 +86,8 @@ func (ng *AlertNG) Init() error {
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
-		Store:           store,
+		QuotaService:    ng.QuotaService,
+		InstanceStore:   store,
 		RuleStore:       store,
 		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
