@@ -53,33 +53,12 @@ describe('createGraphFrames', () => {
 
 const singleSpanResponse = new MutableDataFrame({
   fields: [
-    {
-      name: 'traceID',
-      values: ['04450900759028499335'],
-    },
-    {
-      name: 'spanID',
-      values: ['4322526419282105830'],
-    },
-    {
-      name: 'parentSpanID',
-      values: [''],
-    },
-    {
-      name: 'operationName',
-      values: ['store.validateQueryTimeRange'],
-    },
-    {
-      name: 'serviceName',
-      values: ['loki-all'],
-    },
-    {
-      name: 'startTime',
-      values: [1619712655875.4539],
-    },
-    {
-      name: 'duration',
-      values: [14.984],
-    },
+    { name: 'traceID', values: ['04450900759028499335'] },
+    { name: 'spanID', values: ['4322526419282105830'] },
+    { name: 'parentSpanID', values: [''] },
+    { name: 'operationName', values: ['store.validateQueryTimeRange'] },
+    { name: 'serviceName', values: ['loki-all'] },
+    { name: 'startTime', values: [1619712655875.4539] },
+    { name: 'duration', values: [14.984] },
   ],
 });
