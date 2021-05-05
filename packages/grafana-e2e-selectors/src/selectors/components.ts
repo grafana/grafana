@@ -49,6 +49,9 @@ export const Components = {
       },
     },
   },
+  VizLegend: {
+    seriesName: (name: string) => `VizLegend series ${name}`,
+  },
   Drawer: {
     General: {
       title: (title: string) => `Drawer title ${title}`,
@@ -71,6 +74,7 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
+    applyButton: 'panel editor apply',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
   },
