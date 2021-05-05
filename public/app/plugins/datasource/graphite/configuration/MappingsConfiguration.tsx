@@ -18,9 +18,9 @@ export const MappingsConfiguration = (props: Props): JSX.Element => {
       <h3 className="page-heading">Label mappings</h3>
       {!props.showHelp && (
         <p>
-          <a className="external-link" target="_blank" rel="noreferrer" onClick={props.onRestoreHelp}>
+          <Button variant="link" onClick={props.onRestoreHelp}>
             Learn how label mappings work
-          </a>
+          </Button>
         </p>
       )}
       {props.showHelp && <MappingsHelp onDismiss={props.onDismiss} />}
