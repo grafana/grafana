@@ -11,6 +11,11 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
+# Grafana Enterprise
+
+If you are running Grafana Enterprise and have [Access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need have relevant fine-grained permissions.
+Refer to specific resources to understand what permissions are required.
+
 ## Settings
 
 `GET /api/admin/settings`
@@ -209,6 +214,12 @@ Content-Type: application/json
 
 Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
+#### Fine-grained permissions
+
+Action | Scope
+--- | --- | 
+users:create | n/a
+
 **Example Request**:
 
 ```http
@@ -243,6 +254,12 @@ Content-Type: application/json
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 Change password for a specific user.
 
+#### Fine-grained permissions
+
+Action | Scope
+--- | --- | 
+users.password:update | users:*
+
 **Example Request**:
 
 ```http
@@ -268,6 +285,12 @@ Content-Type: application/json
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
+#### Fine-grained permissions
+
+Action | Scope
+--- | --- | 
+users.permissions:update | users:*
+
 **Example Request**:
 
 ```http
@@ -292,6 +315,12 @@ Content-Type: application/json
 `DELETE /api/admin/users/:id`
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+#### Fine-grained permissions
+
+Action | Scope
+--- | --- | 
+users:delete | users:*
 
 **Example Request**:
 
