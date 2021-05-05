@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { isEqual } from 'lodash';
 import LRU from 'lru-cache';
 import { Collapse } from '@grafana/ui';
-import { AbsoluteTimeRange, DataQuery, Field, LogRowModel, LogsModel, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, Field, LogRowModel, LogsModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
