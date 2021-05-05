@@ -97,7 +97,6 @@ func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	plog = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
-
 	pm.PluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
 
 	pm.log.Info("Starting plugin search")
@@ -355,10 +354,10 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	pm.log.Debug("Initial plugin loading done")
 
-	for foundPluginPath, foundPlugin := range scanner.plugins {
-		if existing := pm.GetPlugin(foundPlugin.Id); existing != nil && foundPlugin.Info.Version == existing.Info.Version {
-			pm.log.Debug("Skipping plugin as it's already installed", "plugin", foundPlugin.Id)
-			delete(scanner.plugins, foundPluginPath)
+	for scannedPluginPath, scannedPlugin := range scanner.plugins {
+		if existing := pm.GetPlugin(scannedPlugin.Id); existing != nil && scannedPlugin.Info.Version == existing.Info.Version {
+			pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
+			delete(scanner.plugins, scannedPluginPath)
 		}
 	}
 

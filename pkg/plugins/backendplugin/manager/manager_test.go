@@ -54,6 +54,7 @@ func TestManager(t *testing.T) {
 				require.Equal(t, testPluginID, ctx.plugin.pluginID)
 				require.NotNil(t, ctx.plugin.logger)
 				require.Equal(t, 1, ctx.plugin.startCount)
+				require.True(t, ctx.manager.Registered(testPluginID))
 
 				t.Run("Should not be able to register an already registered plugin", func(t *testing.T) {
 					err := ctx.manager.RegisterAndStart(testPluginID, ctx.factory)
@@ -221,6 +222,7 @@ func TestManager(t *testing.T) {
 			t.Run("Should be able to register plugin", func(t *testing.T) {
 				err := ctx.manager.RegisterAndStart(testPluginID, ctx.factory)
 				require.NoError(t, err)
+				require.True(t, ctx.manager.Registered(testPluginID))
 				require.False(t, ctx.plugin.managed)
 
 				t.Run("When manager runs should not start plugin", func(t *testing.T) {

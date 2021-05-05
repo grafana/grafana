@@ -12,7 +12,6 @@ import (
 
 func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
 	plugin := pm.GetPlugin(pluginID)
-
 	if plugin == nil {
 		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
