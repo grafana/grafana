@@ -390,8 +390,8 @@ func (tp *testPlugin) Decommission() error {
 }
 
 func (tp *testPlugin) IsDecommissioned() bool {
-	tp.mutex.Lock()
-	defer tp.mutex.Unlock()
+	tp.mutex.RLock()
+	defer tp.mutex.RUnlock()
 	return tp.decommissioned
 }
 
