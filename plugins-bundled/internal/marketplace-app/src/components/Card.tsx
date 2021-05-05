@@ -1,41 +1,52 @@
 import React from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useTheme, stylesFactory } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useTheme2, stylesFactory } from '@grafana/ui';
 
 interface Props {
-  onClick?: () => void;
-  children: React.ReactNode;
+  href: string;
+  text: React.ReactNode;
+  image: React.ReactNode;
+  layout?: 'horizontal' | 'vertical';
 }
 
-export const Card = ({ onClick, children }: Props) => {
-  const theme = useTheme();
-  const styles = getCardStyles(theme);
+export const Card = ({ href, text, image, layout = 'vertical' }: Props) => {
+  const theme = useTheme2();
+  const styles = getCardStyles(theme, layout);
 
   return (
-    <div onClick={onClick} className={styles.root}>
-      {children}
-    </div>
+    <a href={href} className={styles.root}>
+      <div className={styles.container}>
+        <div className={styles.imgContainer}>{image}</div>
+        {text}
+      </div>
+    </a>
   );
 };
 
-export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    root: css`
-      padding: ${theme.spacing.md};
-      background-color: ${theme.colors.bg2};
-      border-radius: ${theme.border.radius.sm};
-      height: 100%;
+const getCardStyles = stylesFactory((theme: GrafanaTheme2, layout) => ({
+  root: css`
+    background-color: ${theme.colors.background.primary};
+    border-radius: ${theme.shape.borderRadius()};
+    cursor: pointer;
+    height: 100%;
+    padding: ${theme.spacing(2)};
 
-      & img {
-        max-width: 100%;
-        margin: auto 0;
-      }
-
-      &:hover {
-        background-color: ${theme.isDark ? '#25272b' : '#eaf0f6'};
-        cursor: pointer;
-      }
-    `,
-  };
-});
+    &:hover {
+      background-color: ${theme.colors.action.hover};
+    }
+  `,
+  container: css`
+    display: flex;
+    flex-direction: ${layout === 'vertical' ? 'column' : 'row'};
+    justify-content: ${layout === 'vertical' ? 'space-around' : 'flex-start'};
+    height: 100%;
+  `,
+  imgContainer: css`
+    flex-grow: ${layout === 'vertical' ? 1 : 0};
+    padding: ${theme.spacing()} 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `,
+}));

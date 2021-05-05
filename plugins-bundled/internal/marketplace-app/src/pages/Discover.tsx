@@ -1,9 +1,10 @@
 import React from 'react';
 import { cx, css } from '@emotion/css';
 
-import { dateTimeParse, AppRootProps, GrafanaTheme } from '@grafana/data';
-import { useTheme, Legend, stylesFactory, Button } from '@grafana/ui';
+import { dateTimeParse, AppRootProps, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Legend, LinkButton } from '@grafana/ui';
 
+import { PLUGIN_ROOT } from '../constants';
 import { Card } from '../components/Card';
 import { Grid } from '../components/Grid';
 import { PluginList } from '../components/PluginList';
@@ -18,15 +19,10 @@ export const Discover = ({ meta }: AppRootProps) => {
 
   const plugins = usePlugins({ includeEnterprise, includeUnsigned });
   const history = useHistory();
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const onSearch = (q: string) => {
     history.push({ query: { q, tab: 'browse' } });
-  };
-
-  const onBrowse = ({ filterBy, sortBy }: { filterBy?: string; sortBy?: string }) => {
-    history.push({ query: { tab: 'browse', filterBy, sortBy } });
   };
 
   const featuredPlugins = plugins.items.filter((_) => _.featured > 0);
@@ -57,57 +53,57 @@ export const Discover = ({ meta }: AppRootProps) => {
       {/* Most popular */}
       <div className={styles.legendContainer}>
         <Legend className={styles.legend}>Most popular</Legend>
-        <Button onClick={() => onBrowse({ sortBy: 'popularity' })}>See more</Button>
+        <LinkButton href={`${PLUGIN_ROOT}?tab=browse&sortBy=popularity`}>See more</LinkButton>
       </div>
       <PluginList plugins={mostPopular.slice(0, 5)} />
 
       {/* Recently added */}
       <div className={styles.legendContainer}>
         <Legend className={styles.legend}>Recently added</Legend>
-        <Button onClick={() => onBrowse({ sortBy: 'published' })}>See more</Button>
+        <LinkButton href={`${PLUGIN_ROOT}?tab=browse&sortBy=published'`}>See more</LinkButton>
       </div>
       <PluginList plugins={recentlyAdded.slice(0, 5)} />
 
       {/* Browse by type */}
       <Legend className={cx(styles.legend)}>Browse by type</Legend>
       <Grid>
-        <Card onClick={() => onBrowse({ filterBy: 'panel' })}>
-          <span className={styles.typeLegend}>
-            <PluginTypeIcon typeCode="panel" size={18} />
-            &nbsp;Panels
-          </span>
-        </Card>
-        <Card onClick={() => onBrowse({ filterBy: 'datasource' })}>
-          <span className={styles.typeLegend}>
-            <PluginTypeIcon typeCode="datasource" size={18} />
-            &nbsp;Data sources
-          </span>
-        </Card>
-        <Card onClick={() => onBrowse({ filterBy: 'app' })}>
-          <span className={styles.typeLegend}>
-            <PluginTypeIcon typeCode="app" size={18} />
-            &nbsp;Apps
-          </span>
-        </Card>
+        <Card
+          layout="horizontal"
+          href={`${PLUGIN_ROOT}?tab=browse&filterBy=panel`}
+          image={<PluginTypeIcon typeCode="panel" size={18} />}
+          text={<span className={styles.typeLegend}>&nbsp;Panels</span>}
+        />
+        <Card
+          layout="horizontal"
+          href={`${PLUGIN_ROOT}?tab=browse&filterBy=datasource`}
+          image={<PluginTypeIcon typeCode="datasource" size={18} />}
+          text={<span className={styles.typeLegend}>&nbsp;Data sources</span>}
+        />
+        <Card
+          layout="horizontal"
+          href={`${PLUGIN_ROOT}?tab=browse&filterBy=app`}
+          image={<PluginTypeIcon typeCode="app" size={18} />}
+          text={<span className={styles.typeLegend}>&nbsp;Apps</span>}
+        />
       </Grid>
     </>
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     legend: css`
-      margin-top: ${theme.spacing.xl};
+      margin-top: ${theme.spacing(4)};
     `,
     legendContainer: css`
+      align-items: baseline;
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
     `,
     typeLegend: css`
-      display: flex;
       align-items: center;
-      font-size: ${theme.typography.size.lg};
+      display: flex;
+      font-size: ${theme.typography.h4.fontSize};
     `,
   };
-});
+};

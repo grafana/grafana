@@ -1,8 +1,9 @@
 import React from 'react';
 import { css } from 'emotion';
+import { PluginTypeCode } from 'types';
 
 interface PluginTypeIconProps {
-  typeCode: 'panel' | 'datasource' | 'app';
+  typeCode: PluginTypeCode;
   size: number;
 }
 

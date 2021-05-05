@@ -4,6 +4,8 @@ export interface MarketplaceAppSettings {
   includeEnterprise?: boolean;
 }
 
+export type PluginTypeCode = 'app' | 'panel' | 'datasource';
+
 export interface Plugin {
   name: string;
   description: string;
