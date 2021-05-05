@@ -38,7 +38,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <a
                 className="external-link"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 href="https://console.cloud.google.com/apis/library/monitoring.googleapis.com"
               >
                 Monitoring API
@@ -59,7 +59,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <a
                 className="external-link"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/"
               >
                 in the documentation.
