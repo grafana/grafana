@@ -10,7 +10,7 @@ interface XYCanvasProps {}
  */
 export const XYCanvas: React.FC<XYCanvasProps> = ({ children }) => {
   const plotCtx = usePlotContext();
-  const plotInstance = plotCtx.getPlot();
+  const plotInstance = plotCtx.plot;
 
   if (!plotInstance) {
     return null;

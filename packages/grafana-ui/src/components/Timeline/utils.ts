@@ -7,19 +7,18 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   outerJoinDataFrames,
-  TimeRange,
-  TimeZone,
   classicColors,
   Field,
-  GrafanaTheme2,
 } from '@grafana/data';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } from '../uPlot/config';
 import { measureText } from '../../utils/measureText';
+import { PrepConfigOpts } from '../GraphNG/utils';
 
 import { TimelineFieldConfig } from '../..';
+import { BarValueVisibility, TimelineMode } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -43,21 +42,27 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-export type uPlotConfigBuilderSupplier = (
-  frame: DataFrame,
-  theme: GrafanaTheme2,
-  getTimeRange: () => TimeRange,
-  getTimeZone: () => TimeZone
-) => UPlotConfigBuilder;
+interface PrepConfigOptsTimeline extends PrepConfigOpts {
+  mode: TimelineMode;
+  rowHeight: number;
+  colWidth?: number;
+  showValue: BarValueVisibility;
+}
 
-export function preparePlotConfigBuilder(
-  frame: DataFrame,
-  theme: GrafanaTheme2,
-  getTimeRange: () => TimeRange,
-  getTimeZone: () => TimeZone,
-  coreOptions: Partial<TimelineCoreOptions>
-): UPlotConfigBuilder {
-  const builder = new UPlotConfigBuilder(getTimeZone);
+type PrepConfig = (opts: PrepConfigOptsTimeline) => UPlotConfigBuilder;
+
+export const preparePlotConfigBuilder: PrepConfig = ({
+  frame,
+  theme,
+  timeZone,
+  getTimeRange,
+
+  mode,
+  rowHeight,
+  colWidth,
+  showValue,
+}) => {
+  const builder = new UPlotConfigBuilder(timeZone);
 
   const isDiscrete = (field: Field) => {
     const mode = field.config?.color?.mode;
@@ -86,12 +91,12 @@ export function preparePlotConfigBuilder(
 
   const opts: TimelineCoreOptions = {
     // should expose in panel config
-    mode: coreOptions.mode!,
+    mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
-    rowHeight: coreOptions.rowHeight!,
-    colWidth: coreOptions.colWidth,
-    showValue: coreOptions.showValue!,
+    rowHeight: rowHeight!,
+    colWidth: colWidth,
+    showValue: showValue!,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     fill: colorLookup,
     stroke: colorLookup,
@@ -136,7 +141,7 @@ export function preparePlotConfigBuilder(
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
-    timeZone: getTimeZone(),
+    timeZone,
     theme,
   });
 
@@ -192,7 +197,7 @@ export function preparePlotConfigBuilder(
   }
 
   return builder;
-}
+};
 
 export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
   const names = new Map<string, number>();

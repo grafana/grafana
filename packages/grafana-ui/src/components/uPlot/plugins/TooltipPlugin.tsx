@@ -74,7 +74,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     });
   }, [config]);
 
-  const plotInstance = plotCtx.getPlot();
+  const plotInstance = plotCtx.plot;
   if (!plotInstance || focusedPointIdx === null) {
     return null;
   }

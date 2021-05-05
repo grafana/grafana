@@ -68,7 +68,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     (frame: DataFrame, index: number) => {
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(index);
-      const plotInstance = plotCtx.getPlot();
+      const plotInstance = plotCtx.plot;
       if (!annotation.time || !plotInstance) {
         return undefined;
       }

@@ -1,16 +1,14 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import { DataFrame, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, TimeRange, TimeZone } from '@grafana/data';
 import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { pluginLog, preparePlotData } from '../uPlot/utils';
-import { PlotLegend } from '../uPlot/PlotLegend';
+import { preparePlotFrame } from './utils';
+import { preparePlotData } from '../uPlot/utils';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
+import { VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { withTheme2 } from '../../themes/ThemeContext';
 
 /**
  * @internal -- not a public API
@@ -20,141 +18,124 @@ export const FIXED_UNIT = '__fixed';
 export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
-  data: DataFrame[];
-  structureRev?: number; // a number that will change when the data[] structure changes
+  frames: DataFrame[];
+  structureRev?: number; // a number that will change when the frames[] structure changes
   timeRange: TimeRange;
-  legend: VizLegendOptions;
   timeZone: TimeZone;
+  legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
-  children?: (builder: UPlotConfigBuilder, alignedDataFrame: DataFrame) => React.ReactNode;
+  children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
+
+  prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  propsToDiff?: string[];
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
+}
+
+function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
+  for (const propName of propsToDiff) {
+    if (nextProps[propName] !== prevProps[propName]) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
  * @internal -- not a public API
  */
 export interface GraphNGState {
-  alignedDataFrame: DataFrame;
-  data: AlignedData;
+  alignedFrame: DataFrame;
+  alignedData: AlignedData;
   config?: UPlotConfigBuilder;
 }
 
-class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
+/**
+ * "Time as X" core component, expectes ascending x
+ */
+export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   constructor(props: GraphNGProps) {
     super(props);
+    this.state = this.prepState(props);
+  }
 
-    pluginLog('GraphNG', false, 'constructor, data aligment');
-    const alignedData = preparePlotFrame(props.data, {
-      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-      y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-    });
+  getTimeRange = () => this.props.timeRange;
 
-    if (!alignedData) {
-      return;
+  prepState(props: GraphNGProps, withConfig = true) {
+    let state: GraphNGState = null as any;
+
+    const { frames, fields } = props;
+
+    const alignedFrame = preparePlotFrame(
+      frames,
+      fields || {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+      }
+    );
+
+    if (alignedFrame) {
+      state = {
+        alignedFrame,
+        alignedData: preparePlotData(alignedFrame, [FieldType.number]),
+      };
+
+      if (withConfig) {
+        state.config = props.prepConfig(alignedFrame, this.getTimeRange);
+      }
     }
 
-    this.state = {
-      alignedDataFrame: alignedData,
-      data: preparePlotData(alignedData),
-      config: preparePlotConfigBuilder(alignedData, props.theme, this.getTimeRange, this.getTimeZone),
-    };
+    return state;
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { theme, structureRev, data } = this.props;
-    let shouldConfigUpdate = false;
-    let stateUpdate = {} as GraphNGState;
+    const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
-    if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
-      shouldConfigUpdate = true;
-    }
+    const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (data !== prevProps.data) {
-      pluginLog('GraphNG', false, 'data changed');
-      const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
+    if (frames !== prevProps.frames || propsChanged) {
+      let newState = this.prepState(this.props, false);
 
-      if (hasStructureChanged) {
-        pluginLog('GraphNG', false, 'schema changed');
+      if (newState) {
+        const shouldReconfig =
+          this.state.config === undefined ||
+          timeZone !== prevProps.timeZone ||
+          structureRev !== prevProps.structureRev ||
+          !structureRev ||
+          propsChanged;
+
+        if (shouldReconfig) {
+          newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);
+        }
       }
 
-      pluginLog('GraphNG', false, 'componentDidUpdate, data aligment');
-      const alignedData = preparePlotFrame(data, {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      });
-
-      if (!alignedData) {
-        return;
-      }
-
-      stateUpdate = {
-        alignedDataFrame: alignedData,
-        data: preparePlotData(alignedData),
-      };
-
-      if (shouldConfigUpdate || hasStructureChanged) {
-        pluginLog('GraphNG', false, 'updating config');
-        const builder = preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone);
-        stateUpdate = { ...stateUpdate, config: builder };
-      }
+      newState && this.setState(newState);
     }
-
-    if (Object.keys(stateUpdate).length > 0) {
-      this.setState(stateUpdate);
-    }
-  }
-
-  getTimeRange = () => {
-    return this.props.timeRange;
-  };
-
-  getTimeZone = () => {
-    return this.props.timeZone;
-  };
-
-  renderLegend() {
-    const { legend, onLegendClick, data } = this.props;
-    const { config } = this.state;
-
-    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
-      return;
-    }
-
-    return (
-      <PlotLegend
-        data={data}
-        config={config}
-        onLegendClick={onLegendClick}
-        maxHeight="35%"
-        maxWidth="60%"
-        {...legend}
-      />
-    );
   }
 
   render() {
-    const { width, height, children, timeRange } = this.props;
-    const { config, alignedDataFrame } = this.state;
+    const { width, height, children, timeRange, renderLegend } = this.props;
+    const { config, alignedFrame } = this.state;
+
     if (!config) {
       return null;
     }
+
     return (
-      <VizLayout width={width} height={height} legend={this.renderLegend()}>
+      <VizLayout width={width} height={height} legend={renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={this.state.config!}
-            data={this.state.data}
+            data={this.state.alignedData}
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}
           >
-            {children ? children(config, alignedDataFrame) : null}
+            {children ? children(config, alignedFrame) : null}
           </UPlotChart>
         )}
       </VizLayout>
     );
   }
 }
-
-export const GraphNG = withTheme2(UnthemedGraphNG);
-GraphNG.displayName = 'GraphNG';

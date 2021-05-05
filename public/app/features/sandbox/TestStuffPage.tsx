@@ -6,7 +6,7 @@ import {
   NavModelItem,
   PanelData,
 } from '@grafana/data';
-import { GraphNG, LegendDisplayMode, Table } from '@grafana/ui';
+import { LegendDisplayMode, Table, TimeSeries } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
@@ -65,10 +65,10 @@ export const TestStuffPage: FC = () => {
             {({ width }) => {
               return (
                 <div>
-                  <GraphNG
+                  <TimeSeries
                     width={width}
                     height={300}
-                    data={data.series}
+                    frames={data.series}
                     legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
                     timeRange={data.timeRange}
                     timeZone="browser"

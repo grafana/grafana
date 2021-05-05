@@ -1,146 +1,44 @@
 import React from 'react';
-import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { withTheme2 } from '../../themes/ThemeContext';
-import { GraphNGState } from '../GraphNG/GraphNG';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils'; // << preparePlotConfigBuilder is really the only change vs GraphNG
-import { pluginLog, preparePlotData } from '../uPlot/utils';
-import { PlotLegend } from '../uPlot/PlotLegend';
-import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
-import { VizLayout } from '../VizLayout/VizLayout';
-import { TimelineProps } from './types';
+import { DataFrame, TimeRange } from '@grafana/data';
+import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { preparePlotConfigBuilder } from './utils';
+import { BarValueVisibility, TimelineMode } from './types';
 
-class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState> {
-  constructor(props: TimelineProps) {
-    super(props);
-    const { theme, mode, rowHeight, colWidth, showValue } = props;
+/**
+ * @alpha
+ */
+export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
+  mode: TimelineMode;
+  rowHeight: number;
+  showValue: BarValueVisibility;
+  colWidth?: number;
+}
 
-    pluginLog('TimelineChart', false, 'constructor, data aligment');
-    const alignedData = preparePlotFrame(
-      props.data,
-      props.fields || {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      }
-    );
+const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue'];
 
-    if (!alignedData) {
-      return;
-    }
-
-    this.state = {
-      alignedDataFrame: alignedData,
-      data: preparePlotData(alignedData),
-      config: preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone, {
-        mode,
-        rowHeight,
-        colWidth,
-        showValue,
-      }),
-    };
-  }
-
-  componentDidUpdate(prevProps: TimelineProps) {
-    const { data, theme, timeZone, mode, rowHeight, colWidth, showValue, structureRev } = this.props;
-    let shouldConfigUpdate = false;
-    let stateUpdate = {} as GraphNGState;
-
-    if (
-      this.state.config === undefined ||
-      timeZone !== prevProps.timeZone ||
-      mode !== prevProps.mode ||
-      rowHeight !== prevProps.rowHeight ||
-      colWidth !== prevProps.colWidth ||
-      showValue !== prevProps.showValue
-    ) {
-      shouldConfigUpdate = true;
-    }
-
-    if (data !== prevProps.data || shouldConfigUpdate) {
-      const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
-
-      const alignedData = preparePlotFrame(
-        data,
-        this.props.fields || {
-          x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-          y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-        }
-      );
-      if (!alignedData) {
-        return;
-      }
-
-      stateUpdate = {
-        alignedDataFrame: alignedData,
-        data: preparePlotData(alignedData),
-      };
-      if (shouldConfigUpdate || hasStructureChanged) {
-        pluginLog('TimelineChart', false, 'updating config');
-        const builder = preparePlotConfigBuilder(alignedData, theme, this.getTimeRange, this.getTimeZone, {
-          mode,
-          rowHeight,
-          colWidth,
-          showValue,
-        });
-        stateUpdate = { ...stateUpdate, config: builder };
-      }
-    }
-
-    if (Object.keys(stateUpdate).length > 0) {
-      this.setState(stateUpdate);
-    }
-  }
-
-  getTimeRange = () => {
-    return this.props.timeRange;
+export class UnthemedTimelineChart extends React.Component<TimelineProps> {
+  prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
+    return preparePlotConfigBuilder({
+      frame: alignedFrame,
+      getTimeRange,
+      ...this.props,
+    });
   };
 
-  getTimeZone = () => {
-    return this.props.timeZone;
+  renderLegend = (config: UPlotConfigBuilder) => {
+    return;
   };
-
-  renderLegend() {
-    const { legend, onLegendClick, data } = this.props;
-    const { config } = this.state;
-
-    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
-      return;
-    }
-
-    return (
-      <PlotLegend
-        data={data}
-        config={config}
-        onLegendClick={onLegendClick}
-        maxHeight="35%"
-        maxWidth="60%"
-        {...legend}
-      />
-    );
-  }
 
   render() {
-    const { width, height, children, timeRange } = this.props;
-    const { config, alignedDataFrame } = this.state;
-
-    if (!config) {
-      return null;
-    }
-
     return (
-      <VizLayout width={width} height={height}>
-        {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart
-            config={this.state.config!}
-            data={this.state.data}
-            width={vizWidth}
-            height={vizHeight}
-            timeRange={timeRange}
-          >
-            {children ? children(config, alignedDataFrame) : null}
-          </UPlotChart>
-        )}
-      </VizLayout>
+      <GraphNG
+        {...this.props}
+        prepConfig={this.prepConfig}
+        propsToDiff={propsToDiff}
+        renderLegend={this.renderLegend as any}
+      />
     );
   }
 }
