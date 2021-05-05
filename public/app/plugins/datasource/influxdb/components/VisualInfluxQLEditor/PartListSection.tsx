@@ -104,7 +104,6 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
               />
             ) : (
               <SegmentInput
-                allowCustomValue
                 value={value}
                 className={noHorizMarginPaddingClass}
                 onChange={(v) => {
