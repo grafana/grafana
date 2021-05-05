@@ -235,11 +235,13 @@ describe('InfluxDB query utils', () => {
 
   describe('normalizeQuery', () => {
     it('should handle minimal query', () => {
-      expect(
-        normalizeQuery({
-          refId: 'A',
-        })
-      ).toStrictEqual({
+      const query: InfluxQuery = {
+        refId: 'A',
+      };
+
+      const queryClone = cloneDeep(query);
+
+      expect(normalizeQuery(query)).toStrictEqual({
         refId: 'A',
         policy: 'default',
         resultFormat: 'time_series',
@@ -256,6 +258,9 @@ describe('InfluxDB query utils', () => {
           ],
         ],
       });
+
+      // make sure the call did not mutate the input
+      expect(query).toStrictEqual(queryClone);
     });
 
     it('should not change values if they already exist', () => {
@@ -277,11 +282,17 @@ describe('InfluxDB query utils', () => {
         tags: [],
       };
 
-      // i want to make sure the code does not mutate the query
-      // by any chance, so we will use a deep-clone of the query
-      const cloneQuery = cloneDeep(query);
+      const queryClone = cloneDeep(query);
 
-      expect(normalizeQuery(cloneQuery)).toStrictEqual(query);
+      const result = normalizeQuery(query);
+
+      // i will check two things:
+      // 1. that the function-call does not mutate the input
+      expect(query).toStrictEqual(queryClone);
+
+      // 2. that the returned object is the same object as the object i gave it.
+      //    (not just the same structure, literally the same object)
+      expect(result === query).toBeTruthy();
     });
   });
 });
