@@ -146,7 +146,7 @@ use expand function (`expand(*.servers.*)`).
 
 #### Comparison between expanded and non-expanded metric search results
 
-Example metrics:
+Here are some example metrics:
 - `prod.servers.001.cpu`
 - `prod.servers.002.cpu`
 - `test.servers.001.cpu`
