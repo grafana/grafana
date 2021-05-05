@@ -5,7 +5,7 @@ import { ErrorBoundaryAlert } from '@grafana/ui';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
 import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 interface WrapperProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {
   resetExploreAction: typeof resetExploreAction;

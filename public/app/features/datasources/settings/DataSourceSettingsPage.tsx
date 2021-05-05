@@ -20,14 +20,13 @@ import { getNavModel } from 'app/core/selectors/navModel';
 
 // Types
 import { StoreState } from 'app/types/';
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings, GrafanaRouteComponentProps } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { CloudInfoBox } from './CloudInfoBox';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { connect, ConnectedProps } from 'react-redux';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { ShowConfirmModalEvent } from '../../../types/events';

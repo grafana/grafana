@@ -30,6 +30,7 @@ export * from './legacyEvents';
 export * from './live';
 export * from './variables';
 export * from './geometry';
+export * from './navigation';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';
 export * from './alerts';

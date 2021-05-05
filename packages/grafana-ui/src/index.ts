@@ -8,6 +8,7 @@ export * from './types';
 export * from './utils';
 export * from './themes';
 export * from './slate-plugins';
+export { Route } from 'react-router-dom';
 
 // Exposes standard editors for registries of optionsUi config and panel options UI
 export { getStandardFieldConfigs, getStandardOptionEditors } from './utils/standardEditors';

@@ -10,7 +10,7 @@ import { deleteFolder, getFolderByUid, saveFolder } from './state/actions';
 import { getLoadingNav } from './state/navModel';
 import { setFolderTitle } from './state/reducers';
 import { ShowConfirmModalEvent } from '../../types/events';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 

@@ -1,14 +1,14 @@
 import React from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
-import { GrafanaRouteComponentProps } from './types';
 import { locationSearchToObject, navigationLogger } from '@grafana/runtime';
 import { keybindingSrv } from '../services/keybindingSrv';
 import { analyticsService } from '../services/analytics';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
-export class GrafanaRoute extends React.Component<Props> {
+export class GrafanaRoute<T extends Props> extends React.Component<T> {
   componentDidMount() {
     this.updateBodyClassNames();
     this.cleanupDOM();

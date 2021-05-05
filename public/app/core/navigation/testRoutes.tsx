@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { RouterDebugger } from './RouterDebugger';
-import { RouteDescriptor } from './types';
+import { RouteDescriptor } from '@grafana/data';
 
 export const testRoutes: RouteDescriptor[] = [
   {

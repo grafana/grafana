@@ -154,6 +154,5 @@ const navigationLog = createLogger('Router');
 
 /** @internal */
 export const navigationLogger = navigationLog.logger;
-
 // For debugging purposes the location service is attached to global _debug variable
 attachDebugger('location', locationService, navigationLog);

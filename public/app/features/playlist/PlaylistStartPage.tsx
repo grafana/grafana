@@ -1,6 +1,6 @@
 import { FC } from 'react';
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { playlistSrv } from './PlaylistSrv';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
 

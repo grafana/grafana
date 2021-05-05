@@ -7,13 +7,13 @@ import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider } from '@gr
 import { GrafanaApp } from './app';
 import { getAppRoutes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
-import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { SideMenu } from './core/components/sidemenu/SideMenu';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionCorner } from './features/live/LiveConnectionCorner';
+import { RouteDescriptor } from '@grafana/data';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -59,7 +59,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
     return (
       <Route
-        exact
+        exact={!route.soft}
         path={route.path}
         key={route.path}
         render={(props) => {

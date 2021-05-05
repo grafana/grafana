@@ -1,15 +1,26 @@
 // Libraries
 import React, { Component } from 'react';
-import { AppEvents, AppPlugin, AppPluginMeta, NavModel, PluginType } from '@grafana/data';
+import {
+  AppEvents,
+  AppPageProps,
+  AppPlugin,
+  AppPluginMeta,
+  GrafanaRouteComponentProps,
+  NavModel,
+  PluginType,
+  RouteDescriptor,
+} from '@grafana/data';
 import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react-reverse-portal';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/nav_model_srv';
-import { appEvents } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { navigationLogger } from '@grafana/runtime';
+import { GrafanaRoute } from '../../core/navigation/GrafanaRoute';
+import { Route, Switch, Redirect } from 'react-router-dom';
 
 interface RouteParams {
   pluginId: string;
@@ -90,26 +101,56 @@ class AppRootPage extends Component<Props, State> {
     this.setState({ nav });
   };
 
+  renderRoute = (route: RouteDescriptor) => {
+    const { plugin } = this.state;
+    const roles = route.roles ? route.roles() : [];
+
+    if (!plugin) {
+      return;
+    }
+
+    return (
+      <Route
+        exact={!route.soft}
+        path={`/a/${plugin.meta.id}${route.path}`}
+        key={route.path}
+        render={(props) => {
+          navigationLogger('AppRootPage', false, 'Rendering route', route, 'with match', props.location);
+          if (roles?.length) {
+            if (!roles.some((r: string) => contextSrv.hasRole(r))) {
+              return <Redirect to="/" />;
+            }
+          }
+
+          return <GrafanaRoute<Omit<AppPageProps, 'queryParams'>> {...props} route={route} meta={plugin.meta} />;
+        }}
+      />
+    );
+  };
+
   render() {
-    const { location, queryParams } = this.props;
     const { loading, plugin, nav, portalNode } = this.state;
 
-    if (plugin && !plugin.root) {
+    if (!plugin) {
+      return null;
+    }
+
+    if (plugin && !plugin.routes.find((r) => r.path === '/')) {
       // TODO? redirect to plugin page?
       return <div>No Root App</div>;
+    }
+
+    if (plugin.root) {
+      // TODO: add deprecation warning
     }
 
     return (
       <>
         <InPortal node={portalNode}>
-          {plugin && plugin.root && (
-            <plugin.root
-              meta={plugin.meta}
-              query={queryParams}
-              path={location.pathname}
-              onNavChanged={this.onNavChanged}
-            />
-          )}
+          <Switch>
+            {plugin.root && <Route path={`/a/${plugin.meta.id}/`} exact component={plugin.root} />}
+            {plugin!.routes.map((r) => this.renderRoute(r))}
+          </Switch>
         </InPortal>
         {nav ? (
           <Page navModel={nav}>

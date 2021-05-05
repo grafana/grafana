@@ -15,7 +15,7 @@ import { getDataSource } from './state/selectors';
 
 // Types
 import { PluginDashboard, StoreState } from 'app/types';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
 

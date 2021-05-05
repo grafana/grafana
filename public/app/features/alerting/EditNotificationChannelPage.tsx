@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { GrafanaRouteComponentProps, NavModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Form, Spinner } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
@@ -11,7 +11,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { mapChannelsToSelectableValue, transformSubmitData, transformTestData } from './utils/notificationChannels';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
 import { resetSecureField } from './state/reducers';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
 

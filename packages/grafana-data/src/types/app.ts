@@ -1,7 +1,8 @@
-import { ComponentClass } from 'react';
+import React, { ComponentClass } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
+import { GrafanaRouteComponentProps, RouteDescriptor } from './navigation';
 
 export enum CoreApp {
   Dashboard = 'dashboard',
@@ -11,7 +12,6 @@ export enum CoreApp {
 
 export interface AppRootProps<T = KeyValue> {
   meta: AppPluginMeta<T>;
-
   path: string; // The URL path to this page
   query: KeyValue; // The URL query parameters
 
@@ -21,15 +21,27 @@ export interface AppRootProps<T = KeyValue> {
   onNavChanged: (nav: NavModel) => void;
 }
 
+export interface AppPageProps<T = any, Q = any, M = any> extends GrafanaRouteComponentProps<T, Q> {
+  meta: AppPluginMeta<M>;
+}
+export type AppRouteComponent<T = any> = React.ComponentType<AppPageProps<T>>;
+
+interface AppRouteDescriptor extends Omit<RouteDescriptor, 'component'> {
+  component: AppRouteComponent<any>;
+  isRoot?: boolean;
+}
 export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
   // TODO anything specific to apps?
 }
 
 export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
-  // Content under: /a/${plugin-id}/*
+  /**
+   * Content under: /a/${plugin-id}/*
+   * @deprecated
+   */
   root?: ComponentClass<AppRootProps<T>>;
   rootNav?: NavModel; // Initial navigation model
-
+  routes: AppRouteDescriptor[] = [];
   // Old style pages
   angularPages?: { [component: string]: any };
 
@@ -47,10 +59,16 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
    * If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
    *
    * NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
+   * @deprecated
    */
   setRootPage(root: ComponentClass<AppRootProps<T>>, rootNav?: NavModel) {
     this.root = root;
     this.rootNav = rootNav;
+    return this;
+  }
+
+  addPage(page: AppRouteDescriptor) {
+    this.routes.push(page);
     return this;
   }
 

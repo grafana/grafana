@@ -3,8 +3,7 @@ import { Form, Field, Input, Button, HorizontalGroup, LinkButton } from '@grafan
 import { getConfig } from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-import { AppEvents } from '@grafana/data';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { AppEvents, GrafanaRouteComponentProps } from '@grafana/data';
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 
 interface SignupDTO {

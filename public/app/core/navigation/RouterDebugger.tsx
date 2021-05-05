@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { getAppRoutes } from '../../routes/routes';
 import { PageContents } from '../components/Page/PageContents';
-import { RouteDescriptor } from './types';
+import { RouteDescriptor } from '@grafana/data';
 
 export const RouterDebugger: React.FC<any> = () => {
   const manualRoutes: RouteDescriptor[] = [];

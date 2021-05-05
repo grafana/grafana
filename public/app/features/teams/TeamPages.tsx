@@ -12,8 +12,7 @@ import { getTeam, getTeamMembers, isSignedInUserTeamAdmin } from './state/select
 import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { NavModel } from '@grafana/data';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps, NavModel } from '@grafana/data';
 
 interface TeamPageRouteParams {
   id: string;

@@ -1,10 +1,9 @@
 import React, { FC } from 'react';
 import { MapStateToProps, connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { GrafanaRouteComponentProps, NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { SnapshotListTable } from './components/SnapshotListTable';
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 
 interface ConnectedProps {

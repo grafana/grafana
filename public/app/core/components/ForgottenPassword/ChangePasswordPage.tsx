@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { LoginLayout, InnerBox } from '../Login/LoginLayout';
 import { ChangePassword } from './ChangePassword';
 import LoginCtrl from '../Login/LoginCtrl';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 interface Props extends GrafanaRouteComponentProps<{}, { code: string }> {}
 

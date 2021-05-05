@@ -9,7 +9,7 @@ import { initDashboard } from '../state/initDashboard';
 // Types
 import { StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 export interface DashboardPageRouteParams {
   uid?: string;

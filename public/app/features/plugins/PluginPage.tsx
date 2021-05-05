@@ -5,6 +5,7 @@ import { capitalize, find } from 'lodash';
 import {
   AppPlugin,
   GrafanaPlugin,
+  GrafanaRouteComponentProps,
   GrafanaTheme2,
   NavModel,
   NavModelItem,
@@ -34,7 +35,6 @@ import { contextSrv } from '../../core/services/context_srv';
 import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { ShowModalReactEvent } from 'app/types/events';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { UpdatePluginModal } from './UpdatePluginModal';
 
 interface Props extends GrafanaRouteComponentProps<{ pluginId: string }, UrlQueryMap> {}

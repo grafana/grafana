@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getConfig } from 'app/core/config';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 interface FormModel {
   email: string;

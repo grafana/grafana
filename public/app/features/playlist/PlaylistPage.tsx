@@ -1,9 +1,8 @@
 import React, { FC, useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
-import { NavModel, SelectableValue, urlUtil } from '@grafana/data';
+import { GrafanaRouteComponentProps, NavModel, SelectableValue, urlUtil } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useAsync } from 'react-use';
 import { getBackendSrv, locationService } from '@grafana/runtime';

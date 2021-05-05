@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { GrafanaRouteComponentProps, NavModel } from '@grafana/data';
 import { Alert, Button, LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -26,7 +26,6 @@ import {
   clearUserError,
   clearUserMappingInfo,
 } from '../state/actions';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/core';
 
 interface Props extends GrafanaRouteComponentProps<{}, { username: string }> {

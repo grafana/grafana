@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaRouteComponentProps, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PageToolbar, stylesFactory, ToolbarButton, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -21,7 +21,6 @@ import {
   updateAlertDefinitionUiState,
 } from './state/actions';
 import { StoreState } from 'app/types';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaQuery } from '../../types/unified-alerting-dto';
 
 function mapStateToProps(state: StoreState, props: RouteProps) {

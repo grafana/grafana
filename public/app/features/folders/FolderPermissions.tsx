@@ -17,7 +17,7 @@ import { getLoadingNav } from './state/navModel';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 

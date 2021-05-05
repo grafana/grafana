@@ -1,7 +1,6 @@
 import { Alert, Button, LoadingPlaceholder } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
@@ -9,6 +8,7 @@ import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchExistingRuleAction } from './state/actions';
 import { parseRuleIdentifier } from './utils/rules';
+import { GrafanaRouteComponentProps } from '@grafana/data';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;

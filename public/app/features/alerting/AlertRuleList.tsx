@@ -9,12 +9,11 @@ import { AlertDefinition, AlertRule, StoreState } from 'app/types';
 import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaRouteComponentProps, SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { setSearchQuery } from './state/reducers';
 import { Button, LinkButton, Select, VerticalGroup } from '@grafana/ui';
 import { AlertDefinitionItem } from './components/AlertDefinitionItem';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ShowModalReactEvent } from '../../types/events';
 import { AlertHowToModal } from './AlertHowToModal';
 

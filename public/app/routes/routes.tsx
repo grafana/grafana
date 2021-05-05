@@ -5,10 +5,10 @@ import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
 import { DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from '../core/navigation/types';
 import { SignupPage } from 'app/core/components/Signup/SignupPage';
 import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
+import { RouteDescriptor } from '@grafana/data';
 
 export const extraRoutes: RouteDescriptor[] = [];
 export const featureToggledRoutes: RouteDescriptor[] = [];
@@ -158,6 +158,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/a/:pluginId/',
+      soft: true,
       // Someday * and will get a ReactRouter under that path!
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/AppRootPage')
