@@ -34,7 +34,7 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	// change to true to run the PostgreSQL tests
+	// change to true to run the MSSQL tests
 	const runMssqlTests = false
 
 	if !(sqlstore.IsTestDBMSSQL() || runMssqlTests) {
