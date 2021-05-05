@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { InfluxQuery } from '../types';
-import { buildRawQuery, normalizeQuery } from './queryUtils';
+import { buildRawQuery, normalizeQuery, changeSelectPart, changeGroupByPart } from './queryUtils';
 
 describe('InfluxDB query utils', () => {
   describe('buildRawQuery', () => {
@@ -293,6 +293,130 @@ describe('InfluxDB query utils', () => {
       // 2. that the returned object is the same object as the object i gave it.
       //    (not just the same structure, literally the same object)
       expect(result === query).toBeTruthy();
+    });
+  });
+
+  describe('changeSelectPart', () => {
+    it('should handle a normal situation', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        select: [
+          [
+            {
+              type: 'field',
+              params: ['usage_idle'],
+            },
+            {
+              type: 'math',
+              params: [' / 5'],
+            },
+            {
+              type: 'alias',
+              params: ['test42'],
+            },
+          ],
+          [
+            {
+              type: 'field',
+              params: ['usage_guest'],
+            },
+            {
+              type: 'math',
+              params: ['*4'],
+            },
+            {
+              type: 'alias',
+              params: ['test43'],
+            },
+          ],
+        ],
+      };
+
+      const queryClone = cloneDeep(query);
+      const result = changeSelectPart(query, 1, 2, ['test55']);
+
+      // make sure the input did not get mutated
+      expect(query).toStrictEqual(queryClone);
+
+      expect(result).toStrictEqual({
+        refId: 'A',
+        select: [
+          [
+            {
+              type: 'field',
+              params: ['usage_idle'],
+            },
+            {
+              type: 'math',
+              params: [' / 5'],
+            },
+            {
+              type: 'alias',
+              params: ['test42'],
+            },
+          ],
+          [
+            {
+              type: 'field',
+              params: ['usage_guest'],
+            },
+            {
+              type: 'math',
+              params: ['*4'],
+            },
+            {
+              type: 'alias',
+              params: ['test55'],
+            },
+          ],
+        ],
+      });
+    });
+  });
+
+  describe('changeGroupByPart', () => {
+    it('should handle a normal situation', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        groupBy: [
+          {
+            type: 'time',
+            params: ['$__interval'],
+          },
+          {
+            type: 'tag',
+            params: ['host'],
+          },
+          {
+            type: 'fill',
+            params: ['none'],
+          },
+        ],
+      };
+
+      const queryClone = cloneDeep(query);
+      const result = changeGroupByPart(query, 1, ['cpu']);
+
+      // make sure the input did not get mutated
+      expect(query).toStrictEqual(queryClone);
+
+      expect(result).toStrictEqual({
+        refId: 'A',
+        groupBy: [
+          {
+            type: 'time',
+            params: ['$__interval'],
+          },
+          {
+            type: 'tag',
+            params: ['cpu'],
+          },
+          {
+            type: 'fill',
+            params: ['none'],
+          },
+        ],
+      });
     });
   });
 });
