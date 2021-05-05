@@ -2,12 +2,12 @@ import React, { Component, createRef } from 'react';
 import { PopoverController } from '../Tooltip/PopoverController';
 import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme2 } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { css } from '@emotion/css';
-import { withTheme, stylesFactory } from '../../themes';
-import { ColorPickerTrigger } from './ColorPickerTrigger';
+import { withTheme2, stylesFactory } from '../../themes';
+import { ColorSwatch } from './ColorSwatch';
 
 /**
  * If you need custom trigger for the color picker you can do that with a render prop pattern and supply a function
@@ -71,11 +71,11 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     hideColorPicker: hidePopper,
                   })
                 ) : (
-                  <ColorPickerTrigger
+                  <ColorSwatch
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    color={getColorForTheme(this.props.color || '#000000', theme)}
+                    color={getColorForTheme(this.props.color || '#000000', theme.v1)}
                   />
                 )}
               </>
@@ -87,15 +87,15 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
-export const ColorPicker = withTheme(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
-export const SeriesColorPicker = withTheme(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
+export const ColorPicker = withTheme2(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
+export const SeriesColorPicker = withTheme2(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     colorPicker: css`
       position: absolute;
       z-index: ${theme.zIndex.tooltip};
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       max-width: 400px;
       font-size: ${theme.typography.size.sm};
       // !important because these styles are also provided to popper via .popper classes from Tooltip component

@@ -146,4 +146,5 @@ type searchLibraryPanelsQuery struct {
 	sortDirection string
 	panelFilter   string
 	excludeUID    string
+	folderFilter  string
 }

@@ -6,6 +6,7 @@ import {
   config,
   LiveDataStreamOptions,
   toDataQueryError,
+  getBackendSrv,
 } from '@grafana/runtime';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import {
@@ -24,6 +25,7 @@ import {
   dataFrameToJSON,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
+  toLiveChannelId,
 } from '@grafana/data';
 import { CentrifugeLiveChannel, getErrorChannel } from './channel';
 import {
@@ -52,7 +54,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
   constructor() {
     // build live url replacing scheme in appUrl.
-    const liveUrl = `${config.appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+    const liveUrl = `${config.appUrl.replace('http', 'ws')}live/ws`;
     this.centrifuge = new Centrifuge(liveUrl, {
       debug: true,
     });
@@ -312,6 +314,18 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
    */
   getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
     return this.getChannel(address).getPresence();
+  }
+
+  /**
+   * Publish into a channel
+   *
+   * @alpha -- experimental
+   */
+  publish(address: LiveChannelAddress, data: any): Promise<any> {
+    return getBackendSrv().post(`api/live/publish`, {
+      channel: toLiveChannelId(address),
+      data,
+    });
   }
 }
 

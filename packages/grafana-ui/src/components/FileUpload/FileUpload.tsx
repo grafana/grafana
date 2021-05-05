@@ -1,5 +1,5 @@
 import React, { FC, FormEvent, useCallback, useState } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { Icon } from '../index';
 import { stylesFactory, useTheme2 } from '../../themes';
@@ -75,7 +75,7 @@ export const FileUpload: FC<Props> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2, size: ComponentSize) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, size: ComponentSize) => {
   const buttonStyles = getButtonStyles({ theme, variant: 'primary', size, iconOnly: false });
   return {
     fileUpload: css`
