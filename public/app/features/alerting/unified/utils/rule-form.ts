@@ -1,16 +1,22 @@
+import { getDefaultTimeRange, rangeUtil } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
   GrafanaAlertState,
+  GrafanaQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
 } from 'app/types/unified-alerting-dto';
-import { SAMPLE_QUERIES } from '../mocks/grafana-queries';
+import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
+import { parseInterval } from './time';
 
 export const defaultFormValues: RuleFormValues = Object.freeze({
   name: '',
@@ -20,7 +26,7 @@ export const defaultFormValues: RuleFormValues = Object.freeze({
 
   // threshold
   folder: null,
-  queries: SAMPLE_QUERIES, // @TODO remove the sample eventually
+  queries: [],
   condition: '',
   noDataState: GrafanaAlertState.NoData,
   execErrState: GrafanaAlertState.Alerting,
@@ -44,14 +50,6 @@ export function formValuesToRulerAlertingRuleDTO(values: RuleFormValues): RulerA
     labels: arrayToRecord(values.labels || []),
     expr: expression,
   };
-}
-
-function parseInterval(value: string): [number, string] {
-  const match = value.match(/(\d+)(\w+)/);
-  if (match) {
-    return [Number(match[1]), match[2]];
-  }
-  throw new Error(`Invalid interval description: ${value}`);
 }
 
 function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Array<{ key: string; value: string }> {
@@ -122,3 +120,63 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   }
 }
+
+export const getDefaultQueries = (): GrafanaQuery[] => {
+  const dataSource = getDataSourceSrv().getInstanceSettings('default');
+
+  if (!dataSource) {
+    return [getDefaultExpression('A')];
+  }
+
+  const timeRange = getDefaultTimeRange();
+  const relativeTimeRange = rangeUtil.timeRangeToRelative(timeRange);
+
+  return [
+    {
+      refId: 'A',
+      datasourceUid: dataSource.uid,
+      queryType: '',
+      relativeTimeRange,
+      model: {
+        refId: 'A',
+        hide: false,
+      },
+    },
+    getDefaultExpression('B'),
+  ];
+};
+
+const getDefaultExpression = (refId: string): GrafanaQuery => {
+  const model: ExpressionQuery = {
+    refId,
+    hide: false,
+    type: ExpressionQueryType.classic,
+    datasource: ExpressionDatasourceID,
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [3],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: ['A'],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+  };
+
+  return {
+    refId,
+    datasourceUid: ExpressionDatasourceUID,
+    queryType: '',
+    model,
+  };
+};
