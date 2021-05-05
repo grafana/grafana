@@ -201,7 +201,6 @@ type PostableUserConfig struct {
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
-
 	type plain PostableUserConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
 		return err
