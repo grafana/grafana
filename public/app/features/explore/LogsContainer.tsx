@@ -16,7 +16,7 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
 
-interface LogsContainerProps extends PropsFromRedux {
+export interface LogsContainerProps extends PropsFromRedux {
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
   width: number;
