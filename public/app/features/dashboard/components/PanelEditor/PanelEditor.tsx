@@ -330,7 +330,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           Save
         </ToolbarButton>
       ),
-      <ToolbarButton onClick={this.onBack} variant="primary" title="Apply changes and go back to dashboard" key="apply">
+      <ToolbarButton
+        onClick={this.onBack}
+        variant="primary"
+        title="Apply changes and go back to dashboard"
+        key="apply"
+        aria-label={selectors.components.PanelEditor.applyButton}
+      >
         Apply
       </ToolbarButton>,
     ];
