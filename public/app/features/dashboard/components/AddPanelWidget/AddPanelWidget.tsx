@@ -72,7 +72,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     const { gridPos } = panel;
 
     const newPanel: Partial<PanelModel> = {
-      type: 'graph',
+      type: 'timeseries',
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };

@@ -5,6 +5,7 @@ import { VizLegendItem } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   item: VizLegendItem;
@@ -53,7 +54,7 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({
   );
 
   return (
-    <div className={styles.itemWrapper}>
+    <div className={styles.itemWrapper} aria-label={selectors.components.VizLegend.seriesName(item.label)}>
       <VizLegendSeriesIcon seriesName={item.label} color={item.color} />
       <div
         onMouseEnter={onMouseEnter}
