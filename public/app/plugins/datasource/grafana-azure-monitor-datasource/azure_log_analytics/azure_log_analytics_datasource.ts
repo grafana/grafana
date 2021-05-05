@@ -104,7 +104,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     const workspaceListUrl =
       this.azureMonitorUrl +
-      `/${subscriptionId}/providers/Micfrosoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
+      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
     return this.doRequest(workspaceListUrl, true);
   }
 

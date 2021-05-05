@@ -181,7 +181,6 @@ function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
             cslDefaultValue: defaultValue,
           };
         })
-        // TODO: better this
         .filter(<T>(v: T): v is Exclude<T, undefined> => !!v);
 
     return {

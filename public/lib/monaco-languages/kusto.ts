@@ -1,6 +1,7 @@
 declare global {
   interface Window {
     __monacoKustoResolvePromise: (value: unknown) => void;
+    __grafana_public_path__: string;
   }
 }
 
