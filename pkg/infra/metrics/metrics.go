@@ -120,6 +120,12 @@ var (
 
 	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
 	MAccessEvaluationCount prometheus.Gauge
+
+	// MProvisionRolesCount is a metric gauge for total number of roles provisioned
+	MProvisionRolesCount prometheus.Gauge
+
+	// MProvisionRolesDeleteCount is a metric gauge for total number of roles provisioned
+	MProvisionRolesDeleteCount prometheus.Gauge
 )
 
 // Timers
@@ -138,6 +144,18 @@ var (
 
 	// MAccessSummary is a metric summary for access request duration
 	MAccessPermissionsSummary prometheus.Histogram
+
+	// MAccessSummary is a metric summary for access request duration
+	MProvisionDatasourcesSummary *prometheus.HistogramVec
+
+	// MProvisionAlertsSummary is a metric summary for access request duration
+	MProvisionAlertsSummary *prometheus.HistogramVec
+
+	// MProvisionRolesSummary is a metric summary for access request duration
+	MProvisionRolesSummary *prometheus.HistogramVec
+
+	// MAccessSummary is a metric summary for access request duration
+	MProvisionPluginsSummary *prometheus.HistogramVec
 )
 
 // StatTotals
@@ -417,6 +435,38 @@ func init() {
 		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
 	})
 
+	MProvisionDatasourcesSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "provision_datasource_duration",
+		Help:    "Histogram for the runtime of datasource provisioning.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	},
+		[]string{"datasource"},
+	)
+
+	MProvisionPluginsSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "provision_plugin_duration",
+		Help:    "Histogram for the runtime of plugin provisioning.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	},
+		[]string{"plugin"},
+	)
+
+	MProvisionAlertsSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "provision_alert_duration",
+		Help:    "Histogram for the runtime of alert provisioning.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	},
+		[]string{"alert"},
+	)
+
+	MProvisionRolesSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "provision_role_duration",
+		Help:    "Histogram for the runtime of role provisioning.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
+	},
+		[]string{"role"},
+	)
+
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
 		Help:      "size of image rendering queue",
@@ -432,6 +482,18 @@ func init() {
 	MAccessEvaluationCount = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "access_evaluation_count",
 		Help:      "number of evaluation calls",
+		Namespace: ExporterName,
+	})
+
+	MProvisionRolesCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "provision_roles_count",
+		Help:      "number of roles provisioned",
+		Namespace: ExporterName,
+	})
+
+	MProvisionRolesDeleteCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "provision_roles_delete_count",
+		Help:      "number of roles deleted",
 		Namespace: ExporterName,
 	})
 
@@ -648,6 +710,12 @@ func initMetricVars() {
 		MRenderingQueue,
 		MAccessSummary,
 		MAccessPermissionsSummary,
+		MProvisionDatasourcesSummary,
+		MProvisionAlertsSummary,
+		MProvisionRolesCount,
+		MProvisionRolesDeleteCount,
+		MProvisionRolesSummary,
+		MProvisionPluginsSummary,
 		MAccessRoleCount,
 		MAccessTeamRoleCount,
 		MAccessUserRoleCount,
