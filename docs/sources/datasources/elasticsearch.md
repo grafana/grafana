@@ -61,7 +61,7 @@ Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, and `7.0+`. S
 
 Grafana assumes that you are running the lowest possible version for a specified range. This ensures that new features or breaking changes in a future Elasticsearch release will not affect your configuration.
 
-For example, suppose you are running Elasticsearch `7.6.1` and you selected `7.0+`. If a new feature is made available for Elasticsearch `7.5.0` or newer releases, the `7.5+` option will be available.  You will not be affected until you explicitly select the new `7.5+` option in your settings.
+For example, suppose you are running Elasticsearch `7.6.1` and you selected `7.0+`. If a new feature is made available for Elasticsearch `7.5.0` or newer releases, then a `7.5+` option will be available.  However, your configuration will not be affected until you explicitly select the new `7.5+` option in your settings.
 
 ### Min time interval
 
