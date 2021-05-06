@@ -140,6 +140,9 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
   }, [scale, viewBounds, isMounted]);
 
   const previousFocus = usePrevious(focus);
+
+  // We need to update the state in case need to focus on something but we want to do it only once when the focus
+  // changes to something new.
   useEffect(() => {
     if (focus && previousFocus?.x !== focus.x && previousFocus?.y !== focus.y) {
       const position = {
@@ -157,6 +160,8 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
   }, [focus, previousFocus, viewBounds, currentPosition, prevPosition]);
 
   let position = state.position;
+  // This part prevents an ugly jump from initial position to the focused one as the set state in the effects is after
+  // initial render.
   if (focus && previousFocus?.x !== focus.x && previousFocus?.y !== focus.y) {
     position = focus;
   }
