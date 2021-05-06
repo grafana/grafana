@@ -10,7 +10,7 @@ import (
 func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{}
+			cmd := patchLibraryElementCommand{Kind: int64(Panel)}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, resp.Status())

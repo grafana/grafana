@@ -22,8 +22,7 @@ SELECT DISTINCT
 	, u1.email AS created_by_email
 	, u2.login AS updated_by_name
 	, u2.email AS updated_by_email
-	, (SELECT COUNT(connection_id) FROM library_element_connection WHERE library_element_id = le.id AND connection_kind=1) AS connections
-`
+	, (SELECT COUNT(connection_id) FROM ` + connectionTableName + ` WHERE library_element_id = le.id AND connection_kind=1) AS connections`
 	fromLibraryElementDTOWithMeta = `
 FROM library_element AS le
 	LEFT JOIN user AS u1 ON le.created_by = u1.id
@@ -84,6 +83,9 @@ func getLibraryElement(session *sqlstore.DBSession, uid string, orgID int64) (Li
 
 // createLibraryElement adds a library element.
 func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd createLibraryElementCommand) (LibraryElementDTO, error) {
+	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
+		return LibraryElementDTO{}, err
+	}
 	element := LibraryElement{
 		OrgID:    c.SignedInUser.OrgId,
 		FolderID: cmd.FolderID,
@@ -397,6 +399,9 @@ func (l *LibraryElementService) handleFolderIDPatches(elementToPatch *LibraryEle
 // patchLibraryElement updates a Library Element.
 func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd patchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
 	var dto LibraryElementDTO
+	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
+		return LibraryElementDTO{}, err
+	}
 	err := l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		elementInDB, err := getLibraryElement(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
@@ -476,4 +481,47 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 	})
 
 	return dto, err
+}
+
+// getConnections gets all connections for a Library Element.
+func (l *LibraryElementService) getConnections(c *models.ReqContext, uid string) ([]LibraryElementConnectionDTO, error) {
+	connections := make([]LibraryElementConnectionDTO, 0)
+	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		element, err := getLibraryElement(session, uid, c.SignedInUser.OrgId)
+		if err != nil {
+			return err
+		}
+		var libraryElementConnections []libraryPanelConnection
+		builder := sqlstore.SQLBuilder{}
+		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
+		builder.Write(" FROM " + connectionTableName + " AS lec")
+		builder.Write(" LEFT JOIN user AS u1 ON lec.created_by = u1.id")
+		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
+		builder.Write(` WHERE lec.library_element_id=?`, element.ID)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
+			return err
+		}
+
+		for _, connection := range libraryElementConnections {
+			connections = append(connections, LibraryElementConnectionDTO{
+				ID:           connection.ID,
+				Kind:         connection.ConnectionKind,
+				ElementID:    connection.LibraryElementID,
+				ConnectionID: connection.ConnectionID,
+				Created:      connection.Created,
+				CreatedBy: LibraryElementDTOMetaUser{
+					ID:        connection.CreatedBy,
+					Name:      connection.CreatedByName,
+					AvatarUrl: dtos.GetGravatarUrl(connection.CreatedByEmail),
+				},
+			})
+		}
+
+		return nil
+	})
+
+	return connections, err
 }

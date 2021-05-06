@@ -19,12 +19,10 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, binding.Bind(createLibraryElementCommand{}), routing.Wrap(l.createHandler))
-		//entities.Post("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(l.connectHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
-		//entities.Delete("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(l.disconnectHandler))
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
-		//entities.Get("/:uid/dashboards/", middleware.ReqSignedIn, routing.Wrap(l.getConnectedDashboardsHandler))
+		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
 	})
 }
@@ -87,6 +85,16 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibr
 	}
 
 	return response.JSON(200, util.DynMap{"result": element})
+}
+
+// getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
+func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) response.Response {
+	connections, err := l.getConnections(c, c.Params(":uid"))
+	if err != nil {
+		return toLibraryElementError(err, "Failed to get connections")
+	}
+
+	return response.JSON(200, util.DynMap{"result": connections})
 }
 
 func toLibraryElementError(err error, message string) response.Response {

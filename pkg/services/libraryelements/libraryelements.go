@@ -17,6 +17,8 @@ type LibraryElementService struct {
 	log           log.Logger
 }
 
+var connectionTableName = "library_element_connection"
+
 func init() {
 	registry.RegisterService(&LibraryElementService{})
 }
@@ -73,7 +75,7 @@ func (l *LibraryElementService) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add index library_element org_id & folder_id & name & kind", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
 
 	libraryElementConnectionV1 := migrator.Table{
-		Name: "library_element_connection",
+		Name: connectionTableName,
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "library_element_id", Type: migrator.DB_BigInt, Nullable: false},
@@ -87,6 +89,6 @@ func (l *LibraryElementService) AddMigration(mg *migrator.Migrator) {
 		},
 	}
 
-	mg.AddMigration("create library_element_connection table v1", migrator.NewAddTableMigration(libraryElementConnectionV1))
-	mg.AddMigration("add index library_element_connection library_element_id & connection_kind & connection_id", migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
+	mg.AddMigration("create "+connectionTableName+" table v1", migrator.NewAddTableMigration(libraryElementConnectionV1))
+	mg.AddMigration("add index "+connectionTableName+" library_element_id & connection_kind & connection_id", migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
 }

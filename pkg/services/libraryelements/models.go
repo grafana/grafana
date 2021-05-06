@@ -109,6 +109,27 @@ type LibraryElementDTOMetaUser struct {
 	AvatarUrl string `json:"avatarUrl"`
 }
 
+// libraryPanelConnection is the model for library panel connections.
+type libraryPanelConnection struct {
+	ID               int64 `xorm:"pk autoincr 'id'"`
+	LibraryElementID int64 `xorm:"library_element_id"`
+	ConnectionKind   int64 `xorm:"connection_kind"`
+	ConnectionID     int64 `xorm:"connection_id"`
+	Created          time.Time
+	CreatedBy        int64
+	CreatedByName    string
+	CreatedByEmail   string
+}
+
+type LibraryElementConnectionDTO struct {
+	ID           int64                     `json:"id"`
+	Kind         int64                     `json:"kind"`
+	ElementID    int64                     `json:"elementId"`
+	ConnectionID int64                     `json:"connectionId"`
+	Created      time.Time                 `json:"created"`
+	CreatedBy    LibraryElementDTOMetaUser `json:"createdBy"`
+}
+
 var (
 	// errLibraryElementAlreadyExists is an error for when the user tries to add a library element that already exists.
 	errLibraryElementAlreadyExists = errors.New("library element with that name already exists")
@@ -120,6 +141,8 @@ var (
 	errLibraryElementHasConnections = errors.New("the library element has connections")
 	// errLibraryElementVersionMismatch is an error for when a library element has been changed by someone else.
 	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
+	// errLibraryElementUnSupportedElementKind is an error for when the kind is unsupported.
+	errLibraryElementUnSupportedElementKind = errors.New("the element kind is not supported")
 )
 
 // Commands
@@ -129,7 +152,7 @@ type createLibraryElementCommand struct {
 	FolderID int64           `json:"folderId"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
-	Kind     int64           `json:"kind" binding:"Required;Range(1,2)"`
+	Kind     int64           `json:"kind" binding:"Required"`
 }
 
 // patchLibraryElementCommand is the command for patching a LibraryElement
@@ -137,7 +160,7 @@ type patchLibraryElementCommand struct {
 	FolderID int64           `json:"folderId" binding:"Default(-1)"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
-	Kind     int64           `json:"kind" binding:"Required;Range(1,2)"`
+	Kind     int64           `json:"kind" binding:"Required"`
 	Version  int64           `json:"version" binding:"Required"`
 }
 
