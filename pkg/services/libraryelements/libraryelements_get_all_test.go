@@ -74,11 +74,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -138,11 +138,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -199,11 +199,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -234,11 +234,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[1].Meta.Created,
-								Updated:             result.Result.Elements[1].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[1].Meta.Created,
+								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -298,11 +298,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -333,11 +333,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[1].Meta.Created,
-								Updated:             result.Result.Elements[1].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[1].Meta.Created,
+								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -417,11 +417,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -452,11 +452,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[1].Meta.Created,
-								Updated:             result.Result.Elements[1].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[1].Meta.Created,
+								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -554,11 +554,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "NewFolder",
-								FolderUID:           newFolder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "NewFolder",
+								FolderUID:   newFolder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -649,11 +649,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -684,11 +684,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[1].Meta.Created,
-								Updated:             result.Result.Elements[1].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[1].Meta.Created,
+								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -748,11 +748,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -812,11 +812,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -877,11 +877,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -951,11 +951,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -1023,11 +1023,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -1058,11 +1058,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[1].Meta.Created,
-								Updated:             result.Result.Elements[1].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[1].Meta.Created,
+								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -1124,11 +1124,11 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.Uid,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
+								FolderName:  "ScenarioFolder",
+								FolderUID:   sc.folder.Uid,
+								Connections: 0,
+								Created:     result.Result.Elements[0].Meta.Created,
+								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
 									Name:      UserInDbName,
@@ -1229,8 +1229,8 @@ func TestGetAllLibraryElements(t *testing.T) {
 	//		var results libraryElementsSearch
 	//		err := json.Unmarshal(resp.Body(), &results)
 	//		require.NoError(t, err)
-	//		require.Equal(t, int64(0), results.Result.Elements[0].Meta.ConnectedDashboards)
-	//		require.Equal(t, int64(2), results.Result.Elements[1].Meta.ConnectedDashboards)
+	//		require.Equal(t, int64(0), results.Result.Elements[0].Meta.Connections)
+	//		require.Equal(t, int64(2), results.Result.Elements[1].Meta.Connections)
 	//	})
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels in a different org, none should be returned",

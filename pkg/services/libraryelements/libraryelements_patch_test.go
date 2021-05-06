@@ -64,10 +64,10 @@ func TestPatchLibraryElement(t *testing.T) {
 					},
 					Version: 2,
 					Meta: LibraryElementDTOMeta{
-						//ConnectedDashboards: 2,
-						ConnectedDashboards: 0,
-						Created:             sc.initialResult.Result.Meta.Created,
-						Updated:             result.Result.Meta.Updated,
+						//Connections: 2,
+						Connections: 0,
+						Created:     sc.initialResult.Result.Meta.Created,
+						Updated:     result.Result.Meta.Updated,
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      UserInDbName,

@@ -41,11 +41,11 @@ func TestGetLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           sc.folder.Uid,
-						ConnectedDashboards: 0,
-						Created:             result.Result.Meta.Created,
-						Updated:             result.Result.Meta.Updated,
+						FolderName:  "ScenarioFolder",
+						FolderUID:   sc.folder.Uid,
+						Connections: 0,
+						Created:     result.Result.Meta.Created,
+						Updated:     result.Result.Meta.Updated,
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      UserInDbName,
@@ -86,6 +86,6 @@ func TestGetLibraryElement(t *testing.T) {
 	//		resp = sc.service.getHandler(sc.reqContext)
 	//		require.Equal(t, 200, resp.Status())
 	//		var result = validateAndUnMarshalResponse(t, resp)
-	//		require.Equal(t, int64(2), result.Result.Meta.ConnectedDashboards)
+	//		require.Equal(t, int64(2), result.Result.Meta.Connections)
 	//	})
 }

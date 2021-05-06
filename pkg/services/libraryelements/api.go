@@ -108,8 +108,8 @@ func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, models.ErrFolderAccessDenied) {
 		return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 	}
-	if errors.Is(err, errLibraryElementHasConnectedDashboards) {
-		return response.Error(403, errLibraryElementHasConnectedDashboards.Error(), err)
+	if errors.Is(err, errLibraryElementHasConnections) {
+		return response.Error(403, errLibraryElementHasConnections.Error(), err)
 	}
 	return response.Error(500, message, err)
 }

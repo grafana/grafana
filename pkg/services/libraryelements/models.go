@@ -13,6 +13,12 @@ const (
 	Variable
 )
 
+type LibraryConnectionKind int
+
+const (
+	Dashboard LibraryConnectionKind = iota + 1
+)
+
 // LibraryElement is the model for library element definitions.
 type LibraryElement struct {
 	ID          int64  `xorm:"pk autoincr 'id'"`
@@ -49,15 +55,15 @@ type LibraryElementWithMeta struct {
 	Created time.Time
 	Updated time.Time
 
-	FolderName          string
-	FolderUID           string `xorm:"folder_uid"`
-	ConnectedDashboards int64
-	CreatedBy           int64
-	UpdatedBy           int64
-	CreatedByName       string
-	CreatedByEmail      string
-	UpdatedByName       string
-	UpdatedByEmail      string
+	FolderName     string
+	FolderUID      string `xorm:"folder_uid"`
+	Connections    int64
+	CreatedBy      int64
+	UpdatedBy      int64
+	CreatedByName  string
+	CreatedByEmail string
+	UpdatedByName  string
+	UpdatedByEmail string
 }
 
 // LibraryElementDTO is the frontend DTO for entities.
@@ -85,9 +91,9 @@ type LibraryElementSearchResult struct {
 
 // LibraryElementDTOMeta is the meta information for LibraryElementDTO.
 type LibraryElementDTOMeta struct {
-	FolderName          string `json:"folderName"`
-	FolderUID           string `json:"folderUid"`
-	ConnectedDashboards int64  `json:"connectedDashboards"`
+	FolderName  string `json:"folderName"`
+	FolderUID   string `json:"folderUid"`
+	Connections int64  `json:"connections"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -110,8 +116,8 @@ var (
 	errLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
 	errLibraryElementDashboardNotFound = errors.New("library element connection could not be found")
-	// errLibraryElementHasConnectedDashboards is an error for when an user deletes a library element that is connected to dashboards.
-	errLibraryElementHasConnectedDashboards = errors.New("the library element is linked to dashboards")
+	// errLibraryElementHasConnections is an error for when an user deletes a library element that is connected.
+	errLibraryElementHasConnections = errors.New("the library element has connections")
 	// errLibraryElementVersionMismatch is an error for when a library element has been changed by someone else.
 	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
 )

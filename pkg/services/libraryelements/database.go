@@ -22,7 +22,7 @@ SELECT DISTINCT
 	, u1.email AS created_by_email
 	, u2.login AS updated_by_name
 	, u2.email AS updated_by_email
-	, (SELECT COUNT(dashboard_id) FROM library_element_dashboard WHERE library_element_id = le.id) AS connected_dashboards
+	, (SELECT COUNT(connection_id) FROM library_element_connection WHERE library_element_id = le.id AND connection_kind=1) AS connections
 `
 	fromLibraryElementDTOWithMeta = `
 FROM library_element AS le
@@ -129,9 +129,9 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd c
 		Model:       element.Model,
 		Version:     element.Version,
 		Meta: LibraryElementDTOMeta{
-			ConnectedDashboards: 0,
-			Created:             element.Created,
-			Updated:             element.Updated,
+			Connections: 0,
+			Created:     element.Created,
+			Updated:     element.Updated,
 			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        element.CreatedBy,
 				Name:      c.SignedInUser.Login,
@@ -158,14 +158,14 @@ func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid s
 		if err := l.requirePermissionsOnFolder(c.SignedInUser, element.FolderID); err != nil {
 			return err
 		}
-		var dashIDs []struct {
-			DashboardID int64 `xorm:"dashboard_id"`
+		var connectionIDs []struct {
+			ConnectionID int64 `xorm:"connection_id"`
 		}
-		sql := "SELECT dashboard_id FROM library_element_dashboard WHERE library_element_id=?"
-		if err := session.SQL(sql, element.ID).Find(&dashIDs); err != nil {
+		sql := "SELECT connection_id FROM library_element_connection WHERE library_element_id=?"
+		if err := session.SQL(sql, element.ID).Find(&connectionIDs); err != nil {
 			return err
-		} else if len(dashIDs) > 0 {
-			return errLibraryElementHasConnectedDashboards
+		} else if len(connectionIDs) > 0 {
+			return errLibraryElementHasConnections
 		}
 
 		result, err := session.Exec("DELETE FROM library_element WHERE id=?", element.ID)
@@ -231,11 +231,11 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid stri
 		Model:       libraryElement.Model,
 		Version:     libraryElement.Version,
 		Meta: LibraryElementDTOMeta{
-			FolderName:          libraryElement.FolderName,
-			FolderUID:           libraryElement.FolderUID,
-			ConnectedDashboards: libraryElement.ConnectedDashboards,
-			Created:             libraryElement.Created,
-			Updated:             libraryElement.Updated,
+			FolderName:  libraryElement.FolderName,
+			FolderUID:   libraryElement.FolderUID,
+			Connections: libraryElement.Connections,
+			Created:     libraryElement.Created,
+			Updated:     libraryElement.Updated,
 			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        libraryElement.CreatedBy,
 				Name:      libraryElement.CreatedByName,
@@ -324,11 +324,11 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 				Model:       element.Model,
 				Version:     element.Version,
 				Meta: LibraryElementDTOMeta{
-					FolderName:          element.FolderName,
-					FolderUID:           element.FolderUID,
-					ConnectedDashboards: element.ConnectedDashboards,
-					Created:             element.Created,
-					Updated:             element.Updated,
+					FolderName:  element.FolderName,
+					FolderUID:   element.FolderUID,
+					Connections: element.Connections,
+					Created:     element.Created,
+					Updated:     element.Updated,
 					CreatedBy: LibraryElementDTOMetaUser{
 						ID:        element.CreatedBy,
 						Name:      element.CreatedByName,
@@ -456,9 +456,9 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 			Model:       libraryElement.Model,
 			Version:     libraryElement.Version,
 			Meta: LibraryElementDTOMeta{
-				ConnectedDashboards: elementInDB.ConnectedDashboards,
-				Created:             libraryElement.Created,
-				Updated:             libraryElement.Updated,
+				Connections: elementInDB.Connections,
+				Created:     libraryElement.Created,
+				Updated:     libraryElement.Updated,
 				CreatedBy: LibraryElementDTOMetaUser{
 					ID:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,

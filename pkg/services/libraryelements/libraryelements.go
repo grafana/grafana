@@ -72,20 +72,21 @@ func (l *LibraryElementService) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create library_element table v1", migrator.NewAddTableMigration(libraryElementsV1))
 	mg.AddMigration("add index library_element org_id & folder_id & name & kind", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
 
-	libraryElementDashboardV1 := migrator.Table{
-		Name: "library_element_dashboard",
+	libraryElementConnectionV1 := migrator.Table{
+		Name: "library_element_connection",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "library_element_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "dashboard_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "connection_kind", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "connection_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"library_element_id", "dashboard_id"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"library_element_id", "connection_kind", "connection_id"}, Type: migrator.UniqueIndex},
 		},
 	}
 
-	mg.AddMigration("create library_element_dashboard table v1", migrator.NewAddTableMigration(libraryElementDashboardV1))
-	mg.AddMigration("add index library_element_dashboard library_element_id & dashboard_id", migrator.NewAddIndexMigration(libraryElementDashboardV1, libraryElementDashboardV1.Indices[0]))
+	mg.AddMigration("create library_element_connection table v1", migrator.NewAddTableMigration(libraryElementConnectionV1))
+	mg.AddMigration("add index library_element_connection library_element_id & connection_kind & connection_id", migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
 }
