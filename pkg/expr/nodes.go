@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	logger = log.New("expr.log")
+	logger = log.New("expr")
 )
 
 // baseNode includes commmon properties used across DPNodes.
