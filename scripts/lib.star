@@ -196,7 +196,7 @@ def enterprise_downstream_step(edition):
                 'from_secret': 'drone_token',
             },
             'repositories': [
-                'grafana/grafana-enterprise',
+                'grafana/grafana-enterprise@main',
             ],
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}',
