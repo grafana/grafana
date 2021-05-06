@@ -1,20 +1,10 @@
 import React, { useMemo } from 'react';
-import {
-  PanelProps,
-  HistogramTransformerOptions,
-  DataFrame,
-  buildHistogram,
-  getHistogramFields,
-  HistogramFields,
-} from '@grafana/data';
+import { PanelProps, DataFrame, buildHistogram, getHistogramFields, HistogramFields } from '@grafana/data';
 
 import { Histogram } from '@grafana/ui';
+import { PanelOptions } from './models.gen';
 
-interface HistogramPanelOptions extends HistogramTransformerOptions {
-  // anything else?
-}
-
-type Props = PanelProps<HistogramPanelOptions>;
+type Props = PanelProps<PanelOptions>;
 
 export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
   const histogram = useMemo(() => {

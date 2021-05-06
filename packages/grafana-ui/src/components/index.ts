@@ -247,7 +247,7 @@ export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { Histogram } from './Histogram/Histogram';
-export { HistogramOptions, HistogramFieldConfig } from './Histogram/types';
+export { HistogramFieldConfig } from './Histogram/types';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';
