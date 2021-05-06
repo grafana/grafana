@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
@@ -63,9 +63,8 @@ describe('QueryEditorRowHeader', () => {
     renderScenario({
       onChangeTimeRange: () => {},
       timeRange: {
-        from: dateTime(),
-        to: dateTime(),
-        raw: { from: 'now', to: 'now' },
+        from: 0,
+        to: 0,
       },
     });
 
@@ -85,9 +84,8 @@ describe('QueryEditorRowHeader', () => {
     renderScenario({
       onChangeTimeRange: undefined,
       timeRange: {
-        from: dateTime(),
-        to: dateTime(),
-        raw: { from: 'now', to: 'now' },
+        from: 0,
+        to: 0,
       },
     });
 

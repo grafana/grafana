@@ -1,6 +1,6 @@
 import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
-import { RelativeTimeRange, GrafanaThemeV2, TimeOption, rangeUtil } from '@grafana/data';
+import { RelativeTimeRange, GrafanaTheme2, isDateTime, TimeOption, rangeUtil } from '@grafana/data';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { useStyles2 } from '../../../themes';
 import { Button, ButtonGroup, ToolbarButton } from '../../Button';
@@ -13,7 +13,6 @@ import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from '../T
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { InputState } from '../TimeRangePicker/TimeRangeForm';
-import { isValid } from '../../../../../grafana-data/src/datetime/datemath';
 
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
@@ -114,11 +113,11 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
 const setValue = (value: string): InputState => {
   return {
     value,
-    invalid: !isValid(value),
+    invalid: !isDateTime(value),
   };
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       position: relative;

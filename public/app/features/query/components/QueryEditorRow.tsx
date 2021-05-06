@@ -16,6 +16,7 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
+  RelativeTimeRange,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
@@ -35,10 +36,10 @@ interface Props {
   queries: DataQuery[];
   id: string;
   index: number;
-  timeRange?: TimeRange;
+  timeRange?: RelativeTimeRange;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
-  onChangeTimeRange?: (timeRange: TimeRange) => void;
+  onChangeTimeRange?: (timeRange: RelativeTimeRange) => void;
   onAddQuery: (query: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
