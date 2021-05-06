@@ -16,6 +16,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     fill: ${theme.colors.panelBg};
     stroke: ${theme.colors.border3};
   `,
+  text: css`
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `,
 }));
 
 export const Marker = memo(function Marker(props: {
@@ -41,7 +49,7 @@ export const Marker = memo(function Marker(props: {
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       <g>
         <foreignObject x={node.x - 25} y={node.y - 25} width="50" height="50">
-          <div style={{ width: 50, height: 50, textAlign: 'center', display: 'flex', alignItems: 'center' }}>
+          <div className={styles.text}>
             {/* we limit the count to 101 so if we have more than 100 nodes we don't have exact count */}
             <span>{marker.count > 100 ? '>100' : marker.count} nodes</span>
           </div>

@@ -65,6 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.secondary};
     box-shadow: ${theme.shadows.z1};
     padding-bottom: 5px;
+    margin-right: 10px;
   `,
   alert: css`
     label: alert;
