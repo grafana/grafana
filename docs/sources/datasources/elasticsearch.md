@@ -56,12 +56,12 @@ a time pattern for the index name or a wildcard.
 
 ### Elasticsearch version
 
-Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences on how queries are composed and which functionalities are made available in the query editor.
-Currently the versions available are `2.x`, `5.x`, `5.6+`, `6.0+` and `7.0+`. Select the option that best matches your Elasticsearch version.
+You must specify the version of your Elasticsearch data source in the version selection dropdown. Different query compositions and functionalities are available in the query editor for different versions.
+Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, and `7.0+`. Select the option that best matches your data source version.
 
-Grafana assumes you are running the lowest possible version for the specified range so that in case there new features or breaking changes in a future Elasticsearch release you won't be affected.
+Grafana assumes that you are running the lowest possible version for a specified range. This ensures that new features or breaking changes in a future Elasticsearch release will not affect your configuration.
 
-> **Example** Assuming you are running Elasticsearch `7.6.1` and you selected `7.0+`, if a new feature is made available for Elasticsearch `7.5.0` or newever releases, another option will be added for `7.5+` and you won't be affected until you explicitly set the new option in your settings.
+For example, suppose you are running Elasticsearch `7.6.1` and you selected `7.0+`. If a new feature is made available for Elasticsearch `7.5.0` or newer releases, the `7.5+` option will be available.  You will not be affected until you explicitly select the new `7.5+` option in your settings.
 
 ### Min time interval
 
