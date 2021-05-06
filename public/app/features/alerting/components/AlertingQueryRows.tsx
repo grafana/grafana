@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceApi, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -18,18 +18,12 @@ interface Props {
 
 interface State {
   dataPerQuery: Record<string, PanelData>;
-  defaultDataSource: DataSourceApi;
 }
 
 export class AlertingQueryRows extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { dataPerQuery: {}, defaultDataSource: {} as DataSourceApi };
-  }
-
-  async componentDidMount() {
-    const defaultDataSource = await getDataSourceSrv().get();
-    this.setState({ defaultDataSource });
+    this.state = { dataPerQuery: {} };
   }
 
   onRemoveQuery = (query: DataQuery) => {
@@ -40,22 +34,62 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
-        if (itemIndex === index) {
-          return { ...item, relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange) };
+        if (itemIndex !== index) {
+          return item;
         }
-        return item;
+        return {
+          ...item,
+          relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange),
+        };
+      })
+    );
+  }
+
+  onChangeDataSource(settings: DataSourceInstanceSettings, index: number) {
+    const { queries, onQueriesChange } = this.props;
+
+    onQueriesChange(
+      queries.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+
+        const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
+
+        if (previous?.type === settings.uid) {
+          return {
+            ...item,
+            datasourceUid: settings.uid,
+          };
+        }
+
+        const { refId, hide } = item.model;
+
+        return {
+          ...item,
+          datasourceUid: settings.uid,
+          model: { refId, hide },
+        };
       })
     );
   }
 
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
-        if (itemIndex === index) {
-          return { ...item, model: { ...item.model, ...query, datasource: query.datasource! } };
+        if (itemIndex !== index) {
+          return item;
         }
-        return item;
+        return {
+          ...item,
+          model: {
+            ...item.model,
+            ...query,
+            datasource: query.datasource!,
+          },
+        };
       })
     );
   }
@@ -79,14 +113,15 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
-  getDataSourceSettings = (query: DataQuery): DataSourceInstanceSettings | undefined => {
-    const { defaultDataSource } = this.state;
+  onDuplicateQuery = (query: DataQuery, source: GrafanaQuery): void => {
+    this.props.onDuplicateQuery({
+      ...source,
+      model: query,
+    });
+  };
 
-    if (isExpressionQuery(query)) {
-      return getDataSourceSrv().getInstanceSettings(defaultDataSource.name);
-    }
-
-    return getDataSourceSrv().getInstanceSettings(query.datasource);
+  getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
+    return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 
   render() {
@@ -108,7 +143,12 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
                   return (
                     <QueryEditorRow
-                      dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
+                      dataSource={dsSettings}
+                      onChangeDataSource={
+                        !isExpressionQuery(query.model)
+                          ? (settings) => this.onChangeDataSource(settings, index)
+                          : undefined
+                      }
                       id={query.refId}
                       index={index}
                       key={query.refId}
@@ -116,7 +156,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       timeRange={
-                        !isExpressionQuery(query.model)
+                        !isExpressionQuery(query.model) && query.relativeTimeRange
                           ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
                           : undefined
                       }
@@ -126,7 +166,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                           : undefined
                       }
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onDuplicateQuery}
+                      onAddQuery={(duplicate) => this.onDuplicateQuery(duplicate, query)}
                       onRunQuery={this.props.onRunQueries}
                       queries={queries}
                     />

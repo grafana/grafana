@@ -22,7 +22,7 @@ export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): 
       },
       replaceVariables: panel.replaceVariables,
       fieldConfigRegistry: panel.plugin!.fieldConfigRegistry,
-      theme: config.theme,
+      theme: config.theme2,
       timeZone: dashboard.getTimezone(),
     }),
     annotations,

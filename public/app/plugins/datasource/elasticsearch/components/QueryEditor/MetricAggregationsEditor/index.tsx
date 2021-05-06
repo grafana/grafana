@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { MetricEditor } from './MetricEditor';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { MetricAggregationAction } from './state/types';
@@ -13,7 +13,7 @@ interface Props {
   nextId: MetricAggregation['id'];
 }
 
-export const MetricAggregationsEditor: FunctionComponent<Props> = ({ nextId }) => {
+export const MetricAggregationsEditor = ({ nextId }: Props) => {
   const dispatch = useDispatch<MetricAggregationAction>();
   const { metrics } = useQuery();
   const totalMetrics = metrics?.length || 0;

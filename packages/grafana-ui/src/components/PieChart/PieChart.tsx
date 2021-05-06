@@ -6,8 +6,9 @@ import {
   FieldDisplay,
   formattedValueToString,
   getFieldDisplayValues,
-  GrafanaThemeV2,
+  GrafanaTheme2,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
@@ -34,6 +35,7 @@ import { getTooltipContainerStyles } from '../../themes/mixins';
 import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
 import { usePanelContext } from '../PanelChrome';
 import { Subscription } from 'rxjs';
+import { SeriesVisibilityChangeBehavior } from '../VizLegend/types';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -53,7 +55,6 @@ export function PieChart(props: PieChartProps) {
     fieldConfig,
     replaceVariables,
     tooltipOptions,
-    onSeriesColorChange,
     width,
     height,
     ...restProps
@@ -65,7 +66,7 @@ export function PieChart(props: PieChartProps) {
     fieldConfig,
     reduceOptions,
     data,
-    theme: theme.v1,
+    theme: theme,
     replaceVariables,
     timeZone,
   });
@@ -94,31 +95,37 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
   if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
     return undefined;
   }
-  const values = displayValues.map((v) => v.display);
-  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+  const total = displayValues
+    .filter((item) => {
+      return !item.field.custom.hideFrom.viz;
+    })
+    .reduce((acc, item) => item.display.numeric + acc, 0);
 
-  const legendItems = values.map<VizLegendItem>((value, idx) => {
+  const legendItems = displayValues.map<VizLegendItem>((value, idx) => {
+    const hidden = value.field.custom.hideFrom.viz;
+    const display = value.display;
     return {
-      label: value.title ?? '',
-      color: value.color ?? FALLBACK_COLOR,
+      label: display.title ?? '',
+      color: display.color ?? FALLBACK_COLOR,
       yAxis: 1,
-      getItemKey: () => (value.title ?? '') + idx,
+      disabled: hidden,
+      getItemKey: () => (display.title ?? '') + idx,
       getDisplayValues: () => {
         const valuesToShow = legendOptions.values ?? [];
         let displayValues = [];
 
         if (valuesToShow.includes(PieChartLegendValues.Value)) {
-          displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
+          displayValues.push({ numeric: display.numeric, text: formattedValueToString(display), title: 'Value' });
         }
 
         if (valuesToShow.includes(PieChartLegendValues.Percent)) {
-          const fractionOfTotal = value.numeric / total;
+          const fractionOfTotal = hidden ? 0 : display.numeric / total;
           const percentOfTotal = fractionOfTotal * 100;
 
           displayValues.push({
             numeric: fractionOfTotal,
             percent: percentOfTotal,
-            text: percentOfTotal.toFixed(0) + '%',
+            text: hidden ? '-' : percentOfTotal.toFixed(0) + '%',
             title: valuesToShow.length > 1 ? 'Percent' : undefined,
           });
         }
@@ -131,7 +138,7 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
   return (
     <VizLegend
       items={legendItems}
-      onSeriesColorChange={props.onSeriesColorChange}
+      seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
       placement={legendOptions.placement}
       displayMode={legendOptions.displayMode}
     />
@@ -143,25 +150,17 @@ function useSliceHighlightState() {
   const { eventBus } = usePanelContext();
 
   useEffect(() => {
-    if (!eventBus) {
-      return;
-    }
-
     const setHighlightedSlice = (event: DataHoverEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(event.payload.dataId);
-      }
+      setHighlightedTitle(event.payload.dataId);
     };
 
     const resetHighlightedSlice = (event: DataHoverClearEvent) => {
-      if (eventBus.isOwnEvent(event)) {
-        setHighlightedTitle(undefined);
-      }
+      setHighlightedTitle(undefined);
     };
 
     const subs = new Subscription()
-      .add(eventBus.subscribe(DataHoverEvent, setHighlightedSlice))
-      .add(eventBus.subscribe(DataHoverClearEvent, resetHighlightedSlice));
+      .add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }))
+      .add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
 
     return () => {
       subs.unsubscribe();
@@ -189,7 +188,11 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
     scroll: true,
   });
 
-  if (fieldDisplayValues.length < 0) {
+  const filteredFieldDisplayValues = fieldDisplayValues.filter((dv) => {
+    return !dv.field.custom.hideFrom.viz;
+  });
+
+  if (filteredFieldDisplayValues.length < 0) {
     return <div>No data</div>;
   }
 
@@ -201,10 +204,12 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
 
   const showLabel = displayLabels.length > 0;
   const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
-  const total = fieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
+  const total = filteredFieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
   const colors = [
-    ...new Set(fieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)),
+    ...new Set(
+      filteredFieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)
+    ),
   ];
 
   return (
@@ -228,7 +233,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             );
           })}
           <Pie
-            data={fieldDisplayValues}
+            data={filteredFieldDisplayValues}
             pieValue={getValue}
             outerRadius={layout.outerRadius}
             innerRadius={layout.innerRadius}
@@ -333,6 +338,7 @@ function PieSlice({ arc, pie, highlighted, openMenu, fill, tooltip, tooltipOptio
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
+      aria-label={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
     </g>
@@ -422,14 +428,14 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
   return [Math.cos(a) * r, Math.sin(a) * r];
 }
 
-function getGradientColorFrom(color: string, theme: GrafanaThemeV2) {
+function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(20 * (theme.isDark ? 1 : -0.7))
     .spin(8)
     .toRgbString();
 }
 
-function getGradientColorTo(color: string, theme: GrafanaThemeV2) {
+function getGradientColorTo(color: string, theme: GrafanaTheme2) {
   return tinycolor(color)
     .darken(10 * (theme.isDark ? 1 : -0.7))
     .spin(-8)
@@ -461,7 +467,7 @@ function getPieLayout(height: number, width: number, pieType: PieChartType, marg
   };
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       width: 100%;

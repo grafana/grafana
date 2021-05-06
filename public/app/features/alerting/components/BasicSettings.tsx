@@ -25,10 +25,15 @@ export const BasicSettings: FC<Props> = ({
   return (
     <>
       <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
-        <Input name="name" ref={register({ required: 'Name is required' })} />
+        <Input {...register('name', { required: 'Name is required' })} />
       </Field>
       <Field label="Type">
-        <InputControl name="type" as={Select} options={channels} control={control} rules={{ required: true }} />
+        <InputControl
+          name="type"
+          render={({ field: { ref, ...field } }) => <Select {...field} options={channels} />}
+          control={control}
+          rules={{ required: true }}
+        />
       </Field>
       <NotificationChannelOptions
         selectedChannelOptions={selectedChannel.options.filter((o) => o.required)}

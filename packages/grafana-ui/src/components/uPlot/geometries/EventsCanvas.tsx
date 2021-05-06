@@ -27,7 +27,8 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
 
   const eventMarkers = useMemo(() => {
     const markers: React.ReactNode[] = [];
-    if (!plotCtx.plot || events.length === 0) {
+    const plotInstance = plotCtx.plot;
+    if (!plotInstance || events.length === 0) {
       return markers;
     }
 

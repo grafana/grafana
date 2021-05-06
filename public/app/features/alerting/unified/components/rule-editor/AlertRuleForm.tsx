@@ -1,13 +1,13 @@
 import React, { FC, useMemo } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertTypeStep } from './AlertTypeStep';
 import { ConditionsStep } from './ConditionsStep';
 import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
-import { useForm, FormContext } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -16,7 +16,7 @@ import { saveRuleFormAction } from '../../state/actions';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { rulerRuleToFormValues, defaultFormValues } from '../../utils/rule-form';
+import { rulerRuleToFormValues, defaultFormValues, getDefaultQueries } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
 
 type Props = {
@@ -24,14 +24,17 @@ type Props = {
 };
 
 export const AlertRuleForm: FC<Props> = ({ existing }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
       return rulerRuleToFormValues(existing);
     }
-    return defaultFormValues;
+    return {
+      ...defaultFormValues,
+      queries: getDefaultQueries(),
+    };
   }, [existing]);
 
   const formAPI = useForm<RuleFormValues>({
@@ -39,7 +42,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     defaultValues,
   });
 
-  const { handleSubmit, watch, errors } = formAPI;
+  const {
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = formAPI;
 
   const hasErrors = !!Object.values(errors).filter((x) => !!x).length;
 
@@ -52,7 +59,6 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
 
   const submit = (values: RuleFormValues, exitOnSave: boolean) => {
-    console.log('submit', values);
     dispatch(
       saveRuleFormAction({
         values: {
@@ -68,24 +74,24 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   };
 
   return (
-    <FormContext {...formAPI}>
+    <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
-        <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
+        <PageToolbar title="Create alert rule" pageIcon="bell">
           <Link to="/alerting/list">
-            <ToolbarButton variant="default" disabled={submitState.loading} type="button">
+            <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
               Cancel
-            </ToolbarButton>
+            </Button>
           </Link>
-          <ToolbarButton
-            variant="primary"
+          <Button
+            variant="secondary"
             type="button"
             onClick={handleSubmit((values) => submit(values, false))}
             disabled={submitState.loading}
           >
             {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save
-          </ToolbarButton>
-          <ToolbarButton
+          </Button>
+          <Button
             variant="primary"
             type="button"
             onClick={handleSubmit((values) => submit(values, true))}
@@ -93,7 +99,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           >
             {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save and exit
-          </ToolbarButton>
+          </Button>
         </PageToolbar>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
@@ -121,19 +127,14 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           </CustomScrollbar>
         </div>
       </form>
-    </FormContext>
+    </FormProvider>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     buttonSpinner: css`
-      margin-right: ${theme.spacing.sm};
-    `,
-    toolbar: css`
-      padding-top: ${theme.spacing.sm};
-      padding-bottom: ${theme.spacing.md};
-      border-bottom: solid 1px ${theme.colors.border2};
+      margin-right: ${theme.spacing(1)};
     `,
     form: css`
       width: 100%;
@@ -143,18 +144,15 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     contentInner: css`
       flex: 1;
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing(2)};
     `,
     contentOuter: css`
-      background: ${theme.colors.panelBg};
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(2)};
       overflow: hidden;
       flex: 1;
-    `,
-    formInput: css`
-      width: 400px;
-      & + & {
-        margin-left: ${theme.spacing.sm};
-      }
     `,
     flexRow: css`
       display: flex;
