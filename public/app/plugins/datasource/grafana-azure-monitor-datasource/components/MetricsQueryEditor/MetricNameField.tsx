@@ -3,52 +3,40 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-metricname';
 const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (
-      !(
-        subscriptionId &&
-        query.azureMonitor.resourceGroup &&
-        query.azureMonitor.metricDefinition &&
-        query.azureMonitor.resourceName &&
-        query.azureMonitor.metricNamespace
-      )
-    ) {
+    const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor;
+    if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
       metricNames.length > 0 && setMetricNames([]);
       return;
     }
+    setIsLoading(true);
 
     datasource
-      .getMetricNames(
-        subscriptionId,
-        query.azureMonitor.resourceGroup,
-        query.azureMonitor.metricDefinition,
-        query.azureMonitor.resourceName,
-        query.azureMonitor.metricNamespace
-      )
-      .then((results) => setMetricNames(results.map(toOption)))
+      .getMetricNames(subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace)
+      .then((results) => {
+        setMetricNames(results.map(toOption));
+        setIsLoading(false);
+      })
       .catch((err) => {
-        // TODO: handle error
-        console.error(err);
+        setError(ERROR_SOURCE, err);
+        setIsLoading(false);
       });
-  }, [
-    subscriptionId,
-    query.azureMonitor.resourceGroup,
-    query.azureMonitor.metricDefinition,
-    query.azureMonitor.resourceName,
-    query.azureMonitor.metricNamespace,
-  ]);
+  }, [datasource, metricNames.length, query.azureMonitor, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -64,7 +52,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...metricNames, variableOptionGroup], [metricNames, variableOptionGroup]);
@@ -77,6 +65,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        isLoading={isLoading}
       />
     </Field>
   );

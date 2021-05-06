@@ -68,6 +68,7 @@ input[type='text'].tight-form-func-param {
 .rst-unknown.rst-directive {
   font-family: monospace;
   margin-bottom: $space-md;
+  word-wrap: break-word;
 }
 
 .rst-interpreted_text {

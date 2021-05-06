@@ -4,7 +4,7 @@ import { Icon, ConfirmButton, Button } from '@grafana/ui';
 
 import alertDef from './state/alertDef';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props {
   dashboard: DashboardModel;

@@ -40,20 +40,30 @@ export function useDetailState() {
     detailStates,
     toggleDetail,
     detailLogItemToggle,
-    detailLogsToggle: useCallback(makeDetailSubsectionToggle('logs', detailStates, setDetailStates), [detailStates]),
-    detailWarningsToggle: useCallback(makeDetailSubsectionToggle('warnings', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailStackTracesToggle: useCallback(makeDetailSubsectionToggle('stackTraces', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailReferencesToggle: useCallback(makeDetailSubsectionToggle('references', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailProcessToggle: useCallback(makeDetailSubsectionToggle('process', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailTagsToggle: useCallback(makeDetailSubsectionToggle('tags', detailStates, setDetailStates), [detailStates]),
+    detailLogsToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('logs', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailWarningsToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('warnings', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailStackTracesToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('stackTraces', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailReferencesToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('references', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailProcessToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('process', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailTagsToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('tags', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
   };
 }
 

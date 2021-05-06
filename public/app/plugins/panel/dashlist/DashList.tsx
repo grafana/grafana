@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import take from 'lodash/take';
+import { take } from 'lodash';
 
 import { InterpolateFunction, PanelProps } from '@grafana/data';
 import { CustomScrollbar, Icon, useStyles } from '@grafana/ui';
@@ -82,17 +82,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
     });
-  }, [
-    props.options.showSearch,
-    props.options.showStarred,
-    props.options.showRecentlyViewed,
-    props.options.maxItems,
-    props.options.query,
-    props.options.tags,
-    props.options.folderId,
-    props.replaceVariables,
-    props.renderCounter,
-  ]);
+  }, [props.options, props.replaceVariables, props.renderCounter]);
 
   const toggleDashboardStar = async (e: React.SyntheticEvent, dash: Dashboard) => {
     e.preventDefault();

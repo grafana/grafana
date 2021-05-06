@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import classNames from 'classnames';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { Icon, IconButton, SetInterval, ToolbarButton, ToolbarButtonRow, Tooltip } from '@grafana/ui';

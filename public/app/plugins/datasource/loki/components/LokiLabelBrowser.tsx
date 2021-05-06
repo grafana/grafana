@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
@@ -364,17 +364,13 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       return <LoadingPlaceholder text="Loading labels..." />;
     }
     const styles = getStyles(theme);
-    let matcher: RegExp;
     let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
       // TODO extract from render() and debounce
-      try {
-        matcher = new RegExp(searchTerm.split('').join('.*'), 'i');
-        selectedLabels = selectedLabels.map((label) => ({
-          ...label,
-          values: label.values?.filter((value) => value.selected || matcher.test(value.name)),
-        }));
-      } catch (error) {}
+      selectedLabels = selectedLabels.map((label) => ({
+        ...label,
+        values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
+      }));
     }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
@@ -439,7 +435,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                           value={value?.name}
                           active={value?.selected}
                           onClick={this.onClickValue}
-                          searchTerm={matcher}
+                          searchTerm={searchTerm}
                         />
                       </div>
                     );

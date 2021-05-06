@@ -49,6 +49,7 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
 	originalQueries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
@@ -102,7 +103,10 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 		azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
 		timeGrain := insightsJSONModel.TimeGrain
 		timeGrains := insightsJSONModel.AllowedTimeGrainsMs
-		if timeGrain == "auto" {
+
+		// Previous versions of the query model don't specify a time grain, so we
+		// need to fallback to a default value
+		if timeGrain == "auto" || timeGrain == "" {
 			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
 			if err != nil {
 				return nil, err
@@ -139,6 +143,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 	return applicationInsightsQueries, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (
 	plugins.DataQueryResult, error) {
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}

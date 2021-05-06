@@ -49,30 +49,35 @@ type GetOrgQuotaByTargetQuery struct {
 	TargetConditions string
 	OrgId            int64
 	Default          int64
+	IsNgAlertEnabled bool
 	Result           *OrgQuotaDTO
 }
 
 type GetOrgQuotasQuery struct {
-	OrgId  int64
-	Result []*OrgQuotaDTO
+	OrgId            int64
+	IsNgAlertEnabled bool
+	Result           []*OrgQuotaDTO
 }
 
 type GetUserQuotaByTargetQuery struct {
-	Target  string
-	UserId  int64
-	Default int64
-	Result  *UserQuotaDTO
+	Target           string
+	UserId           int64
+	Default          int64
+	IsNgAlertEnabled bool
+	Result           *UserQuotaDTO
 }
 
 type GetUserQuotasQuery struct {
-	UserId int64
-	Result []*UserQuotaDTO
+	UserId           int64
+	IsNgAlertEnabled bool
+	Result           []*UserQuotaDTO
 }
 
 type GetGlobalQuotaByTargetQuery struct {
 	Target           string
 	TargetConditions string
 	Default          int64
+	IsNgAlertEnabled bool
 	Result           *GlobalQuotaDTO
 }
 

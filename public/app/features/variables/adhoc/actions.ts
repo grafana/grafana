@@ -80,12 +80,12 @@ export const setFiltersFromUrl = (id: string, filters: AdHocVariableFilter[]): T
   };
 };
 
-export const changeVariableDatasource = (datasource: string): ThunkResult<void> => {
+export const changeVariableDatasource = (datasource?: string): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { editor } = getState().templating;
     const variable = getVariable(editor.id, getState());
 
-    const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+    const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
 
     dispatch(
       changeVariableEditorExtended({
@@ -101,7 +101,7 @@ export const changeVariableDatasource = (datasource: string): ThunkResult<void> 
       dispatch(
         changeVariableEditorExtended({
           propName: 'infoText',
-          propValue: 'This datasource does not support adhoc filters yet.',
+          propValue: 'This data source does not support ad hoc filters yet.',
         })
       );
     }
@@ -111,15 +111,13 @@ export const changeVariableDatasource = (datasource: string): ThunkResult<void> 
 export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
   const dataSources = getDatasourceSrv().getMetricSources();
   const selectable = dataSources.reduce(
-    (all: Array<{ text: string; value: string }>, ds) => {
-      if (ds.meta.mixed || ds.value === null) {
+    (all: Array<{ text: string; value: string | null }>, ds) => {
+      if (ds.meta.mixed) {
         return all;
       }
 
-      all.push({
-        text: ds.name,
-        value: ds.value,
-      });
+      const text = ds.value === null ? `${ds.name} (default)` : ds.name;
+      all.push({ text: text, value: ds.value });
 
       return all;
     },

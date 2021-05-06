@@ -30,4 +30,15 @@ func TestDeleteLibraryPanel(t *testing.T) {
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to delete a library panel that is connected, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
+			resp := sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			resp = sc.service.deleteHandler(sc.reqContext)
+			require.Equal(t, 403, resp.Status())
+		})
 }

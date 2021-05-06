@@ -53,7 +53,7 @@ type InputType string
 const (
 	// InputTypeText will render a text field in the frontend
 	InputTypeText = "text"
-	// InputTypePassword will render a text field in the frontend
+	// InputTypePassword will render a password field in the frontend
 	InputTypePassword = "password"
 )
 
@@ -294,7 +294,7 @@ type NotifierFactory func(notification *models.AlertNotification) (Notifier, err
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 
-// RegisterNotifier register an notifier
+// RegisterNotifier registers a notifier.
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }

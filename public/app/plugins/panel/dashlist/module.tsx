@@ -49,6 +49,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
               initialFolderId={props.value}
               initialTitle="All"
               enableReset={true}
+              permissionLevel="View"
               onChange={({ id }) => props.onChange(id)}
             />
           );

@@ -1,10 +1,12 @@
-import _ from 'lodash';
+import { each, map } from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
 import { DataLinkBuiltInVars } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
+import { config } from 'app/core/config';
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -14,6 +16,12 @@ describe('DashboardModel', () => {
     let graph: any;
     let singlestat: any;
     let table: any;
+    let singlestatGauge: any;
+
+    config.panels = {
+      stat: getPanelPlugin({ id: 'stat' }).meta,
+      gauge: getPanelPlugin({ id: 'gauge' }).meta,
+    };
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -49,9 +57,21 @@ describe('DashboardModel', () => {
             type: 'singlestat',
             legend: true,
             thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
             grid: { min: 1, max: 10 },
             targets: [{ refId: 'A' }, {}],
+          },
+          {
+            type: 'singlestat',
+            thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
+            gauge: {
+              show: true,
+              thresholdMarkers: true,
+              thresholdLabels: false,
+            },
+            grid: { min: 1, max: 10 },
           },
           {
             type: 'table',
@@ -64,7 +84,8 @@ describe('DashboardModel', () => {
 
       graph = model.panels[0];
       singlestat = model.panels[1];
-      table = model.panels[2];
+      singlestatGauge = model.panels[2];
+      table = model.panels[3];
     });
 
     it('should have title', () => {
@@ -84,8 +105,16 @@ describe('DashboardModel', () => {
       expect(graph.type).toBe('graph');
     });
 
-    it('single stat panel should have two thresholds', () => {
-      expect(singlestat.thresholds).toBe('20,30');
+    it('singlestat panel should be mapped to stat panel', () => {
+      expect(singlestat.type).toBe('stat');
+      expect(singlestat.fieldConfig.defaults.thresholds.steps[2].value).toBe(30);
+      expect(singlestat.fieldConfig.defaults.thresholds.steps[0].color).toBe('#FF0000');
+    });
+
+    it('singlestat panel should be mapped to gauge panel', () => {
+      expect(singlestatGauge.type).toBe('gauge');
+      expect(singlestatGauge.options.showThresholdMarkers).toBe(true);
+      expect(singlestatGauge.options.showThresholdLabels).toBe(false);
     });
 
     it('queries without refId should get it', () => {
@@ -133,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(27);
+      expect(model.schemaVersion).toBe(29);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -628,7 +657,7 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('when migrating variables with old tags format', () => {
+  describe('when migrating variables with tags', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -638,6 +667,9 @@ describe('DashboardModel', () => {
             {
               type: 'query',
               tags: ['Africa', 'America', 'Asia', 'Europe'],
+              tagsQuery: 'select datacenter from x',
+              tagValuesQuery: 'select value from x where datacenter = xyz',
+              useTags: true,
             },
             {
               type: 'query',
@@ -660,6 +692,9 @@ describe('DashboardModel', () => {
                 value: ['server-us-east', 'server-us-central', 'server-us-west', 'server-eu-east', 'server-eu-west'],
               },
               tags: ['Africa', 'America', 'Asia', 'Europe'],
+              tagsQuery: 'select datacenter from x',
+              tagValuesQuery: 'select value from x where datacenter = xyz',
+              useTags: true,
             },
             {
               type: 'query',
@@ -669,6 +704,9 @@ describe('DashboardModel', () => {
                 { text: 'Asia', selected: false },
                 { text: 'Europe', selected: false },
               ],
+              tagsQuery: 'select datacenter from x',
+              tagValuesQuery: 'select value from x where datacenter = xyz',
+              useTags: true,
             },
           ],
         },
@@ -679,41 +717,28 @@ describe('DashboardModel', () => {
       expect(model.templating.list.length).toBe(3);
     });
 
-    it('should be migrated with defaults if being out of sync', () => {
-      expect(model.templating.list[0].tags).toEqual([
-        { text: 'Africa', selected: false },
-        { text: 'America', selected: false },
-        { text: 'Asia', selected: false },
-        { text: 'Europe', selected: false },
-      ]);
+    it('should have no tags', () => {
+      expect(model.templating.list[0].tags).toBeUndefined();
+      expect(model.templating.list[1].tags).toBeUndefined();
+      expect(model.templating.list[2].tags).toBeUndefined();
     });
 
-    it('should be migrated with current values if being out of sync', () => {
-      expect(model.templating.list[1].tags).toEqual([
-        { text: 'Africa', selected: false },
-        {
-          selected: true,
-          text: 'America',
-          values: ['server-us-east', 'server-us-central', 'server-us-west'],
-          valuesText: 'server-us-east + server-us-central + server-us-west',
-        },
-        { text: 'Asia', selected: false },
-        {
-          selected: true,
-          text: 'Europe',
-          values: ['server-eu-east', 'server-eu-west'],
-          valuesText: 'server-eu-east + server-eu-west',
-        },
-      ]);
+    it('should have no tagsQuery property', () => {
+      expect(model.templating.list[0].tagsQuery).toBeUndefined();
+      expect(model.templating.list[1].tagsQuery).toBeUndefined();
+      expect(model.templating.list[2].tagsQuery).toBeUndefined();
     });
 
-    it('should not be migrated if being in sync', () => {
-      expect(model.templating.list[2].tags).toEqual([
-        { text: 'Africa', selected: false },
-        { text: 'America', selected: true },
-        { text: 'Asia', selected: false },
-        { text: 'Europe', selected: false },
-      ]);
+    it('should have no tagValuesQuery property', () => {
+      expect(model.templating.list[0].tagValuesQuery).toBeUndefined();
+      expect(model.templating.list[1].tagValuesQuery).toBeUndefined();
+      expect(model.templating.list[2].tagValuesQuery).toBeUndefined();
+    });
+
+    it('should have no useTags property', () => {
+      expect(model.templating.list[0].useTags).toBeUndefined();
+      expect(model.templating.list[1].useTags).toBeUndefined();
+      expect(model.templating.list[2].useTags).toBeUndefined();
     });
   });
 
@@ -900,6 +925,149 @@ describe('DashboardModel', () => {
       });
     });
   });
+
+  describe('when migrating variable refresh to on dashboard load', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              name: 'variable_with_never_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 0,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_never_refresh_without_options',
+              options: [],
+              refresh: 0,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_dashboard_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 1,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_dashboard_refresh_without_options',
+              options: [],
+              refresh: 1,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_timerange_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 2,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_timerange_refresh_without_options',
+              options: [],
+              refresh: 2,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_no_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+            },
+            {
+              type: 'query',
+              name: 'variable_with_no_refresh_without_options',
+              options: [],
+            },
+            {
+              type: 'query',
+              name: 'variable_with_unknown_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 2001,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_unknown_refresh_without_options',
+              options: [],
+              refresh: 2001,
+            },
+            {
+              type: 'custom',
+              name: 'custom',
+              options: [{ text: 'custom', value: 'custom' }],
+            },
+            {
+              type: 'textbox',
+              name: 'textbox',
+              options: [{ text: 'Hello', value: 'World' }],
+            },
+            {
+              type: 'datasource',
+              name: 'datasource',
+              options: [{ text: 'ds', value: 'ds' }], // fake example doesn't exist
+            },
+            {
+              type: 'interval',
+              name: 'interval',
+              options: [{ text: '1m', value: '1m' }],
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have 11 variables after migration', () => {
+      expect(model.templating.list.length).toBe(14);
+    });
+
+    it('should not affect custom variable types', () => {
+      const custom = model.templating.list[10];
+      expect(custom.type).toEqual('custom');
+      expect(custom.options).toEqual([{ text: 'custom', value: 'custom' }]);
+    });
+
+    it('should not affect textbox variable types', () => {
+      const textbox = model.templating.list[11];
+      expect(textbox.type).toEqual('textbox');
+      expect(textbox.options).toEqual([{ text: 'Hello', value: 'World' }]);
+    });
+
+    it('should not affect datasource variable types', () => {
+      const datasource = model.templating.list[12];
+      expect(datasource.type).toEqual('datasource');
+      expect(datasource.options).toEqual([{ text: 'ds', value: 'ds' }]);
+    });
+
+    it('should not affect interval variable types', () => {
+      const interval = model.templating.list[13];
+      expect(interval.type).toEqual('interval');
+      expect(interval.options).toEqual([{ text: '1m', value: '1m' }]);
+    });
+
+    it('should removed options from all query variables', () => {
+      const queryVariables = model.templating.list.filter((v) => v.type === 'query');
+      expect(queryVariables).toHaveLength(10);
+      const noOfOptions = queryVariables.reduce((all, variable) => all + variable.options.length, 0);
+      expect(noOfOptions).toBe(0);
+    });
+
+    it('should set the refresh prop to on dashboard load for all query variables that have never or unknown', () => {
+      expect(model.templating.list[0].refresh).toBe(1);
+      expect(model.templating.list[1].refresh).toBe(1);
+      expect(model.templating.list[2].refresh).toBe(1);
+      expect(model.templating.list[3].refresh).toBe(1);
+      expect(model.templating.list[4].refresh).toBe(2);
+      expect(model.templating.list[5].refresh).toBe(2);
+      expect(model.templating.list[6].refresh).toBe(1);
+      expect(model.templating.list[7].refresh).toBe(1);
+      expect(model.templating.list[8].refresh).toBe(1);
+      expect(model.templating.list[9].refresh).toBe(1);
+      expect(model.templating.list[10].refresh).toBeUndefined();
+      expect(model.templating.list[11].refresh).toBeUndefined();
+      expect(model.templating.list[12].refresh).toBeUndefined();
+      expect(model.templating.list[13].refresh).toBeUndefined();
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
@@ -908,7 +1076,7 @@ function createRow(options: any, panelDescriptions: any[]) {
   let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
   const panels: any[] = [];
-  _.each(panelDescriptions, (panelDesc) => {
+  each(panelDescriptions, (panelDesc) => {
     const panel = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
       //@ts-ignore
@@ -929,7 +1097,7 @@ function createRow(options: any, panelDescriptions: any[]) {
 }
 
 function getGridPositions(dashboard: DashboardModel) {
-  return _.map(dashboard.panels, (panel: PanelModel) => {
+  return map(dashboard.panels, (panel: PanelModel) => {
     return panel.gridPos;
   });
 }

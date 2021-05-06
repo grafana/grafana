@@ -96,15 +96,17 @@ class NewDataSourcePage extends PureComponent<Props> {
           <div className="page-action-bar">
             <FilterInput value={searchQuery} onChange={this.onSearchQueryChange} placeholder="Filter by name or type" />
             <div className="page-action-bar__spacer" />
-            <LinkButton href="datasources">Cancel</LinkButton>
+            <LinkButton href="datasources" fill="outline" variant="secondary" icon="arrow-left">
+              Cancel
+            </LinkButton>
           </div>
           {!searchQuery && (
             <PluginsErrorsInfo>
               <>
                 <br />
                 <p>
-                  Note that <strong>unsigned front-end datasource plugins</strong> are still usable, but this is subject
-                  to change in the upcoming releases of Grafana
+                  Note that unsigned front-end data source plugins are still usable, but this is subject to change in
+                  the upcoming releases of Grafana.
                 </p>
               </>
             </PluginsErrorsInfo>

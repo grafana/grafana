@@ -1,4 +1,7 @@
 export const Components = {
+  TimePicker: {
+    openButton: 'TimePicker Open Button',
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -41,10 +44,16 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      PieChart: {
+        svgSlice: 'Pie Chart Slice',
+      },
       Text: {
         container: () => '.markdown-html',
       },
     },
+  },
+  VizLegend: {
+    seriesName: (name: string) => `VizLegend series ${name}`,
   },
   Drawer: {
     General: {
@@ -61,18 +70,16 @@ export const Components = {
     },
     OptionsPane: {
       content: 'Panel editor option pane content',
-      close: 'Page toolbar button Close options pane',
-      open: 'Page toolbar button Open options pane',
       select: 'Panel editor option pane select',
-      tab: (title: string) => `Panel editor option pane tab ${title}`,
+      fieldLabel: (type: string) => `${type} field property editor`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    FieldOptions: {
-      propertyEditor: (type: string) => `${type} field property editor`,
-    },
+    applyButton: 'panel editor apply',
+    toggleVizPicker: 'toggle-viz-picker',
+    toggleVizOptions: 'toggle-viz-options',
   },
   PanelInspector: {
     Data: {
@@ -171,7 +178,7 @@ export const Components = {
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
-    button: 'Value picker add button',
+    button: (name: string) => `Value picker button ${name}`,
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {
@@ -191,5 +198,8 @@ export const Components = {
   },
   DataLinksContextMenu: {
     singleLink: 'Data link',
+  },
+  CodeEditor: {
+    container: 'Code editor container',
   },
 };

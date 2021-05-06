@@ -24,10 +24,13 @@ const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/use
 const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
   const history = useHistory();
 
-  const onSubmit = useCallback(async (data: UserDTO) => {
-    await createUser(data);
-    history.push('/admin/users');
-  }, []);
+  const onSubmit = useCallback(
+    async (data: UserDTO) => {
+      await createUser(data);
+      history.push('/admin/users');
+    },
+    [history]
+  );
 
   return (
     <Page navModel={navModel}>
@@ -43,15 +46,15 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
                   invalid={!!errors.name}
                   error={errors.name ? 'Name is required' : undefined}
                 >
-                  <Input name="name" ref={register({ required: true })} />
+                  <Input {...register('name', { required: true })} />
                 </Field>
 
-                <Field label="E-mail">
-                  <Input name="email" ref={register} />
+                <Field label="Email">
+                  <Input {...register('email')} />
                 </Field>
 
                 <Field label="Username">
-                  <Input name="login" ref={register} />
+                  <Input {...register('login')} />
                 </Field>
                 <Field
                   label="Password"
@@ -60,11 +63,10 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
                   error={errors.password ? 'Password is required and must contain at least 4 characters' : undefined}
                 >
                   <Input
-                    type="password"
-                    name="password"
-                    ref={register({
+                    {...register('password', {
                       validate: (value) => value.trim() !== '' && value.length >= 4,
                     })}
+                    type="password"
                   />
                 </Field>
                 <Button type="submit">Create user</Button>

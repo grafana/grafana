@@ -1,5 +1,5 @@
 import { PipelineVariable } from '../../../aggregations';
-import { defaultPipelineVariable } from '../utils';
+import { defaultPipelineVariable, generatePipelineVariableName } from '../utils';
 import {
   PipelineVariablesAction,
   REMOVE_PIPELINE_VARIABLE,
@@ -11,7 +11,7 @@ import {
 export const reducer = (state: PipelineVariable[] = [], action: PipelineVariablesAction) => {
   switch (action.type) {
     case ADD_PIPELINE_VARIABLE:
-      return [...state, defaultPipelineVariable()];
+      return [...state, defaultPipelineVariable(generatePipelineVariableName(state))];
 
     case REMOVE_PIPELINE_VARIABLE:
       return state.slice(0, action.payload.index).concat(state.slice(action.payload.index + 1));

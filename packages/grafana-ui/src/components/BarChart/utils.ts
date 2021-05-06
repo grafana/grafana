@@ -6,7 +6,7 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
-  GrafanaTheme,
+  GrafanaTheme2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
@@ -14,11 +14,12 @@ import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarCha
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
 import { BarsOptions, getConfig } from './bars';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
+import { Select } from 'uplot';
 
 /** @alpha */
 export function preparePlotConfigBuilder(
   data: DataFrame,
-  theme: GrafanaTheme,
+  theme: GrafanaTheme2,
   { orientation, showValue, groupWidth, barWidth }: BarChartOptions
 ) {
   const builder = new UPlotConfigBuilder();
@@ -68,7 +69,7 @@ export function preparePlotConfigBuilder(
   builder.addHook('setCursor', config.setCursor);
 
   builder.setCursor(config.cursor);
-  builder.setSelect(config.select);
+  builder.setSelect(config.select as Select);
 
   builder.addScale({
     scaleKey: 'x',

@@ -6,12 +6,12 @@ import { EdgeDatum, NodeDatum } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
-import { DataFrame, GrafanaTheme, LinkModel } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
-import { stylesFactory, useTheme } from '../../themes';
-import { css } from 'emotion';
+import { stylesFactory, useTheme2 } from '../../themes';
+import { css } from '@emotion/css';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
@@ -19,7 +19,7 @@ import { processNodes } from './utils';
 import { Icon } from '..';
 import { useNodeLimit } from './useNodeLimit';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrapper: css`
     height: 100%;
     width: 100%;
@@ -52,13 +52,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     padding: 5px 8px;
     font-size: 10px;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-radius: ${theme.border.radius.md};
+    border-radius: ${theme.shape.borderRadius()};
     align-items: center;
     position: absolute;
     top: 0;
     right: 0;
-    background: ${theme.palette.warn};
-    color: ${theme.palette.white};
+    background: ${theme.colors.warning.main};
+    color: ${theme.colors.warning.contrastText};
   `,
 }));
 
@@ -87,11 +87,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
 
+  const theme = useTheme2();
+
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const processed = useMemo(() => processNodes(firstNodesDataFrame, firstEdgesDataFrame), [
+  const processed = useMemo(() => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme), [
     firstEdgesDataFrame,
     firstNodesDataFrame,
+    theme,
   ]);
 
   const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.edges, nodeCountLimit);
@@ -102,16 +105,19 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     bounds
   );
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
-  const styles = getStyles(useTheme());
+  const styles = getStyles(theme);
+
+  // This cannot be inline func or it will create infinite render cycle.
+  const topLevelRef = useCallback(
+    (r) => {
+      measureRef(r);
+      (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
+    },
+    [measureRef, zoomRef]
+  );
 
   return (
-    <div
-      ref={(r) => {
-        measureRef(r);
-        (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
-      }}
-      className={styles.wrapper}
-    >
+    <div ref={topLevelRef} className={styles.wrapper}>
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
@@ -233,7 +239,8 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
           (e.source as NodeDatum).id === props.nodeHoveringId ||
           (e.target as NodeDatum).id === props.nodeHoveringId ||
           props.edgeHoveringId === e.id;
-        return shouldShow && <EdgeLabel key={e.id} edge={e} />;
+        const hasStats = e.mainStat || e.secondaryStat;
+        return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;
       })}
     </>
   );

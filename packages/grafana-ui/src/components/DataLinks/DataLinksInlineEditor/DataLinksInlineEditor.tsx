@@ -1,22 +1,27 @@
-import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Button } from '../../Button/Button';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { Modal } from '../../Modal/Modal';
-import { stylesFactory, useTheme } from '../../../themes';
+import { stylesFactory, useTheme2 } from '../../../themes';
 import { DataLinksListItem } from './DataLinksListItem';
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
 
 interface DataLinksInlineEditorProps {
   links?: DataLink[];
   onChange: (links: DataLink[]) => void;
-  suggestions: VariableSuggestion[];
+  getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
 }
 
-export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ links, onChange, suggestions, data }) => {
-  const theme = useTheme();
+export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({
+  links,
+  onChange,
+  getSuggestions,
+  data,
+}) => {
+  const theme = useTheme2();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
@@ -74,7 +79,6 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
                 onEdit={() => setEditIndex(i)}
                 onRemove={() => onDataLinkRemove(i)}
                 data={data}
-                suggestions={suggestions}
               />
             );
           })}
@@ -95,7 +99,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
             data={data}
             onSave={onDataLinkChange}
             onCancel={onDataLinkCancel}
-            suggestions={suggestions}
+            getSuggestions={getSuggestions}
           />
         </Modal>
       )}
@@ -107,10 +111,10 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
   );
 };
 
-const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme) => {
+const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
   };
 });

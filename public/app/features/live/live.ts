@@ -1,15 +1,42 @@
-import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
-import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
-import { BehaviorSubject } from 'rxjs';
-import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
+import Centrifuge from 'centrifuge/dist/centrifuge';
+import {
+  GrafanaLiveSrv,
+  setGrafanaLiveSrv,
+  getGrafanaLiveSrv,
+  config,
+  LiveDataStreamOptions,
+  toDataQueryError,
+  getBackendSrv,
+} from '@grafana/runtime';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import {
+  LiveChannelScope,
+  LiveChannelAddress,
+  LiveChannelConnectionState,
+  LiveChannelConfig,
+  LiveChannelEvent,
+  DataQueryResponse,
+  LiveChannelPresenceStatus,
+  isValidLiveChannelAddress,
+  LoadingState,
+  DataFrameJSON,
+  StreamingDataFrame,
+  DataFrame,
+  dataFrameToJSON,
+  isLiveChannelMessageEvent,
+  isLiveChannelStatusEvent,
+  toLiveChannelId,
+} from '@grafana/data';
 import { CentrifugeLiveChannel, getErrorChannel } from './channel';
 import {
   GrafanaLiveScope,
   grafanaLiveCoreFeatures,
   GrafanaLiveDataSourceScope,
   GrafanaLivePluginScope,
+  GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
+import { perf } from './perf';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -20,7 +47,6 @@ export const sessionId =
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
-
   readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
@@ -28,7 +54,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
   constructor() {
     // build live url replacing scheme in appUrl.
-    const liveUrl = `${config.appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+    const liveUrl = `${config.appUrl.replace('http', 'ws')}live/ws`;
     this.centrifuge = new Centrifuge(liveUrl, {
       debug: true,
     });
@@ -52,6 +78,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
       [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
       [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
+      [LiveChannelScope.Stream]: new GrafanaLiveStreamScope(),
     };
 
     // Register global listeners
@@ -82,7 +109,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
    * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
    * channel will be returned with an error state indicated in its status
    */
-  getChannel<TMessage, TPublish = any>(addr: LiveChannelAddress): LiveChannel<TMessage, TPublish> {
+  getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
     const id = `${addr.scope}/${addr.namespace}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
@@ -91,7 +118,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
     const scope = this.scopes[addr.scope];
     if (!scope) {
-      return getErrorChannel('invalid scope', id, addr);
+      return getErrorChannel<TMessage>('invalid scope', id, addr) as any;
     }
 
     channel = new CentrifugeLiveChannel(id, addr);
@@ -102,7 +129,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
     // Initialize the channel in the background
     this.initChannel(scope, channel).catch((err) => {
-      channel?.shutdownWithError(err);
+      if (channel) {
+        channel.currentStatus.state = LiveChannelConnectionState.Invalid;
+        channel.shutdownWithError(err);
+      }
       this.open.delete(id);
     });
 
@@ -114,14 +144,11 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     const { addr } = channel;
     const support = await scope.getChannelSupport(addr.namespace);
     if (!support) {
-      throw new Error(channel.addr.namespace + 'does not support streaming');
+      throw new Error(channel.addr.namespace + ' does not support streaming');
     }
     const config = support.getChannelConfig(addr.path);
     if (!config) {
       throw new Error('unknown path: ' + addr.path);
-    }
-    if (config.canPublish?.()) {
-      channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
     }
     const events = channel.initalize(config);
     if (!this.centrifuge.isConnected()) {
@@ -136,19 +163,174 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   //----------------------------------------------------------
 
   /**
-   * Is the server currently connected
-   */
-  isConnected() {
-    return this.centrifuge.isConnected();
-  }
-
-  /**
    * Listen for changes to the connection state
    */
   getConnectionState() {
     return this.connectionState.asObservable();
   }
+
+  /**
+   * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
+   * channel will be returned with an error state indicated in its status.
+   *
+   * This is a singleton instance that stays active until explicitly shutdown.
+   * Multiple requests for this channel will return the same object until
+   * the channel is shutdown
+   */
+  async getChannelInfo(addr: LiveChannelAddress): Promise<LiveChannelConfig> {
+    const scope = this.scopes[addr.scope];
+    if (!scope) {
+      return Promise.reject('invalid scope');
+    }
+
+    const support = await scope.getChannelSupport(addr.namespace);
+    if (!support) {
+      return Promise.reject(addr.namespace + ' does not support streaming');
+    }
+    return support.getChannelConfig(addr.path)!;
+  }
+
+  /**
+   * Watch for messages in a channel
+   */
+  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>> {
+    return this.getChannel<T>(address).getStream();
+  }
+
+  /**
+   * Connect to a channel and return results as DataFrames
+   */
+  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
+    if (!isValidLiveChannelAddress(options.addr)) {
+      return of({
+        error: toDataQueryError(`invalid channel address: ${JSON.stringify(options.addr)}`),
+        state: LoadingState.Error,
+        data: options.frame ? [options.frame] : [],
+      });
+    }
+
+    return new Observable<DataQueryResponse>((subscriber) => {
+      const channel = this.getChannel(options.addr);
+      let data: StreamingDataFrame | undefined = undefined;
+      let filtered: DataFrame | undefined = undefined;
+      let state = LoadingState.Loading;
+      let { key } = options;
+      let last = perf.last;
+      if (options.frame) {
+        const msg = dataFrameToJSON(options.frame);
+        data = new StreamingDataFrame(msg, options.buffer);
+        state = LoadingState.Streaming;
+      }
+      if (channel.lastMessageWithSchema && !data) {
+        data = new StreamingDataFrame(channel.lastMessageWithSchema, options.buffer);
+      }
+
+      if (!key) {
+        key = `xstr/${streamCounter++}`;
+      }
+
+      const process = (msg: DataFrameJSON) => {
+        if (!data) {
+          data = new StreamingDataFrame(msg, options.buffer);
+        } else {
+          data.push(msg);
+        }
+        state = LoadingState.Streaming;
+
+        // Filter out fields
+        if (!filtered || msg.schema) {
+          filtered = data;
+          if (options.filter) {
+            const { fields } = options.filter;
+            if (fields?.length) {
+              filtered = {
+                ...data,
+                fields: data.fields.filter((f) => fields.includes(f.name)),
+              };
+            }
+          }
+        }
+
+        const elapsed = perf.last - last;
+        if (elapsed > 1000 || perf.ok) {
+          filtered.length = data.length; // make sure they stay up-to-date
+          subscriber.next({ state, data: [filtered], key });
+          last = perf.last;
+        }
+      };
+
+      const sub = channel.getStream().subscribe({
+        error: (err: any) => {
+          console.log('LiveQuery [error]', { err }, options.addr);
+          state = LoadingState.Error;
+          subscriber.next({ state, data: [data], key, error: toDataQueryError(err) });
+          sub.unsubscribe(); // close after error
+        },
+        complete: () => {
+          console.log('LiveQuery [complete]', options.addr);
+          if (state !== LoadingState.Error) {
+            state = LoadingState.Done;
+          }
+          // or track errors? subscriber.next({ state, data: [data], key });
+          subscriber.complete();
+          sub.unsubscribe();
+        },
+        next: (evt: LiveChannelEvent) => {
+          if (isLiveChannelMessageEvent(evt)) {
+            process(evt.message);
+            return;
+          }
+          if (isLiveChannelStatusEvent(evt)) {
+            if (evt.error) {
+              let error = toDataQueryError(evt.error);
+              error.message = `Streaming channel error: ${error.message}`;
+              state = LoadingState.Error;
+              subscriber.next({ state, data: [data], key, error });
+              return;
+            } else if (
+              evt.state === LiveChannelConnectionState.Connected ||
+              evt.state === LiveChannelConnectionState.Pending
+            ) {
+              if (evt.message) {
+                process(evt.message);
+              }
+              return;
+            }
+            console.log('ignore state', evt);
+          }
+        },
+      });
+
+      return () => {
+        sub.unsubscribe();
+      };
+    });
+  }
+
+  /**
+   * For channels that support presence, this will request the current state from the server.
+   *
+   * Join and leave messages will be sent to the open stream
+   */
+  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
+    return this.getChannel(address).getPresence();
+  }
+
+  /**
+   * Publish into a channel
+   *
+   * @alpha -- experimental
+   */
+  publish(address: LiveChannelAddress, data: any): Promise<any> {
+    return getBackendSrv().post(`api/live/publish`, {
+      channel: toLiveChannelId(address),
+      data,
+    });
+  }
 }
+
+// This is used to give a unique key for each stream.  The actual value does not matter
+let streamCounter = 0;
 
 export function getGrafanaLiveCentrifugeSrv() {
   return getGrafanaLiveSrv() as CentrifugeSrv;

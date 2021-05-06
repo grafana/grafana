@@ -64,7 +64,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				}
 				continue
 			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, TargetConditions: scope.TargetConditions}
+			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, TargetConditions: scope.TargetConditions, IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled()}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
 			}
@@ -79,6 +79,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				OrgId:            c.OrgId,
 				Target:           scope.Target,
 				TargetConditions: scope.TargetConditions,
+				IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled()
 				Default:          scope.DefaultLimit,
 			}
 			if err := bus.Dispatch(&query); err != nil {
@@ -98,7 +99,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn || c.UserId == 0 {
 				continue
 			}
-			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
+			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit, IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled()}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
 			}
@@ -164,6 +165,12 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 	case "session":
 		scopes = append(scopes,
 			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Session},
+		)
+		return scopes, nil
+	case "alert_rule": // target need to match the respective database name
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.AlertRule},
+			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.AlertRule},
 		)
 		return scopes, nil
 	default:

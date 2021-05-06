@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { withKnobs, object } from '@storybook/addon-knobs';
+import { Meta, Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
@@ -10,24 +10,28 @@ import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas
 export default {
   title: 'Forms/Select/ButtonSelect',
   component: ButtonSelect,
-  decorators: [withCenteredStory, withKnobs],
-};
+  decorators: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['className', 'options', 'value', 'tooltipContent'],
+    },
+  },
+} as Meta;
 
-export const Basic: FC = () => {
-  const initialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
-  const value = object<SelectableValue<string>>('Selected Value:', initialState);
-  const options = object<Array<SelectableValue<string>>>('Options:', [
-    initialState,
-    { label: 'Another label', value: 'Another value' },
-  ]);
-
+export const Basic: Story = (args) => {
+  const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
+  const options: Array<SelectableValue<string>> = [initialValue, { label: 'Another label', value: 'Another value' }];
   return (
     <DashboardStoryCanvas>
-      <UseState initialState={value}>
+      <UseState initialState={initialValue}>
         {(value, updateValue) => {
           return (
             <div style={{ marginLeft: '100px', position: 'relative', display: 'inline-block' }}>
               <ButtonSelect
+                {...args}
                 value={value}
                 options={options}
                 onChange={(value) => {
@@ -42,4 +46,8 @@ export const Basic: FC = () => {
       </UseState>
     </DashboardStoryCanvas>
   );
+};
+Basic.args = {
+  narrow: true,
+  variant: 'default',
 };

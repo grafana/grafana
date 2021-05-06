@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // Resample turns the Series into a Number based on the given reduction function
-func (s Series) Resample(refID string, interval time.Duration, downsampler string, upsampler string, tr backend.TimeRange) (Series, error) {
-	newSeriesLength := int(float64(tr.To.Sub(tr.From).Nanoseconds()) / float64(interval.Nanoseconds()))
+func (s Series) Resample(refID string, interval time.Duration, downsampler string, upsampler string, from, to time.Time) (Series, error) {
+	newSeriesLength := int(float64(to.Sub(from).Nanoseconds()) / float64(interval.Nanoseconds()))
 	if newSeriesLength <= 0 {
 		return s, fmt.Errorf("the series cannot be sampled further; the time range is shorter than the interval")
 	}
-	resampled := NewSeries(refID, s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullable, newSeriesLength+1)
+	resampled := NewSeries(refID, s.GetLabels(), s.TimeIdx, true, s.ValueIdx, true, newSeriesLength+1)
 	bookmark := 0
 	var lastSeen *float64
 	idx := 0
-	t := tr.From
-	for !t.After(tr.To) && idx <= newSeriesLength {
+	t := from
+	for !t.After(to) && idx <= newSeriesLength {
 		vals := make([]*float64, 0)
 		sIdx := bookmark
 		for {
@@ -57,16 +56,17 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 			}
 		} else { // downsampling
 			fVec := data.NewField("", s.GetLabels(), vals)
+			ff := Float64Field(*fVec)
 			var tmp *float64
 			switch downsampler {
 			case "sum":
-				tmp = Sum(fVec)
+				tmp = Sum(&ff)
 			case "mean":
-				tmp = Avg(fVec)
+				tmp = Avg(&ff)
 			case "min":
-				tmp = Min(fVec)
+				tmp = Min(&ff)
 			case "max":
-				tmp = Max(fVec)
+				tmp = Max(&ff)
 			default:
 				return s, fmt.Errorf("downsampling %v not implemented", downsampler)
 			}

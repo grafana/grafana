@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import React from 'react';
-import _get from 'lodash/get';
+import { get as _get } from 'lodash';
 import IoChevronRight from 'react-icons/lib/io/chevron-right';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import { TraceSpan } from '../types/trace';

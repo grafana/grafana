@@ -9,7 +9,8 @@ export const cleanValue = (value: any, options: Array<SelectableValue | Selectab
     const filtered = value.filter(Boolean);
     return filtered?.length ? filtered : undefined;
   }
-  if (typeof value === 'object' && value !== null) {
+  if (typeof value === 'object') {
+    // we want to allow null through into here, so the Select value can be unset
     return [value];
   }
   if (typeof value === 'string' || typeof value === 'number') {

@@ -5,6 +5,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -45,38 +46,53 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // ExecutionResults contains the unevaluated results from executing
 // a condition.
 type ExecutionResults struct {
-	AlertDefinitionID int64
-
 	Error error
 
 	Results data.Frames
 }
 
 // Results is a slice of evaluated alert instances states.
-type Results []result
+type Results []Result
 
-// result contains the evaluated state of an alert instance
+// Result contains the evaluated State of an alert instance
 // identified by its labels.
-type result struct {
+type Result struct {
 	Instance data.Labels
-	State    state // Enum
+	State    State // Enum
+	// Error message for Error state. should be nil if State != Error.
+	Error              error
+	EvaluatedAt        time.Time
+	EvaluationDuration time.Duration
 }
 
-// state is an enum of the evaluation state for an alert instance.
-type state int
+// State is an enum of the evaluation State for an alert instance.
+type State int
 
 const (
 	// Normal is the eval state for an alert instance condition
 	// that evaluated to false.
-	Normal state = iota
+	Normal State = iota
 
 	// Alerting is the eval state for an alert instance condition
-	// that evaluated to false.
+	// that evaluated to true (Alerting).
 	Alerting
+
+	// Pending is the eval state for an alert instance condition
+	// that evaluated to true (Alerting) but has not yet met
+	// the For duration defined in AlertRule.
+	Pending
+
+	// NoData is the eval state for an alert rule condition
+	// that evaluated to NoData.
+	NoData
+
+	// Error is the eval state for an alert rule condition
+	// that evaluated to Error.
+	Error
 )
 
-func (s state) String() string {
-	return [...]string{"Normal", "Alerting"}[s]
+func (s State) String() string {
+	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
 // AlertExecCtx is the context provided for executing an alert condition.
@@ -87,23 +103,14 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// execute runs the Condition's expressions or queries.
-func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
-	result := ExecutionResults{}
-	if !c.IsValid() {
-		return nil, fmt.Errorf("invalid conditions")
-		// TODO: Things probably
+// GetExprRequest validates the condition and creates a expr.Request from it.
+func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
+	req := &expr.Request{
+		OrgId: ctx.OrgID,
 	}
 
-	queryDataReq := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			OrgID: ctx.OrgID,
-		},
-		Queries: []backend.DataQuery{},
-	}
-
-	for i := range c.QueriesAndExpressions {
-		q := c.QueriesAndExpressions[i]
+	for i := range data {
+		q := data[i]
 		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
@@ -118,94 +125,214 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
 
-		queryDataReq.Queries = append(queryDataReq.Queries, backend.DataQuery{
+		req.Queries = append(req.Queries, expr.Query{
+			TimeRange: expr.TimeRange{
+				From: q.RelativeTimeRange.ToTimeRange(now).From,
+				To:   q.RelativeTimeRange.ToTimeRange(now).To,
+			},
+			DatasourceUID: q.DatasourceUID,
 			JSON:          model,
 			Interval:      interval,
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
+	}
+	return req, nil
+}
+
+func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) ExecutionResults {
+	result := ExecutionResults{}
+
+	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, dataService)
+
+	if err != nil {
+		return ExecutionResults{Error: err}
+	}
+
+	for refID, res := range execResp.Responses {
+		if refID != c.Condition {
+			continue
+		}
+		result.Results = res.Frames
+	}
+
+	return result
+}
+
+func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+	queryDataReq, err := GetExprRequest(ctx, data, now)
+	if err != nil {
+		return nil, err
 	}
 
 	exprService := expr.Service{
 		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
 		DataService: dataService,
 	}
-	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
-	if err != nil {
-		return &result, err
-	}
-
-	for refID, res := range pbRes.Responses {
-		if refID != c.RefID {
-			continue
-		}
-		result.Results = res.Frames
-	}
-
-	if len(result.Results) == 0 {
-		err = fmt.Errorf("no GEL results")
-		result.Error = err
-		return &result, err
-	}
-
-	return &result, nil
+	return exprService.TransformData(ctx.Ctx, queryDataReq)
 }
 
-// evaluateExecutionResult takes the ExecutionResult, and returns a frame where
-// each column is a string type that holds a string representing its state.
-func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
-	evalResults := make([]result, 0)
-	labels := make(map[string]bool)
-	for _, f := range results.Results {
+// evaluateExecutionResult takes the ExecutionResult which includes data.Frames returned
+// from SSE (Server Side Expressions). It will create Results (slice of Result) with a State
+// extracted from each Frame.
+//
+// If the ExecutionResults error property is not nil, a single Error result will be returned.
+// If there is no error and no results then a single NoData state Result will be returned.
+//
+// Each non-empty Frame must be a single Field of type []*float64 and of length 1.
+// Also, each Frame must be uniquely identified by its Field.Labels or a single Error result will be returned.
+//
+// Per Frame, data becomes a State based on the following rules:
+//  - Empty or zero length Frames result in NoData.
+//  - If a value:
+//    - 0 results in Normal.
+//    - Nonzero (e.g 1.2, NaN) results in Alerting.
+//    - nil results in noData.
+//    - unsupported Frame schemas results in Error.
+func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
+	evalResults := make([]Result, 0)
+
+	appendErrRes := func(e error) {
+		evalResults = append(evalResults, Result{
+			State:              Error,
+			Error:              e,
+			EvaluatedAt:        ts,
+			EvaluationDuration: time.Since(ts),
+		})
+	}
+
+	appendNoData := func(l data.Labels) {
+		evalResults = append(evalResults, Result{
+			State:              NoData,
+			Instance:           l,
+			EvaluatedAt:        ts,
+			EvaluationDuration: time.Since(ts),
+		})
+	}
+
+	if execResults.Error != nil {
+		appendErrRes(execResults.Error)
+		return evalResults
+	}
+
+	if len(execResults.Results) == 0 {
+		appendNoData(nil)
+		return evalResults
+	}
+
+	for _, f := range execResults.Results {
 		rowLen, err := f.RowLen()
 		if err != nil {
-			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err}
+			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err})
+			continue
 		}
+
+		if len(f.TypeIndices(data.FieldTypeTime, data.FieldTypeNullableTime)) > 0 {
+			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "looks like time series data, only reduced data can be alerted on."})
+			continue
+		}
+
+		if rowLen == 0 {
+			if len(f.Fields) == 0 {
+				appendNoData(nil)
+				continue
+			}
+			if len(f.Fields) == 1 {
+				appendNoData(f.Fields[0].Labels)
+				continue
+			}
+		}
+
 		if rowLen > 1 {
-			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected row length: %d instead of 1", rowLen)}
+			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected row length: %d instead of 0 or 1", rowLen)})
+			continue
 		}
 
 		if len(f.Fields) > 1 {
-			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected field length: %d instead of 1", len(f.Fields))}
+			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected field length: %d instead of 1", len(f.Fields))})
+			continue
 		}
 
 		if f.Fields[0].Type() != data.FieldTypeNullableFloat64 {
-			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("invalid field type: %d", f.Fields[0].Type())}
+			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("invalid field type: %s", f.Fields[0].Type())})
+			continue
 		}
 
-		labelsStr := f.Fields[0].Labels.String()
-		_, ok := labels[labelsStr]
-		if ok {
-			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: %s", labelsStr)}
-		}
-		labels[labelsStr] = true
+		val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
 
-		state := Normal
-		val, err := f.Fields[0].FloatAt(0)
-		if err != nil || val != 0 {
-			state = Alerting
+		r := Result{
+			Instance:           f.Fields[0].Labels,
+			EvaluatedAt:        ts,
+			EvaluationDuration: time.Since(ts),
 		}
 
-		evalResults = append(evalResults, result{
-			Instance: f.Fields[0].Labels,
-			State:    state,
-		})
+		switch {
+		case val == nil:
+			r.State = NoData
+		case *val == 0:
+			r.State = Normal
+		default:
+			r.State = Alerting
+		}
+
+		evalResults = append(evalResults, r)
 	}
-	return evalResults, nil
+
+	seenLabels := make(map[string]bool)
+	for _, res := range evalResults {
+		labelsStr := res.Instance.String()
+		_, ok := seenLabels[labelsStr]
+		if ok {
+			return Results{
+				Result{
+					State:              Error,
+					Instance:           res.Instance,
+					EvaluatedAt:        ts,
+					EvaluationDuration: time.Since(ts),
+					Error:              &invalidEvalResultFormatError{reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: has duplicate results with labels {%s}", labelsStr)},
+				},
+			}
+		}
+		seenLabels[labelsStr] = true
+	}
+
+	return evalResults
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
-// This may be temporary, as there might be a fair amount we want to display in the frontend, and it might not make sense to store that in data.Frame.
-// For the first pass, I would expect a Frame with a single row, and a column for each instance with a boolean value.
+// It displays one row per alert instance, with a column for each label and one for the alerting state.
 func (evalResults Results) AsDataFrame() data.Frame {
-	fields := make([]*data.Field, 0)
+	fieldLen := len(evalResults)
+
+	uniqueLabelKeys := make(map[string]struct{})
+
 	for _, evalResult := range evalResults {
-		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))
+		for k := range evalResult.Instance {
+			uniqueLabelKeys[k] = struct{}{}
+		}
 	}
-	f := data.NewFrame("", fields...)
-	return *f
+
+	labelColumns := make([]string, 0, len(uniqueLabelKeys))
+	for k := range uniqueLabelKeys {
+		labelColumns = append(labelColumns, k)
+	}
+
+	labelColumns = sort.StringSlice(labelColumns)
+
+	frame := data.NewFrame("evaluation results")
+	for _, lKey := range labelColumns {
+		frame.Fields = append(frame.Fields, data.NewField(lKey, nil, make([]string, fieldLen)))
+	}
+	frame.Fields = append(frame.Fields, data.NewField("State", nil, make([]string, fieldLen)))
+
+	for evalIdx, evalResult := range evalResults {
+		for lIdx, v := range labelColumns {
+			frame.Set(lIdx, evalIdx, evalResult.Instance[v])
+		}
+		frame.Set(len(labelColumns), evalIdx, evalResult.State.String())
+	}
+	return *frame
 }
 
 // ConditionEval executes conditions and evaluates the result.
@@ -215,14 +342,23 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
-	execResult, err := execute(alertExecCtx, condition, now, dataService)
+	execResult := executeCondition(alertExecCtx, condition, now, dataService)
+
+	evalResults := evaluateExecutionResult(execResult, now)
+	return evalResults, nil
+}
+
+// QueriesAndExpressionsEval executes queries and expressions and returns the result.
+func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
+	defer cancelFn()
+
+	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, dataService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
 
-	evalResults, err := evaluateExecutionResult(execResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to evaluate results: %w", err)
-	}
-	return evalResults, nil
+	return execResult, nil
 }

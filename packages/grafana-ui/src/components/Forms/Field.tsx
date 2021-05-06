@@ -1,8 +1,8 @@
 import React, { HTMLAttributes } from 'react';
 import { Label } from './Label';
-import { stylesFactory, useTheme } from '../../themes';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../themes';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { getChildId } from '../../utils/children';
 
@@ -12,7 +12,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
-  description?: string;
+  description?: React.ReactNode;
   /** Indicates if field is in invalid state */
   invalid?: boolean;
   /** Indicates if field is in loading state */
@@ -28,12 +28,12 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-export const getFieldStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     field: css`
       display: flex;
       flex-direction: column;
-      margin-bottom: ${theme.spacing.formInputMargin};
+      margin-bottom: ${theme.spacing(2)};
     `,
     fieldHorizontal: css`
       flex-direction: row;
@@ -41,7 +41,7 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-wrap: wrap;
     `,
     fieldValidationWrapper: css`
-      margin-top: ${theme.spacing.formSpacingBase / 2}px;
+      margin-top: ${theme.spacing(0.5)};
     `,
     fieldValidationWrapperHorizontal: css`
       flex: 1 1 100%;
@@ -62,7 +62,7 @@ export const Field: React.FC<FieldProps> = ({
   className,
   ...otherProps
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getFieldStyles(theme);
   const inputId = getChildId(children);
 

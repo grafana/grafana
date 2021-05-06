@@ -1,7 +1,6 @@
-import { FieldColorMode, getColorForTheme, GrafanaTheme, ThresholdsConfig } from '@grafana/data';
+import { FieldColorMode, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
-import darkTheme from '../../../themes/dark';
 import { getCanvasContext } from '../../../utils/measureText';
 
 export function getOpacityGradientFn(
@@ -21,7 +20,7 @@ export function getOpacityGradientFn(
 export function getHueGradientFn(
   color: string,
   opacity: number,
-  theme: GrafanaTheme
+  theme: GrafanaTheme2
 ): (self: uPlot, seriesIdx: number) => CanvasGradient {
   return (plot: uPlot, seriesIdx: number) => {
     const ctx = getCanvasContext();
@@ -69,7 +68,7 @@ export function getScaleGradientFn(
     console.log('series.max', series.max);
 
     const getColorWithAlpha = (color: string) => {
-      return tinycolor(getColorForTheme(color, darkTheme)).setAlpha(opacity).toString();
+      return 'rgb(255, 0, 0)';
     };
 
     const addColorStop = (value: number, color: string) => {

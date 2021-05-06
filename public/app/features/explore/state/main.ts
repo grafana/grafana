@@ -184,6 +184,14 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 
   if (cleanupPaneAction.match(action)) {
     const { exploreId } = action.payload as CleanupPanePayload;
+
+    // We want to do this only when we remove single pane not when we are unmounting whole explore.
+    // It needs to be checked like this because in component we don't get new path (which would tell us if we are
+    // navigating out of explore) before the unmount.
+    if (!state[exploreId]?.initialized) {
+      return state;
+    }
+
     if (exploreId === ExploreId.left) {
       return {
         ...state,

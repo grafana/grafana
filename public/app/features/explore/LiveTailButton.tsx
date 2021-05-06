@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { CSSTransition } from 'react-transition-group';
 import { useTheme, Tooltip, stylesFactory, ButtonGroup, ToolbarButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';

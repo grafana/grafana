@@ -351,6 +351,7 @@ describe('adhoc actions', () => {
   describe('when initAdHocVariableEditor is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const datasources = [
+        { ...createDatasource('default', true), value: null },
         createDatasource('elasticsearch-v1'),
         createDatasource('loki', false),
         createDatasource('influx'),
@@ -367,6 +368,7 @@ describe('adhoc actions', () => {
 
       const expectedDatasources = [
         { text: '', value: '' },
+        { text: 'default (default)', value: null },
         { text: 'elasticsearch-v1', value: 'elasticsearch-v1' },
         { text: 'influx', value: 'influx' },
         { text: 'elasticsearch-v7', value: 'elasticsearch-v7' },
@@ -381,7 +383,7 @@ describe('adhoc actions', () => {
   describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'mysql';
-      const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
 
       getDatasource.mockRestore();
@@ -398,7 +400,7 @@ describe('adhoc actions', () => {
         changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })),
         changeVariableEditorExtended({
           propName: 'infoText',
-          propValue: 'This datasource does not support adhoc filters yet.',
+          propValue: 'This data source does not support ad hoc filters yet.',
         })
       );
     });
@@ -407,7 +409,7 @@ describe('adhoc actions', () => {
   describe('when changeVariableDatasource is dispatched with datasource', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'elasticsearch';
-      const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
 
       getDatasource.mockRestore();

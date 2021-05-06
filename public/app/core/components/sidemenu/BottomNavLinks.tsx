@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
 import { Icon, IconName, Link } from '@grafana/ui';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { getFooterLinks } from '../Footer/Footer';
-import { ShowModalEvent } from '../../../types/events';
+import { ShowModalReactEvent } from '../../../types/events';
+import { HelpModal } from '../help/HelpModal';
 
 export interface Props {
   link: NavModelItem;
@@ -23,11 +24,7 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
   };
 
   onOpenShortcuts = () => {
-    appEvents.publish(
-      new ShowModalEvent({
-        templateHtml: '<help-modal></help-modal>',
-      })
-    );
+    appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   };
 
   toggleSwitcherModal = () => {

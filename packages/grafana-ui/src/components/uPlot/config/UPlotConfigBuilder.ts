@@ -3,11 +3,11 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
 import { defaultsDeep } from 'lodash';
-import { DefaultTimeZone, getTimeZoneInfo } from '@grafana/data';
-
-type valueof<T> = T[keyof T];
+import { DefaultTimeZone, getTimeZoneInfo, TimeZone } from '@grafana/data';
+import { pluginLog } from '../utils';
+import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -15,23 +15,34 @@ export class UPlotConfigBuilder {
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
   private cursor: Cursor | undefined;
-  // uPlot types don't export the Select interface prior to 1.6.4
-  private select: Partial<BBox> | undefined;
+  private isStacking = false;
+  private select: uPlot.Select | undefined;
   private hasLeftAxis = false;
   private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
+  // to prevent more than one threshold per scale
+  private thresholds: Record<string, UPlotThresholdOptions> = {};
 
-  constructor(getTimeZone = () => DefaultTimeZone) {
-    this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
+  constructor(timeZone: TimeZone = DefaultTimeZone) {
+    this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
   }
 
-  addHook(type: keyof Hooks.Defs, hook: valueof<Hooks.Defs>) {
+  addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]) {
+    pluginLog('UPlotConfigBuilder', false, 'addHook', type);
+
     if (!this.hooks[type]) {
       this.hooks[type] = [];
     }
 
     this.hooks[type]!.push(hook as any);
+  }
+
+  addThresholds(options: UPlotThresholdOptions) {
+    if (!this.thresholds[options.scaleKey]) {
+      this.thresholds[options.scaleKey] = options;
+      this.addHook('drawClear', getThresholdsDrawHook(options));
+    }
   }
 
   addAxis(props: AxisProps) {
@@ -73,11 +84,13 @@ export class UPlotConfigBuilder {
     this.cursor = cursor;
   }
 
-  // uPlot types don't export the Select interface prior to 1.6.4
-  setSelect(select: Partial<BBox>) {
+  setSelect(select: Select) {
     this.select = select;
   }
 
+  setStacking(enabled = true) {
+    this.isStacking = enabled;
+  }
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
@@ -118,16 +131,22 @@ export class UPlotConfigBuilder {
 
     config.tzDate = this.tzDate;
 
-    // When bands exist, only keep fill when defined
-    if (this.bands?.length) {
+    if (this.isStacking) {
+      // Let uPlot handle bands and fills
       config.bands = this.bands;
-      const keepFill = new Set<number>();
-      for (const b of config.bands) {
-        keepFill.add(b.series[0]);
-      }
-      for (let i = 1; i < config.series.length; i++) {
-        if (!keepFill.has(i)) {
-          config.series[i].fill = undefined;
+    } else {
+      // When fillBelowTo option enabled, handle series bands fill manually
+      if (this.bands?.length) {
+        config.bands = this.bands;
+        const keepFill = new Set<number>();
+        for (const b of config.bands) {
+          keepFill.add(b.series[0]);
+        }
+
+        for (let i = 1; i < config.series.length; i++) {
+          if (!keepFill.has(i)) {
+            config.series[i].fill = undefined;
+          }
         }
       }
     }

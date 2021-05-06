@@ -3,7 +3,6 @@ import { LoadingState } from '@grafana/data';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import {
   changePage,
-  changeSearchString,
   initialLibraryPanelsViewState,
   initSearch,
   libraryPanelsViewReducer,
@@ -73,18 +72,6 @@ describe('libraryPanelsViewReducer', () => {
     });
   });
 
-  describe('when changeSearchString is dispatched', () => {
-    it('then the state should be correct', () => {
-      reducerTester<LibraryPanelsViewState>()
-        .givenReducer(libraryPanelsViewReducer, { ...initialLibraryPanelsViewState })
-        .whenActionIsDispatched(changeSearchString({ searchString: 'a search string' }))
-        .thenStateShouldEqual({
-          ...initialLibraryPanelsViewState,
-          searchString: 'a search string',
-        });
-    });
-  });
-
   describe('when changePage is dispatched', () => {
     it('then the state should be correct', () => {
       reducerTester<LibraryPanelsViewState>()
@@ -123,6 +110,8 @@ function mockLibraryPanel({
   model = { type: 'text', title: 'Test Panel' },
   meta = {
     canEdit: true,
+    folderName: 'General',
+    folderUid: '',
     connectedDashboards: 0,
     created: '2021-01-01T00:00:00',
     createdBy: { id: 1, name: 'User X', avatarUrl: '/avatar/abc' },
@@ -130,6 +119,8 @@ function mockLibraryPanel({
     updatedBy: { id: 2, name: 'User Y', avatarUrl: '/avatar/xyz' },
   },
   version = 1,
+  description = 'a description',
+  type = 'text',
 }: Partial<LibraryPanelDTO> = {}): LibraryPanelDTO {
   return {
     uid,
@@ -140,5 +131,7 @@ function mockLibraryPanel({
     model,
     version,
     meta,
+    description,
+    type,
   };
 }

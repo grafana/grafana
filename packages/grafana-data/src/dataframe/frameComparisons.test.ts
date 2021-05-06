@@ -93,39 +93,6 @@ describe('test comparisons', () => {
     ).toBeFalsy();
   });
 
-  it('should skip provided properties', () => {
-    expect(
-      compareDataFrameStructures(
-        {
-          ...frameB,
-          fields: [
-            field0,
-            {
-              ...field1,
-              config: {
-                ...field1.config,
-              },
-            },
-          ],
-        },
-        {
-          ...frameB,
-          fields: [
-            field0,
-            {
-              ...field1,
-              config: {
-                ...field1.config,
-                unit: 'rpm',
-              },
-            },
-          ],
-        },
-        ['unit']
-      )
-    ).toBeTruthy();
-  });
-
   describe('custom config comparison', () => {
     it('handles custom config shallow equality', () => {
       const a = {

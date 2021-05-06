@@ -51,10 +51,30 @@ func TestOpsGenieNotifier(t *testing.T) {
 				So(opsgenieNotifier.Type, ShouldEqual, "opsgenie")
 				So(opsgenieNotifier.APIKey, ShouldEqual, "abcdefgh0123456789")
 			})
+		})
 
-			Convey("alert payload should include tag pairs in a ['key1:value1'] format when a value exists and in ['key2'] format when a value is absent", func() {
-				json := `
-				{
+		Convey("Handling notification tags", func() {
+			Convey("invalid sendTagsAs value should return error", func() {
+				json := `{
+          "apiKey": "abcdefgh0123456789",
+          "sendTagsAs": "not_a_valid_value"
+                                }`
+
+				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				model := &models.AlertNotification{
+					Name:     "opsgenie_testing",
+					Type:     "opsgenie",
+					Settings: settingsJSON,
+				}
+
+				_, err := NewOpsGenieNotifier(model)
+				So(err, ShouldNotBeNil)
+				So(err, ShouldHaveSameTypeAs, alerting.ValidationError{})
+				So(err.Error(), ShouldEndWith, "Invalid value for sendTagsAs: \"not_a_valid_value\"")
+			})
+
+			Convey("alert payload should include tag pairs only as an array in the tags key when sendAsTags is not set", func() {
+				json := `{
           "apiKey": "abcdefgh0123456789"
 				}`
 
@@ -83,11 +103,13 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}, &validations.OSSPluginRequestValidator{})
 				evalContext.IsTestRun = true
 
-				receivedTags := make([]string, 0)
+				tags := make([]string, 0)
+				details := make(map[string]interface{})
 				bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
 					bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
 					if err == nil {
-						receivedTags = bodyJSON.Get("tags").MustStringArray([]string{})
+						tags = bodyJSON.Get("tags").MustStringArray([]string{})
+						details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
 					}
 					return err
 				})
@@ -96,7 +118,108 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				So(notifierErr, ShouldBeNil)
 				So(alertErr, ShouldBeNil)
-				So(receivedTags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
+				So(tags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
+				So(details, ShouldResemble, map[string]interface{}{"url": ""})
+			})
+
+			Convey("alert payload should include tag pairs only as a map in the details key when sendAsTags=details", func() {
+				json := `{
+          "apiKey": "abcdefgh0123456789",
+          "sendTagsAs": "details"
+				}`
+
+				tagPairs := []*models.Tag{
+					{Key: "keyOnly"},
+					{Key: "aKey", Value: "aValue"},
+				}
+
+				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				model := &models.AlertNotification{
+					Name:     "opsgenie_testing",
+					Type:     "opsgenie",
+					Settings: settingsJSON,
+				}
+
+				notifier, notifierErr := NewOpsGenieNotifier(model) // unhandled error
+
+				opsgenieNotifier := notifier.(*OpsGenieNotifier)
+
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:            0,
+					Name:          "someRule",
+					Message:       "someMessage",
+					State:         models.AlertStateAlerting,
+					AlertRuleTags: tagPairs,
+				}, nil)
+				evalContext.IsTestRun = true
+
+				tags := make([]string, 0)
+				details := make(map[string]interface{})
+				bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
+					bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
+					if err == nil {
+						tags = bodyJSON.Get("tags").MustStringArray([]string{})
+						details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+					}
+					return err
+				})
+
+				alertErr := opsgenieNotifier.createAlert(evalContext)
+
+				So(notifierErr, ShouldBeNil)
+				So(alertErr, ShouldBeNil)
+				So(tags, ShouldResemble, []string{})
+				So(details, ShouldResemble, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
+			})
+
+			Convey("alert payload should include tag pairs as both a map in the details key and an array in the tags key when sendAsTags=both", func() {
+				json := `{
+          "apiKey": "abcdefgh0123456789",
+          "sendTagsAs": "both"
+				}`
+
+				tagPairs := []*models.Tag{
+					{Key: "keyOnly"},
+					{Key: "aKey", Value: "aValue"},
+				}
+
+				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				model := &models.AlertNotification{
+					Name:     "opsgenie_testing",
+					Type:     "opsgenie",
+					Settings: settingsJSON,
+				}
+
+				notifier, notifierErr := NewOpsGenieNotifier(model) // unhandled error
+
+				opsgenieNotifier := notifier.(*OpsGenieNotifier)
+
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:            0,
+					Name:          "someRule",
+					Message:       "someMessage",
+					State:         models.AlertStateAlerting,
+					AlertRuleTags: tagPairs,
+				}, nil)
+				evalContext.IsTestRun = true
+
+				tags := make([]string, 0)
+				details := make(map[string]interface{})
+				bus.AddHandlerCtx("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
+					bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
+					if err == nil {
+						tags = bodyJSON.Get("tags").MustStringArray([]string{})
+						details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+					}
+					return err
+				})
+
+				alertErr := opsgenieNotifier.createAlert(evalContext)
+
+				So(notifierErr, ShouldBeNil)
+				So(alertErr, ShouldBeNil)
+				So(tags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
+				So(details, ShouldResemble, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
 			})
 		})
 	})

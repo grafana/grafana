@@ -1,41 +1,65 @@
-import React from 'react';
-import { css, cx } from 'emotion';
+import React, { useCallback } from 'react';
+import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem, SeriesColorChangeHandler } from './types';
+import { VizLegendItem } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   item: VizLegendItem;
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onSeriesColorChange?: SeriesColorChangeHandler;
+  onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 /**
  * @internal
  */
-export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
+export const VizLegendListItem: React.FunctionComponent<Props> = ({
+  item,
+  onLabelClick,
+  onLabelMouseEnter,
+  onLabelMouseOut,
+}) => {
   const styles = useStyles(getStyles);
 
+  const onMouseEnter = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (onLabelMouseEnter) {
+        onLabelMouseEnter(item, event);
+      }
+    },
+    [item, onLabelMouseEnter]
+  );
+
+  const onMouseOut = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (onLabelMouseOut) {
+        onLabelMouseOut(item, event);
+      }
+    },
+    [item, onLabelMouseOut]
+  );
+
+  const onClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (onLabelClick) {
+        onLabelClick(item, event);
+      }
+    },
+    [item, onLabelClick]
+  );
+
   return (
-    <div className={styles.itemWrapper}>
-      <VizLegendSeriesIcon
-        disabled={!onSeriesColorChange}
-        color={item.color}
-        onColorChange={(color) => {
-          if (onSeriesColorChange) {
-            onSeriesColorChange(item.label, color);
-          }
-        }}
-      />
+    <div className={styles.itemWrapper} aria-label={selectors.components.VizLegend.seriesName(item.label)}>
+      <VizLegendSeriesIcon seriesName={item.label} color={item.color} />
       <div
-        onClick={(event) => {
-          if (onLabelClick) {
-            onLabelClick(item, event);
-          }
-        }}
+        onMouseEnter={onMouseEnter}
+        onMouseOut={onMouseOut}
+        onClick={onClick}
         className={cx(styles.label, item.disabled && styles.labelDisabled)}
       >
         {item.label}

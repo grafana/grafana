@@ -96,8 +96,8 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
                 labelWidth={20}
                 tooltip={
                   <div>
-                    Regex filter for which data source instances to choose from in the variable value dropdown. Leave
-                    empty for all.
+                    Regex filter for which data source instances to choose from in the variable value list. Leave empty
+                    for all.
                     <br />
                     <br />
                     Example: <code>/^prod/</code>

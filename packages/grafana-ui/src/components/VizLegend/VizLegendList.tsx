@@ -2,7 +2,7 @@ import React from 'react';
 import { VizLegendBaseProps, VizLegendItem } from './types';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { VizLegendListItem } from './VizLegendListItem';
@@ -15,8 +15,9 @@ export interface Props extends VizLegendBaseProps {}
 export const VizLegendList: React.FunctionComponent<Props> = ({
   items,
   itemRenderer,
-  onSeriesColorChange,
   onLabelClick,
+  onLabelMouseEnter,
+  onLabelMouseOut,
   placement,
   className,
 }) => {
@@ -25,7 +26,12 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item) => (
-      <VizLegendListItem item={item} onLabelClick={onLabelClick} onSeriesColorChange={onSeriesColorChange} />
+      <VizLegendListItem
+        item={item}
+        onLabelClick={onLabelClick}
+        onLabelMouseEnter={onLabelMouseEnter}
+        onLabelMouseOut={onLabelMouseOut}
+      />
     );
   }
 

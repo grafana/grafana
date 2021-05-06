@@ -3,11 +3,12 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../common';
+import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 interface AggregationFieldProps extends AzureQueryEditorFieldProps {
   aggregationOptions: AzureMonitorOption[];
+  isLoading: boolean;
 }
 
 const AggregationField: React.FC<AggregationFieldProps> = ({
@@ -15,6 +16,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
   variableOptionGroup,
   onQueryChange,
   aggregationOptions,
+  isLoading,
 }) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -30,7 +32,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...aggregationOptions, variableOptionGroup], [
@@ -46,6 +48,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        isLoading={isLoading}
       />
     </Field>
   );

@@ -2,7 +2,10 @@ package librarypanels
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/search"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -51,20 +54,25 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    100,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       1,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel",
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
-								"datasource": "${DS_GDEV-TESTDATA}",
-								"id":         float64(1),
-								"title":      "Text - Library Panel",
-								"type":       "text",
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel",
+								"type":        "text",
 							},
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -81,20 +89,475 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							},
 						},
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[1].UID,
-							Name:     "Text - Library Panel2",
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[1].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
-								"datasource": "${DS_GDEV-TESTDATA}",
-								"id":         float64(1),
-								"title":      "Text - Library Panel2",
-								"type":       "text",
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel2",
+								"type":        "text",
 							},
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[1].Meta.Created,
+								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and sort desc is set, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("sortDirection", search.SortAlphaDesc.Name)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount: 2,
+					Page:       1,
+					PerPage:    100,
+					LibraryPanels: []libraryPanel{
+						{
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel2",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[0].Meta.Created,
+								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+						{
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[1].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[1].Meta.Created,
+								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and panelFilter is set to existing types, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", []byte(`
+			{
+			  "datasource": "${DS_GDEV-TESTDATA}",
+			  "id": 1,
+			  "title": "Gauge - Library Panel",
+			  "type": "gauge",
+			  "description": "Gauge description"
+			}
+		`))
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+
+			command = getCreateCommandWithModel(sc.folder.Id, "BarGauge - Library Panel", []byte(`
+			{
+			  "datasource": "${DS_GDEV-TESTDATA}",
+			  "id": 1,
+			  "title": "BarGauge - Library Panel",
+			  "type": "bargauge",
+			  "description": "BarGauge description"
+			}
+		`))
+			resp = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("panelFilter", "bargauge,gauge")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount: 2,
+					Page:       1,
+					PerPage:    100,
+					LibraryPanels: []libraryPanel{
+						{
+							ID:          3,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "BarGauge - Library Panel",
+							Type:        "bargauge",
+							Description: "BarGauge description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "BarGauge description",
+								"id":          float64(1),
+								"title":       "BarGauge - Library Panel",
+								"type":        "bargauge",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[0].Meta.Created,
+								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+						{
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[1].UID,
+							Name:        "Gauge - Library Panel",
+							Type:        "gauge",
+							Description: "Gauge description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"id":          float64(1),
+								"title":       "Gauge - Library Panel",
+								"type":        "gauge",
+								"description": "Gauge description",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[1].Meta.Created,
+								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and panelFilter is set to non existing type, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", []byte(`
+			{
+			  "datasource": "${DS_GDEV-TESTDATA}",
+			  "id": 1,
+			  "title": "Gauge - Library Panel",
+			  "type": "gauge",
+			  "description": "Gauge description"
+			}
+		`))
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("panelFilter", "unknown1,unknown2")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount:    0,
+					Page:          1,
+					PerPage:       100,
+					LibraryPanels: []libraryPanel{},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to existing folders, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
+			command := getCreateCommand(newFolder.Id, "Text - Library Panel2")
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+			folderFilter := strconv.FormatInt(newFolder.Id, 10)
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("folderFilter", folderFilter)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount: 1,
+					Page:       1,
+					PerPage:    100,
+					LibraryPanels: []libraryPanel{
+						{
+							ID:          2,
+							OrgID:       1,
+							FolderID:    newFolder.Id,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel2",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "NewFolder",
+								FolderUID:           newFolder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[0].Meta.Created,
+								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to non existing folders, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
+			command := getCreateCommand(newFolder.Id, "Text - Library Panel2")
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+			folderFilter := "2020,2021"
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("folderFilter", folderFilter)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount:    0,
+					Page:          1,
+					PerPage:       100,
+					LibraryPanels: []libraryPanel{},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to General folder, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+			folderFilter := "0"
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("folderFilter", folderFilter)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount: 0,
+					Page:       1,
+					PerPage:    100,
+					LibraryPanels: []libraryPanel{
+						{
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[0].Meta.Created,
+								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+						{
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[1].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel2",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[1].Meta.Created,
 								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
@@ -140,20 +603,25 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    100,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel2",
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
-								"datasource": "${DS_GDEV-TESTDATA}",
-								"id":         float64(1),
-								"title":      "Text - Library Panel2",
-								"type":       "text",
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel2",
+								"type":        "text",
 							},
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -199,20 +667,25 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    1,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       1,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel",
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
-								"datasource": "${DS_GDEV-TESTDATA}",
-								"id":         float64(1),
-								"title":      "Text - Library Panel",
-								"type":       "text",
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel",
+								"type":        "text",
 							},
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -259,20 +732,25 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    1,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel2",
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
-								"datasource": "${DS_GDEV-TESTDATA}",
-								"id":         float64(1),
-								"title":      "Text - Library Panel2",
-								"type":       "text",
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel2",
+								"type":        "text",
 							},
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -296,9 +774,17 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 1 and name is panel2, it should succeed and the result should be correct",
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in the description, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
+			command := getCreateCommandWithModel(sc.folder.Id, "Text - Library Panel2", []byte(`
+			{
+			  "datasource": "${DS_GDEV-TESTDATA}",
+			  "id": 1,
+			  "title": "Text - Library Panel",
+			  "type": "text",
+			  "description": "Some other d e s c r i p t i o n"
+			}
+		`))
 			resp := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, resp.Status())
 
@@ -306,7 +792,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "1")
-			sc.reqContext.Req.Form.Add("name", "panel2")
+			sc.reqContext.Req.Form.Add("searchString", "description")
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -320,20 +806,25 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    1,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel2",
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
-								"datasource": "${DS_GDEV-TESTDATA}",
-								"id":         float64(1),
-								"title":      "Text - Library Panel2",
-								"type":       "text",
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel",
+								"type":        "text",
 							},
 							Version: 1,
 							Meta: LibraryPanelDTOMeta{
 								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
 								ConnectedDashboards: 0,
 								Created:             result.Result.LibraryPanels[0].Meta.Created,
 								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
@@ -357,7 +848,180 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and name is panel, it should succeed and the result should be correct",
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in both name and description, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommandWithModel(sc.folder.Id, "Some Other", []byte(`
+			{
+			  "datasource": "${DS_GDEV-TESTDATA}",
+			  "id": 1,
+			  "title": "Text - Library Panel",
+			  "type": "text",
+			  "description": "A Library Panel"
+			}
+		`))
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "Library Panel")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount: 2,
+					Page:       1,
+					PerPage:    100,
+					LibraryPanels: []libraryPanel{
+						{
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Some Other",
+							Type:        "text",
+							Description: "A Library Panel",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A Library Panel",
+								"id":          float64(1),
+								"title":       "Some Other",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[0].Meta.Created,
+								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+						{
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[1].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[1].Meta.Created,
+								Updated:             result.Result.LibraryPanels[1].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 1 and searchString is panel2, it should succeed and the result should be correct",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("perPage", "1")
+			sc.reqContext.Req.Form.Add("page", "1")
+			sc.reqContext.Req.Form.Add("searchString", "panel2")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryPanelsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			var expected = libraryPanelsSearch{
+				Result: libraryPanelsSearchResult{
+					TotalCount: 1,
+					Page:       1,
+					PerPage:    1,
+					LibraryPanels: []libraryPanel{
+						{
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
+							Model: map[string]interface{}{
+								"datasource":  "${DS_GDEV-TESTDATA}",
+								"description": "A description",
+								"id":          float64(1),
+								"title":       "Text - Library Panel2",
+								"type":        "text",
+							},
+							Version: 1,
+							Meta: LibraryPanelDTOMeta{
+								CanEdit:             true,
+								FolderName:          "ScenarioFolder",
+								FolderUID:           sc.folder.Uid,
+								ConnectedDashboards: 0,
+								Created:             result.Result.LibraryPanels[0].Meta.Created,
+								Updated:             result.Result.LibraryPanels[0].Meta.Updated,
+								CreatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+								UpdatedBy: LibraryPanelDTOMetaUser{
+									ID:        1,
+									Name:      UserInDbName,
+									AvatarUrl: UserInDbAvatar,
+								},
+							},
+						},
+					},
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString is panel, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
 			resp := sc.service.createHandler(sc.reqContext, command)
@@ -367,7 +1031,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "3")
-			sc.reqContext.Req.Form.Add("name", "panel")
+			sc.reqContext.Req.Form.Add("searchString", "panel")
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -387,7 +1051,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and name does not exist, it should succeed and the result should be correct",
+	scenarioWithLibraryPanel(t, "When an admin tries to get all library panels and two exist and perPage is 1 and page is 3 and searchString does not exist, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(sc.folder.Id, "Text - Library Panel2")
 			resp := sc.service.createHandler(sc.reqContext, command)
@@ -397,7 +1061,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "3")
-			sc.reqContext.Req.Form.Add("name", "monkey")
+			sc.reqContext.Req.Form.Add("searchString", "monkey")
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 

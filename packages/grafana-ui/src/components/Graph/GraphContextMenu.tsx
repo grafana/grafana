@@ -4,7 +4,6 @@ import { GraphDimensions } from './GraphTooltip/types';
 import {
   FlotDataPoint,
   getValueFromDimension,
-  getDisplayProcessor,
   Dimensions,
   dateTimeFormat,
   TimeZone,
@@ -14,7 +13,7 @@ import { useTheme } from '../../themes';
 import { HorizontalGroup } from '../Layout/Layout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { MenuGroup, MenuGroupProps } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 
@@ -60,12 +59,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
         contextDimensions.yAxis[0],
         contextDimensions.yAxis[1]
       );
-      const display =
-        source.series.valueField.display ??
-        getDisplayProcessor({
-          field: source.series.valueField,
-          timeZone,
-        });
+      const display = source.series.valueField.display!;
       value = display(valueFromDimensions);
     }
 

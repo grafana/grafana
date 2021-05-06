@@ -1,11 +1,10 @@
 // Libraries
-import _ from 'lodash';
+import { flatten, omit, uniq } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
   CoreApp,
   DataQuery,
-  DataQueryError,
   DataQueryRequest,
   DataSourceApi,
   dateMath,
@@ -73,7 +72,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   /** In Explore, we don't have legend formatter and we don't want to keep
    * legend formatting as we can't change it
    */
-  let exploreTargets: DataQuery[] = panelTargets.map((t) => _.omit(t, 'legendFormat'));
+  let exploreTargets: DataQuery[] = panelTargets.map((t) => omit(t, 'legendFormat'));
   let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
@@ -422,14 +421,6 @@ export const getValueWithRefId = (value?: any): any => {
   return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]): DataQueryError | undefined => {
-  if (!errors) {
-    return undefined;
-  }
-
-  return errors.filter((error) => (error && error.refId ? false : true))[0];
-};
-
 export const getRefIds = (value: any): string[] => {
   if (!value) {
     return [];
@@ -450,7 +441,7 @@ export const getRefIds = (value: any): string[] => {
     refIds.push(getRefIds(value[key]));
   }
 
-  return _.uniq(_.flatten(refIds));
+  return uniq(flatten(refIds));
 };
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
@@ -478,11 +469,6 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
-
-export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
-  const refId = getValueWithRefId(queryErrors);
-  return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
-};
 
 export const copyStringToClipboard = (string: string) => {
   const el = document.createElement('textarea');

@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { Card } from '../types';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { cardContent, cardStyle, iconStyle } from './sharedStyles';
 
 interface Props {

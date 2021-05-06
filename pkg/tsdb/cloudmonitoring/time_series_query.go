@@ -19,6 +19,7 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery plugins.DataQuery,
 	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
@@ -94,6 +95,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	return queryResult, data, timeSeriesQuery.Query, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *plugins.DataQueryResult,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
@@ -247,7 +249,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl)
+		frames = addConfigData(frames, dl, response.Unit)
 	}
 
 	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
@@ -264,6 +266,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 	return nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *plugins.DataQueryResult,
 	data cloudMonitoringResponse, title string, text string, tags string) error {
 	annotations := make([]map[string]string, 0)
@@ -374,8 +377,4 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) getRefID() string {
 	return timeSeriesQuery.RefID
-}
-
-func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getUnit() string {
-	return timeSeriesQuery.Unit
 }

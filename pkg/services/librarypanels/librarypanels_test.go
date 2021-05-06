@@ -84,13 +84,18 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"x": 6,
 							"y": 0,
 						},
-						"datasource": "${DS_GDEV-TESTDATA}",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
 						"libraryPanel": map[string]interface{}{
-							"uid":     sc.initialResult.Result.UID,
-							"name":    sc.initialResult.Result.Name,
-							"version": sc.initialResult.Result.Version,
+							"uid":         sc.initialResult.Result.UID,
+							"name":        sc.initialResult.Result.Name,
+							"type":        sc.initialResult.Result.Type,
+							"description": sc.initialResult.Result.Description,
+							"version":     sc.initialResult.Result.Version,
 							"meta": map[string]interface{}{
 								"canEdit":             false,
+								"folderName":          "ScenarioFolder",
+								"folderUid":           sc.folder.Uid,
 								"connectedDashboards": int64(1),
 								"created":             sc.initialResult.Result.Meta.Created,
 								"updated":             sc.initialResult.Result.Meta.Updated,
@@ -664,14 +669,16 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 }
 
 type libraryPanel struct {
-	ID       int64                  `json:"id"`
-	OrgID    int64                  `json:"orgId"`
-	FolderID int64                  `json:"folderId"`
-	UID      string                 `json:"uid"`
-	Name     string                 `json:"name"`
-	Model    map[string]interface{} `json:"model"`
-	Version  int64                  `json:"version"`
-	Meta     LibraryPanelDTOMeta    `json:"meta"`
+	ID          int64  `json:"id"`
+	OrgID       int64  `json:"orgId"`
+	FolderID    int64  `json:"folderId"`
+	UID         string `json:"uid"`
+	Name        string `json:"name"`
+	Type        string
+	Description string
+	Model       map[string]interface{} `json:"model"`
+	Version     int64                  `json:"version"`
+	Meta        LibraryPanelDTOMeta    `json:"meta"`
 }
 
 type libraryPanelResult struct {
@@ -715,17 +722,24 @@ func overrideLibraryPanelServiceInRegistry(cfg *setting.Cfg) LibraryPanelService
 }
 
 func getCreateCommand(folderID int64, name string) createLibraryPanelCommand {
-	command := createLibraryPanelCommand{
-		FolderID: folderID,
-		Name:     name,
-		Model: []byte(`
+	command := getCreateCommandWithModel(folderID, name, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
 			  "title": "Text - Library Panel",
-			  "type": "text"
+			  "type": "text",
+			  "description": "A description"
 			}
-		`),
+		`))
+
+	return command
+}
+
+func getCreateCommandWithModel(folderID int64, name string, model []byte) createLibraryPanelCommand {
+	command := createLibraryPanelCommand{
+		FolderID: folderID,
+		Name:     name,
+		Model:    model,
 	}
 
 	return command

@@ -7,67 +7,64 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func Sum(v *data.Field) *float64 {
+func Sum(fv *Float64Field) *float64 {
 	var sum float64
-	for i := 0; i < v.Len(); i++ {
-		if f, ok := v.At(i).(*float64); ok {
-			if f == nil || math.IsNaN(*f) {
-				nan := math.NaN()
-				return &nan
-			}
-			sum += *f
+	for i := 0; i < fv.Len(); i++ {
+		f := fv.GetValue(i)
+		if f == nil || math.IsNaN(*f) {
+			nan := math.NaN()
+			return &nan
 		}
+		sum += *f
 	}
 	return &sum
 }
 
-func Avg(v *data.Field) *float64 {
-	sum := Sum(v)
-	f := *sum / float64(v.Len())
+func Avg(fv *Float64Field) *float64 {
+	sum := Sum(fv)
+	f := *sum / float64(fv.Len())
 	return &f
 }
 
-func Min(fv *data.Field) *float64 {
+func Min(fv *Float64Field) *float64 {
 	var f float64
 	if fv.Len() == 0 {
 		nan := math.NaN()
 		return &nan
 	}
 	for i := 0; i < fv.Len(); i++ {
-		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil || math.IsNaN(*v) {
-				nan := math.NaN()
-				return &nan
-			}
-			if i == 0 || *v < f {
-				f = *v
-			}
+		v := fv.GetValue(i)
+		if v == nil || math.IsNaN(*v) {
+			nan := math.NaN()
+			return &nan
+		}
+		if i == 0 || *v < f {
+			f = *v
 		}
 	}
 	return &f
 }
 
-func Max(fv *data.Field) *float64 {
+func Max(fv *Float64Field) *float64 {
 	var f float64
 	if fv.Len() == 0 {
 		nan := math.NaN()
 		return &nan
 	}
 	for i := 0; i < fv.Len(); i++ {
-		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil || math.IsNaN(*v) {
-				nan := math.NaN()
-				return &nan
-			}
-			if i == 0 || *v > f {
-				f = *v
-			}
+		v := fv.GetValue(i)
+		if v == nil || math.IsNaN(*v) {
+			nan := math.NaN()
+			return &nan
+		}
+		if i == 0 || *v > f {
+			f = *v
 		}
 	}
 	return &f
 }
 
-func Count(fv *data.Field) *float64 {
+func Count(fv *Float64Field) *float64 {
 	f := float64(fv.Len())
 	return &f
 }
@@ -80,18 +77,19 @@ func (s Series) Reduce(refID, rFunc string) (Number, error) {
 	}
 	number := NewNumber(refID, l)
 	var f *float64
-	fVec := s.Frame.Fields[1]
+	fVec := s.Frame.Fields[s.ValueIdx]
+	floatField := Float64Field(*fVec)
 	switch rFunc {
 	case "sum":
-		f = Sum(fVec)
+		f = Sum(&floatField)
 	case "mean":
-		f = Avg(fVec)
+		f = Avg(&floatField)
 	case "min":
-		f = Min(fVec)
+		f = Min(&floatField)
 	case "max":
-		f = Max(fVec)
+		f = Max(&floatField)
 	case "count":
-		f = Count(fVec)
+		f = Count(&floatField)
 	default:
 		return number, fmt.Errorf("reduction %v not implemented", rFunc)
 	}

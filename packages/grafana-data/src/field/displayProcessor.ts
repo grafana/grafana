@@ -1,16 +1,15 @@
 // Libraries
-import _ from 'lodash';
+import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 
 // Types
 import { Field, FieldType } from '../types/dataFrame';
-import { GrafanaTheme } from '../types/theme';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
-import { getTestTheme } from '../utils/testdata/testTheme';
+import { GrafanaTheme2 } from '../themes/types';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -21,7 +20,7 @@ interface DisplayProcessorOptions {
   /**
    * Will pick 'dark' if not defined
    */
-  theme?: GrafanaTheme;
+  theme: GrafanaTheme2;
 }
 
 // Reasonable units for time
@@ -36,15 +35,12 @@ const timeFormats: KeyValue<boolean> = {
 };
 
 export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
-  if (!options || _.isEmpty(options) || !options.field) {
+  if (!options || isEmpty(options) || !options.field) {
     return toStringProcessor;
   }
 
   const { field } = options;
   const config = field.config ?? {};
-
-  // Theme should be required or we need access to default theme instance from here
-  const theme = options.theme ?? getTestTheme();
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
@@ -55,7 +51,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field as Field, theme);
+  const scaleFunc = getScaleCalculator(field as Field, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
@@ -65,7 +61,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       value = dateTime(value).valueOf();
     }
 
-    let text = _.toString(value);
+    let text = toString(value);
     let numeric = isStringUnit ? NaN : toNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
@@ -87,7 +83,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     if (!isNaN(numeric)) {
-      if (shouldFormat && !_.isBoolean(value)) {
+      if (shouldFormat && !isBoolean(value)) {
         const v = formatFunc(numeric, config.decimals, null, options.timeZone);
         text = v.text;
         suffix = v.suffix;
@@ -123,11 +119,11 @@ function toNumber(value: any): number {
   if (typeof value === 'boolean') {
     return value ? 1 : 0;
   }
-  return _.toNumber(value);
+  return _toNumber(value);
 }
 
 function toStringProcessor(value: any): DisplayValue {
-  return { text: _.toString(value), numeric: toNumber(value) };
+  return { text: toString(value), numeric: toNumber(value) };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {

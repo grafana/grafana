@@ -8,11 +8,13 @@
             "resolve_timeout": "1s",
             "smtp_smarthost": ""
         },
-        "route": {},
+        "route": {
+            "receiver": "grafana_managed"
+        },
         "templates": [],
         "receivers": [
             {
-                "name": "",
+                "name": "grafana_managed",
                 "grafana_managed_receiver_configs": [
                     {
                         "uid": "alertmanager UID",

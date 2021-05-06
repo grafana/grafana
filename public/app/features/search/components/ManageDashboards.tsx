@@ -1,6 +1,6 @@
 import React, { FC, memo, useState } from 'react';
-import { css } from 'emotion';
-import { HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -93,17 +93,11 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
 
   return (
     <div className={styles.container}>
-      <div>
-        <HorizontalGroup justify="space-between">
-          <FilterInput
-            labelClassName="gf-form--has-input-icon"
-            inputClassName="gf-form-input width-20"
-            value={query.query}
-            onChange={onQueryChange}
-            placeholder={'Search dashboards by name'}
-          />
-          <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
-        </HorizontalGroup>
+      <div className="page-action-bar">
+        <div className="gf-form gf-form--grow m-r-2">
+          <FilterInput value={query.query} onChange={onQueryChange} placeholder={'Search dashboards by name'} />
+        </div>
+        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
       </div>
 
       <div className={styles.results}>

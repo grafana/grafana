@@ -35,60 +35,61 @@ func init() {
 }
 
 // WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (plugins.DataResponse, error) {
-	sdkReq := &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			OrgID: query.User.OrgId,
-		},
-		Queries: []backend.DataQuery{},
+func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (*backend.QueryDataResponse, error) {
+	req := Request{
+		OrgId:   query.User.OrgId,
+		Queries: []Query{},
 	}
 
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return plugins.DataResponse{}, err
+			return nil, err
 		}
-		sdkReq.Queries = append(sdkReq.Queries, backend.DataQuery{
+		req.Queries = append(req.Queries, Query{
 			JSON:          modelJSON,
 			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			QueryType:     q.QueryType,
-			TimeRange: backend.TimeRange{
+			TimeRange: TimeRange{
 				From: query.TimeRange.GetFromAsTimeUTC(),
 				To:   query.TimeRange.GetToAsTimeUTC(),
 			},
 		})
 	}
-	pbRes, err := s.TransformData(ctx, sdkReq)
-	if err != nil {
-		return plugins.DataResponse{}, err
-	}
+	return s.TransformData(ctx, &req)
+}
 
-	tR := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult, len(pbRes.Responses)),
-	}
-	for refID, res := range pbRes.Responses {
-		tRes := plugins.DataQueryResult{
-			RefID:      refID,
-			Dataframes: plugins.NewDecodedDataFrames(res.Frames),
-		}
-		// if len(res.JsonMeta) != 0 {
-		// 	tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
-		// }
-		if res.Error != nil {
-			tRes.Error = res.Error
-			tRes.ErrorString = res.Error.Error()
-		}
-		tR.Results[refID] = tRes
-	}
+// Request is similar to plugins.DataQuery but with the Time Ranges is per Query.
+type Request struct {
+	Headers map[string]string
+	Debug   bool
+	OrgId   int64
+	Queries []Query
+}
 
-	return tR, nil
+// Query is like plugins.DataSubQuery, but with a a time range, and only the UID
+// for the data source. Also interval is a time.Duration.
+type Query struct {
+	RefID         string
+	TimeRange     TimeRange
+	DatasourceUID string
+	JSON          json.RawMessage
+	Interval      time.Duration
+	QueryType     string
+	MaxDataPoints int64
+}
+
+// TimeRange is a time.Time based TimeRange.
+type TimeRange struct {
+	From time.Time
+	To   time.Time
 }
 
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataRequest) (r *backend.QueryDataResponse, err error) {
+func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
 		return nil, status.Error(codes.PermissionDenied, "Expressions are disabled")
 	}
@@ -139,7 +140,7 @@ func (s *Service) TransformData(ctx context.Context, req *backend.QueryDataReque
 	return responses, nil
 }
 
-func hiddenRefIDs(queries []backend.DataQuery) (map[string]struct{}, error) {
+func hiddenRefIDs(queries []Query) (map[string]struct{}, error) {
 	hidden := make(map[string]struct{})
 
 	for _, query := range queries {
@@ -214,37 +215,6 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
-	// Only error, Series, and encoded Dataframes responses are mapped.
-	responses := make(map[string]backend.DataResponse, len(tsdbRes.Results))
-	for refID, res := range tsdbRes.Results {
-		pRes := backend.DataResponse{}
-		if res.Error != nil {
-			pRes.Error = res.Error
-		}
 
-		if res.Dataframes != nil {
-			decoded, err := res.Dataframes.Decoded()
-			if err != nil {
-				return nil, err
-			}
-			pRes.Frames = decoded
-			responses[refID] = pRes
-			continue
-		}
-
-		for _, series := range res.Series {
-			frame, err := plugins.SeriesToFrame(series)
-			frame.RefID = refID
-			if err != nil {
-				return nil, err
-			}
-			pRes.Frames = append(pRes.Frames, frame)
-		}
-
-		responses[refID] = pRes
-	}
-	return &backend.QueryDataResponse{
-		Responses: responses,
-	}, nil
+	return tsdbRes.ToBackendDataResponse()
 }

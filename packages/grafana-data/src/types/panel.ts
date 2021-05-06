@@ -10,6 +10,7 @@ import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
+import { AlertStateInfo } from './alerts';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -29,8 +30,20 @@ export interface PanelData {
   /** Contains data frames with field overrides applied */
   series: DataFrame[];
 
+  /**
+   * This is a key that will change when the DataFrame[] structure changes.
+   * The revision is a useful way to know if only data has changed or data+structure
+   */
+  structureRev?: number;
+
   /** A list of annotation items */
   annotations?: DataFrame[];
+
+  /**
+   * @internal
+   * @deprecated alertState is deprecated and will be removed when the next generation Alerting is in place
+   */
+  alertState?: AlertStateInfo;
 
   /** Request contains the queries and properties sent to the datasource */
   request?: DataQueryRequest;
@@ -175,4 +188,9 @@ export enum VizOrientation {
   Auto = 'auto',
   Vertical = 'vertical',
   Horizontal = 'horizontal',
+}
+
+export interface PanelPluginDataSupport {
+  annotations: boolean;
+  alertStates: boolean;
 }

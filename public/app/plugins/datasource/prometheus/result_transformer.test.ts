@@ -510,6 +510,20 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].length).toBe(1);
     });
 
+    it('should return with an empty array when data is empty', () => {
+      const result = transform(
+        {
+          data: {
+            status: 'success',
+            data: [],
+          },
+        } as any,
+        options
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
     it('should remove exemplars that are too close to each other', () => {
       const response = {
         status: 'success',

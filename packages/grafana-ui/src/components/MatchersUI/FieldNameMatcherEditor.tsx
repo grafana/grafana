@@ -6,7 +6,7 @@ import { Select } from '../Select/Select';
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
   const names = useFieldDisplayNames(data);
-  const selectOptions = useSelectOptions(names);
+  const selectOptions = useSelectOptions(names, options);
 
   const onChange = useCallback(
     (selection: SelectableValue<string>) => {
@@ -46,11 +46,18 @@ const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
   }, [data]);
 };
 
-const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<string>> => {
+const useSelectOptions = (displayNames: Set<string>, currentName: string): Array<SelectableValue<string>> => {
   return useMemo(() => {
-    return Array.from(displayNames).map((n) => ({
+    const vals = Array.from(displayNames).map((n) => ({
       value: n,
       label: n,
     }));
-  }, [displayNames]);
+    if (currentName && !displayNames.has(currentName)) {
+      vals.push({
+        value: currentName,
+        label: `${currentName} (not found)`,
+      });
+    }
+    return vals;
+  }, [displayNames, currentName]);
 };

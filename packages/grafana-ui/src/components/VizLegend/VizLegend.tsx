@@ -1,7 +1,10 @@
-import React from 'react';
-import { LegendProps, LegendDisplayMode } from './types';
+import React, { useCallback } from 'react';
+import { LegendProps, VizLegendItem } from './types';
+import { LegendDisplayMode } from './models.gen';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
+import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
+import { usePanelContext } from '../PanelChrome';
 
 /**
  * @public
@@ -13,10 +16,41 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   sortDesc,
   onToggleSort,
   onLabelClick,
-  onSeriesColorChange,
   placement,
   className,
 }) => {
+  const { eventBus } = usePanelContext();
+
+  const onMouseEnter = useCallback(
+    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      eventBus?.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: item.label,
+        },
+      });
+    },
+    [eventBus]
+  );
+
+  const onMouseOut = useCallback(
+    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      eventBus?.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: item.label,
+        },
+      });
+    },
+    [eventBus]
+  );
+
   switch (displayMode) {
     case LegendDisplayMode.Table:
       return (
@@ -28,7 +62,8 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
           sortDesc={sortDesc}
           onLabelClick={onLabelClick}
           onToggleSort={onToggleSort}
-          onSeriesColorChange={onSeriesColorChange}
+          onLabelMouseEnter={onMouseEnter}
+          onLabelMouseOut={onMouseOut}
         />
       );
     case LegendDisplayMode.List:
@@ -37,8 +72,9 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
           className={className}
           items={items}
           placement={placement}
+          onLabelMouseEnter={onMouseEnter}
+          onLabelMouseOut={onMouseOut}
           onLabelClick={onLabelClick}
-          onSeriesColorChange={onSeriesColorChange}
         />
       );
     default:
