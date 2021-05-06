@@ -1,10 +1,7 @@
-import { chain } from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { Plugin } from 'slate';
 import {
-  ButtonCascader,
-  CascaderOption,
   SlatePrism,
   TypeaheadInput,
   TypeaheadOutput,
@@ -12,12 +9,13 @@ import {
   BracesPlugin,
   DOMUtil,
   SuggestionsState,
+  Icon,
 } from '@grafana/ui';
 
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 
 // dom also includes Element polyfills
-import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
+import { PromQuery, PromOptions } from '../types';
 import { roundMsToMin } from '../language_utils';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import {
@@ -29,11 +27,11 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
+import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 
-const HISTOGRAM_GROUP = '__histograms__';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metrics: string[]) {
+function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasMetrics: boolean) {
   if (metricsLookupDisabled) {
     return '(Disabled)';
   }
@@ -42,13 +40,14 @@ function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metr
     return 'Loading metrics...';
   }
 
-  if (metrics && metrics.length === 0) {
+  if (!hasMetrics) {
     return '(No metrics found)';
   }
 
-  return 'Metrics';
+  return 'Metrics browser';
 }
 
+/* TODO
 function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
   const option: CascaderOption = { label: metric, value: metric };
   if (metadata && metadata[metric]) {
@@ -57,7 +56,9 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Cas
   }
   return option;
 }
+*/
 
+/*
 export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
@@ -93,6 +94,7 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
 
   return [...options, ...metricsOptions];
 }
+*/
 
 export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
   // Modify suggestion based on context
@@ -127,7 +129,7 @@ interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasourc
 }
 
 interface PromQueryFieldState {
-  metricsOptions: any[];
+  labelBrowserVisible: boolean;
   syntaxLoaded: boolean;
   hint: QueryHint | null;
 }
@@ -151,7 +153,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     ];
 
     this.state = {
-      metricsOptions: [],
+      labelBrowserVisible: false,
       syntaxLoaded: false,
       hint: null,
     };
@@ -181,7 +183,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       // We reset this only on DS change so we do not flesh loading state on every rangeChange which happens on every
       // query run if using relative range.
       this.setState({
-        metricsOptions: [],
         syntaxLoaded: false,
       });
     }
@@ -247,26 +248,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     return false;
   }
 
-  onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
-    let query;
-    if (selectedOptions.length === 1) {
-      const selectedOption = selectedOptions[0];
-      if (!selectedOption.children || selectedOption.children.length === 0) {
-        query = selectedOption.value;
-      } else {
-        // Ignore click on group
-        return;
-      }
-    } else {
-      const prefix = selectedOptions[0].value;
-      const metric = selectedOptions[1].value;
-      if (prefix === HISTOGRAM_GROUP) {
-        query = `histogram_quantile(0.95, sum(rate(${metric}[5m])) by (le))`;
-      } else {
-        query = metric;
-      }
-    }
-    this.onChangeQuery(query, true);
+  // TODO remove this, and add histogram group
+  //         query = `histogram_quantile(0.95, sum(rate(${metric}[5m])) by (le))`;
+  onChangeLabelBrowser = (selector: string) => {
+    this.onChangeQuery(selector, true);
+    this.setState({ labelBrowserVisible: false });
   };
 
   onChangeQuery = (value: string, override?: boolean) => {
@@ -282,6 +268,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
   };
 
+  onClickChooserButton = () => {
+    this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
+  };
+
   onClickHintFix = () => {
     const { datasource, query, onChange, onRunQuery } = this.props;
     const { hint } = this.state;
@@ -294,13 +284,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const {
       datasource: { languageProvider },
     } = this.props;
-    const { histogramMetrics, metrics, metricsMetadata } = languageProvider;
+    const { metrics } = languageProvider;
 
     if (!metrics) {
       return;
     }
 
-    // Build metrics tree
+    /* TODO
+    const { histogramMetrics, metrics, metricsMetadata } = languageProvider;
     const metricsByPrefix = groupMetricsByPrefix(metrics, metricsMetadata);
     const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
@@ -310,8 +301,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             ...metricsByPrefix,
           ]
         : metricsByPrefix;
+    */
 
-    this.setState({ metricsOptions, syntaxLoaded: true });
+    this.setState({ syntaxLoaded: true });
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
@@ -341,19 +333,24 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       query,
       ExtraFieldElement,
     } = this.props;
-    const { metricsOptions, syntaxLoaded, hint } = this.state;
+    const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
     const cleanText = languageProvider ? languageProvider.cleanText : undefined;
-    const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, metricsOptions);
-    const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
+    const hasMetrics = languageProvider.metrics.length > 0;
+    const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, hasMetrics);
+    const buttonDisabled = !(syntaxLoaded && hasMetrics);
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
-          <div className="gf-form flex-shrink-0 min-width-5">
-            <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
-              {chooserText}
-            </ButtonCascader>
-          </div>
+          <button
+            className="gf-form-label query-keyword pointer"
+            onClick={this.onClickChooserButton}
+            disabled={buttonDisabled}
+          >
+            {chooserText}
+            <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+          </button>
+
           <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               additionalPlugins={this.plugins}
@@ -370,6 +367,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             />
           </div>
         </div>
+        {labelBrowserVisible && (
+          <div className="gf-form">
+            <PrometheusMetricsBrowser languageProvider={languageProvider} onChange={this.onChangeLabelBrowser} />
+          </div>
+        )}
+
         {ExtraFieldElement}
         {hint ? (
           <div className="query-row-break">
