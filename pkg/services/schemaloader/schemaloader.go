@@ -3,6 +3,9 @@ package schemaloader
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -73,6 +76,21 @@ func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*
 	return output, nil
 }
 
+func (rs *SchemaLoaderService) GetJsonSchema(fn string) (*simplejson.Json, error) {
+	requestedFilePath := filepath.Join("pkg", "services", "schemaloader", "data", fn)
+	jsonFile, err := os.Open(requestedFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load file %q, file doesn't exist", fn)
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	reJSchema, err := simplejson.NewJson(byteValue)
+	if err != nil {
+		return nil, err
+	}
+	return reJSchema, nil
+}
+
 func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (simplejson.Json, error) {
 	val, _ := input.Map()
 	val = removeNils(val)
@@ -82,7 +100,6 @@ func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (sim
 	if err != nil {
 		return input, err
 	}
-	// spew.Dump(dsSchema)
 	result, err := dsSchema.TrimDefaults(schema.Resource{Value: data})
 	if err != nil {
 		return input, err
