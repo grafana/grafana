@@ -1,229 +1,30 @@
 import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
 import {
-  ArrayVector,
   DataFrame,
-  FieldType,
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
+  histogramBucketSizes,
 } from '@grafana/data';
 import { Themeable2 } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { incrRoundDn, histogram } from './utils';
 import { withTheme2 } from '../../themes';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
 
-/* eslint-disable */
-import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-/* eslint-enable */
-
-/* eslint-disable */
-const bucketSizes = [
-  .001, .002, .0025, .005,
-   .01,  .02,  .025,  .05,
-    .1,   .2,   .25,   .5,
-     1,    2,     4,    5,
-    10,   20,    25,   50,
-   100,  200,   250,  500,
-  1000, 2000,  2500, 5000,
-];
-/* eslint-enable */
-
-const histFilter = [null];
-const histSort = (a: number, b: number) => a - b;
-
-function preparePlotFrame(frames: DataFrame[], bucketSize?: number | null) {
-  let bucketMin = frames[0].fields.find((f) => f.name === 'BucketMin');
-  let bucketMax = frames[0].fields.find((f) => f.name === 'BucketMax');
-
-  // if single frame with BucketMin and BucketMax fields, assume pre-aggregated histogram
-  if (bucketMin && bucketMax) {
-    return frames[0];
-  }
-  // else aggregate all numeric fields in JS
-  else {
-    // TODO: make into a HistogramFrame type?
-    // e.g. AlignedData: https://github.com/leeoniya/uPlot/blob/0ccd572074199f013733a89c4d756b7502a759c6/dist/uPlot.d.ts#L197-L200
-    const histFrame: DataFrame = {
-      // number of buckets
-      length: 0,
-      fields: [
-        // inclusive
-        { name: 'BucketMin', values: null, type: FieldType.number, config: {} },
-        // exclusive
-        { name: 'BucketMax', values: null, type: FieldType.number, config: {} },
-
-        //...bucket counts
-      ],
-    };
-
-    // if bucket size is auto, try to calc from all numeric fields
-    if (!bucketSize) {
-      let min = Infinity,
-        max = -Infinity;
-
-      for (const frame of frames) {
-        for (const field of frame.fields) {
-          if (field.type === FieldType.number) {
-            for (const value of field.values.toArray()) {
-              min = Math.min(min, value);
-              max = Math.max(max, value);
-            }
-          }
-        }
-      }
-
-      let range = Math.abs(max - min);
-
-      // choose bucket
-      for (const size of bucketSizes) {
-        if (range / 10 < size) {
-          bucketSize = size;
-          break;
-        }
-      }
-    }
-
-    const histRound = (v: number) => incrRoundDn(v, bucketSize!);
-
-    let histograms: AlignedData[] = [];
-
-    for (const frame of frames) {
-      for (const field of frame.fields) {
-        if (field.type === FieldType.number) {
-          let fieldHist = histogram(field.values.toArray(), histRound, histFilter, histSort) as AlignedData;
-          histograms.push(fieldHist);
-        }
-      }
-    }
-
-    // align histograms
-    let joinedHists = join(histograms);
-
-    // zero-fill all undefined values (missing buckets -> 0 counts) to prevent stepped spanning
-    for (let histIdx = 1; histIdx < joinedHists.length; histIdx++) {
-      let hist = joinedHists[histIdx];
-
-      for (let bucketIdx = 0; bucketIdx < hist.length; bucketIdx++) {
-        if (hist[bucketIdx] == null) {
-          hist[bucketIdx] = 0;
-        }
-      }
-    }
-
-    // number of buckets
-    histFrame.length = joinedHists[0].length;
-
-    histFrame.fields[0].values = new ArrayVector(joinedHists[0]);
-    histFrame.fields[1].values = new ArrayVector(joinedHists[0].map((v) => v + bucketSize!));
-
-    let i = 1;
-    for (const frame of frames) {
-      for (const field of frame.fields) {
-        if (field.type === FieldType.number) {
-          histFrame.fields.push({
-            ...field,
-            values: new ArrayVector(joinedHists[i]),
-          });
-
-          i++;
-        }
-      }
-    }
-
-    return histFrame;
-  }
-  /*
-    let frameCopy = {
-      ...frame,
-      fields: frame.fields.map((f, fieldIndex) => {
-        const copy = { ...f };
-        const origin = {
-          frameIndex: 0,
-          fieldIndex,
-        };
-        if (copy.state) {
-          copy.state.origin = origin;
-        } else {
-          copy.state = { origin };
-        }
-        return copy;
-      }),
-    };
-  }
-*/
-}
-/*
-export function preparePlotData(frame: DataFrame, keepFieldTypes?: FieldType[]): AlignedData {
-  const result: any[] = [];
-  const stackingGroups: Map<string, number[]> = new Map();
-  let seriesIndex = 0;
-
-  for (let i = 0; i < frame.fields.length; i++) {
-    const f = frame.fields[i];
-
-    if (f.type === FieldType.number) {
-      if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
-        const timestamps = [];
-        for (let i = 0; i < f.values.length; i++) {
-          timestamps.push(dateTime(f.values.get(i)).valueOf());
-        }
-        result.push(timestamps);
-        seriesIndex++;
-        continue;
-      }
-      result.push(f.values.toArray());
-      seriesIndex++;
-      continue;
-    }
-
-    if (keepFieldTypes && keepFieldTypes.indexOf(f.type) < 0) {
-      continue;
-    }
-
-    collectStackingGroups(f, stackingGroups, seriesIndex);
-    result.push(f.values.toArray());
-    seriesIndex++;
-  }
-
-  // Stacking
-  if (stackingGroups.size !== 0) {
-    // array or stacking groups
-    for (const [_, seriesIdxs] of stackingGroups.entries()) {
-      const acc = Array(result[0].length).fill(0);
-
-      for (let j = 0; j < seriesIdxs.length; j++) {
-        const currentlyStacking = result[seriesIdxs[j]];
-
-        for (let k = 0; k < result[0].length; k++) {
-          const v = currentlyStacking[k];
-          acc[k] += v == null ? 0 : +v;
-        }
-
-        result[seriesIdxs[j]] = acc.slice();
-      }
-    }
-  }
-
-  return result as AlignedData;
-}
-*/
-
 export interface HistogramProps extends Themeable2 {
+  alignedFrame: DataFrame;
   width: number;
   height: number;
-  frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
   //onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
 
-  bucketSize?: number | null;
   //prepConfig: (frame: DataFrame) => UPlotConfigBuilder;
   //propsToDiff?: string[];
   //renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
@@ -277,7 +78,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
-    incrs: bucketSizes,
+    incrs: histogramBucketSizes,
     splits: xSplits,
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
@@ -344,10 +145,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   return builder;
 };
 
-const propsToDiff = ['bucketSize'];
-
 const preparePlotData = (frame: DataFrame) => {
-  let data: AlignedData = [];
+  let data: AlignedData = [] as any;
 
   for (const field of frame.fields) {
     if (field.name !== 'BucketMax') {
@@ -376,7 +175,6 @@ export function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] 
  * @internal -- not a public API
  */
 export interface GraphNGState {
-  alignedFrame: DataFrame;
   alignedData: AlignedData;
   config?: UPlotConfigBuilder;
 }
@@ -390,13 +188,9 @@ class UnthemedHistogram extends React.Component<HistogramProps, GraphNGState> {
   prepState(props: HistogramProps, withConfig = true) {
     let state: GraphNGState = null as any;
 
-    const { frames, bucketSize } = props;
-
-    const alignedFrame = preparePlotFrame(frames, bucketSize);
-
+    const { alignedFrame } = props;
     if (alignedFrame) {
       state = {
-        alignedFrame,
         alignedData: preparePlotData(alignedFrame),
       };
 
@@ -409,19 +203,17 @@ class UnthemedHistogram extends React.Component<HistogramProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
-    const { frames, structureRev } = this.props;
+    const { structureRev, alignedFrame } = this.props;
 
-    const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
-
-    if (frames !== prevProps.frames || propsChanged) {
+    if (alignedFrame !== prevProps.alignedFrame) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
-          this.state.config === undefined || structureRev !== prevProps.structureRev || !structureRev || propsChanged;
+          this.state.config === undefined || structureRev !== prevProps.structureRev || !structureRev;
 
         if (shouldReconfig) {
-          newState.config = prepConfig(newState.alignedFrame, this.props.theme);
+          newState.config = prepConfig(alignedFrame, this.props.theme);
         }
       }
 
@@ -430,8 +222,8 @@ class UnthemedHistogram extends React.Component<HistogramProps, GraphNGState> {
   }
 
   render() {
-    const { width, height, children } = this.props;
-    const { config, alignedFrame } = this.state;
+    const { width, height, children, alignedFrame } = this.props;
+    const { config } = this.state;
 
     if (!config) {
       return null;
