@@ -9,7 +9,7 @@ weight = 120
 
 > Feature available in Grafana Enterprise 8.0+.
 
-It is possible to manage your roles and even assign them to builtIn roles ("Viewer", "Editor", "Admin", "Grafana Admin") or already created teams, by adding one or more YAML config files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory. Each config file can contain a list of `roles` that will be created or updated during start up. Upon version increment, Grafana updates the role to match the configuration file. The configuration file can also contain a list of roles that should be deleted. That list is called `deleteRoles`. Grafana will role deletion after role insertion/update.
+It is possible to manage your roles and even assign them to [built-in roles]({{< relref "./concepts/roles.md#built-in-role-assignments" >}}) or already created teams, by adding one or more YAML config files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory. Each config file can contain a list of `roles` that will be created or updated during start up. Upon version increment, Grafana updates the role to match the configuration file. The configuration file can also contain a list of roles that should be deleted. That list is called `deleteRoles`. Grafana will role deletion after role insertion/update.
 
 > Managing your roles can also be done using the [`access-control HTTP API`]({{< relref "../../http_api/access_control/" >}})
 
@@ -70,3 +70,30 @@ roles:
 
 Check correct values for [permissions]({{< relref "./concepts/permissions.md/#available-permissions" >}}), [built-in role assignments]({{< relref "./concepts/roles.md#built-in-role-assignments" >}})
 
+## Validation rules
+
+(todo update with global roles)
+
+A basic set of validation rules are applied to the input yaml files.
+
+To validate the roles configuration, we:
+
+* Check that the role name is not empty
+* Use the [default org ID]({{< relref "../../administration/configuration/#auto_assign_org_id" >}}) if `orgId` is not specified.
+
+To validate team assignments, we:
+
+* Check that the name is not empty
+* Inherit the role org ID if `orgId` is not specified
+* Check that the `orgId` is the same as the role's, to prevent cross organization assignments
+
+To validate builtin-role assignments, we:
+
+* Check that the name is not empty
+* Inherit the role org ID if `orgId` is not specified
+* Check that role and builtin-role `orgId` are the same, to prevent cross organization assignments
+
+To validate the roles to delete configuration, we:
+
+* Check that either the role name or uid is provided
+* Use the [default org ID]({{< relref "../../administration/configuration/#auto_assign_org_id" >}}) if `orgId` is not specified.

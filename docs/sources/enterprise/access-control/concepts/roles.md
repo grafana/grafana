@@ -45,6 +45,8 @@ See [Custom roles]({{< relref "./custom-roles.md" >}}) to understand how it work
 
 ## Built-in role assignments
 
+The built-in role term refers to the 4 roles Grafana used to handle before switching to fine-grained access-control. These built-in roles are: ("Viewer", "Editor", "Admin", "Grafana Admin")
+
 To control what your users can access or not, you can assign or unassign a role to the existing Organization roles, or to a Grafana Admin. These assignments are called built-in role assignments.
 
 During startup, Grafana will create default assignments for you. You can update assignments using [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or using Grafana [Provisioning]({{< relref "../provisioning">}}). Grafana will take into account any changes to the assignments and won’t overwrite them.
