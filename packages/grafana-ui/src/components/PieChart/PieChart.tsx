@@ -8,6 +8,7 @@ import {
   getFieldDisplayValues,
   GrafanaTheme2,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
@@ -317,6 +318,7 @@ function PieSlice({ arc, pie, highlighted, openMenu, fill, tooltip, tooltipOptio
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
+      aria-label={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
     </g>

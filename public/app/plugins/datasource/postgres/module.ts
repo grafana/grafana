@@ -1,6 +1,8 @@
 import { PostgresDatasource } from './datasource';
 import { PostgresQueryCtrl } from './query_ctrl';
 import { PostgresConfigCtrl } from './config_ctrl';
+import { PostgresQuery } from './types';
+import { DataSourcePlugin } from '@grafana/data';
 
 const defaultQuery = `SELECT
   extract(epoch from time_column) AS time,
@@ -24,10 +26,7 @@ class PostgresAnnotationsQueryCtrl {
   }
 }
 
-export {
-  PostgresDatasource,
-  PostgresDatasource as Datasource,
-  PostgresQueryCtrl as QueryCtrl,
-  PostgresConfigCtrl as ConfigCtrl,
-  PostgresAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-};
+export const plugin = new DataSourcePlugin<PostgresDatasource, PostgresQuery>(PostgresDatasource)
+  .setQueryCtrl(PostgresQueryCtrl)
+  .setConfigCtrl(PostgresConfigCtrl)
+  .setAnnotationQueryCtrl(PostgresAnnotationsQueryCtrl);
