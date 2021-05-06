@@ -371,6 +371,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/silence/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+      ),
+    },
+    {
+      path: '/alerting/silence/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+      ),
+    },
+    {
       path: '/alerting/notifications',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
