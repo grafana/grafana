@@ -809,7 +809,7 @@ Grafana supports additional integration with Azure services when hosted in Azure
 
 ### cloud
 
-Azure could environment in which Grafana is hosted:
+Azure cloud environment in which Grafana is hosted:
 
 | Azure Cloud                                      | Value                  |
 | ------------------------------------------------ | ---------------------- |
