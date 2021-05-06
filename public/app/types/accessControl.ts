@@ -33,4 +33,11 @@ export enum AccessControlAction {
   LDAPUsersRead = 'ldap.user:read',
   LDAPUsersSync = 'ldap.user:sync',
   LDAPStatusRead = 'ldap.status:read',
+
+  ReportingAdminWrite = 'reports.admin:write',
+  ReportingDelete = 'reports:delete',
+  ReportingRead = 'reports:read',
+  ReportingSend = 'reports:send',
+  ReportingSettingsWrite = 'reports.settings:write',
+  ReportingSettingsRead = 'reports.settings:read',
 }
