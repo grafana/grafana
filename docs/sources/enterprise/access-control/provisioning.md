@@ -7,13 +7,13 @@ weight = 120
 
 # Provisioning roles and assignments
 
-> This feature is available from v8.0 Enterprise Build
+> Feature available in Grafana Enterprise 8.0+.
 
-It is possible to manage your roles and even assign them to builtIn roles ("Viewer", "Editor", "Admin", "Grafana Admin") by adding one or more YAML config files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory. Each config file can contain a list of `roles` that will get added or updated during start up. Granted it has a greater version number, if the role already exists, then Grafana updates it to match the configuration file. The config file can also contain a list of roles that should be deleted. That list is called `deleteRoles`. Grafana will delete roles listed in `deleteRoles` after inserting/updating those in the `roles` list.
+It is possible to manage your roles and even assign them to builtIn roles ("Viewer", "Editor", "Admin", "Grafana Admin") or already created teams, by adding one or more YAML config files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory. Each config file can contain a list of `roles` that will be created or updated during start up. Upon version increment, Grafana updates the role to match the configuration file. The configuration file can also contain a list of roles that should be deleted. That list is called `deleteRoles`. Grafana will role deletion after role insertion/update.
 
 > Managing your roles can also be done using the [`access-control HTTP API`]({{< relref "../../http_api/access_control/" >}})
 
-### Example of a Role Configuration File
+## Example of a Role Configuration File
 
 ```yaml
 # config file version
@@ -65,3 +65,8 @@ roles:
         # <int> org id. will default to the role org id
         orgId: 1
 ```
+
+## Supported settings
+
+Check correct values for [permissions]({{< relref "./concepts/permissions.md/#available-permissions" >}}), [built-in role assignments]({{< relref "./concepts/roles.md#built-in-role-assignments" >}})
+

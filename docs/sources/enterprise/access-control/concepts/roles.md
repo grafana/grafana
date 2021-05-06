@@ -43,11 +43,11 @@ grafana:roles:ldap:admin:edit | All permissions from `grafana:roles:ldap:admin:r
 You can create custom roles with permissions to control access to your users the way you want. 
 See [Custom roles]({{< relref "./custom-roles.md" >}}) to understand how it works.
 
-# Built-in role assignments
+## Built-in role assignments
 
 To control what your users can access or not, you can assign or unassign a role to the existing Organization roles, or to a Grafana Admin. These assignments are called built-in role assignments.
 
-During the startup, Grafana will create default assignments for you. You can update assignments by using [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or by using Grafana Provisioning(todo). Grafana will take into account any changes to the assignments and won’t overwrite them.
+During startup, Grafana will create default assignments for you. You can update assignments using [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or using Grafana [Provisioning]({{< relref "../provisioning">}}). Grafana will take into account any changes to the assignments and won’t overwrite them.
 
 The following built-in role assignments will be created:
 
