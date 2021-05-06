@@ -1,5 +1,7 @@
-import { NotifierType } from 'app/types';
+import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import { CloudNotifierType, NotifierType } from 'app/types';
 import React from 'react';
+import { ControlledField } from '../hooks/useControlledFieldArray';
 
 export interface ChannelValues {
   __id: string; // used to correllate form values to original DTOs
@@ -11,7 +13,7 @@ export interface ChannelValues {
 
 export interface ReceiverFormValues<R extends ChannelValues> {
   name: string;
-  items: R[];
+  items: Array<ControlledField<R>>;
 }
 
 export interface CloudChannelValues extends ChannelValues {
@@ -31,3 +33,18 @@ export interface CommonSettingsComponentProps {
   className?: string;
 }
 export type CommonSettingsComponentType = React.ComponentType<CommonSettingsComponentProps>;
+
+export type CloudChannelConfig = {
+  send_resolved: boolean;
+  [key: string]: unknown;
+};
+
+// id to notifier
+export type GrafanaChannelMap = Record<string, GrafanaManagedReceiverConfig>;
+export type CloudChannelMap = Record<
+  string,
+  {
+    type: CloudNotifierType;
+    config: CloudChannelConfig;
+  }
+>;
