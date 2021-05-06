@@ -1,5 +1,5 @@
 import { Input, InlineField, Select, InlineSwitch } from '@grafana/ui';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { movingAvgModelOptions } from '../../../../query_def';
 import { isEWMAMovingAverage, isHoltMovingAverage, isHoltWintersMovingAverage, MovingAverage } from '../aggregations';
@@ -13,7 +13,7 @@ interface Props {
 // The way we handle changes for those settings is not ideal compared to the other components in the editor
 // FIXME: using `changeMetricSetting` will cause an error when switching from models that have different options
 // as they might be incompatible. We should clear all other options on model change.
-export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }) => {
+export const MovingAverageSettingsEditor = ({ metric }: Props) => {
   const dispatch = useDispatch();
 
   return (

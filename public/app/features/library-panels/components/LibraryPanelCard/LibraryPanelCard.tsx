@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { PanelPluginMeta } from '@grafana/data';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Icon, Link, useStyles2 } from '@grafana/ui';
 
 import { LibraryPanelDTO } from '../../types';
 import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
@@ -37,7 +39,9 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
         plugin={panelPlugin}
         onClick={() => onClick(libraryPanel)}
         onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
-      />
+      >
+        <FolderLink libraryPanel={libraryPanel} />
+      </PanelTypeCard>
       {showDeletionModal && (
         <DeleteLibraryPanelModal
           libraryPanel={libraryPanel}
@@ -48,3 +52,46 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
     </>
   );
 };
+
+interface FolderLinkProps {
+  libraryPanel: LibraryPanelDTO;
+}
+
+function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
+  const styles = useStyles2(getStyles);
+
+  if (!libraryPanel.meta.folderUid) {
+    return (
+      <span className={styles.metaContainer}>
+        <Icon name={'folder'} size="sm" />
+        {libraryPanel.meta.folderName}
+      </span>
+    );
+  }
+
+  return (
+    <Link href={`/dashboards/f/${libraryPanel.meta.folderUid}`}>
+      <span className={styles.metaContainer}>
+        <Icon name={'folder-upload'} size="sm" />
+        {libraryPanel.meta.folderName}
+      </span>
+    </Link>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    metaContainer: css`
+      display: flex;
+      align-items: center;
+      color: ${theme.colors.text.disabled};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      padding-top: ${theme.spacing(0.5)};
+
+      svg {
+        margin-right: ${theme.spacing(0.5)};
+        margin-bottom: 3px;
+      }
+    `,
+  };
+}

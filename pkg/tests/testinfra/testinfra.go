@@ -219,6 +219,18 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
 			require.NoError(t, err)
 		}
+		if o.EnableQuota {
+			quotaSection, err := cfg.NewSection("quota")
+			require.NoError(t, err)
+			_, err = quotaSection.NewKey("enabled", "true")
+			require.NoError(t, err)
+		}
+		if o.DisableAnonymous {
+			anonSect, err := cfg.GetSection("auth.anonymous")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("enabled", "false")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -235,4 +247,6 @@ type GrafanaOpts struct {
 	EnableCSP            bool
 	EnableFeatureToggles []string
 	AnonymousUserRole    models.RoleType
+	EnableQuota          bool
+	DisableAnonymous     bool
 }
