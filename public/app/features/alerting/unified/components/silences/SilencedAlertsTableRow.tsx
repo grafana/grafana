@@ -1,12 +1,12 @@
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useState } from 'react';
 import { CollapseToggle } from '../CollapseToggle';
-import { StateTag } from '../StateTag';
 import { ActionIcon } from '../rules/ActionIcon';
 import { getAlertTableStyles } from '../../styles/table';
 import { useStyles2 } from '@grafana/ui';
 import { dateTimeAsMoment, toDuration } from '@grafana/data';
 import { AlertLabels } from '../AlertLabels';
+import { AmAlertStateTag } from './AmAlertStateTag';
 
 interface Props {
   alert: AlertmanagerAlert;
@@ -30,7 +30,7 @@ export const SilencedAlertsTableRow: FC<Props> = ({ alert, className }) => {
           <CollapseToggle isCollapsed={isCollapsed} onToggle={(collapsed) => setIsCollapsed(collapsed)} />
         </td>
         <td>
-          <StateTag status={alert.status.state}>{alert.status.state}</StateTag>
+          <AmAlertStateTag state={alert.status.state} />
         </td>
         <td>for {alertDuration} seconds</td>
         <td>{alertName}</td>

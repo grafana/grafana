@@ -5,7 +5,7 @@ import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/t
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
-  GrafanaAlertState,
+  GrafanaAlertStateDecision,
   GrafanaQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
@@ -28,8 +28,8 @@ export const defaultFormValues: RuleFormValues = Object.freeze({
   folder: null,
   queries: [],
   condition: '',
-  noDataState: GrafanaAlertState.NoData,
-  execErrState: GrafanaAlertState.Alerting,
+  noDataState: GrafanaAlertStateDecision.NoData,
+  execErrState: GrafanaAlertStateDecision.Alerting,
   evaluateEvery: '1m',
   evaluateFor: '5m',
 
