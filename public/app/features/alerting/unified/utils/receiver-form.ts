@@ -43,15 +43,16 @@ export function cloudReceiverToFormValues(
 ): [ReceiverFormValues<CloudChannelValues>, CloudChannelMap] {
   const channelMap: CloudChannelMap = {};
   // giving each form receiver item a unique id so we can use it to map back to "original" items
-  // as well as to use as `key` prop.
-  // @TODO use uid once backend is fixed to provide it. then we can get rid of the GrafanaChannelMap
   let idCounter = 1;
   const items: CloudChannelValues[] = Object.entries(receiver)
-    .filter(([type]) => type.endsWith('_configs') && type !== 'grafana_managed_receiver_configs') // filter out only config items
+    // filter out only config items that are relevant to cloud
+    .filter(([type]) => type.endsWith('_configs') && type !== 'grafana_managed_receiver_configs')
+    // map property names to cloud notifier types by removing the `_config` suffix
     .map(([type, configs]): [CloudNotifierType, CloudChannelConfig[]] => [
       type.replace('_configs', '') as CloudNotifierType,
       configs as CloudChannelConfig[],
-    ]) // coerce name into notifier type
+    ])
+    // convert channel configs to form values
     .map(([type, configs]) =>
       configs.map((config) => {
         const id = String(idCounter++);
