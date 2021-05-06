@@ -156,6 +156,39 @@ describe('NodeGraph', () => {
     const nodes = await screen.findAllByLabelText(/Node: service:\d/);
     expect(nodes.length).toBe(2);
     screen.getByLabelText(/Nodes hidden warning/);
+
+    const markers = await screen.findAllByLabelText(/Hidden nodes marker: \d/);
+    expect(markers.length).toBe(1);
+  });
+
+  it('allows expanding the nodes when limiting visible nodes', async () => {
+    render(
+      <NodeGraph
+        dataFrames={[
+          makeNodesDataFrame(5),
+          makeEdgesDataFrame([
+            [0, 1],
+            [1, 2],
+            [2, 3],
+            [3, 4],
+          ]),
+        ]}
+        getLinks={() => []}
+        nodeLimit={3}
+      />
+    );
+
+    const node = await screen.findByLabelText(/Node: service:0/);
+    expect(node).toBeInTheDocument();
+
+    const marker = await screen.findByLabelText(/Hidden nodes marker: 3/);
+    userEvent.click(marker);
+
+    expect(screen.queryByLabelText(/Node: service:0/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Node: service:4/)).toBeInTheDocument();
+
+    const nodes = await screen.findAllByLabelText(/Node: service:\d/);
+    expect(nodes.length).toBe(3);
   });
 });
 

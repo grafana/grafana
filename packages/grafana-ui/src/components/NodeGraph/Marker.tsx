@@ -45,6 +45,7 @@ export const Marker = memo(function Marker(props: {
       onClick={(event) => {
         onClick?.(event, marker);
       }}
+      aria-label={`Hidden nodes marker: ${node.id}`}
     >
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       <g>
