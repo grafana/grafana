@@ -16,7 +16,14 @@ import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 // Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
+import {
+  GraphiteOptions,
+  GraphiteQuery,
+  GraphiteQueryImportConfiguration,
+  GraphiteType,
+  GraphiteLokiMapping,
+  MetricTankRequestMeta,
+} from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
@@ -24,7 +31,11 @@ import { catchError, map } from 'rxjs/operators';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
 
-export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
+export class GraphiteDatasource extends DataSourceApi<
+  GraphiteQuery,
+  GraphiteOptions,
+  GraphiteQueryImportConfiguration
+> {
   basicAuth: string;
   url: string;
   name: string;
@@ -37,6 +48,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   funcDefs: any = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  private readonly metricMappings: GraphiteLokiMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
@@ -46,6 +58,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     // graphiteVersion is set when a datasource is created but it hadn't been set in the past so we're
     // still falling back to the default behavior here for backwards compatibility (see also #17429)
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
+    this.metricMappings = instanceSettings.jsonData.importConfiguration?.loki?.mappings || [];
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
@@ -66,6 +79,14 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           url: 'http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana',
         },
       ],
+    };
+  }
+
+  getImportQueryConfiguration(): GraphiteQueryImportConfiguration {
+    return {
+      loki: {
+        mappings: this.metricMappings,
+      },
     };
   }
 
