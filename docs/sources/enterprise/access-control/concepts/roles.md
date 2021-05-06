@@ -13,7 +13,7 @@ There are two types of roles:
 1. [Predefined roles]({{< relref "./roles.md#predefined-roles" >}}), which provide granular access for specific resources within Grafana and are managed by the Grafana itself. All predefined roles start with a prefix “grafana:roles:” and can’t be changed or deleted by users.
 1. [Custom roles]({{< relref "./custom-roles.md" >}}), which provide granular access based on the user specified set of permissions. A custom role with a prefix of “grafana:roles:” can’t be created as it is reserved for predefined roles.
 
-### Global and organization roles
+## Global and organization roles
 
 A role can be either **global** or **organization local**. Global roles are not mapped to any specific organization and reusable across multiple organizations, whereas organization local roles are only accessible within the assigned organization. 
 Note that organization local roles can't be assigned globally or to a different organization.  
