@@ -8,6 +8,7 @@ import useLastError from '../../utils/useLastError';
 import LogsQueryEditor from '../LogsQueryEditor';
 import ApplicationInsightsEditor from '../ApplicationInsightsEditor';
 import InsightsAnalyticsEditor from '../InsightsAnalyticsEditor';
+import { Space } from '../Space';
 
 interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
@@ -39,7 +40,7 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
 
       {errorMessage && (
         <>
-          <br />
+          <Space v={2} />
           <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
             {errorMessage}
           </Alert>

@@ -3,6 +3,7 @@ import React from 'react';
 import { AzureMonitorOption, AzureMonitorQuery, AzureResultFormat } from '../../types';
 import { findOption } from '../../utils/common';
 import { Field } from '../Field';
+import { Space } from '../Space';
 
 interface InsightsAnalyticsEditorProps {
   query: AzureMonitorQuery;
@@ -35,6 +36,8 @@ const InsightsAnalyticsEditor: React.FC<InsightsAnalyticsEditorProps> = ({ query
           width={38}
         />
       </Field>
+
+      <Space v={2} />
 
       <Alert severity="info" title="Deprecated">
         Insights Analytics is deprecated and is now read only. Migrate your queries to Logs to make changes.
