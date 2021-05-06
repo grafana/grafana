@@ -159,7 +159,6 @@ func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedIn
 
 // GET /api/org/users/search
 func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
-
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -187,9 +186,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	return response.JSON(200, result.Result)
 }
 
-func (hs *HTTPServer) searchOrgUsersHelper(query *models.SearchOrgUsersQuery, signedInUser *models.SignedInUser,
-) (*models.SearchOrgUsersQuery, error) {
-
+func (hs *HTTPServer) searchOrgUsersHelper(query *models.SearchOrgUsersQuery, signedInUser *models.SignedInUser) (*models.SearchOrgUsersQuery, error) {
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
