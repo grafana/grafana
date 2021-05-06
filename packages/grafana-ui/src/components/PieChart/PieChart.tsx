@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -242,15 +242,26 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             {(pie) => (
               <>
                 {pie.arcs.map((arc) => {
-                  let color = arc.data.display.color ?? FALLBACK_COLOR;
-                  const highlighted = highlightedTitle === arc.data.display.title;
+                  const color = arc.data.display.color ?? FALLBACK_COLOR;
+
+                  let highlightState: HighLightState;
+                  if (highlightedTitle) {
+                    if (highlightedTitle === arc.data.display.title) {
+                      highlightState = HighLightState.Highlighted;
+                    } else {
+                      highlightState = HighLightState.Deemphasized;
+                    }
+                  } else {
+                    highlightState = HighLightState.Normal;
+                  }
+
                   if (arc.data.hasLinks && arc.data.getLinks) {
                     return (
                       <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
                         {(api) => (
                           <PieSlice
                             tooltip={tooltip}
-                            highlighted={highlighted}
+                            highlightState={highlightState}
                             arc={arc}
                             pie={pie}
                             fill={getGradientColor(color)}
@@ -264,7 +275,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                     return (
                       <PieSlice
                         key={arc.index}
-                        highlighted={highlighted}
+                        highlightState={highlightState}
                         tooltip={tooltip}
                         arc={arc}
                         pie={pie}
@@ -307,35 +318,85 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   );
 };
 
+enum HighLightState {
+  Highlighted,
+  Deemphasized,
+  Normal,
+}
+
 interface SliceProps {
   arc: PieArcDatum<FieldDisplay>;
   pie: ProvidedProps<FieldDisplay>;
-  highlighted?: boolean;
+  highlightState: HighLightState;
   fill: string;
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
 }
 
-function PieSlice({ arc, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
+function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { eventBus } = usePanelContext();
 
-  const onMouseMoveOverArc = (event: any) => {
-    const coords = localPoint(event.target.ownerSVGElement, event);
-    tooltip.showTooltip({
-      tooltipLeft: coords!.x,
-      tooltipTop: coords!.y,
-      tooltipData: getTooltipData(pie, arc, tooltipOptions),
-    });
-  };
+  const onMouseOut = useCallback(
+    (event: any) => {
+      eventBus?.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+      tooltip.hideTooltip();
+    },
+    [eventBus, arc, tooltip]
+  );
+
+  const onMouseMoveOverArc = useCallback(
+    (event: any) => {
+      eventBus?.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+
+      const coords = localPoint(event.target.ownerSVGElement, event);
+      tooltip.showTooltip({
+        tooltipLeft: coords!.x,
+        tooltipTop: coords!.y,
+        tooltipData: getTooltipData(pie, arc, tooltipOptions),
+      });
+    },
+    [eventBus, arc, tooltip, pie, tooltipOptions]
+  );
+
+  let pieStyle;
+  switch (highlightState) {
+    case HighLightState.Highlighted:
+      pieStyle = styles.svgArg.highlighted;
+      break;
+    case HighLightState.Deemphasized:
+      pieStyle = styles.svgArg.deemphasized;
+      break;
+    case HighLightState.Normal:
+    default:
+      pieStyle = styles.svgArg.normal;
+      break;
+  }
 
   return (
     <g
       key={arc.data.display.title}
-      className={highlighted ? styles.svgArg.highlighted : styles.svgArg.normal}
+      className={pieStyle}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
-      onMouseOut={tooltip.hideTooltip}
+      onMouseOut={onMouseOut}
       onClick={openMenu}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
@@ -477,13 +538,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     svgArg: {
       normal: css`
         transition: all 200ms ease-in-out;
-        &:hover {
-          transform: scale3d(1.03, 1.03, 1);
-        }
       `,
       highlighted: css`
         transition: all 200ms ease-in-out;
         transform: scale3d(1.03, 1.03, 1);
+      `,
+      deemphasized: css`
+        transition: all 200ms ease-in-out;
+        fill-opacity: 0.5;
       `,
     },
     tooltipPortal: css`
