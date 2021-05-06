@@ -1,4 +1,3 @@
-import { AzureCloud } from './azure';
 import { DataSourceInstanceSettings } from './datasource';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
@@ -133,6 +132,4 @@ export interface GrafanaConfig {
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
   customTheme?: any;
-  azureCloud?: AzureCloud;
-  azureManagedIdentityEnabled: boolean;
 }

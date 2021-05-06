@@ -1,6 +1,5 @@
 import { merge } from 'lodash';
 import {
-  AzureCloud,
   BuildInfo,
   createTheme,
   DataSourceInstanceSettings,
@@ -13,6 +12,11 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
+
+export interface AzureSettings {
+  cloud?: string;
+  managedIdentityEnabled: boolean;
+}
 
 export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
@@ -76,8 +80,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
-  azureCloud?: AzureCloud;
-  azureManagedIdentityEnabled = false;
+  azure: AzureSettings = {
+    managedIdentityEnabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
