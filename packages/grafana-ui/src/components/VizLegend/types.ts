@@ -2,11 +2,16 @@ import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
 import React from 'react';
 import { LegendDisplayMode, LegendPlacement } from './models.gen';
 
+export enum SeriesVisibilityChangeBehavior {
+  Isolate,
+  Hide,
+}
+
 export interface VizLegendBaseProps {
   placement: LegendPlacement;
   className?: string;
   items: VizLegendItem[];
-  disableSeriesIsolation?: boolean;
+  seriesVisibilityChangeBehavior?: SeriesVisibilityChangeBehavior;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
   itemRenderer?: (item: VizLegendItem, index: number) => JSX.Element;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;

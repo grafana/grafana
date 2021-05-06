@@ -5,9 +5,9 @@ import { VizLegendItem } from '../VizLegend/types';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { AxisPlacement } from './config';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
-import { mapMouseEventToMode } from '../GraphNG/utils';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { GraphNGLegendEvent } from '..';
+import { mapMouseEventToMode } from '../VizLegend/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 

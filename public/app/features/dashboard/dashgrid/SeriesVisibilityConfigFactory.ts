@@ -9,14 +9,14 @@ import {
   isSystemOverrideWithRef,
   SystemConfigOverrideRule,
 } from '@grafana/data';
-import { GraphNGLegendEventMode } from '@grafana/ui';
+import { SeriesVisibilityChangeMode } from '@grafana/ui';
 
 const displayOverrideRef = 'hideSeriesFrom';
 const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
 
 export function seriesVisibilityConfigFactory(
   label: string,
-  mode: GraphNGLegendEventMode,
+  mode: SeriesVisibilityChangeMode,
   fieldConfig: FieldConfigSource,
   data: DataFrame[]
 ) {
@@ -26,7 +26,7 @@ export function seriesVisibilityConfigFactory(
   const currentIndex = overrides.findIndex(isHideSeriesOverride);
 
   if (currentIndex < 0) {
-    if (mode === GraphNGLegendEventMode.ToggleSelection) {
+    if (mode === SeriesVisibilityChangeMode.ToggleSelection) {
       const override = createOverride([displayName]);
 
       return {
@@ -47,7 +47,7 @@ export function seriesVisibilityConfigFactory(
   const overridesCopy = Array.from(overrides);
   const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
 
-  if (mode === GraphNGLegendEventMode.ToggleSelection) {
+  if (mode === SeriesVisibilityChangeMode.ToggleSelection) {
     const existing = getExistingDisplayNames(current);
 
     if (existing[0] === displayName && existing.length === 1) {

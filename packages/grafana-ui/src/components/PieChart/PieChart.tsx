@@ -34,6 +34,7 @@ import { getTooltipContainerStyles } from '../../themes/mixins';
 import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
 import { usePanelContext } from '../PanelChrome';
 import { Subscription } from 'rxjs';
+import { SeriesVisibilityChangeBehavior } from '../VizLegend/types';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -136,7 +137,7 @@ function getLegend(props: PieChartProps, displayValues: FieldDisplay[]) {
   return (
     <VizLegend
       items={legendItems}
-      disableSeriesIsolation={true}
+      seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
       placement={legendOptions.placement}
       displayMode={legendOptions.displayMode}
     />

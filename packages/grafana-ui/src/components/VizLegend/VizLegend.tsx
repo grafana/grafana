@@ -1,12 +1,11 @@
 import React, { useCallback } from 'react';
-import { LegendProps, VizLegendItem } from './types';
+import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
 import { LegendDisplayMode } from './models.gen';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
 import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
-import { usePanelContext } from '../PanelChrome';
-import { mapMouseEventToMode } from '../GraphNG/utils';
-import { GraphNGLegendEventMode } from '../GraphNG/types';
+import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
+import { mapMouseEventToMode } from './utils';
 
 /**
  * @public
@@ -15,7 +14,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   items,
   displayMode,
   sortBy: sortKey,
-  disableSeriesIsolation,
+  seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
   sortDesc,
   onLabelClick,
   onToggleSort,
@@ -62,11 +61,13 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
       if (onToggleSeriesVisibility) {
         onToggleSeriesVisibility(
           item.label,
-          disableSeriesIsolation ? GraphNGLegendEventMode.AppendToSelection : mapMouseEventToMode(event)
+          seriesVisibilityChangeBehavior === SeriesVisibilityChangeBehavior.Hide
+            ? SeriesVisibilityChangeMode.AppendToSelection
+            : mapMouseEventToMode(event)
         );
       }
     },
-    [onToggleSeriesVisibility, onLabelClick, disableSeriesIsolation]
+    [onToggleSeriesVisibility, onLabelClick, seriesVisibilityChangeBehavior]
   );
 
   switch (displayMode) {

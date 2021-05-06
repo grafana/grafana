@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelContextProvider, PanelContext, GraphNGLegendEventMode } from '@grafana/ui';
+import { ErrorBoundary, PanelContextProvider, PanelContext, SeriesVisibilityChangeMode } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -88,7 +88,7 @@ export class PanelChrome extends Component<Props, State> {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
   };
 
-  onSeriesVisibilityChange = (label: string, mode: GraphNGLegendEventMode) => {
+  onSeriesVisibilityChange = (label: string, mode: SeriesVisibilityChangeMode) => {
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
