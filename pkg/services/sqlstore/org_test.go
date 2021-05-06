@@ -203,6 +203,32 @@ func TestAccountDataAccess(t *testing.T) {
 					So(query.Result[0].Email, ShouldEqual, ac1.Email)
 				})
 
+				Convey("Can get organization users paginated with query", func() {
+					query := models.SearchOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						Page:  1,
+						Query: "ac",
+					}
+					err := SearchOrgUsers(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Role, ShouldEqual, "Admin")
+				})
+
+				Convey("Can get organization users paginated and limited", func() {
+					query := models.SearchOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						Limit: 1,
+						Page:  1,
+					}
+					err := SearchOrgUsers(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Role, ShouldEqual, "Admin")
+				})
+
 				Convey("Can set using org", func() {
 					cmd := models.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.OrgId}
 					err := SetUsingOrg(&cmd)
