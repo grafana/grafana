@@ -13,6 +13,7 @@ import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
+import { getLogAnalyticsManagementApiRoute, getManagementApiRoute } from '../api/routes';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -54,10 +55,25 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
-  private getSubscriptions = async (route?: string): Promise<Array<SelectableValue<string>>> => {
+  private getSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
     await this.saveOptions();
 
-    const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
+    const route = getManagementApiRoute(this.props.options);
+    const url = `/${route}/subscriptions?api-version=2019-03-01`;
+
+    const result = await getBackendSrv().datasourceRequest({
+      url: this.props.options.url + url,
+      method: 'GET',
+    });
+
+    return ResponseParser.parseSubscriptionsForSelect(result);
+  };
+
+  private getLogAnalyticsSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
+    await this.saveOptions();
+
+    const route = getLogAnalyticsManagementApiRoute(this.props.options);
+    const url = `/${route}/subscriptions?api-version=2019-03-01`;
 
     const result = await getBackendSrv().datasourceRequest({
       url: this.props.options.url + url,
@@ -70,22 +86,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
   private getWorkspaces = async (subscriptionId: string): Promise<Array<SelectableValue<string>>> => {
     await this.saveOptions();
 
-    const { azureLogAnalyticsSameAs, cloudName } = this.props.options.jsonData;
-
-    let azureMonitorUrl;
-    if (azureLogAnalyticsSameAs) {
-      const azureCloud = cloudName || 'azuremonitor';
-      azureMonitorUrl = `/${azureCloud}/subscriptions`;
-    } else {
-      azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
-    }
-
-    const workspaceListUrl =
-      azureMonitorUrl +
-      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
+    const route = getLogAnalyticsManagementApiRoute(this.props.options);
+    const url = `/${route}/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
     const result = await getBackendSrv().datasourceRequest({
-      url: this.props.options.url + workspaceListUrl,
+      url: this.props.options.url + url,
       method: 'GET',
     });
 
@@ -125,7 +130,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <AnalyticsConfig
           options={options}
           updateOptions={this.updateOptions}
-          getSubscriptions={this.getSubscriptions}
+          getSubscriptions={this.getLogAnalyticsSubscriptions}
           getWorkspaces={this.getWorkspaces}
         />
 

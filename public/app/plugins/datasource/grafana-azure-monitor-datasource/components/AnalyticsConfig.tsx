@@ -15,7 +15,7 @@ import {
 export interface Props {
   options: AzureDataSourceSettings;
   updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
-  getSubscriptions: (route?: string) => Promise<Array<SelectableValue<string>>>;
+  getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
   getWorkspaces: (subscriptionId: string) => Promise<Array<SelectableValue<string>>>;
 }
 
@@ -131,7 +131,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
           defaultSubscription={subscriptionId}
           onCredentialsChange={onCredentialsChange}
           onDefaultSubscriptionChange={onLogAnalyticsDefaultSubscriptionChange}
-          getSubscriptions={() => getSubscriptions('workspacesloganalytics')}
+          getSubscriptions={getSubscriptions}
         />
       )}
       <div className="gf-form-group">

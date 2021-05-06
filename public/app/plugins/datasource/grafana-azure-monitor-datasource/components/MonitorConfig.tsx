@@ -14,7 +14,7 @@ const azureClouds = [
 export interface Props {
   options: AzureDataSourceSettings;
   updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
-  getSubscriptions: (route?: string) => Promise<Array<SelectableValue<string>>>;
+  getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
 }
 
 export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
