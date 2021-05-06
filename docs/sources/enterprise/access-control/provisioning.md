@@ -44,9 +44,9 @@ roles:
     orgId: 1
     # <list> list of the permissions granted by this role
     permissions:
-      # <string> action allowed
+      # <string, required> action allowed
       - action: "users:read"
-        #<string> scope it applies to
+        #<string, required> scope it applies to
         scope: "users:*"
       - action: "users:write"
         scope: "users:*"
@@ -54,13 +54,13 @@ roles:
         scope: "users:*"
     # <list> list of teams the role should be assigned to
     teams:
-      # <string> name of the team you want to assign the role to
+      # <string, required> name of the team you want to assign the role to
       - name: CustomEditors
         # <int> org id. will default to the role org id
         orgId: 1
     # <list> list of builtIn roles the role should be assigned to
     builtInRoles:
-      # <string> name of the builtin role you want to assign the role to
+      # <string, required> name of the builtin role you want to assign the role to
       - name: "Editor"
         # <int> org id. will default to the role org id
         orgId: 1
