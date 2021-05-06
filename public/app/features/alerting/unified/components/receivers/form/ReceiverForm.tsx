@@ -145,7 +145,6 @@ export function ReceiverForm<R extends ChannelValues>({
             disabled={loading}
             fill="outline"
             variant="secondary"
-            fill="outline"
             href={makeAMLink('alerting/notifications', alertManagerSourceName)}
           >
             Cancel
