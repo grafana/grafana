@@ -16,4 +16,5 @@ export interface RouteDescriptor {
   pageClass?: string;
   /** Can be used like an id for the route if the same component is used by many routes */
   routeName?: string;
+  exact?: boolean;
 }

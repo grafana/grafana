@@ -91,7 +91,6 @@ class AppRootPage extends Component<Props, State> {
   };
 
   render() {
-    const { location, queryParams } = this.props;
     const { loading, plugin, nav, portalNode } = this.state;
 
     if (plugin && !plugin.root) {
@@ -103,12 +102,7 @@ class AppRootPage extends Component<Props, State> {
       <>
         <InPortal node={portalNode}>
           {plugin && plugin.root && (
-            <plugin.root
-              meta={plugin.meta}
-              query={queryParams}
-              path={location.pathname}
-              onNavChanged={this.onNavChanged}
-            />
+            <plugin.root meta={plugin.meta} basename={this.props.match.url} onNavChanged={this.onNavChanged} />
           )}
         </InPortal>
         {nav ? (

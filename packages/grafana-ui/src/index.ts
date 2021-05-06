@@ -11,3 +11,4 @@ export * from './slate-plugins';
 
 // Exposes standard editors for registries of optionsUi config and panel options UI
 export { getStandardFieldConfigs, getStandardOptionEditors } from './utils/standardEditors';
+export { Route, useLocation, useParams } from 'react-router-dom';

@@ -11,9 +11,10 @@ export enum CoreApp {
 
 export interface AppRootProps<T = KeyValue> {
   meta: AppPluginMeta<T>;
-
-  path: string; // The URL path to this page
-  query: KeyValue; // The URL query parameters
+  /**
+   * base URL segment for an app, /app/pluginId
+   */
+  basename: string; // The URL path to this page
 
   /**
    * Pass the nav model to the container... is there a better way?
