@@ -35,7 +35,7 @@ export interface PanelEditorState {
   isOpen: boolean;
   ui: PanelEditorUIState;
   isVizPickerOpen: boolean;
-  rawDataEnabled: boolean;
+  tableViewEnabled: boolean;
 }
 
 export const initialState = (): PanelEditorState => {
@@ -59,7 +59,7 @@ export const initialState = (): PanelEditorState => {
     shouldDiscardChanges: false,
     isOpen: false,
     isVizPickerOpen: false,
-    rawDataEnabled: false,
+    tableViewEnabled: false,
     ui: {
       ...DEFAULT_PANEL_EDITOR_UI_STATE,
       ...migratedState,
@@ -103,14 +103,14 @@ const pluginsSlice = createSlice({
         state.ui.isPanelOptionsVisible = true;
       }
     },
-    toggleRawDataMode(state) {
-      state.rawDataEnabled = !state.rawDataEnabled;
+    toggleTableView(state) {
+      state.tableViewEnabled = !state.tableViewEnabled;
     },
     closeCompleted: (state) => {
       state.isOpen = false;
       state.initDone = false;
       state.isVizPickerOpen = false;
-      state.rawDataEnabled = false;
+      state.tableViewEnabled = false;
     },
   },
 });
@@ -122,7 +122,7 @@ export const {
   closeCompleted,
   setPanelEditorUIState,
   toggleVizPicker,
-  toggleRawDataMode,
+  toggleTableView,
 } = pluginsSlice.actions;
 
 export const panelEditorReducer = pluginsSlice.reducer;

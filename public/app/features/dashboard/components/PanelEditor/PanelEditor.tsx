@@ -39,7 +39,7 @@ import {
 } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { toggleRawDataMode } from './state/reducers';
+import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
@@ -78,7 +78,7 @@ const mapStateToProps = (state: StoreState) => {
     panel,
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
-    rawDataEnabled: state.panelEditor.rawDataEnabled,
+    tableViewEnabled: state.panelEditor.tableViewEnabled,
     variables: getVariables(state),
   };
 };
@@ -91,7 +91,7 @@ const mapDispatchToProps = {
   discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
-  toggleRawDataMode,
+  toggleTableView,
   notifyApp,
 };
 
@@ -223,8 +223,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     });
   };
 
-  onTableToggleRawData = () => {
-    this.props.toggleRawDataMode();
+  onToggleTableView = () => {
+    this.props.toggleTableView();
   };
 
   onTogglePanelOptions = () => {
@@ -233,7 +233,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel = (styles: EditorStyles) => {
-    const { dashboard, panel, uiState, plugin, tab, rawDataEnabled } = this.props;
+    const { dashboard, panel, uiState, plugin, tab, tableViewEnabled } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
 
     return (
@@ -246,7 +246,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 return null;
               }
 
-              if (rawDataEnabled) {
+              if (tableViewEnabled) {
                 return <RawDataViewer width={width} height={height} panel={panel} />;
               }
 
@@ -304,7 +304,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, uiState, variables, updateTimeZoneForSession, panel, rawDataEnabled } = this.props;
+    const { dashboard, uiState, variables, updateTimeZoneForSession, panel, tableViewEnabled } = this.props;
 
     return (
       <div className={styles.panelToolbar}>
@@ -312,11 +312,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {this.renderTemplateVariables(styles)}
           <HorizontalGroup>
             <InlineSwitch
-              label="Raw data"
+              label="Table view"
               showLabel={true}
-              id="show-raw-data"
-              value={rawDataEnabled}
-              onClick={this.onTableToggleRawData}
+              id="table-view"
+              value={tableViewEnabled}
+              onClick={this.onToggleTableView}
             />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
