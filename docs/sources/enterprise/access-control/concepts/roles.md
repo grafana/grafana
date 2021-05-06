@@ -1,7 +1,8 @@
 +++
 title = "Roles"
 description = "Understand roles in access control"
-keywords = ["grafana", "access-control", "concepts", "roles", "predefined-roles", "built-in-roles"" "permissions" "enterprise"]
+keywords = ["grafana", "access-control", "concepts", "roles", "predefined-roles", "built-in-roles", "permissions", "enterprise"]
+weight = 110
 +++
 
 # Roles
@@ -30,7 +31,7 @@ grafana:roles:permissions:admin:read | roles:read<br>roles:list<br>roles.builtin
 grafana:roles:permissions:admin:edit | All permissions from `grafana:roles:permissions:admin:read` and <br>roles:write<br>roles:delete<br>roles.builtin:add<br>roles.builtin:remove |
 grafana:roles:reporting:admin:read | reports:read<br>reports:send<br>reports.settings:read | 
 grafana:roles:reporting:admin:edit | All permissions from `grafana:roles:reporting:admin:read` and <br>reports.admin:write<br>reports:delete<br>reports.settings:write | 
-grafana:roles:users:admin:read | users.authtoken:list<br>users.quotas:list<br>users:read<users.teams:read> |
+grafana:roles:users:admin:read | users.authtoken:list<br>users.quotas:list<br>users:read<br>users.teams:read |
 grafana:roles:users:admin:edit | All permissions from `grafana:roles:users:admin:read` and <br>users.password:update<br>users:write<br>users:create<br>users:delete<br>users:enable<br>users:disable<br>users.permissions:update<br>users:logout<br>users.authtoken:update<br>users.quotas:update |
 grafana:roles:users:org:read | org.users:read |
 grafana:roles:users:org:edit | All permissions from `grafana:roles:users:org:read` and <br>org.users:add<br>org.users:remove<br>org.users.role:update |
@@ -44,7 +45,7 @@ See [Custom roles]({{< relref "./custom-roles.md" >}}) to understand how it work
 
 # Built-in role assignments
 
-To control what your users can access or not, you can assign or unassign a role to the existing Organization roles, or to a Grafana Server Admin role. These assignments are called built-in role assignments.
+To control what your users can access or not, you can assign or unassign a role to the existing Organization roles, or to a Grafana Admin. These assignments are called built-in role assignments.
 
 During the startup, Grafana will create default assignments for you. You can update assignments by using [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or by using Grafana Provisioning(todo). Grafana will take into account any changes to the assignments and won’t overwrite them.
 
@@ -52,6 +53,6 @@ The following built-in role assignments will be created:
 
 Built-in role | Associated role | Description
 --- | --- | ---
-Grafana Server Admin | grafana:roles:permissions:admin:edit<br>grafana:roles:permissions:admin:read<br>grafana:roles:reporting:admin:edit<br>grafana:roles:reporting:admin:read<br>grafana:roles:users:admin:edit<br>grafana:roles:users:admin:read<br>grafana:roles:users:org:edit<br>grafana:roles:users:org:read<br>grafana:roles:ldap:admin:edit<br>grafana:roles:ldap:admin:read | Allows access to resources which [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) has permissions for by default.
-Admin | grafana:roles:users:org:edit<br>grafana:roles:users:org:read<br>grafana:roles:reporting:admin:edit<br>grafana:roles:reporting:admin:read | Allows access to resource which [Admin]({{< relref "../../permissions/organization_roles.md" >}}) has permissions for by default.
+Grafana Admin | grafana:roles:permissions:admin:edit<br>grafana:roles:permissions:admin:read<br>grafana:roles:reporting:admin:edit<br>grafana:roles:reporting:admin:read<br>grafana:roles:users:admin:edit<br>grafana:roles:users:admin:read<br>grafana:roles:users:org:edit<br>grafana:roles:users:org:read<br>grafana:roles:ldap:admin:edit<br>grafana:roles:ldap:admin:read | Allows access to resources which [Grafana Admin]({{< relref "../../../permissions/_index.md#grafana-server-admin-role" >}}) has permissions for by default.
+Admin | grafana:roles:users:org:edit<br>grafana:roles:users:org:read<br>grafana:roles:reporting:admin:edit<br>grafana:roles:reporting:admin:read | Allows access to resource which [Admin]({{< relref "../../../permissions/organization_roles.md" >}}) has permissions for by default.
 

@@ -1,6 +1,6 @@
 +++
 title = "Access control HTTP API "
-description = "Access control API"
+description = "Access Control API"
 keywords = ["grafana", "http", "documentation", "api", "access-control", "acl", "enterprise"]
 aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 +++
@@ -9,7 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 
 > The Access Control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-> Only available in Grafana Enterprise v8.0+.
+> Access control is available behind the `accesscontrol` feature flag in Grafana Enterprise 8.0+.
 
 The API can be used to create, update, get and list roles, and add or revoke role assignments for built-in roles. By default, the API assumes that the requests are done for the organization that users is signed in. Refer to [Access Control Roles]({{< relref "../enterprise/access-control/concepts" >}}) to learn more about how you can use access control.
 

@@ -2,13 +2,14 @@
 title = "Custom roles"
 description = "Understand custom roles in access control"
 keywords = ["grafana", "access-control", "concepts", "roles", "custom-roles", "enterprise"]
+weight = 120
 +++
 
 # Custom roles
 
 You can create custom roles with permissions to control access for your users the way you want. 
 A custom role must have a name and a version. To create, update or delete a custom role, you can use [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or Grafana Provisioning(todo).
-For more information about using custom roles, refer to [Managing roles and permissions]({{< relref "./managing-roles-permissions.md" >}}).
+For more information about using custom roles, refer to [Managing roles and permissions]({{< relref "../managing-roles-permissions.md" >}}).
 
 ## Role name
 

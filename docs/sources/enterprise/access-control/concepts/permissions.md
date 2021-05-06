@@ -2,6 +2,7 @@
 title = "Permissions"
 description = "Understand permissions in access control"
 keywords = ["grafana", "access-control", "concepts", "roles", "permissions", "enterprise"]
+weight = 130
 +++
 
 # Permissions 

@@ -2,7 +2,7 @@
 title = "Managing roles and permissions"
 description = "Understand how to manage roles and permissions"
 keywords = ["grafana", "access-control", "roles", "permissions", "enterprise"]
-weight = 191
+weight = 110
 +++
 
 # Managing roles and permissions
@@ -11,7 +11,7 @@ You can grant, change and revoke access to a resource by creating built-in role 
 
 ## Before you begin
 
-- Understand the [concepts]({{< relref "../concepts/_index.md" >}})
+- Understand the [concepts]({{< relref "./concepts/_index.md" >}})
 
 ## Resources with fine-grained permissions 
 
@@ -28,8 +28,8 @@ Refer to the relevant API guide from below list to learn more about specific end
 
 You can create, update and delete custom roles by using an [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by [provisioning]({{< relref "./provisioning.md" >}}).
 
-By default, Grafana Server Admin has a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage custom roles. 
-If a Grafana Server Admin wants to delegate that privilege to other users, they can create a custom role with relevant [permissions]({{< relref "./concepts/permissions.md" >}}) and `permissions:delegate` scope will allow those users to manage roles themselves.
+By default, Grafana Admin has a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage custom roles. 
+If a Grafana Admin wants to delegate that privilege to other users, they can create a custom role with relevant [permissions]({{< relref "./concepts/permissions.md" >}}) and `permissions:delegate` scope will allow those users to manage roles themselves.
 Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
 
 Custom roles can be created either globally or for a specific organization. You will be able to assign a role only to an organization for which a role has been created.
@@ -37,6 +37,6 @@ Custom roles can be created either globally or for a specific organization. You 
 ## Creating and removing built-in role assignments
 
 You can create or remove built-in role assignment by using an [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by [provisioning]({{< relref "./provisioning.md" >}}).
-By default, Grafana Server Admin has alreadt a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage further assignments. 
+By default, Grafana Admin has alreadt a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage further assignments. 
 
 Assignments can be done either globally or for a specific organization. Global assignments will take an effect across all organizations. 
