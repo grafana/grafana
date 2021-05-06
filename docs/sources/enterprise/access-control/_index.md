@@ -21,6 +21,7 @@ The access control work with the following main parts:
 1. _what access_ they have and for which _Grafana resource_ (`role`).
 
 Learn more about [Concepts]({{< relref "./concepts/_index.md" >}}) and understand how to [Manage roles and permissions]({{< relref "./managing-roles-permissions.md" >}}).
+Refer to [how-to guides]({{< relref "./how-to-examples.md" >}}) for examples of using fine-grained roles and permissions.
 
 ### Identity
 
