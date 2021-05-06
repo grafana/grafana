@@ -158,7 +158,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/CloudSearch":             {"ClientId", "DomainName"},
 	"AWS/CodeBuild":               {"ProjectName"},
 	"AWS/Cognito":                 {"Operation", "RiskLevel", "UserPoolId"},
-	"AWS/Connect":                 {"InstanceId", "MetricGroup", "Participant", "QueueName", "Stream Type", "Type of Connection"},
+	"AWS/Connect":                 {"InstanceId", "MetricGroup", "ContactFlowName", "SigningKeyId", "TypeOfConnection", "Participant", "QueueName", "StreamType"},
 	"AWS/DataSync":                {"AgentId", "TaskId"},
 	"AWS/DDoSProtection":          {"ResourceArn", "AttackVector", "MitigationAction", "Protocol", "SourcePort", "DestinationPort", "SourceIp", "SourceAsn", "TcpFlags"},
 	"AWS/DMS":                     {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
