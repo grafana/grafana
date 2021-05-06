@@ -42,6 +42,74 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Len(t, resp, 3)
 	})
 
+	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", func(sc *scenarioContext) {
+		var sentLimit int
+		var sendPage int
+
+		bus.AddHandler("test", func(query *models.SearchOrgUsersQuery) error {
+			query.Result.OrgUsers = []*models.OrgUserDTO{
+				{Email: "testUser@grafana.com", Login: testUserLogin},
+				{Email: "user1@grafana.com", Login: "user1"},
+				{Email: "user2@grafana.com", Login: "user2"},
+			}
+			query.Result.TotalCount = 3
+
+			sentLimit = query.Limit
+			sendPage = query.Page
+
+			return nil
+		})
+
+		sc.handlerFunc = hs.SearchOrgUsersWithPaging
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 1000, sentLimit)
+		assert.Equal(t, 1, sendPage)
+
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+
+		var resp models.SearchOrgUsersQueryResult
+		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.OrgUsers, 3)
+		assert.Equal(t, resp.TotalCount, int64(3))
+	})
+
+	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", func(sc *scenarioContext) {
+		var sentLimit int
+		var sendPage int
+
+		bus.AddHandler("test", func(query *models.SearchOrgUsersQuery) error {
+			query.Result.OrgUsers = []*models.OrgUserDTO{
+				{Email: "testUser@grafana.com", Login: testUserLogin},
+				{Email: "user1@grafana.com", Login: "user1"},
+				{Email: "user2@grafana.com", Login: "user2"},
+			}
+			query.Result.TotalCount = 3
+
+			sentLimit = query.Limit
+			sendPage = query.Page
+
+			return nil
+		})
+
+		sc.handlerFunc = hs.SearchOrgUsersWithPaging
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
+
+		assert.Equal(t, 10, sentLimit)
+		assert.Equal(t, 2, sendPage)
+
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+
+		var resp models.SearchOrgUsersQueryResult
+		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.OrgUsers, 3)
+		assert.Equal(t, resp.TotalCount, int64(3))
+	})
+
 	loggedInUserScenario(t, "When calling GET as an editor with no team / folder permissions on",
 		"api/org/users/lookup", func(sc *scenarioContext) {
 			setUpGetOrgUsersHandler()

@@ -157,6 +157,58 @@ func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedIn
 	return filteredUsers, nil
 }
 
+// GET /api/org/users/search
+func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
+
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	result, err := hs.searchOrgUsersHelper(&models.SearchOrgUsersQuery{
+		OrgId: c.OrgId,
+		Query: c.Query("query"),
+		Limit: perPage,
+		Page:  page,
+	}, c.SignedInUser)
+
+	if err != nil {
+		return response.Error(500, "Failed to get users for current organization", err)
+	}
+
+	result.Result.Page = page
+	result.Result.PerPage = perPage
+
+	return response.JSON(200, result.Result)
+}
+
+func (hs *HTTPServer) searchOrgUsersHelper(query *models.SearchOrgUsersQuery, signedInUser *models.SignedInUser,
+) (*models.SearchOrgUsersQuery, error) {
+
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
+	for _, user := range query.Result.OrgUsers {
+		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
+			continue
+		}
+		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+
+		filteredUsers = append(filteredUsers, user)
+	}
+
+	query.Result.OrgUsers = filteredUsers
+
+	return query, nil
+}
+
 // PATCH /api/org/users/:userId
 func UpdateOrgUserForCurrentOrg(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
 	cmd.OrgId = c.OrgId
