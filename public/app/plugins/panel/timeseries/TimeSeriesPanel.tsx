@@ -1,11 +1,11 @@
 import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
 import {
-  GraphNG,
   GraphNGLegendEvent,
   TooltipDisplayMode,
   TooltipPlugin,
   usePanelContext,
   ZoomPlugin,
+  TimeSeries,
 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useCallback } from 'react';
@@ -52,8 +52,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   }
 
   return (
-    <GraphNG
-      data={data.series}
+    <TimeSeries
+      frames={data.series}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -93,6 +93,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
           </>
         );
       }}
-    </GraphNG>
+    </TimeSeries>
   );
 };

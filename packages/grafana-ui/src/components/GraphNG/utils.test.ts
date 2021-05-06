@@ -1,4 +1,5 @@
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { preparePlotFrame } from './utils';
+import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import {
   createTheme,
   DefaultTimeZone,
@@ -189,13 +190,13 @@ jest.mock('@grafana/data', () => ({
 describe('GraphNG utils', () => {
   test('preparePlotConfigBuilder', () => {
     const frame = mockDataFrame();
-    const result = preparePlotConfigBuilder(
-      frame!,
-      createTheme(),
-      getDefaultTimeRange,
-      () => DefaultTimeZone,
-      new EventBusSrv()
-    ).getConfig();
+    const result = preparePlotConfigBuilder({
+      frame: frame!,
+      theme: createTheme(),
+      timeZone: DefaultTimeZone,
+      getTimeRange: getDefaultTimeRange,
+      eventBus: new EventBusSrv(),
+    }).getConfig();
     expect(result).toMatchSnapshot();
   });
 });
