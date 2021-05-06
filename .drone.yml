@@ -1448,6 +1448,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1514,6 +1517,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+image_pull_secrets:
+- dockerconfigjson
 
 trigger:
   ref:
@@ -2366,6 +2372,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   event:
   - custom
@@ -2432,6 +2441,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+image_pull_secrets:
+- dockerconfigjson
 
 trigger:
   event:
@@ -3258,6 +3270,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3321,6 +3336,9 @@ steps:
   depends_on:
   - initialize
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3357,5 +3375,21 @@ depends_on:
 - oss-windows-release-branch
 - enterprise-build-release-branch
 - enterprise-windows-release-branch
+
+---
+kind: secret
+name: dockerconfigjson
+
+get:
+  path: secret/data/common/gcr
+  name: .dockerconfigjson
+
+---
+kind: secret
+name: github_token
+
+get:
+  path: infra/data/ci/github/grafanabot
+  name: pat
 
 ...

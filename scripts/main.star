@@ -29,7 +29,7 @@ load(
     'publish_storybook_step',
     'release_canary_npm_packages_step',
     'upload_packages_step',
-    'deploy_to_kubernetes_step',
+    'push_to_deployment_tools_steps',
     'publish_packages_step',
     'notify_pipeline',
     'integration_test_services',
@@ -85,9 +85,10 @@ def get_steps(edition, is_downstream=False):
     steps.extend([
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
         upload_cdn(edition=edition)
     ])
+
+    steps.extend(push_to_deployment_tools_steps(edition=edition, is_downstream=is_downstream))
 
     if include_enterprise2:
         edition2 = 'enterprise2'
