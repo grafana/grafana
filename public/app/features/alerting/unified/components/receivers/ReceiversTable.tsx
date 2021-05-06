@@ -7,6 +7,8 @@ import { extractReadableNotifierTypes } from '../../utils/receivers';
 import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
 import { makeAMLink } from '../../utils/misc';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -15,6 +17,7 @@ interface Props {
 
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const tableStyles = useStyles2(getAlertTableStyles);
+  const styles = useStyles2(getStyles);
 
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
@@ -29,12 +32,13 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
 
   return (
     <ReceiversSection
+      className={styles.section}
       title="Contact points"
       description="Define where the notifications will be sent to, for example email or Slack."
       addButtonLabel="New contact point"
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
-      <table className={tableStyles.table}>
+      <table className={tableStyles.table} data-testid="receivers-table">
         <colgroup>
           <col />
           <col />
@@ -59,7 +63,8 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
               <td>{receiver.types.join(', ')}</td>
               <td className={tableStyles.actionsCell}>
                 <ActionIcon
-                  href={makeAMLink(
+                  data-testid="edit"
+                  to={makeAMLink(
                     `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
                     alertManagerName
                   )}
@@ -75,3 +80,9 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     </ReceiversSection>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  section: css`
+    margin-top: ${theme.spacing(4)};
+  `,
+});

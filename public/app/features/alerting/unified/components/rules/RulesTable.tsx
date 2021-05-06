@@ -4,7 +4,6 @@ import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
-import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
 import { ActionIcon } from './ActionIcon';
@@ -14,6 +13,7 @@ import { useDispatch } from 'react-redux';
 import { deleteRuleAction } from '../../state/actions';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
+import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   rules: CombinedRule[];
@@ -63,7 +63,7 @@ export const RulesTable: FC<Props> = ({
   const wrapperClass = cx(styles.wrapper, { [styles.wrapperMargin]: showGuidelines });
 
   if (!rules.length) {
-    return <div className={wrapperClass}>{emptyMessage}</div>;
+    return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
   return (
@@ -126,7 +126,7 @@ export const RulesTable: FC<Props> = ({
                         data-testid="rule-collapse-toggle"
                       />
                     </td>
-                    <td>{promRule && isAlertingRule(promRule) ? <StateTag status={promRule.state} /> : 'n/a'}</td>
+                    <td>{promRule && isAlertingRule(promRule) ? <AlertStateTag state={promRule.state} /> : 'n/a'}</td>
                     <td>{rule.name}</td>
                     {showGroupColumn && (
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
@@ -138,14 +138,14 @@ export const RulesTable: FC<Props> = ({
                           icon="chart-line"
                           tooltip="view in explore"
                           target="__blank"
-                          href={createExploreLink(rulesSource.name, rule.query)}
+                          to={createExploreLink(rulesSource.name, rule.query)}
                         />
                       )}
                       {!!rulerRule && (
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          href={`alerting/${encodeURIComponent(
+                          to={`alerting/${encodeURIComponent(
                             stringifyRuleIdentifier(
                               getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
                             )
@@ -193,6 +193,9 @@ export const RulesTable: FC<Props> = ({
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css`
     margin-left: 36px;
+  `,
+  emptyMessage: css`
+    padding: ${theme.spacing(1)};
   `,
   wrapper: css`
     margin-top: ${theme.spacing(3)};
