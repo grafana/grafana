@@ -14,7 +14,7 @@ import { UPlotChart } from '../uPlot/Plot';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { withTheme2 } from '../../themes';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
+import { AxisPlacement, PointVisibility, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
 
 export interface HistogramProps extends Themeable2 {
   alignedFrame: DataFrame;
@@ -101,7 +101,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     theme,
   });
 
-  let pathBuilder = uPlot.paths.stepped!({ align: 1 });
+  let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
 
   let seriesIndex = 0;
 
@@ -151,6 +151,17 @@ const preparePlotData = (frame: DataFrame) => {
   for (const field of frame.fields) {
     if (field.name !== 'BucketMax') {
       data.push(field.values.toArray());
+    }
+  }
+
+  // uPlot's bars pathBuilder will draw rects even if 0 (to distinguish them from nulls)
+  // but for histograms we want to omit them, so remap 0s -> nulls
+  for (let i = 1; i < data.length; i++) {
+    let counts = data[i];
+    for (let j = 0; j < counts.length; j++) {
+      if (counts[j] === 0) {
+        counts[j] = null;
+      }
     }
   }
 

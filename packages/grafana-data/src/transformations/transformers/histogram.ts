@@ -134,6 +134,17 @@ export function buildHistogram(frames: DataFrame[], bucketSize?: number): Histog
   // align histograms
   let joinedHists = join(histograms);
 
+  // zero-fill all undefined values (missing buckets -> 0 counts)
+  for (let histIdx = 1; histIdx < joinedHists.length; histIdx++) {
+    let hist = joinedHists[histIdx];
+
+    for (let bucketIdx = 0; bucketIdx < hist.length; bucketIdx++) {
+      if (hist[bucketIdx] == null) {
+        hist[bucketIdx] = 0;
+      }
+    }
+  }
+
   const bucketMin = {
     name: histogramFrameBucketMinFieldName,
     values: new ArrayVector(joinedHists[0]),
