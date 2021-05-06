@@ -69,7 +69,13 @@ export default class Api {
       downloadUrl = `${downloadUrl}?os=${pair[0]}&arch=${pair[1]}`;
     }
 
-    Promise.resolve('installing plugin...');
+    console.log({
+      endpoint: `/install`,
+      payload: JSON.stringify({
+        url: downloadUrl,
+        pluginDir: this.pluginDir,
+      }),
+    });
     // await getBackendSrv().post(
     //   `${API_ROOT}/install`,
     //   JSON.stringify({
@@ -80,7 +86,10 @@ export default class Api {
   }
 
   async uninstallPlugin(id: string) {
-    Promise.resolve('uninstalling plugin...');
+    console.log({
+      endpoint: `/uninstall`,
+      payload: JSON.stringify({ slug: id, pluginDir: this.pluginDir }),
+    });
     // await getBackendSrv().post(`${API_ROOT}/uninstall`, JSON.stringify({ slug: id, pluginDir: this.pluginDir }));
   }
 }
