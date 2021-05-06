@@ -13,6 +13,7 @@ import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
+import { getAzureCloud } from '../credentials';
 import { getLogAnalyticsManagementApiRoute, getManagementApiRoute } from '../api/routes';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -58,7 +59,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   private getSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
     await this.saveOptions();
 
-    const route = getManagementApiRoute(this.props.options);
+    const cloud = getAzureCloud(this.props.options);
+    const route = getManagementApiRoute(cloud);
     const url = `/${route}/subscriptions?api-version=2019-03-01`;
 
     const result = await getBackendSrv().datasourceRequest({
@@ -72,7 +74,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   private getLogAnalyticsSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
     await this.saveOptions();
 
-    const route = getLogAnalyticsManagementApiRoute(this.props.options);
+    const cloud = getAzureCloud(this.props.options);
+    const route = getLogAnalyticsManagementApiRoute(cloud);
     const url = `/${route}/subscriptions?api-version=2019-03-01`;
 
     const result = await getBackendSrv().datasourceRequest({
@@ -86,8 +89,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
   private getWorkspaces = async (subscriptionId: string): Promise<Array<SelectableValue<string>>> => {
     await this.saveOptions();
 
-    const route = getLogAnalyticsManagementApiRoute(this.props.options);
-    const url = `/${route}/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
+    const cloud = getAzureCloud(this.props.options);
+    const route = getLogAnalyticsManagementApiRoute(cloud);
+    const url = `/${route}/subscriptions/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
     const result = await getBackendSrv().datasourceRequest({
       url: this.props.options.url + url,

@@ -1,7 +1,14 @@
-import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourceSettings,
+  TableData,
+} from '@grafana/data';
 import Datasource from './datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
+export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
 
 export type AzureResultFormat = 'time_series' | 'table';
 

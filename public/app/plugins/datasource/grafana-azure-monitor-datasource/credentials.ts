@@ -1,4 +1,8 @@
-import { AzureCredentials, AzureDataSourceSettings } from './types';
+import { AzureCredentials, AzureDataSourceInstanceSettings, AzureDataSourceSettings } from './types';
+
+export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): string {
+  return options.jsonData.cloudName || 'azuremonitor';
+}
 
 function getSecret(options: AzureDataSourceSettings): undefined | string | object {
   if (options.secureJsonFields.clientSecret) {
@@ -30,7 +34,7 @@ export function isCredentialsComplete(credentials: AzureCredentials) {
 
 export function getCredentials(options: AzureDataSourceSettings): AzureCredentials {
   return {
-    azureCloud: options.jsonData.cloudName || 'azuremonitor',
+    azureCloud: getAzureCloud(options),
     tenantId: options.jsonData.tenantId,
     clientId: options.jsonData.clientId,
     clientSecret: getSecret(options),
@@ -43,6 +47,7 @@ export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): Az
   }
 
   return {
+    azureCloud: getAzureCloud(options),
     tenantId: options.jsonData.logAnalyticsTenantId,
     clientId: options.jsonData.logAnalyticsClientId,
     clientSecret: getLogAnalyticsSecret(options),
