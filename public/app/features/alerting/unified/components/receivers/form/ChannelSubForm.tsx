@@ -1,6 +1,6 @@
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { NotifierDTO } from 'app/types';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { useFormContext, FieldErrors } from 'react-hook-form';
@@ -32,8 +32,12 @@ export function ChannelSubForm<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch } = useFormContext();
+  const { control, watch, register } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
+
+  useEffect(() => {
+    register(`${pathPrefix}.__id`);
+  }, [register, pathPrefix]);
 
   const [_secureFields, setSecureFields] = useState(secureFields ?? {});
 
@@ -47,10 +51,12 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const typeOptions = useMemo(
     (): SelectableValue[] =>
-      notifiers.map(({ name, type }) => ({
-        label: name,
-        value: type,
-      })),
+      notifiers
+        .map(({ name, type }) => ({
+          label: name,
+          value: type,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
     [notifiers]
   );
 
@@ -61,16 +67,10 @@ export function ChannelSubForm<R extends ChannelValues>({
   const optionalOptions = notifier?.options.filter((o) => !o.required);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <InputControl
-            name={name('__id')}
-            render={({ field }) => <input type="hidden" {...field} />}
-            defaultValue={defaultValues.__id}
-            control={control}
-          />
-          <Field label="Contact point type">
+          <Field label="Contact point type" data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
               defaultValue={defaultValues.type}
@@ -87,7 +87,14 @@ export function ChannelSubForm<R extends ChannelValues>({
             Duplicate
           </Button>
           {onDelete && (
-            <Button size="xs" variant="secondary" type="button" onClick={() => onDelete()} icon="trash-alt">
+            <Button
+              data-testid={`${pathPrefix}delete-button`}
+              size="xs"
+              variant="secondary"
+              type="button"
+              onClick={() => onDelete()}
+              icon="trash-alt"
+            >
               Delete
             </Button>
           )}
@@ -96,6 +103,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       {notifier && (
         <div className={styles.innerContent}>
           <ChannelOptions<R>
+            defaultValues={defaultValues}
             selectedChannelOptions={mandatoryOptions?.length ? mandatoryOptions! : optionalOptions!}
             secureFields={_secureFields}
             errors={errors}
@@ -110,6 +118,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 </Alert>
               )}
               <ChannelOptions<R>
+                defaultValues={defaultValues}
                 selectedChannelOptions={optionalOptions!}
                 secureFields={_secureFields}
                 onResetSecureField={onResetSecureField}

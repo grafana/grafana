@@ -1,5 +1,6 @@
 import { AnyAction, AsyncThunk, createSlice, Draft, isAsyncThunkAction, SerializedError } from '@reduxjs/toolkit';
-
+import { FetchError } from '@grafana/runtime';
+import { isArray } from 'angular';
 export interface AsyncRequestState<T> {
   result?: T;
   loading: boolean;
@@ -98,9 +99,27 @@ export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
 export function withSerializedError<T>(p: Promise<T>): Promise<T> {
   return p.catch((e) => {
     const err: SerializedError = {
-      message: e.data?.message || e.message || e.statusText,
+      message: messageFromError(e),
       code: e.statusCode,
     };
     throw err;
   });
+}
+
+function isFetchError(e: unknown): e is FetchError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
+}
+
+function messageFromError(e: Error | FetchError): string {
+  if (isFetchError(e)) {
+    if (e.data?.message) {
+      return e.data?.message;
+    } else if (isArray(e.data) && e.data.length && e.data[0]?.message) {
+      return e.data
+        .map((d) => d?.message)
+        .filter((m) => !!m)
+        .join(' ');
+    }
+  }
+  return (e as Error)?.message || String(e);
 }

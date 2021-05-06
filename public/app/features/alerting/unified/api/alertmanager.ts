@@ -40,7 +40,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
   }
 }
 
-export async function updateAlertmanagerConfig(
+export async function updateAlertManagerConfig(
   alertManagerSourceName: string,
   config: AlertManagerCortexConfig
 ): Promise<void> {

@@ -35,7 +35,7 @@ export const SilencedAlertsTableRow: FC<Props> = ({ alert, className }) => {
         <td>for {alertDuration} seconds</td>
         <td>{alertName}</td>
         <td className={tableStyles.actionsCell}>
-          <ActionIcon icon="chart-line" href={alert.generatorURL} tooltip="View in explorer" />
+          <ActionIcon icon="chart-line" to={alert.generatorURL} tooltip="View in explorer" />
         </td>
       </tr>
       {!isCollapsed && (

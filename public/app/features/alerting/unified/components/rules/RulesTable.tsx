@@ -138,14 +138,14 @@ export const RulesTable: FC<Props> = ({
                           icon="chart-line"
                           tooltip="view in explore"
                           target="__blank"
-                          href={createExploreLink(rulesSource.name, rule.query)}
+                          to={createExploreLink(rulesSource.name, rule.query)}
                         />
                       )}
                       {!!rulerRule && (
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          href={`alerting/${encodeURIComponent(
+                          to={`alerting/${encodeURIComponent(
                             stringifyRuleIdentifier(
                               getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
                             )

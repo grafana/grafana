@@ -23,7 +23,7 @@ import {
   fetchAlerts,
   fetchSilences,
   createOrUpdateSilence,
-  updateAlertmanagerConfig,
+  updateAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -47,6 +47,7 @@ import {
   ruleWithLocationToRuleIdentifier,
   stringifyRuleIdentifier,
 } from '../utils/rules';
+import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager-config';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -349,9 +350,10 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
           );
         }
-        await updateAlertmanagerConfig(alertManagerSourceName, newConfig);
+
+        await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
         if (successMessage) {
-          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+          appEvents?.emit(AppEvents.alertSuccess, [successMessage]);
         }
         if (redirectPath) {
           locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
@@ -359,6 +361,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       })()
     )
 );
+
 export const fetchAmAlertsAction = createAsyncThunk(
   'unifiedalerting/fetchAmAlerts',
   (alertManagerSourceName: string): Promise<AlertmanagerAlert[]> =>
