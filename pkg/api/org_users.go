@@ -143,7 +143,6 @@ func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedIn
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
-
 	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
 	for _, user := range query.Result {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
