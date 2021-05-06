@@ -2,7 +2,6 @@ import React, { FC, Fragment, useState } from 'react';
 import { dateMath, GrafanaTheme, toDuration } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { Silence, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
-import { StateTag } from '../StateTag';
 import { CollapseToggle } from '../CollapseToggle';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
@@ -11,6 +10,7 @@ import SilencedAlertsTable from './SilencedAlertsTable';
 import { expireSilenceAction } from '../../state/actions';
 import { useDispatch } from 'react-redux';
 import { Matchers } from './Matchers';
+import { SilenceStateTag } from './SilenceStateTag';
 interface Props {
   className?: string;
   silence: Silence;
@@ -41,7 +41,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
           <CollapseToggle isCollapsed={isCollapsed} onToggle={(value) => setIsCollapsed(value)} />
         </td>
         <td>
-          <StateTag status={status.state}>{status.state}</StateTag>
+          <SilenceStateTag state={status.state} />
         </td>
         <td className={styles.matchersCell}>
           <Matchers matchers={matchers} />

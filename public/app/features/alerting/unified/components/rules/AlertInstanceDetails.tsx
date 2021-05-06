@@ -12,9 +12,11 @@ export const AlertInstanceDetails: FC<Props> = ({ instance }) => {
 
   return (
     <div>
-      <DetailsField label="Value" horizontal={true}>
-        {instance.value}
-      </DetailsField>
+      {instance.value && (
+        <DetailsField label="Value" horizontal={true}>
+          {instance.value}
+        </DetailsField>
+      )}
       {annotations.map(([key, value]) => (
         <DetailsField key={key} label={key} horizontal={true}>
           <Annotation annotationKey={key} value={value} />

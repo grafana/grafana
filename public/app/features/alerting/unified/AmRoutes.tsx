@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -96,9 +96,7 @@ const AmRoutes: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="am-routes">
-      <Field label="Choose alert manager">
-        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      </Field>
+      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {savingError && !saving && (
         <Alert severity="error" title="Error saving alert manager config">
           {savingError.message || 'Unknown error.'}
@@ -112,7 +110,6 @@ const AmRoutes: FC = () => {
       {resultLoading && <LoadingPlaceholder text="Loading alert manager config..." />}
       {result && !resultLoading && !resultError && (
         <>
-          <div className={styles.break} />
           <AmRootRoute
             alertManagerSourceName={alertManagerSourceName}
             isEditMode={isRootRouteEditMode}

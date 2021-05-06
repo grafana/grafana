@@ -1,26 +1,19 @@
 import React, { FC } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2, Link, Button, Field } from '@grafana/ui';
+import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
 import SilenceTableRow from './SilenceTableRow';
 import { getAlertTableStyles } from '../../styles/table';
 import { NoSilencesSplash } from './NoSilencesCTA';
-import { AlertManagerPicker } from '../AlertManagerPicker';
 import { makeAMLink } from '../../utils/misc';
 interface Props {
   silences: Silence[];
   alertManagerAlerts: AlertmanagerAlert[];
   alertManagerSourceName: string;
-  setAlertManagerSourceName(name: string): void;
 }
 
-const SilencesTable: FC<Props> = ({
-  silences,
-  alertManagerAlerts,
-  alertManagerSourceName,
-  setAlertManagerSourceName,
-}) => {
+const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSourceName }) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getAlertTableStyles);
 
@@ -30,9 +23,6 @@ const SilencesTable: FC<Props> = ({
 
   return (
     <>
-      <Field label="Choose alert manager">
-        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      </Field>
       {!!silences.length && (
         <>
           <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>

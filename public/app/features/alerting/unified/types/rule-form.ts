@@ -1,4 +1,4 @@
-import { GrafanaQuery, GrafanaAlertState } from 'app/types/unified-alerting-dto';
+import { GrafanaQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
   threshold = 'threshold',
@@ -17,8 +17,8 @@ export interface RuleFormValues {
   // threshold alerts
   queries: GrafanaQuery[];
   condition: string | null; // refId of the query that gets alerted on
-  noDataState: GrafanaAlertState;
-  execErrState: GrafanaAlertState;
+  noDataState: GrafanaAlertStateDecision;
+  execErrState: GrafanaAlertStateDecision;
   folder: { title: string; id: number } | null;
   evaluateEvery: string;
   evaluateFor: string;

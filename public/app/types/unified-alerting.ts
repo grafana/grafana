@@ -8,13 +8,14 @@ import {
   Labels,
   Annotations,
   RulerRuleGroupDTO,
+  GrafanaAlertState,
 } from './unified-alerting-dto';
 
 export type Alert = {
   activeAt: string;
   annotations: { [key: string]: string };
   labels: { [key: string]: string };
-  state: PromAlertingRuleState;
+  state: PromAlertingRuleState | GrafanaAlertState;
   value: string;
 };
 
