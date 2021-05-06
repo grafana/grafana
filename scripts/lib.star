@@ -811,36 +811,25 @@ def release_canary_npm_packages_step(edition):
         ],
     }
 
-def push_to_deployment_tools_steps(edition, is_downstream=False):
+def push_to_deployment_tools_step(edition, is_downstream=False):
     if edition != 'enterprise' or not is_downstream:
-        return []
+        return None
 
-    return [
-        {
-            'name': 'push-to-deployment_tools-config',
-            'image': build_image,
-            'depends_on': [
-                'build-docker-images',
-                # This step should have all the dependencies required for packaging, and should generate
-                # dist/grafana.version
-                'gen-version',
-            ],
-            'commands': [
-                'cat ./deployment_tools_config.json | sed "s/{version}/$(cat ./dist/grafana.version)/g" > ./deployment_tools_config_resolved.json'
-            ]
+    return {
+        'name': 'push-to-deployment_tools',
+        'image': deploy_docker_image,
+        'depends_on': [
+            'build-docker-images',
+            # This step should have all the dependencies required for packaging, and should generate
+            # dist/grafana.version
+            'gen-version',
+        ],
+        'settings': {
+            'github_token': from_secret(github_token),
+            'images_file': './deployment_tools_config.json',
+            'docker_tag_file': './dist/grafana.version'
         },
-        {
-            'name': 'push-to-deployment_tools',
-            'image': deploy_docker_image,
-            'depends_on': [
-                'push-to-deployment_tools-config'
-            ],
-            'settings': {
-                'github_token': from_secret(github_token),
-                'images_file': './deployment_tools_config_resolved.json',
-            },
-        }
-    ]
+    }
 
 def enterprise2_sfx(edition):
     if edition == 'enterprise2':
