@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
