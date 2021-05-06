@@ -117,8 +117,10 @@ export const Editor = (props: Props): JSX.Element => {
           policy={policy}
           measurement={measurement}
           getPolicyOptions={() => getAllPolicies(datasource)}
-          getMeasurementOptions={() =>
-            withTemplateVariableOptions(getAllMeasurementsForTags(query.tags ?? [], datasource))
+          getMeasurementOptions={(filter) =>
+            withTemplateVariableOptions(
+              getAllMeasurementsForTags(filter === '' ? undefined : filter, query.tags ?? [], datasource)
+            )
           }
           onChange={handleFromSectionChange}
         />

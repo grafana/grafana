@@ -5,26 +5,28 @@ import { InfluxQueryBuilder } from './query_builder';
 const runExploreQuery = (
   type: string,
   withKey: string | undefined,
+  withMeasurementFilter: string | undefined,
   target: { measurement: string | undefined; tags: InfluxQueryTag[]; policy: string | undefined },
   datasource: InfluxDatasource
 ): Promise<Array<{ text: string }>> => {
   const builder = new InfluxQueryBuilder(target, datasource.database);
-  const q = builder.buildExploreQuery(type, withKey);
+  const q = builder.buildExploreQuery(type, withKey, withMeasurementFilter);
   return datasource.metricFindQuery(q);
 };
 
 export async function getAllPolicies(datasource: InfluxDatasource): Promise<string[]> {
   const target = { tags: [], measurement: undefined, policy: undefined };
-  const data = await runExploreQuery('RETENTION POLICIES', undefined, target, datasource);
+  const data = await runExploreQuery('RETENTION POLICIES', undefined, undefined, target, datasource);
   return data.map((item) => item.text);
 }
 
 export async function getAllMeasurementsForTags(
+  measurementFilter: string | undefined,
   tags: InfluxQueryTag[],
   datasource: InfluxDatasource
 ): Promise<string[]> {
   const target = { tags, measurement: undefined, policy: undefined };
-  const data = await runExploreQuery('MEASUREMENTS', undefined, target, datasource);
+  const data = await runExploreQuery('MEASUREMENTS', undefined, measurementFilter, target, datasource);
   return data.map((item) => item.text);
 }
 
@@ -35,7 +37,7 @@ export async function getTagKeysForMeasurementAndTags(
   datasource: InfluxDatasource
 ): Promise<string[]> {
   const target = { tags, measurement, policy };
-  const data = await runExploreQuery('TAG_KEYS', undefined, target, datasource);
+  const data = await runExploreQuery('TAG_KEYS', undefined, undefined, target, datasource);
   return data.map((item) => item.text);
 }
 
@@ -46,7 +48,7 @@ export async function getTagValues(
   datasource: InfluxDatasource
 ): Promise<string[]> {
   const target = { tags: [], measurement, policy };
-  const data = await runExploreQuery('TAG_VALUES', tagKey, target, datasource);
+  const data = await runExploreQuery('TAG_VALUES', tagKey, undefined, target, datasource);
   return data.map((item) => item.text);
 }
 
@@ -56,6 +58,6 @@ export async function getFieldKeysForMeasurement(
   datasource: InfluxDatasource
 ): Promise<string[]> {
   const target = { tags: [], measurement, policy };
-  const data = await runExploreQuery('FIELDS', undefined, target, datasource);
+  const data = await runExploreQuery('FIELDS', undefined, undefined, target, datasource);
   return data.map((item) => item.text);
 }

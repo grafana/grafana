@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import debouncePromise from 'debounce-promise';
 import { cx, css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { useClickAway, useAsyncFn } from 'react-use';
-import { InlineLabel, Select, Input } from '@grafana/ui';
+import { InlineLabel, Select, AsyncSelect, Input } from '@grafana/ui';
 import { useShadowedState } from '../useShadowedState';
 
 // this file is a simpler version of `grafana-ui / SegmentAsync.tsx`
@@ -19,10 +20,21 @@ type SelVal = SelectableValue<string>;
 // when allowCustomValue is true, there is no way to enforce the selectableValue
 // enum-type, so i just go with `string`
 
+type LoadOptions = (filter: string) => Promise<SelVal[]>;
+
 type Props = {
   value: string;
   buttonClassName?: string;
-  loadOptions?: () => Promise<SelVal[]>;
+  loadOptions?: LoadOptions;
+  // if filterByLoadOptions is false,
+  // loadOptions si only executed once,
+  // when the select-box opens,
+  // and as you write, the list gets filtered
+  // by the select-box.
+  // if filterByLoadOptions is true,
+  // as you write the loadOptions is executed again and again,
+  // and it is relied on to filter the results.
+  filterByLoadOptions?: boolean;
   onChange: (v: SelVal) => void;
   allowCustomValue?: boolean;
 };
@@ -32,13 +44,54 @@ const selectClass = css({
 });
 
 type SelProps = {
-  loadOptions: () => Promise<SelVal[]>;
+  loadOptions: LoadOptions;
+  filterByLoadOptions?: boolean;
   onClose: () => void;
   onChange: (v: SelVal) => void;
   allowCustomValue?: boolean;
 };
 
-const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelProps): JSX.Element => {
+type SelReloadProps = {
+  loadOptions: (filter: string) => Promise<SelVal[]>;
+  onClose: () => void;
+  onChange: (v: SelVal) => void;
+  allowCustomValue?: boolean;
+};
+
+const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelReloadProps): JSX.Element => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useClickAway(ref, onClose);
+
+  // here we rely on the fact that writing text into the <AsyncSelect/>
+  // does not cause a re-render of the current react component.
+  // this way there is only a single render-call,
+  // so there is only a single `debouncedLoadOptions`.
+  // if we want ot make this "re-render safe,
+  // we will have to put the debounced call into an useRef,
+  // and probably have an useEffect
+  const debouncedLoadOptions = debouncePromise(loadOptions, 1000, { leading: true });
+  return (
+    <div ref={ref} className={selectClass}>
+      <AsyncSelect
+        defaultOptions
+        autoFocus
+        isOpen
+        allowCustomValue={allowCustomValue}
+        loadOptions={debouncedLoadOptions}
+        onChange={onChange}
+      />
+    </div>
+  );
+};
+
+type SelSingleLoadProps = {
+  loadOptions: (filter: string) => Promise<SelVal[]>;
+  onClose: () => void;
+  onChange: (v: SelVal) => void;
+  allowCustomValue?: boolean;
+};
+
+const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: SelSingleLoadProps): JSX.Element => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
   useClickAway(ref, onClose);
@@ -46,6 +99,7 @@ const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelProps): JS
   useEffect(() => {
     doLoad();
   }, [doLoad, loadOptions]);
+
   return (
     <div ref={ref} className={selectClass}>
       <Select
@@ -56,6 +110,21 @@ const Sel = ({ loadOptions, allowCustomValue, onChange, onClose }: SelProps): JS
         onChange={onChange}
       />
     </div>
+  );
+};
+
+const Sel = ({ loadOptions, filterByLoadOptions, allowCustomValue, onChange, onClose }: SelProps): JSX.Element => {
+  // unfortunately <Segment/> and <SegmentAsync/> have somewhat different behavior,
+  // so the simplest approach was to just create two separate wrapper-components
+  return filterByLoadOptions ? (
+    <SelReload loadOptions={loadOptions} allowCustomValue={allowCustomValue} onChange={onChange} onClose={onClose} />
+  ) : (
+    <SelSingleLoad
+      loadOptions={loadOptions}
+      allowCustomValue={allowCustomValue}
+      onChange={onChange}
+      onClose={onClose}
+    />
   );
 };
 
@@ -92,7 +161,14 @@ const defaultButtonClass = css({
   cursor: 'pointer',
 });
 
-export const Seg = ({ value, buttonClassName, loadOptions, allowCustomValue, onChange }: Props): JSX.Element => {
+export const Seg = ({
+  value,
+  buttonClassName,
+  loadOptions,
+  filterByLoadOptions,
+  allowCustomValue,
+  onChange,
+}: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
   if (!isOpen) {
     const className = cx(defaultButtonClass, buttonClassName);
@@ -114,6 +190,7 @@ export const Seg = ({ value, buttonClassName, loadOptions, allowCustomValue, onC
       return (
         <Sel
           loadOptions={loadOptions}
+          filterByLoadOptions={filterByLoadOptions ?? false}
           allowCustomValue={allowCustomValue}
           onChange={(v) => {
             setOpen(false);

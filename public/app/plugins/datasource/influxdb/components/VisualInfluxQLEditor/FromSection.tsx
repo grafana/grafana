@@ -20,7 +20,7 @@ type Props = {
   policy: string | undefined;
   measurement: string | undefined;
   getPolicyOptions: () => Promise<string[]>;
-  getMeasurementOptions: () => Promise<string[]>;
+  getMeasurementOptions: (filter: string) => Promise<string[]>;
 };
 
 export const FromSection = ({
@@ -40,8 +40,8 @@ export const FromSection = ({
     return allPoliciesWithDefault.map(toSelectableValue);
   };
 
-  const handleMeasurementLoadOptions = async () => {
-    const allMeasurements = await getMeasurementOptions();
+  const handleMeasurementLoadOptions = async (filter: string) => {
+    const allMeasurements = await getMeasurementOptions(filter);
     return allMeasurements.map(toSelectableValue);
   };
 
@@ -59,6 +59,7 @@ export const FromSection = ({
         allowCustomValue
         value={measurement ?? 'select measurement'}
         loadOptions={handleMeasurementLoadOptions}
+        filterByLoadOptions
         onChange={(v) => {
           onChange(policy, v.value);
         }}
