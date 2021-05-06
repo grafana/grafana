@@ -3,6 +3,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { AlertManagerCortexConfig, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
 let nextDataSourceId = 1;
 
@@ -140,3 +141,82 @@ export class MockDataSourceSrv implements DataSourceSrv {
     );
   }
 }
+
+export const mockGrafanaReceiver = (
+  type: string,
+  overrides: Partial<GrafanaManagedReceiverConfig> = {}
+): GrafanaManagedReceiverConfig => ({
+  type: type,
+  name: type,
+  disableResolveMessage: false,
+  settings: {},
+  sendReminder: true,
+  ...overrides,
+});
+
+export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
+  template_files: {
+    'first template': 'first template content',
+    'second template': 'second template content',
+    'third template': 'third template',
+  },
+  alertmanager_config: {
+    route: {
+      receiver: 'default',
+    },
+    receivers: [
+      {
+        name: 'default',
+        grafana_managed_receiver_configs: [mockGrafanaReceiver('email')],
+      },
+      {
+        name: 'critical',
+        grafana_managed_receiver_configs: [mockGrafanaReceiver('slack'), mockGrafanaReceiver('pagerduty')],
+      },
+    ],
+  },
+};
+
+export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
+  template_files: {
+    'foo template': 'foo content',
+  },
+  alertmanager_config: {
+    route: {
+      receiver: 'cloud-receiver',
+    },
+    receivers: [
+      {
+        name: 'cloud-receiver',
+        email_configs: [
+          {
+            to: 'domas.lapinskas@grafana.com',
+          },
+        ],
+        slack_configs: [
+          {
+            api_url: 'http://slack1',
+            channel: '#mychannel',
+            actions: [
+              {
+                text: 'action1text',
+                type: 'action1type',
+                url: 'http://action1',
+              },
+            ],
+            fields: [
+              {
+                title: 'field1',
+                value: 'text1',
+              },
+              {
+                title: 'field2',
+                value: 'text2',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+};
