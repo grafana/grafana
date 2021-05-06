@@ -1,4 +1,4 @@
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, Fragment, useMemo, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
@@ -15,7 +15,7 @@ interface Props {
 
 export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
-  const tableStyles = useStyles(getAlertTableStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const templateRows = useMemo(() => Object.entries(config.template_files), [config]);
 
@@ -26,7 +26,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
       addButtonLabel="New template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
     >
-      <table className={tableStyles.table}>
+      <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
           <col className={tableStyles.colExpand} />
           <col />
@@ -59,7 +59,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                   <td>{name}</td>
                   <td className={tableStyles.actionsCell}>
                     <ActionIcon
-                      href={makeAMLink(
+                      to={makeAMLink(
                         `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
                         alertManagerName
                       )}

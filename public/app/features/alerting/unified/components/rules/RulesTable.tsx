@@ -1,10 +1,9 @@
-import { GrafanaTheme } from '@grafana/data';
-import { ConfirmModal, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
-import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
 import { ActionIcon } from './ActionIcon';
@@ -14,6 +13,7 @@ import { useDispatch } from 'react-redux';
 import { deleteRuleAction } from '../../state/actions';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
+import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   rules: CombinedRule[];
@@ -32,8 +32,8 @@ export const RulesTable: FC<Props> = ({
 
   const hasRuler = useHasRuler();
 
-  const styles = useStyles(getStyles);
-  const tableStyles = useStyles(getAlertTableStyles);
+  const styles = useStyles2(getStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
@@ -63,7 +63,7 @@ export const RulesTable: FC<Props> = ({
   const wrapperClass = cx(styles.wrapper, { [styles.wrapperMargin]: showGuidelines });
 
   if (!rules.length) {
-    return <div className={wrapperClass}>{emptyMessage}</div>;
+    return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
   return (
@@ -126,7 +126,7 @@ export const RulesTable: FC<Props> = ({
                         data-testid="rule-collapse-toggle"
                       />
                     </td>
-                    <td>{promRule && isAlertingRule(promRule) ? <StateTag status={promRule.state} /> : 'n/a'}</td>
+                    <td>{promRule && isAlertingRule(promRule) ? <AlertStateTag state={promRule.state} /> : 'n/a'}</td>
                     <td>{rule.name}</td>
                     {showGroupColumn && (
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
@@ -138,14 +138,14 @@ export const RulesTable: FC<Props> = ({
                           icon="chart-line"
                           tooltip="view in explore"
                           target="__blank"
-                          href={createExploreLink(rulesSource.name, rule.query)}
+                          to={createExploreLink(rulesSource.name, rule.query)}
                         />
                       )}
                       {!!rulerRule && (
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          href={`alerting/${encodeURIComponent(
+                          to={`alerting/${encodeURIComponent(
                             stringifyRuleIdentifier(
                               getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
                             )
@@ -190,28 +190,31 @@ export const RulesTable: FC<Props> = ({
   );
 };
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css`
     margin-left: 36px;
   `,
+  emptyMessage: css`
+    padding: ${theme.spacing(1)};
+  `,
   wrapper: css`
-    margin-top: ${theme.spacing.md};
+    margin-top: ${theme.spacing(3)};
     width: auto;
-    padding: ${theme.spacing.sm};
-    background-color: ${theme.colors.bg2};
-    border-radius: 3px;
+    background-color: ${theme.colors.background.secondary};
+    border-radius: ${theme.shape.borderRadius()};
   `,
   table: css`
     width: 100%;
-    border-radius: 3px;
-    border: solid 1px ${theme.colors.border3};
+    border-radius: ${theme.shape.borderRadius()};
+    border: solid 1px ${theme.colors.border.weak};
+    background-color: ${theme.colors.background.secondary};
 
     th {
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
     }
 
     td + td {
-      padding: 0 ${theme.spacing.sm};
+      padding: ${theme.spacing(0, 1)};
     }
 
     tr {
@@ -219,7 +222,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
     }
   `,
   evenRow: css`
-    background-color: ${theme.colors.bodyBg};
+    background-color: ${theme.colors.background.primary};
   `,
   colState: css`
     width: 110px;
@@ -228,13 +231,13 @@ export const getStyles = (theme: GrafanaTheme) => ({
     position: relative;
   `,
   guideline: css`
-    left: -27px;
-    border-left: 1px solid ${theme.colors.border3};
+    left: -19px;
+    border-left: 1px solid ${theme.colors.border.medium};
     position: absolute;
   `,
   ruleTopGuideline: css`
     width: 18px;
-    border-bottom: 1px solid ${theme.colors.border3};
+    border-bottom: 1px solid ${theme.colors.border.medium};
     top: 0;
     bottom: 50%;
   `,
