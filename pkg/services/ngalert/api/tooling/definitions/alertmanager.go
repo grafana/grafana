@@ -3,6 +3,9 @@ package definitions
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
@@ -10,6 +13,8 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
 )
+
+var tagsJSON map[string]string
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
@@ -294,6 +299,67 @@ type GettableApiAlertingConfig struct {
 
 	// Override with our superset receiver type
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+func getMissingJSONTags(t reflect.Type, m map[string]string) {
+	if t.Kind() != reflect.Struct {
+		return
+	}
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		jsonTag := f.Tag.Get("json")
+		if jsonTag == "" {
+			if yamlTag, ok := t.Field(i).Tag.Lookup("yaml"); ok {
+				// TODO check for conflicts
+				m[f.Name] = strings.Split(yamlTag, ",")[0]
+			}
+		}
+		switch t.Field(i).Type.Kind() {
+		case reflect.Struct:
+			getMissingJSONTags(t.Field(i).Type, m)
+		case reflect.Ptr:
+			getMissingJSONTags(t.Field(i).Type.Elem(), m)
+		}
+	}
+}
+
+func (c *GettableApiAlertingConfig) MarshalJSON() ([]byte, error) {
+	type cloneGettableApiAlertingConfig struct {
+		Config `yaml:",inline"`
+
+		// Override with our superset receiver type
+		Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	}
+
+	clone := cloneGettableApiAlertingConfig{
+		Config:    c.Config,
+		Receivers: c.Receivers,
+	}
+
+	enc, err := json.Marshal(clone)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	if tagsJSON == nil {
+		tagsJSON = make(map[string]string)
+		getMissingJSONTags(reflect.TypeOf(*c), tagsJSON)
+	}
+
+	var keyMatchRegex = regexp.MustCompile(`\"(\w+)\":`)
+	converted := keyMatchRegex.ReplaceAllFunc(
+		enc,
+		func(match []byte) []byte {
+			submatch := keyMatchRegex.ReplaceAllString(string(match), `$1`)
+			key, ok := tagsJSON[submatch]
+			if ok {
+				return []byte(fmt.Sprintf(`"%s":`, key))
+			}
+			return match
+		},
+	)
+
+	return converted, err
 }
 
 func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
