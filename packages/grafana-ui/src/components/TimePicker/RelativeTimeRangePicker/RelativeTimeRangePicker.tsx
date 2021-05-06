@@ -1,17 +1,17 @@
 import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
-import { RelativeTimeRange, GrafanaThemeV2, TimeOption } from '@grafana/data';
-import { Field } from '../Forms/Field';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { useStyles2 } from '../../themes';
-import { ButtonGroup, ToolbarButton } from '../Button';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { Input } from '../Input/Input';
-import { TimeRangeList } from './TimeRangePicker/TimeRangeList';
-import { quickOptions } from './rangeOptions';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
-import { TimePickerTitle } from './TimeRangePicker/TimePickerTitle';
-import { mapOptionToRelativeTimeRange } from './TimeRangePicker/mapper';
+import { RelativeTimeRange, GrafanaThemeV2, TimeOption, rangeUtil } from '@grafana/data';
+import { Field } from '../../Forms/Field';
+import { Tooltip } from '../../Tooltip/Tooltip';
+import { useStyles2 } from '../../../themes';
+import { ButtonGroup, ToolbarButton } from '../../Button';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { Input } from '../../Input/Input';
+import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
+import { quickOptions } from '../rangeOptions';
+import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
+import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
+import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from '../TimeRangePicker/mapper';
 
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
@@ -28,6 +28,8 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
     onChange(mapOptionToRelativeTimeRange(option));
   };
 
+  const timeOption = mapRelativeTimeRangeToOption(timeRange);
+
   const onOpen = useCallback(
     (event: FormEvent<HTMLButtonElement>) => {
       event.stopPropagation();
@@ -41,7 +43,9 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
     <ButtonGroup className={styles.container}>
       <Tooltip content="Choose time range" placement="bottom">
         <ToolbarButton aria-label="TimePicker Open Button" onClick={onOpen} icon="clock-nine" isOpen={isOpen}>
-          <span className={styles.container}>blahablaha</span>
+          <span className={styles.container}>
+            {rangeUtil.describeTimeRange({ from: timeOption.from, to: timeOption.to })}
+          </span>
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
@@ -49,17 +53,22 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
           <div className={styles.content}>
             <div className={styles.body}>
               <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
-                <TimeRangeList title="Example time ranges" options={quickOptions} onChange={() => {}} value={} />
+                <TimeRangeList
+                  title="Example time ranges"
+                  options={quickOptions}
+                  onChange={() => {}}
+                  value={timeOption}
+                />
               </CustomScrollbar>
               <div className={styles.rightSide}>
                 <div className={styles.title}>
                   <TimePickerTitle>Specify time range</TimePickerTitle>
                 </div>
                 <Field label="From">
-                  <Input placeholder="now-6h" />
+                  <Input placeholder="now-6h" value={timeOption.from} onChange={() => {}} />
                 </Field>
                 <Field label="To">
-                  <Input placeholder="now" value="now" onChange={() => {}} />
+                  <Input placeholder="now" value={timeOption.to} onChange={() => {}} />
                 </Field>
               </div>
             </div>

@@ -58,4 +58,11 @@ describe('Range Utils', () => {
       expect(timeRange.to.valueOf()).toEqual(dateTime('2021-04-20T15:55:00Z').valueOf());
     });
   });
+
+  describe('describe time range', () => {
+    it('should format time range', () => {
+      const describedTimeRange = rangeUtil.describeTimeRange({ from: 'now-900s', to: 'now' });
+      expect(describedTimeRange).toEqual('Last 900 seconds');
+    });
+  });
 });
