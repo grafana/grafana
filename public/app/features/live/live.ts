@@ -54,7 +54,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
   constructor() {
     // build live url replacing scheme in appUrl.
-    const liveUrl = `${config.appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+    const liveUrl = `${config.appUrl.replace('http', 'ws')}live/ws`;
     this.centrifuge = new Centrifuge(liveUrl, {
       debug: true,
     });
