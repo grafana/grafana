@@ -62,6 +62,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
 
+	err := m.clear() // TODO cleanup dashboards
+	if err != nil {
+		return fmt.Errorf("failed to clear existing ng alert data: %w", err)
+	}
+
 	dashAlerts, err := m.slurpDashAlerts()
 	if err != nil {
 		return err
@@ -197,6 +202,25 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *migration) clear() error {
+	_, err := m.sess.Exec("delete from alert_rule")
+	if err != nil {
+		return err
+	}
+
+	_, err = m.sess.Exec("delete from alert_configuration")
+	if err != nil {
+		return err
+	}
+
+	_, err = m.sess.Exec("delete from alert_instance")
+	if err != nil {
+		return err
 	}
 
 	return nil
