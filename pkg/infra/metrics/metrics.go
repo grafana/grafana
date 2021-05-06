@@ -145,17 +145,8 @@ var (
 	// MAccessSummary is a metric summary for access request duration
 	MAccessPermissionsSummary prometheus.Histogram
 
-	// MAccessSummary is a metric summary for access request duration
-	MProvisionDatasourcesSummary *prometheus.HistogramVec
-
-	// MProvisionAlertsSummary is a metric summary for access request duration
-	MProvisionAlertsSummary *prometheus.HistogramVec
-
 	// MProvisionRolesSummary is a metric summary for access request duration
 	MProvisionRolesSummary *prometheus.HistogramVec
-
-	// MAccessSummary is a metric summary for access request duration
-	MProvisionPluginsSummary *prometheus.HistogramVec
 )
 
 // StatTotals
@@ -435,30 +426,6 @@ func init() {
 		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
 	})
 
-	MProvisionDatasourcesSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "provision_datasource_duration",
-		Help:    "Histogram for the runtime of datasource provisioning.",
-		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
-	},
-		[]string{"datasource"},
-	)
-
-	MProvisionPluginsSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "provision_plugin_duration",
-		Help:    "Histogram for the runtime of plugin provisioning.",
-		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
-	},
-		[]string{"plugin"},
-	)
-
-	MProvisionAlertsSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "provision_alert_duration",
-		Help:    "Histogram for the runtime of alert provisioning.",
-		Buckets: prometheus.LinearBuckets(0.01, 0.01, 10),
-	},
-		[]string{"alert"},
-	)
-
 	MProvisionRolesSummary = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "provision_role_duration",
 		Help:    "Histogram for the runtime of role provisioning.",
@@ -710,12 +677,9 @@ func initMetricVars() {
 		MRenderingQueue,
 		MAccessSummary,
 		MAccessPermissionsSummary,
-		MProvisionDatasourcesSummary,
-		MProvisionAlertsSummary,
+		MProvisionRolesSummary,
 		MProvisionRolesCount,
 		MProvisionRolesDeleteCount,
-		MProvisionRolesSummary,
-		MProvisionPluginsSummary,
 		MAccessRoleCount,
 		MAccessTeamRoleCount,
 		MAccessUserRoleCount,
