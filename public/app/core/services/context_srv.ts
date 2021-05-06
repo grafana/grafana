@@ -77,7 +77,7 @@ export class ContextSrv {
   }
 
   // Checks whether user has required permission
-  hasPermission(action: AccessControlAction): boolean {
+  hasPermission(action: AccessControlAction | string): boolean {
     // Fallback if access control disabled
     if (!config.featureToggles['accesscontrol']) {
       return true;
