@@ -1,5 +1,6 @@
-import { getDefaultTimeRange, rangeUtil } from '@grafana/data';
+import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
@@ -13,6 +14,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { DASHBOARD_UID_ANNOTATION_KEY, PANEL_ID_ANNOTATION_KEY } from './constants';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
@@ -178,5 +180,69 @@ const getDefaultExpression = (refId: string): GrafanaQuery => {
     datasourceUid: ExpressionDatasourceUID,
     queryType: '',
     model,
+  };
+};
+
+const dataQueriesToGrafanaQueries = (
+  queries: DataQuery[],
+  datasourceName: string,
+  relativeTimeRange: RelativeTimeRange
+): GrafanaQuery[] => {
+  return queries.reduce<GrafanaQuery[]>((queries, target) => {
+    const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
+    if (datasource && datasource.meta.alerting) {
+      const newQuery: GrafanaQuery = {
+        refId: target.refId,
+        queryType: target.queryType ?? '',
+        relativeTimeRange,
+        datasourceUid: datasource.uid,
+        model: target,
+      };
+      return [...queries, newQuery];
+    }
+    return queries;
+  }, []);
+};
+
+export const panelToRuleFormValues = (
+  panel: PanelModel,
+  dashboard: DashboardModel
+): Partial<RuleFormValues> | undefined => {
+  const { targets, datasource: dashboardDatasource } = panel;
+
+  if (!dashboardDatasource) {
+    return undefined;
+  }
+
+  const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
+  const queries = dataQueriesToGrafanaQueries(targets, dashboardDatasource, relativeTimeRange);
+
+  if (!queries.length) {
+    return undefined;
+  }
+
+  const { folderId, folderTitle } = dashboard.meta;
+
+  return {
+    type: RuleFormType.threshold,
+    folder:
+      folderId && folderTitle
+        ? {
+            id: folderId,
+            title: folderTitle,
+          }
+        : undefined,
+    queries,
+    name: panel.title + ' alert',
+    annotations: [
+      {
+        key: DASHBOARD_UID_ANNOTATION_KEY,
+        value: dashboard.uid,
+      },
+      {
+        key: PANEL_ID_ANNOTATION_KEY,
+        value: String(panel.id),
+      },
+    ],
   };
 };
