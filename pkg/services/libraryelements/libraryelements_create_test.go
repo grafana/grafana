@@ -24,6 +24,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Text - Library Panel",
+					Kind:        int64(Panel),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -68,6 +69,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         result.Result.UID,
 					Name:        "Library Panel Name",
+					Kind:        int64(Panel),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{

@@ -25,18 +25,18 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		//entities.Get("/:uid/dashboards/", middleware.ReqSignedIn, routing.Wrap(l.getConnectedDashboardsHandler))
-		//entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryPanelCommand{}), routing.Wrap(l.patchHandler))
+		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
 	})
 }
 
 // createHandler handles POST /api/library-elements.
 func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd createLibraryElementCommand) response.Response {
-	panel, err := l.createLibraryElement(c, cmd)
+	element, err := l.createLibraryElement(c, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": panel})
+	return response.JSON(200, util.DynMap{"result": element})
 }
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
@@ -71,12 +71,22 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 		excludeUID:    c.Query("excludeUid"),
 		folderFilter:  c.Query("folderFilter"),
 	}
-	libraryPanels, err := l.getAllLibraryElements(c, query)
+	elementsResult, err := l.getAllLibraryElements(c, query)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	return response.JSON(200, util.DynMap{"result": libraryPanels})
+	return response.JSON(200, util.DynMap{"result": elementsResult})
+}
+
+// patchHandler handles PATCH /api/library-elements/:uid
+func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
+	element, err := l.patchLibraryElement(c, cmd, c.Params(":uid"))
+	if err != nil {
+		return toLibraryElementError(err, "Failed to update library element")
+	}
+
+	return response.JSON(200, util.DynMap{"result": element})
 }
 
 func toLibraryElementError(err error, message string) response.Response {
@@ -89,8 +99,8 @@ func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, errLibraryElementDashboardNotFound) {
 		return response.Error(404, errLibraryElementDashboardNotFound.Error(), err)
 	}
-	if errors.Is(err, errLibraryElementHeaderUIDMissing) {
-		return response.Error(412, errLibraryElementHeaderUIDMissing.Error(), err)
+	if errors.Is(err, errLibraryElementVersionMismatch) {
+		return response.Error(412, errLibraryElementVersionMismatch.Error(), err)
 	}
 	if errors.Is(err, models.ErrFolderNotFound) {
 		return response.Error(404, models.ErrFolderNotFound.Error(), err)

@@ -110,10 +110,10 @@ var (
 	errLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
 	errLibraryElementDashboardNotFound = errors.New("library element connection could not be found")
-	// errLibraryElementHeaderUIDMissing is an error for when a library element header is missing the uid property.
-	errLibraryElementHeaderUIDMissing = errors.New("library element header is missing required property uid")
 	// errLibraryElementHasConnectedDashboards is an error for when an user deletes a library element that is connected to dashboards.
 	errLibraryElementHasConnectedDashboards = errors.New("the library element is linked to dashboards")
+	// errLibraryElementVersionMismatch is an error for when a library element has been changed by someone else.
+	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
 )
 
 // Commands
@@ -124,6 +124,15 @@ type createLibraryElementCommand struct {
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
 	Kind     int64           `json:"kind" binding:"Required;Range(1,2)"`
+}
+
+// patchLibraryElementCommand is the command for patching a LibraryElement
+type patchLibraryElementCommand struct {
+	FolderID int64           `json:"folderId" binding:"Default(-1)"`
+	Name     string          `json:"name"`
+	Model    json.RawMessage `json:"model"`
+	Kind     int64           `json:"kind" binding:"Required;Range(1,2)"`
+	Version  int64           `json:"version" binding:"Required"`
 }
 
 // searchLibraryElementsQuery is the query used for searching for Elements

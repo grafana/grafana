@@ -62,6 +62,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -126,6 +127,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "query0",
+							Kind:        int64(Variable),
 							Type:        "query",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -185,6 +187,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -219,6 +222,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -282,6 +286,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -316,6 +321,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -399,6 +405,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "BarGauge - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "bargauge",
 							Description: "BarGauge description",
 							Model: map[string]interface{}{
@@ -433,6 +440,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Gauge - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "gauge",
 							Description: "Gauge description",
 							Model: map[string]interface{}{
@@ -534,6 +542,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    newFolder.Id,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -628,6 +637,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -662,6 +672,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -725,6 +736,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -788,6 +800,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -852,6 +865,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -925,6 +939,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -996,6 +1011,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Some Other",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A Library Panel",
 							Model: map[string]interface{}{
@@ -1030,6 +1046,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -1095,6 +1112,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
+							Kind:        int64(Panel),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{

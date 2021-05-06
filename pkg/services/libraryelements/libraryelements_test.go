@@ -23,13 +23,14 @@ const UserInDbName = "user_in_db"
 const UserInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
 type libraryElement struct {
-	ID          int64  `json:"id"`
-	OrgID       int64  `json:"orgId"`
-	FolderID    int64  `json:"folderId"`
-	UID         string `json:"uid"`
-	Name        string `json:"name"`
-	Type        string
-	Description string
+	ID          int64                  `json:"id"`
+	OrgID       int64                  `json:"orgId"`
+	FolderID    int64                  `json:"folderId"`
+	UID         string                 `json:"uid"`
+	Name        string                 `json:"name"`
+	Kind        int64                  `json:"kind"`
+	Type        string                 `json:"type"`
+	Description string                 `json:"description"`
 	Model       map[string]interface{} `json:"model"`
 	Version     int64                  `json:"version"`
 	Meta        LibraryElementDTOMeta  `json:"meta"`
@@ -203,7 +204,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		cfg := setting.NewCfg()
 		// Everything in this service is behind the feature toggle "panelLibrary"
 		cfg.FeatureToggles = map[string]bool{"panelLibrary": true}
-		// Because the LibraryPanelService is behind a feature toggle, we need to override the service in the registry
+		// Because the LibraryElementService is behind a feature toggle, we need to override the service in the registry
 		// with a Cfg that contains the feature toggle so migrations are run properly
 		service := overrideLibraryElementServiceInRegistry(cfg)
 

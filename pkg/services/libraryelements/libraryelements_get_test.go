@@ -29,6 +29,7 @@ func TestGetLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         result.Result.UID,
 					Name:        "Text - Library Panel",
+					Kind:        int64(Panel),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{

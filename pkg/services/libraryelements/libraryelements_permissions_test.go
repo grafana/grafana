@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func TestLibraryPanelPermissions(t *testing.T) {
+func TestLibraryElemmentPermissions(t *testing.T) {
 	var defaultPermissions = []folderACLItem{}
 	var adminOnlyPermissions = []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_EDIT}}
 	var editorOnlyPermissions = []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}}
@@ -75,6 +75,36 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to a folder with %s, it should return correct status", testCase.role, testCase.desc),
+			func(t *testing.T, sc scenarioContext) {
+				fromFolder := createFolderWithACL(t, sc.sqlStore, "Everyone", sc.user, everyonePermissions)
+				command := getCreatePanelCommand(fromFolder.Id, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, command)
+				result := validateAndUnMarshalResponse(t, resp)
+				toFolder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				cmd := patchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(Panel)}
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.patchHandler(sc.reqContext, cmd)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it from a folder with %s, it should return correct status", testCase.role, testCase.desc),
+			func(t *testing.T, sc scenarioContext) {
+				fromFolder := createFolderWithACL(t, sc.sqlStore, "Everyone", sc.user, testCase.items)
+				command := getCreatePanelCommand(fromFolder.Id, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, command)
+				result := validateAndUnMarshalResponse(t, resp)
+				toFolder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, everyonePermissions)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				cmd := patchLibraryElementCommand{FolderID: toFolder.Id, Version: 1, Kind: int64(Panel)}
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.patchHandler(sc.reqContext, cmd)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
 		testScenario(t, fmt.Sprintf("When %s tries to delete a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
@@ -108,6 +138,34 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				require.Equal(t, testCase.status, resp.Status())
 			})
 
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to the General folder, it should return correct status", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, everyonePermissions)
+				command := getCreatePanelCommand(folder.Id, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, command)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				cmd := patchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(Panel)}
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.patchHandler(sc.reqContext, cmd)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it from the General folder, it should return correct status", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, everyonePermissions)
+				command := getCreatePanelCommand(0, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, command)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				cmd := patchLibraryElementCommand{FolderID: folder.Id, Version: 1, Kind: int64(Panel)}
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.patchHandler(sc.reqContext, cmd)
+				require.Equal(t, testCase.status, resp.Status())
+			})
+
 		testScenario(t, fmt.Sprintf("When %s tries to delete a library panel in the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
 				cmd := getCreatePanelCommand(0, "Library Panel Name")
@@ -136,6 +194,20 @@ func TestLibraryPanelPermissions(t *testing.T) {
 
 				command := getCreatePanelCommand(-100, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, command)
+				require.Equal(t, 404, resp.Status())
+			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to patch a library panel by moving it to a folder that doesn't exist, it should fail", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, everyonePermissions)
+				command := getCreatePanelCommand(folder.Id, "Library Panel Name")
+				resp := sc.service.createHandler(sc.reqContext, command)
+				result := validateAndUnMarshalResponse(t, resp)
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				cmd := patchLibraryElementCommand{FolderID: -100, Version: 1, Kind: int64(Panel)}
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.patchHandler(sc.reqContext, cmd)
 				require.Equal(t, 404, resp.Status())
 			})
 	}
