@@ -268,7 +268,7 @@ steps:
     - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     - SOURCE_COMMIT=${DRONE_COMMIT}
     repositories:
-    - grafana/grafana-enterprise
+    - grafana/grafana-enterprise@main
     server: https://drone.grafana.net
     token:
       from_secret: drone_token
