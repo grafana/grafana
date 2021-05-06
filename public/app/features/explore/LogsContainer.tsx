@@ -32,7 +32,9 @@ type LogsContainerState = {
   absoluteRangeToShow: AbsoluteTimeRange;
 };
 export class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
-  private logRowsCache = new LRU<string, { cacheLogsResult: LogsModel; cacheAbsoluteRange: AbsoluteTimeRange }>(5);
+  private logRowsCache = new LRU<string, { cacheLogsResult: LogsModel | null; cacheAbsoluteRange: AbsoluteTimeRange }>(
+    5
+  );
 
   constructor(props: LogsContainerProps) {
     super(props);
@@ -53,9 +55,9 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
   componentDidUpdate(prevProps: LogsContainerProps) {
     const { logsResult, absoluteRange } = this.props;
     // If new results, update cache
-    if (logsResult && !isEqual(logsResult, prevProps.logsResult)) {
+    if (!isEqual(logsResult, prevProps.logsResult) || !isEqual(absoluteRange, prevProps.absoluteRange)) {
       // If queries were changed, reset cache and start fresh
-      if (!isEqual(logsResult.queries, prevProps.logsResult?.queries)) {
+      if (!isEqual(logsResult?.queries, prevProps.logsResult?.queries)) {
         this.logRowsCache.reset();
       }
       // Update state and add to logResults and absolutRange to cache
@@ -64,7 +66,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
     }
   }
 
-  setCacheLogResults(logsResult: LogsModel, absoluteRange: AbsoluteTimeRange) {
+  setCacheLogResults(logsResult: LogsModel | null, absoluteRange: AbsoluteTimeRange) {
     const cacheKey = this.createCacheKey(absoluteRange);
     this.logRowsCache.set(cacheKey, { cacheLogsResult: logsResult, cacheAbsoluteRange: absoluteRange });
   }
@@ -143,7 +145,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
     } = this.props;
 
     const { logsToShow, absoluteRangeToShow } = this.state;
-
     const { rows: logRows, meta: logsMeta, series: logsSeries, queries: logsQueries, visibleRange } = logsToShow || {};
 
     if (!logRows) {

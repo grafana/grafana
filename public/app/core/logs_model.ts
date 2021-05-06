@@ -220,7 +220,6 @@ export function dataFrameToLogsModel(
       );
       logsModel.visibleRange = visibleRange;
       logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
-      logsModel.queries = queries;
 
       if (logsModel.meta) {
         logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
@@ -228,6 +227,7 @@ export function dataFrameToLogsModel(
     } else {
       logsModel.series = [];
     }
+    logsModel.queries = queries;
     return logsModel;
   }
 
@@ -236,6 +236,7 @@ export function dataFrameToLogsModel(
     rows: [],
     meta: [],
     series: [],
+    queries,
   };
 }
 

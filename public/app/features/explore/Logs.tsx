@@ -351,7 +351,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           </CustomScrollbar>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={visibleRange}
+            visibleRange={visibleRange || absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}

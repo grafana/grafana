@@ -15,10 +15,10 @@ import { Button, Icon, Spinner, useTheme, stylesFactory, CustomScrollbar } from 
 
 type Props = {
   absoluteRange: AbsoluteTimeRange;
+  visibleRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   queries: DataQuery[];
   loading: boolean;
-  visibleRange?: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange, runFromNavigation?: boolean) => void;
 };
@@ -34,8 +34,8 @@ function LogsNavigation({
   timeZone,
   loading,
   onChangeTime,
-  visibleRange = absoluteRange,
-  queries = [],
+  visibleRange,
+  queries,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
