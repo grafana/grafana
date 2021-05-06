@@ -59,13 +59,16 @@ export default class InfluxSeries {
   }
 
   _getSeriesName(series: any, index: number) {
-    const regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+    const regex = /\$(\$|\w+)|\[\[([\s\S]+?)\]\]/g;
     const segments = series.name.split('.');
 
     return this.alias.replace(regex, (match: any, g1: any, g2: any) => {
       const group = g1 || g2;
       const segIndex = parseInt(group, 10);
 
+      if (group === '$') {
+        return '$';
+      }
       if (group === 'm' || group === 'measurement') {
         return series.name;
       }

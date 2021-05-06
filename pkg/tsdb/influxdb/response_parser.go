@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$\s*([\@\/\w-]+?)*`)
+	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$(\$|\s*([\@\/\w-]+?)*)`)
 }
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated
@@ -105,6 +105,10 @@ func formatFrameName(row Row, column string, query *Query) string {
 		aliasFormat = strings.Replace(aliasFormat, "[[", "", 1)
 		aliasFormat = strings.Replace(aliasFormat, "]]", "", 1)
 		aliasFormat = strings.Replace(aliasFormat, "$", "", 1)
+
+		if aliasFormat == "$" {
+			return "$"
+		}
 
 		if aliasFormat == "m" || aliasFormat == "measurement" {
 			return []byte(query.Measurement)
