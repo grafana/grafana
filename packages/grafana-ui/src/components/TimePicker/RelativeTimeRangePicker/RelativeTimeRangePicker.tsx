@@ -3,19 +3,24 @@ import { css } from '@emotion/css';
 import { RelativeTimeRange, GrafanaThemeV2, TimeOption, rangeUtil } from '@grafana/data';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { useStyles2 } from '../../../themes';
-import { ButtonGroup, ToolbarButton } from '../../Button';
+import { Button, ButtonGroup, ToolbarButton } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../rangeOptions';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from '../TimeRangePicker/mapper';
-import { RelativeTimeRangeInput } from './RelativeTimeRangeInput';
+import { Field } from '../../Forms/Field';
+import { Input } from '../../Input/Input';
+import { InputState } from '../TimeRangePicker/TimeRangeForm';
+import { isValid } from '../../../../../grafana-data/src/datetime/datemath';
 
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
 }
+
+const errorMessage = 'Please enter a past date or "now"';
 
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
   const { timeRange, onChange } = props;
@@ -23,11 +28,18 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
 
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
-  const onChangeTimeOption = (option: TimeOption) => {
-    onChange(mapOptionToRelativeTimeRange(option));
-  };
-
   const timeOption = mapRelativeTimeRangeToOption(timeRange);
+  const [from, setFrom] = useState<InputState>(setValue(timeOption.from));
+  const [to, setTo] = useState<InputState>(setValue(timeOption.to));
+
+  const onChangeTimeOption = (option: TimeOption) => {
+    const relativeTimeRange = mapOptionToRelativeTimeRange(option);
+
+    if (!relativeTimeRange) {
+      return;
+    }
+    onChange(relativeTimeRange);
+  };
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLButtonElement>) => {
@@ -37,6 +49,16 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
     },
     [isOpen]
   );
+
+  const onApply = (event: FormEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    const timeRange = mapOptionToRelativeTimeRange({ from: from.value, to: to.value, display: '' });
+    if (to.invalid || from.invalid || !timeRange) {
+      return;
+    }
+    onChange(timeRange);
+    setIsOpen(false);
+  };
 
   return (
     <ButtonGroup className={styles.container}>
@@ -63,16 +85,23 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
                 <div className={styles.title}>
                   <TimePickerTitle>Specify time range</TimePickerTitle>
                 </div>
-                <RelativeTimeRangeInput
-                  label="From"
-                  value={timeOption.from}
-                  onChange={(value) => onChangeTimeOption({ ...timeOption, from: value })}
-                />
-                <RelativeTimeRangeInput
-                  label="To"
-                  value={timeOption.to}
-                  onChange={(value) => onChangeTimeOption({ ...timeOption, to: value })}
-                />
+                <Field label="From" invalid={from.invalid} error={errorMessage}>
+                  <Input
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) => setFrom(setValue(event.currentTarget.value))}
+                    value={from.value}
+                  />
+                </Field>
+                <Field label="To" invalid={to.invalid} error={errorMessage}>
+                  <Input
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) => setTo(setValue(event.currentTarget.value))}
+                    value={to.value}
+                  />
+                </Field>
+                <Button aria-label="TimePicker submit button" onClick={onApply}>
+                  Apply time range
+                </Button>
               </div>
             </div>
           </div>
@@ -81,6 +110,13 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
     </ButtonGroup>
   );
 }
+
+const setValue = (value: string): InputState => {
+  return {
+    value,
+    invalid: !isValid(value),
+  };
+};
 
 const getStyles = (theme: GrafanaThemeV2) => {
   return {
