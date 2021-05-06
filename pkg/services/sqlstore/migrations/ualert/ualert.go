@@ -39,7 +39,6 @@ func AddMigration(mg *migrator.Migrator) {
 
 		switch {
 		case ngEnabled && !migrationRun:
-			// TODO Clear old migration data
 			mg.AddMigration(migTitle, &migration{})
 		case !ngEnabled && migrationRun:
 			mg.ClearMigrationEntry(migTitle)
