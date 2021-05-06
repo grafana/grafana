@@ -337,11 +337,12 @@ interface UpdateAlertManagerConfigActionOptions {
   newConfig: AlertManagerCortexConfig;
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
+  refetch?: boolean; // refetch config on success
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath }): Promise<void> =>
+  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch }, thunkAPI): Promise<void> =>
     withSerializedError(
       (async () => {
         const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
@@ -350,10 +351,12 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
           );
         }
-
         await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
         if (successMessage) {
           appEvents?.emit(AppEvents.alertSuccess, [successMessage]);
+        }
+        if (refetch) {
+          await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
         }
         if (redirectPath) {
           locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
@@ -398,3 +401,62 @@ export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceA
       })()
     )
 );
+
+export const deleteReceiverAction = (receiverName: string, alertManagerSourceName: string): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const config = getState().unifiedAlerting.amConfigs?.[alertManagerSourceName]?.result;
+    if (!config) {
+      throw new Error(`Config for ${alertManagerSourceName} not found`);
+    }
+    if (!config.alertmanager_config.receivers?.find((receiver) => receiver.name === receiverName)) {
+      throw new Error(`Cannot delete receiver ${receiverName}: not found in config.`);
+    }
+    const newConfig: AlertManagerCortexConfig = {
+      ...config,
+      alertmanager_config: {
+        ...config.alertmanager_config,
+        receivers: config.alertmanager_config.receivers.filter((receiver) => receiver.name !== receiverName),
+      },
+    };
+    return dispatch(
+      updateAlertManagerConfigAction({
+        newConfig,
+        oldConfig: config,
+        alertManagerSourceName,
+        successMessage: 'Contact point deleted.',
+        refetch: true,
+      })
+    );
+  };
+};
+
+export const deleteTemplateAction = (templateName: string, alertManagerSourceName: string): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const config = getState().unifiedAlerting.amConfigs?.[alertManagerSourceName]?.result;
+    if (!config) {
+      throw new Error(`Config for ${alertManagerSourceName} not found`);
+    }
+    if (typeof config.template_files?.[templateName] !== 'string') {
+      throw new Error(`Cannot delete template ${templateName}: not found in config.`);
+    }
+    const newTemplates = { ...config.template_files };
+    delete newTemplates[templateName];
+    const newConfig: AlertManagerCortexConfig = {
+      ...config,
+      alertmanager_config: {
+        ...config.alertmanager_config,
+        templates: config.alertmanager_config.templates?.filter((existing) => existing !== templateName),
+      },
+      template_files: newTemplates,
+    };
+    return dispatch(
+      updateAlertManagerConfigAction({
+        newConfig,
+        oldConfig: config,
+        alertManagerSourceName,
+        successMessage: 'Template deleted.',
+        refetch: true,
+      })
+    );
+  };
+};

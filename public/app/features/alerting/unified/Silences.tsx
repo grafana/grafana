@@ -57,13 +57,18 @@ const Silences: FC = () => {
           {error.message || 'Unknown error.'}
         </Alert>
       )}
+      {alertsRequest?.error && !alertsRequest?.loading && (
+        <Alert severity="error" title="Error loading alert manager alerts">
+          {alertsRequest.error?.message || 'Unknown error.'}
+        </Alert>
+      )}
       {loading && <LoadingPlaceholder text="loading silences..." />}
-      {result && !error && alertsRequest?.result && (
+      {result && !error && (
         <Switch>
           <Route exact path="/alerting/silences">
             <SilencesTable
               silences={result}
-              alertManagerAlerts={alertsRequest.result}
+              alertManagerAlerts={alertsRequest?.result ?? []}
               alertManagerSourceName={alertManagerSourceName}
             />
           </Route>

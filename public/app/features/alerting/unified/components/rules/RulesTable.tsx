@@ -145,7 +145,7 @@ export const RulesTable: FC<Props> = ({
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          to={`alerting/${encodeURIComponent(
+                          to={`/alerting/${encodeURIComponent(
                             stringifyRuleIdentifier(
                               getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
                             )

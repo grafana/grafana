@@ -31,6 +31,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   parent: css`
     display: flex;
     flex-direction: row;
+    max-width: ${theme.breakpoints.xl};
   `,
   description: css`
     margin-top: -${theme.spacing.md};
