@@ -29,15 +29,13 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   const [loadSubscriptions, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
   useEffect(() => {
     if (!getSubscriptions || !hasRequiredFields) {
+      updateSubscriptions([]);
       return;
     }
     let canceled = false;
     getSubscriptions().then((result) => {
       if (!canceled) {
-        setSubscriptions(result);
-        if (onDefaultSubscriptionChange && !defaultSubscription && result.length > 0) {
-          onDefaultSubscriptionChange(result[0].value);
-        }
+        updateSubscriptions(result);
       }
     });
     return () => {
@@ -46,6 +44,22 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
     // This effect is intended to be called only once initially and on Load Subscriptions click
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadSubscriptions]);
+
+  const updateSubscriptions = (received: Array<SelectableValue<string>>) => {
+    setSubscriptions(received);
+    if (onDefaultSubscriptionChange) {
+      if (!defaultSubscription && received.length > 0) {
+        // Setting the default subscription if subscriptions received but no default subscription selected
+        onDefaultSubscriptionChange(received[0].value);
+      } else if (defaultSubscription) {
+        const found = received.find((opt) => opt.value === defaultSubscription);
+        if (!found) {
+          // Unsetting the default found if it isn't found among the received subscriptions
+          onDefaultSubscriptionChange(undefined);
+        }
+      }
+    }
+  };
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
     if (onCredentialsChange) {
@@ -116,7 +130,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                 className="width-15"
                 value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                 options={azureCloudOptions}
-                defaultValue={credentials.azureCloud}
                 onChange={onAzureCloudChange}
               />
             </div>
@@ -186,7 +199,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   <Select
                     value={subscriptions.find((opt) => opt.value === defaultSubscription)}
                     options={subscriptions}
-                    defaultValue={defaultSubscription}
                     onChange={onSubscriptionChange}
                   />
                 </div>

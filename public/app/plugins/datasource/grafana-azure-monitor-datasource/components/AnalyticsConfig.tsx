@@ -39,23 +39,13 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const [loadWorkspaces, onLoadWorkspaces] = useReducer((val) => val + 1, 0);
   useEffect(() => {
     if (!hasRequiredFields || !subscriptionId) {
+      updateWorkspaces([]);
       return;
     }
     let canceled = false;
     getWorkspaces(subscriptionId).then((result) => {
       if (!canceled) {
-        setWorkspaces(result);
-        if (!defaultWorkspace && result.length > 0) {
-          updateOptions((options) => {
-            return {
-              ...options,
-              jsonData: {
-                ...options.jsonData,
-                logAnalyticsDefaultWorkspace: result[0].value,
-              },
-            };
-          });
-        }
+        updateWorkspaces(result);
       }
     });
     return () => {
@@ -64,6 +54,36 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     // This effect is intended to be called only once initially and on Load Workspaces click
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadWorkspaces, subscriptionId]);
+
+  const updateWorkspaces = (received: Array<SelectableValue<string>>) => {
+    setWorkspaces(received);
+    if (!defaultWorkspace && received.length > 0) {
+      // Setting the default workspace if workspaces received but no default workspace selected
+      updateOptions((options) => {
+        return {
+          ...options,
+          jsonData: {
+            ...options.jsonData,
+            logAnalyticsDefaultWorkspace: received[0].value,
+          },
+        };
+      });
+    } else if (defaultWorkspace) {
+      const found = received.find((opt) => opt.value === defaultWorkspace);
+      if (!found) {
+        // Unsetting the default workspace if it isn't found among the received workspaces
+        updateOptions((options) => {
+          return {
+            ...options,
+            jsonData: {
+              ...options.jsonData,
+              logAnalyticsDefaultWorkspace: undefined,
+            },
+          };
+        });
+      }
+    }
+  };
 
   const [sameAsSwitched, setSameAsSwitched] = useState(false);
 
@@ -147,7 +167,6 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
               <Select
                 value={workspaces.find((opt) => opt.value === defaultWorkspace)}
                 options={workspaces}
-                defaultValue={defaultWorkspace}
                 onChange={onDefaultWorkspaceChange}
               />
             </div>
