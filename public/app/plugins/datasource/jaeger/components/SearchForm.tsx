@@ -85,7 +85,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         <InlineField label="Tags" labelWidth={21} grow>
           <Input
             value={transformToLogfmt(query.tags)}
-            placeholder="Filter by tags"
+            placeholder="http.status_code=200 error=true"
             onChange={(v) =>
               onChange({
                 ...query,
