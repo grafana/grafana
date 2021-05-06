@@ -35,5 +35,20 @@ describe('LocationService', () => {
 
       expect(locationService.getLocation().search).toBe('?servers=A&servers=B&servers=C');
     });
+
+    it('persist state', () => {
+      locationService.push({
+        pathname: '/d/123',
+        state: {
+          some: 'stateToPersist',
+        },
+      });
+      locationService.partial({ q: 1 });
+
+      expect(locationService.getLocation().search).toBe('?q=1');
+      expect(locationService.getLocation().state).toEqual({
+        some: 'stateToPersist',
+      });
+    });
   });
 });
