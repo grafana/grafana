@@ -223,7 +223,6 @@ func updateOrgUserHelper(cmd models.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
-
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
