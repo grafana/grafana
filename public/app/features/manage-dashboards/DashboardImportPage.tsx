@@ -1,7 +1,7 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from '@emotion/css';
-import { AppEvents, GrafanaThemeV2, NavModel } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, NavModel } from '@grafana/data';
 import {
   Button,
   stylesFactory,
@@ -165,7 +165,7 @@ export default DashboardImportPage;
 
 DashboardImportPage.displayName = 'DashboardImport';
 
-const importStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const importStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     option: css`
       margin-bottom: ${theme.spacing(4)};

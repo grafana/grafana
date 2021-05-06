@@ -9,6 +9,7 @@ export interface GetLibraryPanelsOptions {
   excludeUid?: string;
   sortDirection?: string;
   panelFilter?: string[];
+  folderFilter?: string[];
 }
 
 export async function getLibraryPanels({
@@ -18,11 +19,13 @@ export async function getLibraryPanels({
   excludeUid = '',
   sortDirection = '',
   panelFilter = [],
+  folderFilter = [],
 }: GetLibraryPanelsOptions = {}): Promise<LibraryPanelSearchResult> {
   const params = new URLSearchParams();
   params.append('searchString', searchString);
   params.append('sortDirection', sortDirection);
   params.append('panelFilter', panelFilter.join(','));
+  params.append('folderFilter', folderFilter.join(','));
   params.append('excludeUid', excludeUid);
   params.append('perPage', perPage.toString(10));
   params.append('page', page.toString(10));
