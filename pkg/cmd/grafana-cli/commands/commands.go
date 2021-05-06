@@ -136,15 +136,9 @@ var adminCommands = []*cli.Command{
 
 var cueCommands = []*cli.Command{
 	{
-		Name:   "validate",
+		Name:   "validate-schema",
 		Usage:  "validate *.cue files in the project",
 		Action: runPluginCommand(cmd.validateScuemataBasics),
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "resource",
-				Usage: "JSON file to validate",
-			},
-		},
 	},
 }
 
