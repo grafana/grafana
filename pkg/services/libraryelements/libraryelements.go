@@ -3,6 +3,7 @@ package libraryelements
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -39,6 +40,45 @@ func (l *LibraryElementService) IsEnabled() bool {
 	}
 
 	return l.Cfg.IsPanelLibraryEnabled()
+}
+
+func (l *LibraryElementService) CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
+	if !l.IsEnabled() {
+		return LibraryElementDTO{}, nil
+	}
+
+	return l.createLibraryElement(c, cmd)
+}
+
+func (l *LibraryElementService) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
+	if !l.IsEnabled() {
+		return map[string]LibraryElementDTO{}, nil
+	}
+
+	return l.getElementsForDashboardID(c, dashboardID)
+}
+
+func (l *LibraryElementService) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
+	if !l.IsEnabled() {
+		return nil
+	}
+
+	return l.connectElementsToDashboardID(c, elementUIDs, dashboardID)
+}
+
+func (l *LibraryElementService) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
+	if !l.IsEnabled() {
+		return nil
+	}
+
+	return l.disconnectElementsFromDashboardID(c, dashboardID)
+}
+
+func (l *LibraryElementService) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
+	if !l.IsEnabled() {
+		return nil
+	}
+	return l.deleteLibraryElementsInFolderUID(c, folderUID)
 }
 
 // AddMigration defines database migrations.

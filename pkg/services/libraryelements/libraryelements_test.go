@@ -22,6 +22,136 @@ import (
 const UserInDbName = "user_in_db"
 const UserInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
+//func TestDisconnectLibraryPanelsForDashboard(t *testing.T) {
+//	scenarioWithLibraryPanel(t, "When an admin tries to delete a dashboard with a library panel, it should disconnect the two",
+//		func(t *testing.T, sc scenarioContext) {
+//			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
+//			resp := sc.service.connectHandler(sc.reqContext)
+//			require.Equal(t, 200, resp.Status())
+//
+//			dashJSON := map[string]interface{}{
+//				"panels": []interface{}{
+//					map[string]interface{}{
+//						"id": int64(1),
+//						"gridPos": map[string]interface{}{
+//							"h": 6,
+//							"w": 6,
+//							"x": 0,
+//							"y": 0,
+//						},
+//					},
+//					map[string]interface{}{
+//						"id": int64(2),
+//						"gridPos": map[string]interface{}{
+//							"h": 6,
+//							"w": 6,
+//							"x": 6,
+//							"y": 0,
+//						},
+//						"datasource": "${DS_GDEV-TESTDATA}",
+//						"libraryPanel": map[string]interface{}{
+//							"uid":  sc.initialResult.Result.UID,
+//							"name": sc.initialResult.Result.Name,
+//						},
+//						"title": "Text - Library Panel",
+//						"type":  "text",
+//					},
+//				},
+//			}
+//			dash := models.Dashboard{
+//				Id:   int64(1),
+//				Data: simplejson.NewFromAny(dashJSON),
+//			}
+//
+//			err := sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
+//			require.NoError(t, err)
+//
+//			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+//			resp = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+//			require.Equal(t, 200, resp.Status())
+//
+//			var dashResult libraryPanelDashboardsResult
+//			err = json.Unmarshal(resp.Body(), &dashResult)
+//			require.NoError(t, err)
+//			require.Empty(t, dashResult.Result)
+//		})
+//
+//	scenarioWithLibraryPanel(t, "When an admin tries to delete a dashboard with a library panel without uid, it should fail",
+//		func(t *testing.T, sc scenarioContext) {
+//			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
+//			resp := sc.service.connectHandler(sc.reqContext)
+//			require.Equal(t, 200, resp.Status())
+//
+//			dashJSON := map[string]interface{}{
+//				"panels": []interface{}{
+//					map[string]interface{}{
+//						"id": int64(1),
+//						"gridPos": map[string]interface{}{
+//							"h": 6,
+//							"w": 6,
+//							"x": 0,
+//							"y": 0,
+//						},
+//					},
+//					map[string]interface{}{
+//						"id": int64(2),
+//						"gridPos": map[string]interface{}{
+//							"h": 6,
+//							"w": 6,
+//							"x": 6,
+//							"y": 0,
+//						},
+//						"datasource": "${DS_GDEV-TESTDATA}",
+//						"libraryPanel": map[string]interface{}{
+//							"name": sc.initialResult.Result.Name,
+//						},
+//						"title": "Text - Library Panel",
+//						"type":  "text",
+//					},
+//				},
+//			}
+//			dash := models.Dashboard{
+//				Id:   int64(1),
+//				Data: simplejson.NewFromAny(dashJSON),
+//			}
+//
+//			err := sc.service.DisconnectLibraryPanelsForDashboard(sc.reqContext, &dash)
+//			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
+//		})
+//}
+
+//func TestDeleteLibraryPanelsInFolder(t *testing.T) {
+//	scenarioWithLibraryPanel(t, "When an admin tries to delete a folder that contains connected library panels, it should fail",
+//		func(t *testing.T, sc scenarioContext) {
+//			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
+//			resp := sc.service.connectHandler(sc.reqContext)
+//			require.Equal(t, 200, resp.Status())
+//
+//			err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
+//			require.EqualError(t, err, ErrFolderHasConnectedLibraryPanels.Error())
+//		})
+//
+//	scenarioWithLibraryPanel(t, "When an admin tries to delete a folder that contains disconnected library panels, it should delete all disconnected library panels too",
+//		func(t *testing.T, sc scenarioContext) {
+//			resp := sc.service.getAllHandler(sc.reqContext)
+//			require.Equal(t, 200, resp.Status())
+//			var result libraryPanelsSearch
+//			err := json.Unmarshal(resp.Body(), &result)
+//			require.NoError(t, err)
+//			require.NotNil(t, result.Result)
+//			require.Equal(t, 1, len(result.Result.LibraryPanels))
+//
+//			err = sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
+//			require.NoError(t, err)
+//			resp = sc.service.getAllHandler(sc.reqContext)
+//			require.Equal(t, 200, resp.Status())
+//			err = json.Unmarshal(resp.Body(), &result)
+//			require.NoError(t, err)
+//			require.NotNil(t, result.Result)
+//			require.Equal(t, 0, len(result.Result.LibraryPanels))
+//		})
+//}
+
 type libraryElement struct {
 	ID          int64                  `json:"id"`
 	OrgID       int64                  `json:"orgId"`
@@ -72,7 +202,7 @@ func overrideLibraryElementServiceInRegistry(cfg *setting.Cfg) LibraryElementSer
 	return l
 }
 
-func getCreatePanelCommand(folderID int64, name string) createLibraryElementCommand {
+func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementCommand {
 	command := getCreateCommandWithModel(folderID, name, Panel, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -86,7 +216,7 @@ func getCreatePanelCommand(folderID int64, name string) createLibraryElementComm
 	return command
 }
 
-func getCreateVariableCommand(folderID int64, name string) createLibraryElementCommand {
+func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementCommand {
 	command := getCreateCommandWithModel(folderID, name, Variable, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -99,8 +229,8 @@ func getCreateVariableCommand(folderID int64, name string) createLibraryElementC
 	return command
 }
 
-func getCreateCommandWithModel(folderID int64, name string, kind LibraryElementKind, model []byte) createLibraryElementCommand {
-	command := createLibraryElementCommand{
+func getCreateCommandWithModel(folderID int64, name string, kind LibraryElementKind, model []byte) CreateLibraryElementCommand {
+	command := CreateLibraryElementCommand{
 		FolderID: folderID,
 		Name:     name,
 		Model:    model,
@@ -124,6 +254,32 @@ type folderACLItem struct {
 	roleType   models.RoleType
 	permission models.PermissionType
 }
+
+//func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.SignedInUser, title string,
+//	folderID int64) *models.Dashboard {
+//	dash := models.NewDashboard(title)
+//	dash.FolderId = folderID
+//	dashItem := &dashboards.SaveDashboardDTO{
+//		Dashboard: dash,
+//		Message:   "",
+//		OrgId:     user.OrgId,
+//		User:      &user,
+//		Overwrite: false,
+//	}
+//	origUpdateAlerting := dashboards.UpdateAlerting
+//	t.Cleanup(func() {
+//		dashboards.UpdateAlerting = origUpdateAlerting
+//	})
+//	dashboards.UpdateAlerting = func(store dboards.Store, orgID int64, dashboard *models.Dashboard,
+//		user *models.SignedInUser) error {
+//		return nil
+//	}
+//
+//	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
+//	require.NoError(t, err)
+//
+//	return dashboard
+//}
 
 func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user models.SignedInUser,
 	items []folderACLItem) *models.Folder {

@@ -109,8 +109,18 @@ type LibraryElementDTOMetaUser struct {
 	AvatarUrl string `json:"avatarUrl"`
 }
 
-// libraryPanelConnection is the model for library panel connections.
-type libraryPanelConnection struct {
+// libraryElementConnection is the model for library element connections.
+type libraryElementConnection struct {
+	ID               int64 `xorm:"pk autoincr 'id'"`
+	LibraryElementID int64 `xorm:"library_element_id"`
+	ConnectionKind   int64 `xorm:"connection_kind"`
+	ConnectionID     int64 `xorm:"connection_id"`
+	Created          time.Time
+	CreatedBy        int64
+}
+
+// libraryElementConnectionWithMeta is the model for library element connections with meta.
+type libraryElementConnectionWithMeta struct {
 	ID               int64 `xorm:"pk autoincr 'id'"`
 	LibraryElementID int64 `xorm:"library_element_id"`
 	ConnectionKind   int64 `xorm:"connection_kind"`
@@ -121,6 +131,7 @@ type libraryPanelConnection struct {
 	CreatedByEmail   string
 }
 
+// LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
 	ID           int64                     `json:"id"`
 	Kind         int64                     `json:"kind"`
@@ -143,12 +154,14 @@ var (
 	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
 	// errLibraryElementUnSupportedElementKind is an error for when the kind is unsupported.
 	errLibraryElementUnSupportedElementKind = errors.New("the element kind is not supported")
+	// ErrFolderHasConnectedLibraryElements is an error for when an user deletes a folder that contains connected library elements.
+	ErrFolderHasConnectedLibraryElements = errors.New("folder contains library elements that are linked in use")
 )
 
 // Commands
 
-// createLibraryElementCommand is the command for adding a LibraryElement
-type createLibraryElementCommand struct {
+// CreateLibraryElementCommand is the command for adding a LibraryElement
+type CreateLibraryElementCommand struct {
 	FolderID int64           `json:"folderId"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`

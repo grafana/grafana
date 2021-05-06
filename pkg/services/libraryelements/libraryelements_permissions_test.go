@@ -117,6 +117,56 @@ func TestLibraryElemmentPermissions(t *testing.T) {
 				resp = sc.service.deleteHandler(sc.reqContext)
 				require.Equal(t, testCase.status, resp.Status())
 			})
+
+		//testScenario(t, fmt.Sprintf("When %s tries to connect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		//	func(t *testing.T, sc scenarioContext) {
+		//		folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
+		//		dashboard := createDashboard(t, sc.sqlStore, sc.user, "Some Folder Dash", folder.Id)
+		//		cmd := getCreateCommand(folder.Id, "Library Panel Name")
+		//		resp := sc.service.createHandler(sc.reqContext, cmd)
+		//		result := validateAndUnMarshalResponse(t, resp)
+		//		sc.reqContext.SignedInUser.OrgRole = testCase.role
+		//
+		//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+		//		resp = sc.service.connectHandler(sc.reqContext)
+		//		require.Equal(t, testCase.status, resp.Status())
+		//	})
+		//
+		//testScenario(t, fmt.Sprintf("When %s tries to disconnect a library panel in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		//	func(t *testing.T, sc scenarioContext) {
+		//		folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
+		//		dashboard := createDashboard(t, sc.sqlStore, sc.user, "Some Folder Dash", folder.Id)
+		//		cmd := getCreateCommand(folder.Id, "Library Panel Name")
+		//		resp := sc.service.createHandler(sc.reqContext, cmd)
+		//		result := validateAndUnMarshalResponse(t, resp)
+		//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+		//		resp = sc.service.connectHandler(sc.reqContext)
+		//		require.Equal(t, 200, resp.Status())
+		//		sc.reqContext.SignedInUser.OrgRole = testCase.role
+		//
+		//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+		//		resp = sc.service.disconnectHandler(sc.reqContext)
+		//		require.Equal(t, testCase.status, resp.Status())
+		//	})
+		//
+		//testScenario(t, fmt.Sprintf("When %s tries to delete all library panels in a folder with %s, it should return correct status", testCase.role, testCase.desc),
+		//	func(t *testing.T, sc scenarioContext) {
+		//		folder := createFolderWithACL(t, sc.sqlStore, "Folder", sc.user, testCase.items)
+		//		cmd := getCreateCommand(folder.Id, "Library Panel Name")
+		//		resp := sc.service.createHandler(sc.reqContext, cmd)
+		//		validateAndUnMarshalResponse(t, resp)
+		//		sc.reqContext.SignedInUser.OrgRole = testCase.role
+		//
+		//		err := sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, folder.Uid)
+		//		switch testCase.status {
+		//		case 200:
+		//			require.NoError(t, err)
+		//		case 403:
+		//			require.EqualError(t, err, models.ErrFolderAccessDenied.Error())
+		//		default:
+		//			t.Fatalf("Unrecognized test case status %d", testCase.status)
+		//		}
+		//	})
 	}
 
 	var generalFolderCases = []struct {

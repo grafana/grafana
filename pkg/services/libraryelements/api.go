@@ -18,7 +18,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 	}
 
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, binding.Bind(createLibraryElementCommand{}), routing.Wrap(l.createHandler))
+		entities.Post("/", middleware.ReqSignedIn, binding.Bind(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
@@ -28,7 +28,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 }
 
 // createHandler handles POST /api/library-elements.
-func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd createLibraryElementCommand) response.Response {
+func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLibraryElementCommand) response.Response {
 	element, err := l.createLibraryElement(c, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
