@@ -308,8 +308,7 @@
     "tinycolor2": "1.4.1",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.1.0",
-    "worker-plugin": "^5.0.0"
+    "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"
