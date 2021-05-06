@@ -21,14 +21,13 @@ interface Props {
 
 const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
   if (silence) {
-    const duration = Date.parse(silence.endsAt) - Date.parse(silence.startsAt);
     return {
       id: silence.id,
-      startsAt: silence.startsAt,
-      endsAt: silence.endsAt,
+      startsAt: new Date().toISOString(),
+      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // Default time period is now + 2h
       comment: silence.comment,
       createdBy: silence.createdBy,
-      duration: `${duration} ms`,
+      duration: `2h`,
       isRegex: false,
       matchers: silence.matchers || [],
       matcherName: '',
@@ -42,9 +41,9 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // Default time period is now + 2h
       comment: '',
       createdBy: config.bootData.user.name,
-      duration: '',
+      duration: '2h',
       isRegex: false,
-      matchers: [],
+      matchers: [{ name: '', value: '', isRegex: false }],
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
@@ -86,7 +85,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet label={`${silence ? 'Edit silence' : 'Silence alert'}`}>
+        <FieldSet label={`${silence ? 'Recreate silence' : 'Create silence'}`}>
           {error && (
             <Alert severity="error" title="Error saving silence">
               {error.message || (error as any)?.data?.message || String(error)}
@@ -101,7 +100,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             error={formState.errors.comment?.message}
             invalid={!!formState.errors.comment}
           >
-            <TextArea {...register('comment', { required: true })} />
+            <TextArea {...register('comment', { required: { value: true, message: 'Required.' } })} />
           </Field>
           <Field
             className={cx(styles.field, styles.createdBy)}
@@ -110,7 +109,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             error={formState.errors.createdBy?.message}
             invalid={!!formState.errors.createdBy}
           >
-            <Input {...register('createdBy', { required: true })} />
+            <Input {...register('createdBy', { required: { value: true, message: 'Required.' } })} />
           </Field>
         </FieldSet>
         <div className={styles.flexRow}>
@@ -121,7 +120,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
           )}
           {!loading && <Button type="submit">Submit</Button>}
           <LinkButton
-            href={makeAMLink('/alerting/silence/', alertManagerSourceName)}
+            href={makeAMLink('alerting/silences', alertManagerSourceName)}
             variant={'secondary'}
             fill="outline"
           >

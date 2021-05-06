@@ -12,7 +12,10 @@ interface Props {
 const MatchersField: FC<Props> = ({ className }) => {
   const styles = useStyles(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
-  const { register } = formApi;
+  const {
+    register,
+    formState: { errors },
+  } = formApi;
   const { fields: matchers = [], append, remove } = useFieldArray<SilenceFormFields>({ name: 'matchers' });
 
   return (
@@ -23,17 +26,29 @@ const MatchersField: FC<Props> = ({ className }) => {
             {matchers.map((matcher, index) => {
               return (
                 <div className={styles.row} key={`${matcher.id}`}>
-                  <Field label="Name">
+                  <Field
+                    label="Name"
+                    invalid={!!errors?.matchers?.[index]?.name}
+                    error={errors?.matchers?.[index]?.name?.message}
+                  >
                     <Input
-                      {...register(`matchers.${index}.name` as const)}
+                      {...register(`matchers.${index}.name` as const, {
+                        required: { value: true, message: 'Required.' },
+                      })}
                       defaultValue={matcher.name}
                       placeholder="name"
                     />
                   </Field>
                   <InlineLabel className={styles.equalSign}>=</InlineLabel>
-                  <Field label="Value">
+                  <Field
+                    label="Value"
+                    invalid={!!errors?.matchers?.[index]?.value}
+                    error={errors?.matchers?.[index]?.value?.message}
+                  >
                     <Input
-                      {...register(`matchers.${index}.value` as const)}
+                      {...register(`matchers.${index}.value` as const, {
+                        required: { value: true, message: 'Required.' },
+                      })}
                       defaultValue={matcher.value}
                       placeholder="value"
                     />
@@ -41,9 +56,16 @@ const MatchersField: FC<Props> = ({ className }) => {
                   <Field className={styles.regexCheckbox} label="Regex">
                     <Checkbox {...register(`matchers.${index}.isRegex` as const)} defaultChecked={matcher.isRegex} />
                   </Field>
-                  <IconButton className={styles.removeButton} name={'trash-alt'} onClick={() => remove(index)}>
-                    Remove
-                  </IconButton>
+                  {matchers.length > 1 && (
+                    <IconButton
+                      className={styles.removeButton}
+                      tooltip="Remove matcher"
+                      name={'trash-alt'}
+                      onClick={() => remove(index)}
+                    >
+                      Remove
+                    </IconButton>
+                  )}
                 </div>
               );
             })}

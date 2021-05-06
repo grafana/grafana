@@ -10,7 +10,7 @@ export const NoSilencesSplash: FC<Props> = ({ alertManagerSourceName }) => (
   <EmptyListCTA
     title="You haven't created any silences yet"
     buttonIcon="bell-slash"
-    buttonLink={makeAMLink('/alerting/silence/new', alertManagerSourceName)}
+    buttonLink={makeAMLink('alerting/silence/new', alertManagerSourceName)}
     buttonTitle="New silence"
   />
 );
