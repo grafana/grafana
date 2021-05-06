@@ -43,7 +43,13 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
-        return [buildHistogram(data, options)];
+        const hist = buildHistogram(data, options.bucketSize);
+        return [
+          {
+            fields: [hist.bucketMin, hist.bucketMax, ...hist.counts],
+            length: hist.bucketMin.values.length,
+          },
+        ];
       })
     ),
 };
@@ -51,7 +57,7 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
 const histogramFrameBucketMinFieldName = 'BucketMin';
 const histogramFrameBucketMaxFieldName = 'BucketMax';
 
-interface HistogramFields {
+export interface HistogramFields {
   bucketMin: Field;
   bucketMax: Field;
   counts: Field[];
@@ -83,9 +89,7 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
-export function buildHistogram(frames: DataFrame[], options?: HistogramTransformerOptions): DataFrame {
-  let { bucketSize } = options ?? { bucketSize: 0 };
-
+export function buildHistogram(frames: DataFrame[], bucketSize?: number): HistogramFields {
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize) {
     let min = Infinity,
@@ -130,20 +134,25 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   // align histograms
   let joinedHists = join(histograms);
 
-  const bucketMin = new ArrayVector(joinedHists[0]);
-  const bucketMax = new ArrayVector(joinedHists[0].map((v) => v + bucketSize!));
-  const fields: Field[] = [
-    // inclusive
-    { name: histogramFrameBucketMinFieldName, values: bucketMin, type: FieldType.number, config: {} },
-    // exclusive
-    { name: histogramFrameBucketMaxFieldName, values: bucketMax, type: FieldType.number, config: {} },
-  ];
+  const bucketMin = {
+    name: histogramFrameBucketMinFieldName,
+    values: new ArrayVector(joinedHists[0]),
+    type: FieldType.number,
+    config: {},
+  };
+  const bucketMax = {
+    name: histogramFrameBucketMaxFieldName,
+    values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
+    type: FieldType.number,
+    config: {},
+  };
+  const counts: Field[] = [];
 
   let i = 1;
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        fields.push({
+        counts.push({
           ...field,
           values: new ArrayVector(joinedHists[i]),
         });
@@ -154,8 +163,9 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   }
 
   return {
-    length: bucketMin.length,
-    fields,
+    bucketMin,
+    bucketMax,
+    counts,
   };
 }
 
