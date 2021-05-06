@@ -199,4 +199,113 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				}
 			})
 	}
+
+	var getAllCases = []struct {
+		role          models.RoleType
+		panels        int
+		folderIndexes []int
+	}{
+		{models.ROLE_ADMIN, 7, []int{0, 1, 2, 3, 4, 5, 6}},
+		{models.ROLE_EDITOR, 6, []int{0, 2, 3, 4, 5, 6}},
+		{models.ROLE_VIEWER, 5, []int{0, 3, 4, 5, 6}},
+	}
+
+	for _, testCase := range getAllCases {
+		testScenario(t, fmt.Sprintf("When %s tries to get all library panels, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				var results []libraryElement
+				for i, folderCase := range folderCases {
+					folder := createFolderWithACL(t, sc.sqlStore, fmt.Sprintf("Folder%v", i), sc.user, folderCase)
+					cmd := getCreatePanelCommand(folder.Id, fmt.Sprintf("Library Panel in Folder%v", i))
+					resp := sc.service.createHandler(sc.reqContext, cmd)
+					result := validateAndUnMarshalResponse(t, resp)
+					result.Result.Meta.CreatedBy.Name = UserInDbName
+					result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.UpdatedBy.Name = UserInDbName
+					result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.FolderName = folder.Title
+					result.Result.Meta.FolderUID = folder.Uid
+					results = append(results, result.Result)
+				}
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				resp := sc.service.getAllHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryElementsSearch
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				require.Equal(t, testCase.panels, len(actual.Result.Elements))
+				for _, folderIndex := range testCase.folderIndexes {
+					var folderID = int64(folderIndex + 2) // testScenario creates one folder and general folder doesn't count
+					var foundResult libraryElement
+					var actualResult libraryElement
+					for _, result := range results {
+						if result.FolderID == folderID {
+							foundResult = result
+							break
+						}
+					}
+					require.NotEmpty(t, foundResult)
+
+					for _, result := range actual.Result.Elements {
+						if result.FolderID == folderID {
+							actualResult = result
+							break
+						}
+					}
+					require.NotEmpty(t, actualResult)
+
+					if diff := cmp.Diff(foundResult, actualResult, getCompareOptions()...); diff != "" {
+						t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+					}
+				}
+			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to get all library panels from General folder, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreatePanelCommand(0, "Library Panel in General Folder")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				result.Result.Meta.CreatedBy.Name = UserInDbName
+				result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = UserInDbName
+				result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.FolderName = "General"
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				resp = sc.service.getAllHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryElementsSearch
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(actual.Result.Elements))
+				if diff := cmp.Diff(result.Result, actual.Result.Elements[0], getCompareOptions()...); diff != "" {
+					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+				}
+			})
+
+		//testScenario(t, fmt.Sprintf("When %s tries to get connected dashboards for a library panel, it should return correct connected dashboard IDs", testCase.role),
+		//	func(t *testing.T, sc scenarioContext) {
+		//		cmd := getCreatePanelCommand(0, "Library Panel in General Folder")
+		//		resp := sc.service.createHandler(sc.reqContext, cmd)
+		//		result := validateAndUnMarshalResponse(t, resp)
+		//		for i, folderCase := range folderCases {
+		//			folder := createFolderWithACL(t, sc.sqlStore, fmt.Sprintf("Folder%v", i), sc.user, folderCase)
+		//			dashboard := createDashboard(t, sc.sqlStore, sc.user, "Some Folder Dash", folder.Id)
+		//			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": strconv.FormatInt(dashboard.Id, 10)})
+		//			resp = sc.service.connectHandler(sc.reqContext)
+		//			require.Equal(t, 200, resp.Status())
+		//		}
+		//		sc.reqContext.SignedInUser.OrgRole = testCase.role
+		//
+		//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+		//		resp = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+		//		require.Equal(t, 200, resp.Status())
+		//
+		//		var dashResult libraryElementDashboardsResult
+		//		err := json.Unmarshal(resp.Body(), &dashResult)
+		//		require.NoError(t, err)
+		//		require.Equal(t, testCase.panels, len(dashResult.Result))
+		//	})
+	}
 }

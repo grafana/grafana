@@ -39,6 +39,17 @@ type libraryElementResult struct {
 	Result libraryElement `json:"result"`
 }
 
+type libraryElementsSearch struct {
+	Result libraryElementsSearchResult `json:"result"`
+}
+
+type libraryElementsSearchResult struct {
+	TotalCount int64            `json:"totalCount"`
+	Elements   []libraryElement `json:"elements"`
+	Page       int              `json:"page"`
+	PerPage    int              `json:"perPage"`
+}
+
 func overrideLibraryElementServiceInRegistry(cfg *setting.Cfg) LibraryElementService {
 	l := LibraryElementService{
 		SQLStore: nil,
@@ -67,6 +78,19 @@ func getCreatePanelCommand(folderID int64, name string) createLibraryElementComm
 			  "id": 1,
 			  "title": "Text - Library Panel",
 			  "type": "text",
+			  "description": "A description"
+			}
+		`))
+
+	return command
+}
+
+func getCreateVariableCommand(folderID int64, name string) createLibraryElementCommand {
+	command := getCreateCommandWithModel(folderID, name, Variable, []byte(`
+			{
+			  "datasource": "${DS_GDEV-TESTDATA}",
+			  "name": "query0",
+			  "type": "query",
 			  "description": "A description"
 			}
 		`))

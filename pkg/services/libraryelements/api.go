@@ -22,8 +22,8 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 		//entities.Post("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(l.connectHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		//entities.Delete("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(l.disconnectHandler))
-		//entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
-		//entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
+		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
+		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		//entities.Get("/:uid/dashboards/", middleware.ReqSignedIn, routing.Wrap(l.getConnectedDashboardsHandler))
 		//entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryPanelCommand{}), routing.Wrap(l.patchHandler))
 	})
@@ -57,6 +57,26 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 	}
 
 	return response.JSON(200, util.DynMap{"result": element})
+}
+
+// getAllHandler handles GET /api/library-elements/.
+func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Response {
+	query := searchLibraryElementsQuery{
+		perPage:       c.QueryInt("perPage"),
+		page:          c.QueryInt("page"),
+		searchString:  c.Query("searchString"),
+		sortDirection: c.Query("sortDirection"),
+		kind:          c.QueryInt("kind"),
+		typeFilter:    c.Query("typeFilter"),
+		excludeUID:    c.Query("excludeUid"),
+		folderFilter:  c.Query("folderFilter"),
+	}
+	libraryPanels, err := l.getAllLibraryElements(c, query)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to get library elements")
+	}
+
+	return response.JSON(200, util.DynMap{"result": libraryPanels})
 }
 
 func toLibraryElementError(err error, message string) response.Response {

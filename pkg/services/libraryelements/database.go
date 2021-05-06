@@ -3,7 +3,10 @@ package libraryelements
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/search"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
@@ -35,7 +38,12 @@ func syncFieldsWithModel(libraryElement *LibraryElement) error {
 		return err
 	}
 
-	model["title"] = libraryElement.Name
+	if LibraryElementKind(libraryElement.Kind) == Panel {
+		model["title"] = libraryElement.Name
+	}
+	if LibraryElementKind(libraryElement.Kind) == Variable {
+		model["name"] = libraryElement.Name
+	}
 	if model["type"] != nil {
 		libraryElement.Type = model["type"].(string)
 	} else {
@@ -241,4 +249,122 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid stri
 	}
 
 	return dto, err
+}
+
+// getAllLibraryElements gets all Library Elements.
+func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, query searchLibraryElementsQuery) (LibraryElementSearchResult, error) {
+	elements := make([]LibraryElementWithMeta, 0)
+	result := LibraryElementSearchResult{}
+	if query.perPage <= 0 {
+		query.perPage = 100
+	}
+	if query.page <= 0 {
+		query.page = 1
+	}
+	var typeFilter []string
+	if len(strings.TrimSpace(query.typeFilter)) > 0 {
+		typeFilter = strings.Split(query.typeFilter, ",")
+	}
+	folderFilter := parseFolderFilter(query)
+	if folderFilter.parseError != nil {
+		return LibraryElementSearchResult{}, folderFilter.parseError
+	}
+	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		builder := sqlstore.SQLBuilder{}
+		if folderFilter.includeGeneralFolder {
+			builder.Write(selectLibraryElementDTOWithMeta)
+			builder.Write(", 'General' as folder_name ")
+			builder.Write(", '' as folder_uid ")
+			builder.Write(fromLibraryElementDTOWithMeta)
+			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, c.SignedInUser.OrgId)
+			writeKindSQL(query, &builder)
+			writeSearchStringSQL(query, l.SQLStore, &builder)
+			writeExcludeSQL(query, &builder)
+			writeTypeFilterSQL(typeFilter, &builder)
+			builder.Write(" UNION ")
+		}
+		builder.Write(selectLibraryElementDTOWithMeta)
+		builder.Write(", dashboard.title as folder_name ")
+		builder.Write(", dashboard.uid as folder_uid ")
+		builder.Write(fromLibraryElementDTOWithMeta)
+		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id<>0")
+		builder.Write(` WHERE le.org_id=?`, c.SignedInUser.OrgId)
+		writeKindSQL(query, &builder)
+		writeSearchStringSQL(query, l.SQLStore, &builder)
+		writeExcludeSQL(query, &builder)
+		writeTypeFilterSQL(typeFilter, &builder)
+		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
+			return err
+		}
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if query.sortDirection == search.SortAlphaDesc.Name {
+			builder.Write(" ORDER BY 1 DESC")
+		} else {
+			builder.Write(" ORDER BY 1 ASC")
+		}
+		writePerPageSQL(query, l.SQLStore, &builder)
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&elements); err != nil {
+			return err
+		}
+
+		retDTOs := make([]LibraryElementDTO, 0)
+		for _, panel := range elements {
+			retDTOs = append(retDTOs, LibraryElementDTO{
+				ID:          panel.ID,
+				OrgID:       panel.OrgID,
+				FolderID:    panel.FolderID,
+				UID:         panel.UID,
+				Name:        panel.Name,
+				Type:        panel.Type,
+				Description: panel.Description,
+				Model:       panel.Model,
+				Version:     panel.Version,
+				Meta: LibraryElementDTOMeta{
+					FolderName:          panel.FolderName,
+					FolderUID:           panel.FolderUID,
+					ConnectedDashboards: panel.ConnectedDashboards,
+					Created:             panel.Created,
+					Updated:             panel.Updated,
+					CreatedBy: LibraryElementDTOMetaUser{
+						ID:        panel.CreatedBy,
+						Name:      panel.CreatedByName,
+						AvatarUrl: dtos.GetGravatarUrl(panel.CreatedByEmail),
+					},
+					UpdatedBy: LibraryElementDTOMetaUser{
+						ID:        panel.UpdatedBy,
+						Name:      panel.UpdatedByName,
+						AvatarUrl: dtos.GetGravatarUrl(panel.UpdatedByEmail),
+					},
+				},
+			})
+		}
+
+		var panels []LibraryElement
+		countBuilder := sqlstore.SQLBuilder{}
+		countBuilder.Write("SELECT * FROM library_element AS le")
+		countBuilder.Write(` WHERE le.org_id=?`, c.SignedInUser.OrgId)
+		writeKindSQL(query, &countBuilder)
+		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
+		writeExcludeSQL(query, &countBuilder)
+		writeTypeFilterSQL(typeFilter, &countBuilder)
+		if err := folderFilter.writeFolderFilterSQL(true, &countBuilder); err != nil {
+			return err
+		}
+		if err := session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&panels); err != nil {
+			return err
+		}
+
+		result = LibraryElementSearchResult{
+			TotalCount: int64(len(panels)),
+			Elements:   retDTOs,
+			Page:       query.page,
+			PerPage:    query.perPage,
+		}
+
+		return nil
+	})
+
+	return result, err
 }

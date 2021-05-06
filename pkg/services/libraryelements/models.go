@@ -78,7 +78,7 @@ type LibraryElementDTO struct {
 // LibraryElementSearchResult is the search result for entities.
 type LibraryElementSearchResult struct {
 	TotalCount int64               `json:"totalCount"`
-	Elements   []LibraryElementDTO `json:"dashboardparts"`
+	Elements   []LibraryElementDTO `json:"elements"`
 	Page       int                 `json:"page"`
 	PerPage    int                 `json:"perPage"`
 }
@@ -124,4 +124,16 @@ type createLibraryElementCommand struct {
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
 	Kind     int64           `json:"kind" binding:"Required;Range(1,2)"`
+}
+
+// searchLibraryElementsQuery is the query used for searching for Elements
+type searchLibraryElementsQuery struct {
+	perPage       int
+	page          int
+	searchString  string
+	sortDirection string
+	kind          int
+	typeFilter    string
+	excludeUID    string
+	folderFilter  string
 }
