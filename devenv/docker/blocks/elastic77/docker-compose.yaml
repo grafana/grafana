@@ -15,7 +15,7 @@
       - elasticsearch77
     environment:
       FD_SERVER: elasticsearch77
-      FD_DATASOURCE: elasticsearch77
+      FD_DATASOURCE: elasticsearch7
       FD_PORT: 9200
 
   filebeat77:
