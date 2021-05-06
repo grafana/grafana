@@ -230,14 +230,14 @@ class UnthemedHistogram extends React.Component<HistogramProps, GraphNGState> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={renderLegend(config)}>
+      <VizLayout width={width} height={height} legend={renderLegend(config) as any}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={this.state.config!}
             data={this.state.alignedData}
             width={vizWidth}
             height={vizHeight}
-            timeRange={null}
+            timeRange={null as any}
           >
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>

@@ -1,9 +1,9 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { HistogramPanel } from './HistogramPanel';
-import { HistogramOptions, HistogramFieldConfig, graphFieldOptions } from '@grafana/ui';
-import { defaultHistogramFieldConfig } from '@grafana/ui/src/components/Histogram/types';
+import { graphFieldOptions } from '@grafana/ui';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './models.gen';
 
-export const plugin = new PanelPlugin<HistogramOptions, HistogramFieldConfig>(HistogramPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
     builder.addNumberInput({
       path: 'bucketSize',
@@ -26,7 +26,7 @@ export const plugin = new PanelPlugin<HistogramOptions, HistogramFieldConfig>(Hi
       },
     },
     useCustomConfig: (builder) => {
-      const cfg = defaultHistogramFieldConfig;
+      const cfg = defaultPanelFieldConfig;
 
       builder
         .addSliderInput({
