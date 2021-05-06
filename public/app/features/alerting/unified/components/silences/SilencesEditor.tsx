@@ -10,8 +10,9 @@ import { SilenceFormFields } from '../../types/silence-form';
 import { useDispatch } from 'react-redux';
 import { createOrUpdateSilenceAction } from '../../state/actions';
 import { SilencePeriod } from './SilencePeriod';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { makeAMLink } from '../../utils/misc';
 
 interface Props {
   silence?: Silence;
@@ -38,7 +39,7 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
     return {
       id: '',
       startsAt: new Date().toISOString(),
-      endsAt: '',
+      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // Default time period is now + 2h
       comment: '',
       createdBy: config.bootData.user.name,
       duration: '',
@@ -87,14 +88,14 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label={`${silence ? 'Edit silence' : 'Silence alert'}`}>
           {error && (
-            <Alert severity="error" title="Error saving template">
+            <Alert severity="error" title="Error saving silence">
               {error.message || (error as any)?.data?.message || String(error)}
             </Alert>
           )}
           <SilencePeriod />
           <MatchersField />
           <Field
-            className={styles.field}
+            className={cx(styles.field, styles.textArea)}
             label="Comment"
             required
             error={formState.errors.comment?.message}
@@ -103,7 +104,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             <TextArea {...register('comment', { required: true })} />
           </Field>
           <Field
-            className={styles.field}
+            className={cx(styles.field, styles.createdBy)}
             label="Created by"
             required
             error={formState.errors.createdBy?.message}
@@ -119,7 +120,11 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
             </Button>
           )}
           {!loading && <Button type="submit">Submit</Button>}
-          <LinkButton href="/alerting/silences" variant={'secondary'}>
+          <LinkButton
+            href={makeAMLink('/alerting/silence/', alertManagerSourceName)}
+            variant={'secondary'}
+            fill="outline"
+          >
             Cancel
           </LinkButton>
         </div>
@@ -131,6 +136,12 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
 const getStyles = (theme: GrafanaTheme) => ({
   field: css`
     margin: ${theme.spacing.sm} 0;
+  `,
+  textArea: css`
+    width: 600px;
+  `,
+  createdBy: css`
+    width: 200px;
   `,
   flexRow: css`
     display: flex;
