@@ -94,6 +94,150 @@ func transformRows(rows []Row, query *Query) data.Frames {
 	return frames
 }
 
+func subst(instr string) (retstr string, reterr error) {
+	// catch panics
+	defer func() {
+		if r := recover(); r != nil {
+			retstr = ""; reterr = fmt.Errorf("subst: %v", r) // %w?
+		}
+	}()
+
+	in := strings.NewReader(instr)
+
+	// helper: get next rune unless end-of-string; on end-of-string, return (0,io.EOF) if msg is empty, panic with msg otherwise
+	nextchorerr := func(msg string) (rune, error) {
+		if ch, _, err := in.ReadRune(); err == nil {
+			return ch, nil
+		} else if err == io.EOF {
+			if msg == "" {
+				return 0, io.EOF
+			} else {
+				panic("EOF in " + msg)
+			}
+		} else {
+			panic("Error in " + msg)
+		}
+	}
+	// get next rune; return (0,io.EOF) on end-of-string
+	nextcherr := func() (rune, error) {
+		return nextchorerr("")
+	}
+	// get next rune; panic with msg on end-of-string
+	nextch := func(msg string) rune {
+		if msg == "" {
+			panic("nextch without msg")
+		}
+		ch, _ := nextchorerr(msg)
+		return ch
+	}
+
+	var out strings.Builder
+	for {
+		var left, mid, right rune
+		if ch, err := nextcherr(); err != nil {
+			break
+		} else if ch == '$' {
+			left = nextch("after $")
+			switch left {
+			case '/':
+				mid = '/'; right = '/'
+			case '(':
+				mid = '|'; right = ')'
+			case '[':
+				mid = '|'; right = ']'
+			case '{':
+				mid = '|'; right = '}'
+			case '$':
+				out.WriteRune('$')
+				continue
+			default:
+				out.WriteRune(ch); out.WriteRune(left)
+				continue
+			}
+		} else {
+			out.WriteRune(ch)
+			continue
+		}
+		more := true // more substitions in same command
+		matched := false // had a match so far
+		for more {
+			var b strings.Builder
+			// parse search (RE) part
+LoopSrch:		for {
+				ch := nextch("RE")
+				switch ch {
+				case '\\':
+					b.WriteRune(nextch("escape sequence in RE"))
+				case mid:
+					break LoopSrch
+				case right:
+					panic("missing replace part")
+				default:
+					b.WriteRune(ch)
+				}
+			}
+			srch := b.String(); b.Reset()
+			re, err := regexp.Compile(srch)
+			if err != nil {
+				panic("invalid RE " + srch)
+			}
+			// parse replace part
+LoopRepl:		for {
+				ch := nextch("replace")
+				switch ch {
+				case '\\':
+					b.WriteRune(nextch("escape sequence in replace"))
+				case right:
+					break LoopRepl
+				default:
+					b.WriteRune(ch)
+				}
+			}
+			repl := b.String()
+
+			// check if more substitutions follow in order to speed up code below
+			if ch, err := nextcherr(); err != nil {
+				more = false
+			} else if ch != left {
+				in.UnreadRune()
+				more = false
+			}
+
+			// there seems to be no sane way to re.Replace*() and find out whether a replacement took place in case one needs backreferences
+			replace := false // 1. set matched to true; 2. replace out with tmp
+			var tmp string
+			if matched {
+				// already matched something, skip this
+			} else if !more {
+				// last replacement in command; no need to find out whether a replacement actually occured
+				tmp = re.ReplaceAllString(out.String(), repl)
+				replace = true
+			} else if strings.IndexRune(repl, '$') < 0 {
+				// no backreferences, use ReplaceAllStringFunc() func to find out whether replacement occured
+				tmp = re.ReplaceAllStringFunc(out.String(), func(string) string {
+					replace = true
+					return repl
+				})
+			} else {
+				// possible backreferences, use FindStringIndex() to find out whether replacement occured
+				tmp = out.String()
+				if re.FindStringIndex(tmp) != nil {
+					tmp = re.ReplaceAllString(tmp, repl)
+					replace = true
+				}
+			}
+			if replace {
+				matched = true
+				out.Reset()
+				out.WriteString(tmp)
+			}
+
+		}
+	}
+
+	return out.String(), nil
+}
+
 func formatFrameName(row Row, column string, query *Query) string {
 	if query.Alias == "" {
 		return buildFrameNameFromQuery(row, column)
@@ -135,7 +279,11 @@ func formatFrameName(row Row, column string, query *Query) string {
 		return in
 	})
 
-	return string(result)
+	if s, err := subst(string(result)); err == nil {
+		return s
+	} else {
+		return in
+	}
 }
 
 func buildFrameNameFromQuery(row Row, column string) string {

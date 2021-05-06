@@ -2,6 +2,136 @@ import { each, map, includes, flatten, keys } from 'lodash';
 import TableModel from 'app/core/table_model';
 import { FieldType, QueryResultMeta, TimeSeries, TableData } from '@grafana/data';
 
+function subst(instr:string): string {
+  var instr_idx = 0;
+  var instr_oldidx: number;
+
+  // get next character; on end-of-string, return null if no msg given, throw otherwise
+  function nextch(msg: string): string | null {
+    instr_oldidx = instr_idx;
+    // rather convoluted in order to handle Code Points not fitting in 16 bits
+    var cp = instr.codePointAt(instr_idx);
+    if (cp == undefined) {
+      if (msg == "")
+        return null;
+      else
+        throw "EOF in " + msg;
+    }
+    var ch = String.fromCodePoint(cp);
+    instr_idx += ch.length;
+    return ch;
+  }
+
+  function prevch() {
+    instr_idx = instr_oldidx;
+  }
+
+  var out = "";
+  for (;;) {
+    let left, mid, right: string;
+    let ch = nextch("");
+    if (ch == null) {
+      break;
+    } else if (ch == "$") {
+      left = nextch("after $");
+      switch (left) {
+      case "/":
+        mid = "/"; right = "/";
+        break;
+      case "(":
+        mid = "|"; right = ")";
+        break;
+      case "[":
+        mid = "|"; right = "]";
+        break;
+      case "{":
+        mid = "|"; right = "}";
+        break;
+      case "$":
+        out += "$";
+        continue;
+      default:
+        out += (ch + left);
+        continue;
+      }
+    } else {
+      out += ch;
+      continue;
+    }
+    let more = true; // more substitutions in same command
+    let matched = false; // had a match so far
+    while (more) {
+      // parse search (RE) part
+      let srch = "";
+      for (;;) {
+        let ch = nextch("RE");
+        if (ch == "\\") {
+          srch += nextch("escape sequence in RE");
+        } else if (ch == mid) {
+          break;
+        } else if (ch == right) {
+          throw "missing replace part";
+        } else {
+          srch += ch;
+        }
+      }
+      let re: RegExp;
+      try {
+        re = new RegExp(srch, "g");
+      } catch (err) {
+        throw "invalid RE " + srch + ": " + err;
+      }
+      // parse replace part
+      let repl = "";
+      let backref = false; // replace part possibly contains backreferences
+      for (;;) {
+        let ch = nextch("replace");
+        if (ch == "\\") {
+          repl += nextch("escape sequence in replace");
+        } else if (ch == right) {
+          break;
+        } else if (ch == "$") {
+          backref = true;
+          repl += "$";
+        } else {
+          repl += ch;
+        }
+      }
+
+      // check if more substitutions follow in order to speed up code below
+      let ch = nextch("");
+      if (ch == null) {
+        more = false;
+      } else if (ch != left) {
+        prevch();
+        more = false;
+      }
+
+      // there's no easy way to replace() with backreferences and log whether a replacement took place
+      if (matched) {
+        // already matched something, skip this
+      } else if (!more) {
+        // last replacement in command; no need to find out whether a replacement actually occured
+        out = out.replace(re, repl);
+      } else if (!backref) {
+        // no backreferences, use a replace function to log whether a replacement occured
+        out = out.replace(re, function() {
+          matched = true;
+          return repl;
+        });
+      } else {
+        // possible backreferences, use match() to find out whether replacements occured
+        if (out.match(re)) {
+          matched = true;
+          out = out.replace(re, repl);
+        }
+      }
+    }
+  }
+
+  return out;
+}
+
 export default class InfluxSeries {
   refId?: string;
   series: any;
@@ -62,7 +192,7 @@ export default class InfluxSeries {
     const regex = /\$(\$|\w+)|\[\[([\s\S]+?)\]\]/g;
     const segments = series.name.split('.');
 
-    return this.alias.replace(regex, (match: any, g1: any, g2: any) => {
+    var ret = this.alias.replace(regex, (match: any, g1: any, g2: any) => {
       const group = g1 || g2;
       const segIndex = parseInt(group, 10);
 
@@ -88,6 +218,13 @@ export default class InfluxSeries {
       }
       return series.tags[tag];
     });
+
+    try {
+      let ret1 = subst(ret);
+      return ret1;
+    } catch (err) {
+      return ret;
+    }
   }
 
   getAnnotations() {
