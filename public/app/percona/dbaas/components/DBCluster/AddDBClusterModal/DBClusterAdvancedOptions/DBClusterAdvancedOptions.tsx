@@ -185,15 +185,15 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
       <div className={styles.resourcesWrapper}>
         <div className={styles.resourcesInputCol}>
           <NumberInputField
-            name={AddDBClusterFields.memory}
-            label={Messages.dbcluster.addModal.fields.memory}
+            name={AddDBClusterFields.cpu}
+            label={Messages.dbcluster.addModal.fields.cpu}
             validators={parameterValidators}
             disabled={resources !== DBClusterResources.custom}
             inputProps={resourcesInputProps}
           />
           <NumberInputField
-            name={AddDBClusterFields.cpu}
-            label={Messages.dbcluster.addModal.fields.cpu}
+            name={AddDBClusterFields.memory}
+            label={Messages.dbcluster.addModal.fields.memory}
             validators={parameterValidators}
             disabled={resources !== DBClusterResources.custom}
             inputProps={resourcesInputProps}
@@ -209,15 +209,6 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
         <div className={styles.resourcesBarCol}>
           <Overlay isPending={loadingAllocatedResources || loadingExpectedResources}>
             <ResourcesBar
-              resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
-              icon={<Memory />}
-              total={allocatedResources?.total.memory}
-              allocated={allocatedResources?.allocated.memory}
-              expected={expectedResources?.expected.memory}
-              className={cx(resourcesBarStyles)}
-              dataQa="dbcluster-resources-bar-memory"
-            />
-            <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.cpu}
               icon={<CPU />}
               total={allocatedResources?.total.cpu}
@@ -225,6 +216,15 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
               dataQa="dbcluster-resources-bar-cpu"
+            />
+            <ResourcesBar
+              resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
+              icon={<Memory />}
+              total={allocatedResources?.total.memory}
+              allocated={allocatedResources?.allocated.memory}
+              expected={expectedResources?.expected.memory}
+              className={cx(resourcesBarStyles)}
+              dataQa="dbcluster-resources-bar-memory"
             />
             <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}

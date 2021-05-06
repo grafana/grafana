@@ -106,7 +106,7 @@ export const Messages = {
       title: 'Confirm action',
     },
     editModal: {
-      confirm: 'Save changes',
+      confirm: 'Save',
     },
     table: {
       nameColumn: 'Name',

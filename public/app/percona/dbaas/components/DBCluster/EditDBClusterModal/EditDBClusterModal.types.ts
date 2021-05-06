@@ -6,7 +6,7 @@ export interface EditDBClusterModalProps {
   isVisible: boolean;
   setVisible: (value: boolean) => void;
   onDBClusterChanged: () => void;
-  selectedCluster?: DBCluster;
+  selectedCluster: DBCluster;
 }
 
 export interface EditDBClusterRenderProps {

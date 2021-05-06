@@ -2,7 +2,14 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Databases } from 'app/percona/shared/core';
-import { DBCluster, DBClusterStatus, DBClusterStatusMap, ResourcesUnits, ResourcesWithUnits } from './DBCluster.types';
+import {
+  DBCluster,
+  DBClusterExpectedResources,
+  DBClusterStatus,
+  DBClusterStatusMap,
+  ResourcesUnits,
+  ResourcesWithUnits,
+} from './DBCluster.types';
 import { ADVANCED_SETTINGS_URL, SERVICE_MAP, THOUSAND } from './DBCluster.constants';
 import { DBClusterService } from './DBCluster.service';
 
@@ -43,4 +50,47 @@ export const formatResources = (bytes: number, decimals: number): ResourcesWithU
   const units = Object.values(ResourcesUnits)[i];
 
   return { value: parseFloat((bytes / Math.pow(THOUSAND, i)).toFixed(decimals)), units, original: bytes };
+};
+
+export const getResourcesDifference = (
+  { value: valueA, original: originalA, units: unitsA }: ResourcesWithUnits,
+  { value: valueB, original: originalB, units: unitsB }: ResourcesWithUnits
+): ResourcesWithUnits | null => {
+  if (unitsA !== unitsB) {
+    return null;
+  }
+
+  return {
+    original: originalA - originalB,
+    value: valueA - valueB,
+    units: unitsA,
+  };
+};
+
+export const getResourcesSum = (
+  { value: valueA, original: originalA, units: unitsA }: ResourcesWithUnits,
+  { value: valueB, original: originalB, units: unitsB }: ResourcesWithUnits
+): ResourcesWithUnits | null => {
+  if (unitsA !== unitsB) {
+    return null;
+  }
+
+  return {
+    original: originalA + originalB,
+    value: valueA + valueB,
+    units: unitsA,
+  };
+};
+
+export const getExpectedResourcesDifference = (
+  { expected: { cpu: cpuA, memory: memoryA, disk: diskA } }: DBClusterExpectedResources,
+  { expected: { cpu: cpuB, memory: memoryB, disk: diskB } }: DBClusterExpectedResources
+): DBClusterExpectedResources => {
+  return {
+    expected: {
+      cpu: getResourcesDifference(cpuA, cpuB) as ResourcesWithUnits,
+      memory: getResourcesDifference(memoryA, memoryB) as ResourcesWithUnits,
+      disk: getResourcesDifference(diskA, diskB) as ResourcesWithUnits,
+    },
+  };
 };

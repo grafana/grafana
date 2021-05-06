@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState, useMemo, useEffect } from 'react';
+import React, { FC, useCallback, useState, useMemo, useEffect, useRef } from 'react';
 import { cx } from 'emotion';
 import { HorizontalGroup, Icon, useStyles } from '@grafana/ui';
 import { LoaderButton, NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
@@ -28,16 +28,18 @@ import {
   RECHECK_INTERVAL,
   EXPECTED_DELAY,
 } from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
-import { newDBClusterService } from '../../DBCluster.utils';
+import { getExpectedResourcesDifference, newDBClusterService } from '../../DBCluster.utils';
 
 export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ selectedCluster, renderProps }) => {
   let allocatedTimer: NodeJS.Timeout;
   let expectedTimer: NodeJS.Timeout;
   const { values, form, valid, pristine, submitting } = renderProps;
   const styles = useStyles(getStyles);
+  const initialExpected = useRef<DBClusterExpectedResources>();
+  const unmounted = useRef<boolean>(false);
   const [prevResources, setPrevResources] = useState(DBClusterResources.small);
-  const [customMemory, setCustomMemory] = useState(DEFAULT_SIZES.small.memory);
-  const [customCPU, setCustomCPU] = useState(DEFAULT_SIZES.small.cpu);
+  const [customMemory, setCustomMemory] = useState(selectedCluster.memory);
+  const [customCPU, setCustomCPU] = useState(selectedCluster.cpu);
   const [allocatedResources, setAllocatedResources] = useState<DBClusterAllocatedResources>();
   const [loadingAllocatedResources, setLoadingAllocatedResources] = useState(false);
   const [expectedResources, setExpectedResources] = useState<DBClusterExpectedResources>();
@@ -82,7 +84,9 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
         setLoadingAllocatedResources(false);
       }
 
-      allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
+      if (!unmounted.current) {
+        allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
+      }
     }
   };
 
@@ -91,17 +95,24 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
       const dbClusterService = newDBClusterService(selectedCluster.databaseType);
 
       setLoadingExpectedResources(true);
-      setExpectedResources(
-        await dbClusterService.getExpectedResources({
-          clusterName: selectedCluster.clusterName,
-          kubernetesClusterName: selectedCluster.kubernetesClusterName,
-          databaseType: selectedCluster.databaseType,
-          clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
-          cpu,
-          memory,
-          disk,
-        })
-      );
+
+      const expected = await dbClusterService.getExpectedResources({
+        clusterName: selectedCluster.clusterName,
+        kubernetesClusterName: selectedCluster.kubernetesClusterName,
+        databaseType: selectedCluster.databaseType,
+        clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
+        cpu,
+        memory,
+        disk,
+      });
+
+      // store current cluster expected (consumed) resources
+      // to use in future expected resources calculations
+      if (!initialExpected.current) {
+        initialExpected.current = expected;
+      }
+
+      setExpectedResources(getExpectedResourcesDifference(expected, initialExpected.current));
     } catch (e) {
       logger.error(e);
     } finally {
@@ -127,12 +138,13 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   }, [resources]);
 
   useEffect(() => {
-    if (selectedCluster) {
-      getAllocatedResources();
-    }
+    getAllocatedResources();
 
-    return () => clearTimeout(allocatedTimer);
-  }, [selectedCluster]);
+    return () => {
+      clearTimeout(allocatedTimer);
+      unmounted.current = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (canGetExpectedResources(selectedCluster, values)) {
@@ -183,15 +195,15 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
       <div className={styles.resourcesWrapper}>
         <div className={styles.resourcesInputCol}>
           <NumberInputField
-            name={EditDBClusterFields.memory}
-            label={Messages.dbcluster.addModal.fields.memory}
+            name={EditDBClusterFields.cpu}
+            label={Messages.dbcluster.addModal.fields.cpu}
             validators={resourceValidators}
             disabled={resources !== DBClusterResources.custom}
             inputProps={resourcesInputProps}
           />
           <NumberInputField
-            name={EditDBClusterFields.cpu}
-            label={Messages.dbcluster.addModal.fields.cpu}
+            name={EditDBClusterFields.memory}
+            label={Messages.dbcluster.addModal.fields.memory}
             validators={resourceValidators}
             disabled={resources !== DBClusterResources.custom}
             inputProps={resourcesInputProps}
@@ -206,15 +218,6 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
         <div className={styles.resourcesBarCol}>
           <Overlay isPending={loadingAllocatedResources || loadingExpectedResources}>
             <ResourcesBar
-              resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
-              icon={<Memory />}
-              total={allocatedResources?.total.memory}
-              allocated={allocatedResources?.allocated.memory}
-              expected={expectedResources?.expected.memory}
-              className={cx(resourcesBarStyles)}
-              dataQa="dbcluster-resources-bar-memory"
-            />
-            <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.cpu}
               icon={<CPU />}
               total={allocatedResources?.total.cpu}
@@ -224,12 +227,21 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               dataQa="dbcluster-resources-bar-cpu"
             />
             <ResourcesBar
+              resourceLabel={Messages.dbcluster.addModal.resourcesBar.memory}
+              icon={<Memory />}
+              total={allocatedResources?.total.memory}
+              allocated={allocatedResources?.allocated.memory}
+              expected={expectedResources?.expected.memory}
+              className={cx(resourcesBarStyles)}
+              dataQa="dbcluster-resources-bar-memory"
+            />
+            <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}
               icon={<Disk />}
               total={allocatedResources?.total.disk}
               allocated={allocatedResources?.allocated.disk}
               expected={undefined}
-              className={cx(resourcesBarStyles)}
+              className={cx(resourcesBarStyles, styles.resourcesBarLast)}
               dataQa="dbcluster-resources-bar-disk"
             />
           </Overlay>
