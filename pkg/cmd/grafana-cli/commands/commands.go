@@ -134,6 +134,14 @@ var adminCommands = []*cli.Command{
 	},
 }
 
+var cueCommands = []*cli.Command{
+	{
+		Name:   "validate-schema",
+		Usage:  "validate *.cue files in the project",
+		Action: runPluginCommand(cmd.validateScuemataBasics),
+	},
+}
+
 var Commands = []*cli.Command{
 	{
 		Name:        "plugins",
@@ -144,5 +152,10 @@ var Commands = []*cli.Command{
 		Name:        "admin",
 		Usage:       "Grafana admin commands",
 		Subcommands: adminCommands,
+	},
+	{
+		Name:        "cue",
+		Usage:       "Cue validation commands",
+		Subcommands: cueCommands,
 	},
 }
