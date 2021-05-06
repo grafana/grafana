@@ -58,7 +58,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
       if (!isEqual(logsResult.queries, prevProps.logsResult?.queries)) {
         this.logRowsCache.reset();
       }
-      // Update state and add to logResults and absolutRange to chache
+      // Update state and add to logResults and absolutRange to cache
       this.setState({ logsToShow: this.props.logsResult, absoluteRangeToShow: this.props.absoluteRange });
       this.setCacheLogResults(logsResult, absoluteRange);
     }
