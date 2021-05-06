@@ -6,12 +6,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
 	"gonum.org/v1/gonum/graph/simple"
+)
+
+var (
+	logger = log.New("expr.log")
 )
 
 // baseNode includes commmon properties used across DPNodes.
@@ -241,7 +247,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
-				backend.Logger.Debug("expression datasource query (numberSet)", "query", refID)
+				logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)
 				if err != nil {
 					return mathexp.Results{}, err
@@ -257,7 +263,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		}
 
 		for _, frame := range qr.Frames {
-			backend.Logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			logger.Debug("expression datasource query (seriesSet)", "query", refID)
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err
