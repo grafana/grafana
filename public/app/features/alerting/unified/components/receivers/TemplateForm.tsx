@@ -153,6 +153,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           href={makeAMLink('alerting/notifications', alertManagerSourceName)}
           variant="secondary"
           type="button"
+          fill="outline"
         >
           Cancel
         </LinkButton>
