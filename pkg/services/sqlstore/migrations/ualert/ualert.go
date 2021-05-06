@@ -11,6 +11,8 @@ import (
 const GENERAL_FOLDER = "General Alerting"
 const DASHBOARD_FOLDER = "Migrated %s"
 
+var migTitle = "move dashboard alerts to unified alerting"
+
 type MigrationError struct {
 	AlertId int64
 	Err     error
@@ -26,7 +28,22 @@ func AddMigration(mg *migrator.Migrator) {
 	if os.Getenv("UALERT_MIG") == "iDidBackup" {
 		// TODO: unified alerting DB needs to be extacted into ../migrations.go
 		// so it runs and creates the tables before this migration runs.
-		mg.AddMigration("move dashboard alerts to unified alerting", &migration{})
+		logs, err := mg.GetMigrationLog()
+		if err != nil {
+			panic(fmt.Sprintf("could not get migration log: %v", err))
+		}
+
+		_, migrationRun := logs[migTitle]
+
+		ngEnabled := mg.Cfg.IsNgAlertEnabled()
+
+		switch {
+		case ngEnabled && !migrationRun:
+			// TODO Clear old migration data
+			mg.AddMigration(migTitle, &migration{})
+		case !ngEnabled && migrationRun:
+			mg.ClearMigrationEntry(migTitle)
+		}
 	}
 }
 
