@@ -2,7 +2,7 @@ import React, { FC, useEffect, useCallback } from 'react';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { useDispatch } from 'react-redux';
-import { Redirect, Route, RouteChildrenProps, Switch } from 'react-router-dom';
+import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -22,6 +22,9 @@ const Silences: FC = () => {
   const alertsRequest = alertManagerSourceName
     ? alertsRequests[alertManagerSourceName] || initialAsyncRequestState
     : undefined;
+
+  const location = useLocation();
+  const isRoot = location.pathname.endsWith('/alerting/silences');
 
   useEffect(() => {
     function fetchAll() {
@@ -48,7 +51,7 @@ const Silences: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="silences">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AlertManagerPicker disabled={!isRoot} current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {error && !loading && (
         <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}
