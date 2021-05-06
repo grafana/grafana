@@ -33,6 +33,7 @@ type AppPluginRoute struct {
 	URL          string                   `json:"url"`
 	URLParams    []AppPluginRouteURLParam `json:"urlParams"`
 	Headers      []AppPluginRouteHeader   `json:"headers"`
+	AuthType     string                   `json:"authType"`
 	TokenAuth    *JwtTokenAuth            `json:"tokenAuth"`
 	JwtTokenAuth *JwtTokenAuth            `json:"jwtTokenAuth"`
 	Body         json.RawMessage          `json:"body"`
