@@ -85,7 +85,14 @@ export function processNodes(
   nodes: DataFrame | undefined,
   edges: DataFrame | undefined,
   theme: GrafanaTheme2
-): { nodes: NodeDatum[]; edges: EdgeDatum[]; legend?: any } {
+): {
+  nodes: NodeDatum[];
+  edges: EdgeDatum[];
+  legend?: Array<{
+    color: string;
+    name: string;
+  }>;
+} {
   if (!nodes) {
     return { nodes: [], edges: [] };
   }

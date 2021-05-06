@@ -1,4 +1,4 @@
-import { createTheme } from '@grafana/data';
+import { ArrayVector, createTheme } from '@grafana/data';
 import { makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
 
 describe('processNodes', () => {
@@ -9,105 +9,187 @@ describe('processNodes', () => {
   });
 
   it('returns proper nodes and edges', async () => {
-    expect(
-      processNodes(
-        makeNodesDataFrame(3),
-        makeEdgesDataFrame([
-          [0, 1],
-          [0, 2],
-          [1, 2],
-        ]),
-        theme
-      )
-    ).toEqual({
-      nodes: [
-        {
-          arcSections: [
-            {
-              color: 'green',
-              value: 0.5,
+    const { nodes, edges, legend } = processNodes(
+      makeNodesDataFrame(3),
+      makeEdgesDataFrame([
+        [0, 1],
+        [0, 2],
+        [1, 2],
+      ]),
+      theme
+    );
+
+    expect(nodes).toEqual([
+      {
+        arcSections: [
+          {
+            config: {
+              color: {
+                fixedColor: 'green',
+              },
             },
-            {
-              color: 'red',
-              value: 0.5,
+            name: 'arc__success',
+            type: 'number',
+            values: new ArrayVector([0.5, 0.5, 0.5]),
+          },
+          {
+            config: {
+              color: {
+                fixedColor: 'red',
+              },
             },
-          ],
-          color: 'rgb(226, 192, 61)',
-          dataFrameRowIndex: 0,
-          id: '0',
-          incoming: 0,
-          mainStat: '0.10',
-          secondaryStat: '2.00',
-          subTitle: 'service',
-          title: 'service:0',
+            name: 'arc__errors',
+            type: 'number',
+            values: new ArrayVector([0.5, 0.5, 0.5]),
+          },
+        ],
+        color: 'rgb(226, 192, 61)',
+        dataFrameRowIndex: 0,
+        id: '0',
+        incoming: 0,
+        mainStat: {
+          config: {},
+          index: 3,
+          name: 'mainStat',
+          type: 'number',
+          values: new ArrayVector([0.1, 0.1, 0.1]),
         },
-        {
-          arcSections: [
-            {
-              color: 'green',
-              value: 0.5,
+        secondaryStat: {
+          config: {},
+          index: 4,
+          name: 'secondaryStat',
+          type: 'number',
+          values: new ArrayVector([2, 2, 2]),
+        },
+        subTitle: 'service',
+        title: 'service:0',
+      },
+      {
+        arcSections: [
+          {
+            config: {
+              color: {
+                fixedColor: 'green',
+              },
             },
-            {
-              color: 'red',
-              value: 0.5,
+            name: 'arc__success',
+            type: 'number',
+            values: new ArrayVector([0.5, 0.5, 0.5]),
+          },
+          {
+            config: {
+              color: {
+                fixedColor: 'red',
+              },
             },
-          ],
-          color: 'rgb(226, 192, 61)',
-          dataFrameRowIndex: 1,
-          id: '1',
-          incoming: 1,
-          mainStat: '0.10',
-          secondaryStat: '2.00',
-          subTitle: 'service',
-          title: 'service:1',
+            name: 'arc__errors',
+            type: 'number',
+            values: new ArrayVector([0.5, 0.5, 0.5]),
+          },
+        ],
+        color: 'rgb(226, 192, 61)',
+        dataFrameRowIndex: 1,
+        id: '1',
+        incoming: 1,
+        mainStat: {
+          config: {},
+          index: 3,
+          name: 'mainStat',
+          type: 'number',
+          values: new ArrayVector([0.1, 0.1, 0.1]),
         },
-        {
-          arcSections: [
-            {
-              color: 'green',
-              value: 0.5,
+        secondaryStat: {
+          config: {},
+          index: 4,
+          name: 'secondaryStat',
+          type: 'number',
+          values: new ArrayVector([2, 2, 2]),
+        },
+        subTitle: 'service',
+        title: 'service:1',
+      },
+      {
+        arcSections: [
+          {
+            config: {
+              color: {
+                fixedColor: 'green',
+              },
             },
-            {
-              color: 'red',
-              value: 0.5,
+            name: 'arc__success',
+            type: 'number',
+            values: new ArrayVector([0.5, 0.5, 0.5]),
+          },
+          {
+            config: {
+              color: {
+                fixedColor: 'red',
+              },
             },
-          ],
-          color: 'rgb(226, 192, 61)',
-          dataFrameRowIndex: 2,
-          id: '2',
-          incoming: 2,
-          mainStat: '0.10',
-          secondaryStat: '2.00',
-          subTitle: 'service',
-          title: 'service:2',
+            name: 'arc__errors',
+            type: 'number',
+            values: new ArrayVector([0.5, 0.5, 0.5]),
+          },
+        ],
+        color: 'rgb(226, 192, 61)',
+        dataFrameRowIndex: 2,
+        id: '2',
+        incoming: 2,
+        mainStat: {
+          config: {},
+          index: 3,
+          name: 'mainStat',
+          type: 'number',
+          values: new ArrayVector([0.1, 0.1, 0.1]),
         },
-      ],
-      edges: [
-        {
-          dataFrameRowIndex: 0,
-          id: '0--1',
-          mainStat: '',
-          secondaryStat: '',
-          source: '0',
-          target: '1',
+        secondaryStat: {
+          config: {},
+          index: 4,
+          name: 'secondaryStat',
+          type: 'number',
+          values: new ArrayVector([2, 2, 2]),
         },
-        {
-          dataFrameRowIndex: 1,
-          id: '0--2',
-          mainStat: '',
-          secondaryStat: '',
-          source: '0',
-          target: '2',
-        },
-        {
-          dataFrameRowIndex: 2,
-          id: '1--2',
-          mainStat: '',
-          secondaryStat: '',
-          source: '1',
-          target: '2',
-        },
-      ],
-    });
+        subTitle: 'service',
+        title: 'service:2',
+      },
+    ]);
+
+    expect(edges).toEqual([
+      {
+        dataFrameRowIndex: 0,
+        id: '0--1',
+        mainStat: '',
+        secondaryStat: '',
+        source: '0',
+        target: '1',
+      },
+      {
+        dataFrameRowIndex: 1,
+        id: '0--2',
+        mainStat: '',
+        secondaryStat: '',
+        source: '0',
+        target: '2',
+      },
+      {
+        dataFrameRowIndex: 2,
+        id: '1--2',
+        mainStat: '',
+        secondaryStat: '',
+        source: '1',
+        target: '2',
+      },
+    ]);
+
+    expect(legend).toEqual([
+      {
+        color: 'green',
+        name: 'arc__success',
+      },
+      {
+        color: 'red',
+        name: 'arc__errors',
+      },
+    ]);
   });
 });
