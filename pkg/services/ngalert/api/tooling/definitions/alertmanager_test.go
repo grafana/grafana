@@ -2,6 +2,8 @@ package definitions
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
@@ -372,7 +374,34 @@ alertmanager_config: |
 				return
 			}
 			require.Nil(t, err)
+			// Override the map[string]interface{} field for test simplicity.
+			// It's tested in Test_GettableUserConfigRoundtrip.
+			out.amSimple = nil
 			require.Equal(t, tc.output, out)
 		})
 	}
+}
+
+func Test_GettableUserConfigRoundtrip(t *testing.T) {
+	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
+	// the fields are not redacted.
+	yamlEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.yaml")
+	require.Nil(t, err)
+
+	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	require.Nil(t, err)
+
+	// test GettableUserConfig (yamlDecode -> jsonEncode)
+	var tmp GettableUserConfig
+	require.Nil(t, yaml.Unmarshal(yamlEncoded, &tmp))
+	out, err := json.MarshalIndent(&tmp, "", "  ")
+	require.Nil(t, err)
+	require.Equal(t, strings.TrimSpace(string(jsonEncoded)), string(out))
+
+	// test PostableUserConfig (jsonDecode -> yamlEncode)
+	var tmp2 PostableUserConfig
+	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp2))
+	out, err = yaml.Marshal(&tmp2)
+	require.Nil(t, err)
+	require.Equal(t, string(yamlEncoded), string(out))
 }

@@ -2,7 +2,12 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
-import { AlertmanagerAlert, AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerAlert,
+  AlertManagerCortexConfig,
+  Silence,
+  SilenceCreatePayload,
+} from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -17,7 +22,8 @@ import {
   fetchAlertManagerConfig,
   fetchAlerts,
   fetchSilences,
-  updateAlertmanagerConfig,
+  createOrUpdateSilence,
+  updateAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -41,6 +47,7 @@ import {
   ruleWithLocationToRuleIdentifier,
   stringifyRuleIdentifier,
 } from '../utils/rules';
+import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager-config';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -343,9 +350,10 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
           );
         }
-        await updateAlertmanagerConfig(alertManagerSourceName, newConfig);
+
+        await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
         if (successMessage) {
-          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+          appEvents?.emit(AppEvents.alertSuccess, [successMessage]);
         }
         if (redirectPath) {
           locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
@@ -353,6 +361,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       })()
     )
 );
+
 export const fetchAmAlertsAction = createAsyncThunk(
   'unifiedalerting/fetchAmAlerts',
   (alertManagerSourceName: string): Promise<AlertmanagerAlert[]> =>
@@ -366,3 +375,26 @@ export const expireSilenceAction = (alertManagerSourceName: string, silenceId: s
     dispatch(fetchAmAlertsAction(alertManagerSourceName));
   };
 };
+
+type UpdateSilenceActionOptions = {
+  alertManagerSourceName: string;
+  payload: SilenceCreatePayload;
+  exitOnSave: boolean;
+  successMessage?: string;
+};
+
+export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceActionOptions, {}>(
+  'unifiedalerting/updateSilence',
+  ({ alertManagerSourceName, payload, exitOnSave, successMessage }): Promise<void> =>
+    withSerializedError(
+      (async () => {
+        await createOrUpdateSilence(alertManagerSourceName, payload);
+        if (successMessage) {
+          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+        }
+        if (exitOnSave) {
+          locationService.push('/alerting/silences');
+        }
+      })()
+    )
+);
