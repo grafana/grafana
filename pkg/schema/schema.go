@@ -302,12 +302,7 @@ func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
 
 func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
 	val, _ := inputdef.Default()
-	err1 := input.Subsume(val)
-	err2 := val.Subsume(input)
-	if err1 == nil && err2 == nil {
-		return true
-	}
-	return false
+	return input.Subsume(val) == nil && val.Subsume(input) == nil
 }
 
 func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {

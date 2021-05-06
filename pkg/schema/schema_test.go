@@ -13,13 +13,13 @@ import (
 	"golang.org/x/tools/txtar"
 )
 
-var CasesDir = filepath.Join("load", "testdata", "artifacts", "dashboards", "trimdefault")
+var CasesDir = filepath.Join("load", "testdata", "trimdefault")
 
 type Case struct {
-	Name   string
-	CUE    string
-	Full   string
-	Trimed string
+	Name    string
+	CUE     string
+	Full    string
+	Trimmed string
 }
 
 func TestGenerate(t *testing.T) {
@@ -35,7 +35,7 @@ func TestGenerate(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			inputResource := Resource{Value: c.Trimed}
+			inputResource := Resource{Value: c.Trimmed}
 			out, err := ApplyDefaults(inputResource, scmInstance.Value())
 			if err != nil {
 				t.Fatal(err)
@@ -61,7 +61,7 @@ func TestGenerate(t *testing.T) {
 				t.Fatal(err)
 			}
 			b := []byte(out.Value.(string))
-			if s := cmp.Diff(string(b), c.Trimed); s != "" {
+			if s := cmp.Diff(string(b), c.Trimmed); s != "" {
 				t.Fatal(s)
 			}
 		})
@@ -98,10 +98,10 @@ func loadCases(dir string) ([]Case, error) {
 		}
 
 		cases = append(cases, Case{
-			Name:   fi.Name(),
-			CUE:    string(a.Files[0].Data),
-			Full:   fullBuffer.String(),
-			Trimed: trimBuffer.String(),
+			Name:    fi.Name(),
+			CUE:     string(a.Files[0].Data),
+			Full:    fullBuffer.String(),
+			Trimmed: trimBuffer.String(),
 		})
 	}
 	return cases, nil
