@@ -1,7 +1,7 @@
 import React from 'react';
-
+import { css } from '@emotion/css';
 import { AppRootProps, SelectableValue, dateTimeParse } from '@grafana/data';
-import { Field, Select, Spinner } from '@grafana/ui';
+import { Field, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
@@ -9,6 +9,7 @@ import { HorizontalGroup } from '../components/HorizontalGroup';
 import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
 import { MarketplaceAppSettings, Plugin } from '../types';
+import { Page } from 'components/Page';
 
 export const Browse = ({ query, meta }: AppRootProps) => {
   const { q, filterBy, sortBy } = query;
@@ -41,13 +42,17 @@ export const Browse = ({ query, meta }: AppRootProps) => {
   filteredPlugins.sort(sorters[sortBy || 'name']);
 
   return (
-    <>
+    <Page>
       <SearchField value={q} onSearch={onSearch} />
-
       <HorizontalGroup>
         <div>
           {plugins.status === 'LOADING' ? (
-            <Spinner />
+            <LoadingPlaceholder
+              className={css`
+                margin-bottom: 0;
+              `}
+              text="Loading results"
+            />
           ) : (
             `${filteredPlugins.length} ${filteredPlugins.length > 1 ? 'results' : 'result'}`
           )}
@@ -82,7 +87,7 @@ export const Browse = ({ query, meta }: AppRootProps) => {
       </HorizontalGroup>
 
       {plugins.status === 'DONE' && <PluginList plugins={filteredPlugins} />}
-    </>
+    </Page>
   );
 };
 

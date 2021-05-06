@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { cx, css } from '@emotion/css';
+import { css } from '@emotion/css';
 
-import { AppRootProps, GrafanaTheme } from '@grafana/data';
-import { useTheme, TabsBar, TabContent, Tab, Icon, stylesFactory } from '@grafana/ui';
+import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, TabsBar, TabContent, Tab, Icon, LoadingPlaceholder } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
 import { PLUGIN_ROOT, GRAFANA_API_ROOT } from '../constants';
 import { MarketplaceAppSettings, PluginDetails as PluginDeets } from '../types';
 import API from '../api';
+import { Page } from 'components/Page';
 
 export const PluginDetails = ({ query, meta }: AppRootProps) => {
   const { slug } = query;
@@ -22,13 +23,13 @@ export const PluginDetails = ({ query, meta }: AppRootProps) => {
     { label: 'Version history', active: false },
   ]);
 
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const onRefresh = useCallback(() => {
     (async () => {
       const api = new API(pluginDir);
-      setState(await api.getPlugin(slug));
+      const plugin = await api.getPlugin(slug);
+      setState(plugin);
       setLoading(false);
     })();
   }, [slug, pluginDir]);
@@ -44,151 +45,58 @@ export const PluginDetails = ({ query, meta }: AppRootProps) => {
   const links = (state?.local?.info?.links || state?.remote?.json?.info?.links) ?? [];
   const downloads = state?.remote?.downloads;
 
-  const skeletonStyles = {
-    root: css`
-      width: 100%;
-      display: flex;
-    `,
-
-    logo: css`
-      background-image: radial-gradient(circle 64px at 64px 64px, ${theme.colors.bg3} 99%, transparent 0);
-      width: 128px;
-      height: 128px;
-      margin-right: ${theme.spacing.lg};
-    `,
-    title: css`
-      height: 30px;
-      width: 256px;
-      background-color: ${theme.colors.bg3};
-      border-radius: ${theme.border.radius.md};
-      margin-bottom: ${theme.spacing.md};
-    `,
-    org: css`
-      height: 24px;
-      width: 64px;
-      background-color: ${theme.colors.bg3};
-      border-radius: ${theme.border.radius.md};
-    `,
-
-    link: css`
-      height: 24px;
-      width: 72px;
-      background-color: ${theme.colors.bg3};
-      border-radius: ${theme.border.radius.md};
-    `,
-    linkGroup: css`
-      display: flex;
-      margin-bottom: 24px;
-      & > * {
-        margin-right: ${theme.spacing.sm};
-      }
-      & > *:last-child {
-        margin-right: 0;
-      }
-    `,
-    description: css`
-      height: 18px;
-      width: 512px;
-      background-color: ${theme.colors.bg3};
-      border-radius: ${theme.border.radius.md};
-      margin-bottom: 8px;
-    `,
-    content: css``,
-  };
+  if (loading) {
+    return (
+      <Page>
+        <div className="page-loader-wrapper">
+          <LoadingPlaceholder text="Loading..." />
+        </div>
+      </Page>
+    );
+  }
 
   return (
-    <>
-      <div
-        className={css`
-          display: flex;
-          margin-bottom: 64px;
-          min-height: 160px;
-        `}
-      >
-        {loading ? (
-          <div className={skeletonStyles.root}>
-            <div className={skeletonStyles.logo}></div>
-            <div className={skeletonStyles.content}>
-              <div className={skeletonStyles.title}></div>
-              <div className={skeletonStyles.linkGroup}>
-                <div className={skeletonStyles.org}></div>
-                <div className={skeletonStyles.link}></div>
-              </div>
-              <div className={skeletonStyles.description}></div>
-            </div>
+    <Page>
+      <div className={styles.headerContainer}>
+        <img
+          src={`${GRAFANA_API_ROOT}/plugins/${slug}/versions/${state?.remote?.version}/logos/small`}
+          className={css`
+            object-fit: cover;
+            width: 100%;
+            height: 68px;
+            max-width: 68px;
+          `}
+        />
+        <div className={styles.headerWrapper}>
+          <h1>{state?.remote?.name}</h1>
+          <div className={styles.headerLinks}>
+            <a className={styles.headerOrgName} href={`${PLUGIN_ROOT}?tab=org&orgSlug=${state?.remote?.orgSlug}`}>
+              {state?.remote?.orgName}
+            </a>
+            {links.map((link: any) => (
+              <a key={link.name} href={link.url}>
+                {link.name}
+              </a>
+            ))}
+            {downloads && (
+              <span>
+                <Icon name="cloud-download" />
+                {` ${new Intl.NumberFormat().format(downloads)}`}{' '}
+              </span>
+            )}
+            {version && <span>{version}</span>}
           </div>
-        ) : (
-          <>
-            <img
-              src={`${GRAFANA_API_ROOT}/plugins/${slug}/versions/${state?.remote?.version}/logos/small`}
-              className={css`
-                object-fit: cover;
-                width: 100%;
-                height: 128px;
-                max-width: 128px;
-              `}
+          <p>{description}</p>
+          {state?.remote && (
+            <InstallControls
+              localPlugin={state?.local}
+              remotePlugin={state?.remote}
+              slug={slug}
+              pluginDir={pluginDir}
+              onRefresh={onRefresh}
             />
-            <div
-              className={css`
-                margin-left: ${theme.spacing.lg};
-              `}
-            >
-              <h1>{state?.remote?.name}</h1>
-              <div
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  margin-top: ${theme.spacing.sm};
-                  margin-bottom: ${theme.spacing.lg};
-                  & > * {
-                    &::after {
-                      content: '|';
-                      padding: 0 ${theme.spacing.md};
-                    }
-                  }
-                  & > *:last-child {
-                    &::after {
-                      content: '';
-                      padding-right: 0;
-                    }
-                  }
-                  font-size: ${theme.typography.size.lg};
-                `}
-              >
-                <a
-                  className={css`
-                    font-size: ${theme.typography.size.lg};
-                  `}
-                  href={`${PLUGIN_ROOT}?tab=org&orgSlug=${state?.remote?.orgSlug}`}
-                >
-                  {state?.remote?.orgName}
-                </a>
-                {links.map((link: any) => (
-                  <a key={link.name} href={link.url}>
-                    {link.name}
-                  </a>
-                ))}
-                {downloads && (
-                  <span>
-                    <Icon name="cloud-download" />
-                    {` ${new Intl.NumberFormat().format(downloads)}`}{' '}
-                  </span>
-                )}
-                {version && <span>{version}</span>}
-              </div>
-              <p>{description}</p>
-              {state?.remote && (
-                <InstallControls
-                  localPlugin={state?.local}
-                  remotePlugin={state?.remote}
-                  slug={slug}
-                  pluginDir={pluginDir}
-                  onRefresh={onRefresh}
-                />
-              )}
-            </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
       <TabsBar>
         {tabs.map((tab, key) => (
@@ -203,52 +111,56 @@ export const PluginDetails = ({ query, meta }: AppRootProps) => {
         ))}
       </TabsBar>
       <TabContent>
-        {tabs.find((_) => _.label === 'Overview')?.active &&
-          (loading ? (
-            <div className={skeletonStyles.root}>
-              <div
-                className={cx(
-                  skeletonStyles.content,
-                  css`
-                    margin-top: 24px;
-                  `
-                )}
-              >
-                <div className={skeletonStyles.title}></div>
-                <div className={skeletonStyles.description}></div>
-                <div className={skeletonStyles.description}></div>
-              </div>
-            </div>
-          ) : (
-            <div className={styles.readme} dangerouslySetInnerHTML={{ __html: readme ?? '' }}></div>
-          ))}
+        {tabs.find((_) => _.label === 'Overview')?.active && (
+          <div className={styles.readme} dangerouslySetInnerHTML={{ __html: readme ?? '' }} />
+        )}
         {tabs.find((_) => _.label === 'Version history')?.active && (
           <VersionList versions={state?.remoteVersions ?? []} />
         )}
       </TabContent>
-    </>
+    </Page>
   );
 };
 
-export const getStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    message: css`
-      color: ${theme.colors.textSemiWeak};
+    headerContainer: css`
+      display: flex;
+      margin-bottom: 24px;
+      margin-top: 24px;
+      min-height: 120px;
     `,
-    horizontalGroup: css`
+    headerWrapper: css`
+      margin-left: ${theme.spacing(3)};
+    `,
+    headerLinks: css`
       display: flex;
       align-items: center;
+      margin-top: ${theme.spacing()};
+      margin-bottom: ${theme.spacing(3)};
 
       & > * {
-        margin-right: ${theme.spacing.sm};
+        &::after {
+          content: '|';
+          padding: 0 ${theme.spacing()};
+        }
       }
-
       & > *:last-child {
-        margin-right: 0;
+        &::after {
+          content: '';
+          padding-right: 0;
+        }
       }
+      font-size: ${theme.typography.h4.fontSize};
+    `,
+    headerOrgName: css`
+      font-size: ${theme.typography.h4.fontSize};
+    `,
+    message: css`
+      color: ${theme.colors.text.secondary};
     `,
     readme: css`
-      margin: ${theme.spacing.lg} 0;
+      padding: ${theme.spacing(3, 4)};
 
       & img {
         max-width: 100%;
@@ -257,16 +169,20 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       h1,
       h2,
       h3 {
-        margin-top: ${theme.spacing.lg};
-        margin-bottom: ${theme.spacing.md};
+        margin-top: ${theme.spacing(3)};
+        margin-bottom: ${theme.spacing(2)};
+      }
+
+      *:first-child {
+        margin-top: 0;
       }
 
       li {
-        margin-left: ${theme.spacing.md};
+        margin-left: ${theme.spacing(2)};
         & > p {
-          margin: ${theme.spacing.sm} 0;
+          margin: ${theme.spacing()} 0;
         }
       }
     `,
   };
-});
+};

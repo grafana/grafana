@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { gt, satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
-import { Button, Icon, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, Select, useStyles2 } from '@grafana/ui';
+import { AppEvents, GrafanaTheme2, OrgRole } from '@grafana/data';
 
 import { Metadata, Plugin } from '../types';
 import { hasRole } from '../helpers';
@@ -12,7 +13,6 @@ import API from '../api';
 // This isn't exported in the sdk yet
 // @ts-ignore
 import appEvents from 'grafana/app/core/app_events';
-import { AppEvents, GrafanaTheme, OrgRole } from '@grafana/data';
 
 interface Props {
   localPlugin?: Metadata;
@@ -28,8 +28,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
   const [arch, setArch] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const onInstall = (slug: string, version: string, pkg: string) => {
     setLoading(true);
@@ -64,7 +63,11 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
   const isUpdateAvailable =
     remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!);
   const grafanaDependency = remotePlugin?.json?.dependencies?.grafanaDependency;
-  const unsupportedGrafanaVersion = grafanaDependency ? !satisfies(config.buildInfo.version, grafanaDependency) : false;
+  const unsupportedGrafanaVersion = grafanaDependency
+    ? !satisfies(config.buildInfo.version, grafanaDependency, {
+        includePrerelease: process.env.NODE_ENV === 'development',
+      })
+    : false;
 
   const isDevelopmentBuild = !!localPlugin?.dev;
   const isEnterprise = remotePlugin?.status === 'enterprise';
@@ -111,7 +114,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
 
   if (isInstalled) {
     return (
-      <div className={styles.horizontalGroup}>
+      <HorizontalGroup height="auto">
         {isUpdateAvailable && (
           <Button disabled={loading || !hasPermission} onClick={onUpdate}>
             {loading ? 'Updating' : 'Update'}
@@ -121,7 +124,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
           {loading ? 'Uninstalling' : 'Uninstall'}
         </Button>
         {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
-      </div>
+      </HorizontalGroup>
     );
   }
 
@@ -136,7 +139,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
 
   if (hasPackages) {
     return (
-      <div className={styles.horizontalGroup}>
+      <HorizontalGroup height="auto">
         <Select
           disabled={loading || !hasPermission}
           width={25}
@@ -152,39 +155,27 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
           </Button>
         )}
         {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
-      </div>
+      </HorizontalGroup>
     );
   }
 
   return (
-    <div className={styles.horizontalGroup}>
+    <HorizontalGroup height="auto">
       <Button disabled={loading || !hasPermission} onClick={() => onInstall(slug, remotePlugin.version, 'any')}>
         {loading ? 'Installing' : 'Install'}
       </Button>
       {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
-    </div>
+    </HorizontalGroup>
   );
 };
 
-export const getStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     message: css`
-      color: ${theme.colors.textSemiWeak};
-    `,
-    horizontalGroup: css`
-      display: flex;
-      align-items: center;
-
-      & > * {
-        margin-right: ${theme.spacing.sm};
-      }
-
-      & > *:last-child {
-        margin-right: 0;
-      }
+      color: ${theme.colors.text.secondary};
     `,
     readme: css`
-      margin: ${theme.spacing.lg} 0;
+      margin: ${theme.spacing(3)} 0;
 
       & img {
         max-width: 100%;
@@ -193,16 +184,16 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       h1,
       h2,
       h3 {
-        margin-top: ${theme.spacing.lg};
-        margin-bottom: ${theme.spacing.md};
+        margin-top: ${theme.spacing(3)};
+        margin-bottom: ${theme.spacing(2)};
       }
 
       li {
-        margin-left: ${theme.spacing.md};
+        margin-left: ${theme.spacing(2)};
         & > p {
-          margin: ${theme.spacing.sm} 0;
+          margin: ${theme.spacing()} 0;
         }
       }
     `,
   };
-});
+};

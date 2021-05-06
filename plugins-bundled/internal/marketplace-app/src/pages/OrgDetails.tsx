@@ -9,6 +9,7 @@ import { useOrg } from '../hooks/useOrg';
 import { MarketplaceAppSettings } from '../types';
 
 import { stylesFactory, useTheme } from '@grafana/ui';
+import { Page } from 'components/Page';
 
 export const OrgDetails = ({ query, meta }: AppRootProps) => {
   const { orgSlug } = query;
@@ -22,7 +23,7 @@ export const OrgDetails = ({ query, meta }: AppRootProps) => {
   const plugins = pluginsData.items.filter((plugin) => plugin.orgSlug === orgSlug);
 
   return (
-    <>
+    <Page>
       <div
         className={css`
           display: flex;
@@ -42,7 +43,7 @@ export const OrgDetails = ({ query, meta }: AppRootProps) => {
         <h1 className={styles.header}>{orgData.org?.name}</h1>
       </div>
       <PluginList plugins={plugins} />
-    </>
+    </Page>
   );
 };
 
