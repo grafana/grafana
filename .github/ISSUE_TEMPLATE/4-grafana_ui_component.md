@@ -25,9 +25,9 @@ ___
 **Implementation** (Checklist meant for the person implementing the component)
 
 - [ ] Component has a story in Storybook.
-- [ ] Props and naming follows [our style guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/frontend.md).
+- [ ] Props and naming follows [our style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/frontend.md).
 - [ ] It is extendable (rest props are spread, styles with className work, and so on).
-- [ ] Uses [theme for spacing, colors, and so on](https://github.com/grafana/grafana/blob/master/contribute/style-guides/themes.md).
+- [ ] Uses [theme for spacing, colors, and so on](https://github.com/grafana/grafana/blob/main/contribute/style-guides/themes.md).
 - [ ] Works with both light and dark theme.
 
 **Documentation**

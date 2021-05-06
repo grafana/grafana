@@ -40,7 +40,7 @@ import (
 // The following variables cannot be constants, since they can be overridden through the -X link flag
 var version = "5.0.0"
 var commit = "NA"
-var buildBranch = "master"
+var buildBranch = "main"
 var buildstamp string
 
 type exitWithCode struct {

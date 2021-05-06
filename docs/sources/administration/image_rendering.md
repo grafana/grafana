@@ -58,7 +58,7 @@ version: '2'
 
 services:
   grafana:
-    image: grafana/grafana:master
+    image: grafana/grafana:main
     ports:
      - "3000:3000"
     environment:

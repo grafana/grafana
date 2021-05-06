@@ -124,7 +124,7 @@ To generate a signature, you will need to sign up for a free account on https://
 
 ### Which version of grafana-toolkit should I use?
 
-See [Grafana packages versioning guide](https://github.com/grafana/grafana/blob/master/packages/README.md#versioning).
+See [Grafana packages versioning guide](https://github.com/grafana/grafana/blob/main/packages/README.md#versioning).
 
 ### What tools does grafana-toolkit use?
 
@@ -240,7 +240,7 @@ const MyComponent = () => {
 };
 ```
 
-To learn more about using Grafana theme please refer to [Theme usage guide](https://github.com/grafana/grafana/blob/master/style_guides/themes.md#react)
+To learn more about using Grafana theme please refer to [Theme usage guide](https://github.com/grafana/grafana/blob/main/style_guides/themes.md#react)
 
 > We do not support Emotion's `css` prop. Use className instead!
 
@@ -261,7 +261,7 @@ Yes! However, it's important that your `tsconfig.json` file contains the followi
 
 ### Can I adjust ESLint configuration to suit my needs?
 
-grafana-toolkit comes with [default config for ESLint](https://github.com/grafana/grafana/blob/master/packages/grafana-toolkit/src/config/eslint.plugin.json). For now, there is no way to customise ESLint config.
+grafana-toolkit comes with [default config for ESLint](https://github.com/grafana/grafana/blob/main/packages/grafana-toolkit/src/config/eslint.plugin.json). For now, there is no way to customise ESLint config.
 
 ### How is Prettier integrated into grafana-toolkit workflow?
 

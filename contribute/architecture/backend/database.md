@@ -79,7 +79,7 @@ To see all the types of migrations you can add, refer to [migrations.go](/pkg/se
 
 Before you add a migration, make sure that you:
 
-- Never change a migration that has been committed and pushed to master.
+- Never change a migration that has been committed and pushed to main.
 - Always add new migrations, to change or undo previous migrations.
 
 Add a migration using one of the following methods:
