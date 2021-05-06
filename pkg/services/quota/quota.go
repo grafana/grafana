@@ -79,8 +79,8 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				OrgId:            c.OrgId,
 				Target:           scope.Target,
 				TargetConditions: scope.TargetConditions,
-				IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled()
 				Default:          scope.DefaultLimit,
+				IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled(),
 			}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
