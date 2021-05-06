@@ -49,16 +49,16 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.5
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.92.0
+	github.com/grafana/grafana-plugin-sdk-go v0.93.0
 	github.com/grafana/loki v1.6.2-0.20210429132126-d88f3996eaa2
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
 	github.com/hashicorp/go-plugin v1.4.0
 	github.com/hashicorp/go-version v1.3.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/influxdata/influxdb-client-go/v2 v2.2.3
 	github.com/jmespath/go-jmespath v0.4.0
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.11
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/lib/pq v1.10.0
 	github.com/linkedin/goavro/v2 v2.10.0
