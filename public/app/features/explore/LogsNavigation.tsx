@@ -21,6 +21,7 @@ type Props = {
   visibleRange?: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange, runFromNavigation?: boolean) => void;
+  scrollToTopLogs: () => void;
 };
 
 type LogsPage = {
@@ -36,6 +37,7 @@ function LogsNavigation({
   onChangeTime,
   visibleRange = absoluteRange,
   queries = [],
+  scrollToTopLogs,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -162,6 +164,14 @@ function LogsNavigation({
           </div>
         </Button>
       )}
+      <Button
+        data-testid="scrollToTop"
+        className={styles.scrollToTopButton}
+        variant="secondary"
+        onClick={scrollToTopLogs}
+      >
+        <Icon name="arrow-up" size="lg" />
+      </Button>
     </div>
   );
 }
@@ -196,6 +206,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       width: 100%;
       height: 100%;
       white-space: normal;
+    `,
+    scrollToTopButton: css`
+      width: 40px;
+      height: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin-top: ${theme.spacing.sm};
+      align-items: center;
     `,
     pagesWrapper: css`
       height: 100%;

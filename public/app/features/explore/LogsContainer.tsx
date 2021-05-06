@@ -33,9 +33,13 @@ type LogsContainerState = {
   absoluteRangeToShow: AbsoluteTimeRange;
 };
 
+// We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
 const styleOverridesForStickyNavigation = css`
-  div {
+  & > div {
     overflow: visible;
+    & > div {
+      overflow: visible;
+    }
   }
 `;
 export class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {

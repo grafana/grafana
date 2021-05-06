@@ -14,6 +14,7 @@ const setup = (propOverrides?: object) => {
     logsSortOrder: undefined,
     visibleRange: { from: 1619081941000, to: 1619081945930 },
     onChangeTime: jest.fn(),
+    scrollToTopLogs: jest.fn(),
     ...propOverrides,
   };
 
