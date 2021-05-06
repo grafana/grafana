@@ -248,6 +248,7 @@ func (g *GrafanaLive) Init() error {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
+		newCtx = livecontext.SetContextStreamID(newCtx, ctx.Params(":streamId"))
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
@@ -258,7 +259,7 @@ func (g *GrafanaLive) Init() error {
 	}, middleware.ReqSignedIn)
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
-		group.Get("/push", g.pushWebsocketHandler)
+		group.Get("/push/:streamId", g.pushWebsocketHandler)
 	}, middleware.ReqOrgAdmin)
 
 	return nil
