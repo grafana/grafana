@@ -144,7 +144,6 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 }
 
 func SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
-
 	query.Result = models.SearchOrgUsersQueryResult{
 		OrgUsers: make([]*models.OrgUserDTO, 0),
 	}
