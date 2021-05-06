@@ -1,17 +1,16 @@
 import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { RelativeTimeRange, GrafanaThemeV2, TimeOption, rangeUtil } from '@grafana/data';
-import { Field } from '../../Forms/Field';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { useStyles2 } from '../../../themes';
 import { ButtonGroup, ToolbarButton } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
-import { Input } from '../../Input/Input';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../rangeOptions';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from '../TimeRangePicker/mapper';
+import { RelativeTimeRangeInput } from './RelativeTimeRangeInput';
 
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
@@ -64,12 +63,16 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
                 <div className={styles.title}>
                   <TimePickerTitle>Specify time range</TimePickerTitle>
                 </div>
-                <Field label="From">
-                  <Input placeholder="now-6h" value={timeOption.from} onChange={() => {}} />
-                </Field>
-                <Field label="To">
-                  <Input placeholder="now" value={timeOption.to} onChange={() => {}} />
-                </Field>
+                <RelativeTimeRangeInput
+                  label="From"
+                  value={timeOption.from}
+                  onChange={(value) => onChangeTimeOption({ ...timeOption, from: value })}
+                />
+                <RelativeTimeRangeInput
+                  label="To"
+                  value={timeOption.to}
+                  onChange={(value) => onChangeTimeOption({ ...timeOption, to: value })}
+                />
               </div>
             </div>
           </div>
@@ -80,7 +83,6 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
 }
 
 const getStyles = (theme: GrafanaThemeV2) => {
-  const side = css``;
   return {
     container: css`
       position: relative;
