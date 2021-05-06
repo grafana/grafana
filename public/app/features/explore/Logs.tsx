@@ -414,6 +414,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     logsSection: css`
       display: flex;
       flex-direction: row;
+      justify-content: space-between;
     `,
     logRows: css`
       overflow-x: scroll;
