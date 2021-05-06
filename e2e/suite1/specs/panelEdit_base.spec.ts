@@ -1,6 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
-const PANEL_UNDER_TEST = 'Random walk series';
+const PANEL_UNDER_TEST = 'Lines 500 data points';
 
 e2e.scenario({
   describeName: 'Panel edit tests',
@@ -9,7 +9,7 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
+    e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
@@ -64,12 +64,10 @@ e2e.scenario({
     e2e.components.PanelEditor.toggleVizOptions().should('be.visible').click();
     e2e.components.PanelEditor.OptionsPane.content().should('be.visible');
 
-    // Check that Graph is chosen
+    // Check that Time series is chosen
     e2e.components.PanelEditor.toggleVizPicker().click();
-    e2e.components.PluginVisualization.item('Graph').should('be.visible');
-    e2e.components.PluginVisualization.current().within((div: JQuery<HTMLDivElement>) => {
-      expect(div.text()).equals('Graph');
-    });
+    e2e.components.PluginVisualization.item('Time series').should('be.visible');
+    e2e.components.PluginVisualization.current().should((e) => expect(e).to.contain('Time series'));
 
     // Change to Text panel
     e2e.components.PluginVisualization.item('Text').scrollIntoView().should('be.visible').click();
