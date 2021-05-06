@@ -43,7 +43,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
     <ButtonGroup className={styles.container}>
       <Tooltip content="Choose time range" placement="bottom">
         <ToolbarButton aria-label="TimePicker Open Button" onClick={onOpen} icon="clock-nine" isOpen={isOpen}>
-          <span className={styles.container}>
+          <span data-testid="picker-button-label" className={styles.container}>
             {rangeUtil.describeTimeRange({ from: timeOption.from, to: timeOption.to })}
           </span>
         </ToolbarButton>
@@ -56,7 +56,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
                 <TimeRangeList
                   title="Example time ranges"
                   options={quickOptions}
-                  onChange={() => {}}
+                  onChange={onChangeTimeOption}
                   value={timeOption}
                 />
               </CustomScrollbar>
