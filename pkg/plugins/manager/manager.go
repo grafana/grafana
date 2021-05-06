@@ -354,7 +354,17 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	pm.log.Debug("Initial plugin loading done")
 
+	pluginsByID := make(map[string]struct{})
 	for scannedPluginPath, scannedPlugin := range scanner.plugins {
+		// Check if scanning found duplicate plugins
+		if _, dupe := pluginsByID[scannedPlugin.Id]; dupe {
+			pm.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.Id)
+			scanner.errors = append(scanner.errors,
+				plugins.DuplicatePluginError{PluginID: scannedPlugin.Id, ExistingPluginDir: scannedPlugin.PluginDir})
+		}
+		pluginsByID[scannedPlugin.Id] = struct{}{}
+
+		// Check if scanning found plugins that were already installed
 		if existing := pm.GetPlugin(scannedPlugin.Id); existing != nil {
 			if scannedPlugin.Info.Version == existing.Info.Version {
 				pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
@@ -462,12 +472,6 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 	plug, err := loader.Load(jsonParser, pluginBase, scanner.backendPluginManager)
 	if err != nil {
 		return err
-	}
-
-	if p := pm.GetPlugin(pluginBase.Id); p != nil {
-		pm.log.Warn("Plugin is duplicate", "id", p.Id)
-		scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{PluginID: p.Id, ExistingPluginDir: p.PluginDir})
-		return nil
 	}
 
 	pm.pluginsMu.Lock()
