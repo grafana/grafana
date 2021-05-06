@@ -175,6 +175,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       display: flex;
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
+      position: sticky;
+      top: 0;
+      right: 0;
     `,
     navButton: css`
       width: 58px;

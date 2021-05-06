@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
+import { css } from 'emotion';
 import { connect, ConnectedProps } from 'react-redux';
 import { isEqual } from 'lodash';
 import LRU from 'lru-cache';
@@ -31,6 +32,12 @@ type LogsContainerState = {
   logsToShow: LogsModel | null;
   absoluteRangeToShow: AbsoluteTimeRange;
 };
+
+const styleOverridesForStickyNavigation = css`
+  div {
+    overflow: visible;
+  }
+`;
 export class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
   private logRowsCache = new LRU<string, { cacheLogsResult: LogsModel; cacheAbsoluteRange: AbsoluteTimeRange }>(5);
 
@@ -169,7 +176,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
           </Collapse>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
-          <Collapse label="Logs" loading={loading} isOpen>
+          <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
             <Logs
               logRows={logRows}
               logsMeta={logsMeta}
