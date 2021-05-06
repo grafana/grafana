@@ -317,7 +317,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Schema
 		apiRoute.Group("/schema", func(schemaRoute routing.RouteRegister) {
-			schemaRoute.Get("/:filename", routing.Wrap(hs.GetDashboardOrPanelJsonSchema))
+			schemaRoute.Get("/dashboard.json", routing.Wrap(hs.GetDashboardJsonSchema))
+			schemaRoute.Get("/panel/:pluginid.json", routing.Wrap(hs.GetPanelJsonSchema))
 		})
 
 		// Dashboard

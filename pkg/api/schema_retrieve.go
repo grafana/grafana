@@ -6,13 +6,30 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (hs *HTTPServer) GetDashboardOrPanelJsonSchema(c *models.ReqContext) response.Response {
+const defaultPanelSchema = "panel.json"
+
+func (hs *HTTPServer) GetDashboardJsonSchema(c *models.ReqContext) response.Response {
 	var dsSchema *simplejson.Json
 	var err error
-	fn := c.Params(":filename")
-	dsSchema, err = hs.LoadSchemaService.GetJsonSchema(fn)
+
+	dsSchema, err = hs.LoadSchemaService.GetJsonSchema("dashboard.json")
 	if err != nil {
 		return response.Error(500, "Error while get target json schema", err)
 	}
 	return response.JSON(200, dsSchema)
+}
+
+func (hs *HTTPServer) GetPanelJsonSchema(c *models.ReqContext) response.Response {
+	var dsSchema *simplejson.Json
+	var err error
+	pluginid := c.Params(":pluginid")
+	dsSchema, err = hs.LoadSchemaService.GetJsonSchema(pluginid + ".json")
+	if err != nil {
+		dsSchema, err = hs.LoadSchemaService.GetJsonSchema(defaultPanelSchema)
+		if err != nil {
+			return response.Error(500, "Error while get target json schema", err)
+		}
+	}
+	return response.JSON(200, dsSchema)
+
 }
