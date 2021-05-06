@@ -24,12 +24,12 @@ export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): Tim
   };
 };
 
-export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRange => {
+export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRange | undefined => {
   const now = dateTime().unix();
   const from = dateMath.parse(option.from)?.unix();
   const to = dateMath.parse(option.to)?.unix();
   if (!from || !to) {
-    return { from: 600, to: 0 };
+    return;
   }
 
   return {

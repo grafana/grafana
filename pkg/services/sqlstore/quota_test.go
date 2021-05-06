@@ -24,6 +24,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Dashboard:  5,
 				DataSource: 5,
 				ApiKey:     5,
+				AlertRule:  5,
 			},
 			User: &setting.UserQuota{
 				Org: 5,
@@ -35,6 +36,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				DataSource: 5,
 				ApiKey:     5,
 				Session:    5,
+				AlertRule:  5,
 			},
 		}
 
@@ -87,12 +89,19 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result.Used, ShouldEqual, 0)
 			})
+			Convey("Should be able to get zero used org alert quota when table does not exist (ngalert is not enabled - default case)", func() {
+				query := models.GetOrgQuotaByTargetQuery{OrgId: 2, Target: "alert", Default: 11}
+				err = GetOrgQuotaByTarget(&query)
+
+				So(err, ShouldBeNil)
+				So(query.Result.Used, ShouldEqual, 0)
+			})
 			Convey("Should be able to quota list for org", func() {
 				query := models.GetOrgQuotasQuery{OrgId: orgId}
 				err = GetOrgQuotas(&query)
 
 				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 4)
+				So(len(query.Result), ShouldEqual, 5)
 				for _, res := range query.Result {
 					limit := 5 // default quota limit
 					used := 0
@@ -168,6 +177,14 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 			So(query.Result.Limit, ShouldEqual, 5)
 			So(query.Result.Used, ShouldEqual, 1)
+		})
+		Convey("Should be able to get zero used global alert quota when table does not exist (ngalert is not enabled - default case)", func() {
+			query := models.GetGlobalQuotaByTargetQuery{Target: "alert_rule", Default: 5}
+			err = GetGlobalQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+
+			So(query.Result.Limit, ShouldEqual, 5)
+			So(query.Result.Used, ShouldEqual, 0)
 		})
 
 		// related: https://github.com/grafana/grafana/issues/14342

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, RelativeTimeRange } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Icon, Input, FieldValidationMessage, TimeRangeInput, useStyles } from '@grafana/ui';
+import { Icon, Input, FieldValidationMessage, RelativeTimeRangePicker, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
 
@@ -10,10 +10,10 @@ export interface Props {
   query: DataQuery;
   queries: DataQuery[];
   disabled?: boolean;
-  timeRange?: TimeRange;
+  timeRange?: RelativeTimeRange;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
-  onChangeTimeRange?: (timeRange: TimeRange) => void;
+  onChangeTimeRange?: (timeRange: RelativeTimeRange) => void;
   onChange: (query: DataQuery) => void;
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
@@ -140,7 +140,7 @@ const PickerRenderer: React.FC<Props> = (props) => {
   return (
     <div className={styles.pickerWrapper}>
       {onChangeDataSource && <DataSourcePicker current={dataSource.name} onChange={onChangeDataSource} />}
-      {onChangeTimeRange && timeRange && <TimeRangeInput onChange={onChangeTimeRange} value={timeRange} />}
+      {onChangeTimeRange && timeRange && <RelativeTimeRangePicker onChange={onChangeTimeRange} timeRange={timeRange} />}
     </div>
   );
 };

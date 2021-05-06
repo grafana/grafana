@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -153,6 +153,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           href={makeAMLink('alerting/notifications', alertManagerSourceName)}
           variant="secondary"
           type="button"
+          fill="outline"
         >
           Cancel
         </LinkButton>
@@ -161,7 +162,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   externalLink: css`
     color: ${theme.colors.text.secondary};
     text-decoration: underline;

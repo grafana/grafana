@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
-export const darkThemeVarsTemplate = (theme: GrafanaThemeV2) =>
+export const darkThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
 // Global values
 // --------------------------------------------------

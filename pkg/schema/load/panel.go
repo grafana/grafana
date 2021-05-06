@@ -58,7 +58,10 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 		panelSchema: maj: in.v.maj
 		panelSchema: min: in.v.min
 		options: in.model.PanelOptions
-		fieldConfig: defaults: custom: in.model.PanelFieldConfig
+		fieldConfig: defaults: custom: {}
+		if in.model.PanelFieldConfig != _|_ {
+			fieldConfig: defaults: custom: in.model.PanelFieldConfig
+		}
 	}
 	`, id, maj, min))
 
@@ -140,7 +143,8 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		}
 
 		// Ensure the declared value is subsumed by/correct wrt #PanelFamily
-		if err := pmf.Subsume(pmod); err != nil {
+		// TODO not actually sure that Final is what we want here.
+		if err := pmf.Subsume(pmod, cue.Final()); err != nil {
 			return err
 		}
 

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, PanelData, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -30,7 +30,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange(timeRange: TimeRange, index: number) {
+  onChangeTimeRange(timeRange: RelativeTimeRange, index: number) {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -39,7 +39,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         }
         return {
           ...item,
-          relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange),
+          relativeTimeRange: timeRange,
         };
       })
     );
@@ -76,6 +76,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
@@ -110,6 +111,13 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
+  };
+
+  onDuplicateQuery = (query: DataQuery, source: GrafanaQuery): void => {
+    this.props.onDuplicateQuery({
+      ...source,
+      model: query,
+    });
   };
 
   getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
@@ -148,9 +156,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       timeRange={
-                        !isExpressionQuery(query.model)
-                          ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
-                          : undefined
+                        !isExpressionQuery(query.model) && query.relativeTimeRange ? query.relativeTimeRange : undefined
                       }
                       onChangeTimeRange={
                         !isExpressionQuery(query.model)
@@ -158,7 +164,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                           : undefined
                       }
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onDuplicateQuery}
+                      onAddQuery={(duplicate) => this.onDuplicateQuery(duplicate, query)}
                       onRunQuery={this.props.onRunQueries}
                       queries={queries}
                     />
