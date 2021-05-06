@@ -8,7 +8,7 @@ import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
 import { makeAMLink } from '../../utils/misc';
 import { useDispatch } from 'react-redux';
-import { updateAlertManagerConfigAction } from '../../state/actions';
+import { deleteTemplateAction } from '../../state/actions';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -24,22 +24,8 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   const [templateToDelete, setTemplateToDelete] = useState<string>();
 
   const deleteTemplate = () => {
-    if (templateToDelete && !!config.template_files[templateToDelete]) {
-      const newTemplates = { ...config.template_files };
-      delete newTemplates[templateToDelete];
-      const newConfig: AlertManagerCortexConfig = {
-        ...config,
-        template_files: newTemplates,
-      };
-      dispatch(
-        updateAlertManagerConfigAction({
-          newConfig,
-          oldConfig: config,
-          alertManagerSourceName: alertManagerName,
-          successMessage: 'Template deleted.',
-          refetch: true,
-        })
-      );
+    if (templateToDelete) {
+      dispatch(deleteTemplateAction(templateToDelete, alertManagerName));
     }
     setTemplateToDelete(undefined);
   };

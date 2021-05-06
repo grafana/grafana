@@ -11,7 +11,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { isReceiverUsed } from '../../utils/alertmanager-config';
 import { useDispatch } from 'react-redux';
-import { updateAlertManagerConfigAction } from '../../state/actions';
+import { deleteReceiverAction } from '../../state/actions';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -38,26 +38,8 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   };
 
   const deleteReceiver = () => {
-    if (
-      receiverToDelete &&
-      !!config.alertmanager_config.receivers?.find((receiver) => receiver.name === receiverToDelete)
-    ) {
-      const newConfig: AlertManagerCortexConfig = {
-        ...config,
-        alertmanager_config: {
-          ...config.alertmanager_config,
-          receivers: config.alertmanager_config.receivers.filter((receiver) => receiver.name !== receiverToDelete),
-        },
-      };
-      dispatch(
-        updateAlertManagerConfigAction({
-          newConfig,
-          oldConfig: config,
-          alertManagerSourceName: alertManagerName,
-          successMessage: 'Contact point deleted.',
-          refetch: true,
-        })
-      );
+    if (receiverToDelete) {
+      dispatch(deleteReceiverAction(receiverToDelete, alertManagerName));
     }
     setReceiverToDelete(undefined);
   };
