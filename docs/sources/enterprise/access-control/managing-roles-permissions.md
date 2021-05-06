@@ -37,6 +37,6 @@ Custom roles can be created either globally or for a specific organization. You 
 ## Creating and removing built-in role assignments
 
 You can create or remove built-in role assignment by using an [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by [provisioning]({{< relref "./provisioning.md" >}}).
-By default, Grafana Admin has alreadt a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage further assignments. 
+By default, Grafana Admin already has a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage further assignments. 
 
 Assignments can be done either globally or for a specific organization. Global assignments will take an effect across all organizations. 
