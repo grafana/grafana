@@ -6,14 +6,14 @@ describe('mapper', () => {
       const relativeTimeRange = { from: 600, to: 0 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
-      expect(timeOption).toEqual({ from: 'now-600s', to: 'now', display: 'something readable' });
+      expect(timeOption).toEqual({ from: 'now-10m', to: 'now', display: 'Last 10 minutes' });
     });
 
     it('should handle two relative ranges', () => {
       const relativeTimeRange = { from: 600, to: 300 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
-      expect(timeOption).toEqual({ from: 'now-600s', to: 'now-300s', display: 'something readable' });
+      expect(timeOption).toEqual({ from: 'now-10m', to: 'now-5m', display: 'Last 10 minutes, 5 minutes ago' });
     });
   });
 

@@ -38,10 +38,24 @@ export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRa
   };
 };
 
-export const mapRelativeTimeRangeToOption = (relativeTimeRage: RelativeTimeRange): TimeOption => {
+export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOption => {
+  const fromWithUnit = rangeUtil.secondsToHms(range.from);
+  const toWithUnit = range.to > 0 ? rangeUtil.secondsToHms(range.to) : undefined;
+
   return {
-    from: `now-${relativeTimeRage.from}s`,
-    to: relativeTimeRage.to > 0 ? `now-${relativeTimeRage.to}s` : 'now',
-    display: 'something readable',
+    from: `now-${fromWithUnit}`,
+    to: !!toWithUnit ? `now-${toWithUnit}` : 'now',
+    display: formatRelativeWithUnit(fromWithUnit, toWithUnit),
   };
+};
+
+const formatRelativeWithUnit = (fromWithUnit: string, toWithUnit: string | undefined) => {
+  const match = /^(\d*)([msywdh]|ms)$/g.exec(fromWithUnit);
+
+  if (!match) {
+    return '';
+  }
+
+  const [, amount, unit] = match;
+  return `Last ${amount} minutes`;
 };

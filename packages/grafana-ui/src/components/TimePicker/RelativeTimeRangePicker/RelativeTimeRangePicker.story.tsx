@@ -17,10 +17,8 @@ export const basic = () => {
   return (
     <UseState
       initialState={{
-        value: {
-          from: 900,
-          to: 0,
-        },
+        from: 900,
+        to: 0,
       }}
     >
       {(value, updateValue) => {
@@ -28,9 +26,9 @@ export const basic = () => {
           <RelativeTimeRangePicker
             onChange={(newValue) => {
               action('on selected')(newValue);
-              updateValue({ value: newValue });
+              updateValue(newValue);
             }}
-            timeRange={value.value}
+            timeRange={value}
           />
         );
       }}

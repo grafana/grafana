@@ -1,6 +1,6 @@
 import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
-import { RelativeTimeRange, GrafanaTheme2, isDateTime, TimeOption, rangeUtil } from '@grafana/data';
+import { RelativeTimeRange, GrafanaTheme2, TimeOption, rangeUtil } from '@grafana/data';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { useStyles2 } from '../../../themes';
 import { Button, ButtonGroup, ToolbarButton } from '../../Button';
@@ -19,24 +19,29 @@ export interface RelativeTimeRangePickerProps {
   onChange: (timeRange: RelativeTimeRange) => void;
 }
 
-const errorMessage = 'Please enter a past date or "now"';
+const bodyHeight = 217;
+const errorHeight = 30.83;
+const errorMessage = 'Please enter a value in the relative time format.';
 
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
   const { timeRange, onChange } = props;
-  const styles = useStyles2(getStyles);
-
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange);
   const [from, setFrom] = useState<InputState>(setValue(timeOption.from));
   const [to, setTo] = useState<InputState>(setValue(timeOption.to));
 
+  const bodyHeight = useFlexibleHeight(from, to);
+  const styles = useStyles2(getStyles(bodyHeight));
+
   const onChangeTimeOption = (option: TimeOption) => {
     const relativeTimeRange = mapOptionToRelativeTimeRange(option);
-
     if (!relativeTimeRange) {
       return;
     }
+    onClose();
+    setFrom(setValue(option.from));
+    setTo(setValue(option.to));
     onChange(relativeTimeRange);
   };
 
@@ -64,7 +69,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
       <Tooltip content="Choose time range" placement="bottom">
         <ToolbarButton aria-label="TimePicker Open Button" onClick={onOpen} icon="clock-nine" isOpen={isOpen}>
           <span data-testid="picker-button-label" className={styles.container}>
-            {rangeUtil.describeTimeRange({ from: timeOption.from, to: timeOption.to })}
+            {timeOption.display}
           </span>
         </ToolbarButton>
       </Tooltip>
@@ -113,11 +118,11 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
 const setValue = (value: string): InputState => {
   return {
     value,
-    invalid: !isDateTime(value),
+    invalid: !rangeUtil.isRelativeTime(value),
   };
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (pickerHeight = bodyHeight) => (theme: GrafanaTheme2) => {
   return {
     container: css`
       position: relative;
@@ -137,11 +142,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     body: css`
       display: flex;
-      height: 217px;
     `,
     leftSide: css`
+      max-height: ${pickerHeight}px !important;
       width: 50% !important;
-      overflow: hidden;
       border-right: 1px solid ${theme.colors.border.medium};
     `,
     rightSide: css`
@@ -152,4 +156,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: ${theme.spacing(1)};
     `,
   };
+};
+
+const useFlexibleHeight = (from: InputState, to: InputState): number => {
+  // Hacky way of getting the body to grow depending on the state.
+  // Need to sync with Peter if we can do this in a better way using only
+  // css.
+  if (!from.invalid && !to.invalid) {
+    return bodyHeight;
+  }
+
+  if (from.invalid && to.invalid) {
+    return bodyHeight + errorHeight * 2;
+  }
+
+  return bodyHeight + errorHeight;
 };

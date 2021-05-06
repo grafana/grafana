@@ -203,7 +203,7 @@ export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeR
   return { from, to, raw: { from, to } };
 };
 
-function isRelativeTime(v: DateTime | string) {
+export function isRelativeTime(v: DateTime | string) {
   if (typeof v === 'string') {
     return (v as string).indexOf('now') >= 0;
   }
