@@ -24,7 +24,7 @@ export interface CodeEditorProps {
    *
    * @alpha -- experimental
    */
-  onEditorDidMount?: (editor: monacoType.editor.IStandaloneCodeEditor) => void;
+  onEditorDidMount?: (editor: monacoType.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
 
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;

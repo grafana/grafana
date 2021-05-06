@@ -90,7 +90,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
 
     if (onEditorDidMount) {
-      onEditorDidMount(editor);
+      onEditorDidMount(editor, monaco);
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Button, CodeEditor, HorizontalGroup, useStyles2 } from '@grafana/ui';
@@ -6,6 +6,8 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { dashboardSchema } from './schema';
 
 interface Props {
   dashboard: DashboardModel;
@@ -25,6 +27,21 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
   };
   const styles = useStyles2(getStyles);
 
+  const loadJsonSchema = useCallback((editor: any, monaco: any) => {
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      validate: true,
+      schemas: [
+        {
+          uri: 'http://myserver/foo-schema.json', // id of the first schema
+          fileMatch: ['*'], // associate with our model
+          schema: dashboardSchema,
+        },
+      ],
+    });
+    // monacoType.editor.IStandaloneCodeEditor
+    return console.log('Did Mount!', monaco);
+  }, []);
+
   return (
     <>
       <h3 className="dashboard-settings__header">JSON Model</h3>
@@ -39,6 +56,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
             <CodeEditor
               value={dashboardJson}
               language="json"
+              onEditorDidMount={loadJsonSchema}
               width={width}
               height={height}
               showMiniMap={true}
