@@ -16,7 +16,7 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
       padding: ${theme.spacing(0.5, 1)};
-      color: ${theme.colors.error.text};
+      color: ${theme.colors.error.contrastText};
       background: ${theme.colors.error.main};
       border-radius: ${theme.shape.borderRadius()};
       position: relative;
