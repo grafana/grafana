@@ -233,10 +233,10 @@ describe('preparePlotData', () => {
           {
             name: 'a',
             values: [-10, 20, 10],
-            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' }, hideFrom: { graph: true } } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' }, hideFrom: { viz: true } } },
           },
           {
-            // Will ignore a series as stacking base as it's hidden from graph
+            // Will ignore a series as stacking base as it's hidden from viz
             name: 'b',
             values: [10, 10, 10],
             config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
@@ -249,10 +249,10 @@ describe('preparePlotData', () => {
           {
             name: 'e',
             values: [1, 2, 3],
-            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' }, hideFrom: { graph: true } } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' }, hideFrom: { viz: true } } },
           },
           {
-            // Will ignore e series as stacking base as it's hidden from graph
+            // Will ignore e series as stacking base as it's hidden from viz
             name: 'f',
             values: [1, 2, 3],
             config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },

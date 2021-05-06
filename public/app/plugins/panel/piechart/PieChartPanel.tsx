@@ -10,7 +10,6 @@ export const PieChartPanel: React.FC<Props> = ({
   height,
   options,
   data,
-  onFieldConfigChange,
   replaceVariables,
   fieldConfig,
   timeZone,

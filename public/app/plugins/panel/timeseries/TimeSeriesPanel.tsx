@@ -1,8 +1,7 @@
 import { Field, PanelProps } from '@grafana/data';
-import { TimeSeries, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import React, { useCallback } from 'react';
-import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
+import React from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
@@ -17,18 +16,9 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   width,
   height,
   options,
-  fieldConfig,
   onChangeTimeRange,
-  onFieldConfigChange,
   replaceVariables,
 }) => {
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
-    },
-    [fieldConfig, onFieldConfigChange, data.series]
-  );
-
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
@@ -50,7 +40,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
-      onLegendClick={onLegendClick}
     >
       {(config, alignedDataFrame) => {
         return (

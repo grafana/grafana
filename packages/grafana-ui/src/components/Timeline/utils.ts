@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraphNGLegendEventMode, XYFieldMatchers } from '../GraphNG/types';
+import { XYFieldMatchers } from '../GraphNG/types';
 import {
   DataFrame,
   FieldColorModeId,
@@ -17,7 +17,7 @@ import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } fr
 import { measureText } from '../../utils/measureText';
 import { PrepConfigOpts } from '../GraphNG/utils';
 
-import { TimelineFieldConfig } from '../..';
+import { SeriesVisibilityChangeMode, TimelineFieldConfig } from '../..';
 import { BarValueVisibility, TimelineMode } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
@@ -26,11 +26,11 @@ const defaultConfig: TimelineFieldConfig = {
   gradientMode: GraphGradientMode.None,
 };
 
-export function mapMouseEventToMode(event: React.MouseEvent): GraphNGLegendEventMode {
+export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityChangeMode {
   if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    return GraphNGLegendEventMode.AppendToSelection;
+    return SeriesVisibilityChangeMode.AppendToSelection;
   }
-  return GraphNGLegendEventMode.ToggleSelection;
+  return SeriesVisibilityChangeMode.ToggleSelection;
 }
 
 export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
@@ -186,7 +186,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({
       //colorMode,
       fillOpacity,
       theme,
-      show: !customConfig.hideFrom?.graph,
+      show: !customConfig.hideFrom?.viz,
       thresholds: config.thresholds,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config

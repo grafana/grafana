@@ -3,6 +3,7 @@ import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { LegendDisplayMode, PieChartType, PieChartLabels, PieChartLegendValues } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
+import { addHideFrom } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
@@ -19,6 +20,9 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
           mode: FieldColorModeId.PaletteClassic,
         },
       },
+    },
+    useCustomConfig: (builder) => {
+      addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {

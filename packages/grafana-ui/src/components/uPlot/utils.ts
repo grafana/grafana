@@ -96,7 +96,7 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
   if (
     customConfig.stacking?.mode !== StackingMode.None &&
     customConfig.stacking?.group &&
-    !customConfig.hideFrom?.graph
+    !customConfig.hideFrom?.viz
   ) {
     if (!groups.has(customConfig.stacking.group)) {
       groups.set(customConfig.stacking.group, [seriesIdx]);

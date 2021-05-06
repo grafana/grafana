@@ -15,9 +15,9 @@ export interface Props extends VizLegendBaseProps {}
 export const VizLegendList: React.FunctionComponent<Props> = ({
   items,
   itemRenderer,
-  onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
+  onLabelClick,
   placement,
   className,
 }) => {
