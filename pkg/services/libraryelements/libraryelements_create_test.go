@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateLibraryPanel(t *testing.T) {
+func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel")

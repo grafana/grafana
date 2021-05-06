@@ -173,3 +173,72 @@ func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid s
 		return nil
 	})
 }
+
+// getLibraryElement gets a Library Element.
+func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid string) (LibraryElementDTO, error) {
+	var libraryPanel LibraryElementWithMeta
+	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		libraryPanels := make([]LibraryElementWithMeta, 0)
+		builder := sqlstore.SQLBuilder{}
+		builder.Write(selectLibraryElementDTOWithMeta)
+		builder.Write(", 'General' as folder_name ")
+		builder.Write(", '' as folder_uid ")
+		builder.Write(fromLibraryElementDTOWithMeta)
+		builder.Write(` WHERE le.uid=? AND le.org_id=? AND le.folder_id=0`, uid, c.SignedInUser.OrgId)
+		builder.Write(" UNION ")
+		builder.Write(selectLibraryElementDTOWithMeta)
+		builder.Write(", dashboard.title as folder_name ")
+		builder.Write(", dashboard.uid as folder_uid ")
+		builder.Write(fromLibraryElementDTOWithMeta)
+		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
+		builder.Write(` WHERE le.uid=? AND le.org_id=?`, uid, c.SignedInUser.OrgId)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		builder.Write(` OR dashboard.id=0`)
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
+			return err
+		}
+		if len(libraryPanels) == 0 {
+			return errLibraryElementNotFound
+		}
+		if len(libraryPanels) > 1 {
+			return fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
+		}
+
+		libraryPanel = libraryPanels[0]
+
+		return nil
+	})
+
+	dto := LibraryElementDTO{
+		ID:          libraryPanel.ID,
+		OrgID:       libraryPanel.OrgID,
+		FolderID:    libraryPanel.FolderID,
+		UID:         libraryPanel.UID,
+		Name:        libraryPanel.Name,
+		Type:        libraryPanel.Type,
+		Description: libraryPanel.Description,
+		Model:       libraryPanel.Model,
+		Version:     libraryPanel.Version,
+		Meta: LibraryElementDTOMeta{
+			FolderName:          libraryPanel.FolderName,
+			FolderUID:           libraryPanel.FolderUID,
+			ConnectedDashboards: libraryPanel.ConnectedDashboards,
+			Created:             libraryPanel.Created,
+			Updated:             libraryPanel.Updated,
+			CreatedBy: LibraryElementDTOMetaUser{
+				ID:        libraryPanel.CreatedBy,
+				Name:      libraryPanel.CreatedByName,
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.CreatedByEmail),
+			},
+			UpdatedBy: LibraryElementDTOMetaUser{
+				ID:        libraryPanel.UpdatedBy,
+				Name:      libraryPanel.UpdatedByName,
+				AvatarUrl: dtos.GetGravatarUrl(libraryPanel.UpdatedByEmail),
+			},
+		},
+	}
+
+	return dto, err
+}

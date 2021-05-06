@@ -1,11 +1,14 @@
 package libraryelements
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestLibraryPanelPermissions(t *testing.T) {
@@ -16,6 +19,15 @@ func TestLibraryPanelPermissions(t *testing.T) {
 	var viewerOnlyPermissions = []folderACLItem{{models.ROLE_VIEWER, models.PERMISSION_EDIT}}
 	var everyonePermissions = []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_EDIT}, {models.ROLE_EDITOR, models.PERMISSION_EDIT}, {models.ROLE_VIEWER, models.PERMISSION_EDIT}}
 	var noPermissions = []folderACLItem{{models.ROLE_VIEWER, models.PERMISSION_VIEW}}
+	var folderCases = [][]folderACLItem{
+		defaultPermissions,
+		adminOnlyPermissions,
+		editorOnlyPermissions,
+		editorAndViewerPermissions,
+		viewerOnlyPermissions,
+		everyonePermissions,
+		noPermissions,
+	}
 	var defaultDesc = "default permissions"
 	var adminOnlyDesc = "admin only permissions"
 	var editorOnlyDesc = "editor only permissions"
@@ -125,6 +137,66 @@ func TestLibraryPanelPermissions(t *testing.T) {
 				command := getCreatePanelCommand(-100, "Library Panel Name")
 				resp := sc.service.createHandler(sc.reqContext, command)
 				require.Equal(t, 404, resp.Status())
+			})
+	}
+
+	var getCases = []struct {
+		role     models.RoleType
+		statuses []int
+	}{
+		{models.ROLE_ADMIN, []int{200, 200, 200, 200, 200, 200, 200}},
+		{models.ROLE_EDITOR, []int{200, 404, 200, 200, 200, 200, 200}},
+		{models.ROLE_VIEWER, []int{200, 404, 404, 200, 200, 200, 200}},
+	}
+
+	for _, testCase := range getCases {
+		testScenario(t, fmt.Sprintf("When %s tries to get a library panel, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				var results []libraryElement
+				for i, folderCase := range folderCases {
+					folder := createFolderWithACL(t, sc.sqlStore, fmt.Sprintf("Folder%v", i), sc.user, folderCase)
+					cmd := getCreatePanelCommand(folder.Id, fmt.Sprintf("Library Panel in Folder%v", i))
+					resp := sc.service.createHandler(sc.reqContext, cmd)
+					result := validateAndUnMarshalResponse(t, resp)
+					result.Result.Meta.CreatedBy.Name = UserInDbName
+					result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.UpdatedBy.Name = UserInDbName
+					result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.FolderName = folder.Title
+					result.Result.Meta.FolderUID = folder.Uid
+					results = append(results, result.Result)
+				}
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				for i, result := range results {
+					sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.UID})
+					resp := sc.service.getHandler(sc.reqContext)
+					require.Equal(t, testCase.statuses[i], resp.Status())
+				}
+			})
+
+		testScenario(t, fmt.Sprintf("When %s tries to get a library panel from General folder, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreatePanelCommand(0, "Library Panel in General Folder")
+				resp := sc.service.createHandler(sc.reqContext, cmd)
+				result := validateAndUnMarshalResponse(t, resp)
+				result.Result.Meta.CreatedBy.Name = UserInDbName
+				result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = UserInDbName
+				result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.FolderName = "General"
+				result.Result.Meta.FolderUID = ""
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
+
+				sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+				resp = sc.service.getHandler(sc.reqContext)
+				require.Equal(t, 200, resp.Status())
+				var actual libraryElementResult
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				if diff := cmp.Diff(result.Result, actual.Result, getCompareOptions()...); diff != "" {
+					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+				}
 			})
 	}
 }

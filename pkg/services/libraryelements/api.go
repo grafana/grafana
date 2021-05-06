@@ -49,6 +49,16 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 	return response.Success("Library element deleted")
 }
 
+// getHandler handles GET  /api/library-elements/:uid.
+func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Response {
+	element, err := l.getLibraryElement(c, c.Params(":uid"))
+	if err != nil {
+		return toLibraryElementError(err, "Failed to get library element")
+	}
+
+	return response.JSON(200, util.DynMap{"result": element})
+}
+
 func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, errLibraryElementAlreadyExists) {
 		return response.Error(400, errLibraryElementAlreadyExists.Error(), err)
