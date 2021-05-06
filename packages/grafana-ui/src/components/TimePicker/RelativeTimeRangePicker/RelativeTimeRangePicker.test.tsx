@@ -45,7 +45,7 @@ describe('RelativeTimePicker', () => {
       />
     );
 
-    expect(queryByText('Specify time range')).not.toBeInTheDocument();
-    expect(queryByText('Example time ranges')).not.toBeInTheDocument();
+    expect(queryByText('Specify time range')).toBeNull();
+    expect(queryByText('Example time ranges')).toBeNull();
   });
 });
