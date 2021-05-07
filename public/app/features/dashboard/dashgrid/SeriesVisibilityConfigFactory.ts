@@ -9,32 +9,20 @@ import {
   isSystemOverrideWithRef,
   SystemConfigOverrideRule,
 } from '@grafana/data';
-import { GraphNGLegendEvent, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { SeriesVisibilityChangeMode } from '@grafana/ui';
 
 const displayOverrideRef = 'hideSeriesFrom';
 const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
 
-export const hideSeriesConfigFactory = (
-  event: GraphNGLegendEvent,
-  fieldConfig: FieldConfigSource<any>,
+export function seriesVisibilityConfigFactory(
+  label: string,
+  mode: SeriesVisibilityChangeMode,
+  fieldConfig: FieldConfigSource,
   data: DataFrame[]
-): FieldConfigSource<any> => {
-  const { fieldIndex, mode } = event;
+) {
   const { overrides } = fieldConfig;
 
-  const frame = data[fieldIndex.frameIndex];
-
-  if (!frame) {
-    return fieldConfig;
-  }
-
-  const field = frame.fields[fieldIndex.fieldIndex];
-
-  if (!field) {
-    return fieldConfig;
-  }
-
-  const displayName = getFieldDisplayName(field, frame, data);
+  const displayName = label;
   const currentIndex = overrides.findIndex(isHideSeriesOverride);
 
   if (currentIndex < 0) {
@@ -90,35 +78,17 @@ export const hideSeriesConfigFactory = (
     ...fieldConfig,
     overrides: [override, ...overridesCopy],
   };
-};
+}
 
-const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: string): SystemConfigOverrideRule => {
-  const property = current.properties.find((p) => p.id === 'custom.hideFrom');
-  const existing = getExistingDisplayNames(current);
-  const index = existing.findIndex((name) => name === displayName);
-
-  if (index < 0) {
-    existing.push(displayName);
-  } else {
-    existing.splice(index, 1);
-  }
-
-  return createOverride(existing, property);
-};
-
-const getExistingDisplayNames = (rule: SystemConfigOverrideRule): string[] => {
-  const names = rule.matcher.options?.names;
-  if (!Array.isArray(names)) {
-    return [];
-  }
-  return names;
-};
-
-const createOverride = (names: string[], property?: DynamicConfigValue): SystemConfigOverrideRule => {
+function createOverride(
+  names: string[],
+  mode = ByNamesMatcherMode.exclude,
+  property?: DynamicConfigValue
+): SystemConfigOverrideRule {
   property = property ?? {
     id: 'custom.hideFrom',
     value: {
-      graph: true,
+      viz: true,
       legend: false,
       tooltip: false,
     },
@@ -129,9 +99,9 @@ const createOverride = (names: string[], property?: DynamicConfigValue): SystemC
     matcher: {
       id: FieldMatcherID.byNames,
       options: {
-        mode: ByNamesMatcherMode.exclude,
+        mode: mode,
         names: names,
-        prefix: 'All except:',
+        prefix: mode === ByNamesMatcherMode.exclude ? 'All except:' : undefined,
         readOnly: true,
       },
     },
@@ -139,13 +109,39 @@ const createOverride = (names: string[], property?: DynamicConfigValue): SystemC
       {
         ...property,
         value: {
-          graph: true,
+          viz: true,
           legend: false,
           tooltip: false,
         },
       },
     ],
   };
+}
+
+const createExtendedOverride = (
+  current: SystemConfigOverrideRule,
+  displayName: string,
+  mode = ByNamesMatcherMode.exclude
+): SystemConfigOverrideRule => {
+  const property = current.properties.find((p) => p.id === 'custom.hideFrom');
+  const existing = getExistingDisplayNames(current);
+  const index = existing.findIndex((name) => name === displayName);
+
+  if (index < 0) {
+    existing.push(displayName);
+  } else {
+    existing.splice(index, 1);
+  }
+
+  return createOverride(existing, mode, property);
+};
+
+const getExistingDisplayNames = (rule: SystemConfigOverrideRule): string[] => {
+  const names = rule.matcher.options?.names;
+  if (!Array.isArray(names)) {
+    return [];
+  }
+  return names;
 };
 
 const allFieldsAreExcluded = (override: SystemConfigOverrideRule, data: DataFrame[]): boolean => {

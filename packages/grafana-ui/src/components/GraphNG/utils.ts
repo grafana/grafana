@@ -1,5 +1,4 @@
-import React from 'react';
-import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
+import { XYFieldMatchers } from './types';
 import {
   ArrayVector,
   DataFrame,
@@ -19,13 +18,6 @@ export interface PrepConfigOpts {
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   [prop: string]: any;
-}
-
-export function mapMouseEventToMode(event: React.MouseEvent): GraphNGLegendEventMode {
-  if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    return GraphNGLegendEventMode.AppendToSelection;
-  }
-  return GraphNGLegendEventMode.ToggleSelection;
 }
 
 function applySpanNullsThresholds(frames: DataFrame[]) {
