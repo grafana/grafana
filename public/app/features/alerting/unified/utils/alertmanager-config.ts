@@ -1,4 +1,4 @@
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, Route } from 'app/plugins/datasource/alertmanager/types';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -15,4 +15,16 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
     config.template_files = {};
   }
   return config;
+}
+
+function isReceiverUsedInRoute(receiver: string, route: Route): boolean {
+  return (
+    (route.receiver === receiver || route.routes?.some((route) => isReceiverUsedInRoute(receiver, route))) ?? false
+  );
+}
+
+export function isReceiverUsed(receiver: string, config: AlertManagerCortexConfig): boolean {
+  return (
+    (config.alertmanager_config.route && isReceiverUsedInRoute(receiver, config.alertmanager_config.route)) ?? false
+  );
 }

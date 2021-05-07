@@ -1,4 +1,4 @@
-grabpl_version = '0.5.57'
+grabpl_version = '2.0.0'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -124,7 +124,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
-            committish = 'master'
+            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
         else:
@@ -196,7 +196,7 @@ def enterprise_downstream_step(edition):
                 'from_secret': 'drone_token',
             },
             'repositories': [
-                'grafana/grafana-enterprise',
+                'grafana/grafana-enterprise@main',
             ],
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}',
@@ -569,7 +569,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
 
-    if ver_mode in ('master', 'release', 'test-release', 'release-branch'):
+    if ver_mode in ('main', 'release', 'test-release', 'release-branch'):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': {
@@ -866,7 +866,7 @@ def enterprise2_sfx(edition):
     return ''
 
 def upload_packages_step(edition, ver_mode, is_downstream=False):
-    if ver_mode == 'master' and edition in ('enterprise', 'enterprise2') and not is_downstream:
+    if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
     packages_bucket = ' --packages-bucket grafana-downloads' + enterprise2_sfx(edition)
@@ -911,7 +911,7 @@ def publish_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
-    elif ver_mode == 'master':
+    elif ver_mode == 'main':
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
         else:
@@ -974,7 +974,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'commands': init_cmds,
         },
     ]
-    if (ver_mode == 'master' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
+    if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
         'release', 'test-release', 'release-branch',
     ):
         bucket_part = ''
@@ -988,7 +988,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             bucket = 'grafana-downloads-test'
             bucket_part = ' --packages-bucket {}'.format(bucket)
         else:
-            dir = 'master'
+            dir = 'main'
             if not is_downstream:
                 build_no = 'DRONE_BUILD_NUMBER'
             else:
@@ -1003,7 +1003,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
         ]
-        if (ver_mode == 'master' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
+        if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
             'release', 'test-release',
         ):
             installer_commands.extend([
@@ -1030,7 +1030,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
         elif ver_mode == 'test-release':
-            committish = 'master'
+            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '$$env:DRONE_BRANCH'
         else:

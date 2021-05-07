@@ -13,6 +13,7 @@ import { SilencePeriod } from './SilencePeriod';
 import { css, cx } from '@emotion/css';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { makeAMLink } from '../../utils/misc';
+import { useCleanup } from 'app/core/hooks/useCleanup';
 
 interface Props {
   silence?: Silence;
@@ -57,6 +58,8 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const styles = useStyles(getStyles);
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.updateSilence);
+
+  useCleanup((state) => state.unifiedAlerting.updateSilence);
 
   const { register, handleSubmit, formState } = formAPI;
 
