@@ -16,7 +16,7 @@ import { preparePlotFrame } from './utils';
 
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { filter, throttleTime } from 'rxjs/operators';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -72,7 +72,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   panelContext: PanelContext = {} as PanelContext;
   private plotInstance: React.RefObject<uPlot>;
 
-  subscriptions: Unsubscribable[] = [];
+  private subscription = new Subscription();
 
   constructor(props: GraphNGProps) {
     super(props);
@@ -113,7 +113,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     this.panelContext = this.context as PanelContext;
     const { eventBus } = this.panelContext;
 
-    this.subscriptions.push(
+    this.subscription.add(
       eventBus
         .getStream(LegacyGraphHoverEvent)
         .pipe(
@@ -145,7 +145,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         })
     );
 
-    this.subscriptions.push(
+    this.subscription.add(
       eventBus
         .getStream(LegacyGraphHoverClearEvent)
         .pipe(
@@ -193,9 +193,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentWillUnmount() {
-    for (const sub of this.subscriptions) {
-      sub.unsubscribe();
-    }
+    this.subscription.unsubscribe();
   }
 
   render() {
