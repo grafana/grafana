@@ -4,6 +4,30 @@ import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './processDataFrame';
 
+// converts vertical insertion records with table keys in [0] and column values in [1...N]
+// to join()-able tables with column arrays
+export function transpose(vrecs: any[][]) {
+  let tableKeys = new Set(vrecs[0]);
+  let tables = new Map();
+
+  tableKeys.forEach((key) => {
+    let cols = Array(vrecs.length - 1)
+      .fill(null)
+      .map(() => []);
+
+    tables.set(key, cols);
+  });
+
+  for (let r = 0; r < vrecs[0].length; r++) {
+    let table = tables.get(vrecs[0][r]);
+    for (let c = 1; c < vrecs.length; c++) {
+      table[c - 1].push(vrecs[c][r]);
+    }
+  }
+
+  return [[...tables.keys()], [...tables.values()]];
+}
+
 // binary search for index of closest value
 function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
   let mid;

@@ -1,7 +1,8 @@
 import { reduceField, ReducerID } from '..';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
-import { StreamingDataFrame } from './StreamingDataFrame';
+import { StreamingDataFrame, transpose } from './StreamingDataFrame';
+import { join } from '../transformations/transformers/joinDataFrames';
 
 describe('Streaming JSON', () => {
   describe('when called with a DataFrame', () => {
@@ -261,13 +262,13 @@ describe('Streaming JSON', () => {
       },
     });
 
-    expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, value: f.values.buffer })))
+    expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, values: f.values.buffer })))
       .toMatchInlineSnapshot(`
       Array [
         Object {
           "labels": undefined,
           "name": "time",
-          "value": Array [
+          "values": Array [
             100,
             200,
             300,
@@ -279,7 +280,7 @@ describe('Streaming JSON', () => {
             "sensor": "A",
           },
           "name": "speed",
-          "value": Array [
+          "values": Array [
             10,
             undefined,
             30,
@@ -291,7 +292,7 @@ describe('Streaming JSON', () => {
             "sensor": "B",
           },
           "name": "speed",
-          "value": Array [
+          "values": Array [
             15,
             20,
             undefined,
@@ -303,13 +304,81 @@ describe('Streaming JSON', () => {
             "sensor": "C",
           },
           "name": "speed",
-          "value": Array [
+          "values": Array [
             undefined,
             25,
             undefined,
             40,
           ],
         },
+      ]
+    `);
+  });
+
+  describe('transpose vertical records', () => {
+    let vrecsA = [
+      ['sensor=A', 'sensor=B'],
+      [100, 100],
+      [10, 15],
+    ];
+
+    let vrecsB = [
+      ['sensor=B', 'sensor=C'],
+      [200, 200],
+      [20, 25],
+    ];
+
+    let vrecsC = [
+      ['sensor=A', 'sensor=C'],
+      [300, 400],
+      [30, 40],
+    ];
+
+    let cTables = transpose(vrecsC);
+
+    expect(cTables).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "sensor=A",
+          "sensor=C",
+        ],
+        Array [
+          Array [
+            Array [
+              300,
+            ],
+            Array [
+              30,
+            ],
+          ],
+          Array [
+            Array [
+              400,
+            ],
+            Array [
+              40,
+            ],
+          ],
+        ],
+      ]
+    `);
+
+    let cJoined = join(cTables[1]);
+
+    expect(cJoined).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          300,
+          400,
+        ],
+        Array [
+          30,
+          undefined,
+        ],
+        Array [
+          undefined,
+          40,
+        ],
       ]
     `);
   });
