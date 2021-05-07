@@ -8,7 +8,7 @@ import {
   BusEventWithPayload,
 } from '@grafana/data';
 import React, { Component } from 'react';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 interface Props {
   eventBus: EventBus;
@@ -18,31 +18,31 @@ interface State {
   event?: BusEventWithPayload<DataHoverPayload>;
 }
 export class CursorView extends Component<Props, State> {
-  subscriptions: Unsubscribable[] = [];
+  subscription = new Subscription();
   state: State = {};
 
   componentDidMount() {
     const { eventBus } = this.props;
 
-    this.subscriptions.push(
+    this.subscription.add(
       eventBus.subscribe(DataHoverEvent, (event) => {
         this.setState({ event });
       })
     );
 
-    this.subscriptions.push(
+    this.subscription.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
         this.setState({ event });
       })
     );
 
-    this.subscriptions.push(
+    this.subscription.add(
       eventBus.subscribe(LegacyGraphHoverEvent, (event) => {
         this.setState({ event });
       })
     );
 
-    this.subscriptions.push(
+    this.subscription.add(
       eventBus.subscribe(LegacyGraphHoverClearEvent, (event) => {
         this.setState({ event });
       })
@@ -50,9 +50,7 @@ export class CursorView extends Component<Props, State> {
   }
 
   componentWillUnmount() {
-    for (const sub of this.subscriptions) {
-      sub.unsubscribe();
-    }
+    this.subscription.unsubscribe();
   }
 
   render() {

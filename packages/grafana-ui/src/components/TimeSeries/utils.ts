@@ -239,7 +239,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
             eventBus.publish(hoverEvent);
             hoverEvent.payload.down = undefined;
           }
-          return true; // false; // for now sync everything all the time
+          return true;
         },
       },
       // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
