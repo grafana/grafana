@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/live/convert"
+	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 
@@ -101,15 +102,10 @@ const (
 )
 
 func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	var streamID string
-
-	streamID = r.Header.Get("X-Grafana-Live-Stream")
-	if streamID == "" {
-		streamID = r.URL.Query().Get("gf_live_stream")
-	}
-	if streamID == "" {
+	streamID, ok := livecontext.GetContextStreamID(r.Context())
+	if !ok || streamID == "" {
 		logger.Warn("Push request without stream ID")
-		rw.WriteHeader(http.StatusBadRequest)
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

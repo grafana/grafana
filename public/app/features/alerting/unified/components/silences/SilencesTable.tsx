@@ -25,11 +25,13 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
     <>
       {!!silences.length && (
         <>
-          <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
-            <Button className={styles.addNewSilence} icon="plus">
-              New Silence
-            </Button>
-          </Link>
+          <div className={styles.topButtonContainer}>
+            <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
+              <Button className={styles.addNewSilence} icon="plus">
+                New Silence
+              </Button>
+            </Link>
+          </div>
           <table className={tableStyles.table}>
             <colgroup>
               <col className={tableStyles.colExpand} />
@@ -76,6 +78,11 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  topButtonContainer: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+  `,
   addNewSilence: css`
     margin-bottom: ${theme.spacing(1)};
   `,
