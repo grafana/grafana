@@ -6,6 +6,7 @@ Family: {
             {
                 PanelOptions: {
                     bucketSize?: int
+                    bucketOffset?: int
                 }
 
                 // TODO: FieldConfig

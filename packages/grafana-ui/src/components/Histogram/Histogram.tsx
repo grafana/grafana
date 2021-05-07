@@ -14,7 +14,11 @@ import { UPlotChart } from '../uPlot/Plot';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { withTheme2 } from '../../themes';
-import { AxisPlacement, PointVisibility, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
+
+/* eslint-disable */
+import { histogramFrameBucketMaxFieldName } from '@grafana/data/src/transformations/transformers/histogram';
+/* eslint-enable */
 
 export interface HistogramProps extends Themeable2 {
   alignedFrame: DataFrame;
@@ -149,7 +153,7 @@ const preparePlotData = (frame: DataFrame) => {
   let data: AlignedData = [] as any;
 
   for (const field of frame.fields) {
-    if (field.name !== 'BucketMax') {
+    if (field.name !== histogramFrameBucketMaxFieldName) {
       data.push(field.values.toArray());
     }
   }

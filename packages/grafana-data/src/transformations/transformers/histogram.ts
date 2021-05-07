@@ -23,6 +23,7 @@ const histSort = (a: number, b: number) => a - b;
 
 export interface HistogramTransformerOptions {
   bucketSize?: number; // 0 is auto
+  bucketOffset?: number;
 }
 
 export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptions> = {
@@ -43,7 +44,7 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
-        const hist = buildHistogram(data, options.bucketSize);
+        const hist = buildHistogram(data, options.bucketSize, options.bucketOffset);
         return [
           {
             fields: [hist.bucketMin, hist.bucketMax, ...hist.counts],
@@ -54,8 +55,8 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
     ),
 };
 
-const histogramFrameBucketMinFieldName = 'BucketMin';
-const histogramFrameBucketMaxFieldName = 'BucketMax';
+export const histogramFrameBucketMinFieldName = 'BucketMin';
+export const histogramFrameBucketMaxFieldName = 'BucketMax';
 
 export interface HistogramFields {
   bucketMin: Field;
@@ -89,7 +90,7 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
-export function buildHistogram(frames: DataFrame[], bucketSize?: number): HistogramFields {
+export function buildHistogram(frames: DataFrame[], bucketSize?: number, bucketOffset = 0): HistogramFields {
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize) {
     let min = Infinity,
@@ -118,14 +119,14 @@ export function buildHistogram(frames: DataFrame[], bucketSize?: number): Histog
     }
   }
 
-  const histRound = (v: number) => incrRoundDn(v, bucketSize!);
+  const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
 
   let histograms: AlignedData[] = [];
 
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        let fieldHist = histogram(field.values.toArray(), histRound, histFilter, histSort) as AlignedData;
+        let fieldHist = histogram(field.values.toArray(), getBucket, histFilter, histSort) as AlignedData;
         histograms.push(fieldHist);
       }
     }
@@ -194,8 +195,8 @@ export function incrRoundDn(num: number, incr: number) {
 
 export function histogram(
   vals: number[],
-  round: (v: number) => number,
-  filter?: any[] | null,
+  getBucket: (v: number) => number,
+  filterOut?: any[] | null,
   sort?: ((a: any, b: any) => number) | null
 ) {
   let hist = new Map();
@@ -204,7 +205,7 @@ export function histogram(
     let v = vals[i];
 
     if (v != null) {
-      v = round(v);
+      v = getBucket(v);
     }
 
     let entry = hist.get(v);
@@ -216,7 +217,7 @@ export function histogram(
     }
   }
 
-  filter && filter.forEach((v) => hist.delete(v));
+  filterOut && filterOut.forEach((v) => hist.delete(v));
 
   let bins = [...hist.values()];
 

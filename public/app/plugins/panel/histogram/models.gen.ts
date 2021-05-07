@@ -9,6 +9,7 @@ export const modelVersion = Object.freeze([1, 0]);
 
 export interface PanelOptions {
   bucketSize?: number;
+  bucketOffset?: number;
 }
 
 export const defaultPanelOptions: PanelOptions = {};

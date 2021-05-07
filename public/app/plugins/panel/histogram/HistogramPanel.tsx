@@ -18,8 +18,8 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
       }
     }
 
-    return toFrame(buildHistogram(data.series, options.bucketSize));
-  }, [data.series, options.bucketSize]);
+    return toFrame(buildHistogram(data.series, options.bucketSize, options.bucketOffset));
+  }, [data.series, options.bucketSize, options.bucketOffset]);
 
   if (!histogram || !histogram.fields.length) {
     return (

@@ -5,14 +5,22 @@ import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './model
 
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
-    builder.addNumberInput({
-      path: 'bucketSize',
-      name: 'Bucket size',
-      //category: ['Axis'],
-      settings: {
-        placeholder: 'Auto',
-      },
-    });
+    builder
+      .addNumberInput({
+        path: 'bucketSize',
+        name: 'Bucket size',
+        settings: {
+          placeholder: 'Auto',
+        },
+      })
+      .addNumberInput({
+        path: 'bucketOffset',
+        name: 'Bucket offset',
+        settings: {
+          placeholder: '0',
+        },
+        defaultValue: 0,
+      });
   })
   .useFieldConfig({
     standardOptions: {
