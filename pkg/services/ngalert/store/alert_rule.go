@@ -40,6 +40,7 @@ type RuleStore interface {
 	DeleteAlertRuleByUID(orgID int64, ruleUID string) error
 	DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([]string, error)
 	DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) ([]string, error)
+	DeleteAlertInstancesByRuleUID(orgID int64, ruleUID string) error
 	GetAlertRuleByUID(*ngmodels.GetAlertRuleByUIDQuery) error
 	GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery) error
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
@@ -155,6 +156,17 @@ func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ru
 	})
 
 	return ruleUIDs, err
+}
+
+// DeleteAlertInstanceByRuleUID is a handler for deleting alert instances by alert rule UID when a rule has been updated
+func (st DBstore) DeleteAlertInstancesByRuleUID(orgID int64, ruleUID string) error {
+	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", orgID, ruleUID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
@@ -505,6 +517,15 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 
 		if err := st.UpsertAlertRules(upsertRules); err != nil {
 			return err
+		}
+
+		// delete instances for rules that will not be removed
+		for _, rule := range existingGroupRules {
+			if _, ok := existingGroupRulesUIDs[rule.UID]; !ok {
+				if err := st.DeleteAlertInstancesByRuleUID(cmd.OrgID, rule.UID); err != nil {
+					return err
+				}
+			}
 		}
 
 		// delete the remaining rules
