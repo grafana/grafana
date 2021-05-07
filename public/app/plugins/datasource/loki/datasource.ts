@@ -275,7 +275,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => ({
         ...query,
-        datasource: this.name,
+        datasource: { uid: this.uid },
         expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
       }));
     }

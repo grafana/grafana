@@ -1,4 +1,4 @@
-import { ScopedVars, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { ScopedVars, DataSourceApi, DataSourceInstanceSettings, DatasourceRef } from '@grafana/data';
 
 /**
  * This is the entry point for communicating with a datasource that is added as
@@ -13,7 +13,7 @@ export interface DataSourceSrv {
    * @param name - name of the datasource plugin you want to use.
    * @param scopedVars - variables used to interpolate a templated passed as name.
    */
-  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
+  get(name?: string | null | DatasourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
    * Get a list of data sources
@@ -23,7 +23,7 @@ export interface DataSourceSrv {
   /**
    * Get settings and plugin metadata by name or uid
    */
-  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined;
+  getInstanceSettings(nameOrUid: string | null | undefined | DatasourceRef): DataSourceInstanceSettings | undefined;
 }
 
 /** @public */

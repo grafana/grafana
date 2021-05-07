@@ -377,7 +377,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const expandedQueries = queries.map(
       (query): ElasticsearchQuery => ({
         ...query,
-        datasource: this.name,
+        datasource: { uid: this.uid },
         query: this.interpolateLuceneQuery(query.query || '', scopedVars),
         bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
       })

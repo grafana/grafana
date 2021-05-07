@@ -33,7 +33,9 @@ describe('getAlertingValidationMessage', () => {
       ];
       const transformations: DataTransformerConfig[] = [];
 
-      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, datasource.name);
+      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, {
+        uid: datasource.uid,
+      });
 
       expect(result).toBe('');
       expect(getMock).toHaveBeenCalledTimes(2);
@@ -73,7 +75,9 @@ describe('getAlertingValidationMessage', () => {
       ];
       const transformations: DataTransformerConfig[] = [];
 
-      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, datasource.name);
+      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, {
+        uid: datasource.uid,
+      });
 
       expect(result).toBe('');
     });
@@ -100,7 +104,9 @@ describe('getAlertingValidationMessage', () => {
       ];
       const transformations: DataTransformerConfig[] = [];
 
-      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, datasource.name);
+      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, {
+        uid: datasource.uid,
+      });
 
       expect(result).toBe('Template variables are not supported in alert queries');
       expect(getMock).toHaveBeenCalledTimes(2);
@@ -129,7 +135,9 @@ describe('getAlertingValidationMessage', () => {
       ];
       const transformations: DataTransformerConfig[] = [];
 
-      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, datasource.name);
+      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, {
+        uid: datasource.uid,
+      });
 
       expect(result).toBe('The datasource does not support alerting queries');
       expect(getMock).toHaveBeenCalledTimes(2);
@@ -158,7 +166,9 @@ describe('getAlertingValidationMessage', () => {
       ];
       const transformations: DataTransformerConfig[] = [{ id: 'A', options: null }];
 
-      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, datasource.name);
+      const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, {
+        uid: datasource.uid,
+      });
 
       expect(result).toBe('Transformations are not supported in alert queries');
       expect(getMock).toHaveBeenCalledTimes(0);

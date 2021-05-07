@@ -9,6 +9,7 @@ import { DashboardModel } from './DashboardModel';
 import {
   DataLink,
   DataLinkBuiltInVars,
+  DatasourceRef,
   PanelPlugin,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
@@ -30,6 +31,8 @@ import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -45,7 +48,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 29;
+    this.dashboard.schemaVersion = 30;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -610,6 +613,42 @@ export class DashboardMigrator {
       }
     }
 
+    // Replace datasource name with reference, uid and type
+    if (oldVersion < 30) {
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.type !== 'query') {
+          continue;
+        }
+        console.log('TODO: MIGRATE variable query...', variable);
+      }
+
+      // Mutate panel models
+      for (const panel of this.dashboard.panels) {
+        let name = (panel as any).datasource as string;
+        if (!name) {
+          panel.datasource = null; // use default
+        } else if (name === MIXED_DATASOURCE_NAME) {
+          panel.datasource = { type: MIXED_DATASOURCE_NAME };
+          for (const target of panel.targets) {
+            name = (target as any).datasource as string;
+            panel.datasource = migrateDatasourceNameToRef(name);
+          }
+          continue; // do not cleanup targets
+        } else {
+          panel.datasource = migrateDatasourceNameToRef(name);
+        }
+
+        // cleanup query datasource references
+        if (!panel.targets) {
+          panel.targets = [];
+        } else {
+          for (const target of panel.targets) {
+            delete target.datasource;
+          }
+        }
+      }
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -884,4 +923,15 @@ function migrateSinglestat(panel: PanelModel) {
     statPanelPlugin.meta = config.panels['stat'];
     panel.changePlugin(statPanelPlugin);
   }
+}
+
+function migrateDatasourceNameToRef(name: string): DatasourceRef | null {
+  if (!name || name === 'default') {
+    return null;
+  }
+  const ds = getDataSourceSrv().getInstanceSettings(name);
+  if (!ds) {
+    return { uid: name }; // not found
+  }
+  return { type: ds.meta.id, uid: ds.uid };
 }

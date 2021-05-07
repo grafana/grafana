@@ -734,7 +734,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: { uid: this.uid },
           expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
         };
         return expandedQuery;

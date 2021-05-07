@@ -21,6 +21,7 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
+  DatasourceRef,
   DataTransformerConfig,
   LoadingState,
   PanelData,
@@ -37,7 +38,7 @@ export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: string | DataSourceApi<TQuery, TOptions> | null;
+  datasource: DatasourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
@@ -216,7 +217,7 @@ export class PanelQueryRunner {
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
-          query.datasource = ds.name;
+          query.datasource = { uid: ds.uid };
         }
         return query;
       });
@@ -312,7 +313,7 @@ export class PanelQueryRunner {
 }
 
 async function getDataSource(
-  datasource: string | DataSourceApi | null,
+  datasource: DatasourceRef | string | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
   if (datasource && (datasource as any).query) {

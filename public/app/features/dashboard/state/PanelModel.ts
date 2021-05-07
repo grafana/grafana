@@ -17,6 +17,8 @@ import {
   PanelPluginDataSupport,
   ScopedVars,
   urlUtil,
+  PanelModel as IPanelModel,
+  DatasourceRef,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
@@ -122,7 +124,7 @@ const defaults: any = {
   title: '',
 };
 
-export class PanelModel implements DataConfigSource {
+export class PanelModel implements DataConfigSource, IPanelModel {
   /* persisted id, used in URL to identify a panel */
   id!: number;
   editSourceId?: number;
@@ -142,7 +144,7 @@ export class PanelModel implements DataConfigSource {
   panels?: any;
   declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: string | null = null;
+  datasource: DatasourceRef | null;
   thresholds?: any;
   pluginVersion?: string;
 
@@ -415,7 +417,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateQueries(options: QueryGroupOptions) {
-    this.datasource = options.dataSource.default ? null : options.dataSource.name!;
+    this.datasource = options.dataSource.default ? null : { uid: options.dataSource.uid };
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;

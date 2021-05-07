@@ -55,7 +55,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           if (previous?.type === dataSource.type) {
             return {
               ...item,
-              datasource: dataSource.name,
+              datasource: { uid: dataSource.uid },
             };
           }
         }
@@ -63,7 +63,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         return {
           refId: item.refId,
           hide: item.hide,
-          datasource: dataSource.name,
+          datasource: { uid: dataSource.uid },
         };
       })
     );

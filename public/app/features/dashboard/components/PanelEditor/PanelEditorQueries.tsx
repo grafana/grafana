@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { PanelModel } from '../../state';
 import { getLocationSrv } from '@grafana/runtime';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 import { DataQuery } from '@grafana/data';
 
 interface Props {
@@ -18,10 +18,17 @@ export class PanelEditorQueries extends PureComponent<Props> {
   }
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
+    const dataSource: QueryGroupDataSource = panel.datasource?.uid
+      ? {
+          default: false,
+          uid: panel.datasource?.uid,
+        }
+      : {
+          default: true,
+        };
+
     return {
-      dataSource: {
-        name: panel.datasource,
-      },
+      dataSource,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,

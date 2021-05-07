@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
 
-import { DataQuery, QueryEditorProps } from './datasource';
+import { QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
+import { DataQuery } from './query';
 
 /**
  * This JSON object is stored in the dashboard json model.

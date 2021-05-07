@@ -151,7 +151,7 @@ const getDefaultExpression = (refId: string): GrafanaQuery => {
     refId,
     hide: false,
     type: ExpressionQueryType.classic,
-    datasource: ExpressionDatasourceID,
+    datasource: { type: ExpressionDatasourceID },
     conditions: [
       {
         type: 'query',

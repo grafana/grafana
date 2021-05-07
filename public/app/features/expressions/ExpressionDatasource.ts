@@ -7,7 +7,7 @@ import { DataSourceWithBackend } from '@grafana/runtime';
  * This is a singleton instance that just pretends to be a DataSource
  */
 export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQuery> {
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  constructor(public instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
@@ -19,7 +19,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     return {
       refId: '--', // Replaced with query
       type: query?.type ?? ExpressionQueryType.math,
-      datasource: ExpressionDatasourceID,
+      datasource: { type: ExpressionDatasourceID },
       conditions: query?.conditions ?? undefined,
     };
   }

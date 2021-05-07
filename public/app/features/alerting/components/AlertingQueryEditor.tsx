@@ -75,7 +75,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
         datasourceUid: defaultDataSource.uid,
         model: {
           refId: '',
-          datasource: defaultDataSource.name,
+          datasource: { uid: defaultDataSource.uid },
         },
       })
     );

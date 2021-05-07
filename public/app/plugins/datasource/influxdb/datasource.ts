@@ -271,7 +271,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: { uid: this.uid },
           measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
           policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
         };
