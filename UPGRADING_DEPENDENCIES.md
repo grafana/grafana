@@ -68,7 +68,7 @@ Our builds run on CircleCI through our build script.
 
 The main build step (in CircleCI) is built using a custom build container that comes pre-baked with some of the necessary dependencies.
 
-Link: [grafana/build-container](https://github.com/grafana/grafana/tree/master/scripts/build/ci-build)
+Link: [grafana/build-container](https://github.com/grafana/grafana/tree/main/scripts/build/ci-build)
 
 #### Dependencies
 
@@ -79,7 +79,7 @@ Link: [grafana/build-container](https://github.com/grafana/grafana/tree/master/s
 
 ### Appveyor
 
-Master and release builds trigger test runs on Appveyors build environment so that tests will run on Windows.
+Main and release builds trigger test runs on Appveyors build environment so that tests will run on Windows.
 
 #### Files:
 

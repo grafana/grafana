@@ -257,7 +257,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           )}
           <div className={styles.buttonGroup}>
             <Button type="submit">Save policy</Button>
-            <Button onClick={onCancel} type="button" variant="secondary">
+            <Button onClick={onCancel} fill="outline" type="button" variant="secondary">
               Cancel
             </Button>
           </div>
