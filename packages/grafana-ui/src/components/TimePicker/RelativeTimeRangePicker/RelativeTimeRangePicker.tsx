@@ -21,7 +21,7 @@ export interface RelativeTimeRangePickerProps {
 
 const bodyHeight = 217;
 const errorHeight = 30.83;
-const errorMessage = 'Please enter a value in the relative time format.';
+const errorMessage = 'Value not in relative time format.';
 
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
   const { timeRange, onChange } = props;
@@ -142,9 +142,9 @@ const getStyles = (pickerHeight = bodyHeight) => (theme: GrafanaTheme2) => {
     `,
     body: css`
       display: flex;
+      height: ${pickerHeight}px;
     `,
     leftSide: css`
-      max-height: ${pickerHeight}px !important;
       width: 50% !important;
       border-right: 1px solid ${theme.colors.border.medium};
     `,

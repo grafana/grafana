@@ -57,5 +57,20 @@ const formatRelativeWithUnit = (fromWithUnit: string, toWithUnit: string | undef
   }
 
   const [, amount, unit] = match;
-  return `Last ${amount} minutes`;
+  const parsed = parseInt(amount, 10);
+
+  if (!isNaN(parsed)) {
+    return `Last ${amount} ${displayUnits[unit]}${parsed > 1 ? 's' : ''}`;
+  }
+  return `Last ${amount} ${displayUnits[unit]}`;
+};
+
+const displayUnits: Record<string, string> = {
+  s: 'second',
+  m: 'minute',
+  h: 'hour',
+  y: 'year',
+  w: 'week',
+  d: 'day',
+  ms: 'millisecond',
 };
