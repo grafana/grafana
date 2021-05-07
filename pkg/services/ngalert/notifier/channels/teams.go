@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
@@ -75,7 +76,8 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"name":     "View Rule",
 				"targets": []map[string]interface{}{
 					{
-						"os": "default", "uri": "", // TODO: add the rule URL here.
+						"os":  "default",
+						"uri": path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
 					},
 				},
 			},

@@ -40,7 +40,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
   }
 }
 
-export async function updateAlertmanagerConfig(
+export async function updateAlertManagerConfig(
   alertManagerSourceName: string,
   config: AlertManagerCortexConfig
 ): Promise<void> {
@@ -70,12 +70,12 @@ export async function fetchSilences(alertManagerSourceName: string): Promise<Sil
 export async function createOrUpdateSilence(
   alertmanagerSourceName: string,
   payload: SilenceCreatePayload
-): Promise<string> {
+): Promise<Silence> {
   const result = await getBackendSrv().post(
     `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
     payload
   );
-  return result.data.silenceID;
+  return result.data;
 }
 
 export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
