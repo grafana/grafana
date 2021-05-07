@@ -85,6 +85,13 @@ func getTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *p
 	}
 
 	switch authType {
+	case "azure":
+		if tokenAuth == nil {
+			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
+		}
+		provider := newAzureAccessTokenProvider(ds, pluginRoute, tokenAuth)
+		return provider, nil
+
 	case "gce":
 		if jwtTokenAuth == nil {
 			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
