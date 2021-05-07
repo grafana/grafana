@@ -246,7 +246,6 @@ export { preparePlotFrame } from './GraphNG/utils';
 export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
-export { Histogram } from './Histogram/Histogram';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
