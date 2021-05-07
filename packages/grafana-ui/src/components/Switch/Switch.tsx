@@ -12,7 +12,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, disabled, onChange, id, 'aria-label': ariaLabel, ...inputProps }, ref) => {
+  ({ value, checked, disabled, onChange, id, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
@@ -34,7 +34,7 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} aria-label={ariaLabel} />
+        <label htmlFor={switchIdRef.current} />
       </div>
     );
   }
