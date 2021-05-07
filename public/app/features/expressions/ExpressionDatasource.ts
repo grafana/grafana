@@ -19,7 +19,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     return {
       refId: '--', // Replaced with query
       type: query?.type ?? ExpressionQueryType.math,
-      datasource: { type: ExpressionDatasourceID },
+      datasource: { uid: ExpressionDatasourceID },
       conditions: query?.conditions ?? undefined,
     };
   }
