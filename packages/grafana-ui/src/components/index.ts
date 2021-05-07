@@ -247,6 +247,7 @@ export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
-export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
+export { GraphNGLegendEvent } from './GraphNG/types';
+export * from './PanelChrome/types';
 export * from './NodeGraph';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
