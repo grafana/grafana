@@ -7,10 +7,43 @@ import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
-function getStub(arg: string) {
-  return Promise.resolve(stubs[arg || 'gfdb']);
-}
+const stubs = [
+  mockDataSource({
+    name: 'gfdb',
+    meta: { info: { version: '1.2.1' }, name: 'TestDB' } as any,
+  }),
+  mockDataSource({
+    name: 'other',
+    meta: { uid: 'other', info: { version: '1.2.1' }, name: 'OtherDB' } as any,
+  }),
+  mockDataSource({
+    name: 'other2',
+    meta: { uid: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' } as any,
+  }),
+  mockDataSource({
+    name: 'mixed',
+    meta: {
+      info: { version: '1.2.1' },
+      name: 'Mixed',
+      builtIn: true,
+    } as any,
+  }),
+  mockDataSource({
+    name: '-- Grafana --',
+    meta: {
+      info: { version: '1.2.1' },
+      name: 'grafana',
+      builtIn: true,
+    } as any,
+  }),
+].map((v) => {
+  v.uid = v.name;
+  return v;
+});
+
+const mockDsSrv = new MockDataSourceSrv(stubs);
 
 jest.mock('app/core/store', () => {
   return {
@@ -21,9 +54,7 @@ jest.mock('app/core/store', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getDataSourceSrv: () => ({
-    get: jest.fn((arg) => getStub(arg)),
-  }),
+  getDataSourceSrv: () => mockDsSrv,
   config: {
     buildInfo: {},
     panels: {},
@@ -237,40 +268,3 @@ describe('given dashboard with repeated panels', () => {
     expect(require.id).toBe('other2');
   });
 });
-
-// Stub responses
-const stubs: { [key: string]: {} } = {};
-stubs['gfdb'] = {
-  name: 'gfdb',
-  meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
-};
-
-stubs['other'] = {
-  name: 'other',
-  meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
-};
-
-stubs['other2'] = {
-  name: 'other2',
-  meta: { id: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' },
-};
-
-stubs['-- Mixed --'] = {
-  name: 'mixed',
-  meta: {
-    id: 'mixed',
-    info: { version: '1.2.1' },
-    name: 'Mixed',
-    builtIn: true,
-  },
-};
-
-stubs['-- Grafana --'] = {
-  name: '-- Grafana --',
-  meta: {
-    id: 'grafana',
-    info: { version: '1.2.1' },
-    name: 'grafana',
-    builtIn: true,
-  },
-};

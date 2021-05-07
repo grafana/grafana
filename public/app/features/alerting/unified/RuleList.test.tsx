@@ -60,6 +60,7 @@ const dataSources = {
     type: DataSourceType.Prometheus,
   }),
 };
+const dataSourceList = [dataSources.prom, dataSources.loki, dataSources.promBroken];
 
 const ui = {
   ruleGroup: byTestId('rule-group'),
@@ -79,7 +80,7 @@ describe('RuleList', () => {
   it('load & show rule groups from multiple cloud data sources', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    setDataSourceSrv(new MockDataSourceSrv(dataSourceList));
 
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === dataSources.prom.name) {
@@ -160,7 +161,7 @@ describe('RuleList', () => {
 
   it('expand rule group, rule and alert details', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
-    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+    setDataSourceSrv(new MockDataSourceSrv([dataSources.prom]));
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         return Promise.resolve([]);

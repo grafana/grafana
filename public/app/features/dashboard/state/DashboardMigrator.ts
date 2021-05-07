@@ -619,7 +619,10 @@ export class DashboardMigrator {
         if (variable.type !== 'query') {
           continue;
         }
-        console.log('TODO: MIGRATE variable query...', variable);
+        let name = (variable as any).datasource as string;
+        if (name) {
+          variable.datasource = migrateDatasourceNameToRef(name);
+        }
       }
 
       // Mutate panel models

@@ -1,6 +1,5 @@
 import { FieldConfigSource } from './fieldOverrides';
 import { DataQuery, DatasourceRef } from './query';
-import { ScopedVars } from './ScopedVars';
 
 export type ModelVersion = [number, number];
 
@@ -25,7 +24,4 @@ export interface PanelModel<TOptions = any> {
 
   /** The queries in a panel */
   targets?: DataQuery[];
-
-  // RUNTIME!!!! (not saved in panel model)
-  scopedVars?: ScopedVars;
 }
