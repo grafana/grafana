@@ -214,4 +214,103 @@ describe('Streaming JSON', () => {
     const copy = ({ ...stream } as any) as DataFrame;
     expect(copy.length).toEqual(2);
   });
+
+  describe('streaming labels column', () => {
+    const stream = new StreamingDataFrame(
+      {
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'labels', type: FieldType.string },
+            { name: 'speed', type: FieldType.number },
+          ],
+        },
+      },
+      {
+        maxLength: 4,
+      }
+    );
+
+    stream.push({
+      data: {
+        values: [
+          [100, 100],
+          ['sensor=A', 'sensor=B'],
+          [10, 15],
+        ],
+      },
+    });
+
+    stream.push({
+      data: {
+        values: [
+          [200, 200],
+          ['sensor=B', 'sensor=C'],
+          [20, 25],
+        ],
+      },
+    });
+
+    stream.push({
+      data: {
+        values: [
+          [300, 400],
+          ['sensor=A', 'sensor=C'],
+          [30, 40],
+        ],
+      },
+    });
+
+    expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, value: f.values.buffer })))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "labels": undefined,
+          "name": "time",
+          "value": Array [
+            100,
+            200,
+            300,
+            400,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "A",
+          },
+          "name": "speed",
+          "value": Array [
+            10,
+            undefined,
+            30,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "B",
+          },
+          "name": "speed",
+          "value": Array [
+            15,
+            20,
+            undefined,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "C",
+          },
+          "name": "speed",
+          "value": Array [
+            undefined,
+            25,
+            undefined,
+            40,
+          ],
+        },
+      ]
+    `);
+  });
 });
