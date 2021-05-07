@@ -132,6 +132,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
+        type: newSettings.meta.id,
         default: newSettings.isDefault,
       },
     });
@@ -193,7 +194,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
-              current={options.dataSource.name}
+              current={options.dataSource}
               metrics={true}
               mixed={true}
               dashboard={true}

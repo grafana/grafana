@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
-import { DataSourceInstanceSettings, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, DatasourceRef, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
@@ -14,7 +14,7 @@ import { getDataSourceSrv } from '../services/dataSourceSrv';
  */
 export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
-  current: string | null;
+  current: DatasourceRef | string | null; // uid
   hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;
@@ -83,7 +83,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
   private getCurrentValue(): SelectableValue<string> | undefined {
     const { current, hideTextValue, noDefault } = this.props;
-
     if (!current && noDefault) {
       return;
     }
@@ -93,16 +92,23 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     if (ds) {
       return {
         label: ds.name.substr(0, 37),
-        value: ds.name,
+        value: ds.uid,
         imgUrl: ds.meta.info.logos.small,
         hideText: hideTextValue,
         meta: ds.meta,
       };
     }
 
+    let uid = '?';
+    if (typeof current === 'string') {
+      uid = current as string;
+    } else {
+      uid = (current as any).uid;
+    }
+
     return {
-      label: (current ?? 'no name') + ' - not found',
-      value: current === null ? undefined : current,
+      label: (uid ?? 'no name') + ' - not found',
+      value: uid ?? undefined,
       imgUrl: '',
       hideText: hideTextValue,
     };

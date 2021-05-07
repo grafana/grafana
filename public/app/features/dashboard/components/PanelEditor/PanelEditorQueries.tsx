@@ -21,7 +21,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
     const dataSource: QueryGroupDataSource = panel.datasource?.uid
       ? {
           default: false,
-          uid: panel.datasource?.uid,
+          ...panel.datasource,
         }
       : {
           default: true,
@@ -54,8 +54,8 @@ export class PanelEditorQueries extends PureComponent<Props> {
   onOptionsChange = (options: QueryGroupOptions) => {
     const { panel } = this.props;
 
-    const newDataSourceName = options.dataSource.default ? null : options.dataSource.name!;
-    const dataSourceChanged = newDataSourceName !== panel.datasource;
+    const newDataSourceID = options.dataSource.default ? null : options.dataSource.uid!;
+    const dataSourceChanged = newDataSourceID !== panel.datasource?.uid;
     panel.updateQueries(options);
 
     if (dataSourceChanged) {

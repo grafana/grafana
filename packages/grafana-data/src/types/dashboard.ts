@@ -1,6 +1,7 @@
 import { FieldConfigSource } from './fieldOverrides';
 import { DataQuery, DatasourceRef } from './query';
 
+/** The scuemata version for the panel plugin */
 export type ModelVersion = [number, number];
 
 export interface PanelModel<TOptions = any> {

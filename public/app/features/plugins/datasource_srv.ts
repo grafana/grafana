@@ -61,6 +61,8 @@ export class DatasourceSrv implements DataSourceService {
     // Preload expressions
     this.datasources[ExpressionDatasourceID] = expressionDatasource as any;
     this.datasources[ExpressionDatasourceUID] = expressionDatasource as any;
+    this.settingsMapByUid[ExpressionDatasourceID] = expressionInstanceSettings;
+    this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
   }
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
@@ -80,10 +82,6 @@ export class DatasourceSrv implements DataSourceService {
         }
       }
       return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
-    }
-
-    if (nameOrUid === ExpressionDatasourceID || nameOrUid === ExpressionDatasourceUID) {
-      return expressionInstanceSettings;
     }
 
     // Complex logic to support template variable data source names

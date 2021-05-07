@@ -417,7 +417,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   updateQueries(options: QueryGroupOptions) {
-    this.datasource = options.dataSource.default ? null : { uid: options.dataSource.uid };
+    const { dataSource } = options;
+    this.datasource = dataSource.default
+      ? null
+      : {
+          uid: dataSource.uid,
+          type: dataSource.type,
+        };
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;
