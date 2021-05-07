@@ -116,7 +116,11 @@ func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[st
 			app.DefaultNavUrl = cfg.AppSubURL + "/plugins/" + app.Id + "/page/" + include.Slug
 		}
 		if include.Type == "dashboard" && include.DefaultNav {
-			app.DefaultNavUrl = cfg.AppSubURL + "/dashboard/db/" + include.Slug
+			if len(include.Uid) > 0 {
+				app.DefaultNavUrl = cfg.AppSubURL + "/d/" + include.Uid
+			} else {
+				app.DefaultNavUrl = cfg.AppSubURL + "/dashboard/db/" + include.Slug
+			}
 		}
 	}
 

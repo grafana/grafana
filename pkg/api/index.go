@@ -109,8 +109,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
+				var url string
+				if len(include.Uid) > 0 {
+					url = hs.Cfg.AppSubURL + "/d/" + include.Uid
+				} else {
+					url = hs.Cfg.AppSubURL + "/dashboard/db/" + include.Slug
+				}
 				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + "/dashboard/db/" + include.Slug,
+					Url:  url,
 					Text: include.Name,
 				}
 				appLink.Children = append(appLink.Children, link)
