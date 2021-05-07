@@ -1,26 +1,26 @@
 import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
-import { Options } from './types';
+import { PanelOptions, defaultPanelOptions } from './models.gen';
 import { LogsPanel } from './LogsPanel';
 
-export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((builder) => {
+export const plugin = new PanelPlugin<PanelOptions>(LogsPanel).setPanelOptions((builder) => {
   builder
     .addBooleanSwitch({
       path: 'showTime',
       name: 'Time',
       description: '',
-      defaultValue: false,
+      defaultValue: defaultPanelOptions.showTime,
     })
     .addBooleanSwitch({
       path: 'showLabels',
       name: 'Unique labels',
       description: '',
-      defaultValue: false,
+      defaultValue: defaultPanelOptions.showLabels,
     })
     .addBooleanSwitch({
       path: 'wrapLogMessage',
       name: 'Wrap lines',
       description: '',
-      defaultValue: false,
+      defaultValue: defaultPanelOptions.wrapLogMessage,
     })
     .addRadio({
       path: 'dedupStrategy',
@@ -46,7 +46,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
           },
         ],
       },
-      defaultValue: LogsDedupStrategy.none,
+      defaultValue: defaultPanelOptions.dedupStrategy,
     })
     .addRadio({
       path: 'sortOrder',
@@ -58,6 +58,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
           { value: LogsSortOrder.Ascending, label: 'Ascending' },
         ],
       },
-      defaultValue: LogsSortOrder.Descending,
+      defaultValue: defaultPanelOptions.sortOrder,
     });
 });

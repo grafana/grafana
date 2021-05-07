@@ -3,6 +3,8 @@ import { GraphSeriesXY } from './graph';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange } from './time';
 
+export * from './logs.gen';
+
 /**
  * Mapping of log level abbreviation to canonical log level.
  * Supported levels are reduce to limit color variation.
@@ -35,12 +37,6 @@ export enum LogsMetaKind {
   LabelsMap,
   Error,
 }
-
-export enum LogsSortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-}
-
 export interface LogsMetaItem {
   label: string;
   value: string | number | Labels;
@@ -99,14 +95,6 @@ export interface LogLabelStatsModel {
   proportion: number;
   value: string;
 }
-
-export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
-}
-
 export interface LogsParser {
   /**
    * Value-agnostic matcher for a field label.
