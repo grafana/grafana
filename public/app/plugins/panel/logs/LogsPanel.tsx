@@ -1,10 +1,10 @@
 import React from 'react';
 import { LogRows, CustomScrollbar } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
-import { Options } from './types';
+import { PanelOptions } from './models.gen';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 
-interface LogsPanelProps extends PanelProps<Options> {}
+interface LogsPanelProps extends PanelProps<PanelOptions> {}
 
 export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
