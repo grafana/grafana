@@ -57,7 +57,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
 
   const textColor = theme.colors.text.secondary;
   const textColorHover = theme.colors.text.primary;
-  const bg = theme.colors.background.primary;
   // remove the group inner padding (set on RadioButtonGroup)
   const labelHeight = height * theme.spacing.gridSize - 4 - 2;
 
@@ -99,7 +98,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       color: ${textColor};
       padding: ${theme.spacing(0, padding)};
       border-radius: ${theme.shape.borderRadius()};
-      background: ${bg};
+      background: transparent;
       cursor: pointer;
       z-index: 1;
       flex: ${fullWidth ? `1 0 0` : 'none'};

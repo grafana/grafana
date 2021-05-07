@@ -27,8 +27,10 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
 import { TableCell } from './TableCell';
 import { useStyles2 } from '../../themes';
+import { selectors } from '@grafana/e2e-selectors';
 
 const COLUMN_MIN_WIDTH = 150;
+const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
 export interface Props {
   ariaLabel?: string;
@@ -202,7 +204,12 @@ export const Table: FC<Props> = memo((props: Props) => {
               {headerGroups.map((headerGroup: HeaderGroup) => {
                 const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
                 return (
-                  <div className={tableStyles.thead} {...headerGroupProps} key={key}>
+                  <div
+                    className={tableStyles.thead}
+                    {...headerGroupProps}
+                    key={key}
+                    aria-label={e2eSelectorsTable.header}
+                  >
                     {headerGroup.headers.map((column: Column, index: number) =>
                       renderHeaderCell(column, tableStyles, data.fields[index])
                     )}

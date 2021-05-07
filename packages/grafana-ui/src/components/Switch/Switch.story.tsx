@@ -37,6 +37,12 @@ export const Controlled = () => {
           </InlineField>
         </InlineFieldRow>
       </div>
+      <div style={{ marginBottom: '32px' }}>
+        <div>just inline switch with show label</div>
+        <span>
+          <InlineSwitch label="Raw data" showLabel={true} value={checked} disabled={disabled} onChange={onChange} />
+        </span>
+      </div>
     </div>
   );
 };

@@ -15,7 +15,7 @@ export interface PanelRendererProps<P extends object = any, F extends object = a
   title: string;
   fieldConfig?: FieldConfigSource<F>;
   options?: P;
-  onOptionsChange: (options: P) => void;
+  onOptionsChange?: (options: P) => void;
   onChangeTimeRange?: (timeRange: AbsoluteTimeRange) => void;
   timeZone?: string;
   width: number;
