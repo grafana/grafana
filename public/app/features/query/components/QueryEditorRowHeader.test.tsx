@@ -3,13 +3,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+
+const mockSvr = new MockDataSourceSrv([mockDataSource({})]);
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
-    getDataSourceSrv: () => ({
-      getInstanceSettings: jest.fn(),
-      getList: jest.fn().mockReturnValue([]),
-    }),
+    getDataSourceSrv: () => mockSvr,
   };
 });
 
