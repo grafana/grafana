@@ -10,7 +10,7 @@ interface Props {
   panel: PanelModel;
 }
 
-export function RawDataViewer({ width, height, panel }: Props) {
+export function PanelEditorTableView({ width, height, panel }: Props) {
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   if (!data) {

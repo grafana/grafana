@@ -47,6 +47,9 @@ export const Components = {
       Text: {
         container: () => '.markdown-html',
       },
+      Table: {
+        header: 'table header',
+      },
     },
   },
   VizLegend: {
@@ -77,6 +80,7 @@ export const Components = {
     applyButton: 'panel editor apply',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
+    toggleTableView: 'toggle-table-view',
   },
   PanelInspector: {
     Data: {

@@ -61,7 +61,7 @@ import {
   saveAndRefreshLibraryPanel,
 } from '../../../library-panels/utils';
 import { notifyApp } from '../../../../core/actions';
-import { RawDataViewer } from './RawDataViewer';
+import { PanelEditorTableView } from './PanelEditorTableView';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -247,7 +247,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               }
 
               if (tableViewEnabled) {
-                return <RawDataViewer width={width} height={height} panel={panel} />;
+                return <PanelEditorTableView width={width} height={height} panel={panel} />;
               }
 
               return (
@@ -317,6 +317,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               id="table-view"
               value={tableViewEnabled}
               onClick={this.onToggleTableView}
+              aria-label={selectors.components.PanelEditor.toggleTableView}
             />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
