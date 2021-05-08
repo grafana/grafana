@@ -6,6 +6,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     options: {
       id: 21,
+      uid: 'z',
       orgId: 1,
       name: 'InfluxDB-3',
       type: 'influxdb',

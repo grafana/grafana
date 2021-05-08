@@ -17,10 +17,10 @@ import { getDataSource } from './state/selectors';
 import { PluginDashboard, StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
+export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 function mapStateToProps(state: StoreState, props: OwnProps) {
-  const dataSourceId = parseInt(props.match.params.id, 10);
+  const dataSourceId = props.match.params.uid;
 
   return {
     navModel: getNavModel(state.navIndex, `datasource-dashboards-${dataSourceId}`),

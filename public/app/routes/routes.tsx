@@ -94,7 +94,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/datasources/edit/:id/',
+      path: '/datasources/edit/:uid/',
       component: SafeDynamicImport(
         () =>
           import(
@@ -103,7 +103,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/datasources/edit/:id/dashboards',
+      path: '/datasources/edit/:uid/dashboards',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/DataSourceDashboards')
       ),

@@ -61,7 +61,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { datasource, query } = this.props;
-    const { id, name } = datasource;
+    const { uid, name } = datasource;
     const { text } = this.state;
 
     const selected = query.data ? options[0] : options[1];
@@ -73,7 +73,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
             {query.data ? (
               <div style={{ alignSelf: 'center' }}>{describeDataFrame(query.data)}</div>
             ) : (
-              <LinkButton variant="link" href={`datasources/edit/${id}/`}>
+              <LinkButton variant="link" href={`datasources/edit/${uid}/`}>
                 {name}: {describeDataFrame(datasource.data)} &nbsp;&nbsp;
                 <Icon name="pen" />
               </LinkButton>

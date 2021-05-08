@@ -19,7 +19,7 @@ export const DataSourcesList: FC<Props> = ({ dataSources, layoutMode }) => {
       {dataSources.map((dataSource, index) => {
         return (
           <li key={dataSource.id}>
-            <Card heading={dataSource.name} href={`datasources/edit/${dataSource.id}`}>
+            <Card heading={dataSource.name} href={`datasources/edit/${dataSource.uid}`}>
               <Card.Figure>
                 <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
               </Card.Figure>
