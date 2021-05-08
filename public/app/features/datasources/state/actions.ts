@@ -41,7 +41,7 @@ export interface TestDataSourceDependencies {
 }
 
 export const initDataSourceSettings = (
-  pageId: number,
+  pageId: string,
   dependencies: InitDataSourceSettingDependencies = {
     loadDataSource,
     getDataSource,
@@ -50,7 +50,7 @@ export const initDataSourceSettings = (
   }
 ): ThunkResult<void> => {
   return async (dispatch: ThunkDispatch, getState) => {
-    if (isNaN(pageId)) {
+    if (!pageId) {
       dispatch(initDataSourceSettingsFailed(new Error('Invalid ID')));
       return;
     }
@@ -111,9 +111,18 @@ export function loadDataSources(): ThunkResult<void> {
   };
 }
 
-export function loadDataSource(id: number): ThunkResult<void> {
+export function loadDataSource(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    const dataSource = (await getBackendSrv().get(`/api/datasources/${id}`)) as DataSourceSettings;
+    // Check if this is an old id format!
+    const id = parseInt(uid, 10);
+    if (id) {
+      const ds = (await getBackendSrv().get(`/api/datasources/${id}`)) as DataSourceSettings;
+      if (ds?.uid) {
+        console.log('TODO... redirect!', ds.uid);
+      }
+    }
+
+    const dataSource = (await getBackendSrv().get(`/api/datasources/uid/${uid}`)) as DataSourceSettings;
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);
 
@@ -141,7 +150,7 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
     }
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
-    locationService.push(`/datasources/edit/${result.id}`);
+    locationService.push(`/datasources/edit/${result.uid}`);
   };
 }
 
@@ -156,9 +165,9 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
 
 export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
+    await getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource);
     await updateFrontendSettings();
-    return dispatch(loadDataSource(dataSource.id));
+    return dispatch(loadDataSource(dataSource.uid));
   };
 }
 
