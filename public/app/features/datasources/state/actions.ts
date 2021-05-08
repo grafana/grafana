@@ -113,12 +113,14 @@ export function loadDataSources(): ThunkResult<void> {
 
 export function loadDataSource(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    // Check if this is an old id format!
-    const id = parseInt(uid, 10);
+    const id = Number(uid); // Try old number format
     if (id) {
       const ds = (await getBackendSrv().get(`/api/datasources/${id}`)) as DataSourceSettings;
       if (ds?.uid) {
-        console.log('TODO... redirect!', ds.uid);
+        console.log('redirect', ds);
+        // Spread current location to persist search params used for navigation
+        locationService.push(`/datasources/edit/${ds.uid}`);
+        return;
       }
     }
 
