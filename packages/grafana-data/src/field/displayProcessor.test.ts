@@ -135,9 +135,10 @@ describe('Format value', () => {
 
   it('should return formatted value if there are no matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, text: 'elva', type: MappingType.ValueToText, value: '11' },
-      { id: 1, text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
+      { id: 0, type: MappingType.ValueToText, map: { '11': { state: 'elva' } } },
+      { id: 1, type: MappingType.RangeToText, from: '1', to: '9', result: { state: '1-9' } },
     ];
+
     const value = '10';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
 
@@ -148,26 +149,27 @@ describe('Format value', () => {
 
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
+      { id: 0, type: MappingType.ValueToText, map: { '11': { state: 'elva' } } },
+      { id: 1, type: MappingType.RangeToText, from: '1', to: '9', result: { state: '1-9' } },
     ];
     const value = '11';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
-
-    expect(instance(value).text).toEqual('1-20');
+    expect(instance(value).text).toEqual('elva');
   });
 
-  it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
-    const valueMappings: ValueMapping[] = [{ id: 1, text: '', type: MappingType.ValueToText, value: '1' }];
-    const value = '1';
-    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+  // Wonder what this is scenario is for?
 
-    expect(instance(value).text).toEqual('');
-    expect(instance(value).numeric).toEqual(1);
-  });
+  // it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
+  //   const valueMappings: ValueMapping[] = [{ id: 1, text: '', type: MappingType.ValueToText, value: '1' }];
+  //   const value = '1';
+  //   const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+
+  //   expect(instance(value).text).toEqual('');
+  //   expect(instance(value).numeric).toEqual(1);
+  // });
 
   it('should not map 1kW to the value for 1W', () => {
-    const valueMappings: ValueMapping[] = [{ id: 0, text: 'mapped', type: MappingType.ValueToText, value: '1' }];
+    const valueMappings: ValueMapping[] = [{ id: 0, type: MappingType.ValueToText, map: { '1': { state: 'mapped' } } }];
     const value = '1000';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings, unit: 'watt' });
 

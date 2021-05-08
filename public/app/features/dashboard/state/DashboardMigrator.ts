@@ -7,12 +7,16 @@ import kbn from 'app/core/utils/kbn';
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
 import {
+  anyToNumber,
   DataLink,
   DataLinkBuiltInVars,
+  MappingType,
   PanelPlugin,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   urlUtil,
+  ValueMap,
+  ValueMapping,
 } from '@grafana/data';
 // Constants
 import {
@@ -45,7 +49,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 29;
+    this.dashboard.schemaVersion = 30;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -610,6 +614,10 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 30) {
+      panelUpgrades.push(upgradeValueMappingsForPanel);
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -884,4 +892,70 @@ function migrateSinglestat(panel: PanelModel) {
     statPanelPlugin.meta = config.panels['stat'];
     panel.changePlugin(statPanelPlugin);
   }
+}
+
+function upgradeValueMappingsForPanel(panel: PanelModel) {
+  const fieldConfig = panel.fieldConfig;
+  if (!fieldConfig) {
+    return;
+  }
+
+  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings);
+}
+
+function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
+  if (!oldMappings) {
+    return undefined;
+  }
+
+  const valueMaps: ValueMap = { id: 0, type: 1, map: {} };
+  const newMappings: ValueMapping[] = [];
+
+  for (const old of oldMappings) {
+    switch (old.type) {
+      case MappingType.ValueToText:
+        if (old.value !== null || old.value !== undefined) {
+          if (isNumeric(old.text)) {
+            valueMaps.map[String(old.value)] = {
+              value: anyToNumber(old.text),
+            };
+          } else {
+            valueMaps.map[String(old.value)] = {
+              state: old.text,
+            };
+          }
+        }
+        break;
+      case MappingType.RangeToText:
+        if (isNumeric(old.text)) {
+          newMappings.push({
+            id: old.id,
+            type: old.type,
+            from: old.from,
+            to: old.to,
+            result: { value: anyToNumber(old.text) },
+          });
+        } else {
+          newMappings.push({
+            id: old.id,
+            type: old.type,
+            from: old.from,
+            to: old.to,
+            result: { state: old.text },
+          });
+        }
+        break;
+    }
+  }
+
+  if (Object.keys(valueMaps.map).length > 0) {
+    newMappings.unshift(valueMaps);
+  }
+
+  return newMappings;
+}
+
+// Ref https://stackoverflow.com/a/58550111
+function isNumeric(num: any) {
+  return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
 }

@@ -5,11 +5,12 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
-import { getMappedValue } from '../utils/valueMappings';
+import { getValueMappingResult } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
+import { anyToNumber } from '../utils/anyToNumber';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -62,20 +63,21 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     let text = toString(value);
-    let numeric = isStringUnit ? NaN : toNumber(value);
+    let numeric = isStringUnit ? NaN : anyToNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
     let shouldFormat = true;
 
     if (mappings && mappings.length > 0) {
-      const mappedValue = getMappedValue(mappings, value);
+      const mappingResult = getValueMappingResult(mappings, value);
 
-      if (mappedValue) {
-        text = mappedValue.text;
-        const v = isStringUnit ? NaN : toNumber(text);
+      if (mappingResult) {
+        if (mappingResult.state !== undefined) {
+          text = mappingResult.state;
+        }
 
-        if (!isNaN(v)) {
-          numeric = v;
+        if (mappingResult.value !== undefined && !isStringUnit) {
+          numeric = mappingResult.value;
         }
 
         shouldFormat = false;
@@ -108,22 +110,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   };
 }
 
-/** Will return any value as a number or NaN */
-function toNumber(value: any): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-  if (value === '' || value === null || value === undefined || Array.isArray(value)) {
-    return NaN; // lodash calls them 0
-  }
-  if (typeof value === 'boolean') {
-    return value ? 1 : 0;
-  }
-  return _toNumber(value);
-}
-
 function toStringProcessor(value: any): DisplayValue {
-  return { text: toString(value), numeric: toNumber(value) };
+  return { text: toString(value), numeric: anyToNumber(value) };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {

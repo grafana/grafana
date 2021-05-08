@@ -1,21 +1,41 @@
+/**
+ * @internal
+ */
 export enum MappingType {
   ValueToText = 1,
   RangeToText = 2,
 }
 
+export interface ValueMappingResult {
+  value?: number;
+  state?: string;
+  color?: string;
+}
+
 interface BaseMap {
   id: number; // this could/should just be the array index
-  text: string; // the final display value
   type: MappingType;
 }
 
+/**
+ * @internal
+ */
 export type ValueMapping = ValueMap | RangeMap;
 
+/**
+ * @internal
+ */
 export interface ValueMap extends BaseMap {
-  value: string;
+  type: MappingType.ValueToText;
+  map: Record<string, ValueMappingResult>;
 }
 
+/**
+ * @internal
+ */
 export interface RangeMap extends BaseMap {
+  type: MappingType.RangeToText;
   from: string;
   to: string;
+  result: ValueMappingResult;
 }

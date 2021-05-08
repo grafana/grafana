@@ -1,104 +1,61 @@
-import { ValueMapping, MappingType, ValueMap, RangeMap } from '../types';
+import { ValueMapping, MappingType, ValueMappingResult } from '../types';
 
 type TimeSeriesValue = string | number | null;
 
-const addValueToTextMappingText = (
-  allValueMappings: ValueMapping[],
-  valueToTextMapping: ValueMap,
+// TODO investigate this sorting and why it's needed, move to migration?
+// const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: TimeSeriesValue) => {
+//   const allFormattedValueMappings = valueMappings.reduce((allValueMappings, valueMapping) => {
+//     if (valueMapping.type === MappingType.ValueToText) {
+//       allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
+//     } else if (valueMapping.type === MappingType.RangeToText) {
+//       allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
+//     }
+
+//     return allValueMappings;
+//   }, [] as ValueMapping[]);
+
+//   allFormattedValueMappings.sort((t1, t2) => {
+//     return t1.id - t2.id;
+//   });
+
+//   return allFormattedValueMappings;
+// };
+
+export function getValueMappingResult(
+  valueMappings: ValueMapping[],
   value: TimeSeriesValue
-) => {
-  if (valueToTextMapping.value === undefined) {
-    return allValueMappings;
-  }
+): ValueMappingResult | null {
+  for (const vm of valueMappings) {
+    switch (vm.type) {
+      case MappingType.ValueToText:
+        const result = vm.map[value ?? 'null'];
+        if (result) {
+          return result;
+        }
+        break;
+      case MappingType.RangeToText:
+        if (value === null || value === undefined) {
+          continue;
+        }
 
-  if (value === null && isNullValueMap(valueToTextMapping)) {
-    return allValueMappings.concat(valueToTextMapping);
-  }
+        const valueAsNumber = parseFloat(value as string);
+        const fromAsNumber = parseFloat(vm.from as string);
+        const toAsNumber = parseFloat(vm.to as string);
 
-  let valueAsNumber, valueToTextMappingAsNumber;
+        if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
+          continue;
+        }
 
-  if (isNumeric(value as string) && isNumeric(valueToTextMapping.value)) {
-    valueAsNumber = parseFloat(value as string);
-    valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
-
-    if (valueAsNumber === valueToTextMappingAsNumber) {
-      return allValueMappings.concat(valueToTextMapping);
+        if (valueAsNumber >= fromAsNumber && valueAsNumber <= toAsNumber) {
+          return vm.result;
+        }
     }
-    return allValueMappings;
   }
 
-  if (value === valueToTextMapping.value) {
-    return allValueMappings.concat(valueToTextMapping);
-  }
-
-  return allValueMappings;
-};
-
-const addRangeToTextMappingText = (
-  allValueMappings: ValueMapping[],
-  rangeToTextMapping: RangeMap,
-  value: TimeSeriesValue
-) => {
-  if (rangeToTextMapping.from === undefined || rangeToTextMapping.to === undefined || value === undefined) {
-    return allValueMappings;
-  }
-
-  if (
-    value === null &&
-    rangeToTextMapping.from &&
-    rangeToTextMapping.to &&
-    rangeToTextMapping.from.toLowerCase() === 'null' &&
-    rangeToTextMapping.to.toLowerCase() === 'null'
-  ) {
-    return allValueMappings.concat(rangeToTextMapping);
-  }
-
-  const valueAsNumber = parseFloat(value as string);
-  const fromAsNumber = parseFloat(rangeToTextMapping.from as string);
-  const toAsNumber = parseFloat(rangeToTextMapping.to as string);
-
-  if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
-    return allValueMappings;
-  }
-
-  if (valueAsNumber >= fromAsNumber && valueAsNumber <= toAsNumber) {
-    return allValueMappings.concat(rangeToTextMapping);
-  }
-
-  return allValueMappings;
-};
-
-const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: TimeSeriesValue) => {
-  const allFormattedValueMappings = valueMappings.reduce((allValueMappings, valueMapping) => {
-    if (valueMapping.type === MappingType.ValueToText) {
-      allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
-    } else if (valueMapping.type === MappingType.RangeToText) {
-      allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
-    }
-
-    return allValueMappings;
-  }, [] as ValueMapping[]);
-
-  allFormattedValueMappings.sort((t1, t2) => {
-    return t1.id - t2.id;
-  });
-
-  return allFormattedValueMappings;
-};
-
-export const getMappedValue = (valueMappings: ValueMapping[], value: TimeSeriesValue): ValueMapping => {
-  return getAllFormattedValueMappings(valueMappings, value)[0];
-};
-
-const isNullValueMap = (mapping: ValueMap): boolean => {
-  if (!mapping || !mapping.value) {
-    return false;
-  }
-  return mapping.value.toLowerCase() === 'null';
-};
+  return null;
+}
 
 // Ref https://stackoverflow.com/a/58550111
-
 export function isNumeric(num: any) {
   return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
 }

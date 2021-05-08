@@ -162,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(29);
+      expect(model.schemaVersion).toBe(30);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1066,6 +1066,98 @@ describe('DashboardModel', () => {
       expect(model.templating.list[11].refresh).toBeUndefined();
       expect(model.templating.list[12].refresh).toBeUndefined();
       expect(model.templating.list[13].refresh).toBeUndefined();
+    });
+  });
+
+  describe('when migrating old value mapping model', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            fieldConfig: {
+              defaults: {
+                mappings: [
+                  {
+                    id: 0,
+                    text: '1',
+                    type: 1,
+                    value: 'up',
+                  },
+                  {
+                    id: 1,
+                    text: 'BAD',
+                    type: 1,
+                    value: 'down',
+                  },
+                  {
+                    from: '0',
+                    id: 2,
+                    text: 'below 30',
+                    to: '30',
+                    type: 2,
+                  },
+                  {
+                    from: '30',
+                    id: 3,
+                    text: '100',
+                    to: '100',
+                    type: 2,
+                  },
+                ],
+              },
+              overrides: [
+                {
+                  matcher: { id: 'byName', options: 'D-series' },
+                  properties: [
+                    {
+                      id: 'mappings',
+                      value: [
+                        {
+                          id: 0,
+                          text: 'OverrideText',
+                          type: 1,
+                          value: 'up',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+    });
+
+    it('should migrate value mapping model', () => {
+      expect(model.panels[0].fieldConfig.defaults.mappings).toEqual([
+        {
+          id: 0,
+          type: 1,
+          map: {
+            down: { state: 'BAD' },
+            up: { value: 1 },
+          },
+        },
+        {
+          id: 2,
+          type: 2,
+          from: '0',
+          to: '30',
+          result: { state: 'below 30' },
+        },
+        {
+          id: 3,
+          type: 2,
+          from: '30',
+          to: '100',
+          result: { value: 100 },
+        },
+      ]);
     });
   });
 });
