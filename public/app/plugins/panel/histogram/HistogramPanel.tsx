@@ -3,10 +3,13 @@ import { PanelProps, DataFrame, buildHistogram, getHistogramFields, HistogramFie
 
 import { Histogram } from './Histogram';
 import { PanelOptions } from './models.gen';
+import { useTheme2 } from '@grafana/ui';
 
 type Props = PanelProps<PanelOptions>;
 
 export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
+  const theme = useTheme2();
+
   const histogram = useMemo(() => {
     if (!data?.series?.length) {
       return undefined;
@@ -31,6 +34,8 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
 
   return (
     <Histogram
+      theme={theme}
+      legend={null as any}
       structureRev={data.structureRev}
       width={width}
       height={height}

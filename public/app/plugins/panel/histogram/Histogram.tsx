@@ -14,16 +14,13 @@ import {
   VizLegendOptions,
   UPlotChart,
   VizLayout,
-  withTheme2,
   AxisPlacement,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
 } from '@grafana/ui';
 
-/* eslint-disable */
 import { histogramFrameBucketMaxFieldName } from '@grafana/data/src/transformations/transformers/histogram';
-/* eslint-enable */
 
 export interface HistogramProps extends Themeable2 {
   alignedFrame: DataFrame;
@@ -199,7 +196,7 @@ export interface GraphNGState {
   config?: UPlotConfigBuilder;
 }
 
-class UnthemedHistogram extends React.Component<HistogramProps, GraphNGState> {
+export class Histogram extends React.Component<HistogramProps, GraphNGState> {
   constructor(props: HistogramProps) {
     super(props);
     this.state = this.prepState(props);
@@ -266,6 +263,3 @@ class UnthemedHistogram extends React.Component<HistogramProps, GraphNGState> {
     );
   }
 }
-
-export const Histogram = withTheme2(UnthemedHistogram);
-Histogram.displayName = 'Histogram';
