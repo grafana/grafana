@@ -129,6 +129,7 @@ export function loadDataSource(uid: string): ThunkResult<void> {
  * Old data source urls used the numeric db id
  */
 async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSettings> {
+  // Try first with uid api
   try {
     const byUid = await getBackendSrv()
       .fetch<DataSourceSettings>({
@@ -183,7 +184,7 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
     }
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
-    locationService.push(`/datasources/edit/${result.uid}`);
+    locationService.push(`/datasources/edit/${result.datasource.uid}`);
   };
 }
 
