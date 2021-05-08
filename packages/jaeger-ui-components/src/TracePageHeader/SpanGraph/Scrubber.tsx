@@ -16,7 +16,7 @@ import React from 'react';
 import cx from 'classnames';
 
 import { createStyle } from '../../Theme';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export const getStyles = createStyle(() => {
   return {

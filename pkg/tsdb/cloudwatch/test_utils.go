@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -13,36 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-type fakeDataSourceCfg struct {
-	assumeRoleARN string
-	externalID    string
-}
-
-func fakeDataSource(cfgs ...fakeDataSourceCfg) *models.DataSource {
-	jsonData := simplejson.New()
-	jsonData.Set("defaultRegion", defaultRegion)
-	jsonData.Set("authType", "default")
-	for _, cfg := range cfgs {
-		if cfg.assumeRoleARN != "" {
-			jsonData.Set("assumeRoleArn", cfg.assumeRoleARN)
-		}
-		if cfg.externalID != "" {
-			jsonData.Set("externalId", cfg.externalID)
-		}
-	}
-	return &models.DataSource{
-		Id:             1,
-		Database:       "default",
-		JsonData:       jsonData,
-		SecureJsonData: securejsondata.SecureJsonData{},
-	}
-}
 
 type FakeCWLogsClient struct {
 	cloudwatchlogsiface.CloudWatchLogsAPI
@@ -178,4 +152,13 @@ func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metri
 
 func newTestConfig() *setting.Cfg {
 	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true, AWSListMetricsPageLimit: 1000}
+}
+
+type fakeSessionCache struct {
+}
+
+func (s fakeSessionCache) GetSession(region string, settings awsds.AWSDatasourceSettings) (*session.Session, error) {
+	return &session.Session{
+		Config: &aws.Config{},
+	}, nil
 }

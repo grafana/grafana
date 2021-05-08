@@ -1,6 +1,21 @@
+const fs = require('fs-extra');
 const path = require('path');
 
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const getBabelConfig = require('./babel.config');
+
+class CopyUniconsPlugin {
+  apply(compiler) {
+    compiler.hooks.afterEnvironment.tap('CopyUniconsPlugin', () => {
+      let destDir = path.resolve(__dirname, '../../public/img/icons/unicons');
+
+      if (!fs.pathExistsSync(destDir)) {
+        let srcDir = path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/unicons/svg/line');
+        fs.copySync(srcDir, destDir);
+      }
+    });
+  }
+}
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
@@ -9,16 +24,7 @@ function shouldExclude(filename) {
     return false;
   }
 
-  const packagesToProcessbyBabel = [
-    'debug',
-    'lru-cache',
-    'yallist',
-    'apache-arrow',
-    'react-hook-form',
-    'rc-trigger',
-    '@iconscout/react-unicons',
-    'monaco-editor',
-  ];
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger', 'monaco-editor'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
       return false;
@@ -68,51 +74,24 @@ module.exports = {
     fs: 'empty',
   },
   plugins: [
-    new MonacoWebpackPlugin({
-      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
-      features: [
-        '!accessibilityHelp',
-        'bracketMatching',
-        'caretOperations',
-        '!clipboard',
-        '!codeAction',
-        '!codelens',
-        '!colorDetector',
-        '!comment',
-        '!contextmenu',
-        '!coreCommands',
-        '!cursorUndo',
-        '!dnd',
-        '!find',
-        'folding',
-        '!fontZoom',
-        '!format',
-        '!gotoError',
-        '!gotoLine',
-        '!gotoSymbol',
-        '!hover',
-        '!iPadShowKeyboard',
-        '!inPlaceReplace',
-        '!inspectTokens',
-        '!linesOperations',
-        '!links',
-        '!multicursor',
-        'parameterHints',
-        '!quickCommand',
-        '!quickOutline',
-        '!referenceSearch',
-        '!rename',
-        '!smartSelect',
-        '!snippets',
-        'suggest',
-        '!toggleHighContrast',
-        '!toggleTabFocusMode',
-        '!transpose',
-        '!wordHighlighter',
-        '!wordOperations',
-        '!wordPartOperations',
+    new CopyUniconsPlugin(),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
+          from: 'min/vs/**',
+          to: '../lib/monaco/', // inside the public/build folder
+          globOptions: {
+            ignore: [
+              '**/language/typescript/**', // 10mb
+              '**/*.map', // debug files
+            ],
+          },
+        },
+        // {
+        //   from: './node_modules/@kusto/monaco-kusto/release/min/',
+        //   to: 'monaco/min/vs/language/kusto/',
+        // },
       ],
     }),
   ],
@@ -129,9 +108,7 @@ module.exports = {
         use: [
           {
             loader: 'babel-loader',
-            options: {
-              presets: [['@babel/preset-env']],
-            },
+            options: getBabelConfig(),
           },
         ],
       },
@@ -170,6 +147,11 @@ module.exports = {
         test: /\.css$/,
         // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
+      },
+      // for pre-caching SVGs as part of the JS bundles
+      {
+        test: /\.svg$/,
+        use: 'raw-loader',
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,

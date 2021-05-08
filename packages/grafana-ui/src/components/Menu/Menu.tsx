@@ -1,7 +1,7 @@
 import React from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '../../themes';
 
 /** @internal */
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -14,7 +14,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
 /** @internal */
 export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, ...otherProps }, ref) => {
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
 
     return (
       <div {...otherProps} ref={ref} className={styles.wrapper} aria-label={ariaLabel}>
@@ -27,25 +27,17 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
 Menu.displayName = 'Menu';
 
 /** @internal */
-const getStyles = (theme: GrafanaTheme) => {
-  const wrapperBg = theme.colors.formInputBg;
-  const wrapperShadow = theme.isDark ? theme.palette.black : theme.palette.gray3;
-  const headerBg = theme.colors.formInputBg;
-  const headerSeparator = theme.colors.border3;
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
-      padding: 4px;
-      border-bottom: 1px solid ${headerSeparator};
-      background: ${headerBg};
-      margin-bottom: ${theme.spacing.xs};
-      border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
+      padding: ${theme.spacing(0.5, 0.5, 1, 0.5)};
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     wrapper: css`
-      background: ${wrapperBg};
-      box-shadow: 0 2px 5px 0 ${wrapperShadow};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
       display: inline-block;
-      border-radius: ${theme.border.radius.sm};
+      border-radius: ${theme.shape.borderRadius()};
     `,
   };
 };

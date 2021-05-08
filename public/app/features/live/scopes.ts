@@ -2,6 +2,7 @@ import { LiveChannelScope, LiveChannelSupport, SelectableValue } from '@grafana/
 import { getDataSourceSrv } from '@grafana/runtime';
 import { config } from 'app/core/config';
 import { loadPlugin } from '../plugins/PluginPage';
+import { LiveMeasurementsSupport } from './measurements/measurementsSupport';
 
 export abstract class GrafanaLiveScope {
   constructor(protected scope: LiveChannelScope) {}
@@ -72,7 +73,10 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
    */
   async getChannelSupport(namespace: string) {
     const ds = await getDataSourceSrv().get(namespace);
-    return ds.channelSupport;
+    if (ds.channelSupport) {
+      return ds.channelSupport;
+    }
+    return new LiveMeasurementsSupport(); // default support?
   }
 
   /**
@@ -118,10 +122,13 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
    */
   async getChannelSupport(namespace: string) {
     const plugin = await loadPlugin(namespace);
-    if (!plugin.channelSupport) {
-      throw new Error('Unknown plugin: ' + namespace);
+    if (!plugin) {
+      throw new Error('Unknown streaming plugin: ' + namespace);
     }
-    return plugin.channelSupport;
+    if (plugin.channelSupport) {
+      return plugin.channelSupport; // explicit
+    }
+    throw new Error('Plugin does not support streaming: ' + namespace);
   }
 
   /**
@@ -149,6 +156,32 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
         }
       }
     }
+    return (this.names = names);
+  }
+}
+
+export class GrafanaLiveStreamScope extends GrafanaLiveScope {
+  names?: Array<SelectableValue<string>>;
+
+  constructor() {
+    super(LiveChannelScope.Stream);
+  }
+
+  async getChannelSupport(namespace: string) {
+    return new LiveMeasurementsSupport();
+  }
+
+  /**
+   * List the possible values within this scope
+   */
+  async listNamespaces() {
+    if (this.names) {
+      return Promise.resolve(this.names);
+    }
+    const names: Array<SelectableValue<string>> = [];
+
+    // TODO!!!
+
     return (this.names = names);
   }
 }

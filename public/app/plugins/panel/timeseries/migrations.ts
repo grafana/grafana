@@ -9,20 +9,25 @@ import {
   fieldReducers,
   NullValueMode,
   PanelModel,
+  Threshold,
+  ThresholdsMode,
 } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import {
-  GraphGradientMode,
   AxisPlacement,
   DrawStyle,
+  GraphFieldConfig,
+  GraphGradientMode,
+  GraphTresholdsStyleMode,
+  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
-} from '@grafana/ui/src/components/uPlot/config';
+  StackingMode,
+  TooltipDisplayMode,
+} from '@grafana/ui';
 import { Options } from './types';
-import omitBy from 'lodash/omitBy';
-import isNil from 'lodash/isNil';
-import { isNumber, isString } from 'lodash';
+import { omitBy, isNil, isNumber, isString } from 'lodash';
+import { defaultGraphConfig } from './config';
 
 /**
  * This is called when the panel changes from another panel
@@ -210,6 +215,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
                 break;
             }
             break;
+          case 'stack':
+            rule.properties.push({
+              id: 'custom.stacking',
+              value: { mode: StackingMode.Normal, group: v },
+            });
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }
@@ -265,18 +276,24 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.fillOpacity = 100; // bars were always
   }
 
+  if (angular.stack) {
+    graph.stacking = {
+      mode: StackingMode.Normal,
+      group: defaultGraphConfig.stacking!.group,
+    };
+  }
+
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 
   const options: Options = {
-    graph: {},
     legend: {
       displayMode: LegendDisplayMode.List,
       placement: 'bottom',
       calcs: [],
     },
     tooltipOptions: {
-      mode: 'single',
+      mode: TooltipDisplayMode.Single,
     },
   };
 
@@ -298,6 +315,83 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     }
   }
 
+  if (angular.thresholds && angular.thresholds.length > 0) {
+    let steps: Threshold[] = [];
+    let area = false;
+    let line = false;
+
+    const sorted = (angular.thresholds as AngularThreshold[]).sort((a, b) => (a.value > b.value ? 1 : -1));
+
+    for (let idx = 0; idx < sorted.length; idx++) {
+      const threshold = sorted[idx];
+      const next = sorted.length > idx + 1 ? sorted[idx + 1] : null;
+
+      if (threshold.fill) {
+        area = true;
+      }
+
+      if (threshold.line) {
+        line = true;
+      }
+
+      if (threshold.op === 'gt') {
+        steps.push({
+          value: threshold.value,
+          color: getThresholdColor(threshold),
+        });
+      }
+
+      if (threshold.op === 'lt') {
+        if (steps.length === 0) {
+          steps.push({
+            value: -Infinity,
+            color: getThresholdColor(threshold),
+          });
+        }
+
+        // next op is gt and there is a gap set color to transparent
+        if (next && next.op === 'gt' && next.value > threshold.value) {
+          steps.push({
+            value: threshold.value,
+            color: 'transparent',
+          });
+          // if next is a lt we need to use it's color
+        } else if (next && next.op === 'lt') {
+          steps.push({
+            value: threshold.value,
+            color: getThresholdColor(next),
+          });
+        } else {
+          steps.push({
+            value: threshold.value,
+            color: 'transparent',
+          });
+        }
+      }
+    }
+
+    // if now less then threshold add an -Infinity base that is transparent
+    if (steps.length > 0 && steps[0].value !== -Infinity) {
+      steps.unshift({
+        color: 'transparent',
+        value: -Infinity,
+      });
+    }
+
+    let displayMode = area ? GraphTresholdsStyleMode.Area : GraphTresholdsStyleMode.Line;
+    if (line && area) {
+      displayMode = GraphTresholdsStyleMode.LineAndArea;
+    }
+
+    // TODO move into standard ThresholdConfig ?
+    y1.custom.thresholdsStyle = { mode: displayMode };
+
+    y1.thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps,
+    };
+  }
+
   return {
     fieldConfig: {
       defaults: omitBy(y1, isNil),
@@ -305,6 +399,33 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     },
     options,
   };
+}
+
+function getThresholdColor(threshold: AngularThreshold): string {
+  if (threshold.colorMode === 'critical') {
+    return 'red';
+  }
+
+  if (threshold.colorMode === 'warning') {
+    return 'orange';
+  }
+
+  if (threshold.colorMode === 'custom') {
+    return threshold.fillColor || threshold.lineColor;
+  }
+
+  return 'red';
+}
+
+interface AngularThreshold {
+  op: string;
+  fill: boolean;
+  line: boolean;
+  value: number;
+  colorMode: 'critical' | 'warning' | 'custom';
+  yaxis?: 'left' | 'right';
+  fillColor: string;
+  lineColor: string;
 }
 
 // {

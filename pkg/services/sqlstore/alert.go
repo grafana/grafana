@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -166,18 +167,18 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	return nil
 }
 
-func SaveAlerts(cmd *models.SaveAlertsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
+func (ss *SQLStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
 			return err
 		}
 
-		if err := updateAlerts(existingAlerts, cmd, sess); err != nil {
+		if err := updateAlerts(existingAlerts, alerts, sess); err != nil {
 			return err
 		}
 
-		if err := deleteMissingAlerts(existingAlerts, cmd, sess); err != nil {
+		if err := deleteMissingAlerts(existingAlerts, alerts, sess); err != nil {
 			return err
 		}
 
@@ -185,8 +186,27 @@ func SaveAlerts(cmd *models.SaveAlertsCommand) error {
 	})
 }
 
-func updateAlerts(existingAlerts []*models.Alert, cmd *models.SaveAlertsCommand, sess *DBSession) error {
-	for _, alert := range cmd.Alerts {
+func SaveAlerts(cmd *models.SaveAlertsCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
+		if err != nil {
+			return err
+		}
+
+		if err := updateAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
+			return err
+		}
+
+		if err := deleteMissingAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func updateAlerts(existingAlerts []*models.Alert, alerts []*models.Alert, sess *DBSession) error {
+	for _, alert := range alerts {
 		update := false
 		var alertToUpdate *models.Alert
 
@@ -245,11 +265,11 @@ func updateAlerts(existingAlerts []*models.Alert, cmd *models.SaveAlertsCommand,
 	return nil
 }
 
-func deleteMissingAlerts(alerts []*models.Alert, cmd *models.SaveAlertsCommand, sess *DBSession) error {
+func deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *DBSession) error {
 	for _, missingAlert := range alerts {
 		missing := true
 
-		for _, k := range cmd.Alerts {
+		for _, k := range existingAlerts {
 			if missingAlert.PanelId == k.PanelId {
 				missing = false
 				break

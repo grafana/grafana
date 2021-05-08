@@ -4,6 +4,13 @@ exports[`PromExploreQueryEditor should render component 1`] = `
 <PromQueryField
   ExtraFieldElement={
     <Memo
+      datasource={
+        Object {
+          "languageProvider": Object {
+            "syntax": [Function],
+          },
+        }
+      }
       onChange={[MockFunction]}
       onKeyDownFunc={[Function]}
       onQueryTypeChange={[Function]}

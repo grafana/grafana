@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 
 // Services & Utils
@@ -13,12 +13,14 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery, DataSourceApi } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import { Grammar } from 'prismjs';
+import fromGraphite from './importing/fromGraphite';
+import { GraphiteDatasource } from '../graphite/datasource';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -29,13 +31,13 @@ const NS_IN_MS = 1000000;
 // When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
 // @see public/app/plugins/datasource/prometheus/promql.ts
 const RATE_RANGES: CompletionItem[] = [
-  { label: '$__interval', sortText: '$__interval' },
-  { label: '1m', sortText: '00:01:00' },
-  { label: '5m', sortText: '00:05:00' },
-  { label: '10m', sortText: '00:10:00' },
-  { label: '30m', sortText: '00:30:00' },
-  { label: '1h', sortText: '01:00:00' },
-  { label: '1d', sortText: '24:00:00' },
+  { label: '$__interval', sortValue: '$__interval' },
+  { label: '1m', sortValue: '00:01:00' },
+  { label: '5m', sortValue: '00:05:00' },
+  { label: '10m', sortValue: '00:10:00' },
+  { label: '30m', sortValue: '00:30:00' },
+  { label: '1h', sortValue: '01:00:00' },
+  { label: '1d', sortValue: '24:00:00' },
 ];
 
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
@@ -68,11 +70,10 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
-  logLabelOptions: any[];
   logLabelFetchTs: number;
-  started: boolean;
+  started = false;
   datasource: LokiDatasource;
-  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
+  lookupsDisabled = false; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -201,7 +202,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const suggestions = [];
 
     if (history?.length) {
-      const historyItems = _.chain(history)
+      const historyItems = chain(history)
         .map((h) => h.query.expr)
         .filter()
         .uniq()
@@ -281,7 +282,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       selector = EMPTY_SELECTOR;
     }
 
-    if (!isValueStart && selector === EMPTY_SELECTOR) {
+    if (!labelKey && selector === EMPTY_SELECTOR) {
       // start task gets all labels
       await this.start();
       const allLabels = this.getLabelKeys();
@@ -320,7 +321,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       // Label keys
       const labelKeys = labelValues ? Object.keys(labelValues) : DEFAULT_KEYS;
       if (labelKeys) {
-        const possibleKeys = _.difference(labelKeys, existingKeys);
+        const possibleKeys = difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
           const newItems = possibleKeys.map((key) => ({ label: key }));
           const newSuggestion: CompletionItemGroup = { label: `Labels`, items: newItems };
@@ -332,11 +333,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(queries: LokiQuery[], datasourceType: string): Promise<LokiQuery[]> {
+  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
+    const datasourceType = originDataSource.meta.id;
     if (datasourceType === 'prometheus') {
       return Promise.all(
         queries.map(async (query) => {
-          const expr = await this.importPrometheusQuery(query.expr);
+          const expr = await this.importPrometheusQuery((query as PromQuery).expr);
           const { ...rest } = query as PromQuery;
           return {
             ...rest,
@@ -344,6 +346,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
           };
         })
       );
+    }
+    if (datasourceType === 'graphite') {
+      return fromGraphite(queries, originDataSource as GraphiteDatasource);
     }
     // Return a cleaned LokiQuery
     return queries.map((query) => ({
@@ -414,15 +419,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   async fetchLogLabels(): Promise<any> {
     const url = '/loki/api/v1/label';
-    try {
-      this.logLabelFetchTs = Date.now().valueOf();
-      const rangeParams = this.datasource.getTimeRangeParams();
-      const res = await this.request(url, rangeParams);
+    const timeRange = this.datasource.getTimeRangeParams();
+    this.logLabelFetchTs = Date.now().valueOf();
+
+    const res = await this.request(url, timeRange);
+    if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
-      this.logLabelOptions = this.labelKeys.map((key: string) => ({ label: key, value: key, isLeaf: false }));
-    } catch (e) {
-      console.error(e);
     }
+
     return [];
   }
 
@@ -485,41 +489,23 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchLabelValues(key: string): Promise<string[]> {
     const url = `/loki/api/v1/label/${key}/values`;
-    let values: string[] = [];
     const rangeParams = this.datasource.getTimeRangeParams();
     const { from: start, to: end } = rangeParams;
 
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };
 
-    let value = this.labelsCache.get(cacheKey);
-    if (!value) {
-      try {
-        // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
-        this.labelsCache.set(cacheKey, []);
-        const res = await this.request(url, params);
-        values = res.slice().sort();
-        value = values;
-        this.labelsCache.set(cacheKey, value);
-
-        this.logLabelOptions = this.addLabelValuesToOptions(key, values);
-      } catch (e) {
-        console.error(e);
+    let labelValue = this.labelsCache.get(cacheKey);
+    if (!labelValue) {
+      // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
+      this.labelsCache.set(cacheKey, []);
+      const res = await this.request(url, params);
+      if (Array.isArray(res)) {
+        labelValue = res.slice().sort();
+        this.labelsCache.set(cacheKey, labelValue);
       }
-    } else {
-      this.logLabelOptions = this.addLabelValuesToOptions(key, value);
     }
-    return value ?? [];
-  }
 
-  private addLabelValuesToOptions = (labelKey: string, values: string[]) => {
-    return this.logLabelOptions.map((keyOption) =>
-      keyOption.value === labelKey
-        ? {
-            ...keyOption,
-            children: values.map((value) => ({ label: value, value })),
-          }
-        : keyOption
-    );
-  };
+    return labelValue ?? [];
+  }
 }

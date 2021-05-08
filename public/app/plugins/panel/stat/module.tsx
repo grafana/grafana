@@ -1,18 +1,23 @@
 import { BigValueTextMode, sharedSingleStatMigrationHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { addStandardDataReduceOptions, StatPanelOptions } from './types';
+import { addOrientationOption, addStandardDataReduceOptions, addTextSizeOptions, StatPanelOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
+    const mainCategory = ['Stat styles'];
+
     addStandardDataReduceOptions(builder);
+    addOrientationOption(builder, mainCategory);
+    addTextSizeOptions(builder);
 
     builder.addSelect({
       path: 'textMode',
       name: 'Text mode',
       description: 'Control if name and value is displayed or just name',
+      category: mainCategory,
       settings: {
         options: [
           { value: BigValueTextMode.Auto, label: 'Auto' },
@@ -29,8 +34,8 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
       .addRadio({
         path: 'colorMode',
         name: 'Color mode',
-        description: 'Color either the value or the background',
         defaultValue: 'value',
+        category: mainCategory,
         settings: {
           options: [
             { value: 'value', label: 'Value' },
@@ -42,6 +47,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         path: 'graphMode',
         name: 'Graph mode',
         description: 'Stat panel graph / sparkline mode',
+        category: mainCategory,
         defaultValue: 'area',
         settings: {
           options: [
@@ -52,9 +58,9 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
       })
       .addRadio({
         path: 'justifyMode',
-        name: 'Alignment mode',
-        description: 'Value & title posititioning',
+        name: 'Text alignment',
         defaultValue: 'auto',
+        category: mainCategory,
         settings: {
           options: [
             { value: 'auto', label: 'Auto' },

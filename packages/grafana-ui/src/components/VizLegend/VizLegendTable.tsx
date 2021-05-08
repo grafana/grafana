@@ -1,10 +1,9 @@
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
 import { useStyles } from '../../themes/ThemeContext';
-import union from 'lodash/union';
-import sortBy from 'lodash/sortBy';
+import { union, sortBy } from 'lodash';
 import { LegendTableItem } from './VizLegendTableItem';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -19,7 +18,8 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   className,
   onToggleSort,
   onLabelClick,
-  onSeriesColorChange,
+  onLabelMouseEnter,
+  onLabelMouseOut,
 }) => {
   const styles = useStyles(getStyles);
 
@@ -56,8 +56,9 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
       <LegendTableItem
         key={`${item.label}-${index}`}
         item={item}
-        onSeriesColorChange={onSeriesColorChange}
         onLabelClick={onLabelClick}
+        onLabelMouseEnter={onLabelMouseEnter}
+        onLabelMouseOut={onLabelMouseOut}
       />
     );
   }

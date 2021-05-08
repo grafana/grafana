@@ -5,7 +5,10 @@ import {
   MetricAggregation,
   PipelineMetricAggregationType,
 } from './aggregations';
-import { defaultPipelineVariable } from './SettingsEditor/BucketScriptSettingsEditor/utils';
+import {
+  defaultPipelineVariable,
+  generatePipelineVariableName,
+} from './SettingsEditor/BucketScriptSettingsEditor/utils';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
@@ -118,7 +121,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         model: 'simple',
-        window: 5,
+        window: '5',
       },
     },
   },
@@ -157,7 +160,11 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
-    defaults: {},
+    defaults: {
+      settings: {
+        lag: '1',
+      },
+    },
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
@@ -182,7 +189,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
-      pipelineVariables: [defaultPipelineVariable()],
+      pipelineVariables: [defaultPipelineVariable(generatePipelineVariableName([]))],
     },
   },
   raw_document: {
@@ -223,10 +230,15 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
-    hasSettings: false,
+    hasSettings: true,
+    isSingleMetric: true,
     supportsInlineScript: false,
     hasMeta: false,
-    defaults: {},
+    defaults: {
+      settings: {
+        limit: '500',
+      },
+    },
   },
 };
 

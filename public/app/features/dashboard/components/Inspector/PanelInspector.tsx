@@ -3,14 +3,13 @@ import { connect, MapStateToProps } from 'react-redux';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-
 import { StoreState } from 'app/types';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
 import { useLocation } from 'react-router-dom';
-import { InspectTab } from './types';
+import { InspectTab } from 'app/features/inspector/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -24,19 +23,15 @@ export interface ConnectedProps {
 export type Props = OwnProps & ConnectedProps;
 
 const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
-  if (!plugin) {
-    return null;
-  }
-
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
   });
 
   const location = useLocation();
-  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
+  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);
   const metaDs = useDatasourceMetadata(data);
-  const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
+  const tabs = useInspectTabs(dashboard, plugin, error, metaDs);
   const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
 
   const onClose = () => {
@@ -45,6 +40,10 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
       inspectTab: null,
     });
   };
+
+  if (!plugin) {
+    return null;
+  }
 
   return (
     <InspectContent

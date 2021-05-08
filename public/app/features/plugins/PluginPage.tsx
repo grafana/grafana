@@ -1,10 +1,11 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import find from 'lodash/find';
+import { capitalize, find } from 'lodash';
 // Types
 import {
   AppPlugin,
   GrafanaPlugin,
+  GrafanaTheme2,
   NavModel,
   NavModelItem,
   PluginDependencies,
@@ -13,11 +14,13 @@ import {
   PluginMeta,
   PluginMetaInfo,
   PluginSignatureStatus,
+  PluginSignatureType,
   PluginType,
   UrlQueryMap,
 } from '@grafana/data';
 import { AppNotificationSeverity } from 'app/types';
-import { Alert, InfoBox, Tooltip } from '@grafana/ui';
+import { Alert, LinkButton, PluginSignatureBadge, Tooltip, Badge, useStyles2, Icon } from '@grafana/ui';
+
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin, importDataSourcePlugin, importPanelPlugin } from './plugin_loader';
@@ -28,11 +31,11 @@ import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
 import { contextSrv } from '../../core/services/context_srv';
-import { css } from 'emotion';
-import { PluginSignatureBadge } from './PluginSignatureBadge';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
-import { ShowModalEvent } from 'app/types/events';
+import { ShowModalReactEvent } from 'app/types/events';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { UpdatePluginModal } from './UpdatePluginModal';
 
 interface Props extends GrafanaRouteComponentProps<{ pluginId: string }, UrlQueryMap> {}
 
@@ -142,10 +145,14 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
+    const { id, name } = this.state.plugin!.meta;
     appEvents.publish(
-      new ShowModalEvent({
-        src: 'public/app/features/plugins/partials/update_instructions.html',
-        model: this.state.plugin!.meta,
+      new ShowModalReactEvent({
+        props: {
+          id,
+          name,
+        },
+        component: UpdatePluginModal,
       })
     );
   };
@@ -162,9 +169,9 @@ class PluginPage extends PureComponent<Props, State> {
         {meta.hasUpdate && (
           <div>
             <Tooltip content={meta.latestVersion!} theme="info" placement="top">
-              <a href="#" onClick={this.showUpdateInfo}>
+              <LinkButton fill="text" onClick={this.showUpdateInfo}>
                 Update Available!
-              </a>
+              </LinkButton>
             </Tooltip>
           </div>
         )}
@@ -270,32 +277,52 @@ class PluginPage extends PureComponent<Props, State> {
       return null;
     }
 
+    const isSignatureValid = plugin.meta.signature === PluginSignatureStatus.valid;
+
     if (plugin.meta.signature === PluginSignatureStatus.internal) {
       return null;
     }
 
     return (
-      <InfoBox
+      <Alert
         aria-label={selectors.pages.PluginPage.signatureInfo}
-        severity={plugin.meta.signature !== PluginSignatureStatus.valid ? 'warning' : 'info'}
-        urlTitle="Read more about plugins signing"
-        url="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
+        severity={isSignatureValid ? 'info' : 'warning'}
+        title="Plugin signature"
       >
-        <PluginSignatureBadge
-          status={plugin.meta.signature}
+        <div
           className={css`
-            margin-top: 0;
+            display: flex;
           `}
-        />
-        <br />
+        >
+          <PluginSignatureBadge
+            status={plugin.meta.signature}
+            className={css`
+              margin-top: 0;
+            `}
+          />
+          {isSignatureValid && (
+            <PluginSignatureDetailsBadge
+              signatureType={plugin.meta.signatureType}
+              signatureOrg={plugin.meta.signatureOrg}
+            />
+          )}
+        </div>
         <br />
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
           is part of our security measures to ensure plugins are safe and trustworthy.
-          {plugin.meta.signature !== PluginSignatureStatus.valid &&
+          {!isSignatureValid &&
             'Grafana Labs can’t guarantee the integrity of this unsigned plugin. Ask the plugin author to request it to be signed.'}
         </p>
-      </InfoBox>
+        <a
+          href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
+          className="external-link"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Read more about plugins signing.
+        </a>
+      </Alert>
     );
   }
 
@@ -491,5 +518,72 @@ export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     return Promise.reject('Unknown Plugin type: ' + info.type);
   });
 }
+
+type PluginSignatureDetailsBadgeProps = {
+  signatureType?: PluginSignatureType;
+  signatureOrg?: string;
+};
+
+const PluginSignatureDetailsBadge: React.FC<PluginSignatureDetailsBadgeProps> = ({ signatureType, signatureOrg }) => {
+  const styles = useStyles2(getDetailsBadgeStyles);
+
+  if (!signatureType && !signatureOrg) {
+    return null;
+  }
+
+  const signatureTypeIcon =
+    signatureType === PluginSignatureType.grafana
+      ? 'grafana'
+      : signatureType === PluginSignatureType.commercial || signatureType === PluginSignatureType.community
+      ? 'shield'
+      : 'shield-exclamation';
+
+  const signatureTypeText = signatureType === PluginSignatureType.grafana ? 'Grafana Labs' : capitalize(signatureType);
+
+  return (
+    <>
+      {signatureType && (
+        <Badge
+          color="green"
+          className={styles.badge}
+          text={
+            <>
+              <strong className={styles.strong}>Level:&nbsp;</strong>
+              <Icon size="xs" name={signatureTypeIcon} />
+              &nbsp;
+              {signatureTypeText}
+            </>
+          }
+        />
+      )}
+      {signatureOrg && (
+        <Badge
+          color="green"
+          className={styles.badge}
+          text={
+            <>
+              <strong className={styles.strong}>Signed by:</strong> {signatureOrg}
+            </>
+          }
+        />
+      )}
+    </>
+  );
+};
+
+const getDetailsBadgeStyles = (theme: GrafanaTheme2) => ({
+  badge: css`
+    background-color: ${theme.colors.background.canvas};
+    border-color: ${theme.colors.border.strong};
+    color: ${theme.colors.text.secondary};
+    margin-left: ${theme.spacing()};
+  `,
+  strong: css`
+    color: ${theme.colors.text.primary};
+  `,
+  icon: css`
+    margin-right: ${theme.spacing(0.5)};
+  `,
+});
 
 export default PluginPage;

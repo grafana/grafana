@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
@@ -110,12 +109,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range manager.DataSources {
+	for _, ds := range hs.PluginManager.DataSources() {
 		if ds.BuiltIn {
 			dataSources[ds.Name] = map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
-				"meta": manager.DataSources[ds.Id],
+				"meta": hs.PluginManager.GetDataSource(ds.Id),
 			}
 		}
 	}
@@ -226,8 +225,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": hs.PluginManager.GrafanaLatestVersion,
-			"hasUpdate":     hs.PluginManager.GrafanaHasUpdate,
+			"latestVersion": hs.PluginManager.GrafanaLatestVersion(),
+			"hasUpdate":     hs.PluginManager.GrafanaHasUpdate(),
 			"env":           setting.Env,
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},
@@ -255,9 +254,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
-	case "graph":
-		sort = 1
 	case "timeseries":
+		sort = 1
+	case "barchart":
 		sort = 2
 	case "stat":
 		sort = 3
@@ -269,16 +268,22 @@ func getPanelSort(id string) int {
 		sort = 6
 	case "singlestat":
 		sort = 7
-	case "text":
+	case "piechart":
 		sort = 8
-	case "heatmap":
+	case "timeline":
 		sort = 9
-	case "alertlist":
+	case "heatmap":
 		sort = 10
-	case "dashlist":
+	case "graph":
 		sort = 11
-	case "news":
+	case "text":
 		sort = 12
+	case "alertlist":
+		sort = 13
+	case "dashlist":
+		sort = 14
+	case "news":
+		sort = 15
 	}
 	return sort
 }

@@ -26,6 +26,8 @@ export const ConfigEditor = (props: Props) => {
         logLevelField: options.jsonData.logLevelField || '',
       },
     });
+    // We can't enforce the eslint rule here because we only want to run this once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -1,12 +1,14 @@
 import React from 'react';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareExport } from './ShareExport';
 import { ShareEmbed } from './ShareEmbed';
 import { ShareModalTabModel } from './types';
 import { contextSrv } from 'app/core/core';
+import { ShareLibraryPanel } from './ShareLibraryPanel';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -38,6 +40,10 @@ function getTabs(props: Props) {
 
   if (panel) {
     tabs.push({ label: 'Embed', value: 'embed', component: ShareEmbed });
+
+    if (!isPanelModelLibraryPanel(panel)) {
+      tabs.push({ label: 'Library panel', value: 'library_panel', component: ShareLibraryPanel });
+    }
     tabs.push(...customPanelTabs);
   } else {
     tabs.push({ label: 'Export', value: 'export', component: ShareExport });
@@ -65,10 +71,10 @@ export class ShareModal extends React.Component<Props, State> {
     this.state = getInitialState(props);
   }
 
-  onDismiss = () => {
-    this.setState(getInitialState(this.props));
-    this.props.onDismiss();
-  };
+  // onDismiss = () => {
+  //   //this.setState(getInitialState(this.props));
+  //   this.props.onDismiss();
+  // };
 
   onSelectTab = (t: any) => {
     this.setState({ activeTab: t.value });
@@ -106,9 +112,9 @@ export class ShareModal extends React.Component<Props, State> {
     const ActiveTab = activeTabModel.component;
 
     return (
-      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.onDismiss}>
+      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss}>
         <TabContent>
-          <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.onDismiss} />
+          <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
         </TabContent>
       </Modal>
     );

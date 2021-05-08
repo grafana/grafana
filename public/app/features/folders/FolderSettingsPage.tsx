@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { LegacyForms } from '@grafana/ui';
+import { Button, LegacyForms } from '@grafana/ui';
 const { Input } = LegacyForms;
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
@@ -85,7 +85,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={this.state.isLoading}>
-          <h3 className="page-sub-heading">Folder Settings</h3>
+          <h3 className="page-sub-heading">Folder settings</h3>
 
           <div className="section gf-form-group">
             <form name="folderSettingsForm" onSubmit={this.onSave}>
@@ -99,12 +99,12 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
                 />
               </div>
               <div className="gf-form-button-row">
-                <button type="submit" className="btn btn-primary" disabled={!folder.canSave || !folder.hasChanged}>
+                <Button type="submit" disabled={!folder.canSave || !folder.hasChanged}>
                   Save
-                </button>
-                <button className="btn btn-danger" onClick={this.onDelete} disabled={!folder.canSave}>
+                </Button>
+                <Button variant="destructive" onClick={this.onDelete} disabled={!folder.canSave}>
                   Delete
-                </button>
+                </Button>
               </div>
             </form>
           </div>

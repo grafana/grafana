@@ -2,7 +2,7 @@
 
 exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`] = `
 <div
-  className="dashboard-container"
+  className="css-1mwktlb"
 >
   <div
     aria-label="Dashboard navigation"
@@ -56,12 +56,17 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
                 },
+              },
+              "fieldConfig": Object {
+                "defaults": Object {},
+                "overrides": Array [],
               },
               "gridPos": Object {
                 "h": 1,
@@ -70,6 +75,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "y": 0,
               },
               "id": 1,
+              "isEditing": false,
+              "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -84,7 +92,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 27,
+          "schemaVersion": 29,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -103,11 +111,12 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         }
       }
       isFullscreen={false}
+      kioskMode="off"
       onAddPanel={[Function]}
     />
   </div>
   <div
-    className="dashboard-scroll"
+    className="css-17x4n39"
   >
     <CustomScrollbar
       autoHeightMin="100%"
@@ -116,7 +125,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       updateAfterMountMs={500}
     >
       <div
-        className="dashboard-content"
+        className="css-50qyg5"
       >
         <div
           aria-label="Dashboard submenu"
@@ -183,12 +192,17 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "panels": Array [
                   PanelModel {
                     "cachedPluginOptions": Object {},
+                    "configRev": 0,
                     "datasource": null,
                     "events": EventBusSrv {
                       "emitter": EventEmitter {
                         "_events": Object {},
                         "_eventsCount": 0,
                       },
+                    },
+                    "fieldConfig": Object {
+                      "defaults": Object {},
+                      "overrides": Array [],
                     },
                     "gridPos": Object {
                       "h": 1,
@@ -197,6 +211,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                       "y": 0,
                     },
                     "id": 1,
+                    "isEditing": false,
+                    "isInView": false,
+                    "isViewing": false,
                     "options": Object {},
                     "replaceVariables": [Function],
                     "targets": Array [
@@ -211,7 +228,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 ],
                 "refresh": undefined,
                 "revision": undefined,
-                "schemaVersion": 27,
+                "schemaVersion": 29,
                 "snapshot": undefined,
                 "style": "dark",
                 "tags": Array [],
@@ -281,12 +298,17 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "panels": Array [
                 PanelModel {
                   "cachedPluginOptions": Object {},
+                  "configRev": 0,
                   "datasource": null,
                   "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
                     },
+                  },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
                   },
                   "gridPos": Object {
                     "h": 1,
@@ -295,6 +317,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "y": 0,
                   },
                   "id": 1,
+                  "isEditing": false,
+                  "isInView": false,
+                  "isViewing": false,
                   "options": Object {},
                   "replaceVariables": [Function],
                   "targets": Array [
@@ -309,7 +334,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 27,
+              "schemaVersion": 29,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -338,50 +363,16 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
 `;
 
 exports[`DashboardPage Dashboard is fetching slowly Should render slow init state 1`] = `
-<div
-  className="dashboard-loading"
->
-  <div
-    className="dashboard-loading__text"
-  >
-    <VerticalGroup
-      spacing="md"
-    >
-      <HorizontalGroup
-        align="center"
-        justify="center"
-        spacing="xs"
-      >
-        <Spinner
-          inline={true}
-        />
-         
-        Fetching
-      </HorizontalGroup>
-       
-      <HorizontalGroup
-        align="center"
-        justify="center"
-      >
-        <Button
-          icon="repeat"
-          onClick={[Function]}
-          size="md"
-          variant="secondary"
-        >
-          Cancel loading dashboard
-        </Button>
-      </HorizontalGroup>
-    </VerticalGroup>
-  </div>
-</div>
+<DashboardLoading
+  initPhase="Fetching"
+/>
 `;
 
 exports[`DashboardPage Given initial state Should render nothing 1`] = `""`;
 
 exports[`DashboardPage When dashboard has editview url state should render settings view 1`] = `
 <div
-  className="dashboard-container"
+  className="css-1mwktlb"
 >
   <div
     aria-label="Dashboard navigation"
@@ -435,12 +426,17 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
                 },
+              },
+              "fieldConfig": Object {
+                "defaults": Object {},
+                "overrides": Array [],
               },
               "gridPos": Object {
                 "h": 1,
@@ -449,6 +445,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "y": 0,
               },
               "id": 1,
+              "isEditing": false,
+              "isInView": false,
+              "isViewing": false,
               "options": Object {},
               "replaceVariables": [Function],
               "targets": Array [
@@ -463,7 +462,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 27,
+          "schemaVersion": 29,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -482,11 +481,12 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         }
       }
       isFullscreen={false}
+      kioskMode="off"
       onAddPanel={[Function]}
     />
   </div>
   <div
-    className="dashboard-scroll"
+    className="css-17x4n39"
   >
     <CustomScrollbar
       autoHeightMin="100%"
@@ -495,7 +495,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       updateAfterMountMs={500}
     >
       <div
-        className="dashboard-content"
+        className="css-50qyg5"
       >
         <div
           aria-label="Dashboard submenu"
@@ -562,12 +562,17 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "panels": Array [
                   PanelModel {
                     "cachedPluginOptions": Object {},
+                    "configRev": 0,
                     "datasource": null,
                     "events": EventBusSrv {
                       "emitter": EventEmitter {
                         "_events": Object {},
                         "_eventsCount": 0,
                       },
+                    },
+                    "fieldConfig": Object {
+                      "defaults": Object {},
+                      "overrides": Array [],
                     },
                     "gridPos": Object {
                       "h": 1,
@@ -576,6 +581,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                       "y": 0,
                     },
                     "id": 1,
+                    "isEditing": false,
+                    "isInView": false,
+                    "isViewing": false,
                     "options": Object {},
                     "replaceVariables": [Function],
                     "targets": Array [
@@ -590,7 +598,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 ],
                 "refresh": undefined,
                 "revision": undefined,
-                "schemaVersion": 27,
+                "schemaVersion": 29,
                 "snapshot": undefined,
                 "style": "dark",
                 "tags": Array [],
@@ -660,12 +668,17 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "panels": Array [
                 PanelModel {
                   "cachedPluginOptions": Object {},
+                  "configRev": 0,
                   "datasource": null,
                   "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
                     },
+                  },
+                  "fieldConfig": Object {
+                    "defaults": Object {},
+                    "overrides": Array [],
                   },
                   "gridPos": Object {
                     "h": 1,
@@ -674,6 +687,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "y": 0,
                   },
                   "id": 1,
+                  "isEditing": false,
+                  "isInView": false,
+                  "isViewing": false,
                   "options": Object {},
                   "replaceVariables": [Function],
                   "targets": Array [
@@ -688,7 +704,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 27,
+              "schemaVersion": 29,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -762,12 +778,17 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "panels": Array [
           PanelModel {
             "cachedPluginOptions": Object {},
+            "configRev": 0,
             "datasource": null,
             "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
               },
+            },
+            "fieldConfig": Object {
+              "defaults": Object {},
+              "overrides": Array [],
             },
             "gridPos": Object {
               "h": 1,
@@ -776,6 +797,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "y": 0,
             },
             "id": 1,
+            "isEditing": false,
+            "isInView": false,
+            "isViewing": false,
             "options": Object {},
             "replaceVariables": [Function],
             "targets": Array [
@@ -790,7 +814,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 27,
+        "schemaVersion": 29,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],

@@ -12,12 +12,15 @@ if (process.env.NODE_ENV !== 'production') {
 module.exports = {
   stories: stories,
   addons: [
-    '@storybook/addon-docs',
-    '@storybook/addon-controls',
+    {
+      name: '@storybook/addon-essentials',
+      options: {
+        backgrounds: false,
+      },
+    },
     '@storybook/addon-knobs',
-    '@storybook/addon-actions',
-    'storybook-dark-mode/register',
     '@storybook/addon-storysource',
+    'storybook-dark-mode',
   ],
   reactOptions: {
     fastRefresh: true,
@@ -30,6 +33,7 @@ module.exports = {
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
       propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+      savePropValueAsString: true,
     },
   },
   webpackFinal: async (config: any, { configType }: any) => {

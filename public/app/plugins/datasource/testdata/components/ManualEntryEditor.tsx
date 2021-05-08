@@ -9,22 +9,24 @@ export interface Props extends EditorProps {
 }
 
 export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
+  const points = query.points ?? [];
+
   const addPoint = (point: NewPoint) => {
     const newPointTime = dateMath.parse(point.newPointTime);
-    const points = [...query.points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort(
+    const pointsUpdated = [...points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort(
       (a, b) => a[1] - b[1]
     );
-    onChange({ ...query, points });
+    onChange({ ...query, points: pointsUpdated });
     onRunQuery();
   };
 
   const deletePoint = (point: SelectableValue) => {
-    const points = query.points.filter((_, index) => index !== point.value);
-    onChange({ ...query, points });
+    const pointsUpdated = points.filter((_, index) => index !== point.value);
+    onChange({ ...query, points: pointsUpdated });
     onRunQuery();
   };
 
-  const points = query.points.map((point, index) => {
+  const pointOptions = points.map((point, index) => {
     return {
       label: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
       value: index,
@@ -33,27 +35,25 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
 
   return (
     <Form onSubmit={addPoint} maxWidth="none">
-      {({ register, control, watch }) => {
-        const selectedPoint = watch('selectedPoint') as SelectableValue;
+      {({ register, control, watch, setValue }) => {
+        const selectedPoint = watch('selectedPoint' as any) as SelectableValue;
         return (
           <InlineFieldRow>
             <InlineField label="New value" labelWidth={14}>
               <Input
+                {...register('newPointValue')}
                 width={32}
                 type="number"
                 placeholder="value"
                 id={`newPointValue-${query.refId}`}
-                name="newPointValue"
-                ref={register}
               />
             </InlineField>
             <InlineField label="Time" labelWidth={14}>
               <Input
+                {...register('newPointTime')}
                 width={32}
                 id={`newPointTime-${query.refId}`}
                 placeholder="time"
-                name="newPointTime"
-                ref={register}
                 defaultValue={dateTime().format()}
               />
             </InlineField>
@@ -62,13 +62,11 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
             </InlineField>
             <InlineField label="All values">
               <InputControl
+                name={'selectedPoint' as any}
                 control={control}
-                as={Select}
-                options={points}
-                width={32}
-                name="selectedPoint"
-                onChange={(value) => value[0]}
-                placeholder="Select point"
+                render={({ field: { ref, ...field } }) => (
+                  <Select {...field} options={pointOptions} width={32} placeholder="Select point" />
+                )}
               />
             </InlineField>
 
@@ -78,7 +76,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
                   type="button"
                   variant="destructive"
                   onClick={() => {
-                    control.setValue('selectedPoint', [{ value: undefined, label: 'Select value' }]);
+                    setValue('selectedPoint' as any, [{ value: undefined, label: 'Select value' }]);
                     deletePoint(selectedPoint);
                   }}
                 >

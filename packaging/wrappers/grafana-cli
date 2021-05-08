@@ -36,4 +36,4 @@ OPTS="--homepath=${GRAFANA_HOME} \
                         cfg:default.paths.logs=${LOG_DIR} \
                         cfg:default.paths.plugins=${PLUGINS_DIR}'"
 
-eval $EXECUTABLE "$OPTS" "$@"
+eval $EXECUTABLE "$OPTS" '$@'

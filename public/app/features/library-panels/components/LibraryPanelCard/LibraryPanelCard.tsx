@@ -1,80 +1,50 @@
 import React, { useState } from 'react';
-import { Icon, IconButton, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Icon, Link, useStyles2 } from '@grafana/ui';
+
 import { LibraryPanelDTO } from '../../types';
+import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
+import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryPanelDTO;
-  onClick?: (panel: LibraryPanelDTO) => void;
-  onDelete?: () => void;
+  onClick: (panel: LibraryPanelDTO) => void;
+  onDelete?: (panel: LibraryPanelDTO) => void;
   showSecondaryActions?: boolean;
-  formatDate?: (dateString: string) => string;
 }
 
 export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] }> = ({
   libraryPanel,
-  children,
   onClick,
   onDelete,
-  formatDate,
   showSecondaryActions,
 }) => {
-  const styles = useStyles(getStyles);
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
-    onDelete?.();
+    onDelete?.(libraryPanel);
     setShowDeletionModal(false);
   };
 
+  const panelPlugin = config.panels[libraryPanel.model.type] ?? ({} as PanelPluginMeta);
+
   return (
     <>
-      <Card heading={libraryPanel.name} onClick={onClick ? () => onClick(libraryPanel) : undefined}>
-        <Card.Figure>
-          <Icon className={styles.panelIcon} name="book-open" size="xl" />
-        </Card.Figure>
-        <Card.Meta>
-          <span>Reusable panel</span>
-          <Tooltip content="Connected dashboards" placement="bottom">
-            <div className={styles.tooltip}>
-              <Icon name="apps" className={styles.detailIcon} />
-              {libraryPanel.meta.connectedDashboards}
-            </div>
-          </Tooltip>
-          <span>
-            Last edited {formatDate?.(libraryPanel.meta.updated ?? '') ?? libraryPanel.meta.updated} by{' '}
-            {libraryPanel.meta.updatedBy.name}
-          </span>
-        </Card.Meta>
-        {/*
-        Commenting this out as tagging isn't implemented yet.
-        <Card.Tags>
-          <TagList className={styles.tagList} tags={['associated panel tag']} />
-        </Card.Tags> */}
-        {children && <Card.Actions>{children}</Card.Actions>}
-        {showSecondaryActions && (
-          <Card.SecondaryActions>
-            <IconButton
-              name="trash-alt"
-              tooltip="Delete panel"
-              tooltipPlacement="bottom"
-              onClick={() => setShowDeletionModal(true)}
-            />
-            {/*
-          Commenting this out as panel favoriting hasn't been implemented yet.
-          <IconButton name="star" tooltip="Favorite panel" tooltipPlacement="bottom" />
-          */}
-          </Card.SecondaryActions>
-        )}
-      </Card>
+      <PanelTypeCard
+        isCurrent={false}
+        title={libraryPanel.name}
+        description={libraryPanel.description}
+        plugin={panelPlugin}
+        onClick={() => onClick(libraryPanel)}
+        onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
+      >
+        <FolderLink libraryPanel={libraryPanel} />
+      </PanelTypeCard>
       {showDeletionModal && (
-        <ConfirmModal
-          isOpen={showDeletionModal}
-          icon="trash-alt"
-          title="Delete library panel"
-          body="Do you want to delete this panel?"
-          confirmText="Delete"
+        <DeleteLibraryPanelModal
+          libraryPanel={libraryPanel}
           onConfirm={onDeletePanel}
           onDismiss={() => setShowDeletionModal(false)}
         />
@@ -83,19 +53,45 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+interface FolderLinkProps {
+  libraryPanel: LibraryPanelDTO;
+}
+
+function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
+  const styles = useStyles2(getStyles);
+
+  if (!libraryPanel.meta.folderUid) {
+    return (
+      <span className={styles.metaContainer}>
+        <Icon name={'folder'} size="sm" />
+        {libraryPanel.meta.folderName}
+      </span>
+    );
+  }
+
+  return (
+    <Link href={`/dashboards/f/${libraryPanel.meta.folderUid}`}>
+      <span className={styles.metaContainer}>
+        <Icon name={'folder-upload'} size="sm" />
+        {libraryPanel.meta.folderName}
+      </span>
+    </Link>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
   return {
-    tooltip: css`
-      display: inline;
-    `,
-    detailIcon: css`
-      margin-right: 0.5ch;
-    `,
-    panelIcon: css`
-      color: ${theme.colors.textWeak};
-    `,
-    tagList: css`
-      align-self: center;
+    metaContainer: css`
+      display: flex;
+      align-items: center;
+      color: ${theme.colors.text.disabled};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      padding-top: ${theme.spacing(0.5)};
+
+      svg {
+        margin-right: ${theme.spacing(0.5)};
+        margin-bottom: 3px;
+      }
     `,
   };
-};
+}

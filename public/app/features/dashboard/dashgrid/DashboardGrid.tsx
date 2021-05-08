@@ -153,7 +153,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
     this.props.dashboard.sortPanelsByGridPos();
 
-    // Call render() after any changes.  This is called when the layour loads
+    // Call render() after any changes.  This is called when the layout loads
     this.forceUpdate();
   };
 
@@ -228,7 +228,7 @@ export class DashboardGrid extends PureComponent<Props> {
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <div key={id} className={panelClasses} id={'panel-' + id} ref={(elem) => elem && (this.panelRef[id] = elem)}>
+        <div key={id} className={panelClasses} data-panelid={id} ref={(elem) => elem && (this.panelRef[id] = elem)}>
           {this.renderPanel(panel)}
         </div>
       );

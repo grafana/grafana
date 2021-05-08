@@ -1,19 +1,21 @@
-import _ from 'lodash';
+import { cloneDeep, isNumber } from 'lodash';
 import { coreModule } from 'app/core/core';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { AnnotationEvent, dateTime } from '@grafana/data';
-import { AnnotationsSrv } from './all';
+import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
+import { deleteAnnotation, saveAnnotation, updateAnnotation } from './api';
 
 export class EventEditorCtrl {
+  // @ts-ignore initialized through Angular not constructor
   panelCtrl: MetricsPanelCtrl;
+  // @ts-ignore initialized through Angular not constructor
   event: AnnotationEvent;
-  timeRange: { from: number; to: number };
+  timeRange?: { from: number; to: number };
   form: any;
   close: any;
-  timeFormated: string;
+  timeFormated?: string;
 
   /** @ngInject */
-  constructor(private annotationsSrv: AnnotationsSrv) {}
+  constructor() {}
 
   $onInit() {
     this.event.panelId = this.panelCtrl.panel.id;
@@ -33,7 +35,7 @@ export class EventEditorCtrl {
       return;
     }
 
-    const saveModel = _.cloneDeep(this.event);
+    const saveModel = cloneDeep(this.event);
     saveModel.time = saveModel.time!.valueOf();
     saveModel.timeEnd = 0;
 
@@ -47,8 +49,7 @@ export class EventEditorCtrl {
     }
 
     if (saveModel.id) {
-      this.annotationsSrv
-        .updateAnnotationEvent(saveModel)
+      updateAnnotation(saveModel)
         .then(() => {
           this.panelCtrl.refresh();
           this.close();
@@ -58,8 +59,7 @@ export class EventEditorCtrl {
           this.close();
         });
     } else {
-      this.annotationsSrv
-        .saveAnnotationEvent(saveModel)
+      saveAnnotation(saveModel)
         .then(() => {
           this.panelCtrl.refresh();
           this.close();
@@ -72,8 +72,7 @@ export class EventEditorCtrl {
   }
 
   delete() {
-    return this.annotationsSrv
-      .deleteAnnotationEvent(this.event)
+    return deleteAnnotation(this.event)
       .then(() => {
         this.panelCtrl.refresh();
         this.close();
@@ -86,7 +85,7 @@ export class EventEditorCtrl {
 }
 
 function tryEpochToMoment(timestamp: any) {
-  if (timestamp && _.isNumber(timestamp)) {
+  if (timestamp && isNumber(timestamp)) {
     const epoch = Number(timestamp);
     return dateTime(epoch);
   } else {

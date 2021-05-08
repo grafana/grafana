@@ -21,6 +21,7 @@ func init() {
 }
 
 // Query builds flux queries, executes them, and returns the results.
+//nolint: staticcheck // plugins.DataQuery deprecated
 func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	glog.Debug("Received a query", "query", tsdbQuery)
@@ -98,6 +99,7 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 // backendDataResponseToDataResponse takes the SDK's style response and changes it into a
 // plugins.DataQueryResult. This is a wrapper so less of existing code needs to be changed. This should
 // be able to be removed in the near future https://github.com/grafana/grafana/pull/25472.
+//nolint: staticcheck // plugins.DataQueryResult deprecated
 func backendDataResponseToDataResponse(dr *backend.DataResponse, refID string) plugins.DataQueryResult {
 	qr := plugins.DataQueryResult{
 		RefID: refID,

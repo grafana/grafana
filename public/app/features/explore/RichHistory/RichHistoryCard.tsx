@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
+import { GrafanaTheme, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
 
 import { updateRichHistory } from '../state/history';
@@ -34,19 +37,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   const rigtColumnContentWidth = '170px';
 
   /* If datasource was removed, card will have inactive color */
-  const cardColor = theme.isLight
-    ? isRemoved
-      ? theme.palette.gray95
-      : theme.palette.white
-    : isRemoved
-    ? theme.palette.gray15
-    : theme.palette.gray05;
+  const cardColor = theme.colors.bg2;
 
   return {
     queryCard: css`
       display: flex;
       flex-direction: column;
-      border: 1px solid ${theme.colors.formInputBorder};
+      border: 1px solid ${theme.colors.border1};
       margin: ${theme.spacing.sm} 0;
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
@@ -61,7 +58,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       padding: ${theme.spacing.sm};
       border-bottom: none;
       :first-of-type {
-        border-bottom: 1px solid ${theme.colors.formInputBorder};
+        border-bottom: 1px solid ${theme.colors.border1};
         padding: ${theme.spacing.xs} ${theme.spacing.sm};
       }
       img {
@@ -90,7 +87,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
-      border-top: 1px solid ${theme.colors.formInputBorder};
+      border-top: 1px solid ${theme.colors.border1};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
@@ -114,14 +111,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     textArea: css`
-      border: 1px solid ${theme.colors.formInputBorder};
-      background: inherit;
-      color: inherit;
       width: 100%;
-      font-size: ${theme.typography.size.sm};
-      &placeholder {
-        padding: 0 ${theme.spacing.sm};
-      }
     `,
     runButton: css`
       max-width: ${rigtColumnContentWidth};
@@ -179,7 +169,7 @@ export function RichHistoryCard(props: Props) {
   const onCopyQuery = () => {
     const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
     copyStringToClipboard(queriesToCopy);
-    appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
+    dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
   };
 
   const onCreateShortLink = async () => {
@@ -198,13 +188,13 @@ export function RichHistoryCard(props: Props) {
           icon: 'trash-alt',
           onConfirm: () => {
             updateRichHistory(query.ts, 'delete');
-            appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+            dispatch(notifyApp(createSuccessNotification('Query deleted')));
           },
         })
       );
     } else {
       updateRichHistory(query.ts, 'delete');
-      appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+      dispatch(notifyApp(createSuccessNotification('Query deleted')));
     }
   };
 

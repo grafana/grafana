@@ -1,8 +1,7 @@
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { applyFieldOverrides } from './fieldOverrides';
 import { toDataFrame } from '../dataframe';
-import { GrafanaTheme } from '../types';
-import { getTestTheme } from '../utils/testdata/testTheme';
+import { createTheme } from '../themes';
 
 describe('getFieldDisplayValuesProxy', () => {
   const data = applyFieldOverrides({
@@ -13,6 +12,9 @@ describe('getFieldDisplayValuesProxy', () => {
           {
             name: 'power',
             values: [100, 200, 300],
+            labels: {
+              name: 'POWAH!',
+            },
             config: {
               displayName: 'The Power',
             },
@@ -30,7 +32,7 @@ describe('getFieldDisplayValuesProxy', () => {
     },
     replaceVariables: (val: string) => val,
     timeZone: 'utc',
-    theme: getTestTheme(),
+    theme: createTheme(),
   })[0];
 
   it('should define all display functions', () => {
@@ -42,9 +44,7 @@ describe('getFieldDisplayValuesProxy', () => {
 
   it('should format the time values in UTC', () => {
     // Test Proxies in general
-    const p = getFieldDisplayValuesProxy(data, 0, {
-      theme: {} as GrafanaTheme,
-    });
+    const p = getFieldDisplayValuesProxy({ frame: data, rowIndex: 0 });
     const time = p.Time;
     expect(time.numeric).toEqual(1);
     expect(time.text).toEqual('1970-01-01 00:00:00');
@@ -55,19 +55,16 @@ describe('getFieldDisplayValuesProxy', () => {
   });
 
   it('Lookup by name, index, or displayName', () => {
-    const p = getFieldDisplayValuesProxy(data, 2, {
-      theme: {} as GrafanaTheme,
-    });
+    const p = getFieldDisplayValuesProxy({ frame: data, rowIndex: 2 });
     expect(p.power.numeric).toEqual(300);
     expect(p['power'].numeric).toEqual(300);
+    expect(p['POWAH!'].numeric).toEqual(300);
     expect(p['The Power'].numeric).toEqual(300);
     expect(p[1].numeric).toEqual(300);
   });
 
   it('should return undefined when missing', () => {
-    const p = getFieldDisplayValuesProxy(data, 0, {
-      theme: {} as GrafanaTheme,
-    });
+    const p = getFieldDisplayValuesProxy({ frame: data, rowIndex: 0 });
     expect(p.xyz).toBeUndefined();
     expect(p[100]).toBeUndefined();
   });

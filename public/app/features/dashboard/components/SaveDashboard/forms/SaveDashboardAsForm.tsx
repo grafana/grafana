@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, HorizontalGroup, Input, Switch, Form, Field, InputControl } from '@grafana/ui';
+import { Button, Input, Switch, Form, Field, InputControl, Modal } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardFormProps } from '../types';
@@ -51,7 +51,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
 
   const validateDashboardName = (getFormValues: () => SaveDashboardAsFormDTO) => async (dashboardName: string) => {
     if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
-      return 'Dashboard name cannot be the same as folder';
+      return 'Dashboard name cannot be the same as folder name';
     }
     try {
       await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
@@ -92,8 +92,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
         <>
           <Field label="Dashboard name" invalid={!!errors.title} error={errors.title?.message}>
             <Input
-              name="title"
-              ref={register({
+              {...register('title', {
                 validate: validateDashboardName(getValues),
               })}
               aria-label="Save dashboard title field"
@@ -102,26 +101,30 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
           </Field>
           <Field label="Folder">
             <InputControl
-              as={FolderPicker}
+              render={({ field: { ref, ...field } }) => (
+                <FolderPicker
+                  {...field}
+                  dashboardId={dashboard.id}
+                  initialFolderId={dashboard.meta.folderId}
+                  initialTitle={dashboard.meta.folderTitle}
+                  enableCreateNew
+                />
+              )}
               control={control}
               name="$folder"
-              dashboardId={dashboard.id}
-              initialFolderId={dashboard.meta.folderId}
-              initialTitle={dashboard.meta.folderTitle}
-              enableCreateNew
             />
           </Field>
           <Field label="Copy tags">
-            <Switch name="copyTags" ref={register} />
+            <Switch {...register('copyTags')} />
           </Field>
-          <HorizontalGroup>
+          <Modal.ButtonRow>
+            <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
+              Cancel
+            </Button>
             <Button type="submit" aria-label="Save dashboard button">
               Save
             </Button>
-            <Button variant="secondary" onClick={onCancel}>
-              Cancel
-            </Button>
-          </HorizontalGroup>
+          </Modal.ButtonRow>
         </>
       )}
     </Form>

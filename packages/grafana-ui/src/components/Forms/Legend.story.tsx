@@ -1,14 +1,8 @@
 import React from 'react';
-import { text } from '@storybook/addon-knobs';
+import { Meta, Story } from '@storybook/react';
 
 import { Legend } from '@grafana/ui';
 import mdx from './Legend.mdx';
-
-const getKnobs = () => {
-  return {
-    label: text('text', 'Form section'),
-  };
-};
 
 export default {
   title: 'Forms/Legend',
@@ -17,11 +11,21 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['description'],
+    },
   },
+  argTypes: {
+    children: { name: 'Label' },
+  },
+} as Meta;
+
+export const Basic: Story = (args) => {
+  return <Legend>{args.children}</Legend>;
 };
-
-export const basic = () => {
-  const { label } = getKnobs();
-
-  return <Legend>{label}</Legend>;
+Basic.args = {
+  children: 'Form section',
 };

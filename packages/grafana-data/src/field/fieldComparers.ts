@@ -1,7 +1,7 @@
 import { Field, FieldType } from '../types/dataFrame';
 import { Vector } from '../types/vector';
 import { dateTime } from '../datetime';
-import isNumber from 'lodash/isNumber';
+import { isNumber } from 'lodash';
 
 type IndexComparer = (a: number, b: number) => number;
 

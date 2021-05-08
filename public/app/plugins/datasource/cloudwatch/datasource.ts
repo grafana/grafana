@@ -1,6 +1,6 @@
 import React from 'react';
 import angular from 'angular';
-import _ from 'lodash';
+import { find, isEmpty, isString, set } from 'lodash';
 import { merge, Observable, of, throwError, zip } from 'rxjs';
 import {
   catchError,
@@ -32,7 +32,9 @@ import {
   LogRowModel,
   rangeUtil,
   ScopedVars,
+  TableData,
   TimeRange,
+  toLegacyResponseData,
 } from '@grafana/data';
 
 import { notifyApp } from 'app/core/actions';
@@ -63,9 +65,8 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
-import config from 'app/core/config';
 
-const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
+const DS_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
 const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
@@ -126,11 +127,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      if (config.featureToggles.live) {
-        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      } else {
-        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
-      }
+      dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
+      //  dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {
@@ -138,7 +136,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(dataQueryResponses)) {
+    if (isEmpty(dataQueryResponses)) {
       return of({
         data: [],
         state: LoadingState.Done,
@@ -158,7 +156,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(validLogQueries)) {
+    if (isEmpty(validLogQueries)) {
       return of({ data: [], state: LoadingState.Done });
     }
 
@@ -184,15 +182,15 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       queries: queryParams,
     };
 
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
       mergeMap((response: TSDBResponse) => {
-        const channelName: string = response.results['A'].meta.channelName;
-        const channel = getGrafanaLiveSrv().getChannel({
+        const dataQueryResponse = toDataQueryResponse({ data: response }, options.targets);
+        const channelName: string = dataQueryResponse.data[0].meta.custom.channelName;
+        return getGrafanaLiveSrv().getStream({
           scope: LiveChannelScope.Plugin,
           namespace: 'cloudwatch',
           path: channelName,
         });
-        return channel.getStream();
       }),
       filter((e: LiveChannelEvent<any>) => e.type === 'message'),
       map(({ message }: LiveChannelMessageEvent<TSDBResponse>) => {
@@ -227,7 +225,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(validLogQueries)) {
+    if (isEmpty(validLogQueries)) {
       return of({ data: [], state: LoadingState.Done });
     }
 
@@ -261,7 +259,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     const validMetricsQueries = metricQueries
       .filter(
         (item) =>
-          (!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
+          (!!item.region && !!item.namespace && !!item.metricName && !isEmpty(item.statistics)) ||
           item.expression?.length > 0
       )
       .map(
@@ -300,7 +298,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       );
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(validMetricsQueries)) {
+    if (isEmpty(validMetricsQueries)) {
       return of({ data: [] });
     }
 
@@ -375,7 +373,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       map(([dataFrames, failedAttempts]) => {
         if (failedAttempts >= MAX_ATTEMPTS) {
           for (const frame of dataFrames) {
-            _.set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
+            set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
           }
         }
 
@@ -543,7 +541,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<any> {
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, request).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, request).pipe(
       map((res) => {
         const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
         if (!dataframes || dataframes.length <= 0) {
@@ -576,8 +574,11 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     );
   }
 
-  transformSuggestDataFromTable(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
-    return suggestData.results['metricFindQuery'].tables[0].rows.map(([text, value]) => ({
+  transformSuggestDataFromDataframes(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
+    const frames = toDataQueryResponse({ data: suggestData }).data as DataFrame[];
+    const table = toLegacyResponseData(frames[0]) as TableData;
+
+    return table.rows.map(([text, value]) => ({
       text,
       value,
       label: value,
@@ -586,7 +587,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
   doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
     const range = this.timeSrv.timeRange();
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, {
+    return this.awsRequest(DS_QUERY_ENDPOINT, {
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),
       queries: [
@@ -603,7 +604,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     })
       .pipe(
         map((r) => {
-          return this.transformSuggestDataFromTable(r);
+          return this.transformSuggestDataFromDataframes(r);
         })
       )
       .toPromise();
@@ -650,7 +651,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
 
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams).pipe(
+    return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err) => {
         if (err.data?.error) {
@@ -835,7 +836,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       alarmNamePrefix: annotation.alarmNamePrefix || '',
     };
 
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, {
+    return this.awsRequest(DS_QUERY_ENDPOINT, {
       from: options.range.from.valueOf().toString(),
       to: options.range.to.valueOf().toString(),
       queries: [
@@ -849,7 +850,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     })
       .pipe(
         map((r) => {
-          return r.results['annotationQuery'].tables[0].rows.map((v) => ({
+          const frames = toDataQueryResponse({ data: r }).data as DataFrame[];
+          const table = toLegacyResponseData(frames[0]) as TableData;
+          return table.rows.map((v) => ({
             annotation: annotation,
             time: Date.parse(v[0]),
             title: v[1],
@@ -868,7 +871,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       this.templateSrv.variableExists(target.metricName) ||
       this.templateSrv.variableExists(target.expression!) ||
       target.logGroupNames?.some((logGroup: string) => this.templateSrv.variableExists(logGroup)) ||
-      _.find(target.dimensions, (v, k) => this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v))
+      find(target.dimensions, (v, k) => this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v))
     );
   }
 
@@ -913,7 +916,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   convertToCloudWatchTime(date: any, roundUp: any) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.round(date.valueOf() / 1000);

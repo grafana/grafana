@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
@@ -23,8 +22,9 @@ import (
 )
 
 type InsightsAnalyticsDatasource struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
 }
 
 type InsightsAnalyticsQuery struct {
@@ -39,6 +39,7 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
 	originalQueries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -96,6 +97,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 	return iaQueries, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) plugins.DataQueryResult {
 	queryResult := plugins.DataQueryResult{RefID: query.RefID}
 
@@ -187,8 +189,8 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 
 func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	// find plugin
-	plugin, ok := manager.DataSources[dsInfo.Type]
-	if !ok {
+	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 

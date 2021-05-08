@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
 import { useTheme, Icon } from '../../index';
 import { stylesFactory } from '../../themes';

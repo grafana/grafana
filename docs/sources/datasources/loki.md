@@ -8,29 +8,23 @@ weight = 800
 
 # Using Loki in Grafana
 
-> BETA: Querying Loki data requires Grafana's Explore section.
-> Grafana v6.x comes with Explore enabled by default.
-> In Grafana v5.3.x and v5.4.x. you need to enable Explore manually.
-> Viewing Loki data in dashboard panels is supported in Grafana v6.4+.
+Grafana ships with built-in support for Loki, an open source log aggregation system by Grafana Labs. This topic explains options, variables, querying, and other options specific to this data source.
 
-Grafana ships with built-in support for Loki, Grafana's log aggregation system.
-Just add it as a data source and you are ready to query your log data in [Explore]({{< relref "../explore" >}}).
+Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore" >}}). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-## Adding the data source
+> **Note:** To troubleshoot configuration and other issues, check the log file located at /var/log/grafana/grafana.log on Unix systems or in <grafana_install_dir>/data/log on other platforms and manual installations.
 
-1. Open Grafana and make sure you are logged in.
-1. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
-1. Click the `Add data source` button at the top.
-1. Select `Loki` from the list of data sources.
+## Loki settings
 
-> **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+To access Loki settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click the Loki data source.
 
-| Name            | Description                                                                                                                                   |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
-| `Default`       | Default data source means that it will be pre-selected for new panels.                                                                        |
-| `URL`           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
-| `Maximum lines` | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
+| Name                  | Description                                                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
+| `Default`             | Default data source means that it will be pre-selected for new panels.                                                                        |
+| `URL`                 | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
+| `Whitelisted Cookies` | Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.                      |
+| `Maximum lines`       | Upper limit for the number of log lines returned by Loki (default is 1000). Lower this limit if your browser is sluggish when displaying logs in Explore. |
 
 ### Derived fields
 
@@ -40,7 +34,7 @@ The Derived Fields configuration allows you to:
 - Add a link that uses the value of the field.
 
 You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/logs-integration/#labels-and-detected-fields).
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
+
 Each derived field consists of:
 
 - **Name -** Shown in the log details as a label.
@@ -49,97 +43,73 @@ Each derived field consists of:
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
+{{< docs-imagebox img="/img/docs/v75/loki_derived_fields_settings.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the derived fields debugging" >}}
 
 The new field with the link shown in log details:
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_detail.png" class="docs-image--no-shadow" caption="Screenshot of the derived field in log detail" >}}
+{{< docs-imagebox img="/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
 
-## Querying Logs
+## Loki query editor
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/) query to display your logs.
+You can use the Loki query editor to create log and metric queries.
 
-### Log Queries
+| Name               | Description                                                                                                                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Query expression` | Loki query expression, refer to the [LogQL documentation](https://grafana.com/docs/loki/latest/logql/) for more information.                                                                                                    |
+| `Query type`       | Choose the type of query to run. The instant type queries against a single point in time. We are using "To" time from the time range. The range type queries over the selected range of time. |
+| `Line limit`       | Upper limit for number of log lines returned by query. The default is the Maximum lines limit set in Loki settings.                                                                                         |
+| `Legend`           | Available only in Dashboard. Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.                             |
 
-A log query consists of two parts: **log stream selector**, and a **search expression**. For performance reasons you need to start by choosing a log stream by selecting a log label.
+### Log browser
 
-The Logs Explorer (the `Log labels` button) next to the query field shows a list of labels of available log streams. An alternative way to write a query is to use the query field's autocomplete - you start by typing a left curly brace `{` and the autocomplete menu will suggest a list of labels. Press the `Enter` key to execute the query.
+With Loki log browser you can easily navigate trough your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
+1. Choose the labels you would like to consider for your search.
+2. Pick the values for selected labels. Log browser supports facetting and therefore it shows you only possible label combinations. 
+3. Choose the type of query - logs query or rate metrics query. Additionally, you can also validate selector.
 
-Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
+{{< docs-imagebox img="/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the derived fields debugging" >}}
 
-<div class="medium-6 columns">
-  <video width="800" height="500" controls>
-    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</div>
+## Querying with Loki
 
-<br />
+There are two types of LogQL queries:
 
-### Log Stream Selector
+- Log queries - Return the contents of log lines.
+- Metric queries - Extend log queries and calculate sample values based on the content of logs from a log query.
 
-For the label part of the query expression, wrap it in curly braces `{}` and then use the key value syntax for selecting labels. Multiple label expressions are separated by a comma:
+### Log queries
 
-`{app="mysql",name="mysql-backup"}`
+Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/#log-queries) query to display your logs.
 
-The following label matching operators are currently supported:
+A log query consists of two parts: log stream selector, and a log pipeline. For performance reasons begin by choosing a log stream by selecting a log label.
 
-- `=` exactly equal.
-- `!=` not equal.
-- `=~` regex-match.
-- `!~` do not regex-match.
+### Log context
 
-Examples:
+When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
+By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
+log message you're interested in.
 
-- `{name=~"mysql.+"}`
-- `{name!~"mysql.+"}`
-
-The [same rules that apply for Prometheus Label Selectors](https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors) apply for Loki Log Stream Selectors.
-
-Another way to add a label selector is in the table section. Click **Filter** beside a label to add the label to the query expression. This even works for multiple queries and will add the label selector to each query.
-
-### Search Expression
-
-After writing the Log Stream Selector, you can filter the results further by writing a search expression. The search expression can be just text or a regex expression.
-
-Example queries:
-
-- `{job="mysql"} |= "error"`
-- `{name="kafka"} |~ "tsdb-ops.*io:2003"`
-- `{instance=~"kafka-[23]",name="kafka"} != "kafka.server:type=ReplicaManager"`
-
-Filter operators can be chained and will sequentially filter down the expression. The resulting log lines will satisfy every filter.
-
-**Example**
-
-`{job="mysql"} |= "error" != "timeout"`
-
-The following filter types are currently supported:
-
-- `|=` line contains string.
-- `!=` line doesn't contain string.
-- `|~` line matches regular expression.
-- `!~` line does not match regular expression.
-
-> **Note:** For more details about LogQL, Loki's query language, refer to the [Loki LogQL](https://grafana.com/docs/loki/latest/logql/)
-
-## Live tailing
+### Live tailing
 
 Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly. The following example for Apache2 can be used for proxying between the browser and the Grafana server:
+
 ```
 ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
 ```
+
 The following example shows basic NGINX proxy configuration. It assumes that the Grafana server is available at `http://localhost:3000/`, Loki server is running locally without proxy, and your external site uses HTTPS. If you also host Loki behind NGINX proxy, then you might want to repeat the following configuration for Loki as well.
 
 In the `http` section of NGINX configuration, add the following map definition:
+
 ```
   map $http_upgrade $connection_upgrade {
     default upgrade;
     '' close;
   }
 ```
+
 In your `server` section, add the following configuration:
+
 ```
   location ~ /(api/datasources/proxy/\d+/loki/api/v1/tail) {
       proxy_pass          http://localhost:3000$request_uri;
@@ -162,13 +132,9 @@ In your `server` section, add the following configuration:
 
 > **Note:** This feature is only available in Grafana v6.3+.
 
-## Log Context
+## Metric queries
 
-When using a search expression as detailed above, you now have the ability to retrieve the context surrounding your filtered results.
-By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
-log message you're interested in.
-
-> **Note:** This feature is only available in Grafana v6.3+
+LogQL supports wrapping a log query with functions that allow for creating metrics out of the logs. See [LogQL](https://grafana.com/docs/loki/latest/logql/#metric-queries) documentation on how to create and use metrics queries.
 
 ## Templating
 
@@ -176,11 +142,19 @@ Instead of hard-coding things like server, application and sensor name in your m
 
 Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
+## Query variable
+
+Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
+provides the following functions you can use in the `Query` input field.
+
+| Name                  | Description                                                     |
+| --------------------- | --------------------------------------------------------------- |
+| `label_names()`       | Returns a list of label names.                                  |
+| `label_values(label)` | Returns a list of label values for the `label` in every metric. |
+
 ## Annotations
 
 You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
-
-> **Note:** Annotations for Loki are only available in Grafana v6.4+
 
 ## Configure the data source with provisioning
 
@@ -224,12 +198,12 @@ datasources:
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           # url will be interpreted as query for the datasource
-          url: "$${__value.raw}"
+          url: '$${__value.raw}'
 
         # Field with external link.
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
-          url: "http://localhost:16686/trace/$${__value.raw}"
+          url: 'http://localhost:16686/trace/$${__value.raw}'
 ```
 
 Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.

@@ -1,6 +1,6 @@
 import React, { FC, useReducer } from 'react';
 import { Icon, IconName, Tooltip } from '@grafana/ui';
-import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
+import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardLinksDashboard } from './DashboardLinksDashboard';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
@@ -17,10 +17,6 @@ export interface Props {
 }
 
 export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
-  if (!links.length) {
-    return null;
-  }
-
   // Emulate forceUpdate (https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate)
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -32,12 +28,9 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
     };
   });
 
-  useEffectOnce(() => {
-    dashboard.on(CoreEvents.submenuVisibilityChanged, forceUpdate);
-    return () => {
-      dashboard.off(CoreEvents.submenuVisibilityChanged, forceUpdate);
-    };
-  });
+  if (!links.length) {
+    return null;
+  }
 
   return (
     <>
@@ -58,7 +51,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
             aria-label={selectors.components.DashboardLinks.link}
           >
             <Icon name={linkIconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
-            <span>{sanitize(linkInfo.title)}</span>
+            <span>{linkInfo.title}</span>
           </a>
         );
 

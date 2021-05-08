@@ -10,12 +10,12 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { from, Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { serializeParams } from 'app/core/utils/fetch';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { createTraceFrame } from './responseTransform';
+import { createGraphFrames } from './graphTransform';
 
 export type JaegerQuery = {
   query: string;
@@ -42,8 +42,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
       map((response) => {
+        // We assume there is only one trace, as the querying right now does not work to query for multiple traces.
+        const traceData = response?.data?.data?.[0];
+        if (!traceData) {
+          return { data: [emptyTraceDataFrame] };
+        }
         return {
-          data: [createTraceFrame(response?.data?.data?.[0] || [])],
+          data: [createTraceFrame(traceData), ...createGraphFrames(traceData)],
         };
       })
     );
@@ -100,16 +105,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
     const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,
       url,
     };
 
-    return from(getBackendSrv().datasourceRequest(req));
+    return getBackendSrv().fetch(req);
   }
 }
 

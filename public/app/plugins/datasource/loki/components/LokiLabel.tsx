@@ -1,7 +1,7 @@
 import React, { forwardRef, HTMLAttributes } from 'react';
-import { cx, css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useTheme } from '@grafana/ui';
+import { cx, css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 
@@ -14,7 +14,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   name: string;
   active?: boolean;
   loading?: boolean;
-  searchTerm?: RegExp;
+  searchTerm?: string;
   value?: string;
   facets?: number;
   onClick?: OnLabelClick;
@@ -22,8 +22,9 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
 
 export const LokiLabel = forwardRef<HTMLElement, Props>(
   ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
-    const theme = useTheme();
+    const theme = useTheme2();
     const styles = getLabelStyles(theme);
+    const searchWords = searchTerm ? [searchTerm] : [];
 
     const onLabelClick = (event: React.MouseEvent<HTMLElement>) => {
       if (onClick && !hidden) {
@@ -55,7 +56,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         )}
         {...rest}
       >
-        <Highlighter textToHighlight={text} searchWords={[searchTerm]} highlightClassName={styles.matchHighLight} />
+        <Highlighter textToHighlight={text} searchWords={searchWords} highlightClassName={styles.matchHighLight} />
       </span>
     );
   }
@@ -63,49 +64,47 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
 
 LokiLabel.displayName = 'LokiLabel';
 
-const getLabelStyles = (theme: GrafanaTheme) => ({
+const getLabelStyles = (theme: GrafanaTheme2) => ({
   base: css`
     cursor: pointer;
     font-size: ${theme.typography.size.sm};
-    line-height: ${theme.typography.lineHeight.xs};
-    border: 1px solid ${theme.colors.border2};
+    line-height: ${theme.typography.bodySmall.lineHeight};
+    background-color: ${theme.colors.background.secondary};
     vertical-align: baseline;
     color: ${theme.colors.text};
     white-space: nowrap;
     text-shadow: none;
-    padding: ${theme.spacing.xs};
-    border-radius: ${theme.border.radius.md};
-    margin-right: ${theme.spacing.sm};
-    margin-bottom: ${theme.spacing.xs};
-    text-overflow: ellipsis;
-    overflow: hidden;
+    padding: ${theme.spacing(0.5)};
+    border-radius: ${theme.shape.borderRadius()};
+    margin-right: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
   loading: css`
-    font-weight: ${theme.typography.weight.semibold};
-    background-color: ${theme.colors.formSwitchBgHover};
-    color: ${theme.palette.gray98};
+    font-weight: ${theme.typography.fontWeightMedium};
+    background-color: ${theme.colors.primary.shade};
+    color: ${theme.colors.text.primary};
     animation: pulse 3s ease-out 0s infinite normal forwards;
     @keyframes pulse {
       0% {
-        color: ${theme.colors.textSemiWeak};
+        color: ${theme.colors.text.primary};
       }
       50% {
-        color: ${theme.colors.textFaint};
+        color: ${theme.colors.text.secondary};
       }
       100% {
-        color: ${theme.colors.textSemiWeak};
+        color: ${theme.colors.text.disabled};
       }
     }
   `,
   active: css`
-    font-weight: ${theme.typography.weight.semibold};
-    background-color: ${theme.colors.formSwitchBgActive};
-    color: ${theme.colors.formSwitchDot};
+    font-weight: ${theme.typography.fontWeightMedium};
+    background-color: ${theme.colors.primary.main};
+    color: ${theme.colors.primary.contrastText};
   `,
   matchHighLight: css`
     background: inherit;
-    color: ${theme.palette.yellow};
-    background-color: rgba(${theme.palette.yellow}, 0.1);
+    color: ${theme.colors.primary.text};
+    background-color: ${theme.colors.primary.transparent};
   `,
   hidden: css`
     opacity: 0.6;

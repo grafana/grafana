@@ -6,14 +6,14 @@ import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 import PageHeader from '../PageHeader/PageHeader';
 import { Footer } from '../Footer/Footer';
 import { PageContents } from './PageContents';
-import { CustomScrollbar, useStyles } from '@grafana/ui';
-import { GrafanaTheme, NavModel } from '@grafana/data';
+import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { Branding } from '../Branding/Branding';
-import { css } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  navModel: NavModel;
+  navModel?: NavModel;
 }
 
 export interface PageType extends FC<Props> {
@@ -21,19 +21,23 @@ export interface PageType extends FC<Props> {
   Contents: typeof PageContents;
 }
 
-export const Page: PageType = ({ navModel, children, ...otherProps }) => {
-  const styles = useStyles(getStyles);
+export const Page: PageType = ({ navModel, children, className, ...otherProps }) => {
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const title = getTitleFromNavModel(navModel);
-    document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
+    if (navModel) {
+      const title = getTitleFromNavModel(navModel);
+      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
+    } else {
+      document.title = Branding.AppTitle;
+    }
   }, [navModel]);
 
   return (
-    <div {...otherProps} className={styles.wrapper}>
+    <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          <PageHeader model={navModel} />
+          {navModel && <PageHeader model={navModel} />}
           {children}
           <Footer />
         </div>
@@ -47,12 +51,11 @@ Page.Contents = PageContents;
 
 export default Page;
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
+    bottom: 0;
     position: absolute;
     top: 0;
-    bottom: 0;
     width: 100%;
-    background: ${theme.colors.bg1};
   `,
 });

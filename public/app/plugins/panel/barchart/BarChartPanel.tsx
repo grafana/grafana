@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { FieldType, PanelProps, VizOrientation } from '@grafana/data';
 import { BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 
 interface Props extends PanelProps<BarChartOptions> {}
@@ -32,13 +31,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     [fieldConfig, onFieldConfigChange, data.series]
   );
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
-
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
@@ -66,10 +58,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   return (
     <BarChart
       data={data.series}
+      structureRev={data.structureRev}
       width={width}
       height={height}
       onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
       {...options}
       orientation={orientation}
     />

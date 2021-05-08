@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
-import { getPanelInspectorStyles } from './styles';
-import { InspectSubtitle } from './InspectSubtitle';
-import { InspectDataTab } from './InspectDataTab';
-import { InspectMetadataTab } from './InspectMetadataTab';
-import { InspectJSONTab } from './InspectJSONTab';
-import { InspectErrorTab } from './InspectErrorTab';
-import { InspectStatsTab } from './InspectStatsTab';
-import { QueryInspector } from './QueryInspector';
-import { InspectTab } from './types';
+import { getPanelInspectorStyles } from 'app/features/inspector/styles';
+import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
+import { InspectSubtitle } from 'app/features/inspector/InspectSubtitle';
+import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
+import { QueryInspector } from 'app/features/inspector/QueryInspector';
+import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
+import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
+import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
+import { InspectTab } from 'app/features/inspector/types';
 import { DashboardModel, PanelModel } from '../../state';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 
@@ -94,7 +94,9 @@ export const InspectContent: React.FC<Props> = ({
           )}
           {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
           {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
-          {data && activeTab === InspectTab.Query && <QueryInspector panel={panel} data={data.series} />}
+          {data && activeTab === InspectTab.Query && (
+            <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
+          )}
         </TabContent>
       </CustomScrollbar>
     </Drawer>

@@ -1,6 +1,4 @@
-import isString from 'lodash/isString';
-import isArray from 'lodash/isArray';
-import isEqual from 'lodash/isEqual';
+import { isString, isArray, isEqual } from 'lodash';
 import { ScopedVars, UrlQueryMap, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
@@ -222,4 +220,24 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ur
     }
   }
   return count ? changes : undefined;
+}
+
+export function ensureStringValues(value: any | any[]): string | string[] {
+  if (Array.isArray(value)) {
+    return value.map(String);
+  }
+
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'number') {
+    return value.toString(10);
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return '';
 }

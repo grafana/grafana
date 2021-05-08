@@ -1,6 +1,6 @@
 import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { css } from 'emotion';
+import { DataSourcePicker } from '@grafana/runtime';
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { ExemplarTraceIdDestination } from '../types';
 
@@ -43,6 +43,7 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             tracing={true}
             current={value.datasourceUid}
             noDefault={true}
+            width={40}
             onChange={(ds) =>
               onChange({
                 datasourceUid: ds.uid,

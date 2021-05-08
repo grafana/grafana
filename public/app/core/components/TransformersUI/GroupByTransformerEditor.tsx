@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import {
   DataTransformerID,
   ReducerID,
@@ -40,7 +40,9 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
         },
       });
     },
-    [options]
+    // Adding options to the dependency array causes infinite loop here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange]
   );
 
   return (

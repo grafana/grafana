@@ -7,7 +7,7 @@ import { convertToType } from './utils';
 export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<T>>> {
-  return function render({ options, onChange, field }) {
+  return function Render({ options, onChange, field }) {
     const { validator, converter = convertToType } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));

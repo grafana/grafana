@@ -63,23 +63,33 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 # Set to complete URL to override apple/ios icon
 ;apple_touch_icon =
 ```
-
-Below is an example for how to replace the default footer and help links with two custom links.
+You can replace the default footer links (Documentation, Support, Community) and even add your own custom links.
+An example follows for replacing the default footer and help links with new custom links.
 
 ```ini
-footer_links = support guides
+footer_links = support guides extracustom
 footer_links_support_text = Support
 footer_links_support_url = http://your.support.site
 footer_links_guides_text = Guides
 footer_links_guides_url = http://your.guides.site
+footer_links_extracustom_text = Custom text
+footer_links_extracustom_url = http://your.custom.site
 ```
 
 Here is the same example using environment variables instead of the custom.ini or grafana.ini file.
 
 ```
-GF_WHITE_LABELING_FOOTER_LINKS=support guides
+GF_WHITE_LABELING_FOOTER_LINKS=support guides extracustom
 GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_TEXT=Support
 GF_WHITE_LABELING_FOOTER_LINKS_SUPPORT_URL=http://your.support.site
 GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_TEXT=Guides
 GF_WHITE_LABELING_FOOTER_LINKS_GUIDES_URL=http://your.guides.site
+GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_TEXT=Custom Text
+GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
+
+> **Note:** The following two links are always present in the footer:
+- Grafana edition
+- Grafana version with build number
+
+If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer and only what is specified is included.

@@ -1,8 +1,36 @@
-import { getBackendSrv } from '@grafana/runtime';
-import { LibraryPanelDTO, PanelModelWithLibraryPanel } from '../types';
+import { LibraryPanelDTO, LibraryPanelSearchResult, PanelModelWithLibraryPanel } from '../types';
+import { DashboardSearchHit } from '../../search/types';
+import { getBackendSrv } from '../../../core/services/backend_srv';
 
-export async function getLibraryPanels(): Promise<LibraryPanelDTO[]> {
-  const { result } = await getBackendSrv().get(`/api/library-panels`);
+export interface GetLibraryPanelsOptions {
+  searchString?: string;
+  perPage?: number;
+  page?: number;
+  excludeUid?: string;
+  sortDirection?: string;
+  panelFilter?: string[];
+  folderFilter?: string[];
+}
+
+export async function getLibraryPanels({
+  searchString = '',
+  perPage = 100,
+  page = 1,
+  excludeUid = '',
+  sortDirection = '',
+  panelFilter = [],
+  folderFilter = [],
+}: GetLibraryPanelsOptions = {}): Promise<LibraryPanelSearchResult> {
+  const params = new URLSearchParams();
+  params.append('searchString', searchString);
+  params.append('sortDirection', sortDirection);
+  params.append('panelFilter', panelFilter.join(','));
+  params.append('folderFilter', folderFilter.join(','));
+  params.append('excludeUid', excludeUid);
+  params.append('perPage', perPage.toString(10));
+  params.append('page', page.toString(10));
+
+  const { result } = await getBackendSrv().get(`/api/library-panels?${params.toString()}`);
   return result;
 }
 
@@ -43,4 +71,14 @@ export function deleteLibraryPanel(uid: string): Promise<{ message: string }> {
 export async function getLibraryPanelConnectedDashboards(libraryPanelUid: string): Promise<number[]> {
   const { result } = await getBackendSrv().get(`/api/library-panels/${libraryPanelUid}/dashboards`);
   return result;
+}
+
+export async function getConnectedDashboards(uid: string): Promise<DashboardSearchHit[]> {
+  const dashboardIds = await getLibraryPanelConnectedDashboards(uid);
+  if (dashboardIds.length === 0) {
+    return [];
+  }
+
+  const searchHits = await getBackendSrv().search({ dashboardIds });
+  return searchHits;
 }

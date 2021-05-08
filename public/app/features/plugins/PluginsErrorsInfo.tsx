@@ -1,29 +1,28 @@
 import React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
-import { HorizontalGroup, InfoBox, List, useTheme } from '@grafana/ui';
-import { mapPluginErrorCodeToSignatureStatus, PluginSignatureBadge } from './PluginSignatureBadge';
+import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useTheme } from '@grafana/ui';
 import { StoreState } from '../../types';
 import { getAllPluginsErrors } from './state/selectors';
 import { loadPlugins, loadPluginsErrors } from './state/actions';
 import useAsync from 'react-use/lib/useAsync';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { PluginError } from '@grafana/data';
-import { css } from 'emotion';
+import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { css } from '@emotion/css';
 
-interface ConnectedProps {
-  errors: PluginError[];
-}
+const mapStateToProps = (state: StoreState) => ({
+  errors: getAllPluginsErrors(state.plugins),
+});
 
-interface DispatchProps {
-  loadPluginsErrors: typeof loadPluginsErrors;
-}
+const mapDispatchToProps = {
+  loadPluginsErrors,
+};
 
 interface OwnProps {
   children?: React.ReactNode;
 }
-
-type PluginsErrorsInfoProps = ConnectedProps & DispatchProps & OwnProps;
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type PluginsErrorsInfoProps = ConnectedProps<typeof connector> & OwnProps;
 
 export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
   loadPluginsErrors,
@@ -89,16 +88,19 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
   );
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => {
-  return {
-    errors: getAllPluginsErrors(state.plugins),
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  loadPluginsErrors,
-};
-
 export const PluginsErrorsInfo = hot(module)(
   connect(mapStateToProps, mapDispatchToProps)(PluginsErrorsInfoUnconnected)
 );
+
+function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
+  switch (code) {
+    case PluginErrorCode.invalidSignature:
+      return PluginSignatureStatus.invalid;
+    case PluginErrorCode.missingSignature:
+      return PluginSignatureStatus.missing;
+    case PluginErrorCode.modifiedSignature:
+      return PluginSignatureStatus.modified;
+    default:
+      return PluginSignatureStatus.missing;
+  }
+}

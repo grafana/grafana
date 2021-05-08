@@ -49,7 +49,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			routePattern: "/api/folders/:uid/permissions",
 			cmd:          cmd,
 			fn: func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
+				callUpdateFolderPermissions(t, sc)
 				assert.Equal(t, 404, sc.resp.Code)
 			},
 		}, hs)
@@ -92,7 +92,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			routePattern: "/api/folders/:uid/permissions",
 			cmd:          cmd,
 			fn: func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
+				callUpdateFolderPermissions(t, sc)
 				assert.Equal(t, 403, sc.resp.Code)
 			},
 		}, hs)
@@ -153,7 +153,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			routePattern: "/api/folders/:uid/permissions",
 			cmd:          cmd,
 			fn: func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
+				callUpdateFolderPermissions(t, sc)
 				assert.Equal(t, 200, sc.resp.Code)
 
 				var resp struct {
@@ -205,7 +205,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			routePattern: "/api/folders/:uid/permissions",
 			cmd:          cmd,
 			fn: func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
+				callUpdateFolderPermissions(t, sc)
 				assert.Equal(t, 400, sc.resp.Code)
 			},
 		}, hs)
@@ -233,7 +233,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 				routePattern: "/api/folders/:uid/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					callUpdateFolderPermissions(sc)
+					callUpdateFolderPermissions(t, sc)
 					assert.Equal(t, 400, sc.resp.Code)
 					respJSON, err := jsonMap(sc.resp.Body.Bytes())
 					require.NoError(t, err)
@@ -279,7 +279,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			routePattern: "/api/folders/:uid/permissions",
 			cmd:          cmd,
 			fn: func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
+				callUpdateFolderPermissions(t, sc)
 				assert.Equal(t, 400, sc.resp.Code)
 			},
 		}, hs)
@@ -355,13 +355,19 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			routePattern: "/api/folders/:uid/permissions",
 			cmd:          cmd,
 			fn: func(sc *scenarioContext) {
-				bus.AddHandler("test", func(cmd *models.UpdateDashboardAclCommand) error {
-					assert.Len(t, cmd.Items, 4)
-					return nil
+				origUpdateDashboardACL := updateDashboardACL
+				t.Cleanup(func() {
+					updateDashboardACL = origUpdateDashboardACL
 				})
+				var gotItems []*models.DashboardAcl
+				updateDashboardACL = func(hs *HTTPServer, dashID int64, items []*models.DashboardAcl) error {
+					gotItems = items
+					return nil
+				}
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
+				assert.Len(t, gotItems, 4)
 			},
 		}, hs)
 	})
@@ -372,10 +378,16 @@ func callGetFolderPermissions(sc *scenarioContext, hs *HTTPServer) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func callUpdateFolderPermissions(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *models.UpdateDashboardAclCommand) error {
-		return nil
+func callUpdateFolderPermissions(t *testing.T, sc *scenarioContext) {
+	t.Helper()
+
+	origUpdateDashboardACL := updateDashboardACL
+	t.Cleanup(func() {
+		updateDashboardACL = origUpdateDashboardACL
 	})
+	updateDashboardACL = func(hs *HTTPServer, dashID int64, items []*models.DashboardAcl) error {
+		return nil
+	}
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }

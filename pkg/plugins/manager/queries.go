@@ -1,23 +1,22 @@
 package manager
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (pm *PluginManager) GetPluginSettings(orgId int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	query := models.GetPluginSettingsQuery{OrgId: orgId}
-	if err := bus.Dispatch(&query); err != nil {
+func (pm *PluginManager) GetPluginSettings(orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
+	pluginSettings, err := pm.SQLStore.GetPluginSettings(orgID)
+	if err != nil {
 		return nil, err
 	}
 
 	pluginMap := make(map[string]*models.PluginSettingInfoDTO)
-	for _, plug := range query.Result {
+	for _, plug := range pluginSettings {
 		pluginMap[plug.PluginId] = plug
 	}
 
-	for _, pluginDef := range Plugins {
+	for _, pluginDef := range pm.plugins {
 		// ignore entries that exists
 		if _, ok := pluginMap[pluginDef.Id]; ok {
 			continue
@@ -26,12 +25,12 @@ func (pm *PluginManager) GetPluginSettings(orgId int64) (map[string]*models.Plug
 		// default to enabled true
 		opt := &models.PluginSettingInfoDTO{
 			PluginId: pluginDef.Id,
-			OrgId:    orgId,
+			OrgId:    orgID,
 			Enabled:  true,
 		}
 
 		// apps are disabled by default unless autoEnabled: true
-		if app, exists := Apps[pluginDef.Id]; exists {
+		if app, exists := pm.apps[pluginDef.Id]; exists {
 			opt.Enabled = app.AutoEnabled
 			opt.Pinned = app.AutoEnabled
 		}
@@ -64,7 +63,7 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 		return enabledPlugins, err
 	}
 
-	for pluginID, app := range Apps {
+	for pluginID, app := range pm.apps {
 		if b, ok := pluginSettingMap[pluginID]; ok {
 			app.Pinned = b.Pinned
 			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
@@ -72,13 +71,13 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 	}
 
 	// add all plugins that are not part of an App.
-	for dsID, ds := range DataSources {
+	for dsID, ds := range pm.dataSources {
 		if _, exists := pluginSettingMap[ds.Id]; exists {
 			enabledPlugins.DataSources[dsID] = ds
 		}
 	}
 
-	for _, panel := range Panels {
+	for _, panel := range pm.panels {
 		if _, exists := pluginSettingMap[panel.Id]; exists {
 			enabledPlugins.Panels = append(enabledPlugins.Panels, panel)
 		}
@@ -88,7 +87,7 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 }
 
 // IsAppInstalled checks if an app plugin with provided plugin ID is installed.
-func IsAppInstalled(pluginID string) bool {
-	_, exists := Apps[pluginID]
+func (pm *PluginManager) IsAppInstalled(pluginID string) bool {
+	_, exists := pm.apps[pluginID]
 	return exists
 }

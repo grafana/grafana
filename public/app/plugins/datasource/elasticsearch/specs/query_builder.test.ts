@@ -495,7 +495,7 @@ describe('ElasticQueryBuilder', () => {
               type: 'serial_diff',
               field: '3',
               settings: {
-                lag: 5,
+                lag: '5',
               },
             },
           ],
@@ -680,7 +680,7 @@ describe('ElasticQueryBuilder', () => {
 
       describe('getLogsQuery', () => {
         it('should return query with defaults', () => {
-          const query = builder.getLogsQuery({ refId: 'A' }, null, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, null, '*');
 
           expect(query.size).toEqual(500);
 
@@ -714,7 +714,7 @@ describe('ElasticQueryBuilder', () => {
         });
 
         it('with querystring', () => {
-          const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, null, 'foo');
+          const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, 500, null, 'foo');
 
           const expectedQuery = {
             bool: {
@@ -737,7 +737,7 @@ describe('ElasticQueryBuilder', () => {
             { key: 'key5', operator: '=~', value: 'value5' },
             { key: 'key6', operator: '!~', value: 'value6' },
           ];
-          const query = builder.getLogsQuery({ refId: 'A' }, adhocFilters, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, adhocFilters, '*');
 
           expect(query.query.bool.must[0].match_phrase['key1'].query).toBe('value1');
           expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');
@@ -747,6 +747,67 @@ describe('ElasticQueryBuilder', () => {
           expect(query.query.bool.filter[4].bool.must_not.regexp['key6']).toBe('value6');
         });
       });
+    });
+  });
+
+  describe('Value casting for settings', () => {
+    it('correctly casts values in moving_avg ', () => {
+      const query = builder7x.build({
+        refId: 'A',
+        metrics: [
+          { type: 'avg', id: '2' },
+          {
+            type: 'moving_avg',
+            id: '3',
+            field: '2',
+            settings: {
+              window: '5',
+              model: 'holt_winters',
+              predict: '10',
+              settings: {
+                alpha: '1',
+                beta: '2',
+                gamma: '3',
+                period: '4',
+              },
+            },
+          },
+        ],
+        timeField: '@timestamp',
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+      });
+
+      const movingAvg = query.aggs['1'].aggs['3'].moving_avg;
+
+      expect(movingAvg.window).toBe(5);
+      expect(movingAvg.predict).toBe(10);
+      expect(movingAvg.settings.alpha).toBe(1);
+      expect(movingAvg.settings.beta).toBe(2);
+      expect(movingAvg.settings.gamma).toBe(3);
+      expect(movingAvg.settings.period).toBe(4);
+    });
+
+    it('correctly casts values in serial_diff ', () => {
+      const query = builder7x.build({
+        refId: 'A',
+        metrics: [
+          { type: 'avg', id: '2' },
+          {
+            type: 'serial_diff',
+            id: '3',
+            field: '2',
+            settings: {
+              lag: '1',
+            },
+          },
+        ],
+        timeField: '@timestamp',
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+      });
+
+      const serialDiff = query.aggs['1'].aggs['3'].serial_diff;
+
+      expect(serialDiff.lag).toBe(1);
     });
   });
 });

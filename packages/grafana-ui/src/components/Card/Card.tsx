@@ -1,50 +1,13 @@
-import React, { memo, cloneElement, FC, HTMLAttributes, ReactNode, useCallback } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useTheme, styleMixins, stylesFactory } from '../../themes';
-import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
+import React, { memo, cloneElement, FC, ReactNode, useCallback } from 'react';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useTheme2, stylesFactory } from '../../themes';
+import { CardContainer, CardContainerProps } from './CardContainer';
 
 /**
  * @public
  */
-export interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
-  /** Content for the card's tooltip */
-  tooltip?: PopoverContent;
-}
-
-const CardContainer: FC<ContainerProps> = ({ children, tooltip, ...props }) => {
-  return tooltip ? (
-    <Tooltip placement="top" content={tooltip} theme="info">
-      <div {...props}>{children}</div>
-    </Tooltip>
-  ) : (
-    <div {...props}>{children}</div>
-  );
-};
-
-/**
- * @public
- */
-export interface CardInnerProps {
-  href?: string;
-}
-
-const CardInner: FC<CardInnerProps> = ({ children, href }) => {
-  const theme = useTheme();
-  const styles = getCardStyles(theme);
-  return href ? (
-    <a className={styles.innerLink} href={href}>
-      {children}
-    </a>
-  ) : (
-    <>{children}</>
-  );
-};
-
-/**
- * @public
- */
-export interface Props extends ContainerProps {
+export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disableHover'> {
   /** Main heading for the Card **/
   heading: ReactNode;
   /** Card description text */
@@ -74,14 +37,13 @@ export const Card: CardInterface = ({
   heading,
   description,
   disabled,
-  tooltip,
   href,
   onClick,
   className,
   children,
   ...htmlProps
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getCardStyles(theme);
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
     (item) => {
@@ -100,38 +62,36 @@ export const Card: CardInterface = ({
   const disableHover = disabled || (!onClick && !href);
   const disableEvents = disabled && !actions;
 
-  const containerStyles = getContainerStyles(theme, disableEvents, disableHover);
   const onCardClick = useCallback(() => (disableHover ? () => {} : onClick?.()), [disableHover, onClick]);
 
   return (
     <CardContainer
-      tooltip={tooltip}
       tabIndex={disableHover ? undefined : 0}
-      className={cx(containerStyles, className)}
       onClick={onCardClick}
+      disableEvents={disableEvents}
+      disableHover={disableHover}
+      href={href}
       {...htmlProps}
     >
-      <CardInner href={href}>
-        {figure}
-        <div className={styles.inner}>
-          <div className={styles.info}>
-            <div>
-              <div className={styles.heading} role="heading">
-                {heading}
-              </div>
-              {meta}
-              {description && <p className={styles.description}>{description}</p>}
+      {figure}
+      <div className={styles.inner}>
+        <div className={styles.info}>
+          <div>
+            <div className={styles.heading} role="heading">
+              {heading}
             </div>
-            {tags}
+            {meta}
+            {description && <p className={styles.description}>{description}</p>}
           </div>
-          {hasActions && (
-            <div className={styles.actionRow}>
-              {actions}
-              {secondaryActions}
-            </div>
-          )}
+          {tags}
         </div>
-      </CardInner>
+        {hasActions && (
+          <div className={styles.actionRow}>
+            {actions}
+            {secondaryActions}
+          </div>
+        )}
+      </div>
     </CardContainer>
   );
 };
@@ -139,47 +99,7 @@ export const Card: CardInterface = ({
 /**
  * @public
  */
-export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
-  return css`
-    display: flex;
-    width: 100%;
-    color: ${theme.colors.textStrong};
-    background: ${theme.colors.bg2};
-    border-radius: ${theme.border.radius.sm};
-    padding: ${theme.spacing.md};
-    position: relative;
-    pointer-events: ${disabled ? 'none' : 'auto'};
-    margin-bottom: ${theme.spacing.sm};
-
-    &::after {
-      content: '';
-      display: ${disabled ? 'block' : 'none'};
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      right: 1px;
-      bottom: 1px;
-      background: linear-gradient(180deg, rgba(75, 79, 84, 0.5) 0%, rgba(82, 84, 92, 0.5) 100%);
-      width: calc(100% - 2px);
-      height: calc(100% - 2px);
-      border-radius: ${theme.border.radius.sm};
-    }
-
-    &:hover {
-      background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
-      cursor: ${disableHover ? 'default' : 'pointer'};
-    }
-
-    &:focus {
-      ${styleMixins.focusCss(theme)};
-    }
-  `;
-});
-
-/**
- * @public
- */
-export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getCardStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     inner: css`
       display: flex;
@@ -195,9 +115,9 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
-      line-height: ${theme.typography.lineHeight.xs};
-      color: ${theme.colors.text};
-      font-weight: ${theme.typography.weight.semibold};
+      line-height: ${theme.typography.body.lineHeight};
+      color: ${theme.colors.text.primary};
+      font-weight: ${theme.typography.fontWeightMedium};
     `,
     info: css`
       display: flex;
@@ -211,18 +131,19 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       width: 100%;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textSemiWeak};
-      margin: ${theme.spacing.xs} 0 0;
-      line-height: ${theme.typography.lineHeight.xs};
+      color: ${theme.colors.text.secondary};
+      margin: ${theme.spacing(0.5, 0, 0)};
+      line-height: ${theme.typography.bodySmall.lineHeight};
+      overflow-wrap: anywhere;
     `,
     description: css`
       width: 100%;
-      margin: ${theme.spacing.sm} 0 0;
-      color: ${theme.colors.textSemiWeak};
-      line-height: ${theme.typography.lineHeight.md};
+      margin: ${theme.spacing(1, 0, 0)};
+      color: ${theme.colors.text.secondary};
+      line-height: ${theme.typography.body.lineHeight};
     `,
     media: css`
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing(2)};
       width: 40px;
       display: flex;
       align-items: center;
@@ -240,29 +161,25 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       align-items: center;
       width: 100%;
-      margin-top: ${theme.spacing.md};
+      margin-top: ${theme.spacing(2)};
     `,
     actions: css`
       & > * {
-        margin-right: ${theme.spacing.sm};
+        margin-right: ${theme.spacing(1)};
       }
     `,
     secondaryActions: css`
       display: flex;
       align-items: center;
-      color: ${theme.colors.textSemiWeak};
+      color: ${theme.colors.text.secondary};
       // align to the right
       margin-left: auto;
       & > * {
-        margin-right: ${theme.spacing.sm} !important;
+        margin-right: ${theme.spacing(1)} !important;
       }
     `,
     separator: css`
-      margin: 0 ${theme.spacing.sm};
-    `,
-    innerLink: css`
-      display: flex;
-      width: 100%;
+      margin: 0 ${theme.spacing(1)};
     `,
     tagList: css`
       max-width: 50%;

@@ -5,6 +5,7 @@ import { TypeaheadInput } from '@grafana/ui';
 
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
+import { DataQuery, DataSourceApi } from '@grafana/data';
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -167,6 +168,25 @@ describe('Language completion provider', () => {
         },
       ]);
     });
+    it('returns label values suggestions from Loki when re-editing', async () => {
+      const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const input = createTypeaheadInput('{label1="label1_v"}', 'label1_v', 'label1', 17, [
+        'attr-value',
+        'context-labels',
+      ]);
+      let result = await provider.provideCompletionItems(input);
+      expect(result.context).toBe('context-label-values');
+      expect(result.suggestions).toEqual([
+        {
+          items: [
+            { label: 'label1_val1', filterText: '"label1_val1"' },
+            { label: 'label1_val2', filterText: '"label1_val2"' },
+          ],
+          label: 'Label values for "label1"',
+        },
+      ]);
+    });
   });
 
   describe('label values', () => {
@@ -212,7 +232,9 @@ describe('Query imports', () => {
 
   it('returns empty queries for unknown origin datasource', async () => {
     const instance = new LanguageProvider(datasource);
-    const result = await instance.importQueries([{ refId: 'bar', expr: 'foo' }], 'unknown');
+    const result = await instance.importQueries([{ refId: 'bar', expr: 'foo' } as DataQuery], {
+      meta: { id: 'unknown' },
+    } as DataSourceApi);
     expect(result).toEqual([{ refId: 'bar', expr: '' }]);
   });
 

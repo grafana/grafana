@@ -65,7 +65,6 @@ const getTestContext = () => {
   const adapter = variableAdapters.get('interval');
   const preloadedState = ({
     dashboard,
-    location: { query: '' },
     templating: ({
       variables: {
         'interval-0': { ...interval },

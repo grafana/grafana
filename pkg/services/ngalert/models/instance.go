@@ -7,12 +7,13 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	DefinitionOrgID   int64  `xorm:"def_org_id"`
-	DefinitionUID     string `xorm:"def_uid"`
+	RuleOrgID         int64  `xorm:"def_org_id"`
+	RuleUID           string `xorm:"def_uid"`
 	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType
 	CurrentStateSince time.Time
+	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
 }
 
@@ -24,53 +25,72 @@ const (
 	InstanceStateFiring InstanceStateType = "Alerting"
 	// InstanceStateNormal is for a normal alert.
 	InstanceStateNormal InstanceStateType = "Normal"
+	// InstanceStatePending is for an alert that is firing but has not met the duration
+	InstanceStatePending InstanceStateType = "Pending"
+	// InstanceStateNoData is for an alert with no data.
+	InstanceStateNoData InstanceStateType = "NoData"
+	// InstanceStateError is for a erroring alert.
+	InstanceStateError InstanceStateType = "Error"
 )
 
 // IsValid checks that the value of InstanceStateType is a valid
 // string.
 func (i InstanceStateType) IsValid() bool {
 	return i == InstanceStateFiring ||
-		i == InstanceStateNormal
+		i == InstanceStateNormal ||
+		i == InstanceStateNoData ||
+		i == InstanceStatePending ||
+		i == InstanceStateError
 }
 
 // SaveAlertInstanceCommand is the query for saving a new alert instance.
 type SaveAlertInstanceCommand struct {
-	DefinitionOrgID int64
-	DefinitionUID   string
-	Labels          InstanceLabels
-	State           InstanceStateType
-	LastEvalTime    time.Time
+	RuleOrgID         int64
+	RuleUID           string
+	Labels            InstanceLabels
+	State             InstanceStateType
+	LastEvalTime      time.Time
+	CurrentStateSince time.Time
+	CurrentStateEnd   time.Time
 }
 
 // GetAlertInstanceQuery is the query for retrieving/deleting an alert definition by ID.
 // nolint:unused
 type GetAlertInstanceQuery struct {
-	DefinitionOrgID int64
-	DefinitionUID   string
-	Labels          InstanceLabels
+	RuleOrgID int64
+	RuleUID   string
+	Labels    InstanceLabels
 
 	Result *AlertInstance
 }
 
 // ListAlertInstancesQuery is the query list alert Instances.
 type ListAlertInstancesQuery struct {
-	DefinitionOrgID int64 `json:"-"`
-	DefinitionUID   string
-	State           InstanceStateType
+	RuleOrgID int64 `json:"-"`
+	RuleUID   string
+	State     InstanceStateType
 
 	Result []*ListAlertInstancesQueryResult
 }
 
+type FetchUniqueOrgIdsQuery struct {
+	Result []*FetchUniqueOrgIdsQueryResult
+}
+
 // ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
 type ListAlertInstancesQueryResult struct {
-	DefinitionOrgID   int64             `xorm:"def_org_id" json:"definitionOrgId"`
-	DefinitionUID     string            `xorm:"def_uid" json:"definitionUid"`
-	DefinitionTitle   string            `xorm:"def_title" json:"definitionTitle"`
+	RuleOrgID         int64             `xorm:"def_org_id" json:"definitionOrgId"`
+	RuleDefinitionUID string            `xorm:"def_uid" json:"definitionUid"`
 	Labels            InstanceLabels    `json:"labels"`
 	LabelsHash        string            `json:"labeHash"`
 	CurrentState      InstanceStateType `json:"currentState"`
 	CurrentStateSince time.Time         `json:"currentStateSince"`
+	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
 	LastEvalTime      time.Time         `json:"lastEvalTime"`
+}
+
+type FetchUniqueOrgIdsQueryResult struct {
+	DefinitionOrgID int64 `xorm:"def_org_id" json:"definitionOrgId"`
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert definition id,
@@ -80,11 +100,11 @@ func ValidateAlertInstance(alertInstance *AlertInstance) error {
 		return fmt.Errorf("alert instance is invalid because it is nil")
 	}
 
-	if alertInstance.DefinitionOrgID == 0 {
+	if alertInstance.RuleOrgID == 0 {
 		return fmt.Errorf("alert instance is invalid due to missing alert definition organisation")
 	}
 
-	if alertInstance.DefinitionUID == "" {
+	if alertInstance.RuleUID == "" {
 		return fmt.Errorf("alert instance is invalid due to missing alert definition uid")
 	}
 

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -26,8 +25,9 @@ import (
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
 }
 
 var (
@@ -41,6 +41,7 @@ const azureMonitorAPIVersion = "2018-01-01"
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -172,6 +173,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, ti
 	return azureMonitorQueries, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataQueryResult, AzureMonitorResponse, error) {
 	queryResult := plugins.DataQueryResult{RefID: query.RefID}
@@ -226,8 +228,8 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	// find plugin
-	plugin, ok := manager.DataSources[dsInfo.Type]
-	if !ok {
+	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
@@ -413,7 +415,7 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 // Map values from:
 //   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
 // to
-//   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
+//   https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
 	case "BitsPerSecond":

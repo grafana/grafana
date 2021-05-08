@@ -1,25 +1,21 @@
 import React, { useState } from 'react';
-import { Button, Field, Input, Modal, useStyles } from '@grafana/ui';
+import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { PanelModel } from '../../../dashboard/state';
-import { css } from 'emotion';
 import { usePanelSave } from '../../utils/usePanelSave';
-
-interface Props {
+interface AddLibraryPanelContentsProps {
   onDismiss: () => void;
-  isOpen?: boolean;
   panel: PanelModel;
   initialFolderId?: number;
 }
 
-export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, initialFolderId, ...props }) => {
-  const styles = useStyles(getStyles);
+export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: AddLibraryPanelContentsProps) => {
   const [folderId, setFolderId] = useState(initialFolderId);
   const [panelTitle, setPanelTitle] = useState(panel.title);
   const { saveLibraryPanel } = usePanelSave();
 
   return (
-    <Modal title="Add this panel to the panel library" isOpen={isOpen} onDismiss={props.onDismiss}>
+    <>
       <Field label="Library panel name">
         <Input name="name" value={panelTitle} onChange={(e) => setPanelTitle(e.currentTarget.value)} />
       </Field>
@@ -27,26 +23,31 @@ export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, i
         <FolderPicker onChange={({ id }) => setFolderId(id)} initialFolderId={initialFolderId} />
       </Field>
 
-      <div className={styles.buttons}>
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          Cancel
+        </Button>
         <Button
           onClick={() => {
             panel.title = panelTitle;
-            saveLibraryPanel(panel, folderId!).then(() => props.onDismiss());
+            saveLibraryPanel(panel, folderId!).then(() => onDismiss());
           }}
         >
-          Add panel to the panel library
+          Create library panel
         </Button>
-        <Button variant="secondary" onClick={props.onDismiss}>
-          Cancel
-        </Button>
-      </div>
-    </Modal>
+      </Modal.ButtonRow>
+    </>
   );
 };
 
-const getStyles = () => ({
-  buttons: css`
-    display: flex;
-    gap: 10px;
-  `,
-});
+interface Props extends AddLibraryPanelContentsProps {
+  isOpen?: boolean;
+}
+
+export const AddLibraryPanelModal: React.FC<Props> = ({ isOpen = false, panel, initialFolderId, ...props }) => {
+  return (
+    <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
+      <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={props.onDismiss} />
+    </Modal>
+  );
+};

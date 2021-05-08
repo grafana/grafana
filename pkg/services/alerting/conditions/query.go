@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 
 	gocontext "context"
 
@@ -47,7 +46,7 @@ type AlertQuery struct {
 }
 
 // Eval evaluates the `QueryCondition`.
-func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler tsdbifaces.RequestHandler) (*alerting.ConditionResult, error) {
+func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler plugins.DataRequestHandler) (*alerting.ConditionResult, error) {
 	timeRange := plugins.NewDataTimeRange(c.Query.From, c.Query.To)
 
 	seriesList, err := c.executeQuery(context, timeRange, requestHandler)
@@ -110,7 +109,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler tsdb
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange plugins.DataTimeRange,
-	requestHandler tsdbifaces.RequestHandler) (plugins.DataTimeSeriesSlice, error) {
+	requestHandler plugins.DataRequestHandler) (plugins.DataTimeSeriesSlice, error) {
 	getDsInfo := &models.GetDataSourceQuery{
 		Id:    c.Query.DatasourceID,
 		OrgId: context.Rule.OrgID,

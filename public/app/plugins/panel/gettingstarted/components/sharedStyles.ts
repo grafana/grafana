@@ -1,5 +1,5 @@
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory } from '@grafana/ui';
 
 export const cardStyle = stylesFactory((theme: GrafanaTheme, complete: boolean) => {

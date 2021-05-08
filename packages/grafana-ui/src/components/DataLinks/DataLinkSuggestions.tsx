@@ -1,68 +1,60 @@
-import { ThemeContext } from '../../index';
-import { GrafanaTheme, VariableSuggestion } from '@grafana/data';
-import { css, cx } from 'emotion';
-import _ from 'lodash';
-import React, { useRef, useContext, useMemo } from 'react';
+import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
+import { css, cx } from '@emotion/css';
+import { groupBy, capitalize } from 'lodash';
+import React, { useRef, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
-import { styleMixins, stylesFactory } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 interface DataLinkSuggestionsProps {
+  activeRef?: React.RefObject<HTMLDivElement>;
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
   onClose?: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const wrapperBg = theme.colors.bg1;
-  const wrapperShadow = theme.colors.dropdownShadow;
-  const itemColor = theme.colors.text;
-  const itemBgHover = styleMixins.hoverColor(theme.colors.bg1, theme);
-  const itemBgActive = theme.colors.bg2;
-  const separatorColor = theme.colors.border2;
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     list: css`
-      border-bottom: 1px solid ${separatorColor};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       &:last-child {
         border: none;
       }
     `,
     wrapper: css`
-      background: ${wrapperBg};
-      z-index: 1;
+      background: ${theme.colors.background.primary};
       width: 250px;
-      box-shadow: 0 5px 10px 0 ${wrapperShadow};
+      box-shadow: 0 5px 10px 0 ${theme.shadows.z1};
     `,
     item: css`
       background: none;
       padding: 2px 8px;
-      color: ${itemColor};
+      color: ${theme.colors.text.primary};
       cursor: pointer;
       &:hover {
-        background: ${itemBgHover};
+        background: ${theme.colors.action.hover};
       }
     `,
     label: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
     activeItem: css`
-      background: ${itemBgActive};
+      background: ${theme.colors.background.secondary};
       &:hover {
-        background: ${itemBgActive};
+        background: ${theme.colors.background.secondary};
       }
     `,
     itemValue: css`
-      font-family: ${theme.typography.fontFamily.monospace};
+      font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.size.sm};
     `,
   };
-});
+};
 
 export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
   const ref = useRef(null);
-  const theme = useContext(ThemeContext);
+
   useClickAway(ref, () => {
     if (otherProps.onClose) {
       otherProps.onClose();
@@ -70,10 +62,11 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   });
 
   const groupedSuggestions = useMemo(() => {
-    return _.groupBy(suggestions, (s) => s.origin);
+    return groupBy(suggestions, (s) => s.origin);
   }, [suggestions]);
 
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
+
   return (
     <div ref={ref} className={styles.wrapper}>
       {Object.keys(groupedSuggestions).map((key, i) => {
@@ -91,7 +84,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
           <DataLinkSuggestionsList
             {...otherProps}
             suggestions={groupedSuggestions[key]}
-            label={`${_.capitalize(key)}`}
+            label={`${capitalize(key)}`}
             activeIndex={otherProps.activeIndex}
             activeIndexOffset={indexOffset}
             key={key}
@@ -107,12 +100,12 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
+  activeRef?: React.RefObject<HTMLDivElement>;
 }
 
 const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
-    const theme = useContext(ThemeContext);
-    const styles = getStyles(theme);
+  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, activeRef: selectedRef }) => {
+    const styles = useStyles2(getStyles);
 
     return (
       <>
@@ -120,9 +113,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           className={styles.list}
           items={suggestions}
           renderItem={(item, index) => {
+            const isActive = index + activeIndexOffset === activeIndex;
             return (
               <div
-                className={cx(styles.item, index + activeIndexOffset === activeIndex && styles.activeItem)}
+                className={cx(styles.item, isActive && styles.activeItem)}
+                ref={isActive ? selectedRef : undefined}
                 onClick={() => {
                   onSuggestionSelect(item);
                 }}

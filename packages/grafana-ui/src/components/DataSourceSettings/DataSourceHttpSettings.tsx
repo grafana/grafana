@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
@@ -125,14 +125,14 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField label="URL" labelWidth={11} tooltip={urlTooltip} inputEl={urlInput} />
+            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
           </div>
 
           {showAccessOptions && (
             <>
               <div className="gf-form-inline">
                 <div className="gf-form">
-                  <FormField label="Access" labelWidth={11} inputWidth={20} inputEl={accessSelect} />
+                  <FormField label="Access" labelWidth={13} inputWidth={20} inputEl={accessSelect} />
                 </div>
                 <div className="gf-form">
                   <label
@@ -148,19 +148,36 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             </>
           )}
           {dataSourceConfig.access === 'proxy' && (
-            <div className="gf-form">
-              <InlineFormLabel
-                width={11}
-                tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
-              >
-                Whitelisted Cookies
-              </InlineFormLabel>
-              <TagsInput
-                tags={dataSourceConfig.jsonData.keepCookies}
-                onChange={(cookies) =>
-                  onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
-                }
-              />
+            <div className="gf-form-group">
+              <div className="gf-form">
+                <InlineFormLabel
+                  width={13}
+                  tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
+                >
+                  Whitelisted Cookies
+                </InlineFormLabel>
+                <TagsInput
+                  tags={dataSourceConfig.jsonData.keepCookies}
+                  width={40}
+                  onChange={(cookies) =>
+                    onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
+                  }
+                />
+              </div>
+              <div className="gf-form">
+                <FormField
+                  label="Timeout"
+                  labelWidth={13}
+                  inputWidth={20}
+                  tooltip="HTTP request timeout in seconds"
+                  value={dataSourceConfig.jsonData.timeout}
+                  onChange={(event) => {
+                    onSettingsChange({
+                      jsonData: { ...dataSourceConfig.jsonData, timeout: event.currentTarget.value },
+                    });
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>

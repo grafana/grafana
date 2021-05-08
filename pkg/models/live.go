@@ -1,17 +1,60 @@
 package models
 
-import "github.com/centrifugal/centrifuge"
+import (
+	"context"
+	"encoding/json"
+	"time"
 
-// ChannelPublisher writes data into a channel. Note that pemissions are not checked.
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+)
+
+// ChannelPublisher writes data into a channel. Note that permissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
+
+// ChannelClientCount will return the number of clients for a channel
+type ChannelClientCount func(channel string) (int, error)
+
+// SubscribeEvent contains subscription data.
+type SubscribeEvent struct {
+	Channel string
+	Path    string
+}
+
+// SubscribeReply is a reaction to SubscribeEvent.
+type SubscribeReply struct {
+	Presence  bool
+	JoinLeave bool
+	Recover   bool
+	Data      json.RawMessage
+}
+
+// PublishEvent contains publication data.
+type PublishEvent struct {
+	Channel string
+	Path    string
+	Data    json.RawMessage
+}
+
+// PublishReply is a reaction to PublishEvent.
+type PublishReply struct {
+	// By default, it's a handler responsibility to publish data
+	// into a stream upon OnPublish but returning a data here
+	// will make Grafana Live publish data itself (i.e. stream handler
+	// just works as permission proxy in this case).
+	Data json.RawMessage
+	// HistorySize sets a stream history size.
+	HistorySize int
+	// HistoryTTL is a time that messages will live in stream history.
+	HistoryTTL time.Duration
+}
 
 // ChannelHandler defines the core channel behavior
 type ChannelHandler interface {
 	// OnSubscribe is called when a client wants to subscribe to a channel
-	OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error)
+	OnSubscribe(ctx context.Context, user *SignedInUser, e SubscribeEvent) (SubscribeReply, backend.SubscribeStreamStatus, error)
 
 	// OnPublish is called when a client writes a message to the channel websocket.
-	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error)
+	OnPublish(ctx context.Context, user *SignedInUser, e PublishEvent) (PublishReply, backend.PublishStreamStatus, error)
 }
 
 // ChannelHandlerFactory should be implemented by all core features.
@@ -23,6 +66,35 @@ type ChannelHandlerFactory interface {
 
 // DashboardActivityChannel is a service to advertise dashboard activity
 type DashboardActivityChannel interface {
-	DashboardSaved(uid string, userID int64) error
-	DashboardDeleted(uid string, userID int64) error
+	// Called when a dashboard is saved -- this includes the error so we can support a
+	// gitops workflow that knows if the value was saved to the local database or not
+	// in many cases all direct save requests will fail, but the request should be forwarded
+	// to any gitops observers
+	DashboardSaved(user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
+
+	// Called when a dashboard is deleted
+	DashboardDeleted(user *UserDisplayDTO, uid string) error
+
+	// Experimental! Indicate is GitOps is active.  This really means
+	// someone is subscribed to the `grafana/dashboards/gitops` channel
+	HasGitOpsObserver() bool
+}
+
+type LiveMessage struct {
+	Id        int64
+	OrgId     int64
+	Channel   string
+	Data      json.RawMessage
+	Published time.Time
+}
+
+type SaveLiveMessageQuery struct {
+	OrgId   int64
+	Channel string
+	Data    json.RawMessage
+}
+
+type GetLiveMessageQuery struct {
+	OrgId   int64
+	Channel string
 }

@@ -18,3 +18,4 @@ export const getInvitees = (state: UsersState) => {
 
 export const getInviteesCount = (state: UsersState) => state.invitees.length;
 export const getUsersSearchQuery = (state: UsersState) => state.searchQuery;
+export const getUsersSearchPage = (state: UsersState) => state.searchPage;
