@@ -35,13 +35,6 @@ export interface DataQuery {
   queryType?: string;
 
   /**
-   * The data topic results should be attached to
-   *
-   * RUNTIME!!! (should not be saved in JSON!!!!)
-   */
-  dataTopic?: DataTopic;
-
-  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
