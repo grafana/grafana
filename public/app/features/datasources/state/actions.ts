@@ -162,6 +162,7 @@ async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSetting
     // page index is not matching with the url in that case. And react router has no way to unmount remount a route
     if (response.ok && response.data.id.toString() === uid) {
       window.location.href = locationUtil.assureBaseUrl(`/datasources/edit/${response.data.uid}`);
+      return {} as DataSourceSettings; // avoids flashing an error
     }
   }
 
