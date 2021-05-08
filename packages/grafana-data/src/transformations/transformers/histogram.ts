@@ -8,6 +8,9 @@ import { AlignedData, join } from './joinDataFrames';
 
 /* eslint-disable */
 // prettier-ignore
+/**
+ * @internal
+ */
 export const histogramBucketSizes = [
     .001, .002, .0025, .005,
      .01,  .02,  .025,  .05,
@@ -22,11 +25,17 @@ export const histogramBucketSizes = [
 const histFilter = [null];
 const histSort = (a: number, b: number) => a - b;
 
+/**
+ * @alpha
+ */
 export interface HistogramTransformerOptions {
   bucketSize?: number; // 0 is auto
   bucketOffset?: number;
 }
 
+/**
+ * @alpha
+ */
 export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptions> = {
   id: DataTransformerID.histogram,
   name: 'Histogram',
@@ -51,9 +60,19 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
     ),
 };
 
+/**
+ * @internal
+ */
 export const histogramFrameBucketMinFieldName = 'BucketMin';
+
+/**
+ * @internal
+ */
 export const histogramFrameBucketMaxFieldName = 'BucketMax';
 
+/**
+ * @alpha
+ */
 export interface HistogramFields {
   bucketMin: Field;
   bucketMax: Field;
@@ -62,6 +81,8 @@ export interface HistogramFields {
 
 /**
  * Given a frame, find the explicit histogram fields
+ *
+ * @alpha
  */
 export function getHistogramFields(frame: DataFrame): HistogramFields | undefined {
   let bucketMin: Field | undefined = undefined;
@@ -86,6 +107,9 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
+/**
+ * @alpha
+ */
 export function buildHistogram(frames: DataFrame[], bucketSize?: number, bucketOffset = 0): HistogramFields {
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize) {
@@ -189,7 +213,7 @@ function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
 }
 
-export function histogram(
+function histogram(
   vals: number[],
   getBucket: (v: number) => number,
   filterOut?: any[] | null,
