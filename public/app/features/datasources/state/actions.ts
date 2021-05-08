@@ -3,7 +3,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import { DataSourcePluginCategory, ThunkResult, ThunkDispatch } from 'app/types';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
@@ -49,7 +49,7 @@ export const initDataSourceSettings = (
     importDataSourcePlugin,
   }
 ): ThunkResult<void> => {
-  return async (dispatch: ThunkDispatch, getState) => {
+  return async (dispatch, getState) => {
     if (!pageId) {
       dispatch(initDataSourceSettingsFailed(new Error('Invalid ID')));
       return;
@@ -57,6 +57,8 @@ export const initDataSourceSettings = (
 
     try {
       await dispatch(dependencies.loadDataSource(pageId));
+
+      // have we already loaded the plugin then we can skip the steps below?
       if (getState().dataSourceSettings.plugin) {
         return;
       }
@@ -113,16 +115,7 @@ export function loadDataSources(): ThunkResult<void> {
 
 export function loadDataSource(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    // Check if this is an old id format!
-    const id = parseInt(uid, 10);
-    if (id) {
-      const ds = (await getBackendSrv().get(`/api/datasources/${id}`)) as DataSourceSettings;
-      if (ds?.uid) {
-        console.log('TODO... redirect!', ds.uid);
-      }
-    }
-
-    const dataSource = (await getBackendSrv().get(`/api/datasources/uid/${uid}`)) as DataSourceSettings;
+    const dataSource = await getDataSourceUsingUidOrId(uid);
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);
 
@@ -130,6 +123,46 @@ export function loadDataSource(uid: string): ThunkResult<void> {
     dispatch(dataSourceMetaLoaded(pluginInfo));
     dispatch(updateNavIndex(buildNavModel(dataSource, plugin)));
   };
+}
+
+/**
+ * Old data source urls used the numeric db id
+ */
+async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSettings> {
+  try {
+    const byUid = await getBackendSrv()
+      .fetch<DataSourceSettings>({
+        method: 'GET',
+        url: `/api/datasources/uid/${uid}`,
+      })
+      .toPromise();
+
+    if (byUid.ok) {
+      return byUid.data;
+    }
+  } catch (err) {
+    console.log('Failed to lookup data source by uid', err);
+  }
+
+  // try lookup by old db id
+  const id = parseInt(uid, 10);
+  if (!Number.isNaN(id)) {
+    const response = await getBackendSrv()
+      .fetch<DataSourceSettings>({
+        method: 'GET',
+        url: `/api/datasources/${id}`,
+      })
+      .toPromise();
+
+    // Not ideal to do a full page reload here but so tricky to handle this otherwise
+    // We can update the location using react router, but need to fully reload the route as the nav model
+    // page index is not matching with the url in that case. And react router has no way to unmount remount a route
+    if (response.ok && response.data.id.toString() === uid) {
+      window.location.href = locationUtil.assureBaseUrl(`/datasources/edit/${response.data.uid}`);
+    }
+  }
+
+  throw Error('Could not find data source');
 }
 
 export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {

@@ -86,7 +86,7 @@ describe('initDataSourceSettings', () => {
       const dataSource = { type: 'app' };
       const dataSourceMeta = { id: 'some id' };
       const dependencies: InitDataSourceSettingDependencies = {
-        loadDataSource: jest.fn(thunkMock),
+        loadDataSource: jest.fn(thunkMock) as any,
         getDataSource: jest.fn().mockReturnValue(dataSource),
         getDataSourceMeta: jest.fn().mockReturnValue(dataSourceMeta),
         importDataSourcePlugin: jest.fn().mockReturnValue({} as GenericDataSourcePlugin),
