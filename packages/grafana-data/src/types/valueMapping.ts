@@ -1,41 +1,31 @@
-/**
- * @internal
- */
 export enum MappingType {
-  ValueToText = 1,
-  RangeToText = 2,
+  ValueToText = 'value', // was 1
+  RangeToText = 'range', // was 2
 }
 
 export interface ValueMappingResult {
-  value?: number;
-  state?: string;
+  value?: number; // use isNaN(value)
+  state?: string; // not yet used -- or text
   color?: string;
 }
 
-interface BaseMap {
-  id: number; // this could/should just be the array index
+interface BaseValueMap<T> {
   type: MappingType;
+  options: T;
 }
 
-/**
- * @internal
- */
-export type ValueMapping = ValueMap | RangeMap;
-
-/**
- * @internal
- */
-export interface ValueMap extends BaseMap {
+export interface ValueMap extends BaseValueMap<Record<string, ValueMappingResult>> {
   type: MappingType.ValueToText;
-  map: Record<string, ValueMappingResult>;
 }
 
-/**
- * @internal
- */
-export interface RangeMap extends BaseMap {
-  type: MappingType.RangeToText;
-  from: string;
-  to: string;
+export interface RangeMapOptions {
+  from: number | null; // changed from string
+  to: number | null;
   result: ValueMappingResult;
 }
+
+export interface RangeMap extends BaseValueMap<RangeMapOptions> {
+  type: MappingType.RangeToText;
+}
+
+export type ValueMapping = ValueMap | RangeMap;

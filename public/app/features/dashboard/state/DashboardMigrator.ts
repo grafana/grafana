@@ -908,47 +908,49 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
     return undefined;
   }
 
-  const valueMaps: ValueMap = { id: 0, type: 1, map: {} };
+  const valueMaps: ValueMap = { type: MappingType.ValueToText, options: {} };
   const newMappings: ValueMapping[] = [];
 
   for (const old of oldMappings) {
     switch (old.type) {
-      case MappingType.ValueToText:
+      case 1: // MappingType.ValueToText:
         if (old.value !== null || old.value !== undefined) {
           if (isNumeric(old.text)) {
-            valueMaps.map[String(old.value)] = {
+            valueMaps.options[String(old.value)] = {
               value: anyToNumber(old.text),
             };
           } else {
-            valueMaps.map[String(old.value)] = {
+            valueMaps.options[String(old.value)] = {
               state: old.text,
             };
           }
         }
         break;
-      case MappingType.RangeToText:
+      case 2: // MappingType.RangeToText:
         if (isNumeric(old.text)) {
           newMappings.push({
-            id: old.id,
-            type: old.type,
-            from: old.from,
-            to: old.to,
-            result: { value: anyToNumber(old.text) },
+            type: MappingType.RangeToText,
+            options: {
+              from: +old.from,
+              to: +old.to,
+              result: { value: anyToNumber(old.text) },
+            },
           });
         } else {
           newMappings.push({
-            id: old.id,
-            type: old.type,
-            from: old.from,
-            to: old.to,
-            result: { state: old.text },
+            type: MappingType.RangeToText,
+            options: {
+              from: +old.from,
+              to: +old.to,
+              result: { state: old.text },
+            },
           });
         }
         break;
     }
   }
 
-  if (Object.keys(valueMaps.map).length > 0) {
+  if (Object.keys(valueMaps.options).length > 0) {
     newMappings.unshift(valueMaps);
   }
 
