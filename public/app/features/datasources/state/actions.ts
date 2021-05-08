@@ -126,7 +126,7 @@ export function loadDataSource(uid: string): ThunkResult<void> {
 }
 
 /**
- * Old data source urls used the numeric db id
+ * Get data source by uid or id, if old id detected handles redirect
  */
 async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSettings> {
   // Try first with uid api
@@ -135,6 +135,7 @@ async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSetting
       .fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/uid/${uid}`,
+        showErrorAlert: false,
       })
       .toPromise();
 
@@ -152,6 +153,7 @@ async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSetting
       .fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/${id}`,
+        showErrorAlert: false,
       })
       .toPromise();
 
