@@ -201,7 +201,7 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
 
 export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource);
+    await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource); // by UID not yet supported
     await updateFrontendSettings();
     return dispatch(loadDataSource(dataSource.uid));
   };
