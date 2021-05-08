@@ -7,6 +7,7 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { AlignedData, join } from './joinDataFrames';
 
 /* eslint-disable */
+// prettier-ignore
 export const histogramBucketSizes = [
     .001, .002, .0025, .005,
      .01,  .02,  .025,  .05,
