@@ -1,7 +1,7 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { histogramTransformer, buildHistogram } from './histogram';
+import { histogramTransformer, buildHistogram, histogramFieldsToFrame } from './histogram';
 
 describe('histogram frames frames', () => {
   beforeAll(() => {
@@ -21,7 +21,7 @@ describe('histogram frames frames', () => {
       fields: [{ name: 'C', type: FieldType.number, values: [5, 6, 7, 8, 9] }],
     });
 
-    const out = buildHistogram([series1, series2]);
+    const out = histogramFieldsToFrame(buildHistogram([series1, series2]));
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -65,33 +65,33 @@ describe('histogram frames frames', () => {
             1,
             1,
             1,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            0,
+            0,
+            0,
+            0,
           ],
         },
         Object {
           "name": "B",
           "values": Array [
-            undefined,
-            undefined,
+            0,
+            0,
             1,
             1,
             1,
             1,
             1,
-            undefined,
-            undefined,
+            0,
+            0,
           ],
         },
         Object {
           "name": "C",
           "values": Array [
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            0,
+            0,
+            0,
+            0,
             1,
             1,
             1,
@@ -102,10 +102,10 @@ describe('histogram frames frames', () => {
         Object {
           "name": "C",
           "values": Array [
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            0,
+            0,
+            0,
+            0,
             1,
             1,
             1,

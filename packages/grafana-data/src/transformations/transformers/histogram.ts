@@ -46,12 +46,7 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
           return data;
         }
         const hist = buildHistogram(data, options.bucketSize, options.bucketOffset);
-        return [
-          {
-            fields: [hist.bucketMin, hist.bucketMax, ...hist.counts],
-            length: hist.bucketMin.values.length,
-          },
-        ];
+        return [histogramFieldsToFrame(hist)];
       })
     ),
 };
@@ -62,7 +57,7 @@ export const histogramFrameBucketMaxFieldName = 'BucketMax';
 export interface HistogramFields {
   bucketMin: Field;
   bucketMax: Field;
-  counts: Field[];
+  counts: Field[]; // frequency
 }
 
 /**
@@ -182,15 +177,15 @@ export function buildHistogram(frames: DataFrame[], bucketSize?: number, bucketO
   };
 }
 
-export function incrRound(num: number, incr: number) {
-  return Math.round(num / incr) * incr;
-}
+// function incrRound(num: number, incr: number) {
+//   return Math.round(num / incr) * incr;
+// }
 
-export function incrRoundUp(num: number, incr: number) {
-  return Math.ceil(num / incr) * incr;
-}
+// function incrRoundUp(num: number, incr: number) {
+//   return Math.ceil(num / incr) * incr;
+// }
 
-export function incrRoundDn(num: number, incr: number) {
+function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
 }
 
@@ -233,4 +228,14 @@ export function histogram(
   }
 
   return [values, counts];
+}
+
+/**
+ * @internal
+ */
+export function histogramFieldsToFrame(info: HistogramFields): DataFrame {
+  return {
+    fields: [info.bucketMin, info.bucketMax, ...info.counts],
+    length: info.bucketMin.values.length,
+  };
 }

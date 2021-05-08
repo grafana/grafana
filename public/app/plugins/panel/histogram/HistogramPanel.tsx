@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
-import { PanelProps, DataFrame, buildHistogram, getHistogramFields, HistogramFields } from '@grafana/data';
+import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
 
 import { Histogram } from './Histogram';
 import { PanelOptions } from './models.gen';
 import { useTheme2 } from '@grafana/ui';
 
 type Props = PanelProps<PanelOptions>;
+
+import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
 
 export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
   const theme = useTheme2();
@@ -17,11 +19,11 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
     if (data.series.length === 1) {
       const info = getHistogramFields(data.series[0]);
       if (info) {
-        return toFrame(info);
+        return histogramFieldsToFrame(info);
       }
     }
 
-    return toFrame(buildHistogram(data.series, options.bucketSize, options.bucketOffset));
+    return histogramFieldsToFrame(buildHistogram(data.series, options.bucketSize, options.bucketOffset));
   }, [data.series, options.bucketSize, options.bucketOffset]);
 
   if (!histogram || !histogram.fields.length) {
@@ -35,21 +37,11 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
   return (
     <Histogram
       theme={theme}
-      legend={null as any}
+      legend={null as any} // TODO!
       structureRev={data.structureRev}
       width={width}
       height={height}
       alignedFrame={histogram}
-      //fieldConfig={fieldConfig}
-      //onLegendClick={onLegendClick}
-      //onSeriesColorChange={onSeriesColorChange}
     />
   );
 };
-
-function toFrame(info: HistogramFields): DataFrame {
-  return {
-    fields: [info.bucketMin, info.bucketMax, ...info.counts],
-    length: info.bucketMin.values.length,
-  };
-}
