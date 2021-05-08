@@ -822,27 +822,11 @@ Azure cloud environment where Grafana is hosted:
 
 Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
 
-### managed_identity_token_url
-
-Azure Instance Metadata Service (IMDS) endpoint for request of access tokens on behalf of the managed identity.
-
-### managed_identity_object_id
-
-The object ID of the managed identity to use for user-assigned managed identity. It is required if the VM has multiple user-assigned managed identities.
-
-Should be empty for system-assigned managed identity.
-
 ### managed_identity_client_id
 
-The client ID of the managed identity to use for user-assigned managed identity. It is required if the VM has multiple user-assigned managed identities.
+The client ID to use for user-assigned managed identity.
 
-Should be empty for system-assigned managed identity.
-
-### managed_identity_resource_id
-
-The Azure Resource ID of the managed identity to use for user-assigned managed identity. It is required if the VM has multiple user-assigned managed identities.
-
-Should be empty for system-assigned managed identity.
+Should be set for user-assigned identity and should be empty for system-assigned identity.
 
 ## [auth.jwt]
 
