@@ -1,23 +1,24 @@
 +++
 title = "Custom roles"
-description = "Understand custom roles in access control"
-keywords = ["grafana", "access-control", "concepts", "roles", "custom-roles", "enterprise"]
+description = "Understand custom roles in fine-grained access control"
+keywords = ["grafana", "fine-grained-access-control", "concepts", "permissions", "roles", "custom-roles", "enterprise"]
 weight = 120
 +++
 
 # Custom roles
 
-You can create custom roles with permissions to control access for your users the way you want. 
-A custom role must have a name and a version. To create, update or delete a custom role, you can use [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or Grafana Provisioning(todo).
-For more information about using custom roles, refer to [Managing roles and permissions]({{< relref "../managing-roles-permissions.md" >}}).
+Custom roles allow you to manage access to your users the way you want, by mapping [fine-grained permissions]({{< relref "./permissions.md" >}}) to it and creating [built-in role assignments]({{< relref "./roles#built-in-role-assignments.md" >}})
+
+A custom role must have a `name` and a `version`. To create, update or delete a custom role, you can use [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or [Grafana Provisioning]({{< relref "../provisioning.md" >}}).
+For more information about how to use custom roles, refer to [Managing roles and permissions]({{< relref "../managing-roles-permissions.md" >}}).
 
 ## Role name
 
-The name of a custom role can’t start with `grafana:roles:` prefix, as it is reserved for predefined roles created by the Grafana Enterprise.
+The name of a custom role can’t start with `grafana:roles:` prefix, as it is reserved for predefined roles created by the Grafana.
 
 ## Role version
 
-The version of a role is a number defines the current version of the role. If you want to update the role you must increment the version number first, otherwise the update will fail. This is done to prevent accidental changes and to preserve history over time.
+The version of a role is a number which defines the current version of the role. If you want to update the role you must increment the version number first, otherwise the update will fail.
 
 ## Permissions
 
@@ -30,4 +31,4 @@ See [Permissions]({{< relref "./permissions.md" >}}) for full list of available 
 
 ## Scope of the role
 
-Custom role can be either global or organization local. Refer to the [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) to understand how you can specify the scope of the role.
+Custom role can be either `global` or `organization local`. Refer to the [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) to understand how you can specify the scope of the role.

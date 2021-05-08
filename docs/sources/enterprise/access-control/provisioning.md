@@ -1,17 +1,28 @@
 +++
 title = "Provisioning roles and assignments"
-description = "Understand how to provision roles and assignments"
-keywords = ["grafana", "access-control", "roles", "provisioning", "assignments", "permissions", "enterprise"]
+description = "Understand how to provision roles and assignments in fine-grained access control"
+keywords = ["grafana", "fine-grained-access-control", "roles", "provisioning", "assignments", "permissions", "enterprise"]
 weight = 120
 +++
 
-# Provisioning roles and assignments
+# Provisioning
 
-> Feature available in Grafana Enterprise 8.0+.
+> Available only when [fine-grained access control]({{< relref "./_index.md" >}}) is enabled.
 
-It is possible to manage your roles and even assign them to [built-in roles]({{< relref "./concepts/roles.md#built-in-role-assignments" >}}) or already created teams, by adding one or more YAML config files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory. Each config file can contain a list of `roles` that will be created or updated during start up. Upon version increment, Grafana updates the role to match the configuration file. The configuration file can also contain a list of roles that should be deleted. That list is called `deleteRoles`. Grafana will role deletion after role insertion/update.
+> Refer to [Fine-Grained Access Control HTTP API]({{< relref "../../http_api/access_control/" >}}) to understand how to manage roles and assignments by API.
+ 
+You can create, change or remove [Custom roles]({{< relref "./concepts/roles.md" >}}) and create or remove [built-in role assignments]({{< relref "./concepts/roles.md#built-in-role-assignments" >}}), by adding one or more YAML configuration files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory. 
 
-> Managing your roles can also be done using the [`access-control HTTP API`]({{< relref "../../http_api/access_control/" >}})
+## Before you begin
+
+- Understand [Grafana provisioning]({{< relref "../../administration/configuration/#provisioning" >}}).
+- Learn about basic [Concepts]({{< relref "./concepts/_index.md" >}})
+- Learn about [Managing roles and permissions]({{< relref "./managing-roles-permissions.md" >}})
+
+## Configuration
+
+Each config file can contain a list of `roles` that will be created or updated during start up. 
+Upon version increment, Grafana updates the role to match the configuration file. The configuration file can also contain a list of roles that should be deleted. That list is called `deleteRoles`. Grafana will perform deletion after role insertion/update.
 
 ## Example of a Role Configuration File
 
@@ -42,6 +53,8 @@ roles:
     version: 2
     # <int> org id. will default to Grafana's default if not specified
     orgId: 1
+    # <boolean> indicates if the role is `global` or not
+    global: false
     # <list> list of the permissions granted by this role
     permissions:
       # <string, required> action allowed
@@ -52,48 +65,39 @@ roles:
         scope: "users:*"
       - action: "users:create"
         scope: "users:*"
-    # <list> list of teams the role should be assigned to
-    teams:
-      # <string, required> name of the team you want to assign the role to
-      - name: CustomEditors
-        # <int> org id. will default to the role org id
-        orgId: 1
     # <list> list of builtIn roles the role should be assigned to
     builtInRoles:
       # <string, required> name of the builtin role you want to assign the role to
       - name: "Editor"
         # <int> org id. will default to the role org id
         orgId: 1
+        # <boolean> indicates if the assignment is `global` or not
+        global: false
 ```
 
 ## Supported settings
 
-Check correct values for [permissions]({{< relref "./concepts/permissions.md/#available-permissions" >}}), [built-in role assignments]({{< relref "./concepts/roles.md#built-in-role-assignments" >}})
+The following sections detail the supported settings for roles and built-in role assignments.
+
+1. Refer to [Permissions]({{< relref "./concepts/permissions.md#available-permissions" >}}) for full list of valid permissions.
+1. Check [Custom roles]({{< relref "./concepts/custom-roles.md" >}}) to understand attributes for roles.
+1. The [default org ID]({{< relref "../../administration/configuration/#auto_assign_org_id" >}}) is used if `orgId` is not specified in any of the configuration blocks.
 
 ## Validation rules
 
-(todo update with global roles)
+A basic set of validation rules are applied to the input `yaml` files.
 
-A basic set of validation rules are applied to the input yaml files.
+### Roles
 
-To validate the roles configuration, we:
+1. `name` must not be empty
+1. `name` must not have `grafana:roles:` prefix. 
 
-* Check that the role name is not empty
-* Use the [default org ID]({{< relref "../../administration/configuration/#auto_assign_org_id" >}}) if `orgId` is not specified.
+### Built-in role assignments
 
-To validate team assignments, we:
+1. `name` must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`. 
+1. When `orgId` is not specified, it inherits the `orgId` from `role`.
+1. `orgId` in the `role` and in the assignment must be the same.
 
-* Check that the name is not empty
-* Inherit the role org ID if `orgId` is not specified
-* Check that the `orgId` is the same as the role's, to prevent cross organization assignments
+### Role deletion
 
-To validate builtin-role assignments, we:
-
-* Check that the name is not empty
-* Inherit the role org ID if `orgId` is not specified
-* Check that role and builtin-role `orgId` are the same, to prevent cross organization assignments
-
-To validate the roles to delete configuration, we:
-
-* Check that either the role name or uid is provided
-* Use the [default org ID]({{< relref "../../administration/configuration/#auto_assign_org_id" >}}) if `orgId` is not specified.
+1. Either the role `name` or `uid` must be provided

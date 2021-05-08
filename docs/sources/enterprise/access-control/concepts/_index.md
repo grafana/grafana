@@ -1,15 +1,13 @@
 +++
 title = "Concepts"
-description = "Understand access control terms and concepts"
-keywords = ["grafana", "access-control", "concepts", "roles", "permissions", "enterprise"]
+description = "Understand fine-grained access control terms and concepts"
+keywords = ["grafana", "fine-grained-access-control", "concepts", "roles", "permissions", "enterprise"]
 weight = 100
 +++
 
 # Concepts
 
-To leverage access control, there are few important parts you would need to manage [Roles]({{< relref "./roles.md" >}}) and [Permissions]({{< relref "./permissions.md" >}}).
+There are few main parts in the fine-grained access control which you would need to understand:
 
-To grant or revoke access to your users, you can assign or unassign roles to the currently available Organization roles (`Admin`, `Editor`, `Viewer`) or Grafana Admin role.
-See [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}) for more information.
-
-To understand how to work with the roles and permissions, refer to [Managing roles and permissions]({{< relref "../managing-roles-permissions.md" >}}).
+1. You would need to manage [Roles]({{< relref "./roles.md" >}}) and [Permissions]({{< relref "./permissions.md" >}}).
+1. For granting or revoking access to your users, you would need to create or remove [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).

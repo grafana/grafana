@@ -1,7 +1,7 @@
 +++
 title = "How-to examples"
-description = "How-to examples"
-keywords = ["grafana", "access-control", "roles", "permissions", "fine-grained", "how-to", "enterprise"]
+description = "How-to examples of using fine-grained access control"
+keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "how-to", "enterprise"]
 weight = 130
 +++
 

@@ -1,15 +1,14 @@
 +++
 title = "Permissions"
-description = "Understand permissions in access control"
-keywords = ["grafana", "access-control", "concepts", "roles", "permissions", "enterprise"]
+description = "Understand permissions in fine-grained access control"
+keywords = ["grafana", "fine-grained access-control", "concepts", "roles", "permissions", "enterprise"]
 weight = 130
 +++
 
 # Permissions 
 
-In access control, permissions define what you can perform on a specific Grafana resource. 
+In access control, permissions define the action you can perform on a specific Grafana resource. 
 To grant permissions to your users, you can create [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
-Refer to [Managing roles and permissions]({{< relref "../managing-roles-permissions.md" >}}) for more information.
 
 A permission is defined by an `action` and a `scope`. 
 When evaluating a decision for access, user will be allowed to perform a specific action on a resource if they have a permission with relevant `action` and `scope`.
