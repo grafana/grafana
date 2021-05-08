@@ -282,7 +282,7 @@ func TestReadCSV(t *testing.T) {
 
 	require.JSONEq(t, `{"schema":{
 		"fields":[
-			{"type":"bool","typeInfo":{"frame":"bool","nullable":true}},
+			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
 			{"type":"number","typeInfo":{"frame":"float64","nullable":true}},
 			{"type":"string","typeInfo":{"frame":"string","nullable":true}}
 		]},"data":{
