@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Input } from '../Input/Input';
 import { GrafanaTheme2, MappingType, ValueMappingResult } from '@grafana/data';
 import { Draggable } from 'react-beautiful-dnd';
@@ -31,16 +31,19 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  function update(fn: (item: ValueMappingEditRowModel) => void) {
-    const copy = {
-      ...mapping,
-      result: {
-        ...mapping.result,
-      },
-    };
-    fn(copy);
-    return onChange(index, copy);
-  }
+  const update = useCallback(
+    (fn: (item: ValueMappingEditRowModel) => void) => {
+      const copy = {
+        ...mapping,
+        result: {
+          ...mapping.result,
+        },
+      };
+      fn(copy);
+      onChange(index, copy);
+    },
+    [mapping, index, onChange]
+  );
 
   const onChangeColor = (color: string) => {
     update((mapping) => {

@@ -11,6 +11,7 @@ import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
+import { getColorForTheme } from '../utils/namedColorsPalette';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -66,6 +67,9 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     let numeric = isStringUnit ? NaN : anyToNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
+    let color: string | undefined = undefined;
+    let percent: number | undefined = undefined;
+
     let shouldFormat = true;
 
     if (mappings && mappings.length > 0) {
@@ -78,6 +82,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
         if (mappingResult.value !== undefined && !isStringUnit) {
           numeric = mappingResult.value;
+        }
+
+        if (mappingResult.color !== undefined) {
+          color = getColorForTheme(mappingResult.color, options.theme.v1);
         }
 
         shouldFormat = false;
@@ -93,8 +101,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
 
       // Return the value along with scale info
-      if (text) {
-        return { text, numeric, prefix, suffix, ...scaleFunc(numeric) };
+      if (color === undefined) {
+        const scaleResult = scaleFunc(numeric);
+        color = scaleResult.color;
+        percent = scaleResult.percent;
       }
     }
 
@@ -106,7 +116,13 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    return { text, numeric, prefix, suffix, ...scaleFunc(-Infinity) };
+    if (!color) {
+      const scaleResult = scaleFunc(-Infinity);
+      color = scaleResult.color;
+      percent = scaleResult.percent;
+    }
+
+    return { text, numeric, prefix, suffix, color, percent };
   };
 }
 

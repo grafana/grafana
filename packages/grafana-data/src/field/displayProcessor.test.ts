@@ -139,10 +139,8 @@ describe('Format value', () => {
       { type: MappingType.RangeToText, options: { from: 1, to: 9, result: { state: '1-9' } } },
     ];
 
-    const value = '10';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
-
-    const result = instance(value);
+    const result = instance('10');
 
     expect(result.text).toEqual('10.0');
   });
@@ -152,9 +150,21 @@ describe('Format value', () => {
       { type: MappingType.ValueToText, options: { '11': { state: 'elva' } } },
       { type: MappingType.RangeToText, options: { from: 1, to: 9, result: { state: '1-9' } } },
     ];
-    const value = '11';
+
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
-    expect(instance(value).text).toEqual('elva');
+    const result = instance('11');
+
+    expect(result.text).toEqual('elva');
+  });
+
+  it('should return value with color if mapping has color', () => {
+    const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { Low: { color: 'red' } } }];
+
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('Low');
+
+    expect(result.text).toEqual('Low');
+    expect(result.color).toEqual('#F2495C');
   });
 
   // Wonder what this is scenario is for?
