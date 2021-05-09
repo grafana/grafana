@@ -61,7 +61,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
         mapping.isNew = false;
       });
     }
-  }, [mapping]);
+  }, [mapping, inputRef, update]);
 
   const onUpdateMatchValue = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
