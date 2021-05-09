@@ -93,6 +93,14 @@ type PluginInclude struct {
 	Id string `json:"-"`
 }
 
+func (e PluginInclude) GetSlugOrUid() string {
+	if len(e.Uid) > 0 {
+		return e.Uid
+	} else {
+		return e.Slug
+	}
+}
+
 type PluginDependencyItem struct {
 	Type    string `json:"type"`
 	Id      string `json:"id"`
