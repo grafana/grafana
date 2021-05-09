@@ -1,5 +1,12 @@
-import React, { PureComponent } from 'react';
-import { ValueMapping } from '@grafana/data';
+import React, { useCallback, useEffect, useState } from 'react';
+import { GrafanaTheme2, MappingType, ValueMapping } from '@grafana/data';
+import { Button } from '../Button/Button';
+import { Modal } from '../Modal/Modal';
+import { useStyles2 } from '../../themes';
+import { css } from '@emotion/css';
+import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+
 // import {
 //   DragDropContext,
 //   Draggable,
@@ -104,126 +111,124 @@ export interface Props {
 //   );
 // };
 
-interface State {
-  ts: number;
+export function ValueMappingsEditor({ value, onChange }: Props) {
+  const styles = useStyles2(getStyles);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const onCloseEditor = useCallback(() => {
+    setIsEditorOpen(false);
+  }, [setIsEditorOpen]);
+
+  return (
+    <>
+      <Button variant="secondary" size="sm" fullWidth onClick={() => setIsEditorOpen(true)} icon="pen">
+        Edit
+      </Button>
+      <Modal isOpen={isEditorOpen} title="Value mappings editor" onDismiss={onCloseEditor} className={styles.modal}>
+        <ValueMappingsEditorModal value={value} onChange={onChange} onClose={onCloseEditor} />
+      </Modal>
+    </>
+  );
 }
 
-export class ValueMappingsEditor extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      ts: Date.now(),
-    };
-  }
+interface ModalProps {
+  value: ValueMapping[];
+  onChange: (valueMappings: ValueMapping[]) => void;
+  onClose: () => void;
+}
 
-  componentDidUpdate(props: Props) {
-    if (this.props.value !== props.value) {
-      this.setState({ ts: Date.now() });
+function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
+  const styles = useStyles2(getStyles);
+  const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
+
+  const onUpdate = () => {
+    onClose();
+  };
+
+  useEffect(() => {
+    const editRows: ValueMappingEditRowModel[] = [];
+    for (const mapping of value) {
+      switch (mapping.type) {
+        case MappingType.ValueToText:
+          for (const key of Object.keys(mapping.map)) {
+            editRows.push({
+              type: mapping.type,
+              result: mapping.map[key],
+              key,
+            });
+          }
+          break;
+        case MappingType.RangeToText:
+          editRows.push({
+            type: mapping.type,
+            result: mapping.result,
+            from: mapping.from ?? 0,
+            to: mapping.to ?? 0,
+          });
+      }
     }
-  }
+    updateRows(editRows);
+  }, [value]);
 
-  // onAddValue = () => {
-  //   const { value, onChange } = this.props;
-  //   const id = value && value.length > 0 ? Math.max(...value.map((v) => v.id)) + 1 : 0;
+  const onDragEnd = (result: DropResult) => {};
 
-  //   onChange([
-  //     ...value,
-  //     {
-  //       id,
-  //       type: MappingType.ValueToText,
-  //       value: '',
-  //       text: '',
-  //     },
-  //   ]);
-  // };
+  const onChangeMapping = useCallback((index: number, model: ValueMappingEditRowModel) => {}, []);
 
-  // onAddRange = () => {
-  //   const { value, onChange } = this.props;
-  //   const id = value && value.length > 0 ? Math.max(...value.map((v) => v.id)) + 1 : 0;
-
-  //   onChange([
-  //     ...value,
-  //     {
-  //       id,
-  //       type: MappingType.RangeToText,
-  //       from: '',
-  //       to: '',
-  //       text: '',
-  //     },
-  //   ]);
-  // };
-
-  // onDragEnd = (result: DropResult) => {
-  //   const { value } = this.props;
-  //   if (!value || !result.destination) {
-  //     return;
-  //   }
-  //   const fromIndex = result.source.index;
-  //   const toIndex = result.destination.index;
-
-  //   const copy = [...value];
-  //   const element = copy[fromIndex];
-  //   copy.splice(fromIndex, 1);
-  //   copy.splice(toIndex, 0, element);
-  //   copy.forEach((v, idx) => {
-  //     v.id = idx; // update the ids
-  //   });
-  //   this.props.onChange(copy);
-  // };
-
-  // onChange = (index: number, mapping: ValueMapping) => {
-  //   const values = [...this.props.value];
-  //   values[index] = mapping;
-  //   this.props.onChange(values);
-  // };
-
-  // onRemove = (index: number) => {
-  //   const values = [...this.props.value];
-  //   values.splice(index, 1);
-  //   this.props.onChange(values);
-  // };
-
-  render() {
-    return <div>hellp</div>;
-  }
+  return (
+    <>
+      <table className={styles.editTable}>
+        <thead>
+          <tr>
+            <th style={{ width: '1%' }}></th>
+            <th>Match</th>
+            <th>Map to value</th>
+            <th>Map to state</th>
+            <th>Map to color</th>
+            <th style={{ width: '1%' }}></th>
+          </tr>
+        </thead>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="sortable-field-mappings" direction="vertical">
+            {(provided) => (
+              <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                {rows.map((row, index) => (
+                  <ValueMappingEditRow key={index.toString()} mapping={row} index={index} onChange={onChangeMapping} />
+                ))}
+                {provided.placeholder}
+              </tbody>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </table>
+      <Modal.ButtonRow>
+        <Button variant="secondary" fill="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={onUpdate}>
+          Update
+        </Button>
+      </Modal.ButtonRow>
+    </>
+  );
 }
 
-// const getStyles = stylesFactory((theme?: GrafanaTheme) => ({
-//   row: css`
-//     margin-bottom: ${theme?.spacing.md};
-//   `,
-//   removeButton: css`
-//     margin-top: 9px;
-//   `,
-//   displayInput: css`
-//     width: 100%;
-//     max-width: 200px;
-//   `,
-//   rowWrap: css`
-//     display: flex;
-//     justify-content: space-between;
-//     flex-grow: 1;
-//   `,
-//   handleWrap: css`
-//     display: flex;
-//     flex-grow: 1;
-//     width: 100%;
-//   `,
+const getStyles = (theme: GrafanaTheme2) => ({
+  modal: css({
+    width: '980px',
+  }),
+  editTable: css({
+    width: '100%',
 
-//   // trying to get a 50% split that stacks when not enough space
-//   splitWrap: css`
-//     border: 1px solid red;
-//     width: 100%;
-//     display: flex;
-//   `,
-//   splitLeft: css`
-//     border: 1px solid green;
-//     flex: 1;
-//     min-width: 100px;
-//     flex-basis: auto;
-//   `,
-//   splitRight: css`
-//     border: 1px solid blue;
-//     flex: 1;
-//   `,
-// }));
+    'thead tr': {},
+
+    'tbody tr:nth-child(odd)': {
+      background: theme.colors.background.secondary,
+    },
+
+    ' th, td': {
+      padding: theme.spacing(1),
+      textAlign: 'center',
+    },
+
+    ' td': {},
+  }),
+});

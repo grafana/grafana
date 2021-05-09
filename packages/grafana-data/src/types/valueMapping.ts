@@ -35,7 +35,7 @@ export interface ValueMap extends BaseMap {
  */
 export interface RangeMap extends BaseMap {
   type: MappingType.RangeToText;
-  from: string;
-  to: string;
+  from: number;
+  to: number;
   result: ValueMappingResult;
 }
