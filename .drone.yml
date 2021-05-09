@@ -158,6 +158,7 @@ steps:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
+  failure: ignore
   depends_on:
   - initialize
   - build-frontend-docs

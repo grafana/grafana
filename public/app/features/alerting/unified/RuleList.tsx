@@ -96,13 +96,13 @@ export const RuleList: FC = () => {
           )}
           {promReqeustErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules state from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              Failed to load rules state from <a href={`datasources/edit/${dataSource.uid}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
           {rulerRequestErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules config from <a href={'datasources/edit/${dataSource.id}'}>{dataSource.name}</a>:{' '}
+              Failed to load rules config from <a href={'datasources/edit/${dataSource.uid}'}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
