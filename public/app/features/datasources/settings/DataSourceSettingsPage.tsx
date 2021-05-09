@@ -32,10 +32,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
+export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 function mapStateToProps(state: StoreState, props: OwnProps) {
-  const dataSourceId = props.match.params.id;
+  const dataSourceId = props.match.params.uid;
   const params = new URLSearchParams(props.location.search);
   const dataSource = getDataSource(state.dataSources, dataSourceId);
   const { plugin, loadError, testingStatus } = state.dataSourceSettings;
@@ -49,7 +49,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     ),
     dataSource: getDataSource(state.dataSources, dataSourceId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
-    dataSourceId: parseInt(dataSourceId, 10),
+    dataSourceId: dataSourceId,
     page,
     plugin,
     loadError,

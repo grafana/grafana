@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 
 	coreapi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -22,6 +24,8 @@ import (
 type RulerSrv struct {
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
+	QuotaService    *quota.QuotaService
+	manager         *state.Manager
 	log             log.Logger
 }
 
@@ -32,9 +36,15 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 		return toNamespaceErrorResponse(err)
 	}
 
-	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid); err != nil {
+	uids, err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid)
+	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to delete namespace alert rules", err)
 	}
+
+	for _, uid := range uids {
+		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+	}
+
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
 }
 
@@ -45,11 +55,17 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 		return toNamespaceErrorResponse(err)
 	}
 	ruleGroup := c.Params(":Groupname")
-	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup); err != nil {
+	uids, err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
+
+	if err != nil {
 		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
 			return response.Error(http.StatusNotFound, "failed to delete rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to delete rule group", err)
+	}
+
+	for _, uid := range uids {
+		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
@@ -195,8 +211,18 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return toNamespaceErrorResponse(err)
 	}
 
-	// TODO check permissions
-	// TODO check quota
+	// quotas are checked in advanced
+	// that is acceptable under the assumption that there will be only one alert rule under the rule group
+	// alternatively we should check the quotas after the rule group update
+	// and rollback the transaction in case of violation
+	limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to get quota", err)
+	}
+	if limitReached {
+		return response.Error(http.StatusForbidden, "quota reached", nil)
+	}
+
 	// TODO validate UID uniqueness in the payload
 
 	//TODO: Should this belong in alerting-api?
@@ -204,6 +230,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return response.Error(http.StatusBadRequest, "rule group name is not valid", nil)
 	}
 
+	var alertRuleUIDs []string
 	for _, r := range ruleGroupConfig.Rules {
 		cond := ngmodels.Condition{
 			Condition: r.GrafanaManagedAlert.Condition,
@@ -213,6 +240,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 			return response.Error(http.StatusBadRequest, fmt.Sprintf("failed to validate alert rule %s", r.GrafanaManagedAlert.Title), err)
 		}
+		alertRuleUIDs = append(alertRuleUIDs, r.GrafanaManagedAlert.UID)
 	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
@@ -226,6 +254,10 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
+	}
+
+	for _, uid := range alertRuleUIDs {
+		srv.manager.RemoveByRuleUID(c.OrgId, uid)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})

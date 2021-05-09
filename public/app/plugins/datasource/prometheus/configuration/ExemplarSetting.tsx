@@ -43,6 +43,7 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             tracing={true}
             current={value.datasourceUid}
             noDefault={true}
+            width={40}
             onChange={(ds) =>
               onChange({
                 datasourceUid: ds.uid,

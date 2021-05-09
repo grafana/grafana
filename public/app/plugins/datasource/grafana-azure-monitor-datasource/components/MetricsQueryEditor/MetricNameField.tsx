@@ -16,21 +16,26 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   setError,
 }) => {
   const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor;
-
     if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
       metricNames.length > 0 && setMetricNames([]);
       return;
     }
+    setIsLoading(true);
 
     datasource
       .getMetricNames(subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace)
       .then((results) => {
         setMetricNames(results.map(toOption));
+        setIsLoading(false);
       })
-      .catch((err) => setError(ERROR_SOURCE, err));
+      .catch((err) => {
+        setError(ERROR_SOURCE, err);
+        setIsLoading(false);
+      });
   }, [datasource, metricNames.length, query.azureMonitor, setError, subscriptionId]);
 
   const handleChange = useCallback(
@@ -60,6 +65,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
+        isLoading={isLoading}
       />
     </Field>
   );

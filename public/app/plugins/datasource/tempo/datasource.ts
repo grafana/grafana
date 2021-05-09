@@ -12,6 +12,7 @@ import {
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { createGraphFrames } from './graphTransform';
 
 export type TempoQuery = {
   query: string;
@@ -28,7 +29,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
         if (response.error) {
           return response;
         }
-
         // We need to parse some of the fields which contain stringified json.
         // Seems like we can't just map the values as the frame we got from backend has some default processing
         // and will stringify the json back when we try to set it. So we create a new field and swap it instead.
@@ -38,26 +38,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
           return emptyDataQueryResponse;
         }
 
-        for (const fieldName of ['serviceTags', 'logs', 'tags']) {
-          const field = frame.fields.find((f) => f.name === fieldName);
-          if (field) {
-            const fieldIndex = frame.fields.indexOf(field);
-            const values = new ArrayVector();
-            const newField: Field = {
-              ...field,
-              values,
-              type: FieldType.other,
-            };
+        parseJsonFields(frame);
 
-            for (let i = 0; i < field.values.length; i++) {
-              const value = field.values.get(i);
-              values.set(i, value === '' ? undefined : JSON.parse(value));
-            }
-            frame.fields[fieldIndex] = newField;
-          }
-        }
-
-        return response;
+        return {
+          ...response,
+          data: [...response.data, ...createGraphFrames(frame)],
+        };
       })
     );
   }
@@ -74,6 +60,30 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
 
   getQueryDisplayText(query: TempoQuery) {
     return query.query;
+  }
+}
+
+/**
+ * Change fields which are json string into JS objects. Modifies the frame in place.
+ */
+function parseJsonFields(frame: DataFrame) {
+  for (const fieldName of ['serviceTags', 'logs', 'tags']) {
+    const field = frame.fields.find((f) => f.name === fieldName);
+    if (field) {
+      const fieldIndex = frame.fields.indexOf(field);
+      const values = new ArrayVector();
+      const newField: Field = {
+        ...field,
+        values,
+        type: FieldType.other,
+      };
+
+      for (let i = 0; i < field.values.length; i++) {
+        const value = field.values.get(i);
+        values.set(i, value === '' ? undefined : JSON.parse(value));
+      }
+      frame.fields[fieldIndex] = newField;
+    }
   }
 }
 
