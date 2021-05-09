@@ -39,8 +39,8 @@ export function getValueMappingResult(
         }
 
         const valueAsNumber = parseFloat(value as string);
-        const fromAsNumber = parseFloat(vm.from as string);
-        const toAsNumber = parseFloat(vm.to as string);
+        const fromAsNumber = parseFloat(vm.from as any);
+        const toAsNumber = parseFloat(vm.to as any);
 
         if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
           continue;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input } from '../Input/Input';
-import { MappingType, ValueMapping, ValueMappingResult } from '@grafana/data';
+import { MappingType, ValueMappingResult } from '@grafana/data';
 import { Draggable } from 'react-beautiful-dnd';
 import { Icon } from '../Icon/Icon';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
