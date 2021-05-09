@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
@@ -1136,26 +1136,27 @@ describe('DashboardModel', () => {
     it('should migrate value mapping model', () => {
       expect(model.panels[0].fieldConfig.defaults.mappings).toEqual([
         {
-          id: 0,
-          type: 1,
-          map: {
+          type: MappingType.ValueToText,
+          options: {
             down: { state: 'BAD' },
             up: { value: 1 },
           },
         },
         {
-          id: 2,
-          type: 2,
-          from: '0',
-          to: '30',
-          result: { state: 'below 30' },
+          type: MappingType.RangeToText,
+          options: {
+            from: 0,
+            to: 30,
+            result: { state: 'below 30' },
+          },
         },
         {
-          id: 3,
-          type: 2,
-          from: '30',
-          to: '100',
-          result: { value: 100 },
+          type: MappingType.RangeToText,
+          options: {
+            from: 30,
+            to: 100,
+            result: { value: 100 },
+          },
         },
       ]);
     });

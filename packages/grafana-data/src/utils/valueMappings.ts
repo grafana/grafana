@@ -28,27 +28,33 @@ export function getValueMappingResult(
   for (const vm of valueMappings) {
     switch (vm.type) {
       case MappingType.ValueToText:
-        const result = vm.map[value ?? 'null'];
+        const result = vm.options[value ?? 'null'];
         if (result) {
           return result;
         }
         break;
+
       case MappingType.RangeToText:
         if (value === null || value === undefined) {
           continue;
         }
 
         const valueAsNumber = parseFloat(value as string);
-        const fromAsNumber = parseFloat(vm.from as any);
-        const toAsNumber = parseFloat(vm.to as any);
-
-        if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
+        if (isNaN(valueAsNumber)) {
           continue;
         }
 
-        if (valueAsNumber >= fromAsNumber && valueAsNumber <= toAsNumber) {
-          return vm.result;
+        const isNumFrom = !isNaN(vm.options.from!);
+        if (isNumFrom && valueAsNumber < vm.options.from!) {
+          continue;
         }
+
+        const isNumTo = !isNaN(vm.options.to!);
+        if (isNumTo && valueAsNumber > vm.options.to!) {
+          continue;
+        }
+
+        return vm.options.result;
     }
   }
 

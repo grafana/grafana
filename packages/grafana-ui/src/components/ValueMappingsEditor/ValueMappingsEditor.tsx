@@ -149,10 +149,10 @@ function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
     for (const mapping of value) {
       switch (mapping.type) {
         case MappingType.ValueToText:
-          for (const key of Object.keys(mapping.map)) {
+          for (const key of Object.keys(mapping.options)) {
             editRows.push({
               type: mapping.type,
-              result: mapping.map[key],
+              result: mapping.options[key],
               key,
             });
           }
@@ -160,9 +160,9 @@ function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
         case MappingType.RangeToText:
           editRows.push({
             type: mapping.type,
-            result: mapping.result,
-            from: mapping.from ?? 0,
-            to: mapping.to ?? 0,
+            result: mapping.options.result,
+            from: mapping.options.from ?? 0,
+            to: mapping.options.to ?? 0,
           });
       }
     }

@@ -3,28 +3,28 @@ import { ValueMapping, MappingType } from '../types';
 
 const testSet1: ValueMapping[] = [
   {
-    id: 0,
     type: MappingType.ValueToText,
-    map: { '11': { state: 'elva' } },
+    options: { '11': { state: 'elva' } },
   },
   {
-    id: 0,
     type: MappingType.ValueToText,
-    map: { null: { state: 'it is null' } },
+    options: { null: { state: 'it is null' } },
   },
   {
-    id: 1,
     type: MappingType.RangeToText,
-    from: '1',
-    to: '9',
-    result: { state: '1-9' },
+    options: {
+      from: 1,
+      to: 9,
+      result: { state: '1-9' },
+    },
   },
   {
-    id: 1,
     type: MappingType.RangeToText,
-    from: '8',
-    to: '12',
-    result: { state: '8-12' },
+    options: {
+      from: 8,
+      to: 12,
+      result: { state: '8-12' },
+    },
   },
 ];
 
