@@ -152,7 +152,7 @@ export const getButtonStyles = (props: StyleProps) => {
     `,
     icon: css`
       margin-right: ${theme.spacing((iconOnly ? -padding : padding) / 2)};
-      margin-left: ${theme.spacing(padding / 2)};
+      margin-left: ${theme.spacing(-padding / 2)};
     `,
     content: css`
       display: flex;

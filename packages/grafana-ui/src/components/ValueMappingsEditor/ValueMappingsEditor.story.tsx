@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { action } from '@storybook/addon-actions';
 import { ValueMappingsEditor } from './ValueMappingsEditor';
 import { MappingType, ValueMapping } from '@grafana/data';
 
@@ -12,14 +11,14 @@ export function Example() {
   const [mappings, setMappings] = useState<ValueMapping[]>([
     {
       type: MappingType.ValueToText,
-      id: 0,
-      map: {
+      options: {
         LowLow: { color: 'red' },
         Low: { value: -1, color: 'orange' },
         Ok: { state: 'all good', color: 'green' },
+        NoColor: { state: 'Unknown' },
       },
     },
   ]);
 
-  return <ValueMappingsEditor value={mappings} onChange={action('Mapping changed')} />;
+  return <ValueMappingsEditor value={mappings} onChange={setMappings} />;
 }

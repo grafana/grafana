@@ -7,6 +7,7 @@ export interface ValueMappingResult {
   value?: number; // use isNaN(value)
   state?: string; // not yet used -- or text
   color?: string;
+  index?: number;
 }
 
 interface BaseValueMap<T> {

@@ -6,6 +6,7 @@ import { useStyles2 } from '../../themes';
 import { css } from '@emotion/css';
 import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { HorizontalGroup } from '../Layout/Layout';
 
 // import {
 //   DragDropContext,
@@ -140,12 +141,9 @@ function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
   const styles = useStyles2(getStyles);
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
-  const onUpdate = () => {
-    onClose();
-  };
-
   useEffect(() => {
     const editRows: ValueMappingEditRowModel[] = [];
+
     for (const mapping of value) {
       switch (mapping.type) {
         case MappingType.ValueToText:
@@ -166,12 +164,81 @@ function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
           });
       }
     }
+
+    // Sort by index
+    editRows.sort((a, b) => {
+      return (a.result.index ?? 0) > (b.result.index ?? 0) ? 1 : -1;
+    });
+
     updateRows(editRows);
   }, [value]);
 
-  const onDragEnd = (result: DropResult) => {};
+  const onDragEnd = (result: DropResult) => {
+    if (!value || !result.destination) {
+      return;
+    }
 
-  const onChangeMapping = useCallback((index: number, model: ValueMappingEditRowModel) => {}, []);
+    const copy = [...rows];
+    const element = copy[result.source.index];
+    copy.splice(result.source.index, 1);
+    copy.splice(result.destination.index, 0, element);
+    updateRows(copy);
+  };
+
+  const onChangeMapping = (index: number, row: ValueMappingEditRowModel) => {
+    const newList = [...rows];
+    newList.splice(index, 1, row);
+    updateRows(newList);
+  };
+
+  const onRemoveRow = (index: number) => {
+    const newList = [...rows];
+    newList.splice(index, 1);
+    updateRows(newList);
+  };
+
+  const onAddValueMap = () => {
+    updateRows([
+      ...rows,
+      {
+        type: MappingType.ValueToText,
+        isNew: true,
+        result: {},
+      },
+    ]);
+  };
+
+  const onAddRangeMap = () => {
+    updateRows([
+      ...rows,
+      {
+        type: MappingType.RangeToText,
+        isNew: true,
+        result: {},
+      },
+    ]);
+  };
+
+  const onUpdate = () => {
+    const maps: ValueMapping = {
+      type: MappingType.ValueToText,
+      options: {},
+    };
+
+    rows.forEach((item, index) => {
+      if (item.key === undefined || item.key === null) {
+        return;
+      }
+
+      maps.options[item.key] = {
+        ...item.result,
+        index,
+      };
+    });
+
+    onChange([maps]);
+    onClose();
+  };
 
   return (
     <>
@@ -191,9 +258,27 @@ function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
             {(provided) => (
               <tbody ref={provided.innerRef} {...provided.droppableProps}>
                 {rows.map((row, index) => (
-                  <ValueMappingEditRow key={index.toString()} mapping={row} index={index} onChange={onChangeMapping} />
+                  <ValueMappingEditRow
+                    key={index.toString()}
+                    mapping={row}
+                    index={index}
+                    onChange={onChangeMapping}
+                    onRemove={onRemoveRow}
+                  />
                 ))}
                 {provided.placeholder}
+                <tr>
+                  <td colSpan={6}>
+                    <HorizontalGroup>
+                      <Button variant="secondary" icon="plus" onClick={onAddValueMap}>
+                        Value map
+                      </Button>
+                      <Button variant="secondary" icon="plus" onClick={onAddRangeMap}>
+                        Range map
+                      </Button>
+                    </HorizontalGroup>
+                  </td>
+                </tr>
               </tbody>
             )}
           </Droppable>
