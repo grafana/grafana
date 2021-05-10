@@ -1,9 +1,9 @@
 import { PanelPlugin } from '@grafana/data';
-import { DrawStyle, GraphFieldConfig } from '@grafana/ui';
+import { DrawStyle, GraphFieldConfig, commonOptionsBuilder } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
-import { getGraphFieldConfig, defaultGraphConfig, addLegendOptions } from '../timeseries/config';
+import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(
@@ -34,5 +34,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
         },
       });
 
-    addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder);
   });

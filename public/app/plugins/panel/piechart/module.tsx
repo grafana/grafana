@@ -1,9 +1,8 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin, ReducerID, standardEditorsRegistry } from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLabels, PieChartLegendValues } from './types';
-import { LegendDisplayMode } from '@grafana/ui';
+import { LegendDisplayMode, commonOptionsBuilder } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
-import { addHideFrom } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
@@ -22,7 +21,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       },
     },
     useCustomConfig: (builder) => {
-      addHideFrom(builder);
+      commonOptionsBuilder.addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {
@@ -73,42 +72,20 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
             { value: 'none', label: 'Hidden' },
           ],
         },
-      })
-      .addRadio({
-        path: 'legend.displayMode',
-        name: 'Legend mode',
-        description: '',
-        defaultValue: LegendDisplayMode.List,
-        settings: {
-          options: [
-            { value: LegendDisplayMode.List, label: 'List' },
-            { value: LegendDisplayMode.Table, label: 'Table' },
-            { value: LegendDisplayMode.Hidden, label: 'Hidden' },
-          ],
-        },
-      })
-      .addRadio({
-        path: 'legend.placement',
-        name: 'Legend placement',
-        description: '',
-        defaultValue: 'right',
-        settings: {
-          options: [
-            { value: 'bottom', label: 'Bottom' },
-            { value: 'right', label: 'Right' },
-          ],
-        },
-        showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
-      })
-      .addMultiSelect({
-        name: 'Legend values',
-        path: 'legend.values',
-        settings: {
-          options: [
-            { value: PieChartLegendValues.Percent, label: 'Percent' },
-            { value: PieChartLegendValues.Value, label: 'Value' },
-          ],
-        },
-        showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
+
+    commonOptionsBuilder.addLegendOptions(builder, false);
+
+    builder.addMultiSelect({
+      name: 'Legend values',
+      path: 'legend.values',
+      category: ['Legend'],
+      settings: {
+        options: [
+          { value: PieChartLegendValues.Percent, label: 'Percent' },
+          { value: PieChartLegendValues.Value, label: 'Value' },
+        ],
+      },
+      showIf: (c) => c.legend.displayMode !== LegendDisplayMode.Hidden,
+    });
   });

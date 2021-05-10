@@ -11,10 +11,11 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarChartFieldConfig } from './types';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '../uPlot/config';
+import { AxisPlacement, ScaleDirection, ScaleOrientation } from '../uPlot/config';
 import { BarsOptions, getConfig } from './bars';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { Select } from 'uplot';
+import { ScaleDistribution } from '../uPlot/models.gen';
 
 /** @alpha */
 export function preparePlotConfigBuilder(
