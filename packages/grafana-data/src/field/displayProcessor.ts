@@ -76,11 +76,11 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       const mappingResult = getValueMappingResult(mappings, value);
 
       if (mappingResult) {
-        if (mappingResult.text !== undefined) {
+        if (mappingResult.text != null) {
           text = mappingResult.text;
         }
 
-        if (mappingResult.color !== undefined) {
+        if (mappingResult.color != null) {
           color = getColorForTheme(mappingResult.color, options.theme.v1);
         }
 

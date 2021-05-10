@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars, MappingType, NullToTextMatchType } from '@grafana/data';
+import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
@@ -1080,6 +1080,19 @@ describe('DashboardModel', () => {
             type: 'timeseries',
             fieldConfig: {
               defaults: {
+                thresholds: {
+                  mode: 'absolute',
+                  steps: [
+                    {
+                      color: 'green',
+                      value: null,
+                    },
+                    {
+                      color: 'red',
+                      value: 80,
+                    },
+                  ],
+                },
                 mappings: [
                   {
                     id: 0,
@@ -1143,8 +1156,8 @@ describe('DashboardModel', () => {
         {
           type: MappingType.ValueToText,
           options: {
-            down: { text: 'BAD' },
-            up: { text: '1' },
+            down: { text: 'BAD', color: undefined },
+            up: { text: '1', color: 'green' },
           },
         },
         {
@@ -1160,14 +1173,14 @@ describe('DashboardModel', () => {
           options: {
             from: 30,
             to: 100,
-            result: { text: '100' },
+            result: { text: '100', color: 'red' },
           },
         },
         {
           type: MappingType.NullToText,
           options: {
-            match: NullToTextMatchType.Null,
-            result: { text: 'it is null' },
+            match: 'null',
+            result: { text: 'it is null', color: undefined },
           },
         },
       ]);
