@@ -107,7 +107,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Len(t, resp.OrgUsers, 3)
-		assert.Equal(t, resp.TotalCount, int64(3))
+		assert.Equal(t, int64(3), resp.TotalCount)
 	})
 
 	loggedInUserScenario(t, "When calling GET as an editor with no team / folder permissions on",
