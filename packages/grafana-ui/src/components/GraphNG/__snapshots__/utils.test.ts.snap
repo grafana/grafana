@@ -12,7 +12,7 @@ Object {
         "width": 1,
       },
       "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
-      "scale": "x",
+      "scale": "time",
       "show": true,
       "side": 2,
       "size": [Function],
@@ -79,6 +79,20 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "sync": Object {
+      "filters": Object {
+        "pub": [Function],
+      },
+      "key": "__global_",
+      "match": Array [
+        [Function],
+        [Function],
+      ],
+      "scales": Array [
+        "time",
+        "__fixed",
+      ],
+    },
   },
   "hooks": Object {},
   "scales": Object {
@@ -91,7 +105,7 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "time": Object {
       "auto": false,
       "dir": 1,
       "ori": 0,

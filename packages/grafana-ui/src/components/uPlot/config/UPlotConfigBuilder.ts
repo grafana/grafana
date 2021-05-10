@@ -28,6 +28,9 @@ export class UPlotConfigBuilder {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
   }
 
+  // Exposed to let the container know the primary scale keys
+  scaleKeys: [string, string] = ['', ''];
+
   addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]) {
     pluginLog('UPlotConfigBuilder', false, 'addHook', type);
 
@@ -81,7 +84,7 @@ export class UPlotConfigBuilder {
   }
 
   setCursor(cursor?: Cursor) {
-    this.cursor = cursor;
+    this.cursor = { ...this.cursor, ...cursor };
   }
 
   setSelect(select: Select) {

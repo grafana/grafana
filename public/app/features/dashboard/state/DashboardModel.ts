@@ -25,6 +25,7 @@ import { DashboardMigrator } from './DashboardMigrator';
 import {
   AnnotationQuery,
   AppEvent,
+  DashboardCursorSync,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
@@ -74,7 +75,7 @@ export class DashboardModel {
   style: any;
   timezone: any;
   editable: any;
-  graphTooltip: any;
+  graphTooltip: DashboardCursorSync;
   time: any;
   private originalTime: any;
   timepicker: any;

@@ -42,14 +42,14 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-interface PrepConfigOptsTimeline extends PrepConfigOpts {
-  mode: TimelineMode;
-  rowHeight: number;
-  colWidth?: number;
-  showValue: BarValueVisibility;
-}
-
-type PrepConfig = (opts: PrepConfigOptsTimeline) => UPlotConfigBuilder;
+type PrepConfig = (
+  opts: PrepConfigOpts<{
+    mode: TimelineMode;
+    rowHeight: number;
+    colWidth?: number;
+    showValue: BarValueVisibility;
+  }>
+) => UPlotConfigBuilder;
 
 export const preparePlotConfigBuilder: PrepConfig = ({
   frame,
