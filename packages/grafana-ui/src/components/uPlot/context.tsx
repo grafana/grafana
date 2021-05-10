@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import uPlot from 'uplot';
-
 export interface PlotContextType {
   plot: uPlot | null;
+  getCanvasBoundingBox: () => DOMRect | null;
 }
 
 /**
