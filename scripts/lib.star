@@ -684,6 +684,7 @@ def build_docs_website_step():
         'name': 'build-docs-website',
         # Use latest revision here, since we want to catch if it breaks
         'image': 'grafana/docs-base:latest',
+        'failure': 'ignore',
         'depends_on': [
             'initialize',
             'build-frontend-docs',
@@ -1109,3 +1110,15 @@ def integration_test_services(edition):
         }])
 
     return services
+
+def validate_scuemata():
+    return {
+        'name': 'validate-scuemata',
+        'image': build_image,
+        'depends_on': [
+            'build-backend',
+        ],
+        'commands': [
+            './bin/linux-amd64/grafana-cli cue validate-schema',
+        ],
+    }

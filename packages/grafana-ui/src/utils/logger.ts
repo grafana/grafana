@@ -14,6 +14,7 @@ export interface Logger {
   logger: (...t: any[]) => void;
   enable: () => void;
   disable: () => void;
+  isEnabled: () => boolean;
 }
 
 /** @internal */
@@ -29,5 +30,6 @@ export const createLogger = (name: string): Logger => {
     },
     enable: () => (LOGGIN_ENABLED = true),
     disable: () => (LOGGIN_ENABLED = false),
+    isEnabled: () => LOGGIN_ENABLED,
   };
 };
