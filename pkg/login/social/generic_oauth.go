@@ -26,6 +26,7 @@ type SocialGenericOAuth struct {
 	loginAttributePath   string
 	nameAttributePath    string
 	roleAttributePath    string
+	roleAttributeStrict  bool
 	idTokenAttributeName string
 	teamIds              []int
 }
@@ -164,6 +165,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	if userInfo.Login == "" {
 		s.log.Debug("Defaulting to using email for user info login", "email", userInfo.Email)
 		userInfo.Login = userInfo.Email
+	}
+
+	if s.roleAttributeStrict && !models.RoleType(userInfo.Role).IsValid() {
+		return nil, errors.New("invalid role")
 	}
 
 	if !s.IsTeamMember(client) {

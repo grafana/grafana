@@ -11,6 +11,15 @@ export interface TimeRange {
   raw: RawTimeRange;
 }
 
+/**
+ * Type to describe relative time to now in seconds.
+ * @internal
+ */
+export interface RelativeTimeRange {
+  from: number;
+  to: number;
+}
+
 export interface AbsoluteTimeRange {
   from: number;
   to: number;
@@ -49,5 +58,17 @@ export function getDefaultTimeRange(): TimeRange {
     from: dateTime(now).subtract(6, 'hour'),
     to: now,
     raw: { from: 'now-6h', to: 'now' },
+  };
+}
+
+/**
+ * Returns the default realtive time range.
+ *
+ * @public
+ */
+export function getDefaultRelativeTimeRange(): RelativeTimeRange {
+  return {
+    from: 21600,
+    to: 0,
   };
 }

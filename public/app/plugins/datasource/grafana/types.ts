@@ -14,6 +14,7 @@ export interface GrafanaQuery extends DataQuery {
   queryType: GrafanaQueryType; // RandomWalk by default
   channel?: string;
   filter?: LiveDataFilter;
+  buffer?: number;
 }
 
 export const defaultQuery: GrafanaQuery = {

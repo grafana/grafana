@@ -4,7 +4,6 @@ load(
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
-    'dashboard_schemas_check',
     'test_backend_step',
     'test_frontend_step',
     'build_backend_step',
@@ -21,6 +20,8 @@ load(
     'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
+    'redis_integration_tests_step',
+    'memcached_integration_tests_step',
     'benchmark_ldap_step',
     'ldap_service',
     'integration_test_services',
@@ -29,15 +30,14 @@ load(
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
-    services = integration_test_services()
+    services = integration_test_services(edition)
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64',]
     include_enterprise2 = edition == 'enterprise'
     steps = [
-        lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
-        dashboard_schemas_check(),
         test_backend_step(edition=edition),
+        lint_backend_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
@@ -50,8 +50,8 @@ def pr_pipelines(edition):
         steps.append(benchmark_ldap_step())
         services.append(ldap_service())
         steps.extend([
-            lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
+            lint_backend_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
 
@@ -72,6 +72,8 @@ def pr_pipelines(edition):
 
     if include_enterprise2:
         steps.extend([
+            redis_integration_tests_step(),
+            memcached_integration_tests_step(),
             package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),

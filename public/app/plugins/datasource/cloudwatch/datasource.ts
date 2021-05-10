@@ -1,6 +1,6 @@
 import React from 'react';
 import angular from 'angular';
-import _ from 'lodash';
+import { find, isEmpty, isString, set } from 'lodash';
 import { merge, Observable, of, throwError, zip } from 'rxjs';
 import {
   catchError,
@@ -65,7 +65,6 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
-import config from 'app/core/config';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -128,11 +127,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      if (config.featureToggles.live) {
-        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      } else {
-        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
-      }
+      dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
+      //  dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {
@@ -140,7 +136,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(dataQueryResponses)) {
+    if (isEmpty(dataQueryResponses)) {
       return of({
         data: [],
         state: LoadingState.Done,
@@ -160,7 +156,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(validLogQueries)) {
+    if (isEmpty(validLogQueries)) {
       return of({ data: [], state: LoadingState.Done });
     }
 
@@ -190,12 +186,11 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       mergeMap((response: TSDBResponse) => {
         const dataQueryResponse = toDataQueryResponse({ data: response }, options.targets);
         const channelName: string = dataQueryResponse.data[0].meta.custom.channelName;
-        const channel = getGrafanaLiveSrv().getChannel({
+        return getGrafanaLiveSrv().getStream({
           scope: LiveChannelScope.Plugin,
           namespace: 'cloudwatch',
           path: channelName,
         });
-        return channel.getStream();
       }),
       filter((e: LiveChannelEvent<any>) => e.type === 'message'),
       map(({ message }: LiveChannelMessageEvent<TSDBResponse>) => {
@@ -230,7 +225,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(validLogQueries)) {
+    if (isEmpty(validLogQueries)) {
       return of({ data: [], state: LoadingState.Done });
     }
 
@@ -264,7 +259,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     const validMetricsQueries = metricQueries
       .filter(
         (item) =>
-          (!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
+          (!!item.region && !!item.namespace && !!item.metricName && !isEmpty(item.statistics)) ||
           item.expression?.length > 0
       )
       .map(
@@ -303,7 +298,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       );
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(validMetricsQueries)) {
+    if (isEmpty(validMetricsQueries)) {
       return of({ data: [] });
     }
 
@@ -378,7 +373,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       map(([dataFrames, failedAttempts]) => {
         if (failedAttempts >= MAX_ATTEMPTS) {
           for (const frame of dataFrames) {
-            _.set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
+            set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
           }
         }
 
@@ -876,7 +871,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       this.templateSrv.variableExists(target.metricName) ||
       this.templateSrv.variableExists(target.expression!) ||
       target.logGroupNames?.some((logGroup: string) => this.templateSrv.variableExists(logGroup)) ||
-      _.find(target.dimensions, (v, k) => this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v))
+      find(target.dimensions, (v, k) => this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v))
     );
   }
 
@@ -921,7 +916,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 
   convertToCloudWatchTime(date: any, roundUp: any) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.round(date.valueOf() / 1000);

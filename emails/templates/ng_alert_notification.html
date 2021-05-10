@@ -1,10 +1,10 @@
 [[Subject .Subject "[[.Title]]"]]
 
 <style>
-  .alert.alert-warning {
+  .alert-warning {
     background-color: #E6522C;
   }
-  .alert.alert-good {
+  .alert-good {
     background-color: #68B90F;
   }
 </style>
@@ -29,72 +29,88 @@
 
 <table class="row">
   <tr>
+    [[ if gt (len .Alerts.Firing) 0 ]]
+    <td class="alert-warning twelve column last">
+      [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
+      [[ range .GroupLabels.SortedPairs ]]
+      [[ .Name ]]=[[ .Value ]]
+      [[ end ]]
+    </td>
+    [[ else ]]
+    <td class="alert-good twelve column last">
+      [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
+      [[ range .GroupLabels.SortedPairs ]]
+      [[ .Name ]]=[[ .Value ]]
+      [[ end ]]
+    </td>
+    [[ end ]]
+    </td>
+  </tr>
+  <tr>
     <td class="last">
-      <table>
+      <table class="twelve columns">
+        [[ if gt (len .Alerts.Firing) 0 ]]
         <tr>
-          [[ if gt (len .Alerts.Firing) 0 ]]
-          <td class="alert alert-warning">
-            [[ else ]]
-          <td class="alert alert-good">
-            [[ end ]].
-            [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
-            [[ range .GroupLabels.SortedPairs ]]
-              [[ .Name ]]=[[ .Value ]]
-            [[ end ]]
+          <td class="twelve last">
+            <h5 style="font-weight: bold;">([[ .Alerts.Firing | len ]]) Firing</h5>
+          </td>
+        </tr>
+        [[ end ]]
+        [[ range .Alerts.Firing ]]
+        <tr>
+          <td class="four">
+            <h5 style="font-weight: bold">Labels</h5>
+          </td>
+          <td class="eight last">
+            [[ if gt (len .Annotations) 0 ]]<h5 style="font-weight: bold">Annotations</h5>[[ end ]]
           </td>
         </tr>
         <tr>
-          <td class="">
-            <table>
-              [[ if gt (len .Alerts.Firing) 0 ]]
-                <tr>
-                  <td class="">
-                    <strong>([[ .Alerts.Firing | len ]]) Firing</strong>
-                  </td>
-                </tr>
-              [[ end ]]
-              [[ range .Alerts.Firing ]]
-                <tr>
-                  <td class="">
-                    <strong>Labels</strong><br />
-                    [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
-                    [[ if gt (len .Annotations) 0 ]]<strong>Annotations</strong><br />[[ end ]]
-                    [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
-                    <a href="[[ .GeneratorURL ]]">Source</a><br />
-                  </td>
-                </tr>
-              [[ end ]]
+          <td class="four">
+            [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+            <a href="[[ .GeneratorURL ]]">Source</a><br />
+          </td>
+          <td class="eight last">
+            [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+          </td>
+        </tr>
+        [[ end ]]
 
-              [[ if gt (len .Alerts.Resolved) 0 ]]
-                [[ if gt (len .Alerts.Firing) 0 ]]
-                  <tr>
-                    <td class="">
-                      <br />
-                      <hr />
-                      <br />
-                    </td>
-                  </tr>
-                [[ end ]]
-                <tr>
-                  <td class="">
-                    <strong>([[ .Alerts.Resolved | len ]]) Resolved</strong>
-                  </td>
-                </tr>
-              [[ end ]]
-              [[ range .Alerts.Resolved ]]
-                <tr>
-                  <td class="">
-                    <strong>Labels</strong><br />
-                    [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
-                    [[ if gt (len .Annotations) 0 ]]<strong>Annotations</strong><br />[[ end ]]
-                    [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
-                    <a href="[[ .GeneratorURL ]]">Source</a><br />
-                  </td>
-                </tr>
-              [[ end ]]
-            </table>
+        [[ if gt (len .Alerts.Resolved) 0 ]]
+        [[ if gt (len .Alerts.Firing) 0 ]]
+        <tr>
+          <td class="twelve">
+            <br />
+            <hr />
+            <br />
           </td>
         </tr>
+        [[ end ]]
+        <tr>
+          <td class="twelve last">
+            <h5 style="font-weight: bold;">([[ .Alerts.Resolved | len ]]) Resolved</h5>
+          </td>
+        </tr>
+        [[ end ]]
+        [[ range .Alerts.Resolved ]]
+        <tr>
+          <td class="six">
+            <h5 style="font-weight: bold">Labels</h5>
+          </td>
+          <td class="six last">
+            [[ if gt (len .Annotations) 0 ]]<h5 style="font-weight: bold">Annotations</h5>[[ end ]]
+          </td>
+        </tr>
+        <tr>
+          <td class="six">
+            [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+            <a href="[[ .GeneratorURL ]]">Source</a><br />
+          </td>
+          <td class="six last">
+            [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+          </td>
+        </tr>
+        [[ end ]]
       </table>
     </td>
   </tr>
@@ -115,8 +131,8 @@
                 </td>
               </tr>
             </table>
-            </td>
-            <td class="center six">
+          </td>
+          <td class="center six">
             <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td align="center" class="better-button-alt" bgcolor="#efefef">

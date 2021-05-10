@@ -200,7 +200,7 @@
           >.
         </p>
       </div>
-      <script>
+      <script nonce="[[.Nonce]]">
         // Check to see if browser is not supported by Grafana
         // Source file in app/core/utils/browser.ts & tests make edits there and copy compiled typescript here
         function checkBrowserCompatibility() {
@@ -262,6 +262,9 @@
         };
         [[if .ContentDeliveryURL]]
           window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
+        [[end]]
+        [[if .Nonce]]
+          window.nonce = '[[.Nonce]]';
         [[end]]
     </script>
 

@@ -1,10 +1,11 @@
 {
   "type": "panel",
-  "name": "Pie chart v2",
+  "name": "Pie chart",
   "id": "piechart",
   "state": "beta",
 
   "info": {
+    "description": "The new core pie chart visualization",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

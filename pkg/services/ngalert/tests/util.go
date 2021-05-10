@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -76,14 +76,16 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						Annotations: map[string]string{"testAnnoKey": "testAnnoValue"},
+					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID:     1,
 						Title:     fmt.Sprintf("an alert definition %d", d),
 						Condition: "A",
 						Data: []models.AlertQuery{
 							{
 								Model: json.RawMessage(`{
-										"datasource": "__expr__",
+										"datasourceUid": "-100",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
@@ -126,8 +128,7 @@ func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						OrgID: 1,
-						UID:   existingRule.UID,
+						UID: existingRule.UID,
 					},
 				},
 			},

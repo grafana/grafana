@@ -14,10 +14,16 @@ let getVariablesUrlParams: (scopedVars?: ScopedVars) => UrlQueryMap;
 const stripBaseFromUrl = (url: string): string => {
   const appSubUrl = grafanaConfig.appSubUrl ?? '';
   const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
-  const urlWithoutBase =
-    url.length > 0 && url.indexOf(appSubUrl) === 0 ? url.slice(appSubUrl.length - stripExtraChars) : url;
+  const isAbsoluteUrl = url.startsWith('http');
+  let segmentToStrip = appSubUrl;
 
-  return urlWithoutBase;
+  if (isAbsoluteUrl || !url.startsWith('/')) {
+    segmentToStrip = `${window.location.origin}${appSubUrl}`;
+  }
+
+  return url.length > 0 && url.indexOf(segmentToStrip) !== -1
+    ? url.slice(segmentToStrip.length - stripExtraChars)
+    : url;
 };
 
 /**

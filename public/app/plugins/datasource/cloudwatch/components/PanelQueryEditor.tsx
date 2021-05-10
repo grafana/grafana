@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import pick from 'lodash/pick';
+import { pick } from 'lodash';
 import { ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { CloudWatchJsonData, CloudWatchQuery } from '../types';

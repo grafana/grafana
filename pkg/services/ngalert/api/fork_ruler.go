@@ -3,10 +3,10 @@ package api
 import (
 	"fmt"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 // ForkedRuler will validate and proxy requests to the correct backend type depending on the datasource.
@@ -15,6 +15,7 @@ type ForkedRuler struct {
 	DatasourceCache          datasources.CacheService
 }
 
+// NewForkedRuler implements a set of routes that proxy to various Cortex Ruler-compatible backends.
 func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana RulerApiService) *ForkedRuler {
 	return &ForkedRuler{
 		LotexRuler:      lotex,

@@ -21,7 +21,7 @@ Expressions are meant to augment data sources by enabling queries from different
 
 > **Note:** When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
 
-Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../getting-started/timeseries-dimensions.md" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
+Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../basics/timeseries-dimensions.md" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
 
 An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifier known as its RefID (e.g., the default letter `A` or `B`).
 
@@ -34,7 +34,7 @@ Expressions work with two types of data.
 - A collections of time series.
 - A collection of numbers, where each collection could be a single series or single number.
 
-Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by it dimensions which are stored as [labels]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) or key-value pairs.
+Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by it dimensions which are stored as [labels]({{< relref "../basics/timeseries-dimensions.md#labels" >}}) or key-value pairs.
 
 ## Data source queries
 

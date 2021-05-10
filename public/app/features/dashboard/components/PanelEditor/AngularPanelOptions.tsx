@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 // Utils and services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
@@ -8,10 +8,10 @@ import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 // Types
 import { PanelModel, DashboardModel } from '../../state';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { PanelCtrl } from 'app/plugins/sdk';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
+import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 interface OwnProps {
   panel: PanelModel;
@@ -19,15 +19,14 @@ interface OwnProps {
   plugin: PanelPlugin;
 }
 
-interface ConnectedProps {
-  angularPanelComponent?: AngularComponent | null;
-}
+const mapStateToProps = (state: StoreState, props: OwnProps) => ({
+  angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
+});
 
-interface DispatchProps {
-  changePanelPlugin: typeof changePanelPlugin;
-}
+const mapDispatchToProps = { changePanelPlugin };
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
   element?: HTMLElement | null;
@@ -89,7 +88,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
       tab.isOpen = getSectionOpenState(tab.title, i === 0);
 
       template += `
-      <div class="panel-options-group" ng-cloak>        
+      <div class="panel-options-group" ng-cloak>
         <div class="panel-options-group__header" ng-click="toggleOptionGroup(${i})" aria-label="${tab.title} section">
           <div class="panel-options-group__icon">
             <icon name="ctrl.editorTabs[${i}].isOpen ? 'angle-down' : 'angle-right'"></icon>
@@ -121,13 +120,5 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
     return <div ref={(elem) => (this.element = elem)} />;
   }
 }
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  return {
-    angularPanelComponent: state.dashboard.panels[props.panel.id].angularComponent,
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { changePanelPlugin };
 
 export const AngularPanelOptions = connect(mapStateToProps, mapDispatchToProps)(AngularPanelOptionsUnconnected);

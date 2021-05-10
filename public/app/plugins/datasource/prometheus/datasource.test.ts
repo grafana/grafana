@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map, cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
 import {
   CoreApp,
@@ -101,12 +101,13 @@ describe('PrometheusDatasource', () => {
 
   describe('Datasource metadata requests', () => {
     it('should perform a GET request with the default config', () => {
-      ds.metadataRequest('/foo');
+      ds.metadataRequest('/foo', { bar: 'baz baz', foo: 'foo' });
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
+      expect(fetchMock.mock.calls[0][0].url).toContain('bar=baz%20baz&foo=foo');
     });
     it('should still perform a GET request with the DS HTTP method set to POST and not POST-friendly endpoint', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
+      const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('/foo');
@@ -114,12 +115,14 @@ describe('PrometheusDatasource', () => {
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
     });
     it('should try to perform a POST request with the DS HTTP method set to POST and POST-friendly endpoint', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
+      const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
-      promDs.metadataRequest('api/v1/series');
+      promDs.metadataRequest('api/v1/series', { bar: 'baz baz', foo: 'foo' });
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('POST');
+      expect(fetchMock.mock.calls[0][0].url).not.toContain('bar=baz%20baz&foo=foo');
+      expect(fetchMock.mock.calls[0][0].data).toEqual({ bar: 'baz baz', foo: 'foo' });
     });
   });
 
@@ -280,7 +283,7 @@ describe('PrometheusDatasource', () => {
 
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
-        const seriesLabels = _.map(result[0].data, 'name');
+        const seriesLabels = map(result[0].data, 'name');
         expect(seriesLabels).toEqual(expected);
       });
     });
@@ -1745,6 +1748,32 @@ describe('prepareTargets', () => {
         step: 1,
       });
       expect(activeTargets[0]).toEqual(target);
+    });
+    it('should give back 2 targets when exemplar enabled', () => {
+      const target: PromQuery = {
+        refId: 'A',
+        expr: 'up',
+        exemplar: true,
+      };
+
+      const { queries, activeTargets } = getPrepareTargetsContext(target);
+      expect(queries).toHaveLength(2);
+      expect(activeTargets).toHaveLength(2);
+      expect(activeTargets[0].exemplar).toBe(true);
+      expect(activeTargets[1].exemplar).toBe(false);
+    });
+    it('should give back 1 target when exemplar and instant are enabled', () => {
+      const target: PromQuery = {
+        refId: 'A',
+        expr: 'up',
+        exemplar: true,
+        instant: true,
+      };
+
+      const { queries, activeTargets } = getPrepareTargetsContext(target);
+      expect(queries).toHaveLength(1);
+      expect(activeTargets).toHaveLength(1);
+      expect(activeTargets[0].instant).toBe(true);
     });
   });
 

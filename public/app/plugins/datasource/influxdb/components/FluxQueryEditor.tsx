@@ -8,6 +8,7 @@ import {
   LinkButton,
   Segment,
   CodeEditor,
+  MonacoEditor,
   CodeEditorSuggestionItem,
   CodeEditorSuggestionItemKind,
 } from '@grafana/ui';
@@ -157,7 +158,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
   // For some reason in angular, when this component gets re-mounted, the width
   // is not set properly.  This forces the layout shortly after mount so that it
   // displays OK.  Note: this is not an issue when used directly in react
-  editorDidMountCallbackHack = (editor: any) => {
+  editorDidMountCallbackHack = (editor: MonacoEditor) => {
     setTimeout(() => editor.layout(), 100);
   };
 

@@ -330,7 +330,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           Save
         </ToolbarButton>
       ),
-      <ToolbarButton onClick={this.onBack} variant="primary" title="Apply changes and go back to dashboard" key="apply">
+      <ToolbarButton
+        onClick={this.onBack}
+        variant="primary"
+        title="Apply changes and go back to dashboard"
+        key="apply"
+        aria-label={selectors.components.PanelEditor.applyButton}
+      >
         Apply
       </ToolbarButton>,
     ];
@@ -354,7 +360,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                     isOpen: true,
                   });
                 }}
-                title="Disconnects this panel from the reusable panel so that you can edit it regularly."
+                title="Disconnects this panel from the library panel so that you can edit it regularly."
                 key="unlink"
               >
                 Unlink
@@ -486,6 +492,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       min-height: 0;
       width: 100%;
       padding-left: ${paneSpacing};
+      padding-right: 2px;
     `,
     tabsWrapper: css`
       height: 100%;

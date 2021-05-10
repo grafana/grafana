@@ -6,7 +6,6 @@
 export * from './services';
 export * from './config';
 export * from './types';
-export * from './measurement';
 export { loadPluginCss, SystemJS, PluginCssOptions } from './utils/plugin';
 export { reportMetaAnalytics } from './utils/analytics';
 export { logInfo, logDebug, logWarning, logError } from './utils/logging';

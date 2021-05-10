@@ -4,10 +4,10 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { useTheme } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
-import SVG from '@leeoniya/react-inlinesvg';
+import SVG from 'react-inlinesvg';
+import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 
-const iconRoot = '/public/img/icons/';
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
+const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
@@ -54,6 +54,10 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
     if (name === 'panel-add') {
       size = 'xl';
+    }
+
+    if (!cacheInitialized) {
+      initIconCache();
     }
 
     const styles = getIconStyles(theme);

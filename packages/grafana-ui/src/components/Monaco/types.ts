@@ -1,5 +1,12 @@
+// We use `import type` to guarentee it'll be erased from the JS and it doesnt accidently bundle monaco
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+
 export type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
+
+export type Monaco = typeof monacoType;
+export type MonacoEditor = monacoType.editor.IStandaloneCodeEditor;
+export type MonacoOptions = monacoType.editor.IStandaloneEditorConstructionOptions;
 
 export interface CodeEditorProps {
   value: string;
@@ -10,13 +17,14 @@ export interface CodeEditorProps {
   readOnly?: boolean;
   showMiniMap?: boolean;
   showLineNumbers?: boolean;
+  monacoOptions?: MonacoOptions;
 
   /**
    * Callback after the editor has mounted that gives you raw access to monaco
    *
-   * @alpha -- experimental - real type is: monaco.editor.IStandaloneCodeEditor
+   * @alpha -- experimental
    */
-  onEditorDidMount?: (editor: any) => void;
+  onEditorDidMount?: (editor: monacoType.editor.IStandaloneCodeEditor) => void;
 
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;

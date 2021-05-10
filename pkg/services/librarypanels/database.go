@@ -8,24 +8,28 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
-	sqlStatmentLibrayPanelDTOWithMeta = `
+	selectLibrayPanelDTOWithMeta = `
 SELECT DISTINCT
-	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.type, lp.description, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
+	lp.name, lp.id, lp.org_id, lp.folder_id, lp.uid, lp.type, lp.description, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
 	, u2.login AS updated_by_name
 	, u2.email AS updated_by_email
 	, (SELECT COUNT(dashboard_id) FROM library_panel_dashboard WHERE librarypanel_id = lp.id) AS connected_dashboards
+`
+	fromLibrayPanelDTOWithMeta = `
 FROM library_panel AS lp
 	LEFT JOIN user AS u1 ON lp.created_by = u1.id
 	LEFT JOIN user AS u2 ON lp.updated_by = u2.id
 `
+	sqlStatmentLibrayPanelDTOWithMeta = selectLibrayPanelDTOWithMeta + fromLibrayPanelDTOWithMeta
 )
 
 func syncFieldsWithModel(libraryPanel *LibraryPanel) error {
@@ -327,10 +331,16 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		libraryPanels := make([]LibraryPanelWithMeta, 0)
 		builder := sqlstore.SQLBuilder{}
-		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(selectLibrayPanelDTOWithMeta)
+		builder.Write(", 'General' as folder_name ")
+		builder.Write(", '' as folder_uid ")
+		builder.Write(fromLibrayPanelDTOWithMeta)
 		builder.Write(` WHERE lp.uid=? AND lp.org_id=? AND lp.folder_id=0`, uid, c.SignedInUser.OrgId)
 		builder.Write(" UNION ")
-		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(selectLibrayPanelDTOWithMeta)
+		builder.Write(", dashboard.title as folder_name ")
+		builder.Write(", dashboard.uid as folder_uid ")
+		builder.Write(fromLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id <> 0")
 		builder.Write(` WHERE lp.uid=? AND lp.org_id=?`, uid, c.SignedInUser.OrgId)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
@@ -364,6 +374,8 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		Version:     libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
+			FolderName:          libraryPanel.FolderName,
+			FolderUID:           libraryPanel.FolderUID,
 			ConnectedDashboards: libraryPanel.ConnectedDashboards,
 			Created:             libraryPanel.Created,
 			Updated:             libraryPanel.Updated,
@@ -384,43 +396,57 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 }
 
 // getAllLibraryPanels gets all library panels.
-func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPage int, page int, name string, excludeUID string) (LibraryPanelSearchResult, error) {
+func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, query searchLibraryPanelsQuery) (LibraryPanelSearchResult, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	result := LibraryPanelSearchResult{}
-	if perPage <= 0 {
-		perPage = 100
+	if query.perPage <= 0 {
+		query.perPage = 100
 	}
-	if page <= 0 {
-		page = 1
+	if query.page <= 0 {
+		query.page = 1
 	}
-
+	var panelFilter []string
+	if len(strings.TrimSpace(query.panelFilter)) > 0 {
+		panelFilter = strings.Split(query.panelFilter, ",")
+	}
+	folderFilter := parseFolderFilter(query)
+	if folderFilter.parseError != nil {
+		return LibraryPanelSearchResult{}, folderFilter.parseError
+	}
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
-		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
-		builder.Write(` WHERE lp.org_id=? AND lp.folder_id=0`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(name)) > 0 {
-			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
+		if folderFilter.includeGeneralFolder {
+			builder.Write(selectLibrayPanelDTOWithMeta)
+			builder.Write(", 'General' as folder_name ")
+			builder.Write(", '' as folder_uid ")
+			builder.Write(fromLibrayPanelDTOWithMeta)
+			builder.Write(` WHERE lp.org_id=?  AND lp.folder_id=0`, c.SignedInUser.OrgId)
+			writeSearchStringSQL(query, lps.SQLStore, &builder)
+			writeExcludeSQL(query, &builder)
+			writePanelFilterSQL(panelFilter, &builder)
+			builder.Write(" UNION ")
 		}
-		if len(strings.TrimSpace(excludeUID)) > 0 {
-			builder.Write(" AND lp.uid <> ?", excludeUID)
-		}
-		builder.Write(" UNION ")
-		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(selectLibrayPanelDTOWithMeta)
+		builder.Write(", dashboard.title as folder_name ")
+		builder.Write(", dashboard.uid as folder_uid ")
+		builder.Write(fromLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(name)) > 0 {
-			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
-		}
-		if len(strings.TrimSpace(excludeUID)) > 0 {
-			builder.Write(" AND lp.uid <> ?", excludeUID)
+		writeSearchStringSQL(query, lps.SQLStore, &builder)
+		writeExcludeSQL(query, &builder)
+		writePanelFilterSQL(panelFilter, &builder)
+		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
+			return err
 		}
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
 		}
-		if perPage != 0 {
-			offset := perPage * (page - 1)
-			builder.Write(lps.SQLStore.Dialect.LimitOffset(int64(perPage), int64(offset)))
+		if query.sortDirection == search.SortAlphaDesc.Name {
+			builder.Write(" ORDER BY 1 DESC")
+		} else {
+			builder.Write(" ORDER BY 1 ASC")
 		}
+		writePerPageSQL(query, lps.SQLStore, &builder)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
 			return err
 		}
@@ -439,6 +465,8 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 				Version:     panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             true,
+					FolderName:          panel.FolderName,
+					FolderUID:           panel.FolderUID,
 					ConnectedDashboards: panel.ConnectedDashboards,
 					Created:             panel.Created,
 					Updated:             panel.Updated,
@@ -458,13 +486,13 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 
 		var panels []LibraryPanel
 		countBuilder := sqlstore.SQLBuilder{}
-		countBuilder.Write("SELECT * FROM library_panel")
-		countBuilder.Write(` WHERE org_id=?`, c.SignedInUser.OrgId)
-		if len(strings.TrimSpace(name)) > 0 {
-			countBuilder.Write(" AND name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
-		}
-		if len(strings.TrimSpace(excludeUID)) > 0 {
-			countBuilder.Write(" AND uid <> ?", excludeUID)
+		countBuilder.Write("SELECT * FROM library_panel AS lp")
+		countBuilder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
+		writeSearchStringSQL(query, lps.SQLStore, &countBuilder)
+		writeExcludeSQL(query, &countBuilder)
+		writePanelFilterSQL(panelFilter, &countBuilder)
+		if err := folderFilter.writeFolderFilterSQL(true, &countBuilder); err != nil {
+			return err
 		}
 		if err := session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&panels); err != nil {
 			return err
@@ -473,8 +501,8 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 		result = LibraryPanelSearchResult{
 			TotalCount:    int64(len(panels)),
 			LibraryPanels: retDTOs,
-			Page:          page,
-			PerPage:       perPage,
+			Page:          query.page,
+			PerPage:       query.perPage,
 		}
 
 		return nil
@@ -517,8 +545,12 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 	libraryPanelMap := make(map[string]LibraryPanelDTO)
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		var libraryPanels []LibraryPanelWithMeta
-		sql := sqlStatmentLibrayPanelDTOWithMeta + "INNER JOIN library_panel_dashboard AS lpd ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?"
-		sess := session.SQL(sql, dashboardID)
+		sql := selectLibrayPanelDTOWithMeta + ", coalesce(dashboard.title, 'General') AS folder_name, coalesce(dashboard.uid, '') AS folder_uid " + fromLibrayPanelDTOWithMeta + `
+LEFT JOIN dashboard AS dashboard ON dashboard.id = lp.folder_id AND dashboard.id=?
+INNER JOIN library_panel_dashboard AS lpd ON lpd.librarypanel_id = lp.id AND lpd.dashboard_id=?
+`
+
+		sess := session.SQL(sql, dashboardID, dashboardID)
 		err := sess.Find(&libraryPanels)
 		if err != nil {
 			return err
@@ -537,6 +569,8 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 				Version:     panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             panel.CanEdit,
+					FolderName:          panel.FolderName,
+					FolderUID:           panel.FolderUID,
 					ConnectedDashboards: panel.ConnectedDashboards,
 					Created:             panel.Created,
 					Updated:             panel.Updated,

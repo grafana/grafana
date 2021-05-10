@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTime } from '@grafana/data';
 
 import {
-  selectThemeVariant,
   Themeable,
   GraphWithLegend,
   LegendDisplayMode,
@@ -11,8 +10,9 @@ import {
   Collapse,
   GraphSeriesToggler,
   GraphSeriesTogglerAPI,
-  Chart,
+  VizTooltip,
   Icon,
+  TooltipDisplayMode,
 } from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -25,7 +25,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 10px 0;
     border-radius: ${theme.border.radius.md};
     text-align: center;
-    background-color: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
+    background-color: ${theme.isLight ? theme.palette.white : theme.palette.dark4};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;
@@ -130,7 +130,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               onHorizontalRegionSelected={this.onChangeTime}
             >
               {/* For logs we are using mulit mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
-              <Chart.Tooltip mode={showBars ? 'multi' : 'single'} />
+              <VizTooltip mode={showBars ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single} />
             </GraphWithLegend>
           );
         }}

@@ -4,16 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 
-	"github.com/go-openapi/strfmt"
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/macaron.v1"
 	"gopkg.in/yaml.v3"
 )
@@ -27,14 +35,6 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func timePtr(t strfmt.DateTime) *strfmt.DateTime {
-	return &t
-}
-
-func stringPtr(s string) *string {
-	return &s
-}
-
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
 	recipient := ctx.Params("Recipient")
 	if recipient == apimodels.GrafanaBackend.String() {
@@ -45,7 +45,7 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
-			case "grafana-alertmanager-datasource":
+			case "alertmanager":
 				return apimodels.AlertmanagerBackend, nil
 			default:
 				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
@@ -85,16 +85,38 @@ type AlertingProxy struct {
 // withReq proxies a different request
 func (p *AlertingProxy) withReq(
 	ctx *models.ReqContext,
-	req *http.Request,
+	method string,
+	u *url.URL,
+	body io.Reader,
 	extractor func([]byte) (interface{}, error),
+	headers map[string]string,
 ) response.Response {
+	req, err := http.NewRequest(method, u.String(), body)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	for h, v := range headers {
+		req.Header.Add(h, v)
+	}
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req.Request = req
 	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("Recipient"))
 
 	status := resp.Status()
 	if status >= 400 {
-		return response.Error(status, string(resp.Body()), nil)
+		errMessage := string(resp.Body())
+		// if Content-Type is application/json
+		// and it is successfully decoded and contains a message
+		// return this as response error message
+		if strings.HasPrefix(resp.Header().Get("Content-Type"), "application/json") {
+			var m map[string]interface{}
+			if err := json.Unmarshal(resp.Body(), &m); err == nil {
+				if message, ok := m["message"]; ok {
+					errMessage = message.(string)
+				}
+			}
+		}
+		return response.Error(status, errMessage, nil)
 	}
 
 	t, err := extractor(resp.Body())
@@ -133,4 +155,82 @@ func jsonExtractor(v interface{}) func([]byte) (interface{}, error) {
 
 func messageExtractor(b []byte) (interface{}, error) {
 	return map[string]string{"message": string(b)}, nil
+}
+
+func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+	if len(c.Data) == 0 {
+		return nil
+	}
+
+	refIDs, err := validateQueriesAndExpressions(c.Data, user, skipCache, datasourceCache)
+	if err != nil {
+		return err
+	}
+
+	t := make([]string, 0, len(refIDs))
+	for refID := range refIDs {
+		t = append(t, refID)
+	}
+	if _, ok := refIDs[c.Condition]; !ok {
+		return fmt.Errorf("condition %s not found in any query or expression: it should be one of: [%s]", c.Condition, strings.Join(t, ","))
+	}
+	return nil
+}
+
+func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+	refIDs := make(map[string]struct{})
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	for _, query := range data {
+		datasourceUID, err := query.GetDatasource()
+		if err != nil {
+			return nil, err
+		}
+
+		isExpression, err := query.IsExpression()
+		if err != nil {
+			return nil, err
+		}
+		if isExpression {
+			refIDs[query.RefID] = struct{}{}
+			continue
+		}
+
+		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		if err != nil {
+			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
+		}
+		refIDs[query.RefID] = struct{}{}
+	}
+	return refIDs, nil
+}
+
+func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService *tsdb.Service, cfg *setting.Cfg) response.Response {
+	evalCond := ngmodels.Condition{
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
+	}
+	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
+		return response.Error(400, "invalid condition", err)
+	}
+
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
+	evaluator := eval.Evaluator{Cfg: cfg}
+	evalResults, err := evaluator.ConditionEval(&evalCond, now, dataService)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to evaluate conditions", err)
+	}
+
+	frame := evalResults.AsDataFrame()
+
+	return response.JSONStreaming(http.StatusOK, util.DynMap{
+		"instances": []*data.Frame{&frame},
+	})
 }

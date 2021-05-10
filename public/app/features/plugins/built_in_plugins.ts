@@ -37,9 +37,12 @@ const azureMonitorPlugin = async () =>
   );
 const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
+const alertmanagerPlugin = async () =>
+  await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
+import * as timelinePanel from 'app/plugins/panel/timeline/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -49,8 +52,7 @@ import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as oldTablePanel from 'app/plugins/panel/table-old/module';
-import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
-import * as singlestatPanel2 from 'app/plugins/panel/stat/module';
+import * as statPanel from 'app/plugins/panel/stat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
@@ -83,9 +85,11 @@ const builtInPlugins: any = {
   'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
+  'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,
+  'app/plugins/panel/timeline/module': timelinePanel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/xychart/module': xyChartPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
@@ -97,9 +101,8 @@ const builtInPlugins: any = {
   'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/live/module': livePanel,
+  'app/plugins/panel/stat/module': statPanel,
   'app/plugins/panel/debug/module': debugPanel,
-  'app/plugins/panel/singlestat/module': singlestatPanel,
-  'app/plugins/panel/stat/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,

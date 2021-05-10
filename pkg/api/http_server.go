@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -35,10 +36,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -71,6 +75,7 @@ type HTTPServer struct {
 	Bus                    bus.Bus                                 `inject:""`
 	RenderService          rendering.Service                       `inject:""`
 	Cfg                    *setting.Cfg                            `inject:""`
+	SettingsProvider       setting.Provider                        `inject:""`
 	HooksService           *hooks.HooksService                     `inject:""`
 	CacheService           *localcache.CacheService                `inject:""`
 	DatasourceCache        datasources.CacheService                `inject:""`
@@ -80,6 +85,7 @@ type HTTPServer struct {
 	ProvisioningService    provisioning.ProvisioningService        `inject:""`
 	Login                  login.Service                           `inject:""`
 	License                models.Licensing                        `inject:""`
+	AccessControl          accesscontrol.AccessControl             `inject:""`
 	BackendPluginManager   backendplugin.Manager                   `inject:""`
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
 	PluginRequestValidator models.PluginRequestValidator           `inject:""`
@@ -87,12 +93,15 @@ type HTTPServer struct {
 	SearchService          *search.SearchService                   `inject:""`
 	ShortURLService        *shorturls.ShortURLService              `inject:""`
 	Live                   *live.GrafanaLive                       `inject:""`
+	LivePushGateway        *pushhttp.Gateway                       `inject:""`
 	ContextHandler         *contexthandler.ContextHandler          `inject:""`
 	SQLStore               *sqlstore.SQLStore                      `inject:""`
 	LibraryPanelService    *librarypanels.LibraryPanelService      `inject:""`
 	DataService            *tsdb.Service                           `inject:""`
 	PluginDashboardService *plugindashboards.Service               `inject:""`
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
+	LoadSchemaService      *schemaloader.SchemaLoaderService       `inject:""`
+	Alertmanager           *notifier.Alertmanager                  `inject:""`
 	Listener               net.Listener
 }
 
@@ -315,6 +324,8 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.macaron
 
+	m.Use(middleware.RequestTracing())
+
 	m.Use(middleware.Logger(hs.Cfg))
 
 	if hs.Cfg.EnableGzip {
@@ -322,12 +333,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-
-	for _, route := range hs.PluginManager.StaticRoutes() {
-		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(m, route.Directory, "", pluginRoute)
-	}
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")

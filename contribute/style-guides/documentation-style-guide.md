@@ -14,7 +14,7 @@ The *Documentation style guide* is a living document. Add to it whenever a style
 
 ## Published guides
 
-For all items that are not covered in this guide, refer to the [Microsoft Style Guide](https://docs.microsoft.com/en-us/style-guide/welcome/) and the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/home.html).
+For all items that are not covered in this guide, refer to the [Google developer documentation style guide](https://developers.google.com/style) and the [Microsoft style guide](https://docs.microsoft.com/en-us/style-guide/welcome/), in that order.
 
 ## Spelling
 
@@ -46,7 +46,7 @@ Avoid _master_ or _slave_.
 
 ## Grafana-specific style
 
-The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
+The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, then please ask in the #docs channel of Grafana Slack.
 
 ### General
 
@@ -117,6 +117,13 @@ If that is the case, then use the following format for headings:
 - _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/documentation-markdown-guide.md#images).
 - Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
 - When you name a file, follow the [file naming conventions](#file-naming-conventions). Example: image-name-7-3.png
+
+### Unordered lists
+
+Here are a few general rules about unordered lists. For more guidance, refer to [Lists](https://developers.google.com/style/lists) in the [Google developer style guide](https://developers.google.com/style/).
+
+- List items should begin with a capital letter unless there is a strong reason not to. For example, you are listing case-sensitive parameters.
+- List items should end with periods if they are complete sentences. If one item in a list ends with a period, then apply periods to all of them.
 
 ### Capitalization
 
@@ -287,6 +294,15 @@ Do not hyphenate when used as an adjective unless the lack of hyphen would cause
 
 Do not hyphenate when it is used as a noun. For example: _Open source is the best way to develop software._
 
+#### plugin, plug in
+
+Two words if used as a verb, one word if used as a noun. Do not use _plug-in_.
+
+**Examples**
+
+- Plug in the appliance.
+- Download the plugin.
+
 #### setup, set up
 
 Two words if used as a verb, one word if used as a noun.
@@ -296,7 +312,7 @@ Two words if used as a verb, one word if used as a noun.
 - Set up the workspace.
 - Initial setup might take five minutes.
 
-### node_exporter, windows_exporter
+#### node_exporter, windows_exporter
 
 When referencing the Prometheus data source exporters, always use "node_exporter" and "windows_exporter" when referring to those tools.
 
@@ -307,8 +323,8 @@ When referencing the Prometheus data source exporters, always use "node_exporter
 
 Two words, not one.
 
-**Correct:** webserver
-**Incorrect:** web server
+**Correct:** web server
+**Incorrect:** webserver
 
 ### MS SQL Server
 Always use "MS SQL" when referring to MS SQL Server application.

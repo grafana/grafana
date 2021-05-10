@@ -78,8 +78,11 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
 const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
       margin-bottom: ${SEARCH_ITEM_MARGIN}px;
+
+      a {
+        padding: ${theme.spacing.sm} ${theme.spacing.md};
+      }
     `,
     metaContainer: css`
       display: flex;

@@ -1,49 +1,47 @@
 import { GrafanaTheme } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
 import { IconButton, InlineLabel, Tooltip, useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { PrometheusDatasource } from '../datasource';
-import { PromQuery } from '../types';
 
 interface Props {
-  query: PromQuery;
-  onChange: (value: PromQuery) => void;
+  isEnabled: boolean;
+  onChange: (isEnabled: boolean) => void;
   datasource: PrometheusDatasource;
 }
 
-export function PromExemplarField(props: Props) {
-  const [error, setError] = useState<FetchError>();
+export function PromExemplarField({ datasource, onChange, isEnabled }: Props) {
+  const [error, setError] = useState<string>();
   const styles = useStyles(getStyles);
 
   useEffect(() => {
-    const subscription = props.datasource.exemplarErrors.subscribe((err) => {
+    const subscription = datasource.exemplarErrors.subscribe((err) => {
       setError(err);
     });
     return () => {
       subscription.unsubscribe();
     };
-  }, [props]);
+  }, [datasource]);
 
   const iconButtonStyles = cx(
     {
-      [styles.activeIcon]: !!props.query.exemplar,
+      [styles.activeIcon]: isEnabled,
     },
     styles.eyeIcon
   );
 
   return (
     <InlineLabel width="auto">
-      <Tooltip content={!!error ? 'Exemplars are not supported in this version of prometheus.' : ''}>
+      <Tooltip content={error ?? ''}>
         <div className={styles.iconWrapper}>
           Exemplars
           <IconButton
             name="eye"
-            tooltip={!!props.query.exemplar ? 'Disable query with exemplars' : 'Enable query with exemplars'}
+            tooltip={isEnabled ? 'Disable query with exemplars' : 'Enable query with exemplars'}
             disabled={!!error}
             className={iconButtonStyles}
             onClick={() => {
-              props.onChange({ ...props.query, exemplar: !props.query.exemplar });
+              onChange(!isEnabled);
             }}
           />
         </div>

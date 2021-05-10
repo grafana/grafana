@@ -1,20 +1,23 @@
 import { FieldColorModeId, toDataFrame, dateTime } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { GraphNG, GraphNGProps } from './GraphNG';
-import { LegendDisplayMode, LegendPlacement } from '../VizLegend/types';
+import { GraphNGProps } from './GraphNG';
+import { LegendDisplayMode, LegendPlacement } from '../VizLegend/models.gen';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Story } from '@storybook/react';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
+import { TimeSeries } from '../TimeSeries/TimeSeries';
 
 export default {
   title: 'Visualizations/GraphNG',
-  component: GraphNG,
+  component: TimeSeries,
   decorators: [withCenteredStory],
   parameters: {
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: ['className', 'timeRange', 'data', 'legend', 'fields'],
     },
   },
   argTypes: {
@@ -23,11 +26,6 @@ export default {
     timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
     width: { control: { type: 'range', min: 200, max: 800 } },
     height: { control: { type: 'range', min: 200, max: 800 } },
-    className: NOOP_CONTROL,
-    timeRange: NOOP_CONTROL,
-    data: NOOP_CONTROL,
-    legend: NOOP_CONTROL,
-    fields: NOOP_CONTROL,
   },
 };
 
@@ -37,7 +35,7 @@ interface StoryProps extends GraphNGProps {
   unit: string;
 }
 export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, ...args }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const seriesA = toDataFrame({
     target: 'SeriesA',
     datapoints: [
@@ -54,9 +52,9 @@ export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, .
   const data = prepDataForStorybook([seriesA], theme);
 
   return (
-    <GraphNG
+    <TimeSeries
       {...args}
-      data={data}
+      frames={data}
       legend={{
         displayMode:
           legendDisplayMode === 'hidden'
@@ -67,6 +65,7 @@ export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, .
         placement: placement,
         calcs: [],
       }}
+      timeZone="browser"
     />
   );
 };

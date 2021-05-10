@@ -34,7 +34,7 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condi
 		return nil, err
 	}
 
-	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond, time.Unix(500, 0))
+	backendReq, err := eval.GetExprRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond.Data, time.Unix(500, 0))
 
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ type dashConditionsJSON struct {
 }
 
 // dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
-// include the model property with the query.
+// includes the model property with the query.
 type dashAlertingConditionJSON struct {
 	Evaluator conditionEvalJSON `json:"evaluator"`
 
@@ -62,8 +62,8 @@ type dashAlertingConditionJSON struct {
 	} `json:"operator"`
 
 	Query struct {
-		Params       []string
-		DatasourceID int64 `json:""`
+		Params       []string `json:"params"`
+		DatasourceID int64    `json:""`
 		Model        json.RawMessage
 	} `json:"query"`
 
@@ -191,7 +191,6 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 			}
 
 			queryObj["datasource"] = getDsInfo.Result.Name
-			queryObj["datasourceUid"] = getDsInfo.Result.Uid
 			queryObj["refId"] = refID
 
 			encodedObj, err := json.Marshal(queryObj)
@@ -211,7 +210,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     getDsInfo.Uid,
+				DatasourceUID:     getDsInfo.Result.Uid,
 			}
 			ngCond.Data = append(ngCond.Data, alertQuery)
 		}
@@ -242,12 +241,10 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	exprModel := struct {
 		Type       string                         `json:"type"`
 		RefID      string                         `json:"refId"`
-		Datasource string                         `json:"datasource"`
 		Conditions []classic.ClassicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		"__expr__",
 		conditions,
 	}
 
@@ -257,8 +254,9 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	}
 
 	ccAlertQuery := ngmodels.AlertQuery{
-		RefID: ccRefID,
-		Model: exprModelJSON,
+		RefID:         ccRefID,
+		Model:         exprModelJSON,
+		DatasourceUID: expr.DatasourceUID,
 	}
 
 	ngCond.Data = append(ngCond.Data, ccAlertQuery)

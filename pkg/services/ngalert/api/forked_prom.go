@@ -3,10 +3,10 @@ package api
 import (
 	"fmt"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 type ForkedPromSvc struct {
@@ -14,6 +14,7 @@ type ForkedPromSvc struct {
 	DatasourceCache      datasources.CacheService
 }
 
+// NewForkedProm implements a set of routes that proxy to various Prometheus-compatible backends.
 func NewForkedProm(datasourceCache datasources.CacheService, proxy, grafana PrometheusApiService) *ForkedPromSvc {
 	return &ForkedPromSvc{
 		ProxySvc:        proxy,
