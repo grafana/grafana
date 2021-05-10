@@ -13,7 +13,6 @@ export interface PieChartSvgProps {
   highlightedTitle?: string;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
-  onSeriesColorChange?: (label: string, color: string) => void;
   tooltipOptions: VizTooltipOptions;
 }
 
@@ -26,7 +25,6 @@ export interface PieChartProps {
   pieType: PieChartType;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
-  onSeriesColorChange?: (label: string, color: string) => void;
   legendOptions?: PieChartLegendOptions;
   tooltipOptions: VizTooltipOptions;
   reduceOptions: ReduceDataOptions;

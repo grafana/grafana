@@ -190,7 +190,7 @@
           "200": {
             "description": "AlertGroups",
             "schema": {
-              "$ref": "#/definitions/alertGroups"
+              "$ref": "#/definitions/AlertGroups"
             }
           },
           "400": {
@@ -305,7 +305,7 @@
           "200": {
             "description": "GettableSilences",
             "schema": {
-              "$ref": "#/definitions/gettableSilences"
+              "$ref": "#/definitions/GettableSilences"
             }
           },
           "400": {
@@ -327,7 +327,7 @@
             "name": "Silence",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/postableSilence"
+              "$ref": "#/definitions/PostableSilence"
             }
           },
           {
@@ -982,7 +982,7 @@
       "title": "AlertQuery represents a single query associated with an alert definition.",
       "properties": {
         "datasourceUid": {
-          "description": "Grafana data source unique identifer; it should be '-100' for a Server Side Expression operation.",
+          "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
           "type": "string",
           "x-go-name": "DatasourceUID"
         },
@@ -1427,10 +1427,10 @@
       "$ref": "#/definitions/ResponseDetails"
     },
     "GettableAlert": {
-      "$ref": "#/definitions/gettableAlert"
+      "$ref": "#/definitions/GettableAlert"
     },
     "GettableAlerts": {
-      "$ref": "#/definitions/gettableAlerts"
+      "$ref": "#/definitions/GettableAlerts"
     },
     "GettableApiAlertingConfig": {
       "type": "object",
@@ -1699,7 +1699,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/gettableSilences"
+      "$ref": "#/definitions/GettableSilences"
     },
     "GettableUserConfig": {
       "type": "object",
@@ -1738,6 +1738,10 @@
         },
         "slack_api_url": {
           "$ref": "#/definitions/SecretURL"
+        },
+        "slack_api_url_file": {
+          "type": "string",
+          "x-go-name": "SlackAPIURLFile"
         },
         "smtp_auth_identity": {
           "type": "string",
@@ -1807,6 +1811,9 @@
         "FollowRedirects": {
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
           "type": "boolean"
+        },
+        "OAuth2": {
+          "$ref": "#/definitions/OAuth2"
         },
         "ProxyURL": {
           "$ref": "#/definitions/URL"
@@ -1962,6 +1969,37 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "OAuth2": {
+      "type": "object",
+      "title": "OAuth2 is the oauth2 client configuration.",
+      "properties": {
+        "ClientID": {
+          "type": "string"
+        },
+        "ClientSecret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "ClientSecretFile": {
+          "type": "string"
+        },
+        "EndpointParams": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "TokenURL": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "OpsGenieConfig": {
       "type": "object",
@@ -2859,6 +2897,10 @@
         "api_url": {
           "$ref": "#/definitions/SecretURL"
         },
+        "api_url_file": {
+          "type": "string",
+          "x-go-name": "APIURLFile"
+        },
         "callback_id": {
           "type": "string",
           "x-go-name": "CallbackID"
@@ -3051,9 +3093,8 @@
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -3086,7 +3127,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3116,6 +3157,9 @@
       "title": "VictorOpsConfig configures notifications via VictorOps.",
       "properties": {
         "api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "api_key_file": {
           "$ref": "#/definitions/Secret"
         },
         "api_url": {
@@ -3262,7 +3306,7 @@
           "description": "alerts",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/gettableAlert"
+            "$ref": "#/definitions/GettableAlert"
           },
           "x-go-name": "Alerts"
         },
@@ -3270,7 +3314,7 @@
           "$ref": "#/definitions/labelSet"
         },
         "receiver": {
-          "$ref": "#/definitions/Receiver"
+          "$ref": "#/definitions/receiver"
         }
       },
       "x-go-name": "AlertGroup",

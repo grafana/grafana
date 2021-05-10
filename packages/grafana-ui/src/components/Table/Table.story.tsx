@@ -8,7 +8,7 @@ import mdx from './Table.mdx';
 import {
   DataFrame,
   FieldType,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   MutableDataFrame,
   ThresholdsConfig,
   ThresholdsMode,
@@ -27,7 +27,7 @@ export default {
   },
 };
 
-function buildData(theme: GrafanaThemeV2, config: Record<string, FieldConfig>): DataFrame {
+function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field

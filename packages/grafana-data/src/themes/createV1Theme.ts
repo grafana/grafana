@@ -1,7 +1,7 @@
 import { GrafanaTheme, GrafanaThemeCommons, GrafanaThemeType } from '../types';
-import { GrafanaThemeV2 } from './types';
+import { GrafanaTheme2 } from './types';
 
-export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
+export function createV1Theme(theme: Omit<GrafanaTheme2, 'v1'>): GrafanaTheme {
   const oldCommon: GrafanaThemeCommons = {
     name: 'Grafana Default',
     typography: {
@@ -194,16 +194,16 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
     palette: {
       ...basicColors,
       brandPrimary: basicColors.orange,
-      brandSuccess: basicColors.greenBase,
-      brandWarning: basicColors.orange,
-      brandDanger: basicColors.redBase,
-      queryRed: basicColors.redBase,
-      queryGreen: '#74e680',
+      brandSuccess: theme.colors.success.main,
+      brandWarning: theme.colors.warning.main,
+      brandDanger: theme.colors.error.main,
+      queryRed: theme.colors.error.text,
+      queryGreen: theme.colors.success.text,
       queryPurple: '#fe85fc',
       queryOrange: basicColors.orange,
-      online: basicColors.greenBase,
-      warn: '#f79520',
-      critical: basicColors.redBase,
+      online: theme.colors.success.main,
+      warn: theme.colors.success.main,
+      critical: theme.colors.success.main,
     },
     colors: {
       ...backgrounds,

@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { css } from '@emotion/css';
 import Scrollbars from 'react-custom-scrollbars';
 import { useStyles2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface Props {
   className?: string;
@@ -127,7 +127,7 @@ export const CustomScrollbar: FC<Props> = ({
 
 export default CustomScrollbar;
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     customScrollbar: css`
       // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to

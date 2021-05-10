@@ -5,7 +5,7 @@ import { capitalize, find } from 'lodash';
 import {
   AppPlugin,
   GrafanaPlugin,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   NavModel,
   NavModelItem,
   PluginDependencies,
@@ -571,7 +571,7 @@ const PluginSignatureDetailsBadge: React.FC<PluginSignatureDetailsBadgeProps> = 
   );
 };
 
-const getDetailsBadgeStyles = (theme: GrafanaThemeV2) => ({
+const getDetailsBadgeStyles = (theme: GrafanaTheme2) => ({
   badge: css`
     background-color: ${theme.colors.background.canvas};
     border-color: ${theme.colors.border.strong};
