@@ -31,7 +31,7 @@ export default class Api {
   }
 
   async getInstalledPlugins(): Promise<any> {
-    const installed = await getBackendSrv().get('/api/plugins?core=0');
+    const installed = await getBackendSrv().get(`${API_ROOT}?core=0`);
     return installed;
   }
 
