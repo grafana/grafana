@@ -19,42 +19,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
   useEffect(() => {
-    const editRows: ValueMappingEditRowModel[] = [];
-
-    for (const mapping of value) {
-      switch (mapping.type) {
-        case MappingType.ValueToText:
-          for (const key of Object.keys(mapping.options)) {
-            editRows.push({
-              type: mapping.type,
-              result: mapping.options[key],
-              key,
-            });
-          }
-          break;
-        case MappingType.RangeToText:
-          editRows.push({
-            type: mapping.type,
-            result: mapping.options.result,
-            from: mapping.options.from ?? 0,
-            to: mapping.options.to ?? 0,
-          });
-          break;
-        case MappingType.NullToText:
-          editRows.push({
-            type: mapping.type,
-            result: mapping.options.result,
-            nullMatch: mapping.options.match ?? NullToTextMatchType.Null,
-          });
-      }
-    }
-
-    // Sort by index
-    editRows.sort((a, b) => {
-      return (a.result.index ?? 0) > (b.result.index ?? 0) ? 1 : -1;
-    });
-
-    updateRows(editRows);
+    updateRows(buildEditRowModels(value));
   }, [value]);
 
   const onDragEnd = (result: DropResult) => {
@@ -115,44 +80,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
   };
 
   const onUpdate = () => {
-    const mappings: ValueMapping[] = [];
-    const valueMaps: ValueMapping = {
-      type: MappingType.ValueToText,
-      options: {},
-    };
-
-    rows.forEach((item, index) => {
-      switch (item.type) {
-        case MappingType.ValueToText:
-          if (item.key != null) {
-            valueMaps.options[item.key] = {
-              ...item.result,
-              index,
-            };
-          }
-          break;
-        case MappingType.RangeToText:
-          if (item.from != null && item.to != null) {
-            mappings.push({
-              type: item.type,
-              options: {
-                from: item.from,
-                to: item.to,
-                result: {
-                  ...item.result,
-                  index,
-                },
-              },
-            });
-          }
-      }
-    });
-
-    if (Object.keys(valueMaps.options).length > 0) {
-      mappings.unshift(valueMaps);
-    }
-
-    onChange(mappings);
+    onChange(editModelToSaveModel(rows));
     onClose();
   };
 
@@ -230,3 +158,94 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     ' td': {},
   }),
 });
+
+export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
+  const mappings: ValueMapping[] = [];
+  const valueMaps: ValueMapping = {
+    type: MappingType.ValueToText,
+    options: {},
+  };
+
+  rows.forEach((item, index) => {
+    switch (item.type) {
+      case MappingType.ValueToText:
+        if (item.key != null) {
+          valueMaps.options[item.key] = {
+            ...item.result,
+            index,
+          };
+        }
+        break;
+      case MappingType.RangeToText:
+        if (item.from != null && item.to != null) {
+          mappings.push({
+            type: item.type,
+            options: {
+              from: item.from,
+              to: item.to,
+              result: {
+                ...item.result,
+                index,
+              },
+            },
+          });
+        }
+        break;
+      case MappingType.NullToText:
+        mappings.push({
+          type: item.type,
+          options: {
+            match: item.nullMatch!,
+            result: {
+              ...item.result,
+              index,
+            },
+          },
+        });
+    }
+  });
+
+  if (Object.keys(valueMaps.options).length > 0) {
+    mappings.unshift(valueMaps);
+  }
+  return mappings;
+}
+
+export function buildEditRowModels(value: ValueMapping[]) {
+  const editRows: ValueMappingEditRowModel[] = [];
+
+  for (const mapping of value) {
+    switch (mapping.type) {
+      case MappingType.ValueToText:
+        for (const key of Object.keys(mapping.options)) {
+          editRows.push({
+            type: mapping.type,
+            result: mapping.options[key],
+            key,
+          });
+        }
+        break;
+      case MappingType.RangeToText:
+        editRows.push({
+          type: mapping.type,
+          result: mapping.options.result,
+          from: mapping.options.from ?? 0,
+          to: mapping.options.to ?? 0,
+        });
+        break;
+      case MappingType.NullToText:
+        editRows.push({
+          type: mapping.type,
+          result: mapping.options.result,
+          nullMatch: mapping.options.match ?? NullToTextMatchType.Null,
+        });
+    }
+  }
+
+  // Sort by index
+  editRows.sort((a, b) => {
+    return (a.result.index ?? 0) > (b.result.index ?? 0) ? 1 : -1;
+  });
+
+  return editRows;
+}
