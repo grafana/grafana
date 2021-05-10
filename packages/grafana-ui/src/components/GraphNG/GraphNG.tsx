@@ -17,7 +17,7 @@ import { preparePlotFrame } from './utils';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { Subscription } from 'rxjs';
-import { filter, throttleTime } from 'rxjs/operators';
+import { throttleTime } from 'rxjs/operators';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
@@ -116,10 +116,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     this.subscription.add(
       eventBus
         .getStream(LegacyGraphHoverEvent)
-        .pipe(
-          throttleTime(50),
-          filter((e) => e.origin !== eventBus)
-        )
+        .pipe(throttleTime(50))
         .subscribe({
           next: (evt) => {
             const u = this.plotInstance?.current;
@@ -148,10 +145,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     this.subscription.add(
       eventBus
         .getStream(LegacyGraphHoverClearEvent)
-        .pipe(
-          throttleTime(50),
-          filter((e) => e.origin !== eventBus)
-        )
+        .pipe(throttleTime(50))
         .subscribe({
           next: () => {
             const u = this.plotInstance?.current;
