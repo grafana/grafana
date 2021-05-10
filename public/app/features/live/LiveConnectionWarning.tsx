@@ -4,6 +4,7 @@ import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory } from '@grafana/ui';
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {}
 
@@ -44,7 +45,7 @@ export class LiveConnectionWarning extends PureComponent<Props, State> {
   render() {
     const { show } = this.state;
     if (show) {
-      if (!(window as any).grafanaBootData?.user?.isSignedIn) {
+      if (!contextSrv.isSignedIn) {
         return null; // do not show the warning for anonomous users (and /login page etc)
       }
 
