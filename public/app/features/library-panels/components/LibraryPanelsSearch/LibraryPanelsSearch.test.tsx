@@ -102,7 +102,7 @@ describe('LibraryPanelsSearch', () => {
           searchString: 'a',
           folderFilter: [],
           page: 0,
-          panelFilter: [],
+          typeFilter: [],
           perPage: 40,
         });
       });
@@ -130,7 +130,7 @@ describe('LibraryPanelsSearch', () => {
           sortDirection: 'alpha-desc',
           folderFilter: [],
           page: 0,
-          panelFilter: [],
+          typeFilter: [],
           perPage: 40,
         });
       });
@@ -158,7 +158,7 @@ describe('LibraryPanelsSearch', () => {
           searchString: '',
           folderFilter: [],
           page: 0,
-          panelFilter: ['graph', 'timeseries'],
+          typeFilter: ['graph', 'timeseries'],
           perPage: 40,
         });
       });
@@ -188,7 +188,7 @@ describe('LibraryPanelsSearch', () => {
           searchString: '',
           folderFilter: ['0'],
           page: 0,
-          panelFilter: [],
+          typeFilter: [],
           perPage: 40,
         });
       });
