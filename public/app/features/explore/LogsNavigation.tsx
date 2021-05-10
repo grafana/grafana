@@ -1,17 +1,9 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
-import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { css } from 'emotion';
-import {
-  LogsSortOrder,
-  AbsoluteTimeRange,
-  dateTimeFormat,
-  systemDateFormats,
-  TimeZone,
-  DataQuery,
-  GrafanaTheme,
-} from '@grafana/data';
-import { Button, Icon, Spinner, useTheme, stylesFactory, CustomScrollbar } from '@grafana/ui';
+import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme } from '@grafana/data';
+import { Button, Icon, Spinner, useTheme, stylesFactory } from '@grafana/ui';
+import LogsNavigationPages from './LogsNavigationPages';
 
 type Props = {
   absoluteRange: AbsoluteTimeRange;
@@ -24,7 +16,7 @@ type Props = {
   scrollToTopLogs: () => void;
 };
 
-type LogsPage = {
+export type LogsPage = {
   logsRange: AbsoluteTimeRange;
   queryRange: AbsoluteTimeRange;
 };
@@ -50,6 +42,8 @@ function LogsNavigation({
   const rangeSpanRef = useRef(0);
 
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
+  const onFirstPage = currentPageIndex === 0;
+  const onLastPage = currentPageIndex === pages.length - 1;
   const theme = useTheme();
   const styles = getStyles(theme, oldestLogsFirst, loading);
 
@@ -92,19 +86,6 @@ function LogsNavigation({
     return a.queryRange.to > b.queryRange.to ? -1 : 1;
   };
 
-  const formatTime = (time: number) => {
-    return `${dateTimeFormat(time, {
-      format: systemDateFormats.interval.second,
-      timeZone: timeZone,
-    })}`;
-  };
-
-  const createPageContent = (page: LogsPage, index: number) => {
-    const topContent = formatTime(oldestLogsFirst ? page.logsRange.from : page.logsRange.to);
-    const bottomContent = formatTime(oldestLogsFirst ? page.logsRange.to : page.logsRange.from);
-    return `${topContent} — ${bottomContent}`;
-  };
-
   const olderLogsButton = (
     <Button
       data-testid="olderLogsButton"
@@ -112,7 +93,7 @@ function LogsNavigation({
       variant="secondary"
       onClick={() => {
         //If we are not on the last page, use next page's range
-        if (currentPageIndex < pages.length - 1) {
+        if (!onLastPage) {
           changeTime({
             from: pages[currentPageIndex + 1].queryRange.from,
             to: pages[currentPageIndex + 1].queryRange.to,
@@ -137,7 +118,7 @@ function LogsNavigation({
       variant="secondary"
       onClick={() => {
         //If we are not on the first page, use previous page's range
-        if (currentPageIndex > 0) {
+        if (!onFirstPage) {
           changeTime({
             from: pages[currentPageIndex - 1].queryRange.from,
             to: pages[currentPageIndex - 1].queryRange.to,
@@ -145,37 +126,27 @@ function LogsNavigation({
         }
         //If we are on the first page, button is disabled and we do nothing
       }}
-      disabled={loading || currentPageIndex === 0}
+      disabled={loading || onFirstPage}
     >
-      <div className={styles.navButtonContent} title={'aaaa'}>
-        {loading ? <Spinner /> : <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />}
-        Newer logs
+      <div className={styles.navButtonContent}>
+        {loading && <Spinner />}
+        {onFirstPage || loading ? null : <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />}
+        {onFirstPage ? 'Start of range' : 'Newer logs'}
       </div>
     </Button>
   );
+
   return (
     <div className={styles.navContainer}>
       {oldestLogsFirst ? olderLogsButton : newerLogsButton}
-      <CustomScrollbar autoHide>
-        <div className={styles.pagesWrapper}>
-          <div className={styles.pagesContainer}>
-            {pages.map((page: LogsPage, index) => (
-              <div
-                className={styles.page}
-                key={page.queryRange.to}
-                onClick={() => !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to })}
-              >
-                <div className={classNames(styles.line, { selectedBg: currentPageIndex === index })} />
-                <div className={classNames(styles.time, { selectedText: currentPageIndex === index })}>
-                  {createPageContent(page, index)}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className={styles.filler}></div>
-        </div>
-      </CustomScrollbar>
-
+      <LogsNavigationPages
+        pages={pages}
+        currentPageIndex={currentPageIndex}
+        oldestLogsFirst={oldestLogsFirst}
+        timeZone={timeZone}
+        loading={loading}
+        changeTime={changeTime}
+      />
       {oldestLogsFirst ? newerLogsButton : olderLogsButton}
       <Button
         data-testid="scrollToTop"
@@ -228,56 +199,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       justify-content: center;
       margin-top: ${theme.spacing.sm};
       align-items: center;
-    `,
-    pagesWrapper: css`
-      height: 100%;
-      padding-left: ${theme.spacing.xs};
-      display: flex;
-      flex-direction: column;
-      overflow-y: scroll;
-    `,
-    pagesContainer: css`
-      display: flex;
-      padding: 0;
-      flex-direction: column;
-    `,
-    page: css`
-      display: flex;
-      margin: ${theme.spacing.md} 0;
-      cursor: ${loading ? 'auto' : 'pointer'};
-      white-space: normal;
-      .selectedBg {
-        background: ${theme.colors.bgBlue2};
-      }
-      .selectedText {
-        color: ${theme.colors.bgBlue2};
-      }
-    `,
-    line: css`
-      width: 3px;
-      height: 100%;
-      align-items: center;
-      background: ${theme.colors.textWeak};
-    `,
-    time: css`
-      width: 60px;
-      min-height: 80px;
-      font-size: ${theme.typography.size.sm};
-      padding-left: ${theme.spacing.xs};
-      display: flex;
-      align-items: center;
-    `,
-    filler: css`
-      height: inherit;
-      background: repeating-linear-gradient(
-        135deg,
-        ${theme.colors.bg1},
-        ${theme.colors.bg1} 5px,
-        ${theme.colors.bg2} 5px,
-        ${theme.colors.bg2} 15px
-      );
-      width: 3px;
-      margin-bottom: 8px;
     `,
   };
 });
