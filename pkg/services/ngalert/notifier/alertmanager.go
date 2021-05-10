@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -223,7 +224,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	if err := am.Store.SaveAlertmanagerConfiguration(cmd); err != nil {
 		return fmt.Errorf("failed to save Alertmanager configuration: %w", err)
 	}
-	if err := am.applyConfig(cfg); err != nil {
+	if err := am.applyConfig(cfg, rawConfig); err != nil {
 		return fmt.Errorf("unable to reload configuration: %w", err)
 	}
 
@@ -252,32 +253,27 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 		return err
 	}
 
-	if err := am.applyConfig(cfg); err != nil {
+	if err := am.applyConfig(cfg, nil); err != nil {
 		return fmt.Errorf("unable to reload configuration: %w", err)
 	}
 
 	return nil
 }
 
-// ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
-func (am *Alertmanager) ApplyConfig(cfg *apimodels.PostableUserConfig) error {
-	am.reloadConfigMtx.Lock()
-	defer am.reloadConfigMtx.Unlock()
-
-	return am.applyConfig(cfg)
-}
-
 const defaultTemplate = "templates/default.tmpl"
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) error {
+func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
 	// First, let's make sure this config is not already loaded
 	var configChanged bool
-	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
-	if err != nil {
-		// In theory, this should never happen.
-		return err
+	if rawConfig == nil {
+		enc, err := json.Marshal(cfg.AlertmanagerConfig)
+		if err != nil {
+			// In theory, this should never happen.
+			return err
+		}
+		rawConfig = enc
 	}
 
 	if md5.Sum(am.config) != md5.Sum(rawConfig) {
@@ -380,6 +376,16 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
+		// secure settings are already encrypted at this point
+		secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
+
+		for k, v := range r.SecureSettings {
+			d, err := base64.StdEncoding.DecodeString(v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode secure setting")
+			}
+			secureSettings[k] = d
+		}
 		var (
 			cfg = &models.AlertNotification{
 				Uid:                   r.Uid,
@@ -389,7 +395,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 				SendReminder:          r.SendReminder,
 				DisableResolveMessage: r.DisableResolveMessage,
 				Settings:              r.Settings,
-				SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
+				SecureSettings:        secureSettings,
 			}
 			n   NotificationChannel
 			err error
@@ -409,6 +415,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewDingDingNotifier(cfg, tmpl)
 		case "webhook":
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
+		default:
+			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}
 		if err != nil {
 			return nil, err

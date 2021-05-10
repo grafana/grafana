@@ -1,11 +1,14 @@
 package definitions
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
 
@@ -239,6 +242,26 @@ func (c *PostableUserConfig) validate() error {
 		return fmt.Errorf("cannot have continue in root route")
 	}
 
+	return nil
+}
+
+func (c *PostableUserConfig) EncryptSecureSettings() error {
+	// encrypt secure settings for storing them in DB
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+		default:
+		}
+	}
 	return nil
 }
 

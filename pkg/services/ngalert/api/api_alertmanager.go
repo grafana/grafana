@@ -168,6 +168,11 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
+	err := body.EncryptSecureSettings()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to encrypt receiver secrets", err)
+	}
+
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to save and apply Alertmanager configuration", err)
 	}
