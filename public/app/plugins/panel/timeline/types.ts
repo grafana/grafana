@@ -1,5 +1,4 @@
-import { GraphGradientMode, HideableFieldConfig } from '../uPlot/config';
-import { VizLegendOptions } from '../VizLegend/models.gen';
+import { VizLegendOptions, GraphGradientMode, HideableFieldConfig } from '@grafana/ui';
 
 /**
  * @alpha
