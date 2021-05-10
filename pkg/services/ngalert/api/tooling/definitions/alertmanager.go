@@ -496,6 +496,7 @@ type ReceiverType int
 const (
 	GrafanaReceiverType ReceiverType = iota
 	AlertmanagerReceiverType
+	EmptyReceiverType
 )
 
 type GettableApiReceiver struct {
