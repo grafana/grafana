@@ -64,6 +64,7 @@ export interface ElasticsearchQuery extends DataQuery {
   bucketAggs?: BucketAggregation[];
   metrics?: MetricAggregation[];
   timeField?: string;
+  indexPatternOverride?: string;
 }
 
 export type DataLinkConfig = {

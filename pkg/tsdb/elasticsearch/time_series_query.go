@@ -70,7 +70,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	}
 	interval := e.intervalCalculator.Calculate(*e.tsdbQuery.TimeRange, minInterval)
 
-	b := ms.Search(interval)
+	b := ms.Search(interval, q.IndexPatternOverride)
+
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
@@ -355,16 +356,18 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery plugins.DataQuery) ([]*Query, er
 			return nil, err
 		}
 		alias := model.Get("alias").MustString("")
+		indexPatternOverride := model.Get("indexPatternOverride").MustString("")
 		interval := model.Get("interval").MustString("")
 
 		queries = append(queries, &Query{
-			TimeField:  timeField,
-			RawQuery:   rawQuery,
-			BucketAggs: bucketAggs,
-			Metrics:    metrics,
-			Alias:      alias,
-			Interval:   interval,
-			RefID:      q.RefID,
+			IndexPatternOverride: indexPatternOverride,
+			TimeField:            timeField,
+			RawQuery:             rawQuery,
+			BucketAggs:           bucketAggs,
+			Metrics:              metrics,
+			Alias:                alias,
+			Interval:             interval,
+			RefID:                q.RefID,
 		})
 	}
 

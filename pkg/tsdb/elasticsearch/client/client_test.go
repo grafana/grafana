@@ -135,7 +135,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 				]
 			}`
 
-		ms, err := createMultisearchForTest(t, sc.client)
+		ms, err := createMultisearchForTest(t, sc.client, "")
 		require.NoError(t, err)
 		res, err := sc.client.ExecuteMultisearch(ms)
 		require.NoError(t, err)
@@ -186,7 +186,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 				]
 			}`
 
-		ms, err := createMultisearchForTest(t, sc.client)
+		ms, err := createMultisearchForTest(t, sc.client, "")
 		require.NoError(t, err)
 		res, err := sc.client.ExecuteMultisearch(ms)
 		require.NoError(t, err)
@@ -238,7 +238,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 				]
 			}`
 
-		ms, err := createMultisearchForTest(t, sc.client)
+		ms, err := createMultisearchForTest(t, sc.client, "")
 		require.NoError(t, err)
 		res, err := sc.client.ExecuteMultisearch(ms)
 		require.NoError(t, err)
@@ -290,7 +290,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 				]
 			}`
 
-		ms, err := createMultisearchForTest(t, sc.client)
+		ms, err := createMultisearchForTest(t, sc.client, "")
 		require.NoError(t, err)
 		res, err := sc.client.ExecuteMultisearch(ms)
 		require.NoError(t, err)
@@ -324,13 +324,48 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		assert.Equal(t, 200, res.Status)
 		require.Len(t, res.Responses, 1)
 	})
+
+	httpClientScenario(t, "Given a fake http client with a indexPatternOverride", &models.DataSource{
+		Database: "[metrics-]YYYY.MM.DD",
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"esVersion":                  70,
+			"maxConcurrentShardRequests": 6,
+			"timeField":                  "@timestamp",
+			"interval":                   "Daily",
+		}),
+	}, func(sc *scenarioContext) {
+		sc.responseBody = `{
+				"responses": [
+					{
+						"hits": {	"hits": [], "max_score": 0,	"total": { "value": 4656, "relation": "eq"}	},
+						"status": 200
+					}
+				]
+			}`
+
+		ms, err := createMultisearchForTest(t, sc.client, "logs-*")
+		require.NoError(t, err)
+		res, err := sc.client.ExecuteMultisearch(ms)
+		require.NoError(t, err)
+
+		headerBytes, err := sc.requestBody.ReadBytes('\n')
+		require.NoError(t, err)
+
+		jHeader, err := simplejson.NewJson(headerBytes)
+		require.NoError(t, err)
+
+		assert.Equal(t, "logs-*", jHeader.Get("index").MustString())
+
+		assert.Equal(t, 200, res.Status)
+		require.Len(t, res.Responses, 1)
+	})
 }
 
-func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, error) {
+func createMultisearchForTest(t *testing.T, c Client, indexPatternOverride string) (*MultiSearchRequest, error) {
 	t.Helper()
 
 	msb := c.MultiSearch()
-	s := msb.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
+	s := msb.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"}, indexPatternOverride)
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 
