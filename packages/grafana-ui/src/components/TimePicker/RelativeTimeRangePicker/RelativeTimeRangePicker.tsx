@@ -13,14 +13,13 @@ import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from '../T
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { InputState } from '../TimeRangePicker/TimeRangeForm';
+import { Icon } from '../../Icon/Icon';
 
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
 }
 
-const bodyHeight = 217;
-const errorHeight = 30.83;
 const errorMessage = 'Value not in relative time format.';
 
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
@@ -31,8 +30,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   const [from, setFrom] = useState<InputState>(setValue(timeOption.from));
   const [to, setTo] = useState<InputState>(setValue(timeOption.to));
 
-  const bodyHeight = useFlexibleHeight(from, to);
-  const styles = useStyles2(getStyles(bodyHeight));
+  const styles = useStyles2(getStyles(from, to));
 
   const onChangeTimeOption = (option: TimeOption) => {
     const relativeTimeRange = mapOptionToRelativeTimeRange(option);
@@ -88,6 +86,13 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
               <div className={styles.rightSide}>
                 <div className={styles.title}>
                   <TimePickerTitle>Specify time range</TimePickerTitle>
+                  <div className={styles.description}>
+                    Specify a relative time range, for more information see{' '}
+                    <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
+                      docs <Icon name="external-link-alt" />
+                    </a>
+                    .
+                  </div>
                 </div>
                 <Field label="From" invalid={from.invalid} error={errorMessage}>
                   <Input
@@ -122,7 +127,16 @@ const setValue = (value: string): InputState => {
   };
 };
 
-const getStyles = (pickerHeight = bodyHeight) => (theme: GrafanaTheme2) => {
+const getStyles = (from: InputState, to: InputState) => (theme: GrafanaTheme2) => {
+  let bodyHeight = 250;
+  const errorHeight = theme.spacing.gridSize * 4;
+
+  if (from.invalid && to.invalid) {
+    bodyHeight += errorHeight * 2;
+  } else if (from.invalid || to.invalid) {
+    bodyHeight += errorHeight;
+  }
+
   return {
     container: css`
       position: relative;
@@ -142,7 +156,11 @@ const getStyles = (pickerHeight = bodyHeight) => (theme: GrafanaTheme2) => {
     `,
     body: css`
       display: flex;
-      height: ${pickerHeight}px;
+      height: ${bodyHeight}px;
+    `,
+    description: css`
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.size.sm};
     `,
     leftSide: css`
       width: 50% !important;
@@ -156,19 +174,4 @@ const getStyles = (pickerHeight = bodyHeight) => (theme: GrafanaTheme2) => {
       margin-bottom: ${theme.spacing(1)};
     `,
   };
-};
-
-const useFlexibleHeight = (from: InputState, to: InputState): number => {
-  // Hacky way of getting the body to grow depending on the state.
-  // Need to sync with Peter if we can do this in a better way using only
-  // css.
-  if (!from.invalid && !to.invalid) {
-    return bodyHeight;
-  }
-
-  if (from.invalid && to.invalid) {
-    return bodyHeight + errorHeight * 2;
-  }
-
-  return bodyHeight + errorHeight;
 };
