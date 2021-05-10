@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
 import { Themeable2 } from '../../types';
-import { findMidPointYPosition, preparePlotData } from '../uPlot/utils';
+import { findMidPointYPosition, pluginLog, preparePlotData } from '../uPlot/utils';
 import {
   DataFrame,
   FieldMatcherID,
@@ -94,15 +94,18 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
       }
     );
+    pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 
     if (alignedFrame) {
       state = {
         alignedFrame,
         alignedData: preparePlotData(alignedFrame, [FieldType.number]),
       };
+      pluginLog('GraphNG', false, 'data prepared', state.alignedData);
 
       if (withConfig) {
         state.config = props.prepConfig(alignedFrame, this.getTimeRange);
+        pluginLog('GraphNG', false, 'config prepared', state.config);
       }
     }
 
@@ -179,6 +182,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);
+          pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
       }
 
