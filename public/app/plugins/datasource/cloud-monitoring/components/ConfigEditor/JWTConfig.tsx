@@ -1,21 +1,10 @@
 import React, { FormEvent, useState } from 'react';
-import { startCase, isObject } from 'lodash';
+import { startCase } from 'lodash';
 import { Button, FileUpload, InlineField, Input, useStyles, Alert } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
-const configKeys = [
-  'type',
-  'project_id',
-  'private_key_id',
-  'private_key',
-  'client_email',
-  'client_id',
-  'auth_uri',
-  'token_uri',
-  'auth_provider_x509_cert_url',
-  'client_x509_cert_url',
-];
+const configKeys = ['project_id', 'private_key', 'client_email', 'token_uri'];
 
 export interface JWT {
   token_uri: string;
@@ -29,7 +18,9 @@ export interface Props {
   isConfigured: boolean;
 }
 
-const validateJson = (json: { [key: string]: string }) => isObject(json) && configKeys.every((key) => !!json[key]);
+const validateJson = (json: JWT): json is JWT => {
+  return !!json.token_uri && !!json.client_email && !!json.project_id && !!json.project_id;
+};
 
 export function JWTConfig({ onChange, isConfigured }: Props) {
   const styles = useStyles(getStyles);
@@ -49,7 +40,7 @@ export function JWTConfig({ onChange, isConfigured }: Props) {
               return (e: any) => {
                 const json = JSON.parse(e.target.result);
                 if (validateJson(json)) {
-                  onChange(json as JWT);
+                  onChange(json);
                   setEnableUpload(false);
                 } else {
                   setError('Invalid JWT file');
