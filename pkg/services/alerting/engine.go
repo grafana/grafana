@@ -28,6 +28,7 @@ type AlertEngine struct {
 	Bus              bus.Bus                       `inject:""`
 	RequestValidator models.PluginRequestValidator `inject:""`
 	DataService      plugins.DataRequestHandler    `inject:""`
+	Cfg              *setting.Cfg                  `inject:""`
 
 	execQueue     chan *Job
 	ticker        *Ticker
@@ -44,7 +45,7 @@ func init() {
 
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.IsNgAlertEnabled()
 }
 
 // Init initializes the AlertingService.
