@@ -16,15 +16,15 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     width,
     height,
     title,
-    onOptionsChange,
+    onOptionsChange = () => {},
     onChangeTimeRange = () => {},
     fieldConfig: config = { defaults: {}, overrides: [] },
   } = props;
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>(config);
   const { value: plugin, error, loading } = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
-  const defaultOptions = useOptionDefaults(plugin, options, fieldConfig);
-  const dataWithOverrides = useFieldOverrides(plugin, defaultOptions, data, timeZone);
+  const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
+  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
 
   if (error) {
     return <div>Failed to load plugin: {error.message}</div>;
@@ -51,7 +51,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
       title={title}
       timeRange={dataWithOverrides.timeRange}
       timeZone={timeZone}
-      options={options}
+      options={optionsWithDefaults!.options}
       fieldConfig={fieldConfig}
       transparent={false}
       width={width}

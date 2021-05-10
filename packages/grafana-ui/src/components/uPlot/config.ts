@@ -165,7 +165,7 @@ export interface AxisConfig {
 export interface HideSeriesConfig {
   tooltip: boolean;
   legend: boolean;
-  graph: boolean;
+  viz: boolean;
 }
 
 /**

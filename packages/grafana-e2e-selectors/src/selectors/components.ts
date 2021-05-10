@@ -44,10 +44,19 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      PieChart: {
+        svgSlice: 'Pie Chart Slice',
+      },
       Text: {
         container: () => '.markdown-html',
       },
+      Table: {
+        header: 'table header',
+      },
     },
+  },
+  VizLegend: {
+    seriesName: (name: string) => `VizLegend series ${name}`,
   },
   Drawer: {
     General: {
@@ -71,8 +80,10 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
+    applyButton: 'panel editor apply',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
+    toggleTableView: 'toggle-table-view',
   },
   PanelInspector: {
     Data: {
