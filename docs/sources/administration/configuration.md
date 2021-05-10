@@ -331,7 +331,7 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### isolation_level
 
-Database drivers may support different transaction isolation levels. Currently, only "mysql" driver supports isolation levels. If the value is empty - driver's default isolation level is applied. For "mysql" use "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
+Only the MySQL driver supports isolation levels in Grafana. In case the value is empty, the driver's default isolation level is applied. Available options are "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
 
 ### ca_cert_path
 
