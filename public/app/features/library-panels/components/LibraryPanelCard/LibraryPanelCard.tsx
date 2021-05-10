@@ -64,18 +64,18 @@ function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
     return (
       <span className={styles.metaContainer}>
         <Icon name={'folder'} size="sm" />
-        {libraryPanel.meta.folderName}
+        <span>{libraryPanel.meta.folderName}</span>
       </span>
     );
   }
 
   return (
-    <Link href={`/dashboards/f/${libraryPanel.meta.folderUid}`}>
-      <span className={styles.metaContainer}>
+    <span className={styles.metaContainer}>
+      <Link href={`/dashboards/f/${libraryPanel.meta.folderUid}`}>
         <Icon name={'folder-upload'} size="sm" />
-        {libraryPanel.meta.folderName}
-      </span>
-    </Link>
+        <span>{libraryPanel.meta.folderName}</span>
+      </Link>
+    </span>
   );
 }
 
