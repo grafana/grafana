@@ -8,8 +8,6 @@ export const SILENCES_POLL_INTERVAL_MS = 20000;
 
 export enum Annotation {
   description = 'description',
-  dashboardURL = 'dashboard_url',
-  panelURL = 'panel_url',
   summary = 'summary',
   runbookURL = 'runbook_url',
   dashboardUID = '__dashboardUId__',
@@ -18,8 +16,6 @@ export enum Annotation {
 
 export const annotationLabels: Record<Annotation, string> = {
   [Annotation.description]: 'Description',
-  [Annotation.dashboardURL]: 'Dashboard URL',
-  [Annotation.panelURL]: 'Panel URL',
   [Annotation.summary]: 'Summary',
   [Annotation.runbookURL]: 'Runbook URL',
   [Annotation.dashboardUID]: 'Dashboard UID',

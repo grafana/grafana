@@ -1,5 +1,5 @@
-import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange, urlUtil } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
@@ -246,21 +246,5 @@ export const panelToRuleFormValues = (
       },
     ],
   };
-
-  if (dashboard.meta.url) {
-    formValues.annotations.push({
-      key: Annotation.dashboardURL,
-      value: `${config.appUrl}${dashboard.meta.url.slice(1)}`,
-    });
-    if (panel.editSourceId) {
-      formValues.annotations.push({
-        key: Annotation.panelURL,
-        value: urlUtil.renderUrl(`${config.appUrl}${dashboard.meta.url.slice(1)}`, {
-          viewPanel: panel.editSourceId,
-        }),
-      });
-    }
-  }
-
   return formValues;
 };
