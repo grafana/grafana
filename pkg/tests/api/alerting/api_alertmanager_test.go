@@ -460,7 +460,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 			}
 
 			return false
-		}, 20*time.Second, 2*time.Second)
+		}, 18*time.Second, 2*time.Second)
 	}
 }
 
