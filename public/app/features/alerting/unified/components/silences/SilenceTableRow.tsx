@@ -11,6 +11,7 @@ import { expireSilenceAction } from '../../state/actions';
 import { useDispatch } from 'react-redux';
 import { Matchers } from './Matchers';
 import { SilenceStateTag } from './SilenceStateTag';
+import { makeAMLink } from '../../utils/misc';
 interface Props {
   className?: string;
   silence: Silence;
@@ -54,7 +55,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
         </td>
         <td className={styles.actionsCell}>
           {status.state === 'expired' ? (
-            <Link href={`/alerting/silence/${silence.id}/edit`}>
+            <Link href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}>
               <ActionButton icon="sync">Recreate</ActionButton>
             </Link>
           ) : (
@@ -63,7 +64,11 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
             </ActionButton>
           )}
           {status.state !== 'expired' && (
-            <ActionIcon href={`/alerting/silence/${silence.id}/edit`} icon="pen" tooltip="edit" />
+            <ActionIcon
+              to={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
+              icon="pen"
+              tooltip="edit"
+            />
           )}
         </td>
       </tr>
