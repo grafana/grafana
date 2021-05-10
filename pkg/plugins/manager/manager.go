@@ -366,7 +366,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		}
 		pluginsByID[scannedPlugin.Id] = struct{}{}
 
-		// Check if scanning found plugins that were already installed
+		// Check if scanning found plugins that are already installed
 		if existing := pm.GetPlugin(scannedPlugin.Id); existing != nil {
 			if scannedPlugin.Info.Version == existing.Info.Version {
 				pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
