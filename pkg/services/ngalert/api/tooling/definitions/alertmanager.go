@@ -1,14 +1,18 @@
 package definitions
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
+
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -196,6 +200,7 @@ type DatasourceReference struct {
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
@@ -204,7 +209,23 @@ func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	return c.validate()
+	// validate first
+	if err := c.validate(); err != nil {
+		return err
+	}
+
+	type intermediate struct {
+		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	var tmp intermediate
+	if err := json.Unmarshal(b, &tmp); err != nil {
+		return err
+	}
+	// store the map[string]interface{} variant for re-encoding later without redaction
+	c.amSimple = tmp.AlertmanagerConfig
+
+	return nil
 }
 
 func (c *PostableUserConfig) validate() error {
@@ -224,9 +245,29 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
+func (c *PostableUserConfig) EncryptSecureSettings() error {
+	// encrypt secure settings for storing them in DB
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+		default:
+		}
+	}
+	return nil
+}
+
 // MarshalYAML implements yaml.Marshaller.
 func (c *PostableUserConfig) MarshalYAML() (interface{}, error) {
-	yml, err := yaml.Marshal(c.AlertmanagerConfig)
+	yml, err := yaml.Marshal(c.amSimple)
 	if err != nil {
 		return nil, err
 	}
@@ -266,6 +307,11 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 type GettableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+
+	// amSimple stores a map[string]interface of the decoded alertmanager config.
+	// This enables circumventing the underlying alertmanager secret type
+	// which redacts itself during encoding.
+	amSimple map[string]interface{} `yaml:"-" json:"-"`
 }
 
 func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
@@ -285,8 +331,26 @@ func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
+	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.amSimple); err != nil {
+		return err
+	}
+
 	c.TemplateFiles = tmp.TemplateFiles
 	return nil
+}
+
+func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
+	type plain struct {
+		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	tmp := plain{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: c.amSimple,
+	}
+
+	return json.Marshal(tmp)
 }
 
 type GettableApiAlertingConfig struct {
