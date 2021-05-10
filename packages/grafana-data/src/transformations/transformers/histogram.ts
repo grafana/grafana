@@ -44,11 +44,11 @@ export interface HistogramTransformerOptions {
 export const histogramFieldInfo = {
   bucketSize: {
     name: 'Bucket size',
-    description: 'the size of each bucket',
+    description: undefined,
   },
   bucketOffset: {
     name: 'Bucket offset',
-    description: 'offset within the bucket size',
+    description: 'for non-zero-based buckets',
   },
   combine: {
     name: 'Combine series',
