@@ -102,7 +102,7 @@ func (l *libraryElementServiceImpl) AddMigration(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create library_element table v1", migrator.NewAddTableMigration(libraryElementsV1))
-	mg.AddMigration("add index library_element org_id-folder_id-name-kind", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
+	mg.AddMigration("add index library_element", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
 
 	libraryElementConnectionV1 := migrator.Table{
 		Name: connectionTableName,
@@ -120,5 +120,5 @@ func (l *libraryElementServiceImpl) AddMigration(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create "+connectionTableName+" table v1", migrator.NewAddTableMigration(libraryElementConnectionV1))
-	mg.AddMigration("add index "+connectionTableName+" library_element_id-kind-connection_id", migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
+	mg.AddMigration("add index "+connectionTableName, migrator.NewAddIndexMigration(libraryElementConnectionV1, libraryElementConnectionV1.Indices[0]))
 }
