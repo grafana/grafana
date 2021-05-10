@@ -33,7 +33,7 @@ export const RestoreHistoryService = {
         dataModel: data_model,
         status,
         started: new Date(started_at).getTime(),
-        finished: new Date(finished_at).getTime(),
+        finished: finished_at ? new Date(finished_at).getTime() : null,
       })
     );
   },

@@ -28,8 +28,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({ backup, isVisi
   const handleSubmit = ({ serviceType, service }: RestoreBackupFormProps) => {
     if (backup) {
       const serviceId = serviceType === ServiceTypeSelect.SAME ? backup.serviceId : service.value;
-      const { locationId, id } = backup;
-      onRestore(serviceId || '', locationId, id);
+      onRestore(serviceId || '', backup.id);
     }
   };
 

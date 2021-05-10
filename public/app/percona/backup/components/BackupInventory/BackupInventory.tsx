@@ -86,9 +86,9 @@ export const BackupInventory: FC = () => {
     setBackupModalVisible(false);
   };
 
-  const handleRestore = async (serviceId: string, locationId: string, artifactId: string) => {
+  const handleRestore = async (serviceId: string, artifactId: string) => {
     try {
-      await BackupInventoryService.restore(serviceId, locationId, artifactId, generateToken(RESTORE_CANCEL_TOKEN));
+      await BackupInventoryService.restore(serviceId, artifactId, generateToken(RESTORE_CANCEL_TOKEN));
       setRestoreModalVisible(false);
     } catch (e) {
       logger.error(e);
