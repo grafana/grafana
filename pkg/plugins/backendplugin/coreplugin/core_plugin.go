@@ -68,11 +68,11 @@ func (cp *corePlugin) Exited() bool {
 	return false
 }
 
-func (p *corePlugin) Decommission() error {
+func (cp *corePlugin) Decommission() error {
 	return nil
 }
 
-func (p *corePlugin) IsDecommissioned() bool {
+func (cp *corePlugin) IsDecommissioned() bool {
 	return false
 }
 
