@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const UserInDbName = "user_in_db"
-const UserInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+const userInDbName = "user_in_db"
+const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
 func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
@@ -322,7 +322,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		cmd := models.CreateUserCommand{
 			Email: "user.in.db@test.com",
 			Name:  "User In DB",
-			Login: UserInDbName,
+			Login: userInDbName,
 		}
 		_, err := sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)

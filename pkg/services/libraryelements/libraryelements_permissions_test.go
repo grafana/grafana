@@ -230,10 +230,10 @@ func TestLibraryElementPermissions(t *testing.T) {
 					cmd := getCreatePanelCommand(folder.Id, fmt.Sprintf("Library Panel in Folder%v", i))
 					resp := sc.service.createHandler(sc.reqContext, cmd)
 					result := validateAndUnMarshalResponse(t, resp)
-					result.Result.Meta.CreatedBy.Name = UserInDbName
-					result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
-					result.Result.Meta.UpdatedBy.Name = UserInDbName
-					result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.CreatedBy.Name = userInDbName
+					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.Name = userInDbName
+					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.Uid
 					results = append(results, result.Result)
@@ -252,10 +252,10 @@ func TestLibraryElementPermissions(t *testing.T) {
 				cmd := getCreatePanelCommand(0, "Library Panel in General Folder")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
 				result := validateAndUnMarshalResponse(t, resp)
-				result.Result.Meta.CreatedBy.Name = UserInDbName
-				result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
-				result.Result.Meta.UpdatedBy.Name = UserInDbName
-				result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.CreatedBy.Name = userInDbName
+				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = userInDbName
+				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = ""
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
@@ -291,10 +291,10 @@ func TestLibraryElementPermissions(t *testing.T) {
 					cmd := getCreatePanelCommand(folder.Id, fmt.Sprintf("Library Panel in Folder%v", i))
 					resp := sc.service.createHandler(sc.reqContext, cmd)
 					result := validateAndUnMarshalResponse(t, resp)
-					result.Result.Meta.CreatedBy.Name = UserInDbName
-					result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
-					result.Result.Meta.UpdatedBy.Name = UserInDbName
-					result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+					result.Result.Meta.CreatedBy.Name = userInDbName
+					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.Name = userInDbName
+					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.Uid
 					results = append(results, result.Result)
@@ -309,23 +309,27 @@ func TestLibraryElementPermissions(t *testing.T) {
 				require.Equal(t, testCase.panels, len(actual.Result.Elements))
 				for _, folderIndex := range testCase.folderIndexes {
 					var folderID = int64(folderIndex + 2) // testScenario creates one folder and general folder doesn't count
+					var foundExists = false
 					var foundResult libraryElement
+					var actualExists = false
 					var actualResult libraryElement
 					for _, result := range results {
 						if result.FolderID == folderID {
+							foundExists = true
 							foundResult = result
 							break
 						}
 					}
-					require.NotEmpty(t, foundResult)
+					require.Equal(t, foundExists, true)
 
 					for _, result := range actual.Result.Elements {
 						if result.FolderID == folderID {
+							actualExists = true
 							actualResult = result
 							break
 						}
 					}
-					require.NotEmpty(t, actualResult)
+					require.Equal(t, actualExists, true)
 
 					if diff := cmp.Diff(foundResult, actualResult, getCompareOptions()...); diff != "" {
 						t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -338,10 +342,10 @@ func TestLibraryElementPermissions(t *testing.T) {
 				cmd := getCreatePanelCommand(0, "Library Panel in General Folder")
 				resp := sc.service.createHandler(sc.reqContext, cmd)
 				result := validateAndUnMarshalResponse(t, resp)
-				result.Result.Meta.CreatedBy.Name = UserInDbName
-				result.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
-				result.Result.Meta.UpdatedBy.Name = UserInDbName
-				result.Result.Meta.UpdatedBy.AvatarUrl = UserInDbAvatar
+				result.Result.Meta.CreatedBy.Name = userInDbName
+				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = userInDbName
+				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 

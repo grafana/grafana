@@ -42,12 +42,12 @@ func TestCreateLibraryElement(t *testing.T) {
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 						UpdatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -87,12 +87,12 @@ func TestCreateLibraryElement(t *testing.T) {
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 						UpdatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},

@@ -48,13 +48,13 @@ func TestGetLibraryElement(t *testing.T) {
 						Updated:     result.Result.Meta.Updated,
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
-							Name:      UserInDbName,
-							AvatarUrl: UserInDbAvatar,
+							Name:      userInDbName,
+							AvatarURL: userInDbAvatar,
 						},
 						UpdatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
-							Name:      UserInDbName,
-							AvatarUrl: UserInDbAvatar,
+							Name:      userInDbName,
+							AvatarURL: userInDbAvatar,
 						},
 					},
 				},

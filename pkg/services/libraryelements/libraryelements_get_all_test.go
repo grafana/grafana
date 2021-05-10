@@ -81,13 +81,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -145,13 +145,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -206,13 +206,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -241,13 +241,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -305,13 +305,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -340,13 +340,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -424,13 +424,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -459,13 +459,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -477,7 +477,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to non existing type, it should succeed and the result should be correct",
+	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to a nonexistent type, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", Panel, []byte(`
 			{
@@ -561,13 +561,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -579,7 +579,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to non existing folders, it should succeed and the result should be correct",
+	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to a nonexistent folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
 			command := getCreatePanelCommand(newFolder.Id, "Text - Library Panel2")
@@ -656,13 +656,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -691,13 +691,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -755,13 +755,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -819,13 +819,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -884,13 +884,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -958,13 +958,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -1030,13 +1030,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -1065,13 +1065,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[1].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},
@@ -1131,13 +1131,13 @@ func TestGetAllLibraryElements(t *testing.T) {
 								Updated:     result.Result.Elements[0].Meta.Updated,
 								CreatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 								UpdatedBy: LibraryElementDTOMetaUser{
 									ID:        1,
-									Name:      UserInDbName,
-									AvatarUrl: UserInDbAvatar,
+									Name:      userInDbName,
+									AvatarURL: userInDbAvatar,
 								},
 							},
 						},

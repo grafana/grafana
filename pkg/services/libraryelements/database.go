@@ -38,8 +38,7 @@ func syncFieldsWithModel(libraryElement *LibraryElement) error {
 
 	if LibraryElementKind(libraryElement.Kind) == Panel {
 		model["title"] = libraryElement.Name
-	}
-	if LibraryElementKind(libraryElement.Kind) == Variable {
+	} else if LibraryElementKind(libraryElement.Kind) == Variable {
 		model["name"] = libraryElement.Name
 	}
 	if model["type"] != nil {
@@ -141,12 +140,12 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        element.CreatedBy,
 				Name:      c.SignedInUser.Login,
-				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
 			},
 			UpdatedBy: LibraryElementDTOMetaUser{
 				ID:        element.UpdatedBy,
 				Name:      c.SignedInUser.Login,
-				AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+				AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
 			},
 		},
 	}
@@ -224,6 +223,9 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid stri
 
 		return nil
 	})
+	if err != nil {
+		return LibraryElementDTO{}, err
+	}
 
 	dto := LibraryElementDTO{
 		ID:          libraryElement.ID,
@@ -245,17 +247,17 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid stri
 			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        libraryElement.CreatedBy,
 				Name:      libraryElement.CreatedByName,
-				AvatarUrl: dtos.GetGravatarUrl(libraryElement.CreatedByEmail),
+				AvatarURL: dtos.GetGravatarUrl(libraryElement.CreatedByEmail),
 			},
 			UpdatedBy: LibraryElementDTOMetaUser{
 				ID:        libraryElement.UpdatedBy,
 				Name:      libraryElement.UpdatedByName,
-				AvatarUrl: dtos.GetGravatarUrl(libraryElement.UpdatedByEmail),
+				AvatarURL: dtos.GetGravatarUrl(libraryElement.UpdatedByEmail),
 			},
 		},
 	}
 
-	return dto, err
+	return dto, nil
 }
 
 // getAllLibraryElements gets all Library Elements.
@@ -338,12 +340,12 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 					CreatedBy: LibraryElementDTOMetaUser{
 						ID:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
+						AvatarURL: dtos.GetGravatarUrl(element.CreatedByEmail),
 					},
 					UpdatedBy: LibraryElementDTOMetaUser{
 						ID:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),
+						AvatarURL: dtos.GetGravatarUrl(element.UpdatedByEmail),
 					},
 				},
 			})
@@ -471,12 +473,12 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 				CreatedBy: LibraryElementDTOMetaUser{
 					ID:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(elementInDB.CreatedByEmail),
+					AvatarURL: dtos.GetGravatarUrl(elementInDB.CreatedByEmail),
 				},
 				UpdatedBy: LibraryElementDTOMetaUser{
 					ID:        libraryElement.UpdatedBy,
 					Name:      c.SignedInUser.Login,
-					AvatarUrl: dtos.GetGravatarUrl(c.SignedInUser.Email),
+					AvatarURL: dtos.GetGravatarUrl(c.SignedInUser.Email),
 				},
 			},
 		}
@@ -519,7 +521,7 @@ func (l *LibraryElementService) getConnections(c *models.ReqContext, uid string)
 				CreatedBy: LibraryElementDTOMetaUser{
 					ID:        connection.CreatedBy,
 					Name:      connection.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(connection.CreatedByEmail),
+					AvatarURL: dtos.GetGravatarUrl(connection.CreatedByEmail),
 				},
 			})
 		}
@@ -568,12 +570,12 @@ func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, 
 					CreatedBy: LibraryElementDTOMetaUser{
 						ID:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
+						AvatarURL: dtos.GetGravatarUrl(element.CreatedByEmail),
 					},
 					UpdatedBy: LibraryElementDTOMetaUser{
 						ID:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),
+						AvatarURL: dtos.GetGravatarUrl(element.UpdatedByEmail),
 					},
 				},
 			}
