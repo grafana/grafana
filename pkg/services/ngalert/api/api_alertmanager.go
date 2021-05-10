@@ -21,7 +21,7 @@ type AlertmanagerSrv struct {
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
-	if c.OrgRole != models.ROLE_EDITOR && c.OrgRole != models.ROLE_ADMIN {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return response.Error(http.StatusForbidden, "Permission denied", nil)
 	}
 	silenceID, err := srv.am.CreateSilence(&postableSilence)
@@ -45,7 +45,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
-	if c.OrgRole != models.ROLE_EDITOR && c.OrgRole != models.ROLE_ADMIN {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return response.Error(http.StatusForbidden, "Permission denied", nil)
 	}
 	silenceID := c.Params(":SilenceId")
@@ -174,7 +174,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	if c.OrgRole != models.ROLE_EDITOR && c.OrgRole != models.ROLE_ADMIN {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return response.Error(http.StatusForbidden, "Permission denied", nil)
 	}
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
