@@ -44,6 +44,7 @@ type RenderingService struct {
 	log             log.Logger
 	pluginInfo      *plugins.RendererPlugin
 	renderAction    renderFunc
+	renderCSVAction renderCSVFunc
 	domain          string
 	inProgressCount int
 
@@ -87,6 +88,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
+		rs.renderCSVAction = rs.renderCSVViaHttp
 		<-ctx.Done()
 		return nil
 	}
@@ -100,6 +102,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		}
 
 		rs.renderAction = rs.renderViaPlugin
+		rs.renderCSVAction = rs.renderCSVViaPlugin
 		<-ctx.Done()
 		return nil
 	}
@@ -142,23 +145,12 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	startTime := time.Now()
-	elapsedTime := time.Since(startTime).Milliseconds()
 	result, err := rs.render(ctx, opts)
-	if err != nil {
-		if errors.Is(err, ErrTimeout) {
-			metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
-			metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
-		} else {
-			metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
-			metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
-		}
 
-		return nil, err
-	}
+	elapsedTime := time.Since(startTime).Milliseconds()
+	saveMetrics(elapsedTime, err)
 
-	metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
-	metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
-	return result, nil
+	return result, err
 }
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
@@ -194,6 +186,43 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	rs.inProgressCount++
 	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
 	return rs.renderAction(ctx, renderKey, opts)
+}
+
+func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+	startTime := time.Now()
+	result, err := rs.renderCSV(ctx, opts)
+
+	elapsedTime := time.Since(startTime).Milliseconds()
+	saveMetrics(elapsedTime, err)
+
+	return result, err
+}
+
+func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+	if rs.inProgressCount > opts.ConcurrentLimit {
+		return nil, ErrConcurrentLimitReached
+	}
+
+	if !rs.IsAvailable() {
+		return nil, ErrRenderUnavailable
+	}
+
+	rs.log.Info("Rendering", "path", opts.Path)
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rs.deleteRenderKey(renderKey)
+
+	defer func() {
+		rs.inProgressCount--
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	}()
+
+	rs.inProgressCount++
+	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 
 func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
@@ -290,4 +319,21 @@ func isoTimeOffsetToPosixTz(isoOffset string) string {
 		return strings.Replace(isoOffset, "UTC-", "UTC+", 1)
 	}
 	return isoOffset
+}
+
+func saveMetrics(elapsedTime int64, err error) {
+	if err == nil {
+		metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
+		metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
+
+		return
+	}
+
+	if errors.Is(err, ErrTimeout) {
+		metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
+		metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
+	} else {
+		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
+		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
+	}
 }
