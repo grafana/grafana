@@ -15,7 +15,7 @@ import {
   Select,
   HorizontalGroup,
   RadioButtonGroup,
-} from '@grafana/ui';
+} from '../index';
 
 export function addAxisConfig(
   builder: FieldConfigEditorBuilder<AxisConfig>,

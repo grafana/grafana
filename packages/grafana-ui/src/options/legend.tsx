@@ -1,5 +1,5 @@
 import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
-import { LegendDisplayMode, VizLegendOptions } from '@grafana/ui';
+import { LegendDisplayMode, VizLegendOptions } from '../index';
 
 export interface OptionsWithLegend {
   legend: VizLegendOptions;

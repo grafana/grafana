@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import { startCase } from 'lodash';
-import { FilterPill, HorizontalGroup } from '@grafana/ui';
+import { FilterPill, HorizontalGroup } from '../index';
 import { FieldConfigEditorBuilder, FieldConfigEditorProps } from '@grafana/data';
-import { HideableFieldConfig, HideSeriesConfig } from '@grafana/ui/src/components/uPlot/config';
+import { HideableFieldConfig, HideSeriesConfig } from '../components/uPlot/config';
 
 export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfig, {}>> = (props) => {
   const { value, onChange } = props;
@@ -16,7 +16,8 @@ export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfi
 
   return (
     <HorizontalGroup spacing="xs">
-      {Object.keys(value).map((key: keyof HideSeriesConfig) => {
+      {Object.keys(value).map((k) => {
+        const key = k as keyof HideSeriesConfig;
         return (
           <FilterPill
             icon={value[key] ? 'eye-slash' : 'eye'}
