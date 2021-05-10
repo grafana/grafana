@@ -65,7 +65,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({
   colWidth,
   showValue,
 }) => {
-  const builder = new UPlotConfigBuilder(timeZone as any);
+  const builder = new UPlotConfigBuilder(timeZone);
 
   const isDiscrete = (field: Field) => {
     const mode = field.config?.color?.mode;
