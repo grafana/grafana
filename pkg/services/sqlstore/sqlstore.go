@@ -74,10 +74,6 @@ func (ss *SQLStore) Register() {
 
 func (ss *SQLStore) Init() error {
 	ss.log = log.New("sqlstore")
-	if err := ss.readConfig(); err != nil {
-		return err
-	}
-
 	if err := ss.initEngine(); err != nil {
 		return errutil.Wrap("failed to connect to database", err)
 	}
@@ -206,6 +202,10 @@ func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
 }
 
 func (ss *SQLStore) buildConnectionString() (string, error) {
+	if err := ss.readConfig(); err != nil {
+		return "", err
+	}
+
 	cnnstr := ss.dbCfg.ConnectionString
 
 	// special case used by integration tests

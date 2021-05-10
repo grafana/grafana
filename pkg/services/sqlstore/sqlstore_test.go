@@ -4,6 +4,7 @@ package sqlstore
 
 import (
 	"errors"
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -71,7 +72,7 @@ var sqlStoreTestCases = []sqlStoreTest{
 	{
 		name:  "Invalid database URL",
 		dbURL: "://invalid.com/",
-		err:   errors.New("parse \"://invalid.com/\": missing protocol scheme"),
+		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
 	},
 }
 
@@ -80,12 +81,6 @@ func TestSQLConnectionString(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			sqlstore := &SQLStore{}
 			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase.dbType, testCase.dbHost, testCase.dbURL)
-			if err := sqlstore.readConfig(); err != nil {
-				require.Error(t, testCase.err)
-				require.Equal(t, testCase.err.Error(), err.Error())
-				return
-			}
-
 			connStr, err := sqlstore.buildConnectionString()
 			require.Equal(t, testCase.err, err)
 
