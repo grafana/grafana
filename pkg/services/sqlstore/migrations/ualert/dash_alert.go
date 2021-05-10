@@ -2,6 +2,7 @@ package ualert
 
 import (
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"time"
 )
 
@@ -21,8 +22,8 @@ type dashAlert struct {
 }
 
 var slurpDashSQL = `
-SELECT id, 
-	org_id, 
+SELECT id,
+	org_id,
 	dashboard_id,
 	panel_id,
 	org_id,
@@ -38,7 +39,7 @@ FROM
 // slurpDashAlerts loads all alerts from the alert database table into the
 // the dashAlert type.
 // Additionally it unmarshals the json settings for the alert into the
-// ParsedSettings property of the dash alert.
+// ParsedSettings property of the oldDash alert.
 func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	dashAlerts := []dashAlert{}
 	err := m.sess.SQL(slurpDashSQL).Find(&dashAlerts)
@@ -99,13 +100,16 @@ type conditionEvalJSON struct {
 	Type   string    `json:"type"` // e.g. "gt"
 }
 
-// slurpDashUIDs returns a map of [orgID, dashboardId] -> dashUID.
-func (m *migration) slurpDashUIDs() (map[[2]int64]string, error) {
-	dashIDs := []struct {
-		OrgID int64  `xorm:"org_id"`
-		ID    int64  `xorm:"id"`
-		UID   string `xorm:"uid"`
-	}{}
+type oldDash struct {
+	OrgID int64            `xorm:"org_id"`
+	ID    int64            `xorm:"id"`
+	UID   string           `xorm:"uid"`
+	Data  *simplejson.Json `xorm:"data"`
+}
+
+// slurpDash returns a map of [orgID, dashboardId] -> oldDash.
+func (m *migration) slurpDash() (map[[2]int64]oldDash, error) {
+	dashIDs := []oldDash{}
 
 	err := m.sess.SQL(`SELECT org_id, id, uid FROM dashboard`).Find(&dashIDs)
 
@@ -113,11 +117,11 @@ func (m *migration) slurpDashUIDs() (map[[2]int64]string, error) {
 		return nil, err
 	}
 
-	idToUID := make(map[[2]int64]string, len(dashIDs))
+	idToDash := make(map[[2]int64]oldDash, len(dashIDs))
 
 	for _, ds := range dashIDs {
-		idToUID[[2]int64{ds.OrgID, ds.ID}] = ds.UID
+		idToDash[[2]int64{ds.OrgID, ds.ID}] = ds
 	}
 
-	return idToUID, nil
+	return idToDash, nil
 }

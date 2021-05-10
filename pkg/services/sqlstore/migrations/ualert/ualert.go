@@ -1,11 +1,15 @@
 package ualert
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"xorm.io/xorm"
+
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const GENERAL_FOLDER = "General Alerting"
@@ -87,10 +91,29 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	// [orgID, dashboardId] -> dashUID
-	dashIDMap, err := m.slurpDashUIDs()
+	// [orgID, dashboardId] -> oldDash
+	dashIDMap, err := m.slurpDash()
 	if err != nil {
 		return err
+	}
+
+	// allChannels: channelUID -> channelConfig
+	allChannels, defaultChannel, err := m.getNotificationChannelMap()
+	if err != nil {
+		return err
+	}
+
+	amConfig := apimodels.PostableUserConfig{}
+
+	if defaultChannel != nil {
+		// Migration for the default route.
+		recv, route, err := m.makeReceiverAndRoute("default_route", []string{defaultChannel.Name}, allChannels)
+		if err != nil {
+			return err
+		}
+
+		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+		amConfig.AlertmanagerConfig.Config.Route = route
 	}
 
 	for _, da := range dashAlerts {
@@ -99,7 +122,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
+		oda := dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
+		da.DashboardUID = oda.UID
 
 		// get dashboard
 		dash := dashboard{}
@@ -194,6 +218,24 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
+		// Attach label for routing.
+		n, v := getLabelForRouteMatching(rule.Uid)
+		rule.Labels[n] = v
+
+		// Create receiver and route for this rule.
+		if allChannels != nil {
+			channelUids, err := getChannelUidsFromDashboard(oda, da.PanelId)
+			if err != nil {
+				return err
+			}
+			recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelUids, allChannels)
+			if err != nil {
+				return err
+			}
+			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+			amConfig.AlertmanagerConfig.Config.Route.Routes = append(amConfig.AlertmanagerConfig.Config.Route.Routes, route)
+		}
+
 		_, err = m.sess.Insert(rule)
 		if err != nil {
 			// TODO better error handling, if constraint
@@ -213,7 +255,21 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
-	return nil
+	if err := amConfig.EncryptSecureSettings(); err != nil {
+		return err
+	}
+	rawAmConfig, err := json.Marshal(&amConfig)
+	if err != nil {
+		return err
+	}
+
+	// TODO: should we apply the config here? Because Alertmanager can take upto 1 min to pick it up.
+	_, err = m.sess.Insert(models.AlertConfiguration{
+		AlertmanagerConfiguration: string(rawAmConfig),
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+	})
+
+	return err
 }
 
 type rmMigration struct {
