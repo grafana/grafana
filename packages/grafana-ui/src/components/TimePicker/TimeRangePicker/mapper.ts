@@ -56,7 +56,7 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
     return {
       from: 'now-6h',
       to: 'now',
-      display: `${formatToOptionDisplay({ value: 6, unit: 'h' })}`,
+      display: `Last ${formatToOptionDisplay({ value: 6, unit: 'h' })}`,
     };
   }
 
@@ -64,22 +64,33 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
     return {
       from: formatToOptionValue(from),
       to: 'now',
-      display: formatToOptionDisplay(from),
+      display: `Last ${formatToOptionDisplay(from)}`,
+    };
+  }
+
+  if (to.value > 0) {
+    return {
+      from: formatToOptionValue(from),
+      to: formatToOptionValue(to),
+      display: `Last ${formatToOptionDisplay(from)}, ${formatToOptionDisplay(to)} ago`,
     };
   }
 
   return {
     from: formatToOptionValue(from),
     to: formatToOptionValue(to),
-    display: `${formatToOptionDisplay(from)}, ${formatToOptionDisplay(to)}`,
+    display: `Last ${formatToOptionDisplay(from)}`,
   };
 };
 
 const formatToOptionDisplay = (value: rangeUtil.HighestUnitValue): string => {
-  const suffix = value.value > 0 ? 's' : '';
+  const suffix = value.value > 1 ? 's' : '';
   return `${value.value} ${displayUnits[value.unit]}${suffix}`;
 };
 
 const formatToOptionValue = (value: rangeUtil.HighestUnitValue): string => {
+  if (value.value <= 0) {
+    return 'now';
+  }
   return `now-${value.value}${value.unit}`;
 };
