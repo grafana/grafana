@@ -9,7 +9,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Label as PromLabel } from './Label';
 
 // Hard limit on labels to render
-const MAX_LABEL_COUNT = 100;
+const MAX_LABEL_COUNT = 10000;
 const MAX_VALUE_COUNT = 10000;
 const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
@@ -30,6 +30,7 @@ interface BrowserState {
   status: string;
   error: string;
   validationStatus: string;
+  valueSearchTerm: string;
 }
 
 interface FacettableValue {
@@ -86,7 +87,13 @@ export function facetLabels(
         // Values for this label have not been requested yet, let's use the facetted ones as the initial values
         existingValues = possibleValues.map((value) => ({ name: value, selected: selectedValues.has(value) }));
       }
-      return { ...label, loading: false, values: existingValues, facets: existingValues.length };
+      return {
+        ...label,
+        loading: false,
+        values: existingValues,
+        hidden: !possibleValues,
+        facets: existingValues.length,
+      };
     }
 
     // Label is facetted out, hide all values
@@ -172,6 +179,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     status: 'Ready',
     error: '',
     validationStatus: '',
+    valueSearchTerm: '',
   };
 
   onChangeLabelSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -180,6 +188,10 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
   onChangeMetricSearch = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ metricSearchTerm: event.target.value });
+  };
+
+  onChangeValueSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ valueSearchTerm: event.target.value });
   };
 
   onClickRunQuery = () => {
@@ -203,9 +215,19 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         hidden: false,
         facets: undefined,
       }));
-      return { labels, labelSearchTerm: '', metricSearchTerm: '', status: '', error: '', validationStatus: '' };
+      return {
+        labels,
+        labelSearchTerm: '',
+        metricSearchTerm: '',
+        status: '',
+        error: '',
+        validationStatus: '',
+        valueSearchTerm: '',
+      };
     });
     store.delete(LAST_USED_LABELS_KEY);
+    // Get metrics
+    this.fetchValues(METRIC_LABEL);
   };
 
   onClickLabel = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
@@ -247,7 +269,10 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     // Resetting search to prevent empty results
     this.setState({ metricSearchTerm: '' });
     // Toggling value for selected label, leaving other values intact
-    const values = label.values.map((v) => ({ ...v, selected: v.name === value ? !v.selected : v.selected }));
+    const values = label.values.map((v) => ({
+      ...v,
+      selected: v.name === value || v.selected ? !v.selected : v.selected,
+    }));
     // Toggle selected state of special metrics label
     const selected = values.some((v) => v.selected);
     this.updateLabelState(name, { selected, values }, '', () => this.doFacetting(name));
@@ -327,13 +352,13 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     if (selector === EMPTY_SELECTOR) {
       // Clear up facetting
       const labels: SelectableLabel[] = this.state.labels.map((label) => {
-        // Keeping metrics
-        const values = label.name === METRIC_LABEL ? label.values : undefined;
-        return { ...label, facets: 0, values, hidden: false };
+        return { ...label, facets: 0, values: undefined, hidden: false };
       });
       this.setState({ labels }, () => {
         // Get fresh set of values
-        this.state.labels.forEach((label) => label.selected && this.fetchValues(label.name));
+        this.state.labels.forEach(
+          (label) => (label.selected || label.name === METRIC_LABEL) && this.fetchValues(label.name)
+        );
       });
     } else {
       // Do facetting
@@ -390,26 +415,47 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
   render() {
     const { theme } = this.props;
-    const { labels, labelSearchTerm, metricSearchTerm, status, error, validationStatus } = this.state;
-    if (labels.length === 0) {
-      return <LoadingPlaceholder text="Loading labels..." />;
-    }
+    const { labels, labelSearchTerm, metricSearchTerm, status, error, validationStatus, valueSearchTerm } = this.state;
     const styles = getStyles(theme);
-    const metrics = labels.find((label) => label.name === METRIC_LABEL);
-    let selectedLabels = labels.filter((label) => label.selected && label.values);
+    if (labels.length === 0) {
+      return (
+        <div className={styles.wrapper}>
+          <LoadingPlaceholder text="Loading labels..." />
+        </div>
+      );
+    }
+
+    // Filter metrics
+    let metrics = labels.find((label) => label.name === METRIC_LABEL);
+    if (metrics && metricSearchTerm) {
+      // TODO extract from render() and debounce
+      metrics = {
+        ...metrics,
+        values: metrics.values?.filter((value) => value.selected || value.name.includes(metricSearchTerm)),
+      };
+    }
+
+    // Filter labels
+    let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
     if (labelSearchTerm) {
+      // TODO extract from render() and debounce
+      nonMetricLabels = nonMetricLabels.filter((label) => label.selected || label.name.includes(labelSearchTerm));
+    }
+
+    // Filter non-metric label values
+    let selectedLabels = nonMetricLabels.filter((label) => label.selected && label.values);
+    if (valueSearchTerm) {
       // TODO extract from render() and debounce
       selectedLabels = selectedLabels.map((label) => ({
         ...label,
-        values: label.values?.filter((value) => value.selected || value.name.includes(labelSearchTerm)),
+        values: label.values?.filter((value) => value.selected || value.name.includes(valueSearchTerm)),
       }));
     }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
-    const metricListHeight = selectedLabels.length > 0 ? 480 : 200;
     return (
       <div className={styles.wrapper}>
-        <HorizontalGroup align="flex-start">
+        <HorizontalGroup align="flex-start" spacing="lg">
           <div>
             <div className={styles.section}>
               <Label description="Which metric do you want to use?">1. Select metric to search in</Label>
@@ -422,11 +468,11 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
               <div role="list" className={styles.valueListWrapper}>
                 <FixedSizeList
-                  height={metricListHeight}
+                  height={550}
                   itemCount={metrics?.values?.length || 0}
                   itemSize={25}
                   itemKey={(i) => (metrics!.values as FacettableValue[])[i].name}
-                  width={200}
+                  width={300}
                   className={styles.valueList}
                 >
                   {({ index, style }) => {
@@ -456,8 +502,15 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               <Label description="Which labels would you like to consider for your search?">
                 2. Select labels to search in
               </Label>
+              <div>
+                <Input
+                  onChange={this.onChangeLabelSearch}
+                  aria-label="Filter expression for label"
+                  value={labelSearchTerm}
+                />
+              </div>
               <div className={styles.list}>
-                {labels.map((label) => (
+                {nonMetricLabels.map((label) => (
                   <PromLabel
                     key={label.name}
                     name={label.name}
@@ -466,6 +519,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                     hidden={label.hidden}
                     facets={label.facets}
                     onClick={this.onClickLabel}
+                    searchTerm={labelSearchTerm}
                   />
                 ))}
               </div>
@@ -476,9 +530,9 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </Label>
               <div>
                 <Input
-                  onChange={this.onChangeLabelSearch}
-                  aria-label="Filter expression for values"
-                  value={labelSearchTerm}
+                  onChange={this.onChangeValueSearch}
+                  aria-label="Filter expression for label values"
+                  value={valueSearchTerm}
                 />
               </div>
               <div className={styles.valueListArea}>
@@ -520,7 +574,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                               value={value?.name}
                               active={value?.selected}
                               onClick={this.onClickValue}
-                              searchTerm={labelSearchTerm}
+                              searchTerm={valueSearchTerm}
                             />
                           </div>
                         );

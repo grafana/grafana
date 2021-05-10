@@ -97,7 +97,7 @@ describe('facetLabels()', () => {
   });
 });
 
-describe('LokiLabelBrowser', () => {
+describe('PrometheusMetricsBrowser', () => {
   const setupProps = (): BrowserProps => {
     const mockLanguageProvider = {
       start: () => Promise.resolve(),
@@ -226,8 +226,8 @@ describe('LokiLabelBrowser', () => {
     await screen.findByLabelText('Values for label2');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(4);
     // Typing '1' to filter for values
-    userEvent.type(screen.getByLabelText('Filter expression for values'), '1');
-    expect(screen.getByLabelText('Filter expression for values')).toHaveValue('1');
+    userEvent.type(screen.getByLabelText('Filter expression for label values'), '1');
+    expect(screen.getByLabelText('Filter expression for label values')).toHaveValue('1');
     expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument();
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(3);
   });

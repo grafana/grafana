@@ -444,7 +444,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const params = this.datasource.getTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
-    const res = await this.request(url, params);
+    const res = await this.request(url, [], params);
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
     }
@@ -495,7 +495,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams();
     const params = { ...range, match };
-    return await this.request(url, params);
+    return await this.request(url, {}, params);
   };
 
   /**
