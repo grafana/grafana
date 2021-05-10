@@ -34,7 +34,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 			Alerts: []*apimodels.Alert{},
 		},
 	}
-	for _, alertState := range srv.manager.GetAll() {
+	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
@@ -89,7 +89,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
 
-		stateMap := srv.manager.GetStatesByRuleUID()
 		for _, rule := range alertRuleQuery.Result {
 			var queryStr string
 			encodedQuery, err := json.Marshal(rule.Data)
@@ -101,7 +100,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
-				Query:       queryStr, // TODO: don't escape <>& etc
+				Query:       queryStr,
 				Duration:    rule.For.Seconds(),
 				Annotations: rule.Annotations,
 			}
@@ -114,7 +113,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				LastEvaluation: time.Time{},
 			}
 
-			for _, alertState := range stateMap[rule.UID] {
+			for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 				activeAt := alertState.StartsAt
 				alert := &apimodels.Alert{
 					Labels:      map[string]string(alertState.Labels),
@@ -144,6 +143,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 					newRule.Health = "error"
 				case eval.NoData:
 					newRule.Health = "nodata"
+				}
+
+				if alertState.Error != nil {
+					newRule.LastError = alertState.Error.Error()
+					newRule.Health = "error"
 				}
 				alertingRule.Alerts = append(alertingRule.Alerts, alert)
 			}
