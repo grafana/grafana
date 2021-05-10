@@ -371,6 +371,9 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
+	if !hs.Cfg.MarketplaceAppEnabled {
+		return response.JSON(404, []byte{})
+	}
 	pluginID := c.Params("pluginId")
 
 	err := hs.PluginManager.Install(c.Req.Context(), pluginID, dto.Version)
@@ -387,6 +390,9 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 }
 
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
+	if !hs.Cfg.MarketplaceAppEnabled {
+		return response.JSON(404, []byte{})
+	}
 	pluginID := c.Params("pluginId")
 
 	err := hs.PluginManager.Uninstall(c.Req.Context(), pluginID)

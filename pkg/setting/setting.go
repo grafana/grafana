@@ -256,6 +256,7 @@ type Cfg struct {
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
 	MarketplaceURL           string
+	MarketplaceAppEnabled    bool
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -889,6 +890,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.MarketplaceAppEnabled = pluginsSection.Key("marketplace_app_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
