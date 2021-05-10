@@ -81,6 +81,7 @@ func TestSQLConnectionString(t *testing.T) {
 			sqlstore := &SQLStore{}
 			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase.dbType, testCase.dbHost, testCase.dbURL)
 			if err := sqlstore.readConfig(); err != nil {
+				require.Error(testCase.err)
 				require.Equal(t, testCase.err.Error(), err.Error())
 				return
 			}
@@ -96,22 +97,24 @@ func TestSQLConnectionString(t *testing.T) {
 }
 
 func makeSQLStoreTestConfig(t *testing.T, dbType, host, dbURL string) *setting.Cfg {
+	t.Helper()
+
 	cfg := setting.NewCfg()
 
 	sec, err := cfg.Raw.NewSection("database")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = sec.NewKey("type", dbType)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = sec.NewKey("host", host)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = sec.NewKey("url", dbURL)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = sec.NewKey("user", "user")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = sec.NewKey("name", "test_db")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = sec.NewKey("password", "pass")
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	return cfg
 }
