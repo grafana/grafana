@@ -371,7 +371,6 @@ func TestPluginManager_Installer(t *testing.T) {
 			})
 		})
 	})
-
 }
 
 type fakeBackendPluginManager struct {
