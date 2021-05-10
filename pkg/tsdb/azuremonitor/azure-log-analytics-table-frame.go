@@ -64,6 +64,7 @@ var converterMap = map[string]data.FieldConverter{
 	"guid":     stringConverter,
 	"timespan": stringConverter,
 	"dynamic":  stringConverter,
+	"object":   objectToStringConverter,
 	"datetime": timeConverter,
 	"int":      intConverter,
 	"long":     longConverter,
@@ -86,6 +87,26 @@ var stringConverter = data.FieldConverter{
 		}
 		as = &s
 		return as, nil
+	},
+}
+
+var objectToStringConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableString,
+	Converter: func(kustoValue interface{}) (interface{}, error) {
+		var output *string
+		if kustoValue == nil {
+			return output, nil
+		}
+
+		data, err := json.Marshal(kustoValue)
+		if err != nil {
+			fmt.Printf("failed to marshal column value: %s", err)
+		}
+
+		asString := string(data)
+		output = &asString
+
+		return output, nil
 	},
 }
 
