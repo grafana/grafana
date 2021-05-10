@@ -8,12 +8,12 @@ import {
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { Observable, throwError } from 'rxjs';
+import { merge, Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LokiOptions } from '../loki/types';
 import { transformTrace, transformTraceList } from './resultTransformer';
 
-export type TempoQueryType = 'search' | undefined;
+export type TempoQueryType = 'search' | 'traceId';
 
 export type TempoQuery = {
   query: string;
@@ -39,35 +39,55 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
-    // If there is a linked query, run that instead. This is used to provide a list of traces.
-    if (options.targets.some((t) => t.linkedQuery) && this.linkedDatasource) {
+    const subQueries: Array<Observable<DataQueryResponse>> = [];
+    const filteredTargets = options.targets.filter((target) => !target.hide);
+    const searchTargets = filteredTargets.filter((target) => target.queryType === 'search');
+    const traceTargets = filteredTargets.filter(
+      (target) => target.queryType === 'traceId' || target.queryType === undefined
+    );
+
+    // Run search queries on linked datasource
+    if (this.linkedDatasource && searchTargets.length > 0) {
       // Wrap linked query into a data request based on original request
-      const linkedQuery = options.targets.find((t) => t.linkedQuery)?.linkedQuery;
-      const linkedRequest: DataQueryRequest = { ...options, targets: [linkedQuery!] };
-      // Find trace matcher in derived fields of the linked datasource that's identical to this datasource
-      const settings: DataSourceInstanceSettings<LokiOptions> = ((this.linkedDatasource as unknown) as any)
-        .instanceSettings;
-      const traceLinkField = settings.jsonData.derivedFields?.find((field) => field.datasourceUid === this.uid);
-      if (!traceLinkField || !traceLinkField.matcherRegex) {
-        return throwError(
-          'No Loki datasource configured for search. Set up Derived Field for traces in a Loki datasource settings and link it to this Tempo datasource.'
+      const linkedRequest: DataQueryRequest = { ...options, targets: searchTargets.map((t) => t.linkedQuery!) };
+      // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
+      const settings: DataSourceInstanceSettings<LokiOptions> = (this.linkedDatasource as any).instanceSettings;
+      const traceLinkMatcher: string[] =
+        settings.jsonData.derivedFields
+          ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
+          .map((field) => field.matcherRegex) || [];
+      if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
+        subQueries.push(
+          throwError(
+            'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
+          )
+        );
+      } else {
+        subQueries.push(
+          (this.linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
+            map((response) =>
+              response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
+            )
+          )
         );
       }
-      return (this.linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
-        map((response) =>
-          response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkField.matcherRegex)
+    }
+
+    if (traceTargets.length > 0) {
+      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: traceTargets };
+      subQueries.push(
+        super.query(traceRequest).pipe(
+          map((response) => {
+            if (response.error) {
+              return response;
+            }
+            return transformTrace(response);
+          })
         )
       );
     }
 
-    return super.query(options).pipe(
-      map((response) => {
-        if (response.error) {
-          return response;
-        }
-        return transformTrace(response);
-      })
-    );
+    return merge(...subQueries);
   }
 
   async testDatasource(): Promise<any> {

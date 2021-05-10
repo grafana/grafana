@@ -5,7 +5,7 @@ export function createTableFrame(
   logsFrame: DataFrame,
   datasourceUid: string,
   datasourceName: string,
-  traceRegex: string
+  traceRegexs: string[]
 ): DataFrame {
   const tableFrame = new MutableDataFrame({
     fields: [
@@ -20,7 +20,7 @@ export function createTableFrame(
           displayNameFromDS: 'Trace ID',
           links: [
             {
-              title: 'Trace: ${__value.raw}',
+              title: 'Click to open trace ${__value.raw}',
               url: '',
               internal: {
                 datasourceUid,
@@ -43,31 +43,38 @@ export function createTableFrame(
     },
   });
 
-  if (!logsFrame) {
+  if (!logsFrame || traceRegexs.length === 0) {
     return tableFrame;
   }
 
   const timeField = logsFrame.fields.find((f) => f.type === FieldType.time);
 
   // Going through all string fields to look for trace IDs
-  logsFrame.fields.forEach((field) => {
+  for (let field of logsFrame.fields) {
+    let hasMatch = false;
     if (field.type === FieldType.string) {
       const values = field.values.toArray();
       for (let i = 0; i < values.length; i++) {
         const line = values[i];
         if (line) {
-          const match = (line as string).match(traceRegex);
-          if (match) {
-            const traceId = match[1];
-            const time = timeField ? timeField.values.get(i) : null;
-            tableFrame.fields[0].values.add(time);
-            tableFrame.fields[1].values.add(traceId);
-            tableFrame.fields[2].values.add(line);
+          for (let traceRegex of traceRegexs) {
+            const match = (line as string).match(traceRegex);
+            if (match) {
+              const traceId = match[1];
+              const time = timeField ? timeField.values.get(i) : null;
+              tableFrame.fields[0].values.add(time);
+              tableFrame.fields[1].values.add(traceId);
+              tableFrame.fields[2].values.add(line);
+              hasMatch = true;
+            }
           }
         }
       }
     }
-  });
+    if (hasMatch) {
+      break;
+    }
+  }
 
   return tableFrame;
 }
@@ -76,9 +83,9 @@ export function transformTraceList(
   response: DataQueryResponse,
   datasourceId: string,
   datasourceName: string,
-  traceRegex: string
+  traceRegexs: string[]
 ): DataQueryResponse {
-  const frame = createTableFrame(response.data[0], datasourceId, datasourceName, traceRegex);
+  const frame = createTableFrame(response.data[0], datasourceId, datasourceName, traceRegexs);
   response.data[0] = frame;
   return response;
 }

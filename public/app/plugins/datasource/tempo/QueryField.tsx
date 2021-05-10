@@ -8,13 +8,12 @@ import { LokiQueryField } from '../loki/components/LokiQueryField';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
 
 type Props = ExploreQueryFieldProps<TempoDatasource, TempoQuery>;
-
+const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 interface State {
   linkedDatasource?: DataSourceApi;
 }
 export class TempoQueryField extends React.PureComponent<Props, State> {
   state = {
-    linkedQueryField: undefined,
     linkedDatasource: undefined,
   };
   linkedQuery: DataQuery;
@@ -29,8 +28,6 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
     const tracesToLogsOptions: TraceToLogsOptions = datasource.tracesToLogs || {};
     const linkedDatasourceUid = tracesToLogsOptions.datasourceUid;
     if (linkedDatasourceUid) {
-      console.log('Loading linked datasource for Tempo', linkedDatasourceUid);
-
       const dsSrv = getDataSourceSrv();
       const linkedDatasource = await dsSrv.get(linkedDatasourceUid);
       this.setState({
@@ -49,7 +46,6 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   };
 
   onRunLinkedQuery = () => {
-    console.log('running query', this.linkedQuery);
     this.props.onRunQuery();
   };
 
@@ -66,9 +62,9 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
             <RadioButtonGroup<TempoQueryType>
               options={[
                 { value: 'search', label: 'Search' },
-                { value: undefined, label: 'TraceID' },
+                { value: 'traceId', label: 'TraceID' },
               ]}
-              value={query.queryType}
+              value={query.queryType || DEFAULT_QUERY_TYPE}
               onChange={(v) =>
                 onChange({
                   ...query,
@@ -96,7 +92,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
           </>
         )}
         {query.queryType === 'search' && !linkedDatasource && (
-          <div>Please set up a Traces-to-logs datasource in the datasource settings.</div>
+          <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>
         )}
         {query.queryType !== 'search' && (
           <LegacyForms.FormField
@@ -112,6 +108,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
                       onChange({
                         ...query,
                         query: e.currentTarget.value,
+                        queryType: 'traceId',
                         linkedQuery: undefined,
                       })
                     }

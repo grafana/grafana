@@ -25,10 +25,13 @@ describe('transformTraceList()', () => {
   });
 
   test('extracts traceIDs from log lines', () => {
-    const frame = createTableFrame(lokiDataFrame, 't1', 'tempo', 'traceID=(\\w+)');
+    const frame = createTableFrame(lokiDataFrame, 't1', 'tempo', ['traceID=(\\w+)', 'traceID=(\\w\\w)']);
     expect(frame.fields[0].name).toBe('Time');
     expect(frame.fields[0].values.get(0)).toBe('2020-02-12T15:05:15.265Z');
     expect(frame.fields[1].name).toBe('traceID');
     expect(frame.fields[1].values.get(0)).toBe('asdfa1234');
+    // Second match in new line
+    expect(frame.fields[0].values.get(1)).toBe('2020-02-12T15:05:15.265Z');
+    expect(frame.fields[1].values.get(1)).toBe('as');
   });
 });
