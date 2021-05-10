@@ -9,7 +9,7 @@ import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../rangeOptions';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
-import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from '../TimeRangePicker/mapper';
+import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from './mapper';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { InputState } from '../TimeRangePicker/TimeRangeForm';
