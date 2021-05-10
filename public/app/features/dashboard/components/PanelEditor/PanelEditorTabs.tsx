@@ -81,7 +81,7 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
     case PanelEditorTabId.Query:
       return panel.targets.length;
     case PanelEditorTabId.Alert:
-      return config.featureToggles.ngalert ? null : panel.alert ? 1 : 0;
+      return panel.alert ? 1 : 0;
     case PanelEditorTabId.Transform:
       const transformations = panel.getTransformations() ?? [];
       return transformations.length;

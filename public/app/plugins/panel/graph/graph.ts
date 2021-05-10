@@ -13,7 +13,7 @@ import { min as _min, max as _max, clone, find, isUndefined, map, toNumber, sort
 import { tickStep } from 'app/core/utils/ticks';
 import { coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
-import { DummyThresholdManager, ThresholdManager } from './threshold_manager';
+import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
@@ -63,7 +63,7 @@ class GraphElement {
   data: any[] = [];
   panelWidth: number;
   eventManager: EventManager;
-  thresholdManager: ThresholdManager;
+  thresholdManager?: ThresholdManager;
   timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
 
@@ -77,9 +77,7 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     // unified alerting does not support threshold for graphs, at least for now
-    if (config.featureToggles.ngalert) {
-      this.thresholdManager = new DummyThresholdManager(this.ctrl);
-    } else {
+    if (!config.featureToggles.ngalert) {
       this.thresholdManager = new ThresholdManager(this.ctrl);
     }
     this.timeRegionManager = new TimeRegionManager(this.ctrl);
@@ -384,8 +382,9 @@ class GraphElement {
       }
       msg.appendTo(this.elem);
     }
-
-    this.thresholdManager.draw(plot);
+    if (this.thresholdManager) {
+      this.thresholdManager.draw(plot);
+    }
     this.timeRegionManager.draw(plot);
   }
 
@@ -456,7 +455,9 @@ class GraphElement {
     }
 
     // give space to alert editing
-    this.thresholdManager.prepare(this.elem, this.data);
+    if (this.thresholdManager) {
+      this.thresholdManager.prepare(this.elem, this.data);
+    }
 
     // un-check dashes if lines are unchecked
     this.panel.dashes = this.panel.lines ? this.panel.dashes : false;
@@ -465,7 +466,9 @@ class GraphElement {
     const options: any = this.buildFlotOptions(this.panel);
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
-    this.thresholdManager.addFlotOptions(options, this.panel);
+    if (this.thresholdManager) {
+      this.thresholdManager.addFlotOptions(options, this.panel);
+    }
     this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
     this.sortedSeries = this.sortSeries(this.data, this.panel);
