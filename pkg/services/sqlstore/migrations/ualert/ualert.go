@@ -11,6 +11,10 @@ import (
 const GENERAL_FOLDER = "General Alerting"
 const DASHBOARD_FOLDER = "Migrated %s"
 
+// It used to track such folders created by this migration
+// during alert migration cleanup
+const FOLDER_CREATED_BY = -8
+
 var migTitle = "move dashboard alerts to unified alerting"
 
 type MigrationError struct {
@@ -212,6 +216,16 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 func (m *migration) clear() error {
 	_, err := m.sess.Exec("delete from alert_rule")
+	if err != nil {
+		return err
+	}
+
+	_, err = m.sess.Exec("delete from dashboard_acl where dashboard_id = (select id from dashboard where created_by = ?)", FOLDER_CREATED_BY)
+	if err != nil {
+		return err
+	}
+
+	_, err = m.sess.Exec("delete from dashboard where created_by = ?", FOLDER_CREATED_BY)
 	if err != nil {
 		return err
 	}
