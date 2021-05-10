@@ -1,9 +1,8 @@
 import React from 'react';
-import { withTheme2, UPlotConfigBuilder, GraphNG, GraphNGProps } from '@grafana/ui';
+import { PanelContext, PanelContextRoot, UPlotConfigBuilder, GraphNG, GraphNGProps } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
 import { BarValueVisibility, TimelineMode } from './types';
-import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 
 /**
  * @alpha
@@ -17,7 +16,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
 
 const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue'];
 
-export class UnthemedTimelineChart extends React.Component<TimelineProps> {
+export class TimelineChart extends React.Component<TimelineProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
@@ -48,6 +47,3 @@ export class UnthemedTimelineChart extends React.Component<TimelineProps> {
     );
   }
 }
-
-export const TimelineChart = withTheme2(UnthemedTimelineChart);
-TimelineChart.displayName = 'TimelineChart';
