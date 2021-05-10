@@ -375,9 +375,9 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 		}
 
 		for _, entry := range cmd.Result {
-			ruleForEntry, ok := ruleByUID[entry.RuleDefinitionUID]
+			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
-				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleDefinitionUID)
+				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
 				continue
 			}
 
@@ -387,7 +387,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 				sch.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
 			stateForEntry := &state.State{
-				AlertRuleUID:       entry.RuleDefinitionUID,
+				AlertRuleUID:       entry.RuleUID,
 				OrgID:              entry.RuleOrgID,
 				CacheId:            cacheId,
 				Labels:             lbs,
