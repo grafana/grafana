@@ -87,8 +87,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
-		rs.renderAction = rs.renderViaHttp
-		rs.renderCSVAction = rs.renderCSVViaHttp
+		rs.renderAction = rs.renderViaHTTP
+		rs.renderCSVAction = rs.renderCSVViaHTTP
 		<-ctx.Done()
 		return nil
 	}
@@ -171,7 +171,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
 		opts.DeviceScaleFactor = 1
 	}
-	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgID, opts.UserID, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
-	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgID, opts.UserID, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}

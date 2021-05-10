@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"mime"
 	"net"
 	"net/http"
@@ -12,8 +13,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var netTransport = &http.Transport{
@@ -28,18 +27,18 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
-func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	filePath, err := rs.getNewFilePath(RenderPNG)
 	if err != nil {
 		return nil, err
 	}
 
-	rendererUrl, err := url.Parse(rs.Cfg.RendererUrl)
+	rendererURL, err := url.Parse(rs.Cfg.RendererUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	queryParams := rendererUrl.Query()
+	queryParams := rendererURL.Query()
 	queryParams.Add("url", rs.getURL(opts.Path))
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("width", strconv.Itoa(opts.Width))
@@ -50,13 +49,13 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
 	queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
 
-	rendererUrl.RawQuery = queryParams.Encode()
+	rendererURL.RawQuery = queryParams.Encode()
 
 	// gives service some additional time to timeout and return possible errors.
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
-	resp, err := rs.doRequest(rendererUrl, opts.Headers, reqContext)
+	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +67,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 		}
 	}()
 
-	err = rs.readFileResponse(resp, filePath, ctx)
+	err = rs.readFileResponse(reqContext, resp, filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -76,18 +75,18 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	return &RenderResult{FilePath: filePath}, nil
 }
 
-func (rs *RenderingService) renderCSVViaHttp(ctx context.Context, renderKey string, opts CSVOpts) (*RenderCSVResult, error) {
+func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey string, opts CSVOpts) (*RenderCSVResult, error) {
 	filePath, err := rs.getNewFilePath(RenderPNG)
 	if err != nil {
 		return nil, err
 	}
 
-	rendererUrl, err := url.Parse(rs.Cfg.RendererUrl + "/csv")
+	rendererURL, err := url.Parse(rs.Cfg.RendererUrl + "/csv")
 	if err != nil {
 		return nil, err
 	}
 
-	queryParams := rendererUrl.Query()
+	queryParams := rendererURL.Query()
 	queryParams.Add("url", rs.getURL(opts.Path))
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("domain", rs.domain)
@@ -95,13 +94,13 @@ func (rs *RenderingService) renderCSVViaHttp(ctx context.Context, renderKey stri
 	queryParams.Add("encoding", opts.Encoding)
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
 
-	rendererUrl.RawQuery = queryParams.Encode()
+	rendererURL.RawQuery = queryParams.Encode()
 
 	// gives service some additional time to timeout and return possible errors.
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
-	resp, err := rs.doRequest(rendererUrl, opts.Headers, reqContext)
+	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +118,7 @@ func (rs *RenderingService) renderCSVViaHttp(ctx context.Context, renderKey stri
 		downloadFileName = params["filename"]
 	}
 
-	err = rs.readFileResponse(resp, filePath, reqContext)
+	err = rs.readFileResponse(reqContext, resp, filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -127,13 +126,13 @@ func (rs *RenderingService) renderCSVViaHttp(ctx context.Context, renderKey stri
 	return &RenderCSVResult{FilePath: filePath, FileName: downloadFileName}, nil
 }
 
-func (rs *RenderingService) doRequest(url *url.URL, headers map[string][]string, ctx context.Context) (*http.Response, error) {
+func (rs *RenderingService) doRequest(ctx context.Context, url *url.URL, headers map[string][]string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
 	for k, v := range headers {
 		req.Header[k] = v
 	}
@@ -152,7 +151,7 @@ func (rs *RenderingService) doRequest(url *url.URL, headers map[string][]string,
 	return resp, nil
 }
 
-func (rs *RenderingService) readFileResponse(resp *http.Response, filePath string, ctx context.Context) error {
+func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Response, filePath string) error {
 	// check for timeout first
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
@@ -172,7 +171,8 @@ func (rs *RenderingService) readFileResponse(resp *http.Response, filePath strin
 	}
 
 	defer func() {
-		if err := out.Close(); err != nil {
+		if err := out.Close(); err != nil && !errors.Is(err, fs.ErrClosed) {
+			// We already close the file explicitly in the non-error path, so shouldn't be a problem
 			rs.log.Warn("Failed to close file", "path", filePath, "err", err)
 		}
 	}()
@@ -187,6 +187,9 @@ func (rs *RenderingService) readFileResponse(resp *http.Response, filePath strin
 
 		rs.log.Error("Remote rendering request failed", "error", err)
 		return fmt.Errorf("remote rendering request failed: %w", err)
+	}
+	if err := out.Close(); err != nil {
+		return fmt.Errorf("failed to write to %q: %w", filePath, err)
 	}
 
 	return nil

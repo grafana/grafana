@@ -26,12 +26,12 @@ message RenderResponse {
 
 message RenderCSVRequest {
   string url = 1;
-  string filePath = 5;
-  string renderKey = 6;
-  string domain = 7;
-  int32 timeout = 8;
-  string timezone = 9;
-  map<string, StringList> headers = 10;
+  string filePath = 2;
+  string renderKey = 3;
+  string domain = 4;
+  int32 timeout = 5;
+  string timezone = 6;
+  map<string, StringList> headers = 7;
 }
 
 message RenderCSVResponse {

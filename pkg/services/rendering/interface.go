@@ -23,8 +23,8 @@ type Opts struct {
 	Width             int
 	Height            int
 	Timeout           time.Duration
-	OrgId             int64
-	UserId            int64
+	OrgID             int64
+	UserID            int64
 	OrgRole           models.RoleType
 	Path              string
 	Encoding          string
@@ -36,8 +36,8 @@ type Opts struct {
 
 type CSVOpts struct {
 	Timeout         time.Duration
-	OrgId           int64
-	UserId          int64
+	OrgID           int64
+	UserID          int64
 	OrgRole         models.RoleType
 	Path            string
 	Encoding        string
