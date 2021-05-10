@@ -190,6 +190,29 @@ describe('NodeGraph', () => {
     const nodes = await screen.findAllByLabelText(/Node: service:\d/);
     expect(nodes.length).toBe(3);
   });
+
+  it('can switch to grid layout', async () => {
+    render(
+      <NodeGraph
+        dataFrames={[
+          makeNodesDataFrame(3),
+          makeEdgesDataFrame([
+            [0, 1],
+            [1, 2],
+          ]),
+        ]}
+        getLinks={() => []}
+        nodeLimit={3}
+      />
+    );
+
+    const button = await screen.findByTitle(/Grid layout/);
+    userEvent.click(button);
+
+    await expectNodePositionCloseTo('service:0', { x: -180, y: -60 });
+    await expectNodePositionCloseTo('service:1', { x: -60, y: -60 });
+    await expectNodePositionCloseTo('service:2', { x: 60, y: -60 });
+  });
 });
 
 async function expectNodePositionCloseTo(node: string, pos: { x: number; y: number }) {
