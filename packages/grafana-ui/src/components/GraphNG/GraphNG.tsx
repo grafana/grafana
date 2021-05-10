@@ -1,14 +1,27 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, TimeRange, TimeZone } from '@grafana/data';
 import { Themeable2 } from '../../types';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { findMidPointYPosition, pluginLog, preparePlotData } from '../uPlot/utils';
+import {
+  DataFrame,
+  FieldMatcherID,
+  fieldMatchers,
+  FieldType,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { preparePlotFrame } from './utils';
-import { preparePlotData } from '../uPlot/utils';
-import { UPlotChart } from '../uPlot/Plot';
+
 import { VizLegendOptions } from '../VizLegend/models.gen';
+import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
+import { Subscription } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
+import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
+import { UPlotChart } from '../uPlot/Plot';
 
 /**
  * @internal -- not a public API
@@ -16,10 +29,10 @@ import { VizLayout } from '../VizLayout/VizLayout';
 export const FIXED_UNIT = '__fixed';
 
 export interface GraphNGProps extends Themeable2 {
-  width: number;
-  height: number;
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
+  width: number;
+  height: number;
   timeRange: TimeRange;
   timeZone: TimeZone;
   legend: VizLegendOptions;
@@ -55,9 +68,16 @@ export interface GraphNGState {
  * "Time as X" core component, expectes ascending x
  */
 export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+  private plotInstance: React.RefObject<uPlot>;
+
+  private subscription = new Subscription();
+
   constructor(props: GraphNGProps) {
     super(props);
     this.state = this.prepState(props);
+    this.plotInstance = React.createRef();
   }
 
   getTimeRange = () => this.props.timeRange;
@@ -74,19 +94,74 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
       }
     );
+    pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 
     if (alignedFrame) {
       state = {
         alignedFrame,
         alignedData: preparePlotData(alignedFrame, [FieldType.number]),
       };
+      pluginLog('GraphNG', false, 'data prepared', state.alignedData);
 
       if (withConfig) {
         state.config = props.prepConfig(alignedFrame, this.getTimeRange);
+        pluginLog('GraphNG', false, 'config prepared', state.config);
       }
     }
 
     return state;
+  }
+
+  componentDidMount() {
+    this.panelContext = this.context as PanelContext;
+    const { eventBus } = this.panelContext;
+
+    this.subscription.add(
+      eventBus
+        .getStream(LegacyGraphHoverEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: (evt) => {
+            const u = this.plotInstance?.current;
+            if (u) {
+              // Try finding left position on time axis
+              const left = u.valToPos(evt.payload.point.time, 'time');
+              let top;
+              if (left) {
+                // find midpoint between points at current idx
+                top = findMidPointYPosition(u, u.posToIdx(left));
+              }
+
+              if (!top || !left) {
+                return;
+              }
+
+              u.setCursor({
+                left,
+                top,
+              });
+            }
+          },
+        })
+    );
+
+    this.subscription.add(
+      eventBus
+        .getStream(LegacyGraphHoverClearEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: () => {
+            const u = this.plotInstance?.current;
+
+            if (u) {
+              u.setCursor({
+                left: -10,
+                top: -10,
+              });
+            }
+          },
+        })
+    );
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
@@ -107,11 +182,16 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);
+          pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
       }
 
       newState && this.setState(newState);
     }
+  }
+
+  componentWillUnmount() {
+    this.subscription.unsubscribe();
   }
 
   render() {
@@ -131,6 +211,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}
+            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
           >
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>
