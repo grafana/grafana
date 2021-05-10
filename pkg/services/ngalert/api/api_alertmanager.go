@@ -177,6 +177,11 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return response.Error(http.StatusForbidden, "Permission denied", nil)
 	}
+	err := body.EncryptSecureSettings()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to encrypt receiver secrets", err)
+	}
+
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to save and apply Alertmanager configuration", err)
 	}
