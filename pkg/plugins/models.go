@@ -101,6 +101,14 @@ func (e PluginInclude) GetSlugOrUid() string {
 	}
 }
 
+func (e PluginInclude) GetSlugOrUidLink() string {
+	if len(e.Uid) > 0 {
+		return "/d/" + e.Uid
+	} else {
+		return "/dashboard/db/" + e.Slug
+	}
+}
+
 type PluginDependencyItem struct {
 	Type    string `json:"type"`
 	Id      string `json:"id"`
