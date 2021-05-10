@@ -21,6 +21,14 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     ],
   };
 
+  model.children.push({
+    active: false,
+    icon: 'library-panel',
+    id: `folder-library-panels-${folder.uid}`,
+    text: 'Panels',
+    url: `${folder.url}/library-panels`,
+  });
+
   if (folder.canAdmin) {
     model.children.push({
       active: false,
@@ -40,14 +48,6 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       url: `${folder.url}/settings`,
     });
   }
-
-  model.children.push({
-    active: false,
-    icon: 'library-panel',
-    id: `folder-library-panels-${folder.uid}`,
-    text: 'Panels',
-    url: `${folder.url}/library-panels`,
-  });
 
   return model;
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	dboards "github.com/grafana/grafana/pkg/dashboards"
 
@@ -20,10 +20,77 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const UserInDbName = "user_in_db"
 const UserInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+
+func TestDeleteLibraryPanelsInFolder(t *testing.T) {
+	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			dashJSON := map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": int64(1),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id": int64(2),
+						"gridPos": map[string]interface{}{
+							"h": 6,
+							"w": 6,
+							"x": 6,
+							"y": 0,
+						},
+						"libraryPanel": map[string]interface{}{
+							"uid":  sc.initialResult.Result.UID,
+							"name": sc.initialResult.Result.Name,
+						},
+					},
+				},
+			}
+			dash := models.Dashboard{
+				Title: "Testing DeleteLibraryElementsInFolder",
+				Data:  simplejson.NewFromAny(dashJSON),
+			}
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			require.NoError(t, err)
+
+			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext, sc.folder.Uid)
+			require.EqualError(t, err, ErrFolderHasConnectedLibraryElements.Error())
+		})
+
+	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateVariableCommand(sc.folder.Id, "query0")
+			resp := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, resp.Status())
+
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var result libraryElementsSearch
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			require.NotNil(t, result.Result)
+			require.Equal(t, 2, len(result.Result.Elements))
+
+			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext, sc.folder.Uid)
+			require.NoError(t, err)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			require.NotNil(t, result.Result)
+			require.Equal(t, 0, len(result.Result.Elements))
+		})
+}
 
 type libraryElement struct {
 	ID          int64                  `json:"id"`

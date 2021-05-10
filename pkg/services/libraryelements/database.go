@@ -653,9 +653,9 @@ func (l *libraryElementServiceImpl) deleteLibraryElementsInFolderUID(c *models.R
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
 		}
-		sql := "SELECT lec.connection_id FROM library_panel AS lp"
-		sql += " INNER JOIN " + connectionTableName + " lpd on lp.id = lec.library_element_id"
-		sql += " WHERE lp.folder_id=? AND lp.org_id=?"
+		sql := "SELECT lec.connection_id FROM library_element AS le"
+		sql += " INNER JOIN " + connectionTableName + " AS lec on le.id = lec.library_element_id"
+		sql += " WHERE le.folder_id=? AND le.org_id=?"
 		err = session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&connectionIDs)
 		if err != nil {
 			return err
@@ -667,7 +667,7 @@ func (l *libraryElementServiceImpl) deleteLibraryElementsInFolderUID(c *models.R
 		var elementIDs []struct {
 			ID int64 `xorm:"id"`
 		}
-		err = session.SQL("SELECT id from library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId).Find(&elementIDs)
+		err = session.SQL("SELECT id from library_element WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId).Find(&elementIDs)
 		if err != nil {
 			return err
 		}
@@ -677,7 +677,7 @@ func (l *libraryElementServiceImpl) deleteLibraryElementsInFolderUID(c *models.R
 				return err
 			}
 		}
-		if _, err := session.Exec("DELETE FROM library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId); err != nil {
+		if _, err := session.Exec("DELETE FROM library_element WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId); err != nil {
 			return err
 		}
 
