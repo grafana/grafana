@@ -10,7 +10,10 @@ export interface Row {
   type: EntryType;
   typeLabel: string;
   location?: string;
-  hasChildren?: boolean;
   children?: Row[];
+
+  hasChildren?: boolean;
   isSelectable?: boolean;
+
+  isOpen?: boolean;
 }

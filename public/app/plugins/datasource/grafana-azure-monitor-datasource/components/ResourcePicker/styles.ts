@@ -10,13 +10,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.secondary,
   }),
 
+  row: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+
+    '&:last-of-type': {
+      borderBottomColor: theme.colors.border.medium,
+    },
+  }),
+
   cell: css({
     padding: theme.spacing(1, 0),
+    width: '25%',
 
-    'tr &:first-of-type': {
+    '&:first-of-type': {
+      width: '50%',
       padding: theme.spacing(1, 0, 1, 2),
     },
   }),
+
+  collapseButton: css({ margin: 0 }),
 });
 
 export default getStyles;
