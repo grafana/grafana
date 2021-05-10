@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { AlertTab } from './AlertTab';
-import { PanelAlertTab } from './unified/PanelAlertTab';
+import { PanelAlertTabContent } from './unified/PanelAlertTabContent';
 
 // route between unified and "old" alerting pages based on feature flag
 
-export default config.featureToggles.ngalert ? PanelAlertTab : AlertTab;
+export default config.featureToggles.ngalert ? PanelAlertTabContent : AlertTab;

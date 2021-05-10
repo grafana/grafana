@@ -5,7 +5,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { isCloudRulesSource } from '../../utils/datasource';
-import { Annotation } from '../Annotation';
+import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from '../DetailsField';
@@ -67,9 +67,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
             </DetailsField>
           )}
           {annotations.map(([key, value]) => (
-            <DetailsField key={key} label={key} horizontal={true}>
-              <Annotation annotationKey={key} value={value} />
-            </DetailsField>
+            <AnnotationDetailsField key={key} annotationKey={key} value={value} />
           ))}
         </div>
         <div className={styles.rightSide}>

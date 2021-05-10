@@ -10,6 +10,7 @@ import { PanelEditorQueries } from './PanelEditorQueries';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
+import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -39,6 +40,19 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
         {tabs.map((tab) => {
+          if (config.featureToggles.ngalert && tab.id === PanelEditorTabId.Alert) {
+            return (
+              <PanelAlertTab
+                key={tab.id}
+                label={tab.text}
+                active={tab.active}
+                onChangeTab={() => onChangeTab(tab)}
+                icon={tab.icon as IconName}
+                panel={panel}
+                dashboard={dashboard}
+              />
+            );
+          }
           return (
             <Tab
               key={tab.id}
