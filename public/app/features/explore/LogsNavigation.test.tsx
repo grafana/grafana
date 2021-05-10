@@ -59,18 +59,4 @@ describe('LogsNavigation', () => {
     setup();
     expect(screen.getByTestId('logsNavigationPages')).toBeInTheDocument();
   });
-
-  it('should render logs pages in correct order if normal order', () => {
-    const { container } = setup();
-    const expectedOrder = ['page1', 'page2'];
-    const elements = container.querySelectorAll('[data-testid=page1],[data-testid=page2]');
-    expect(Array.from(elements).map((el) => el.getAttribute('data-testid'))).toMatchObject(expectedOrder);
-  });
-
-  it('should render logs pages in correct order if flipped order', () => {
-    const { container } = setup({ logsSortOrder: LogsSortOrder.Ascending });
-    const expectedOrder = ['page2', 'page1'];
-    const elements = container.querySelectorAll('[data-testid=page1],[data-testid=page2]');
-    expect(Array.from(elements).map((el) => el.getAttribute('data-testid'))).toMatchObject(expectedOrder);
-  });
 });
