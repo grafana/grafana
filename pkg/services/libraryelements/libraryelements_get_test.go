@@ -72,20 +72,4 @@ func TestGetLibraryElement(t *testing.T) {
 			resp := sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
 		})
-
-	//scenarioWithPanel(t, "When an admin tries to get a library panel with 2 connected dashboards, it should succeed and return correct connected dashboards",
-	//	func(t *testing.T, sc scenarioContext) {
-	//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
-	//		resp := sc.service.connectHandler(sc.reqContext)
-	//		require.Equal(t, 200, resp.Status())
-	//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "2"})
-	//		resp = sc.service.connectHandler(sc.reqContext)
-	//		require.Equal(t, 200, resp.Status())
-	//
-	//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
-	//		resp = sc.service.getHandler(sc.reqContext)
-	//		require.Equal(t, 200, resp.Status())
-	//		var result = validateAndUnMarshalResponse(t, resp)
-	//		require.Equal(t, int64(2), result.Result.Meta.Connections)
-	//	})
 }

@@ -18,13 +18,6 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			//sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
-			//resp := sc.service.connectHandler(sc.reqContext)
-			//require.Equal(t, 200, resp.Status())
-			//sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "2"})
-			//resp = sc.service.connectHandler(sc.reqContext)
-			//require.Equal(t, 200, resp.Status())
-
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
 			cmd := patchLibraryElementCommand{
 				FolderID: newFolder.Id,

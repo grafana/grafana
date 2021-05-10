@@ -1209,30 +1209,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 			}
 		})
 
-	//scenarioWithPanel(t, "When an admin tries to get all library panels and two exist but only one is connected, it should succeed and return correct connected dashboards",
-	//	func(t *testing.T, sc scenarioContext) {
-	//		command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel2")
-	//		resp := sc.service.createHandler(sc.reqContext, command)
-	//		require.Equal(t, 200, resp.Status())
-	//		var result = validateAndUnMarshalResponse(t, resp)
-	//
-	//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": "1"})
-	//		resp = sc.service.connectHandler(sc.reqContext)
-	//		require.Equal(t, 200, resp.Status())
-	//		sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": "2"})
-	//		resp = sc.service.connectHandler(sc.reqContext)
-	//		require.Equal(t, 200, resp.Status())
-	//
-	//		resp = sc.service.getAllHandler(sc.reqContext)
-	//		require.Equal(t, 200, resp.Status())
-	//
-	//		var results libraryElementsSearch
-	//		err := json.Unmarshal(resp.Body(), &results)
-	//		require.NoError(t, err)
-	//		require.Equal(t, int64(0), results.Result.Elements[0].Meta.Connections)
-	//		require.Equal(t, int64(2), results.Result.Elements[1].Meta.Connections)
-	//	})
-
 	scenarioWithPanel(t, "When an admin tries to get all library panels in a different org, none should be returned",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)

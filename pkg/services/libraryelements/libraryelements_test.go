@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	dboards "github.com/grafana/grafana/pkg/dashboards"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
@@ -125,31 +127,29 @@ type folderACLItem struct {
 	permission models.PermissionType
 }
 
-//func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.SignedInUser, title string,
-//	folderID int64) *models.Dashboard {
-//	dash := models.NewDashboard(title)
-//	dash.FolderId = folderID
-//	dashItem := &dashboards.SaveDashboardDTO{
-//		Dashboard: dash,
-//		Message:   "",
-//		OrgId:     user.OrgId,
-//		User:      &user,
-//		Overwrite: false,
-//	}
-//	origUpdateAlerting := dashboards.UpdateAlerting
-//	t.Cleanup(func() {
-//		dashboards.UpdateAlerting = origUpdateAlerting
-//	})
-//	dashboards.UpdateAlerting = func(store dboards.Store, orgID int64, dashboard *models.Dashboard,
-//		user *models.SignedInUser) error {
-//		return nil
-//	}
-//
-//	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
-//	require.NoError(t, err)
-//
-//	return dashboard
-//}
+func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
+	dash.FolderId = folderID
+	dashItem := &dashboards.SaveDashboardDTO{
+		Dashboard: dash,
+		Message:   "",
+		OrgId:     user.OrgId,
+		User:      &user,
+		Overwrite: false,
+	}
+	origUpdateAlerting := dashboards.UpdateAlerting
+	t.Cleanup(func() {
+		dashboards.UpdateAlerting = origUpdateAlerting
+	})
+	dashboards.UpdateAlerting = func(store dboards.Store, orgID int64, dashboard *models.Dashboard,
+		user *models.SignedInUser) error {
+		return nil
+	}
+
+	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
+	require.NoError(t, err)
+
+	return dashboard
+}
 
 func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user models.SignedInUser,
 	items []folderACLItem) *models.Folder {

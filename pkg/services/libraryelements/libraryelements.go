@@ -42,6 +42,7 @@ func (l *LibraryElementService) IsEnabled() bool {
 	return l.Cfg.IsPanelLibraryEnabled()
 }
 
+// CreateElement creates a Library Element.
 func (l *LibraryElementService) CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
 	if !l.IsEnabled() {
 		return LibraryElementDTO{}, nil
@@ -50,6 +51,7 @@ func (l *LibraryElementService) CreateElement(c *models.ReqContext, cmd CreateLi
 	return l.createLibraryElement(c, cmd)
 }
 
+// GetElementsForDashboard gets all connected elements for a specific dashboard.
 func (l *LibraryElementService) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
 	if !l.IsEnabled() {
 		return map[string]LibraryElementDTO{}, nil
@@ -58,6 +60,7 @@ func (l *LibraryElementService) GetElementsForDashboard(c *models.ReqContext, da
 	return l.getElementsForDashboardID(c, dashboardID)
 }
 
+// ConnectElementsToDashboard connects elements to a specific dashboard.
 func (l *LibraryElementService) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
 	if !l.IsEnabled() {
 		return nil
@@ -66,6 +69,7 @@ func (l *LibraryElementService) ConnectElementsToDashboard(c *models.ReqContext,
 	return l.connectElementsToDashboardID(c, elementUIDs, dashboardID)
 }
 
+// DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
 func (l *LibraryElementService) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
 	if !l.IsEnabled() {
 		return nil
@@ -74,6 +78,7 @@ func (l *LibraryElementService) DisconnectElementsFromDashboard(c *models.ReqCon
 	return l.disconnectElementsFromDashboardID(c, dashboardID)
 }
 
+// DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
 	if !l.IsEnabled() {
 		return nil
