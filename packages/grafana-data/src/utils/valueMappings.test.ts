@@ -1,5 +1,5 @@
 import { getValueMappingResult, isNumeric } from './valueMappings';
-import { ValueMapping, MappingType } from '../types';
+import { ValueMapping, MappingType, NullToTextMatchType } from '../types';
 
 const testSet1: ValueMapping[] = [
   {
@@ -25,14 +25,14 @@ const testSet1: ValueMapping[] = [
   {
     type: MappingType.NullToText,
     options: {
-      match: 'null',
+      match: NullToTextMatchType.Null,
       result: { text: 'it is null' },
     },
   },
   {
     type: MappingType.NullToText,
     options: {
-      match: 'nan',
+      match: NullToTextMatchType.NaN,
       result: { text: 'it is nan' },
     },
   },
@@ -46,7 +46,7 @@ describe('Format value with value mappings', () => {
     expect(getValueMappingResult(valueMappings, value)).toBeNull();
   });
 
-  it('should return undefined with no matching valuemappings', () => {
+  it('should return null with no matching valuemappings', () => {
     const value = '100';
     expect(getValueMappingResult(testSet1, value)).toBeNull();
   });

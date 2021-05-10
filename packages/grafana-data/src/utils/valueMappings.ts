@@ -1,4 +1,4 @@
-import { ValueMapping, MappingType, ValueMappingResult } from '../types';
+import { ValueMapping, MappingType, ValueMappingResult, NullToTextMatchType } from '../types';
 
 type TimeSeriesValue = string | number | null;
 
@@ -41,13 +41,16 @@ export function getValueMappingResult(
 
         return vm.options.result;
       case MappingType.NullToText:
-        if (vm.options.match === 'null' && (value === null || value === undefined)) {
+        if (vm.options.match === NullToTextMatchType.Null && (value === null || value === undefined)) {
           return vm.options.result;
         }
-        if (vm.options.match === 'nan' && isNaN(value as number)) {
+        if (vm.options.match === NullToTextMatchType.NaN && isNaN(value as number)) {
           return vm.options.result;
         }
-        if (vm.options.match === 'null-nan' && (value === null || value === undefined || value === Number.NaN)) {
+        if (
+          vm.options.match === NullToTextMatchType.NullAndNaN &&
+          (value === null || value === undefined || value === Number.NaN)
+        ) {
           return vm.options.result;
         }
     }

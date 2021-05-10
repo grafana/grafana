@@ -10,6 +10,7 @@ import {
   DataLink,
   DataLinkBuiltInVars,
   MappingType,
+  NullToTextMatchType,
   PanelPlugin,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
@@ -918,7 +919,7 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
             newMappings.push({
               type: MappingType.NullToText,
               options: {
-                match: 'null',
+                match: NullToTextMatchType.Null,
                 result: { text: old.text },
               },
             });

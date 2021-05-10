@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Input } from '../Input/Input';
-import { GrafanaTheme2, MappingType, ValueMappingResult } from '@grafana/data';
+import { GrafanaTheme2, MappingType, NullToTextMatchType, SelectableValue, ValueMappingResult } from '@grafana/data';
 import { Draggable } from 'react-beautiful-dnd';
 import { Icon } from '../Icon/Icon';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
@@ -9,6 +9,7 @@ import { HorizontalGroup } from '../Layout/Layout';
 import { IconButton } from '../IconButton/IconButton';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
@@ -16,6 +17,7 @@ export interface ValueMappingEditRowModel {
   to?: number;
   key?: string;
   isNew?: boolean;
+  nullMatch?: NullToTextMatchType;
   result: ValueMappingResult;
 }
 
@@ -90,6 +92,18 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
     });
   };
 
+  const onChangeNullMatch = (value: NullToTextMatchType) => {
+    update((mapping) => {
+      mapping.nullMatch = value;
+    });
+  };
+
+  const nullMatchOptions: Array<SelectableValue<NullToTextMatchType>> = [
+    { label: 'Null', value: NullToTextMatchType.Null, description: 'Matches null and undefined values' },
+    { label: 'NaN', value: NullToTextMatchType.NaN, description: 'Matches against Number.NaN (not a number)' },
+    { label: 'Null + NaN', value: NullToTextMatchType.NullAndNaN, description: 'Matches null, undefined and NaN' },
+  ];
+
   return (
     <Draggable draggableId={`mapping-${index}`} index={index}>
       {(provided) => (
@@ -126,6 +140,14 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
                   prefix="To"
                 />
               </div>
+            )}
+            {mapping.type === MappingType.NullToText && (
+              <RadioButtonGroup
+                value={mapping.nullMatch}
+                options={nullMatchOptions}
+                onChange={onChangeNullMatch}
+                fullWidth
+              />
             )}
           </td>
           <td>

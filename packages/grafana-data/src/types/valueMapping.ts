@@ -30,8 +30,14 @@ export interface RangeMap extends BaseValueMap<RangeMapOptions> {
 }
 
 export interface NullToTextOptions {
-  match: 'null' | 'nan' | 'null-nan';
+  match: NullToTextMatchType;
   result: ValueMappingResult;
+}
+
+export enum NullToTextMatchType {
+  Null = 'null',
+  NaN = 'nan',
+  NullAndNaN = 'null+nan',
 }
 
 export interface NullToText extends BaseValueMap<NullToTextOptions> {

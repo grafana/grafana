@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { GrafanaTheme2, MappingType, ValueMapping } from '@grafana/data';
+import { GrafanaTheme2, MappingType, NullToTextMatchType, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 import { useStyles2 } from '../../themes';
@@ -38,6 +38,13 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
             result: mapping.options.result,
             from: mapping.options.from ?? 0,
             to: mapping.options.to ?? 0,
+          });
+          break;
+        case MappingType.NullToText:
+          editRows.push({
+            type: mapping.type,
+            result: mapping.options.result,
+            nullMatch: mapping.options.match ?? NullToTextMatchType.Null,
           });
       }
     }
@@ -91,6 +98,17 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
       {
         type: MappingType.RangeToText,
         isNew: true,
+        result: {},
+      },
+    ]);
+  };
+
+  const onAddNullToTextMap = () => {
+    updateRows([
+      ...rows,
+      {
+        type: MappingType.NullToText,
+        nullMatch: NullToTextMatchType.Null,
         result: {},
       },
     ]);
@@ -164,23 +182,22 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                   />
                 ))}
                 {provided.placeholder}
-                <tr>
-                  <td colSpan={6}>
-                    <HorizontalGroup>
-                      <Button variant="secondary" icon="plus" onClick={onAddValueMap} data-testid="add value map">
-                        Value map
-                      </Button>
-                      <Button variant="secondary" icon="plus" onClick={onAddRangeMap} data-testid="add range map">
-                        Range map
-                      </Button>
-                    </HorizontalGroup>
-                  </td>
-                </tr>
               </tbody>
             )}
           </Droppable>
         </DragDropContext>
       </table>
+      <HorizontalGroup>
+        <Button variant="secondary" icon="plus" onClick={onAddValueMap} data-testid="add value map">
+          Value map
+        </Button>
+        <Button variant="secondary" icon="plus" onClick={onAddRangeMap} data-testid="add range map">
+          Range map
+        </Button>
+        <Button variant="secondary" icon="plus" onClick={onAddNullToTextMap} data-testid="add null map">
+          Null map
+        </Button>
+      </HorizontalGroup>
       <Modal.ButtonRow>
         <Button variant="secondary" fill="outline" onClick={onClose}>
           Cancel
@@ -196,6 +213,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
 export const getStyles = (theme: GrafanaTheme2) => ({
   editTable: css({
     width: '100%',
+    marginBottom: theme.spacing(2),
 
     'thead tr': {},
 

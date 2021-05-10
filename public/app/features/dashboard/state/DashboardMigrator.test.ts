@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
+import { DataLinkBuiltInVars, MappingType, NullToTextMatchType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
@@ -1166,7 +1166,7 @@ describe('DashboardModel', () => {
         {
           type: MappingType.NullToText,
           options: {
-            match: 'null',
+            match: NullToTextMatchType.Null,
             result: { text: 'it is null' },
           },
         },
