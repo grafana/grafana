@@ -139,6 +139,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         display: flex;
         flex-grow: 1;
         flex-direction: column;
+        padding-right: ${theme.spacing(1)};
       }
       .track-vertical {
         border-radius: ${theme.shape.borderRadius(2)};
