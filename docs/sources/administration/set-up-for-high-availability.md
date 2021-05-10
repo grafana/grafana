@@ -26,4 +26,4 @@ Currently alerting supports a limited form of high availability. [Alert notifica
 
 ## User sessions
 
-Grafana uses auth token strategy with database by default. This means that a load balancer can send a user to any Grafana server without having to log in on each server. If you want to offload the login session data from the database, then you can configure [remote_cache]({{< relref "../administration/configuration.md" >}}#remote-cache).
+Grafana uses auth token strategy with database by default. This means that a load balancer can send a user to any Grafana server without having to log in on each server.
