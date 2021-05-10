@@ -1080,6 +1080,19 @@ describe('DashboardModel', () => {
             type: 'timeseries',
             fieldConfig: {
               defaults: {
+                thresholds: {
+                  mode: 'absolute',
+                  steps: [
+                    {
+                      color: 'green',
+                      value: null,
+                    },
+                    {
+                      color: 'red',
+                      value: 80,
+                    },
+                  ],
+                },
                 mappings: [
                   {
                     id: 0,
@@ -1143,8 +1156,8 @@ describe('DashboardModel', () => {
         {
           type: MappingType.ValueToText,
           options: {
-            down: { text: 'BAD' },
-            up: { text: '1' },
+            down: { text: 'BAD', color: undefined },
+            up: { text: '1', color: 'green' },
           },
         },
         {
@@ -1160,14 +1173,14 @@ describe('DashboardModel', () => {
           options: {
             from: 30,
             to: 100,
-            result: { text: '100' },
+            result: { text: '100', color: 'red' },
           },
         },
         {
           type: MappingType.NullToText,
           options: {
             match: 'null',
-            result: { text: 'it is null' },
+            result: { text: 'it is null', color: undefined },
           },
         },
       ]);

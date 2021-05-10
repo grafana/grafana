@@ -13,9 +13,11 @@ import {
   PanelPlugin,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  ThresholdsConfig,
   urlUtil,
   ValueMap,
   ValueMapping,
+  getActiveThreshold,
 } from '@grafana/data';
 // Constants
 import {
@@ -899,10 +901,10 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
     return;
   }
 
-  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings);
+  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings, fieldConfig.defaults.thresholds);
 }
 
-function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
+function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {
   if (!oldMappings) {
     return undefined;
   }
@@ -911,6 +913,16 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
   const newMappings: ValueMapping[] = [];
 
   for (const old of oldMappings) {
+    // Use the color we would have picked from thesholds
+    let color: string | undefined = undefined;
+    const numeric = parseFloat(old.text);
+    if (thresholds && !isNaN(numeric)) {
+      const level = getActiveThreshold(numeric, thresholds.steps);
+      if (level && level.color) {
+        color = level.color;
+      }
+    }
+
     switch (old.type) {
       case 1: // MappingType.ValueToText:
         if (old.value != null) {
@@ -919,12 +931,13 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
               type: MappingType.NullToText,
               options: {
                 match: 'null',
-                result: { text: old.text },
+                result: { text: old.text, color },
               },
             });
           } else {
             valueMaps.options[String(old.value)] = {
               text: old.text,
+              color,
             };
           }
         }
@@ -935,7 +948,7 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
           options: {
             from: +old.from,
             to: +old.to,
-            result: { text: old.text },
+            result: { text: old.text, color },
           },
         });
         break;
