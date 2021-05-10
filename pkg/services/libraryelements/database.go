@@ -28,7 +28,6 @@ FROM library_element AS le
 	LEFT JOIN user AS u1 ON le.created_by = u1.id
 	LEFT JOIN user AS u2 ON le.updated_by = u2.id
 `
-	sqlLibraryElementDTOWithMeta = selectLibraryElementDTOWithMeta + fromLibraryElementDTOWithMeta
 )
 
 func syncFieldsWithModel(libraryElement *LibraryElement) error {
@@ -540,9 +539,9 @@ func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, 
 			", coalesce(dashboard.title, 'General') AS folder_name" +
 			", coalesce(dashboard.uid, '') AS folder_uid" +
 			fromLibraryElementDTOWithMeta +
-			" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id AND dashboard.id=?" +
+			" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id" +
 			" INNER JOIN " + connectionTableName + " AS lce ON lce.library_element_id = le.id AND lce.connection_kind=1 AND lce.connection_id=?"
-		sess := session.SQL(sql, dashboardID, dashboardID)
+		sess := session.SQL(sql, dashboardID)
 		err := sess.Find(&libraryElements)
 		if err != nil {
 			return err
