@@ -208,11 +208,6 @@ func (am *Alertmanager) StopAndWait() error {
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
-	err := cfg.EncryptSecureSettings()
-	if err != nil {
-		return err
-	}
-
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
