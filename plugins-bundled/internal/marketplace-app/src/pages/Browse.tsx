@@ -27,7 +27,7 @@ export const Browse = ({ query, meta }: AppRootProps) => {
   };
 
   const onSearch = (q: any) => {
-    history.push({ query: { q } });
+    history.push({ query: { filterBy: null, q } });
   };
 
   const filteredPlugins = plugins.items
