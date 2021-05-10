@@ -6,7 +6,6 @@ import {
   getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
-  histogramBucketSizes,
 } from '@grafana/data';
 import {
   Themeable2,
@@ -16,12 +15,15 @@ import {
   VizLayout,
   AxisPlacement,
   ScaleDirection,
-  ScaleDistribution,
   ScaleOrientation,
 } from '@grafana/ui';
 
-import { histogramFrameBucketMaxFieldName } from '@grafana/data/src/transformations/transformers/histogram';
+import {
+  histogramBucketSizes,
+  histogramFrameBucketMaxFieldName,
+} from '@grafana/data/src/transformations/transformers/histogram';
 import { PanelOptions } from './models.gen';
+import { ScaleDistribution } from '@grafana/ui/src/components/uPlot/models.gen';
 
 export interface HistogramProps extends Themeable2 {
   options: PanelOptions; // used for diff
