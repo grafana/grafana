@@ -187,7 +187,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
           </Collapse>
           <div className={styles.container}>
             <Button type="submit">Save</Button>
-            <Button onClick={onCancel} type="reset" variant="secondary">
+            <Button onClick={onCancel} type="reset" variant="secondary" fill="outline">
               Cancel
             </Button>
           </div>

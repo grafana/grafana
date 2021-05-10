@@ -18,14 +18,6 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart } from './PieChart/PieChart';
-export {
-  PieChartType,
-  PieChartProps,
-  PieChartLabels,
-  PieChartLegendOptions,
-  PieChartLegendValues,
-} from './PieChart/types';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -105,7 +97,7 @@ export {
   usePanelContext,
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-export { VizLegendItem } from './VizLegend/types';
+export { VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
 export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 
@@ -247,6 +239,7 @@ export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
-export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
+export { GraphNGLegendEvent } from './GraphNG/types';
+export * from './PanelChrome/types';
 export * from './NodeGraph';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
