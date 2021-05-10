@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
+const (
 	selectLibraryElementDTOWithMeta = `
 SELECT DISTINCT
 	le.name, le.id, le.org_id, le.folder_id, le.uid, le.kind, le.type, le.description, le.model, le.created, le.created_by, le.updated, le.updated_by, le.version
