@@ -421,7 +421,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 		case "webhook":
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		default:
-			return nil, fmt.Errorf("nottifier %s is not supported", r.Type)
+			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}
 		if err != nil {
 			return nil, err
