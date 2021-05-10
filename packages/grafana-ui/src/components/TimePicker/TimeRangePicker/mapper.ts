@@ -38,33 +38,6 @@ export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRa
   };
 };
 
-export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOption => {
-  const fromWithUnit = rangeUtil.secondsToHms(range.from);
-  const toWithUnit = range.to > 0 ? rangeUtil.secondsToHms(range.to) : undefined;
-
-  return {
-    from: `now-${fromWithUnit}`,
-    to: !!toWithUnit ? `now-${toWithUnit}` : 'now',
-    display: formatRelativeWithUnit(fromWithUnit, toWithUnit),
-  };
-};
-
-const formatRelativeWithUnit = (fromWithUnit: string, toWithUnit: string | undefined) => {
-  const match = /^(\d*)([msywdh]|ms)$/g.exec(fromWithUnit);
-
-  if (!match) {
-    return '';
-  }
-
-  const [, amount, unit] = match;
-  const parsed = parseInt(amount, 10);
-
-  if (!isNaN(parsed)) {
-    return `Last ${amount} ${displayUnits[unit]}${parsed > 1 ? 's' : ''}`;
-  }
-  return `Last ${amount} ${displayUnits[unit]}`;
-};
-
 const displayUnits: Record<string, string> = {
   s: 'second',
   m: 'minute',
@@ -73,4 +46,40 @@ const displayUnits: Record<string, string> = {
   w: 'week',
   d: 'day',
   ms: 'millisecond',
+};
+
+export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOption => {
+  const from = rangeUtil.secondsToHighestUnit(range.from);
+  const to = rangeUtil.secondsToHighestUnit(range.to);
+
+  if (!from) {
+    return {
+      from: 'now-6h',
+      to: 'now',
+      display: `${formatToOptionDisplay({ value: 6, unit: 'h' })}`,
+    };
+  }
+
+  if (!to) {
+    return {
+      from: formatToOptionValue(from),
+      to: 'now',
+      display: formatToOptionDisplay(from),
+    };
+  }
+
+  return {
+    from: formatToOptionValue(from),
+    to: formatToOptionValue(to),
+    display: `${formatToOptionDisplay(from)}, ${formatToOptionDisplay(to)}`,
+  };
+};
+
+const formatToOptionDisplay = (value: rangeUtil.HighestUnitValue): string => {
+  const suffix = value.value > 0 ? 's' : '';
+  return `${value.value} ${displayUnits[value.unit]}${suffix}`;
+};
+
+const formatToOptionValue = (value: rangeUtil.HighestUnitValue): string => {
+  return `now-${value.value}${value.unit}`;
 };

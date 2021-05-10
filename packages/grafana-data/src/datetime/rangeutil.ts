@@ -214,33 +214,69 @@ export function isRelativeTimeRange(raw: RawTimeRange): boolean {
   return isRelativeTime(raw.from) || isRelativeTime(raw.to);
 }
 
-export function secondsToHms(seconds: number): string {
+export type HighestUnitValue = {
+  value: number;
+  unit: 'y' | 'd' | 'h' | 'm' | 's' | 'ms';
+};
+
+export function secondsToHighestUnit(seconds: number): HighestUnitValue | undefined {
   const numYears = Math.floor(seconds / 31536000);
   if (numYears) {
-    return numYears + 'y';
-  }
-  const numDays = Math.floor((seconds % 31536000) / 86400);
-  if (numDays) {
-    return numDays + 'd';
-  }
-  const numHours = Math.floor(((seconds % 31536000) % 86400) / 3600);
-  if (numHours) {
-    return numHours + 'h';
-  }
-  const numMinutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
-  if (numMinutes) {
-    return numMinutes + 'm';
-  }
-  const numSeconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
-  if (numSeconds) {
-    return numSeconds + 's';
-  }
-  const numMilliseconds = Math.floor(seconds * 1000.0);
-  if (numMilliseconds) {
-    return numMilliseconds + 'ms';
+    return {
+      value: numYears,
+      unit: 'y',
+    };
   }
 
-  return 'less than a millisecond'; //'just now' //or other string you like;
+  const numDays = Math.floor((seconds % 31536000) / 86400);
+  if (numDays) {
+    return {
+      value: numDays,
+      unit: 'd',
+    };
+  }
+
+  const numHours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+  if (numHours) {
+    return {
+      value: numHours,
+      unit: 'h',
+    };
+  }
+
+  const numMinutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+  if (numMinutes) {
+    return {
+      value: numMinutes,
+      unit: 'm',
+    };
+  }
+
+  const numSeconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
+  if (numSeconds) {
+    return {
+      value: numSeconds,
+      unit: 's',
+    };
+  }
+
+  const numMilliseconds = Math.floor(seconds * 1000.0);
+  if (numMilliseconds) {
+    return {
+      value: numMinutes,
+      unit: 'ms',
+    };
+  }
+
+  return; // less than a millisecond
+}
+
+export function secondsToHms(seconds: number): string {
+  const highestUnit = secondsToHighestUnit(seconds);
+  if (!highestUnit) {
+    return 'less than a millisecond';
+  }
+  return `${highestUnit.value}${highestUnit.unit}`;
 }
 
 // Format timeSpan (in sec) to string used in log's meta info
