@@ -63,6 +63,9 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*cue/**/*.cue": [
+      "cue fmt --simplify"
     ]
   },
   "devDependencies": {
