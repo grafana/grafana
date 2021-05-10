@@ -72,7 +72,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     const { gridPos } = panel;
 
     const newPanel: Partial<PanelModel> = {
-      type: 'graph',
+      type: 'timeseries',
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
@@ -141,12 +141,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
-        <LibraryPanelsSearch
-          onClick={onAddLibraryPanel}
-          perPage={40}
-          variant={LibraryPanelsSearchVariant.Tight}
-          showFilter
-        />
+        <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>

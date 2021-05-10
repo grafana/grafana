@@ -1,6 +1,6 @@
 import { Icon } from '@grafana/ui';
 import { cx, css } from '@emotion/css';
-import React, { FunctionComponent, ComponentProps, ButtonHTMLAttributes } from 'react';
+import React, { ComponentProps, ButtonHTMLAttributes } from 'react';
 
 const SROnly = css`
   clip: rect(0 0 0 0);
@@ -19,13 +19,13 @@ interface Props {
   label: string;
 }
 
-export const IconButton: FunctionComponent<Props & ButtonHTMLAttributes<HTMLButtonElement>> = ({
+export const IconButton = ({
   iconName,
   onClick,
   className,
   label,
   ...buttonProps
-}) => (
+}: Props & ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button className={cx('gf-form-label gf-form-label--btn query-part', className)} onClick={onClick} {...buttonProps}>
     <span className={SROnly}>{label}</span>
     <Icon name={iconName} aria-hidden="true" />
