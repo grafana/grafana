@@ -256,7 +256,7 @@ func (c *PostableUserConfig) EncryptSecureSettings() error {
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}
-					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString([]byte(encryptedData))
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
 			}
 		default:
