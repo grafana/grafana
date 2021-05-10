@@ -115,7 +115,7 @@ type GetOrgUsersQuery struct {
 }
 
 type SearchOrgUsersQuery struct {
-	OrgId int64
+	OrgID int64
 	Query string
 	Page  int
 	Limit int
