@@ -123,7 +123,6 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add index rule_org_id, current_state on alert_instance", migrator.NewAddIndexMigration(alertInstance, &migrator.Index{
 		Cols: []string{"rule_org_id", "current_state"}, Type: migrator.IndexType,
 	}))
-
 }
 
 func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
