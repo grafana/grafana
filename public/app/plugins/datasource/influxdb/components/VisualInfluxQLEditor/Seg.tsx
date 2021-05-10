@@ -27,7 +27,7 @@ type Props = {
   buttonClassName?: string;
   loadOptions?: LoadOptions;
   // if filterByLoadOptions is false,
-  // loadOptions si only executed once,
+  // loadOptions is only executed once,
   // when the select-box opens,
   // and as you write, the list gets filtered
   // by the select-box.
