@@ -31,5 +31,4 @@ func (hs *HTTPServer) GetPanelJsonSchema(c *models.ReqContext) response.Response
 		}
 	}
 	return response.JSON(200, dsSchema)
-
 }

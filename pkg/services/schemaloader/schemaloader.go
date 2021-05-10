@@ -77,12 +77,14 @@ func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*
 }
 
 func (rs *SchemaLoaderService) GetJsonSchema(fn string) (*simplejson.Json, error) {
-	requestedFilePath := filepath.Join("pkg", "services", "schemaloader", "data", fn)
-	jsonFile, err := os.Open(requestedFilePath)
+	requestedFilePath := filepath.Join(rs.Cfg.StaticRootPath, "jsonschemas", fn)
+	jsonFile, err := os.Open(filepath.Clean(requestedFilePath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load file %q, file doesn't exist", fn)
 	}
-	defer jsonFile.Close()
+	defer func() {
+		_ = jsonFile.Close()
+	}()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	reJSchema, err := simplejson.NewJson(byteValue)
 	if err != nil {

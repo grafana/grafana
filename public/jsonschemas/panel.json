@@ -1,0 +1,202 @@
+{
+  "schemas": {
+    "Panel": {
+      "type": "object",
+      "required": ["type", "transparent", "repeatDirection", "options", "fieldConfig"],
+      "properties": {
+        "type": {
+          "description": "The panel plugin type id.",
+          "type": "string"
+        },
+        "panelSchema": {
+          "description": "Internal - the exact major and minor versions of the panel plugin\nschema. Hidden and therefore not a part of the data model, but\nexpected to be filled with panel plugin schema versions so that it's\npossible to figure out which schema version matched on a successful\nunification.\n_pv: { maj: int, min: int }\nThe major and minor versions of the panel plugin for this schema.\nTODO 2-tuple list instead of struct?",
+          "type": "object",
+          "required": ["maj", "min"],
+          "properties": {
+            "maj": {
+              "type": "number"
+            },
+            "min": {
+              "type": "number"
+            }
+          }
+        },
+        "title": {
+          "description": "Panel title.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description.",
+          "type": "string"
+        },
+        "transparent": {
+          "description": "Whether to display the panel without a background.",
+          "type": "boolean",
+          "default": false
+        },
+        "datasource": {
+          "description": "Name of default datasource.",
+          "type": "string"
+        },
+        "gridPos": {
+          "description": "Grid position.",
+          "type": "object",
+          "required": ["h", "w", "x", "y"],
+          "properties": {
+            "h": {
+              "description": "Panel",
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "default": 9
+            },
+            "w": {
+              "description": "Panel",
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "maximum": 24,
+              "default": 12
+            },
+            "x": {
+              "description": "Panel x",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 24,
+              "exclusiveMaximum": true,
+              "default": 0
+            },
+            "y": {
+              "description": "Panel y",
+              "type": "number",
+              "minimum": 0,
+              "default": 0
+            },
+            "static": {
+              "description": "true if fixed",
+              "type": "boolean"
+            }
+          }
+        },
+        "repeat": {
+          "description": "Panel links.\nlinks?: [..._panelLink]\nName of template variable to repeat for.",
+          "type": "string"
+        },
+        "repeatDirection": {
+          "description": "Direction to repeat in if 'repeat' is set.\n\"h\" for horizontal, \"v\" for vertical.",
+          "type": "string",
+          "enum": ["h", "v"],
+          "default": "h"
+        },
+        "targets": {
+          "description": "Schema for panel targets is specified by datasource\nplugins. We use a placeholder definition, which the Go\nschema loader either left open/as-is with the Base\nvariant of the Dashboard and Panel families, or filled\nwith types derived from plugins in the Instance variant.\nWhen working directly from CUE, importers can extend this\ntype directly to achieve the same effect.",
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "options": {
+          "description": "The values depend on panel type",
+          "type": "object"
+        },
+        "fieldConfig": {
+          "type": "object",
+          "required": ["defaults", "overrides"],
+          "properties": {
+            "defaults": {
+              "type": "object",
+              "properties": {
+                "displayName": {
+                  "description": "The display value for this field.  This supports template variables blank is auto",
+                  "type": "string"
+                },
+                "displayNameFromDS": {
+                  "description": "This can be used by data sources that return and explicit naming structure for values and labels\nWhen this property is configured, this value is used rather than the default naming strategy.",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "Human readable field metadata",
+                  "type": "string"
+                },
+                "path": {
+                  "description": "An explict path to the field in the datasource.  When the frame meta includes a path,\nThis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used to update the results",
+                  "type": "string"
+                },
+                "writeable": {
+                  "description": "True if data source can write a value to the path.  Auth/authz are supported separately",
+                  "type": "boolean"
+                },
+                "filterable": {
+                  "description": "True if data source field supports ad-hoc filters",
+                  "type": "boolean"
+                },
+                "unit": {
+                  "description": "Numeric Options",
+                  "type": "string"
+                },
+                "decimals": {
+                  "description": "Significant digits (for display)",
+                  "type": "number"
+                },
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "links": {
+                  "description": "// The behavior when clicking on a result",
+                  "type": "array",
+                  "items": {}
+                },
+                "noValue": {
+                  "description": "Alternative to empty string",
+                  "type": "string"
+                },
+                "custom": {
+                  "description": "Can always exist. Valid fields within this are\ndefined by the panel plugin - that's the\nPanelFieldConfig that comes from the plugin.",
+                  "type": "object"
+                }
+              }
+            },
+            "overrides": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["matcher", "properties"],
+                "properties": {
+                  "matcher": {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "default": ""
+                      },
+                      "options": {}
+                    }
+                  },
+                  "properties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["id"],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "default": ""
+                        },
+                        "value": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-04/schema#"
+}
