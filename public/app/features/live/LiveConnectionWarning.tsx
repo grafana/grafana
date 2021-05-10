@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
-import { stylesFactory } from '@grafana/ui';
+import { Alert, stylesFactory } from '@grafana/ui';
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -13,7 +13,7 @@ export interface State {
 
 export class LiveConnectionWarning extends PureComponent<Props, State> {
   subscription?: Unsubscribable;
-  styles = getStyle(config.theme);
+  styles = getStyle(config.theme2);
   state: State = {};
 
   componentDidMount() {
@@ -43,29 +43,37 @@ export class LiveConnectionWarning extends PureComponent<Props, State> {
 
   render() {
     const { show } = this.state;
-    if (window.location.pathname === '/login') {
-      return null; // do not show the warning while logging int
-    }
-
     if (show) {
-      return <div className={this.styles.corner} title="The server is disconnected" />;
+      if (!(window as any).grafanaBootData?.user?.isSignedIn) {
+        return null; // do not show the warning for anonomous users (and /login page etc)
+      }
+
+      return (
+        <div className={this.styles.foot}>
+          <Alert severity={'warning'} className={this.styles.warn} title="connection to server is lost..." />
+        </div>
+      );
     }
     return null;
   }
 }
 
-const getStyle = stylesFactory((theme: GrafanaTheme) => {
+const getStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    corner: css`
-      position: fixed;
-      top: 0px !important;
-      left: 0px !important;
-      width: 0;
-      height: 0;
-      border-top: 60px solid ${theme.palette.brandWarning};
-      border-right: 60px solid transparent;
+    foot: css`
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      right: 0px;
       z-index: 10000;
       cursor: wait;
+      margin: 16px;
+    `,
+    warn: css`
+      border: 2px solid ${theme.colors.warning.main};
+      max-width: 400px;
+      margin: auto;
+      height: 3em;
     `,
   };
 });
