@@ -373,7 +373,7 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
 	pluginID := c.Params("pluginId")
 
-	err := hs.PluginManager.Install(pluginID, dto.Version)
+	err := hs.PluginManager.Install(c.Req.Context(), pluginID, dto.Version)
 	if err != nil {
 		var dupeErr plugins.DuplicatePluginError
 		if errors.As(err, &dupeErr) {
@@ -389,7 +389,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
 
-	err := hs.PluginManager.Uninstall(pluginID)
+	err := hs.PluginManager.Uninstall(c.Req.Context(), pluginID)
 	if err != nil {
 		var notFoundErr plugins.PluginNotFoundError
 		if errors.As(err, &notFoundErr) {

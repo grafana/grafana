@@ -57,9 +57,9 @@ type Manager interface {
 	// IsAppInstalled returns whether an app is installed.
 	IsAppInstalled(id string) bool
 	// Install installs a plugin.
-	Install(pluginID, version string) error
+	Install(ctx context.Context, pluginID, version string) error
 	// Uninstall uninstalls a plugin.
-	Uninstall(pluginID string) error
+	Uninstall(ctx context.Context, pluginID string) error
 }
 
 type ImportDashboardInput struct {
@@ -78,9 +78,9 @@ type DataRequestHandler interface {
 type PluginInstaller interface {
 	// Install finds the plugin given the provided information
 	// and installs in the provided plugins directory.
-	Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
+	Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
-	Uninstall(pluginID, pluginPath string) error
+	Uninstall(ctx context.Context, pluginID, pluginPath string) error
 }
 
 type PluginInstallerLogger interface {

@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
@@ -67,7 +68,7 @@ func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstall
 
 // Install downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
-func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
 	var checksum string
@@ -145,7 +146,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Infof("Fetching %s dependencies...", res.ID)
-		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
+		if err := i.Install(ctx, dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
 			return errutil.Wrapf(err, "failed to install plugin %s", dep.ID)
 		}
 	}
@@ -154,7 +155,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 }
 
 // Uninstall removes the specified plugin from the provided plugins directory.
-func (i *Installer) Uninstall(pluginID, pluginPath string) error {
+func (i *Installer) Uninstall(ctx context.Context, pluginID, pluginPath string) error {
 	pluginDir := filepath.Join(pluginPath, pluginID)
 
 	// verify it's a plugin directory

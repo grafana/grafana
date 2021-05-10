@@ -373,7 +373,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 				delete(scanner.plugins, scannedPluginPath)
 			} else {
 				// remove existing installation of plugin
-				err := pm.Uninstall(existing.Id)
+				err := pm.Uninstall(context.Background(), existing.Id)
 				if err != nil {
 					return err
 				}
@@ -462,7 +462,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	}
 
 	if len(scanner.errors) > 0 {
-		pm.log.Warn("Some plugins failed to load", "errors", scanner.errors)
+		pm.log.Warn("Some plugin scanning errors were found", "errors", scanner.errors)
 		pm.scanningErrors = scanner.errors
 	}
 
@@ -775,7 +775,7 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	return pm.staticRoutes
 }
 
-func (pm *PluginManager) Install(pluginID, version string) error {
+func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
 	plugin := pm.GetPlugin(pluginID)
 	if plugin != nil && plugin.Info.Version == version {
 		return plugins.DuplicatePluginError{
@@ -784,7 +784,7 @@ func (pm *PluginManager) Install(pluginID, version string) error {
 		}
 	}
 
-	err := pm.pluginInstaller.Install(pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
+	err := pm.pluginInstaller.Install(ctx, pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
 	if err != nil {
 		return err
 	}
@@ -797,14 +797,14 @@ func (pm *PluginManager) Install(pluginID, version string) error {
 	return nil
 }
 
-func (pm *PluginManager) Uninstall(pluginID string) error {
+func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
 	plugin := pm.GetPlugin(pluginID)
 	if plugin == nil {
 		return plugins.PluginNotFoundError{PluginID: pluginID}
 	}
 
 	if pm.BackendPluginManager.Registered(pluginID) {
-		err := pm.BackendPluginManager.UnregisterAndStop(pluginID)
+		err := pm.BackendPluginManager.UnregisterAndStop(ctx, pluginID)
 		if err != nil {
 			return err
 		}
@@ -815,7 +815,7 @@ func (pm *PluginManager) Uninstall(pluginID string) error {
 		return err
 	}
 
-	return pm.pluginInstaller.Uninstall(pluginID, pm.Cfg.PluginsPath)
+	return pm.pluginInstaller.Uninstall(ctx, pluginID, pm.Cfg.PluginsPath)
 }
 
 func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {

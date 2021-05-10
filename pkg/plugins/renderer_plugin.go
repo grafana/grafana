@@ -36,7 +36,7 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase,
 		OnLegacyStart: r.onLegacyPluginStart,
 		OnStart:       r.onPluginStart,
 	})
-	if err := backendPluginManager.RegisterAndStart(r.Id, factory); err != nil {
+	if err := backendPluginManager.RegisterAndStart(context.Background(), r.Id, factory); err != nil {
 		return nil, errutil.Wrapf(err, "failed to register backend plugin")
 	}
 

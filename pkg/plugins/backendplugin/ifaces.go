@@ -11,9 +11,9 @@ import (
 // Manager manages backend plugins.
 type Manager interface {
 	// RegisterAndStart registers and starts a backend plugin
-	RegisterAndStart(pluginID string, factory PluginFactoryFunc) error
+	RegisterAndStart(ctx context.Context, pluginID string, factory PluginFactoryFunc) error
 	// UnregisterAndStop unregisters and stops a backend plugin
-	UnregisterAndStop(pluginID string) error
+	UnregisterAndStop(ctx context.Context, pluginID string) error
 	// Registered checks if a plugin is registered with the manager
 	Registered(pluginID string) bool
 	// StartPlugin starts a non-managed backend plugin

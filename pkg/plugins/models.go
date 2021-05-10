@@ -18,7 +18,7 @@ type PluginNotFoundError struct {
 }
 
 func (e PluginNotFoundError) Error() string {
-	return fmt.Sprintf("plugin with ID %q not found", e.PluginID)
+	return fmt.Sprintf("plugin with ID %s not found", e.PluginID)
 }
 
 type DuplicatePluginError struct {
@@ -27,7 +27,7 @@ type DuplicatePluginError struct {
 }
 
 func (e DuplicatePluginError) Error() string {
-	return fmt.Sprintf("plugin with ID %q already exists in %q", e.PluginID, e.ExistingPluginDir)
+	return fmt.Sprintf("plugin with ID %s already exists in %s", e.PluginID, e.ExistingPluginDir)
 }
 
 func (e DuplicatePluginError) Is(err error) bool {

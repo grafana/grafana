@@ -53,7 +53,7 @@ func (m *manager) Run(ctx context.Context) error {
 }
 
 // RegisterAndStart registers and starts a backend plugin
-func (m *manager) RegisterAndStart(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -93,13 +93,13 @@ func (m *manager) RegisterAndStart(pluginID string, factory backendplugin.Plugin
 	m.plugins[pluginID] = plugin
 	m.logger.Debug("Backend plugin registered", "pluginId", pluginID)
 
-	m.start(context.Background(), plugin)
+	m.start(ctx, plugin)
 
 	return nil
 }
 
 // UnregisterAndStop unregisters and stops a backend plugin
-func (m *manager) UnregisterAndStop(pluginID string) error {
+func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error {
 	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -114,7 +114,7 @@ func (m *manager) UnregisterAndStop(pluginID string) error {
 		return err
 	}
 
-	if err := p.Stop(context.Background()); err != nil {
+	if err := p.Stop(ctx); err != nil {
 		return err
 	}
 

@@ -310,7 +310,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		pluginID := "test"
 		pluginFolder := pm.Cfg.PluginsPath + "/plugin"
 
-		err = pm.Install(pluginID, "1.0.0")
+		err = pm.Install(context.Background(), pluginID, "1.0.0")
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, installer.installCount)
@@ -345,7 +345,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Equal(t, pluginFolder, pm.StaticRoutes()[0].Directory)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Install(pluginID, "1.0.0")
+			err := pm.Install(context.Background(), pluginID, "1.0.0")
 			require.Equal(t, plugins.DuplicatePluginError{
 				PluginID:          pluginID,
 				ExistingPluginDir: pluginFolder,
@@ -353,7 +353,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		})
 
 		t.Run("Uninstall base case", func(t *testing.T) {
-			err := pm.Uninstall(pluginID)
+			err := pm.Uninstall(context.Background(), pluginID)
 			require.NoError(t, err)
 
 			assert.Equal(t, 1, installer.installCount)
@@ -364,7 +364,7 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.Len(t, pm.StaticRoutes(), 0)
 
 			t.Run("Won't uninstall if not installed", func(t *testing.T) {
-				err := pm.Uninstall(pluginID)
+				err := pm.Uninstall(context.Background(), pluginID)
 				require.Equal(t, plugins.PluginNotFoundError{
 					PluginID: pluginID,
 				}, err)
@@ -379,12 +379,12 @@ type fakeBackendPluginManager struct {
 	registeredPlugins []string
 }
 
-func (f *fakeBackendPluginManager) RegisterAndStart(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (f *fakeBackendPluginManager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
 }
 
-func (f *fakeBackendPluginManager) UnregisterAndStop(pluginID string) error {
+func (f *fakeBackendPluginManager) UnregisterAndStop(ctx context.Context, pluginID string) error {
 	var result []string
 
 	for _, existingPlugin := range f.registeredPlugins {
@@ -426,12 +426,12 @@ type fakePluginInstaller struct {
 	uninstallCount int
 }
 
-func (f *fakePluginInstaller) Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error {
+func (f *fakePluginInstaller) Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error {
 	f.installCount++
 	return nil
 }
 
-func (f *fakePluginInstaller) Uninstall(pluginID, pluginPath string) error {
+func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginID, pluginPath string) error {
 	f.uninstallCount++
 	return nil
 }
