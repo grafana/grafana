@@ -74,8 +74,6 @@ func (ss *SQLStore) Register() {
 
 func (ss *SQLStore) Init() error {
 	ss.log = log.New("sqlstore")
-	ss.readConfig()
-
 	if err := ss.initEngine(); err != nil {
 		return errutil.Wrap("failed to connect to database", err)
 	}
@@ -204,6 +202,10 @@ func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
 }
 
 func (ss *SQLStore) buildConnectionString() (string, error) {
+	if err := ss.readConfig(); err != nil {
+		return "", err
+	}
+
 	cnnstr := ss.dbCfg.ConnectionString
 
 	// special case used by integration tests
@@ -339,12 +341,15 @@ func (ss *SQLStore) initEngine() error {
 }
 
 // readConfig initializes the SQLStore from its configuration.
-func (ss *SQLStore) readConfig() {
+func (ss *SQLStore) readConfig() error {
 	sec := ss.Cfg.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
-		dbURL, _ := url.Parse(cfgURL)
+		dbURL, err := url.Parse(cfgURL)
+		if err != nil {
+			return err
+		}
 		ss.dbCfg.Type = dbURL.Scheme
 		ss.dbCfg.Host = dbURL.Host
 
@@ -382,6 +387,7 @@ func (ss *SQLStore) readConfig() {
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	return nil
 }
 
 // ITestDB is an interface of arguments for testing db
