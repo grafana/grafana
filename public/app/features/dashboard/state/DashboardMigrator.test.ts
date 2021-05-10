@@ -1177,7 +1177,7 @@ describe('DashboardModel', () => {
           },
         },
         {
-          type: MappingType.NullToText,
+          type: MappingType.SpecialValue,
           options: {
             match: 'null',
             result: { text: 'it is null', color: undefined },

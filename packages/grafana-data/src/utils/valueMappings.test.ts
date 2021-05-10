@@ -1,5 +1,5 @@
 import { getValueMappingResult, isNumeric } from './valueMappings';
-import { ValueMapping, MappingType, NullToTextMatchType } from '../types';
+import { ValueMapping, MappingType, SpecialValueMatch } from '../types';
 
 const testSet1: ValueMapping[] = [
   {
@@ -23,17 +23,31 @@ const testSet1: ValueMapping[] = [
     },
   },
   {
-    type: MappingType.NullToText,
+    type: MappingType.SpecialValue,
     options: {
-      match: NullToTextMatchType.Null,
+      match: SpecialValueMatch.Null,
       result: { text: 'it is null' },
     },
   },
   {
-    type: MappingType.NullToText,
+    type: MappingType.SpecialValue,
     options: {
-      match: NullToTextMatchType.NaN,
+      match: SpecialValueMatch.NaN,
       result: { text: 'it is nan' },
+    },
+  },
+  {
+    type: MappingType.SpecialValue,
+    options: {
+      match: SpecialValueMatch.True,
+      result: { text: 'it is true' },
+    },
+  },
+  {
+    type: MappingType.SpecialValue,
+    options: {
+      match: SpecialValueMatch.False,
+      result: { text: 'it is false' },
     },
   },
 ];

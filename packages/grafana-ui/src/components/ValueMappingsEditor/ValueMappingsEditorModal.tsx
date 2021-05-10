@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { GrafanaTheme2, MappingType, NullToTextMatchType, ValueMapping } from '@grafana/data';
+import { GrafanaTheme2, MappingType, SpecialValueMatch, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 import { useStyles2 } from '../../themes';
@@ -40,11 +40,11 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
             to: mapping.options.to ?? 0,
           });
           break;
-        case MappingType.NullToText:
+        case MappingType.SpecialValue:
           editRows.push({
             type: mapping.type,
             result: mapping.options.result,
-            nullMatch: mapping.options.match ?? NullToTextMatchType.Null,
+            specialMatch: mapping.options.match ?? SpecialValueMatch.Null,
           });
       }
     }
@@ -103,12 +103,12 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
     ]);
   };
 
-  const onAddNullToTextMap = () => {
+  const onAddSpecialValueMap = () => {
     updateRows([
       ...rows,
       {
-        type: MappingType.NullToText,
-        nullMatch: NullToTextMatchType.Null,
+        type: MappingType.SpecialValue,
+        specialMatch: SpecialValueMatch.Null,
         result: {},
       },
     ]);
@@ -195,8 +195,8 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
         <Button variant="secondary" icon="plus" onClick={onAddRangeMap} data-testid="add range map">
           Range map
         </Button>
-        <Button variant="secondary" icon="plus" onClick={onAddNullToTextMap} data-testid="add null map">
-          Null map
+        <Button variant="secondary" icon="plus" onClick={onAddSpecialValueMap} data-testid="add special map">
+          Special value map
         </Button>
       </HorizontalGroup>
       <Modal.ButtonRow>

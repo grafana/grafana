@@ -10,7 +10,7 @@ import {
   DataLink,
   DataLinkBuiltInVars,
   MappingType,
-  NullToTextMatchType,
+  SpecialValueMatch,
   PanelPlugin,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
@@ -937,9 +937,9 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
         if (old.value != null) {
           if (old.value === 'null') {
             newMappings.push({
-              type: MappingType.NullToText,
+              type: MappingType.SpecialValue,
               options: {
-                match: NullToTextMatchType.Null,
+                match: SpecialValueMatch.Null,
                 result: { text: old.text, color },
               },
             });
