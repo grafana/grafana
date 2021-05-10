@@ -1,5 +1,4 @@
 export interface MarketplaceAppSettings {
-  pluginDir?: string;
   includeUnsigned?: boolean;
   includeEnterprise?: boolean;
 }

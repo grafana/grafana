@@ -10,11 +10,9 @@ type PluginsState = {
 };
 
 export const usePlugins = ({
-  pluginDir,
   includeUnsigned,
   includeEnterprise,
 }: {
-  pluginDir?: string;
   includeUnsigned?: boolean;
   includeEnterprise?: boolean;
 }) => {
@@ -30,15 +28,11 @@ export const usePlugins = ({
         .filter((plugin) => plugin.versionSignatureType || includeUnsigned)
         .filter((plugin) => includeEnterprise || plugin.status !== 'enterprise')
         .filter((plugin) => !status || plugin.status === status);
+      const installedPlugins = await api.getInstalledPlugins();
 
-      if (pluginDir) {
-        const installedRes = await api.getInstalledPlugins();
-        setState((state) => ({ ...state, items: filteredItems, installedPlugins: installedRes, status: 'DONE' }));
-      } else {
-        setState((state) => ({ ...state, items: filteredItems, status: 'DONE' }));
-      }
+      setState((state) => ({ ...state, items: filteredItems, installedPlugins, status: 'DONE' }));
     })();
-  }, [includeEnterprise, includeUnsigned, pluginDir]);
+  }, [includeEnterprise, includeUnsigned]);
 
   return state;
 };
@@ -50,7 +44,7 @@ type PluginState = {
   local?: Metadata;
 };
 
-export const usePlugin = ({ slug, pluginDir }: { slug: string; pluginDir?: string }): PluginState => {
+export const usePlugin = ({ slug }: { slug: string }): PluginState => {
   const [state, setState] = useState<PluginState>({
     status: 'LOADING',
   });
@@ -63,7 +57,7 @@ export const usePlugin = ({ slug, pluginDir }: { slug: string; pluginDir?: strin
       const plugin = await api.getPlugin(slug);
       setState({ ...plugin, status: 'DONE' });
     })();
-  }, [slug, pluginDir]);
+  }, [slug]);
 
   return state;
 };

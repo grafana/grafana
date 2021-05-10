@@ -7,13 +7,12 @@ import { useStyles2, TabsBar, TabContent, Tab, Icon, LoadingPlaceholder } from '
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
 import { PLUGIN_ROOT, GRAFANA_API_ROOT } from '../constants';
-import { MarketplaceAppSettings, PluginDetails as PluginDeets } from '../types';
+import { PluginDetails as PluginDeets } from '../types';
 import API from '../api';
 import { Page } from 'components/Page';
 
-export const PluginDetails = ({ query, meta }: AppRootProps) => {
+export const PluginDetails = ({ query }: AppRootProps) => {
   const { slug } = query;
-  const { pluginDir } = meta.jsonData as MarketplaceAppSettings;
 
   const [state, setState] = useState<PluginDeets>();
   const [loading, setLoading] = useState(false);
@@ -25,13 +24,11 @@ export const PluginDetails = ({ query, meta }: AppRootProps) => {
 
   const styles = useStyles2(getStyles);
 
-  const onRefresh = useCallback(() => {
-    (async () => {
-      const api = new API();
-      const plugin = await api.getPlugin(slug);
-      setState(plugin);
-      setLoading(false);
-    })();
+  const onRefresh = useCallback(async () => {
+    const api = new API();
+    const plugin = await api.getPlugin(slug);
+    setState(plugin);
+    setLoading(false);
   }, [slug]);
 
   useEffect(() => {
@@ -92,7 +89,6 @@ export const PluginDetails = ({ query, meta }: AppRootProps) => {
               localPlugin={state?.local}
               remotePlugin={state?.remote}
               slug={slug}
-              pluginDir={pluginDir}
               onRefresh={onRefresh}
             />
           )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PluginConfigPageProps, AppPluginMeta, PluginMeta } from '@grafana/data';
 import { MarketplaceAppSettings } from 'types';
-import { Button, Field, Input, Legend, Switch } from '@grafana/ui';
+import { Button, Field, Legend, Switch } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
 
 interface Props extends PluginConfigPageProps<AppPluginMeta<MarketplaceAppSettings>> {}
@@ -11,7 +11,7 @@ export const Settings = ({ plugin }: Props) => {
   const [state, setState] = useState<MarketplaceAppSettings>(meta.jsonData ?? {});
 
   const { pinned, enabled } = meta;
-  const { includeEnterprise, includeUnsigned, pluginDir } = state;
+  const { includeEnterprise, includeUnsigned } = state;
 
   const onSave = () => {
     updateAndReload('grafana-marketplace-app', {
@@ -59,9 +59,6 @@ export const Settings = ({ plugin }: Props) => {
             setState({ ...state, includeUnsigned: e.currentTarget.checked });
           }}
         />
-      </Field>
-      <Field label="Plugin directory" description="Path where plugins will be installed.">
-        <Input value={pluginDir} onChange={(e) => setState({ ...state, pluginDir: e.currentTarget.value })} />
       </Field>
       <Button onClick={onSave}>Save</Button>
     </>

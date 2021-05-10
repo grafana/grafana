@@ -17,14 +17,11 @@ import appEvents from 'grafana/app/core/app_events';
 interface Props {
   localPlugin?: Metadata;
   remotePlugin: Plugin;
-
   slug: string;
-  pluginDir?: string;
-
   onRefresh: () => void;
 }
 
-export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, onRefresh }: Props) => {
+export const InstallControls = ({ localPlugin, remotePlugin, slug, onRefresh }: Props) => {
   // const [arch, setArch] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
@@ -52,7 +49,6 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
   const onUpdate = async () => {
     setLoading(true);
 
-    await api.uninstallPlugin(slug);
     await api.installPlugin(slug, remotePlugin.version);
 
     setLoading(false);
@@ -71,7 +67,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
 
   const isDevelopmentBuild = !!localPlugin?.dev;
   const isEnterprise = remotePlugin?.status === 'enterprise';
-  const isInternal = remotePlugin?.internal;
+  // const isInternal = remotePlugin?.internal;
   // const hasPackages = Object.keys(remotePlugin?.packages ?? {}).length > 1;
   const isInstalled = !!localPlugin;
   const hasPermission = hasRole(OrgRole.Admin);
@@ -103,9 +99,9 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
       </div>
     );
   }
-  if (isInternal) {
-    return <div className={styles.message}>This plugin is already included in Grafana.</div>;
-  }
+  // if (isInternal) {
+  //   return <div className={styles.message}>This plugin is already included in Grafana.</div>;
+  // }
   if (isDevelopmentBuild) {
     return (
       <div className={styles.message}>This is a development build of the plugin and can&#39;t be uninstalled.</div>
