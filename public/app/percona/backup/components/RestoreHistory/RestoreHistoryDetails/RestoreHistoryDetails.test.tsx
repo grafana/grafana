@@ -17,4 +17,11 @@ describe('RestoreHistoryDetails', () => {
     expect(wrapper.find(dataQa('restore-details-data-model')).exists()).toBeTruthy();
     expect(wrapper.find(DetailedDate).exists()).toBeTruthy();
   });
+
+  it('should hide "finished at" when null', () => {
+    const wrapper = shallow(
+      <RestoreHistoryDetails name="restore one" finished={null} dataModel={DataModel.PHYSICAL} />
+    );
+    expect(wrapper.find(dataQa('restore-details-finished')).exists()).toBeFalsy();
+  });
 });

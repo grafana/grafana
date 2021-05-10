@@ -33,12 +33,11 @@ export const BackupInventoryService = {
       })
     );
   },
-  async restore(serviceId: string, locationId: string, artifactId: string, token?: CancelToken) {
+  async restore(serviceId: string, artifactId: string, token?: CancelToken) {
     return api.post(
-      `${BASE_URL}/Backups/RestoreBackup`,
+      `${BASE_URL}/Backups/Restore`,
       {
         service_id: serviceId,
-        location_id: locationId,
         artifact_id: artifactId,
       },
       false,
