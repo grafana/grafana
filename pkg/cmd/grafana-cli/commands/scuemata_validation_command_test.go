@@ -25,10 +25,10 @@ func TestValidateScuemataBasics(t *testing.T) {
 			DistPluginCueFS: pluginSchema,
 		}
 
-		err := validate(baseLoadPaths, load.BaseDashboardFamily)
+		err := validateScuemata(baseLoadPaths, load.BaseDashboardFamily)
 		require.NoError(t, err, "error while loading base dashboard scuemata")
 
-		err = validate(baseLoadPaths, load.DistDashboardFamily)
+		err = validateScuemata(baseLoadPaths, load.DistDashboardFamily)
 		require.NoError(t, err, "error while loading dist dashboard scuemata")
 	})
 
@@ -40,7 +40,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 			DistPluginCueFS: pluginSchema,
 		}
 
-		err := validate(baseLoadPaths, load.BaseDashboardFamily)
+		err := validateScuemata(baseLoadPaths, load.BaseDashboardFamily)
 		assert.EqualError(t, err, "error while loading dashboard scuemata, err: dashboard schema family did not exist at expected path in expected file")
 	})
 
@@ -52,10 +52,51 @@ func TestValidateScuemataBasics(t *testing.T) {
 			DistPluginCueFS: pluginSchema,
 		}
 
-		err := validate(baseLoadPaths, load.BaseDashboardFamily)
+		err := validateScuemata(baseLoadPaths, load.BaseDashboardFamily)
 		require.NoError(t, err, "error while loading base dashboard scuemata")
 
-		err = validate(baseLoadPaths, load.DistDashboardFamily)
+		err = validateScuemata(baseLoadPaths, load.DistDashboardFamily)
 		assert.EqualError(t, err, "all schema should be valid with respect to basic CUE rules, Family.lineages.0.0: field #Panel not allowed")
+	})
+
+	t.Run("Testing scuemata validity against JSON files", func(t *testing.T) {
+		tempDir := os.DirFS(filepath.Join("testdata", "valid_scuemata"))
+
+		var baseLoadPaths = load.BaseLoadPaths{
+			BaseCueFS:       tempDir,
+			DistPluginCueFS: pluginSchema,
+		}
+
+		require.NoError(t, fs.WalkDir(tempDir, ".", func(path string, d fs.DirEntry, err error) error {
+			require.NoError(t, err)
+
+			if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
+				return nil
+			}
+
+			if d.Name() == "valid.json" {
+				t.Run(path, func(t *testing.T) {
+					b, err := tempDir.Open(path)
+					require.NoError(t, err, "failed to open dashboard file")
+
+					err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
+					require.NoError(t, err, "error while loading base dashboard scuemata")
+
+					err = validateResources(b, baseLoadPaths, load.DistDashboardFamily)
+					require.NoError(t, err, "error while loading base dashboard scuemata")
+				})
+			}
+			if d.Name() == "invalid.json" {
+				t.Run(path, func(t *testing.T) {
+					b, err := tempDir.Open(path)
+					require.NoError(t, err, "failed to open dashboard file")
+
+					err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
+					assert.EqualError(t, err, "invalid resource with respect to the schema, err: Family.lineages.0.0.panels.0.fieldConfig.defaults: field mappings not allowed")
+				})
+			}
+
+			return nil
+		}))
 	})
 }
