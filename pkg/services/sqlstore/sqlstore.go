@@ -235,6 +235,10 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += "&tls=custom"
 		}
 
+		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
+			cnnstr += "&tx_isolation=" + isolation
+		}
+
 		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
@@ -381,6 +385,7 @@ func (ss *SQLStore) readConfig() {
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
@@ -516,6 +521,7 @@ type DatabaseConfig struct {
 	ClientCertPath   string
 	ServerCertName   string
 	ConnectionString string
+	IsolationLevel   string
 	MaxOpenConn      int
 	MaxIdleConn      int
 	ConnMaxLifetime  int
