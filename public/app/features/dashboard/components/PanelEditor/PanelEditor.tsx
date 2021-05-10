@@ -9,6 +9,7 @@ import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   HorizontalGroup,
+  InlineSwitch,
   ModalsController,
   PageToolbar,
   RadioButtonGroup,
@@ -38,6 +39,7 @@ import {
 } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
@@ -59,6 +61,7 @@ import {
   saveAndRefreshLibraryPanel,
 } from '../../../library-panels/utils';
 import { notifyApp } from '../../../../core/actions';
+import { PanelEditorTableView } from './PanelEditorTableView';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -75,6 +78,7 @@ const mapStateToProps = (state: StoreState) => {
     panel,
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
+    tableViewEnabled: state.panelEditor.tableViewEnabled,
     variables: getVariables(state),
   };
 };
@@ -87,6 +91,7 @@ const mapDispatchToProps = {
   discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
+  toggleTableView,
   notifyApp,
 };
 
@@ -213,9 +218,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onDisplayModeChange = (mode?: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
+    if (this.props.tableViewEnabled) {
+      this.props.toggleTableView();
+    }
     updatePanelEditorUIState({
       mode: mode,
     });
+  };
+
+  onToggleTableView = () => {
+    this.props.toggleTableView();
   };
 
   onTogglePanelOptions = () => {
@@ -224,7 +236,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel = (styles: EditorStyles) => {
-    const { dashboard, panel, uiState, plugin, tab } = this.props;
+    const { dashboard, panel, uiState, plugin, tab, tableViewEnabled } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
 
     return (
@@ -236,6 +248,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               if (width < 3 || height < 3) {
                 return null;
               }
+
+              if (tableViewEnabled) {
+                return <PanelEditorTableView width={width} height={height} panel={panel} />;
+              }
+
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
                   <div style={calculatePanelSize(uiState.mode, width, height, panel)} data-panelid={panel.editSourceId}>
@@ -290,12 +307,21 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, uiState, variables, updateTimeZoneForSession, panel } = this.props;
+    const { dashboard, uiState, variables, updateTimeZoneForSession, panel, tableViewEnabled } = this.props;
+
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
           {this.renderTemplateVariables(styles)}
           <HorizontalGroup>
+            <InlineSwitch
+              label="Table view"
+              showLabel={true}
+              id="table-view"
+              value={tableViewEnabled}
+              onClick={this.onToggleTableView}
+              aria-label={selectors.components.PanelEditor.toggleTableView}
+            />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}

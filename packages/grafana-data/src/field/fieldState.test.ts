@@ -1,5 +1,5 @@
 import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType } from '../types';
-import { getFieldDisplayName } from './fieldState';
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 import { toDataFrame } from '../dataframe';
 
 interface TitleScenario {
@@ -13,6 +13,44 @@ function checkScenario(scenario: TitleScenario): string {
   const field = frame.fields[scenario.fieldIndex ?? 0];
   return getFieldDisplayName(field, frame, scenario.frames);
 }
+
+describe('getFrameDisplayName', () => {
+  it('Should return frame name if set', () => {
+    const frame = toDataFrame({
+      name: 'Series A',
+      fields: [{ name: 'Field 1' }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('Series A');
+  });
+
+  it('Should return field name', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Field 1' }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('Field 1');
+  });
+
+  it('Should return all field names', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Field A' }, { name: 'Field B' }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('Field A, Field B');
+  });
+
+  it('Should return labels if single field with labels', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'value', labels: { server: 'A' } }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('{server="A"}');
+  });
+
+  it('Should return field names when labels object exist but has no keys', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'value', labels: {} }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('value');
+  });
+});
 
 describe('Check field state calculations (displayName and id)', () => {
   it('should use field name if no frame name', () => {

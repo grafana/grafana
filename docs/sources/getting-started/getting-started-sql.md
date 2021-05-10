@@ -39,7 +39,7 @@ To add MS SQL Server data source:
 `User`         | Database user's login/username.
 `Password`     | Database user's password. 
 
-For installations from the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository, `gdev-mssql` data source is available. Once you add this data source, you can use the `Datasource tests - MSSQL` dashboard with three panels showing metrics generated from a test database.
+For installations from the [grafana/grafana](https://github.com/grafana/grafana/tree/main) repository, `gdev-mssql` data source is available. Once you add this data source, you can use the `Datasource tests - MSSQL` dashboard with three panels showing metrics generated from a test database.
 
 <img src="/img/docs/getting-started/gdev-sql-dashboard.png" class="no-shadow" width="700px">
 
