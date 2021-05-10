@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, CustomScrollbar, HorizontalGroup, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import React, { FC } from 'react';
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
+import { CopyPanelURLButton } from './components/panel-alerts-tab/CopyPanelURLButton';
 
 interface Props {
   dashboard: DashboardModel;
@@ -37,6 +38,15 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
     );
   }
 
+  const buttons = dashboard.meta.canEdit ? (
+    <div className={styles.buttonGroup}>
+      <HorizontalGroup>
+        <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />
+        <CopyPanelURLButton panel={panel} dashboard={dashboard} />
+      </HorizontalGroup>
+    </div>
+  ) : null;
+
   if (rules.length) {
     return (
       <>
@@ -44,9 +54,7 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
           <div className={styles.innerWrapper}>
             {alert}
             <RulesTable rules={rules} />
-            {dashboard.meta.canEdit && (
-              <NewRuleFromPanelButton className={styles.buttonWithMargin} panel={panel} dashboard={dashboard} />
-            )}
+            {buttons}
           </div>
         </CustomScrollbar>
       </>
@@ -57,13 +65,14 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
     <div className={styles.noRulesWrapper}>
       {alert}
       <p>There are no alert rules linked to this panel.</p>
-      {dashboard.meta.canEdit && <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />}
+      {buttons}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonWithMargin: css`
+  buttonGroup: css`
+    height: auto;
     margin-top: ${theme.spacing(3)};
   `,
   innerWrapper: css`

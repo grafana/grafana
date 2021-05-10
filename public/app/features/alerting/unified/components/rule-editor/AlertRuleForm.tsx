@@ -73,7 +73,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           labels: values.labels?.filter(({ key }) => !!key) ?? [],
         },
         existing,
-        redirectOnSave: returnTo,
+        redirectOnSave: exitOnSave ? returnTo : undefined,
       })
     );
   };

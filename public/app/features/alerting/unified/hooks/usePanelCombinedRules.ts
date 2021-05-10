@@ -9,6 +9,7 @@ import { initialAsyncRequestState } from '../utils/redux';
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 import { useEffect, useMemo } from 'react';
+import { urlUtil } from '@grafana/data';
 
 interface Options {
   dashboard: DashboardModel;
@@ -23,6 +24,8 @@ interface ReturnBag {
 
   loading?: boolean;
 }
+
+const RE_DASHBOARD_URL = /\/d\/(\w+)\//;
 
 export function usePanelCombinedRules({ dashboard, panel, poll = false }: Options): ReturnBag {
   const dispatch = useDispatch();
@@ -61,12 +64,8 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
       combinedNamespaces
         .flatMap((ns) => ns.groups)
         .flatMap((group) => group.rules)
-        .filter(
-          (rule) =>
-            rule.annotations[Annotation.dashboardUID] === dashboard.uid &&
-            rule.annotations[Annotation.panelID] === String(panel.editSourceId)
-        ),
-    [combinedNamespaces, dashboard.uid, panel.editSourceId]
+        .filter((rule) => doesRuleBelongToPanel(rule, panel, dashboard)),
+    [combinedNamespaces, dashboard, panel]
   );
 
   return {
@@ -74,4 +73,29 @@ export function usePanelCombinedRules({ dashboard, panel, poll = false }: Option
     errors,
     loading,
   };
+}
+
+function doesRuleBelongToPanel(rule: CombinedRule, panel: PanelModel, dashboard: DashboardModel): boolean {
+  if (
+    rule.annotations[Annotation.dashboardUID] === dashboard.uid &&
+    rule.annotations[Annotation.panelID] === String(panel.editSourceId)
+  ) {
+    return true;
+    // failing that, match based on panel URL annotation
+  } else if (rule.annotations[Annotation.panelURL]) {
+    console.log(rule.annotations[Annotation.panelURL]);
+    const [path, search] = rule.annotations[Annotation.panelURL].split('?');
+    if (!(path && search)) {
+      return false;
+    }
+    const queryParams = urlUtil.parseKeyValue(search);
+    const panelId = queryParams['viewPanel'] ?? queryParams['editPanel'];
+    const match = RE_DASHBOARD_URL.exec(path);
+    console.log(match, queryParams);
+    if (match && match[1] === dashboard.uid && String(panelId) === String(panel.editSourceId)) {
+      return true;
+    }
+  }
+
+  return false;
 }
