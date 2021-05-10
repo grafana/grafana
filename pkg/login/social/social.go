@@ -85,6 +85,7 @@ func NewOAuthService() {
 
 	for _, name := range allOauthes {
 		sec := setting.Raw.Section("auth." + name)
+
 		info := &setting.OAuthInfo{
 			ClientId:            sec.Key("client_id").String(),
 			ClientSecret:        sec.Key("client_secret").String(),
@@ -105,6 +106,11 @@ func NewOAuthService() {
 			TlsClientKey:        sec.Key("tls_client_key").String(),
 			TlsClientCa:         sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:       sec.Key("tls_skip_verify_insecure").MustBool(),
+		}
+
+		// when empty_scopes parameter exists and is true, overwrite scope with empty value
+		if sec.Key("empty_scopes").MustBool() {
+			info.Scopes = []string{}
 		}
 
 		if !info.Enabled {
