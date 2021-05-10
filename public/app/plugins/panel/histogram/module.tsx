@@ -4,21 +4,23 @@ import { graphFieldOptions } from '@grafana/ui';
 import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
 import { originalDataHasHistogram } from './utils';
 
+import { histogramFieldInfo } from '@grafana/data/src/transformations/transformers/histogram';
+
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
     builder
       .addCustomEditor({
         id: '__calc__',
         path: '__calc__',
-        name: 'Frequencies',
-        description: 'Showing values that are calculated in the query',
+        name: 'Values',
+        description: 'Showing frequencies that are calculated in the query',
         editor: () => null, // empty editor
         showIf: (opts, data) => originalDataHasHistogram(data),
       })
       .addNumberInput({
         path: 'bucketSize',
-        name: 'Bucket size',
-        description: 'The bucket size',
+        name: histogramFieldInfo.bucketSize.name,
+        description: histogramFieldInfo.bucketSize.description,
         settings: {
           placeholder: 'Auto',
         },
@@ -27,8 +29,8 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
       })
       .addNumberInput({
         path: 'bucketOffset',
-        name: 'Bucket offset',
-        description: 'where to start the bucket?',
+        name: histogramFieldInfo.bucketOffset.name,
+        description: histogramFieldInfo.bucketOffset.description,
         settings: {
           placeholder: '0',
         },
@@ -37,8 +39,8 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
       })
       .addBooleanSwitch({
         path: 'combine',
-        name: 'Combine series',
-        description: 'when multiple series exist, combine them into a single aggregate histogram',
+        name: histogramFieldInfo.combine.name,
+        description: histogramFieldInfo.combine.description,
         defaultValue: defaultPanelOptions.combine,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       });

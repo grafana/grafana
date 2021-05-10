@@ -37,6 +37,26 @@ export interface HistogramTransformerOptions {
 }
 
 /**
+ * This is a helper class to use the same text in both a panel and transformer UI
+ *
+ * @internal
+ */
+export const histogramFieldInfo = {
+  bucketSize: {
+    name: 'Bucket size',
+    description: 'the size of each bucket',
+  },
+  bucketOffset: {
+    name: 'Bucket offset',
+    description: 'offset within the bucket size',
+  },
+  combine: {
+    name: 'Combine series',
+    description: 'combine all series into a single histogram',
+  },
+};
+
+/**
  * @alpha
  */
 export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptions> = {
