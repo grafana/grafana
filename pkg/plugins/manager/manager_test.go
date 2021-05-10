@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -41,7 +42,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 		assert.Len(t, pm.StaticRoutes(), 1)
 		assert.Equal(t, "input", pm.StaticRoutes()[0].PluginId)
-		assert.Equal(t, bundledPluginsPath+"/input-datasource/dist", pm.StaticRoutes()[0].Directory)
+		assert.True(t, strings.HasPrefix(pm.StaticRoutes()[0].Directory, bundledPluginsPath+"/input-datasource/"))
 	})
 
 	t.Run("Base case with single external plugin", func(t *testing.T) {
