@@ -81,7 +81,7 @@ func TestSQLConnectionString(t *testing.T) {
 			sqlstore := &SQLStore{}
 			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase.dbType, testCase.dbHost, testCase.dbURL)
 			if err := sqlstore.readConfig(); err != nil {
-				require.Error(testCase.err)
+				require.Error(t, testCase.err)
 				require.Equal(t, testCase.err.Error(), err.Error())
 				return
 			}
