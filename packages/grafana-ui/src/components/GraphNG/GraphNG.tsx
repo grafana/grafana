@@ -32,7 +32,7 @@ export interface GraphNGProps extends Themeable2 {
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
 }
 
-export function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
+function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
   for (const propName of propsToDiff) {
     if (nextProps[propName] !== prevProps[propName]) {
       return false;

@@ -180,22 +180,19 @@ const renderLegend = (config: UPlotConfigBuilder) => {
   return null;
 };
 
-/**
- * @internal -- not a public API
- */
-export interface GraphNGState {
+interface State {
   alignedData: AlignedData;
   config?: UPlotConfigBuilder;
 }
 
-export class Histogram extends React.Component<HistogramProps, GraphNGState> {
+export class Histogram extends React.Component<HistogramProps, State> {
   constructor(props: HistogramProps) {
     super(props);
     this.state = this.prepState(props);
   }
 
   prepState(props: HistogramProps, withConfig = true) {
-    let state: GraphNGState = null as any;
+    let state: State = null as any;
 
     const { alignedFrame } = props;
     if (alignedFrame) {
