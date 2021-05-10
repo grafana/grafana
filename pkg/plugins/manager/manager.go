@@ -371,12 +371,6 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			if scannedPlugin.Info.Version == existing.Info.Version {
 				pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
 				delete(scanner.plugins, scannedPluginPath)
-			} else {
-				// remove existing installation of plugin
-				err := pm.Uninstall(context.Background(), existing.Id)
-				if err != nil {
-					return err
-				}
 			}
 		}
 	}
@@ -777,10 +771,18 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 
 func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
 	plugin := pm.GetPlugin(pluginID)
-	if plugin != nil && plugin.Info.Version == version {
-		return plugins.DuplicatePluginError{
-			PluginID:          pluginID,
-			ExistingPluginDir: plugin.PluginDir,
+	if plugin != nil {
+		if plugin.Info.Version == version {
+			return plugins.DuplicatePluginError{
+				PluginID:          pluginID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
+		}
+
+		// remove existing installation of plugin
+		err := pm.Uninstall(context.Background(), plugin.Id)
+		if err != nil {
+			return err
 		}
 	}
 
