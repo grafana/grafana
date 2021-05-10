@@ -157,6 +157,7 @@ func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedIn
 	return filteredUsers, nil
 }
 
+// SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
 func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
