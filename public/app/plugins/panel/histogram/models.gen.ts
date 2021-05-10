@@ -10,9 +10,12 @@ export const modelVersion = Object.freeze([1, 0]);
 export interface PanelOptions {
   bucketSize?: number;
   bucketOffset?: number;
+  combine?: boolean;
 }
 
-export const defaultPanelOptions: PanelOptions = {};
+export const defaultPanelOptions: PanelOptions = {
+  bucketOffset: 0,
+};
 
 /**
  * @alpha

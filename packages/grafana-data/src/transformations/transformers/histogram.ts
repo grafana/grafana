@@ -31,6 +31,9 @@ const histSort = (a: number, b: number) => a - b;
 export interface HistogramTransformerOptions {
   bucketSize?: number; // 0 is auto
   bucketOffset?: number;
+  // xMin?: number;
+  // xMax?: number;
+  combine?: boolean; // if multiple series are input, join them into one
 }
 
 /**
@@ -54,7 +57,10 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
-        const hist = buildHistogram(data, options.bucketSize, options.bucketOffset);
+        const hist = buildHistogram(data, options);
+        if (hist == null) {
+          return [];
+        }
         return [histogramFieldsToFrame(hist)];
       })
     ),
@@ -110,7 +116,10 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
 /**
  * @alpha
  */
-export function buildHistogram(frames: DataFrame[], bucketSize?: number, bucketOffset = 0): HistogramFields {
+export function buildHistogram(frames: DataFrame[], options?: HistogramTransformerOptions): HistogramFields | null {
+  let bucketSize = options?.bucketSize;
+  let bucketOffset = options?.bucketOffset ?? 0;
+
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize) {
     let min = Infinity,
@@ -142,14 +151,21 @@ export function buildHistogram(frames: DataFrame[], bucketSize?: number, bucketO
   const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
 
   let histograms: AlignedData[] = [];
+  let counts: Field[] = [];
 
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
         let fieldHist = histogram(field.values.toArray(), getBucket, histFilter, histSort) as AlignedData;
         histograms.push(fieldHist);
+        counts.push({ ...field });
       }
     }
+  }
+
+  // Quit early for empty a
+  if (!counts.length) {
+    return null;
   }
 
   // align histograms
@@ -178,20 +194,25 @@ export function buildHistogram(frames: DataFrame[], bucketSize?: number, bucketO
     type: FieldType.number,
     config: {},
   };
-  const counts: Field[] = [];
 
-  let i = 1;
-  for (const frame of frames) {
-    for (const field of frame.fields) {
-      if (field.type === FieldType.number) {
-        counts.push({
-          ...field,
-          values: new ArrayVector(joinedHists[i]),
-        });
-
-        i++;
+  if (options?.combine) {
+    const vals = new Array(joinedHists[0].length).fill(0);
+    for (let i = 1; i < joinedHists.length; i++) {
+      for (let j = 0; j < vals.length; j++) {
+        vals[j] += joinedHists[i][j];
       }
     }
+    counts = [
+      {
+        ...counts[0],
+        name: 'Count',
+        values: new ArrayVector(vals),
+      },
+    ];
+  } else {
+    counts.forEach((field, i) => {
+      field.values = new ArrayVector(joinedHists[i + 1]);
+    });
   }
 
   return {

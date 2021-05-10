@@ -21,7 +21,7 @@ describe('histogram frames frames', () => {
       fields: [{ name: 'C', type: FieldType.number, values: [5, 6, 7, 8, 9] }],
     });
 
-    const out = histogramFieldsToFrame(buildHistogram([series1, series2]));
+    const out = histogramFieldsToFrame(buildHistogram([series1, series2])!);
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -111,6 +111,59 @@ describe('histogram frames frames', () => {
             1,
             1,
             1,
+          ],
+        },
+      ]
+    `);
+
+    const out2 = histogramFieldsToFrame(buildHistogram([series1, series2], { combine: true })!);
+    expect(
+      out2.fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "name": "BucketMin",
+          "values": Array [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+          ],
+        },
+        Object {
+          "name": "BucketMax",
+          "values": Array [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+          ],
+        },
+        Object {
+          "name": "Count",
+          "values": Array [
+            1,
+            1,
+            2,
+            2,
+            4,
+            3,
+            3,
+            2,
+            2,
           ],
         },
       ]

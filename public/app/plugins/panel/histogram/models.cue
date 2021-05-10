@@ -6,7 +6,8 @@ Family: {
             {
                 PanelOptions: {
                     bucketSize?: int
-                    bucketOffset?: int
+                    bucketOffset: int | *0
+                    combine?: bool
                 }
 
                 // TODO: FieldConfig

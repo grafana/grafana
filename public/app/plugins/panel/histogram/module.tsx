@@ -1,7 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { HistogramPanel } from './HistogramPanel';
 import { graphFieldOptions } from '@grafana/ui';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
 
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
@@ -9,17 +9,26 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
       .addNumberInput({
         path: 'bucketSize',
         name: 'Bucket size',
+        description: 'The bucket size',
         settings: {
           placeholder: 'Auto',
         },
+        defaultValue: defaultPanelOptions.bucketSize,
       })
       .addNumberInput({
         path: 'bucketOffset',
         name: 'Bucket offset',
+        description: 'where to start the bucket?',
         settings: {
           placeholder: '0',
         },
-        defaultValue: 0,
+        defaultValue: defaultPanelOptions.bucketOffset,
+      })
+      .addBooleanSwitch({
+        path: 'combine',
+        name: 'Combine series',
+        description: 'when multiple series exist, combine them into a single aggregate histogram',
+        defaultValue: defaultPanelOptions.combine,
       });
   })
   .useFieldConfig({

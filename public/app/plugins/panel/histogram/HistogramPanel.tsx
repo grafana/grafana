@@ -22,9 +22,12 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
         return histogramFieldsToFrame(info);
       }
     }
-
-    return histogramFieldsToFrame(buildHistogram(data.series, options.bucketSize, options.bucketOffset));
-  }, [data.series, options.bucketSize, options.bucketOffset]);
+    const hist = buildHistogram(data.series, options);
+    if (!hist) {
+      return undefined;
+    }
+    return histogramFieldsToFrame(hist);
+  }, [data.series, options]);
 
   if (!histogram || !histogram.fields.length) {
     return (
