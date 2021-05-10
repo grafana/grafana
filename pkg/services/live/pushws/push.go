@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/livecontext"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
