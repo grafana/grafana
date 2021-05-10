@@ -11,14 +11,13 @@ import {
 } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 
-export interface PrepConfigOpts {
+export type PrepConfigOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
   timeZone: TimeZone;
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
-  [prop: string]: any;
-}
+} & T;
 
 function applySpanNullsThresholds(frames: DataFrame[]) {
   for (const frame of frames) {

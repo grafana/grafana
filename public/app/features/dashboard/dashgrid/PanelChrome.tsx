@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  DashboardCursorSync,
   EventBusSrv,
   EventFilterOptions,
   FieldConfigSource,
@@ -76,7 +77,7 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
-        sync: props.dashboard.graphTooltip,
+        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
@@ -140,13 +141,24 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView } = this.props;
+    const { isInView, isEditing } = this.props;
 
     if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
       this.setState((s) => {
-        return { context: { ...s.context, sync: this.props.dashboard.graphTooltip } };
+        return {
+          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
+        };
       });
     }
+
+    if (isEditing !== prevProps.isEditing) {
+      this.setState((s) => {
+        return {
+          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
+        };
+      });
+    }
+
     // View state has changed
     if (isInView !== prevProps.isInView) {
       if (isInView) {

@@ -2,6 +2,7 @@ import { preparePlotFrame } from './utils';
 import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import {
   createTheme,
+  DashboardCursorSync,
   DefaultTimeZone,
   EventBusSrv,
   FieldConfig,
@@ -196,6 +197,7 @@ describe('GraphNG utils', () => {
       timeZone: DefaultTimeZone,
       getTimeRange: getDefaultTimeRange,
       eventBus: new EventBusSrv(),
+      sync: DashboardCursorSync.Tooltip,
     }).getConfig();
     expect(result).toMatchSnapshot();
   });

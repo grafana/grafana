@@ -1,5 +1,6 @@
 import { isNumber } from 'lodash';
 import {
+  DashboardCursorSync,
   DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
@@ -34,9 +35,9 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-type PrepConfig = (opts: PrepConfigOpts) => UPlotConfigBuilder;
+type PrepConfig = (opts: PrepConfigOpts<{ sync: DashboardCursorSync }>) => UPlotConfigBuilder;
 
-export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, getTimeRange, eventBus }) => {
+export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, getTimeRange, eventBus, sync }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
   // X is the first field in the aligned frame
@@ -212,41 +213,43 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
     }
   }
 
-  // Always publish events
   builder.scaleKeys = [xScaleKey, yScaleKey];
-  const payload: DataHoverPayload = {
-    point: {
-      [xScaleKey]: null,
-      [yScaleKey]: null,
-    },
-    data: frame,
-  };
-  const hoverEvent = new DataHoverEvent(payload);
-  builder.setCursor({
-    sync: {
-      key: '__global_',
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          payload.columnIndex = dataIdx;
-          if (x < 0 && y < 0) {
-            payload.point[xScaleKey] = null;
-            payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent(payload));
-          } else {
-            // convert the points
-            payload.point[xScaleKey] = src.posToVal(x, xScaleKey);
-            payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-            eventBus.publish(hoverEvent);
-            hoverEvent.payload.down = undefined;
-          }
-          return true;
-        },
+
+  if (sync !== DashboardCursorSync.Off) {
+    const payload: DataHoverPayload = {
+      point: {
+        [xScaleKey]: null,
+        [yScaleKey]: null,
       },
-      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-      scales: builder.scaleKeys,
-      match: [() => true, () => true],
-    },
-  });
+      data: frame,
+    };
+    const hoverEvent = new DataHoverEvent(payload);
+    builder.setCursor({
+      sync: {
+        key: '__global_',
+        filters: {
+          pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+            payload.columnIndex = dataIdx;
+            if (x < 0 && y < 0) {
+              payload.point[xScaleKey] = null;
+              payload.point[yScaleKey] = null;
+              eventBus.publish(new DataHoverClearEvent(payload));
+            } else {
+              // convert the points
+              payload.point[xScaleKey] = src.posToVal(x, xScaleKey);
+              payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
+              eventBus.publish(hoverEvent);
+              hoverEvent.payload.down = undefined;
+            }
+            return true;
+          },
+        },
+        // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
+        scales: builder.scaleKeys,
+        match: [() => true, () => true],
+      },
+    });
+  }
 
   return builder;
 };
