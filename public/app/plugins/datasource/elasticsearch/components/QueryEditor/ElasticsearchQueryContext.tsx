@@ -4,7 +4,7 @@ import { combineReducers, useStatelessReducer, DispatchContext } from '../../hoo
 import { ElasticsearchQuery } from '../../types';
 
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
-import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
+import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
 import { TimeRange } from '@grafana/data';
 
@@ -40,7 +40,7 @@ export const ElasticsearchProvider = ({
     query: queryReducer,
     alias: aliasPatternReducer,
     metrics: metricsReducer,
-    bucketAggs: bucketAggsReducer,
+    bucketAggs: createBucketAggsReducer(datasource.timeField),
   });
 
   const dispatch = useStatelessReducer(
