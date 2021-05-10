@@ -10,12 +10,12 @@ import {
   AxisConfig,
   AxisPlacement,
   graphFieldOptions,
-  ScaleDistribution,
   ScaleDistributionConfig,
   Select,
   HorizontalGroup,
   RadioButtonGroup,
 } from '../index';
+import { ScaleDistribution } from '../components/uPlot/models.gen';
 
 export function addAxisConfig(
   builder: FieldConfigEditorBuilder<AxisConfig>,
@@ -93,7 +93,7 @@ const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
   },
   {
     label: 'Logarithmic',
-    value: ScaleDistribution.Logarithmic,
+    value: ScaleDistribution.Log,
   },
 ];
 
@@ -126,7 +126,7 @@ export const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDis
           });
         }}
       />
-      {value.type === ScaleDistribution.Logarithmic && (
+      {value.type === ScaleDistribution.Log && (
         <Select
           allowCustomValue={false}
           autoFocus
