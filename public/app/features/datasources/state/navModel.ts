@@ -49,25 +49,25 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       active: false,
       icon: 'lock',
-      id: `datasource-permissions-${dataSource.uid}`,
+      id: `datasource-permissions-${dataSource.id}`,
       text: 'Permissions',
-      url: `datasources/edit/${dataSource.uid}/permissions`,
+      url: `datasources/edit/${dataSource.id}/permissions`,
     });
 
     navModel.children!.push({
       active: false,
       icon: 'info-circle',
-      id: `datasource-insights-${dataSource.uid}`,
+      id: `datasource-insights-${dataSource.id}`,
       text: 'Insights',
-      url: `datasources/edit/${dataSource.uid}/insights`,
+      url: `datasources/edit/${dataSource.id}/insights`,
     });
 
     navModel.children!.push({
       active: false,
       icon: 'database',
-      id: `datasource-cache-${dataSource.uid}`,
+      id: `datasource-cache-${dataSource.id}`,
       text: 'Cache',
-      url: `datasources/edit/${dataSource.uid}/cache`,
+      url: `datasources/edit/${dataSource.id}/cache`,
     });
   }
 
