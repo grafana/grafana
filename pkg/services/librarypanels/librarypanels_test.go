@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const UserInDbName = "user_in_db"
@@ -589,47 +588,10 @@ type libraryPanelResult struct {
 	Result libraryPanel `json:"result"`
 }
 
-func overrideLibraryServicesInRegistry(cfg *setting.Cfg) (*LibraryPanelService, *libraryelements.LibraryElementService) {
-	les := libraryelements.LibraryElementService{
-		SQLStore: nil,
-		Cfg:      cfg,
-	}
-
-	elementsOverride := func(d registry.Descriptor) (*registry.Descriptor, bool) {
-		descriptor := registry.Descriptor{
-			Name:     "LibraryElementService",
-			Instance: &les,
-		}
-
-		return &descriptor, true
-	}
-
-	registry.RegisterOverride(elementsOverride)
-
-	lps := LibraryPanelService{
-		SQLStore:              nil,
-		Cfg:                   cfg,
-		LibraryElementService: &les,
-	}
-
-	panelsOverride := func(d registry.Descriptor) (*registry.Descriptor, bool) {
-		descriptor := registry.Descriptor{
-			Name:     "LibraryPanelService",
-			Instance: &lps,
-		}
-
-		return &descriptor, true
-	}
-
-	registry.RegisterOverride(panelsOverride)
-
-	return &lps, &les
-}
-
 type scenarioContext struct {
 	ctx            *macaron.Context
-	service        *LibraryPanelService
-	elementService *libraryelements.LibraryElementService
+	service        LibraryPanelService
+	elementService libraryelements.LibraryElementService
 	reqContext     *models.ReqContext
 	user           models.SignedInUser
 	folder         *models.Folder
@@ -760,18 +722,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
-
-		cfg := setting.NewCfg()
-		// Everything in this service is behind the feature toggle "panelLibrary"
-		cfg.FeatureToggles = map[string]bool{"panelLibrary": true}
-		// Because the LibraryPanelService is behind a feature toggle, we need to override the service in the registry
-		// with a Cfg that contains the feature toggle so migrations are run properly
-		service, elementService := overrideLibraryServicesInRegistry(cfg)
-
-		// We need to assign SQLStore after the override and migrations are done
 		sqlStore := sqlstore.InitTestDB(t)
-		elementService.SQLStore = sqlStore
-		service.SQLStore = sqlStore
+		service := NewService(sqlStore)
+		elementService := libraryelements.NewService(sqlStore)
 
 		user := models.SignedInUser{
 			UserId:     1,

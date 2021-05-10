@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (l *LibraryElementService) registerAPIEndpoints() {
+func (l *libraryElementServiceImpl) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, binding.Bind(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
@@ -24,7 +24,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 }
 
 // createHandler handles POST /api/library-elements.
-func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLibraryElementCommand) response.Response {
+func (l *libraryElementServiceImpl) createHandler(c *models.ReqContext, cmd CreateLibraryElementCommand) response.Response {
 	element, err := l.createLibraryElement(c, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
@@ -34,7 +34,7 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 }
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
-func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
+func (l *libraryElementServiceImpl) deleteHandler(c *models.ReqContext) response.Response {
 	err := l.deleteLibraryElement(c, c.Params(":uid"))
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
@@ -44,7 +44,7 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 }
 
 // getHandler handles GET  /api/library-elements/:uid.
-func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Response {
+func (l *libraryElementServiceImpl) getHandler(c *models.ReqContext) response.Response {
 	element, err := l.getLibraryElement(c, c.Params(":uid"))
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
@@ -54,7 +54,7 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 }
 
 // getAllHandler handles GET /api/library-elements/.
-func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Response {
+func (l *libraryElementServiceImpl) getAllHandler(c *models.ReqContext) response.Response {
 	query := searchLibraryElementsQuery{
 		perPage:       c.QueryInt("perPage"),
 		page:          c.QueryInt("page"),
@@ -74,7 +74,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
-func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
+func (l *libraryElementServiceImpl) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
 	element, err := l.patchLibraryElement(c, cmd, c.Params(":uid"))
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
@@ -84,7 +84,7 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibr
 }
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
-func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) response.Response {
+func (l *libraryElementServiceImpl) getConnectionsHandler(c *models.ReqContext) response.Response {
 	connections, err := l.getConnections(c, c.Params(":uid"))
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get connections")
