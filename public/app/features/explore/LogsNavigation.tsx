@@ -49,6 +49,10 @@ function LogsNavigation({
   // e.g. if last 5 min selected, always run 5 min range
   const rangeSpanRef = useRef(0);
 
+  const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
+  const theme = useTheme();
+  const styles = getStyles(theme, oldestLogsFirst, loading);
+
   // Main effect to set pages and index
   useEffect(() => {
     const newPage = { logsRange: visibleRange, queryRange: absoluteRange };
@@ -101,32 +105,57 @@ function LogsNavigation({
     return `${topContent} — ${bottomContent}`;
   };
 
-  const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
-  const theme = useTheme();
-  const styles = getStyles(theme, oldestLogsFirst, loading);
+  const olderLogsButton = (
+    <Button
+      data-testid="olderLogsButton"
+      className={styles.navButton}
+      variant="secondary"
+      onClick={() => {
+        //If we are not on the last page, use next page's range
+        if (currentPageIndex < pages.length - 1) {
+          changeTime({
+            from: pages[currentPageIndex + 1].queryRange.from,
+            to: pages[currentPageIndex + 1].queryRange.to,
+          });
+        }
+        //If we are on the last page, create new range
+        changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+      }}
+      disabled={loading}
+    >
+      <div className={styles.navButtonContent}>
+        {loading ? <Spinner /> : <Icon name={oldestLogsFirst ? 'angle-up' : 'angle-down'} size="lg" />}
+        Older logs
+      </div>
+    </Button>
+  );
+
+  const newerLogsButton = (
+    <Button
+      data-testid="newerLogsButton"
+      className={styles.navButton}
+      variant="secondary"
+      onClick={() => {
+        //If we are not on the first page, use previous page's range
+        if (currentPageIndex > 0) {
+          changeTime({
+            from: pages[currentPageIndex - 1].queryRange.from,
+            to: pages[currentPageIndex - 1].queryRange.to,
+          });
+        }
+        //If we are on the first page, button is disabled and we do nothing
+      }}
+      disabled={loading || currentPageIndex === 0}
+    >
+      <div className={styles.navButtonContent} title={'aaaa'}>
+        {loading ? <Spinner /> : <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />}
+        Newer logs
+      </div>
+    </Button>
+  );
   return (
     <div className={styles.navContainer}>
-      {/*
-       * We are going to have 2 buttons - on the top and bottom - Oldest and Newest.
-       * Therefore I have at the moment duplicated the same code, but in the future iteration, it ill be updated
-       */}
-      {oldestLogsFirst && (
-        <Button
-          data-testid="fetchLogsTop"
-          className={styles.navButton}
-          variant="secondary"
-          onClick={() => {
-            // the range is based on initally selected range
-            changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-          }}
-          disabled={loading}
-        >
-          <div className={styles.navButtonContent}>
-            {loading ? <Spinner /> : <Icon name="angle-up" size="lg" />}
-            Older logs
-          </div>
-        </Button>
-      )}
+      {oldestLogsFirst ? olderLogsButton : newerLogsButton}
       <CustomScrollbar autoHide>
         <div className={styles.pagesWrapper}>
           <div className={styles.pagesContainer}>
@@ -147,23 +176,7 @@ function LogsNavigation({
         </div>
       </CustomScrollbar>
 
-      {!oldestLogsFirst && (
-        <Button
-          data-testid="fetchLogsBottom"
-          className={styles.navButton}
-          variant="secondary"
-          onClick={() => {
-            // the range is based on initally selected range
-            changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-          }}
-          disabled={loading}
-        >
-          <div className={styles.navButtonContent}>
-            Older logs
-            {loading ? <Spinner /> : <Icon name="angle-down" size="lg" />}
-          </div>
-        </Button>
-      )}
+      {oldestLogsFirst ? newerLogsButton : olderLogsButton}
       <Button
         data-testid="scrollToTop"
         className={styles.scrollToTopButton}
