@@ -1,7 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin, ReducerID, standardEditorsRegistry } from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLabels, PieChartLegendValues } from './types';
-import { LegendDisplayMode, addHideFrom, addLegendOptions } from '@grafana/ui';
+import { LegendDisplayMode, commonOptionsBuilder } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
@@ -21,7 +21,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       },
     },
     useCustomConfig: (builder) => {
-      addHideFrom(builder);
+      commonOptionsBuilder.addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {
@@ -74,7 +74,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         },
       });
 
-    addLegendOptions(builder, false);
+    commonOptionsBuilder.addLegendOptions(builder, false);
 
     builder.addMultiSelect({
       name: 'Legend values',

@@ -18,8 +18,7 @@ import {
   PointVisibility,
   StackingConfig,
   StackingMode,
-  addHideFrom,
-  addAxisConfig,
+  commonOptionsBuilder,
 } from '@grafana/ui';
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
@@ -178,8 +177,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         });
 
       addStackingConfig(builder, cfg.stacking);
-      addAxisConfig(builder, cfg);
-      addHideFrom(builder);
+      commonOptionsBuilder.addAxisConfig(builder, cfg);
+      commonOptionsBuilder.addHideFrom(builder);
 
       builder.addSelect({
         path: 'thresholdsStyle.mode',

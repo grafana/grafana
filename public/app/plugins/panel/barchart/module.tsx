@@ -13,9 +13,7 @@ import {
   StackingMode,
   BarValueVisibility,
   graphFieldOptions,
-  addHideFrom,
-  addLegendOptions,
-  addAxisConfig,
+  commonOptionsBuilder,
 } from '@grafana/ui';
 import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 
@@ -64,8 +62,8 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           },
         });
 
-      addAxisConfig(builder, cfg, true);
-      addHideFrom(builder);
+      commonOptionsBuilder.addAxisConfig(builder, cfg, true);
+      commonOptionsBuilder.addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {
@@ -121,7 +119,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       });
 
-    addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder);
   });
 
 function countNumberFields(data?: DataFrame[]): number {

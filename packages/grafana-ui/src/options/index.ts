@@ -1,3 +1,4 @@
-export * from './axis';
-export * from './hideSeries';
-export * from './legend';
+// namespace is too big
+export * as commonOptionsBuilder from './builder';
+
+export * from './models.gen';
