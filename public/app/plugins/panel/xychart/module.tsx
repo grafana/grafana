@@ -1,5 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
-import { DrawStyle, GraphFieldConfig, addLegendOptions } from '@grafana/ui';
+import { DrawStyle, GraphFieldConfig, commonOptionsBuilder } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
@@ -34,5 +34,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
         },
       });
 
-    addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder);
   });
