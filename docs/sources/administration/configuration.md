@@ -329,6 +329,10 @@ Set to `true` to log the sql calls and execution times.
 For Postgres, use either `disable`, `require` or `verify-full`.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
+### isolation_level
+
+Database drivers may support different transaction isolation levels. Currently, only "mysql" driver supports isolation levels. If the value is empty - driver's default isolation level is applied. For "mysql" use "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
+
 ### ca_cert_path
 
 The path to the CA certificate to use. On many Linux systems, certs can be found in `/etc/ssl/certs`.
