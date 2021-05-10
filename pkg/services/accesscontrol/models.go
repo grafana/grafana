@@ -42,6 +42,10 @@ func (p RoleDTO) Role() Role {
 const (
 	// Permission actions
 
+	// Actions
+	// Provisioning actions
+	ActionProvisioningReload = "provisioning:reload"
+
 	// Users actions
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
@@ -80,6 +84,9 @@ const (
 
 	ScopeUsersSelf = "users:self"
 	ScopeUsersAll  = "users:*"
+
+	// Services Scopes
+	ScopeServicesAll = "service:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
