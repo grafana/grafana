@@ -1,16 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { GRAFANA_API_ROOT } from './constants';
+import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { Plugin, PluginDetails, Org } from './types';
 
 export default class Api {
-  baseUrl: string;
-  pluginDir?: string;
-
-  constructor(pluginDir?: string) {
-    this.baseUrl = '';
-    this.pluginDir = pluginDir;
-  }
-
   async getRemotePlugins(): Promise<Plugin[]> {
     const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins`);
     return res.items;
@@ -48,48 +40,13 @@ export default class Api {
     return { ...org, avatarUrl: `${GRAFANA_API_ROOT}/orgs/${slug}/avatar` };
   }
 
-  async installPlugin(id: string, v: string, pkg?: string) {
-    const versions = await this.getPluginVersions(id);
-
-    const version = versions.find((_) => _.version === v);
-
-    if (!version) {
-      throw new Error('No such version');
-    }
-
-    const selfLink = version.links.find((_: any) => _.rel === 'self');
-    if (!selfLink) {
-      throw new Error('Missing download information for version');
-    }
-
-    let downloadUrl = GRAFANA_API_ROOT + selfLink.href + '/download';
-
-    const pair = pkg?.split('-');
-    if (pair?.length === 2) {
-      downloadUrl = `${downloadUrl}?os=${pair[0]}&arch=${pair[1]}`;
-    }
-
-    console.log({
-      endpoint: `/install`,
-      payload: JSON.stringify({
-        url: downloadUrl,
-        pluginDir: this.pluginDir,
-      }),
+  async installPlugin(id: string, version: string) {
+    return await getBackendSrv().post(`${API_ROOT}/${id}/install`, {
+      version,
     });
-    // await getBackendSrv().post(
-    //   `${API_ROOT}/install`,
-    //   JSON.stringify({
-    //     url: downloadUrl,
-    //     pluginDir: this.pluginDir,
-    //   })
-    // );
   }
 
   async uninstallPlugin(id: string) {
-    console.log({
-      endpoint: `/uninstall`,
-      payload: JSON.stringify({ slug: id, pluginDir: this.pluginDir }),
-    });
-    // await getBackendSrv().post(`${API_ROOT}/uninstall`, JSON.stringify({ slug: id, pluginDir: this.pluginDir }));
+    return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
   }
 }

@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { gt, satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, Select, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { AppEvents, GrafanaTheme2, OrgRole } from '@grafana/data';
 
 import { Metadata, Plugin } from '../types';
@@ -25,14 +25,15 @@ interface Props {
 }
 
 export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, onRefresh }: Props) => {
-  const [arch, setArch] = useState<string | undefined>();
+  // const [arch, setArch] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   const styles = useStyles2(getStyles);
+  const api = new API();
 
-  const onInstall = (slug: string, version: string, pkg: string) => {
+  const onInstall = (slug: string, version: string) => {
     setLoading(true);
-    new API(pluginDir).installPlugin(slug, version, pkg).finally(() => {
+    api.installPlugin(slug, version).finally(() => {
       setLoading(false);
       onRefresh();
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${remotePlugin?.name}`]);
@@ -41,7 +42,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
 
   const onUninstall = () => {
     setLoading(true);
-    new API(pluginDir).uninstallPlugin(slug).finally(() => {
+    api.uninstallPlugin(slug).finally(() => {
       setLoading(false);
       onRefresh();
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${remotePlugin?.name}`]);
@@ -51,7 +52,6 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
   const onUpdate = async () => {
     setLoading(true);
 
-    const api = new API(pluginDir);
     await api.uninstallPlugin(slug);
     await api.installPlugin(slug, remotePlugin.version);
 
@@ -72,29 +72,29 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
   const isDevelopmentBuild = !!localPlugin?.dev;
   const isEnterprise = remotePlugin?.status === 'enterprise';
   const isInternal = remotePlugin?.internal;
-  const hasPackages = Object.keys(remotePlugin?.packages ?? {}).length > 1;
+  // const hasPackages = Object.keys(remotePlugin?.packages ?? {}).length > 1;
   const isInstalled = !!localPlugin;
   const hasPermission = hasRole(OrgRole.Admin);
 
-  const archOptions = Object.values(remotePlugin?.packages ?? {}).map((_) => {
-    const pair = _.packageName.split('-');
+  // const archOptions = Object.values(remotePlugin?.packages ?? {}).map((_) => {
+  //   const pair = _.packageName.split('-');
 
-    if (pair.length === 2) {
-      switch (pair[0]) {
-        case 'windows':
-          return { label: 'Windows', value: _.packageName };
-        case 'linux':
-          return { label: 'Linux', value: _.packageName };
-        case 'darwin':
-          return { label: 'macOS', value: _.packageName };
-      }
-    }
+  //   if (pair.length === 2) {
+  //     switch (pair[0]) {
+  //       case 'windows':
+  //         return { label: 'Windows', value: _.packageName };
+  //       case 'linux':
+  //         return { label: 'Linux', value: _.packageName };
+  //       case 'darwin':
+  //         return { label: 'macOS', value: _.packageName };
+  //     }
+  //   }
 
-    return {
-      label: _.packageName,
-      value: _.packageName,
-    };
-  });
+  //   return {
+  //     label: _.packageName,
+  //     value: _.packageName,
+  //   };
+  // });
 
   if (isEnterprise) {
     return (
@@ -137,31 +137,31 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug, pluginDir, on
     );
   }
 
-  if (hasPackages) {
-    return (
-      <HorizontalGroup height="auto">
-        <Select
-          disabled={loading || !hasPermission}
-          width={25}
-          placeholder="Select your architecture"
-          options={archOptions}
-          onChange={(e) => {
-            setArch(e.value);
-          }}
-        />
-        {arch && (
-          <Button disabled={loading || !hasPermission} onClick={() => onInstall(slug, remotePlugin.version, arch)}>
-            {loading ? 'Installing' : 'Install'}
-          </Button>
-        )}
-        {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
-      </HorizontalGroup>
-    );
-  }
+  // if (hasPackages) {
+  //   return (
+  //     <HorizontalGroup height="auto">
+  //       <Select
+  //         disabled={loading || !hasPermission}
+  //         width={25}
+  //         placeholder="Select your architecture"
+  //         options={archOptions}
+  //         onChange={(e) => {
+  //           setArch(e.value);
+  //         }}
+  //       />
+  //       {arch && (
+  //         <Button disabled={loading || !hasPermission} onClick={() => onInstall(slug, remotePlugin.version)}>
+  //           {loading ? 'Installing' : 'Install'}
+  //         </Button>
+  //       )}
+  //       {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
+  //     </HorizontalGroup>
+  //   );
+  // }
 
   return (
     <HorizontalGroup height="auto">
-      <Button disabled={loading || !hasPermission} onClick={() => onInstall(slug, remotePlugin.version, 'any')}>
+      <Button disabled={loading || !hasPermission} onClick={() => onInstall(slug, remotePlugin.version)}>
         {loading ? 'Installing' : 'Install'}
       </Button>
       {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}

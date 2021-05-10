@@ -27,12 +27,12 @@ export const PluginDetails = ({ query, meta }: AppRootProps) => {
 
   const onRefresh = useCallback(() => {
     (async () => {
-      const api = new API(pluginDir);
+      const api = new API();
       const plugin = await api.getPlugin(slug);
       setState(plugin);
       setLoading(false);
     })();
-  }, [slug, pluginDir]);
+  }, [slug]);
 
   useEffect(() => {
     setLoading(true);

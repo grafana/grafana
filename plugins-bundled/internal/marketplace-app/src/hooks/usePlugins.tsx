@@ -24,7 +24,7 @@ export const usePlugins = ({
     setState((state) => ({ ...state, status: 'LOADING' }));
 
     (async () => {
-      const api = new API(pluginDir);
+      const api = new API();
       const items = await api.getRemotePlugins();
       const filteredItems = items
         .filter((plugin) => plugin.versionSignatureType || includeUnsigned)
@@ -59,7 +59,7 @@ export const usePlugin = ({ slug, pluginDir }: { slug: string; pluginDir?: strin
     setState((state) => ({ ...state, status: 'LOADING' }));
 
     (async () => {
-      const api = new API(pluginDir);
+      const api = new API();
       const plugin = await api.getPlugin(slug);
       setState({ ...plugin, status: 'DONE' });
     })();
