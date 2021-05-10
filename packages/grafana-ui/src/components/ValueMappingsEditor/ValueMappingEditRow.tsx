@@ -113,16 +113,16 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
               <div className={styles.rangeInputWrapper}>
                 <Input
                   type="number"
-                  defaultValue={mapping.from || ''}
+                  value={mapping.from ?? ''}
                   placeholder="Range start"
-                  onBlur={onChangeFrom}
+                  onChange={onChangeFrom}
                   prefix="From"
                 />
                 <Input
                   type="number"
-                  defaultValue={mapping.to || ''}
+                  value={mapping.to ?? ''}
                   placeholder="Range end"
-                  onBlur={onChangeTo}
+                  onChange={onChangeTo}
                   prefix="To"
                 />
               </div>

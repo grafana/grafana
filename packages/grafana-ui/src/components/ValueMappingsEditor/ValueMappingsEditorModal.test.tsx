@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ValueMappingsEditorModal, Props } from './ValueMappingsEditorModal';
 import { MappingType } from '@grafana/data';
 
@@ -15,7 +15,10 @@ const setup = (spy?: any, propOverrides?: object) => {
       {
         type: MappingType.ValueToText,
         options: {
-          '20': { text: 'Ok' },
+          '20': {
+            text: 'Ok',
+            index: 0,
+          },
         },
       },
       {
@@ -25,6 +28,7 @@ const setup = (spy?: any, propOverrides?: object) => {
           to: 30,
           result: {
             text: 'Meh',
+            index: 1,
           },
         },
       },
@@ -58,43 +62,81 @@ describe('On remove mapping', () => {
           to: 30,
           result: {
             text: 'Meh',
+            index: 0,
           },
         },
       },
     ]);
   });
-
-  // it('should remove mapping at index 1', () => {
-  //   const onChangeSpy = jest.fn();
-  //   const wrapper = setup(onChangeSpy);
-
-  //   const remove = wrapper.find('button[aria-label="ValueMappingsEditor remove button"]');
-  //   remove.at(1).simulate('click');
-
-  //   expect(onChangeSpy).toBeCalledWith([{ id: 1, type: MappingType.ValueToText, value: '20', text: 'Ok' }]);
-  // });
 });
 
-// describe('Next id to add', () => {
-//   it('should be 3', () => {
-//     const onChangeSpy = jest.fn();
-//     const wrapper = setup(onChangeSpy);
+describe('When adding and updating value mapp', () => {
+  it('should be 3', async () => {
+    const onChangeSpy = jest.fn();
+    setup(onChangeSpy);
 
-//     const add = wrapper.find('*[aria-label="ValueMappingsEditor add mapping button"]');
-//     add.at(0).simulate('click');
+    fireEvent.click(screen.getByTestId('add value map'));
 
-//     expect(onChangeSpy).toBeCalledWith([
-//       { id: 1, type: MappingType.ValueToText, value: '20', text: 'Ok' },
-//       { id: 2, type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
-//       { id: 3, type: MappingType.ValueToText, from: '', to: '', text: '' },
-//     ]);
-//   });
+    const input = (await screen.findAllByPlaceholderText('Exact value to match'))[1];
 
-//   it('should default to id 1', () => {
-//     const onChangeSpy = jest.fn();
-//     const wrapper = setup(onChangeSpy, { value: [] });
-//     const add = wrapper.find('*[aria-label="ValueMappingsEditor add mapping button"]');
-//     add.at(0).simulate('click');
-//     expect(onChangeSpy).toBeCalledWith([{ id: 1, type: MappingType.ValueToText, from: '', to: '', text: '' }]);
-//   });
-// });
+    fireEvent.change(input, { target: { value: 'New' } });
+    fireEvent.change(screen.getAllByPlaceholderText('Display text')[2], { target: { value: 'display' } });
+    fireEvent.click(screen.getByText('Update'));
+
+    expect(onChangeSpy).toBeCalledWith([
+      {
+        type: MappingType.ValueToText,
+        options: {
+          '20': {
+            text: 'Ok',
+            index: 0,
+          },
+          New: {
+            text: 'display',
+            index: 2,
+          },
+        },
+      },
+      {
+        type: MappingType.RangeToText,
+        options: {
+          from: 21,
+          to: 30,
+          result: {
+            text: 'Meh',
+            index: 1,
+          },
+        },
+      },
+    ]);
+  });
+});
+
+describe('When adding and updating range map', () => {
+  it('should add new range map', async () => {
+    const onChangeSpy = jest.fn();
+    setup(onChangeSpy, { value: [] });
+
+    fireEvent.click(screen.getByTestId('add range map'));
+
+    fireEvent.change(screen.getByPlaceholderText('Range start'), { target: { value: '10' } });
+    fireEvent.change(screen.getByPlaceholderText('Range end'), { target: { value: '20' } });
+    fireEvent.change(screen.getByPlaceholderText('Display text'), { target: { value: 'display' } });
+
+    fireEvent.click(screen.getByText('Update'));
+
+    expect(onChangeSpy).toBeCalledWith([
+      {
+        type: MappingType.RangeToText,
+        options: {
+          from: 10,
+          to: 20,
+          result: {
+            text: 'display',
+            index: 0,
+          },
+        },
+      },
+    ]);
+  });
+});

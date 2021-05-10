@@ -167,10 +167,10 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                 <tr>
                   <td colSpan={6}>
                     <HorizontalGroup>
-                      <Button variant="secondary" icon="plus" onClick={onAddValueMap}>
+                      <Button variant="secondary" icon="plus" onClick={onAddValueMap} data-testid="add value map">
                         Value map
                       </Button>
-                      <Button variant="secondary" icon="plus" onClick={onAddRangeMap}>
+                      <Button variant="secondary" icon="plus" onClick={onAddRangeMap} data-testid="add range map">
                         Range map
                       </Button>
                     </HorizontalGroup>
