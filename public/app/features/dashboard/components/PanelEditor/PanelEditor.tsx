@@ -218,6 +218,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onDisplayModeChange = (mode?: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
+    if (this.props.tableViewEnabled) {
+      this.props.toggleTableView();
+    }
     updatePanelEditorUIState({
       mode: mode,
     });
