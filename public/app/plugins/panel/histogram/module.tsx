@@ -2,10 +2,19 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { HistogramPanel } from './HistogramPanel';
 import { graphFieldOptions } from '@grafana/ui';
 import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
+import { originalDataHasHistogram } from './utils';
 
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
     builder
+      .addCustomEditor({
+        id: '__calc__',
+        path: '__calc__',
+        name: 'Frequencies',
+        description: 'Showing values that are calculated in the query',
+        editor: () => null, // empty editor
+        showIf: (opts, data) => originalDataHasHistogram(data),
+      })
       .addNumberInput({
         path: 'bucketSize',
         name: 'Bucket size',
@@ -14,6 +23,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
           placeholder: 'Auto',
         },
         defaultValue: defaultPanelOptions.bucketSize,
+        showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addNumberInput({
         path: 'bucketOffset',
@@ -23,12 +33,14 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
           placeholder: '0',
         },
         defaultValue: defaultPanelOptions.bucketOffset,
+        showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addBooleanSwitch({
         path: 'combine',
         name: 'Combine series',
         description: 'when multiple series exist, combine them into a single aggregate histogram',
         defaultValue: defaultPanelOptions.combine,
+        showIf: (opts, data) => !originalDataHasHistogram(data),
       });
   })
   .useFieldConfig({

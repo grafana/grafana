@@ -21,9 +21,11 @@ import {
 } from '@grafana/ui';
 
 import { histogramFrameBucketMaxFieldName } from '@grafana/data/src/transformations/transformers/histogram';
+import { PanelOptions } from './models.gen';
 
 export interface HistogramProps extends Themeable2 {
-  alignedFrame: DataFrame;
+  options: PanelOptions; // used for diff
+  alignedFrame: DataFrame; // This could take HistogramFields
   width: number;
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
@@ -178,16 +180,6 @@ const renderLegend = (config: UPlotConfigBuilder) => {
   return null;
 };
 
-export function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
-  for (const propName of propsToDiff) {
-    if (nextProps[propName] !== prevProps[propName]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 /**
  * @internal -- not a public API
  */
@@ -227,7 +219,10 @@ export class Histogram extends React.Component<HistogramProps, GraphNGState> {
 
       if (newState) {
         const shouldReconfig =
-          this.state.config === undefined || structureRev !== prevProps.structureRev || !structureRev;
+          this.props.options !== prevProps.options ||
+          this.state.config === undefined ||
+          structureRev !== prevProps.structureRev ||
+          !structureRev;
 
         if (shouldReconfig) {
           newState.config = prepConfig(alignedFrame, this.props.theme);
