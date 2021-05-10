@@ -168,14 +168,12 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Icon: "camera",
 		})
 
-		if hs.Cfg.IsPanelLibraryEnabled() {
-			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "Library panels",
-				Id:   "library-panels",
-				Url:  hs.Cfg.AppSubURL + "/library-panels",
-				Icon: "library-panel",
-			})
-		}
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Library panels",
+			Id:   "library-panels",
+			Url:  hs.Cfg.AppSubURL + "/library-panels",
+			Icon: "library-panel",
+		})
 	}
 
 	navTree = append(navTree, &dtos.NavLink{

@@ -33,66 +33,34 @@ func (l *LibraryElementService) Init() error {
 	return nil
 }
 
-// IsEnabled returns true if the Panel Library feature is enabled for this instance.
-func (l *LibraryElementService) IsEnabled() bool {
-	if l.Cfg == nil {
-		return false
-	}
-
-	return l.Cfg.IsPanelLibraryEnabled()
-}
-
 // CreateElement creates a Library Element.
 func (l *LibraryElementService) CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
-	if !l.IsEnabled() {
-		return LibraryElementDTO{}, nil
-	}
-
 	return l.createLibraryElement(c, cmd)
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
 func (l *LibraryElementService) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
-	if !l.IsEnabled() {
-		return map[string]LibraryElementDTO{}, nil
-	}
-
 	return l.getElementsForDashboardID(c, dashboardID)
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
 func (l *LibraryElementService) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
-	if !l.IsEnabled() {
-		return nil
-	}
-
 	return l.connectElementsToDashboardID(c, elementUIDs, dashboardID)
 }
 
 // DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
 func (l *LibraryElementService) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
-	if !l.IsEnabled() {
-		return nil
-	}
-
 	return l.disconnectElementsFromDashboardID(c, dashboardID)
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
-	if !l.IsEnabled() {
-		return nil
-	}
 	return l.deleteLibraryElementsInFolderUID(c, folderUID)
 }
 
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
 func (l *LibraryElementService) AddMigration(mg *migrator.Migrator) {
-	if !l.IsEnabled() {
-		return
-	}
-
 	libraryElementsV1 := migrator.Table{
 		Name: "library_element",
 		Columns: []*migrator.Column{

@@ -32,22 +32,9 @@ func (lps *LibraryPanelService) Init() error {
 	return nil
 }
 
-// IsEnabled returns true if the Panel Library feature is enabled for this instance.
-func (lps *LibraryPanelService) IsEnabled() bool {
-	if lps.Cfg == nil {
-		return false
-	}
-
-	return lps.Cfg.IsPanelLibraryEnabled()
-}
-
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
 func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
-	if !lps.IsEnabled() {
-		return nil
-	}
-
 	elements, err := lps.LibraryElementService.GetElementsForDashboard(c, dash.Id)
 	if err != nil {
 		return err
@@ -135,10 +122,6 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 // CleanLibraryPanelsForDashboard loops through all panels in dashboard JSON and cleans up any library panel JSON so that
 // only the necessary JSON properties remain when storing the dashboard JSON.
 func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
-	if !lps.IsEnabled() {
-		return nil
-	}
-
 	panels := dash.Data.Get("panels").MustArray()
 	for i, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
@@ -175,10 +158,6 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
-	if !lps.IsEnabled() {
-		return nil
-	}
-
 	panels := dash.Data.Get("panels").MustArray()
 	var libraryPanels []string
 	for _, panel := range panels {
