@@ -5,7 +5,7 @@ export interface RawRestore extends Omit<RawBackup, 'created_at' | 'status'> {
   status: RestoreStatus;
   restore_id: string;
   started_at: string;
-  finished_at: string;
+  finished_at?: string;
 }
 
 export interface RestoreResponse {
@@ -15,6 +15,6 @@ export interface RestoreResponse {
 export interface Restore extends Omit<Backup, 'created' | 'status'> {
   artifactId: string;
   started: number;
-  finished: number;
+  finished: number | null;
   status: RestoreStatus;
 }
