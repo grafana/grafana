@@ -10,14 +10,14 @@ describe('mapper', () => {
     });
 
     it('should map relative time range from one hour to time option', () => {
-      const relativeTimeRange = { from: 6000, to: 0 };
+      const relativeTimeRange = { from: 3600, to: 0 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
       expect(timeOption).toEqual({ from: 'now-1h', to: 'now', display: 'Last 1 hour' });
     });
 
     it('should map relative time range from hours to time option', () => {
-      const relativeTimeRange = { from: 12000, to: 0 };
+      const relativeTimeRange = { from: 7200, to: 0 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
       expect(timeOption).toEqual({ from: 'now-2h', to: 'now', display: 'Last 2 hours' });
@@ -34,7 +34,33 @@ describe('mapper', () => {
       const relativeTimeRange = { from: 6000, to: 300 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
-      expect(timeOption).toEqual({ from: 'now-1h', to: 'now-5m', display: 'Last 10 hour, 5 minutes ago' });
+      expect(timeOption).toEqual({
+        from: 'now-100m',
+        to: 'now-5m',
+        display: 'Last 1 hour and 40 minutes, 5 minutes ago',
+      });
+    });
+
+    it('should handle two relative ranges with two units', () => {
+      const relativeTimeRange = { from: 8460, to: 300 };
+      const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
+
+      expect(timeOption).toEqual({
+        from: 'now-141m',
+        to: 'now-5m',
+        display: 'Last 2 hours and 21 minutes, 5 minutes ago',
+      });
+    });
+
+    it('should handle two relative ranges with two units where the second one is singular', () => {
+      const relativeTimeRange = { from: 7260, to: 300 };
+      const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
+
+      expect(timeOption).toEqual({
+        from: 'now-121m',
+        to: 'now-5m',
+        display: 'Last 2 hours and 1 minute, 5 minutes ago',
+      });
     });
   });
 
