@@ -1,6 +1,13 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 
-import { FieldDisplay, FALLBACK_COLOR, formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import {
+  FieldDisplay,
+  FALLBACK_COLOR,
+  formattedValueToString,
+  GrafanaTheme2,
+  DataHoverClearEvent,
+  DataHoverEvent,
+} from '@grafana/data';
 import {
   VizTooltipOptions,
   useTheme2,
@@ -8,6 +15,7 @@ import {
   SeriesTableRowProps,
   DataLinksContextMenu,
   SeriesTable,
+  usePanelContext,
 } from '@grafana/ui';
 import { PieChartType, PieChartLabels } from './types';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
@@ -110,15 +118,16 @@ export const PieChart: FC<PieChartProps> = ({
             {(pie) => (
               <>
                 {pie.arcs.map((arc) => {
-                  let color = arc.data.display.color ?? FALLBACK_COLOR;
-                  const highlighted = highlightedTitle === arc.data.display.title;
+                  const color = arc.data.display.color ?? FALLBACK_COLOR;
+                  const highlightState = getHighlightState(highlightedTitle, arc);
+
                   if (arc.data.hasLinks && arc.data.getLinks) {
                     return (
                       <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
                         {(api) => (
                           <PieSlice
                             tooltip={tooltip}
-                            highlighted={highlighted}
+                            highlightState={highlightState}
                             arc={arc}
                             pie={pie}
                             fill={getGradientColor(color)}
@@ -132,7 +141,7 @@ export const PieChart: FC<PieChartProps> = ({
                     return (
                       <PieSlice
                         key={arc.index}
-                        highlighted={highlighted}
+                        highlightState={highlightState}
                         tooltip={tooltip}
                         arc={arc}
                         pie={pie}
@@ -143,17 +152,21 @@ export const PieChart: FC<PieChartProps> = ({
                   }
                 })}
                 {showLabel &&
-                  pie.arcs.map((arc) => (
-                    <PieLabel
-                      arc={arc}
-                      key={arc.index}
-                      outerRadius={layout.outerRadius}
-                      innerRadius={layout.innerRadius}
-                      displayLabels={displayLabels}
-                      total={total}
-                      color={theme.colors.text.primary}
-                    />
-                  ))}
+                  pie.arcs.map((arc) => {
+                    const highlightState = getHighlightState(highlightedTitle, arc);
+                    return (
+                      <PieLabel
+                        arc={arc}
+                        key={arc.index}
+                        highlightState={highlightState}
+                        outerRadius={layout.outerRadius}
+                        innerRadius={layout.innerRadius}
+                        displayLabels={displayLabels}
+                        total={total}
+                        color={theme.colors.text.primary}
+                      />
+                    );
+                  })}
               </>
             )}
           </Pie>
@@ -178,32 +191,64 @@ export const PieChart: FC<PieChartProps> = ({
 interface SliceProps {
   arc: PieArcDatum<FieldDisplay>;
   pie: ProvidedProps<FieldDisplay>;
-  highlighted?: boolean;
+  highlightState: HighLightState;
   fill: string;
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
 }
 
-function PieSlice({ arc, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
+function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOptions }: SliceProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { eventBus } = usePanelContext();
 
-  const onMouseMoveOverArc = (event: any) => {
-    const coords = localPoint(event.target.ownerSVGElement, event);
-    tooltip.showTooltip({
-      tooltipLeft: coords!.x,
-      tooltipTop: coords!.y,
-      tooltipData: getTooltipData(pie, arc, tooltipOptions),
-    });
-  };
+  const onMouseOut = useCallback(
+    (event: any) => {
+      eventBus?.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+      tooltip.hideTooltip();
+    },
+    [eventBus, arc, tooltip]
+  );
+
+  const onMouseMoveOverArc = useCallback(
+    (event: any) => {
+      eventBus?.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+
+      const coords = localPoint(event.target.ownerSVGElement, event);
+      tooltip.showTooltip({
+        tooltipLeft: coords!.x,
+        tooltipTop: coords!.y,
+        tooltipData: getTooltipData(pie, arc, tooltipOptions),
+      });
+    },
+    [eventBus, arc, tooltip, pie, tooltipOptions]
+  );
+
+  const pieStyle = getSvgStyle(highlightState, styles);
 
   return (
     <g
       key={arc.data.display.title}
-      className={highlighted ? styles.svgArg.highlighted : styles.svgArg.normal}
+      className={pieStyle}
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
-      onMouseOut={tooltip.hideTooltip}
+      onMouseOut={onMouseOut}
       onClick={openMenu}
       aria-label={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
@@ -217,11 +262,13 @@ interface LabelProps {
   outerRadius: number;
   innerRadius: number;
   displayLabels: PieChartLabels[];
+  highlightState: HighLightState;
   total: number;
   color: string;
 }
 
-function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color }: LabelProps) {
+function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color, highlightState }: LabelProps) {
+  const styles = useStyles2(getStyles);
   const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
   const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
   const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
@@ -235,7 +282,7 @@ function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color }
     : Math.min(Math.max((outerRadius / 100) * 14, 12), 36);
 
   return (
-    <g>
+    <g className={getSvgStyle(highlightState, styles)}>
       <text
         fill={color}
         x={labelX}
@@ -334,6 +381,40 @@ function getPieLayout(height: number, width: number, pieType: PieChartType, marg
   };
 }
 
+enum HighLightState {
+  Highlighted,
+  Deemphasized,
+  Normal,
+}
+
+function getHighlightState(highlightedTitle: string | undefined, arc: PieArcDatum<FieldDisplay>) {
+  if (highlightedTitle) {
+    if (highlightedTitle === arc.data.display.title) {
+      return HighLightState.Highlighted;
+    } else {
+      return HighLightState.Deemphasized;
+    }
+  }
+  return HighLightState.Normal;
+}
+
+function getSvgStyle(
+  highlightState: HighLightState,
+  styles: {
+    svgArg: { normal: string; highlighted: string; deemphasized: string };
+  }
+) {
+  switch (highlightState) {
+    case HighLightState.Highlighted:
+      return styles.svgArg.highlighted;
+    case HighLightState.Deemphasized:
+      return styles.svgArg.deemphasized;
+    case HighLightState.Normal:
+    default:
+      return styles.svgArg.normal;
+  }
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
@@ -346,13 +427,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     svgArg: {
       normal: css`
         transition: all 200ms ease-in-out;
-        &:hover {
-          transform: scale3d(1.03, 1.03, 1);
-        }
       `,
       highlighted: css`
         transition: all 200ms ease-in-out;
         transform: scale3d(1.03, 1.03, 1);
+      `,
+      deemphasized: css`
+        transition: all 200ms ease-in-out;
+        fill-opacity: 0.5;
       `,
     },
     tooltipPortal: css`
