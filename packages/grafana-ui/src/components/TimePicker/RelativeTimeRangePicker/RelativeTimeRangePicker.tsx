@@ -1,6 +1,6 @@
 import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
-import { RelativeTimeRange, GrafanaTheme2, TimeOption, rangeUtil } from '@grafana/data';
+import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { useStyles2 } from '../../../themes';
 import { Button, ButtonGroup, ToolbarButton } from '../../Button';
