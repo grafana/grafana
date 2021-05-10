@@ -69,6 +69,9 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	}()
 
 	err = rs.readFileResponse(resp, filePath, ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return &RenderResult{FilePath: filePath}, nil
 }
