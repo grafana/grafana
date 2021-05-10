@@ -150,7 +150,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
           </td>
           <td>
             <HorizontalGroup spacing="sm">
-              <IconButton name="trash-alt" onClick={() => onRemove(index)} />
+              <IconButton name="trash-alt" onClick={() => onRemove(index)} data-testid="remove-value-mapping" />
             </HorizontalGroup>
           </td>
         </tr>

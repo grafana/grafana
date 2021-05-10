@@ -43,32 +43,32 @@ describe('Format value with value mappings', () => {
 
   it('should return match result with string value match', () => {
     const value = '11';
-    expect(getValueMappingResult(testSet1, value)).toEqual({ state: 'elva' });
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'elva' });
   });
 
   it('should return match result with number value', () => {
     const value = 11;
-    expect(getValueMappingResult(testSet1, value)).toEqual({ state: 'elva' });
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'elva' });
   });
 
   it('should return match result for null value', () => {
     const value = null;
-    expect(getValueMappingResult(testSet1, value)).toEqual({ state: 'it is null' });
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'it is null' });
   });
 
   it('should return match result for undefined value', () => {
     const value = undefined;
-    expect(getValueMappingResult(testSet1, value as any)).toEqual({ state: 'it is null' });
+    expect(getValueMappingResult(testSet1, value as any)).toEqual({ text: 'it is null' });
   });
 
   it('should return range mapping that matches first', () => {
     const value = '9';
-    expect(getValueMappingResult(testSet1, value)).toEqual({ state: '1-9' });
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: '1-9' });
   });
 
   it('should return correct range mapping result', () => {
     const value = '12';
-    expect(getValueMappingResult(testSet1, value)).toEqual({ state: '8-12' });
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: '8-12' });
   });
 
   //   it.each`
