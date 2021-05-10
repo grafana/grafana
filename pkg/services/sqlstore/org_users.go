@@ -14,7 +14,6 @@ func init() {
 	bus.AddHandler("sql", AddOrgUser)
 	bus.AddHandler("sql", RemoveOrgUser)
 	bus.AddHandler("sql", GetOrgUsers)
-	bus.AddHandler("sql", SearchOrgUsers)
 	bus.AddHandler("sql", UpdateOrgUser)
 }
 
@@ -143,7 +142,7 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 	return nil
 }
 
-func SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
+func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
 	query.Result = models.SearchOrgUsersQueryResult{
 		OrgUsers: make([]*models.OrgUserDTO, 0),
 	}
@@ -155,7 +154,7 @@ func SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
 	whereParams := make([]interface{}, 0)
 
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
-	whereParams = append(whereParams, query.OrgId)
+	whereParams = append(whereParams, query.OrgID)
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
