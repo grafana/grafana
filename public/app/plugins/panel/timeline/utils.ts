@@ -1,5 +1,5 @@
 import React from 'react';
-import { XYFieldMatchers } from '../GraphNG/types';
+import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   DataFrame,
   FieldColorModeId,
@@ -10,15 +10,18 @@ import {
   classicColors,
   Field,
 } from '@grafana/data';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode } from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
-import { FIXED_UNIT } from '../GraphNG/GraphNG';
-import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } from '../uPlot/config';
-import { measureText } from '../../utils/measureText';
-import { PrepConfigOpts } from '../GraphNG/utils';
+import {
+  AxisPlacement,
+  GraphGradientMode,
+  ScaleDirection,
+  ScaleOrientation,
+} from '@grafana/ui/src/components/uPlot/config';
+import { measureText } from '@grafana/ui/src/utils/measureText';
+import { PrepConfigOpts } from '@grafana/ui/src/components/GraphNG/utils';
 
-import { SeriesVisibilityChangeMode, TimelineFieldConfig } from '../..';
-import { BarValueVisibility, TimelineMode } from './types';
+import { BarValueVisibility, TimelineFieldConfig, TimelineMode } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
