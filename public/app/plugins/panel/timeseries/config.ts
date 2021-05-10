@@ -18,13 +18,13 @@ import {
   PointVisibility,
   StackingConfig,
   StackingMode,
+  addHideFrom,
+  addAxisConfig,
 } from '@grafana/ui';
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { StackingEditor } from './StackingEditor';
-import { addHideFrom } from 'app/features/panel/options/hideSeries';
-import { addAxisConfig } from 'app/features/panel/options/axis';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,

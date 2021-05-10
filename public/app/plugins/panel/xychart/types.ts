@@ -1,6 +1,4 @@
-import { VizTooltipOptions } from '@grafana/ui';
-import { OptionsWithLegend } from 'app/features/panel/options/legend';
-
+import { VizTooltipOptions, OptionsWithLegend } from '@grafana/ui';
 export interface XYDimensionConfig {
   frame: number;
   x?: string; // name | first

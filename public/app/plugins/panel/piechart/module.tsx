@@ -1,10 +1,8 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin, ReducerID, standardEditorsRegistry } from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLabels, PieChartLegendValues } from './types';
-import { LegendDisplayMode } from '@grafana/ui';
+import { LegendDisplayMode, addHideFrom, addLegendOptions } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
-import { addHideFrom } from 'app/features/panel/options/hideSeries';
-import { addLegendOptions } from 'app/features/panel/options/legend';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
