@@ -95,6 +95,13 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: gen-version
   image: grafana/build-container:1.4.1
   commands:
@@ -355,6 +362,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -796,6 +810,13 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: gen-version
   image: grafana/build-container:1.4.1
   commands:
@@ -1163,6 +1184,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -1731,6 +1759,13 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: gen-version
   image: grafana/build-container:1.4.1
   commands:
@@ -2087,6 +2122,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -2645,6 +2687,13 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: gen-version
   image: grafana/build-container:1.4.1
   commands:
@@ -2972,6 +3021,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
