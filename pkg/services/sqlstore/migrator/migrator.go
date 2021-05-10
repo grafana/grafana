@@ -171,13 +171,14 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	return nil
 }
 
-func (mg *Migrator) ClearMigrationEntry(id string) {
+func (mg *Migrator) ClearMigrationEntry(id string) error {
 	sess := mg.x.NewSession()
 	defer sess.Close()
-	_, err := sess.SQL(`DELETE from migration_log where migration_id == 'move dashboard alerts to unified alerting'`).Query()
+	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, id).Query()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to clear migration entry %v: %w", id, err)
 	}
+	return nil
 }
 
 type dbTransactionFunc func(sess *xorm.Session) error

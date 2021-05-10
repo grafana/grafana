@@ -30,7 +30,8 @@ func AddMigration(mg *migrator.Migrator) {
 		// so it runs and creates the tables before this migration runs.
 		logs, err := mg.GetMigrationLog()
 		if err != nil {
-			panic(fmt.Sprintf("could not get migration log: %v", err))
+			mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+			os.Exit(1)
 		}
 
 		_, migrationRun := logs[migTitle]
@@ -41,7 +42,10 @@ func AddMigration(mg *migrator.Migrator) {
 		case ngEnabled && !migrationRun:
 			mg.AddMigration(migTitle, &migration{})
 		case !ngEnabled && migrationRun:
-			mg.ClearMigrationEntry(migTitle)
+			err = mg.ClearMigrationEntry(migTitle)
+			if err != nil {
+				mg.Logger.Error("alert migration error: could not clear alert migration", "error", err)
+			}
 		}
 	}
 }
