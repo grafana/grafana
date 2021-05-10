@@ -60,6 +60,7 @@ export function PieChartPanel(props: Props) {
             fieldDisplayValues={fieldDisplayValues}
             tooltipOptions={options.tooltip}
             pieType={options.pieType}
+            displayLabels={options.displayLabels}
           />
         );
       }}
