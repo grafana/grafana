@@ -95,6 +95,15 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - go run build.go build-cli
+  - chmod +x bin/linux-amd64/grafana-cli
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: gen-version
   image: grafana/build-container:1.4.1
   commands:

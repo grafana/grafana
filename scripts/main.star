@@ -33,7 +33,8 @@ load(
     'publish_packages_step',
     'notify_pipeline',
     'integration_test_services',
-    'upload_cdn'
+    'upload_cdn',
+    'validate_scuemata'
 )
 
 ver_mode = 'main'

@@ -1109,3 +1109,17 @@ def integration_test_services(edition):
         }])
 
     return services
+
+def validate_scuemata():
+    return {
+        'name': 'validate-scuemata',
+        'image': build_image,
+        'depends_on': [
+            'build-backend',
+        ],
+        'commands': [
+            'go run build.go build-cli',
+            'chmod +x bin/linux-amd64/grafana-cli',
+            './bin/linux-amd64/grafana-cli cue validate-schema',
+        ],
+    }

@@ -32,7 +32,8 @@ load(
     'notify_pipeline',
     'integration_test_services',
     'publish_packages_step',
-    'upload_cdn'
+    'upload_cdn',
+    'validate_scuemata'
 )
 
 def release_npm_packages_step(edition, ver_mode):
