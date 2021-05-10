@@ -1171,6 +1171,25 @@ describe('DashboardModel', () => {
           },
         },
       ]);
+
+      expect(model.panels[0].fieldConfig.overrides).toEqual([
+        {
+          matcher: { id: 'byName', options: 'D-series' },
+          properties: [
+            {
+              id: 'mappings',
+              value: [
+                {
+                  type: MappingType.ValueToText,
+                  options: {
+                    up: { text: 'OverrideText' },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
     });
   });
 });

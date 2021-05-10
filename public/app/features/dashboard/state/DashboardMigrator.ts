@@ -901,6 +901,14 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
   }
 
   fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings);
+
+  for (const override of fieldConfig.overrides) {
+    for (const prop of override.properties) {
+      if (prop.id === 'mappings') {
+        prop.value = upgradeValueMappings(prop.value);
+      }
+    }
+  }
 }
 
 function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {

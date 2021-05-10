@@ -113,6 +113,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
               <Icon name="draggabledots" size="lg" />
             </div>
           </td>
+          <td className={styles.typeColumn}>{mapping.type}</td>
           <td>
             {mapping.type === MappingType.ValueToText && (
               <Input
@@ -164,7 +165,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
               <ColorPicker color={'gray'} onChange={onChangeColor} enableNamedColors={true}>
                 {(props) => (
                   <LinkButton variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
-                    Set a color
+                    Set color
                   </LinkButton>
                 )}
               </ColorPicker>
@@ -190,5 +191,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '> div:first-child': {
       marginRight: theme.spacing(2),
     },
+  }),
+  typeColumn: css({
+    textTransform: 'capitalize',
   }),
 });
