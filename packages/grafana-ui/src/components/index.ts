@@ -94,6 +94,7 @@ export {
   PanelChromeErrorIndicatorProps,
   PanelContextProvider,
   PanelContext,
+  PanelContextRoot,
   usePanelContext,
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
@@ -231,14 +232,12 @@ export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { usePlotContext } from './uPlot/context';
-export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
+export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { preparePlotFrame } from './GraphNG/utils';
 export { BarChart } from './BarChart/BarChart';
-export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
-export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export * from './NodeGraph';
