@@ -170,7 +170,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
       position: sticky;
-      top: 0;
+      top: ${theme.spacing.md};
       right: 0;
     `,
     navButton: css`
