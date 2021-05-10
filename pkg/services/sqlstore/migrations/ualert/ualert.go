@@ -11,8 +11,8 @@ import (
 const GENERAL_FOLDER = "General Alerting"
 const DASHBOARD_FOLDER = "Migrated %s"
 
-// It used to track such folders created by this migration
-// during alert migration cleanup
+// FOLDER_CREATED_BY us used to track folders created by this migration
+// during alert migration cleanup.
 const FOLDER_CREATED_BY = -8
 
 var migTitle = "move dashboard alerts to unified alerting"
