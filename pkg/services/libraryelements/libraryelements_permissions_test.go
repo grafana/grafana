@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func TestLibraryElemmentPermissions(t *testing.T) {
+func TestLibraryElementPermissions(t *testing.T) {
 	var defaultPermissions = []folderACLItem{}
 	var adminOnlyPermissions = []folderACLItem{{models.ROLE_ADMIN, models.PERMISSION_EDIT}}
 	var editorOnlyPermissions = []folderACLItem{{models.ROLE_EDITOR, models.PERMISSION_EDIT}}
