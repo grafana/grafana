@@ -112,4 +112,4 @@ require (
 	xorm.io/xorm v0.8.2
 )
 
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.93.1-0.20210505185742-edbe29291fa1
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.93.1-0.20210510162333-2e0b0e48aa14
