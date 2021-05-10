@@ -1,5 +1,6 @@
 import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange, urlUtil } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
@@ -232,7 +233,7 @@ export const panelToRuleFormValues = (
             title: folderTitle,
           }
         : undefined,
-    queries,
+    queries: [...queries, getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model)))],
     name: panel.title,
     annotations: [
       {
