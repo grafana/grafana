@@ -231,7 +231,7 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	_, err = sess.Exec("delete from dashboard_acl where dashboard_id = (select id from dashboard where created_by = ?)", FOLDER_CREATED_BY)
+	_, err = sess.Exec("delete from dashboard_acl where dashboard_id IN (select id from dashboard where created_by = ?)", FOLDER_CREATED_BY)
 	if err != nil {
 		return err
 	}
