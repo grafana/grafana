@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import { startCase } from 'lodash';
 import { FilterPill, HorizontalGroup } from '@grafana/ui';
-import { FieldConfigEditorProps } from '@grafana/data';
-import { HideSeriesConfig } from '@grafana/ui/src/components/uPlot/config';
+import { FieldConfigEditorBuilder, FieldConfigEditorProps } from '@grafana/data';
+import { HideableFieldConfig, HideSeriesConfig } from '@grafana/ui/src/components/uPlot/config';
 
 export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfig, {}>> = (props) => {
   const { value, onChange } = props;
@@ -30,3 +30,23 @@ export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfi
     </HorizontalGroup>
   );
 };
+
+export function addHideFrom(builder: FieldConfigEditorBuilder<HideableFieldConfig>) {
+  builder.addCustomEditor({
+    id: 'hideFrom',
+    name: 'Hide in area',
+    category: ['Series'],
+    path: 'hideFrom',
+    defaultValue: {
+      tooltip: false,
+      graph: false,
+      legend: false,
+    },
+    editor: SeriesConfigEditor,
+    override: SeriesConfigEditor,
+    shouldApply: () => true,
+    hideFromDefaults: true,
+    hideFromOverrides: true,
+    process: (value) => value,
+  });
+}

@@ -1,5 +1,5 @@
 import { VizTooltipOptions } from '@grafana/ui';
-import { OptionsWithLegend } from '../timeseries/types';
+import { OptionsWithLegend } from 'app/features/panel/options/legend';
 
 export interface XYDimensionConfig {
   frame: number;

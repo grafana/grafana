@@ -3,7 +3,8 @@ import { GraphFieldConfig } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
-import { addLegendOptions, defaultGraphConfig, getGraphFieldConfig } from './config';
+import { defaultGraphConfig, getGraphFieldConfig } from './config';
+import { addLegendOptions } from 'app/features/panel/options/legend';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)

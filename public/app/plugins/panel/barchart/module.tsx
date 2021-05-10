@@ -8,8 +8,10 @@ import {
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
 import { BarChartFieldConfig, BarChartOptions, StackingMode, BarValueVisibility, graphFieldOptions } from '@grafana/ui';
-import { addAxisConfig, addHideFrom, addLegendOptions } from '../timeseries/config';
 import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
+import { addHideFrom } from 'app/features/panel/options/hideSeries';
+import { addLegendOptions } from 'app/features/panel/options/legend';
+import { addAxisConfig } from 'app/features/panel/options/axis';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({

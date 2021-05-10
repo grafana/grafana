@@ -3,7 +3,8 @@ import { DrawStyle, GraphFieldConfig } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
-import { getGraphFieldConfig, defaultGraphConfig, addLegendOptions } from '../timeseries/config';
+import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
+import { addLegendOptions } from 'app/features/panel/options/legend';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(
