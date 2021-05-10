@@ -554,25 +554,14 @@ type PostableApiReceiver struct {
 }
 
 func (r *PostableApiReceiver) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var grafanaReceivers PostableGrafanaReceivers
-	if err := unmarshal(&grafanaReceivers); err != nil {
+	if err := unmarshal(&r.PostableGrafanaReceivers); err != nil {
 		return err
 	}
-	r.PostableGrafanaReceivers = grafanaReceivers
 
-	var cfg config.Receiver
-	if err := unmarshal(&cfg); err != nil {
+	if err := unmarshal(&r.Receiver); err != nil {
 		return err
 	}
-	r.Name = cfg.Name
-	r.EmailConfigs = cfg.EmailConfigs
-	r.PagerdutyConfigs = cfg.PagerdutyConfigs
-	r.SlackConfigs = cfg.SlackConfigs
-	r.WebhookConfigs = cfg.WebhookConfigs
-	r.OpsGenieConfigs = cfg.OpsGenieConfigs
-	r.WechatConfigs = cfg.WechatConfigs
-	r.PushoverConfigs = cfg.PushoverConfigs
-	r.VictorOpsConfigs = cfg.VictorOpsConfigs
+
 	return nil
 }
 
