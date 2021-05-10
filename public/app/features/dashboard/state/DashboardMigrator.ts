@@ -914,9 +914,19 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
     switch (old.type) {
       case 1: // MappingType.ValueToText:
         if (old.value != null) {
-          valueMaps.options[String(old.value)] = {
-            text: old.text,
-          };
+          if (old.value === 'null') {
+            newMappings.push({
+              type: MappingType.NullToText,
+              options: {
+                match: 'null',
+                result: { text: old.text },
+              },
+            });
+          } else {
+            valueMaps.options[String(old.value)] = {
+              text: old.text,
+            };
+          }
         }
         break;
       case 2: // MappingType.RangeToText:

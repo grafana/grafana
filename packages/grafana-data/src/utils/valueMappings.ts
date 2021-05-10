@@ -2,25 +2,6 @@ import { ValueMapping, MappingType, ValueMappingResult } from '../types';
 
 type TimeSeriesValue = string | number | null;
 
-// TODO investigate this sorting and why it's needed, move to migration?
-// const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: TimeSeriesValue) => {
-//   const allFormattedValueMappings = valueMappings.reduce((allValueMappings, valueMapping) => {
-//     if (valueMapping.type === MappingType.ValueToText) {
-//       allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
-//     } else if (valueMapping.type === MappingType.RangeToText) {
-//       allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
-//     }
-
-//     return allValueMappings;
-//   }, [] as ValueMapping[]);
-
-//   allFormattedValueMappings.sort((t1, t2) => {
-//     return t1.id - t2.id;
-//   });
-
-//   return allFormattedValueMappings;
-// };
-
 export function getValueMappingResult(
   valueMappings: ValueMapping[],
   value: TimeSeriesValue
@@ -28,12 +9,16 @@ export function getValueMappingResult(
   for (const vm of valueMappings) {
     switch (vm.type) {
       case MappingType.ValueToText:
-        const result = vm.options[value ?? 'null'];
+        if (value === null || value === undefined) {
+          continue;
+        }
+
+        const result = vm.options[value];
         if (result) {
           return result;
         }
-        break;
 
+        break;
       case MappingType.RangeToText:
         if (value === null || value === undefined) {
           continue;
@@ -55,6 +40,16 @@ export function getValueMappingResult(
         }
 
         return vm.options.result;
+      case MappingType.NullToText:
+        if (vm.options.match === 'null' && (value === null || value === undefined)) {
+          return vm.options.result;
+        }
+        if (vm.options.match === 'nan' && isNaN(value as number)) {
+          return vm.options.result;
+        }
+        if (vm.options.match === 'null-nan' && (value === null || value === undefined || value === Number.NaN)) {
+          return vm.options.result;
+        }
     }
   }
 

@@ -1107,6 +1107,11 @@ describe('DashboardModel', () => {
                     to: '100',
                     type: 2,
                   },
+                  {
+                    type: 1,
+                    value: 'null',
+                    text: 'it is null',
+                  },
                 ],
               },
               overrides: [
@@ -1138,8 +1143,8 @@ describe('DashboardModel', () => {
         {
           type: MappingType.ValueToText,
           options: {
-            down: { state: 'BAD' },
-            up: { value: 1 },
+            down: { text: 'BAD' },
+            up: { text: '1' },
           },
         },
         {
@@ -1147,7 +1152,7 @@ describe('DashboardModel', () => {
           options: {
             from: 0,
             to: 30,
-            result: { state: 'below 30' },
+            result: { text: 'below 30' },
           },
         },
         {
@@ -1155,7 +1160,14 @@ describe('DashboardModel', () => {
           options: {
             from: 30,
             to: 100,
-            result: { value: 100 },
+            result: { text: '100' },
+          },
+        },
+        {
+          type: MappingType.NullToText,
+          options: {
+            match: 'null',
+            result: { text: 'it is null' },
           },
         },
       ]);

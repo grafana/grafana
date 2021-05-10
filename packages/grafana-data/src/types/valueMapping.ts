@@ -1,6 +1,7 @@
 export enum MappingType {
   ValueToText = 'value', // was 1
   RangeToText = 'range', // was 2
+  NullToText = 'null', // was 2
 }
 
 export interface ValueMappingResult {
@@ -28,4 +29,13 @@ export interface RangeMap extends BaseValueMap<RangeMapOptions> {
   type: MappingType.RangeToText;
 }
 
-export type ValueMapping = ValueMap | RangeMap;
+export interface NullToTextOptions {
+  match: 'null' | 'nan' | 'null-nan';
+  result: ValueMappingResult;
+}
+
+export interface NullToText extends BaseValueMap<NullToTextOptions> {
+  type: MappingType.NullToText;
+}
+
+export type ValueMapping = ValueMap | RangeMap | NullToText;

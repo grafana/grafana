@@ -144,7 +144,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
         <thead>
           <tr>
             <th style={{ width: '1%' }}></th>
-            <th>Match</th>
+            <th style={{ width: '40%' }}>Match</th>
             <th>Display text</th>
             <th>Color</th>
             <th style={{ width: '1%' }}></th>

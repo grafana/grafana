@@ -7,10 +7,6 @@ const testSet1: ValueMapping[] = [
     options: { '11': { text: 'elva' } },
   },
   {
-    type: MappingType.ValueToText,
-    options: { null: { text: 'it is null' } },
-  },
-  {
     type: MappingType.RangeToText,
     options: {
       from: 1,
@@ -26,10 +22,24 @@ const testSet1: ValueMapping[] = [
       result: { text: '8-12' },
     },
   },
+  {
+    type: MappingType.NullToText,
+    options: {
+      match: 'null',
+      result: { text: 'it is null' },
+    },
+  },
+  {
+    type: MappingType.NullToText,
+    options: {
+      match: 'nan',
+      result: { text: 'it is nan' },
+    },
+  },
 ];
 
 describe('Format value with value mappings', () => {
-  it('should return undefined with no valuemappings', () => {
+  it('should return null with no valuemappings', () => {
     const valueMappings: ValueMapping[] = [];
     const value = '10';
 
@@ -59,6 +69,11 @@ describe('Format value with value mappings', () => {
   it('should return match result for undefined value', () => {
     const value = undefined;
     expect(getValueMappingResult(testSet1, value as any)).toEqual({ text: 'it is null' });
+  });
+
+  it('should return match result for nan value', () => {
+    const value = Number.NaN;
+    expect(getValueMappingResult(testSet1, value as any)).toEqual({ text: 'it is nan' });
   });
 
   it('should return range mapping that matches first', () => {
