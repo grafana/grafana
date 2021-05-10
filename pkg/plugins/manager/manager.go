@@ -361,6 +361,8 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			pm.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.Id)
 			scanner.errors = append(scanner.errors,
 				plugins.DuplicatePluginError{PluginID: scannedPlugin.Id, ExistingPluginDir: scannedPlugin.PluginDir})
+			delete(scanner.plugins, scannedPluginPath)
+			continue
 		}
 		pluginsByID[scannedPlugin.Id] = struct{}{}
 
