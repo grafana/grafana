@@ -4,8 +4,7 @@ export enum MappingType {
 }
 
 export interface ValueMappingResult {
-  value?: number; // use isNaN(value)
-  state?: string; // not yet used -- or text
+  text?: string;
   color?: string;
   index?: number;
 }

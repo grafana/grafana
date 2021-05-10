@@ -45,6 +45,15 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
     [mapping, index, onChange]
   );
 
+  useEffect(() => {
+    if (inputRef.current && mapping.isNew) {
+      inputRef.current.focus();
+      update((mapping) => {
+        mapping.isNew = false;
+      });
+    }
+  }, [mapping, inputRef, update]);
+
   const onChangeColor = (color: string) => {
     update((mapping) => {
       mapping.result.color = color;
@@ -57,30 +66,27 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
     });
   };
 
-  useEffect(() => {
-    if (inputRef.current && mapping.isNew) {
-      inputRef.current.focus();
-      update((mapping) => {
-        mapping.isNew = false;
-      });
-    }
-  }, [mapping, inputRef, update]);
-
   const onUpdateMatchValue = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
       mapping.key = event.currentTarget.value;
     });
   };
 
-  const onChangeValue = (event: React.FormEvent<HTMLInputElement>) => {
+  const onChangeText = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.result.value = parseFloat(event.currentTarget.value);
+      mapping.result.text = event.currentTarget.value;
     });
   };
 
-  const onChangeState = (event: React.FormEvent<HTMLInputElement>) => {
+  const onChangeFrom = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.result.state = event.currentTarget.value;
+      mapping.from = parseFloat(event.currentTarget.value);
+    });
+  };
+
+  const onChangeTo = (event: React.FormEvent<HTMLInputElement>) => {
+    update((mapping) => {
+      mapping.to = parseFloat(event.currentTarget.value);
     });
   };
 
@@ -103,12 +109,27 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
                 placeholder="Exact value to match"
               />
             )}
+            {mapping.type === MappingType.RangeToText && (
+              <div className={styles.rangeInputWrapper}>
+                <Input
+                  type="number"
+                  defaultValue={mapping.from || ''}
+                  placeholder="Range start"
+                  onBlur={onChangeFrom}
+                  prefix="From"
+                />
+                <Input
+                  type="number"
+                  defaultValue={mapping.to || ''}
+                  placeholder="Range end"
+                  onBlur={onChangeTo}
+                  prefix="To"
+                />
+              </div>
+            )}
           </td>
           <td>
-            <Input type="number" value={result.value ?? ''} onChange={onChangeValue} placeholder="Number to map to" />
-          </td>
-          <td>
-            <Input type="text" value={result.state ?? ''} onChange={onChangeState} placeholder="Text state" />
+            <Input type="text" value={result.text ?? ''} onChange={onChangeText} placeholder="Display text" />
           </td>
           <td>
             {result.color && (
@@ -141,5 +162,11 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
 const getStyles = (theme: GrafanaTheme2) => ({
   dragHandle: css({
     cursor: 'grab',
+  }),
+  rangeInputWrapper: css({
+    display: 'flex',
+    '> div:first-child': {
+      marginRight: theme.spacing(2),
+    },
   }),
 });

@@ -8,109 +8,10 @@ import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEdi
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { HorizontalGroup } from '../Layout/Layout';
 
-// import {
-//   DragDropContext,
-//   Draggable,
-//   DraggableProvidedDragHandleProps,
-//   Droppable,
-//   DropResult,
-// } from 'react-beautiful-dnd';
-//import { css } from 'emotion';
-//import { stylesFactory } from '../../themes';
-// import { IconButton } from '../IconButton/IconButton';
-// import { Input } from '../Input/Input';
-// import { Button } from '../Button';
-// import { ValueMapRow } from './ValueMappingRow';
-// import { RangeMapRow } from './RangeMappingRow';
-// import { VerticalGroup } from '../Layout/Layout';
-// import { DraggableMappingRow } from './DraggableMappingRow';
-
 export interface Props {
   value: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
 }
-
-// interface DraggableMappingProps {
-//   mapping: ValueMapping;
-//   index: number;
-//   onChange: (index: number, mapping: ValueMapping) => void;
-//   onRemove: (index: number) => void;
-// }
-
-// const DraggableMapping: React.FC<DraggableMappingProps> = ({ mapping, index, onChange, onRemove }) => {
-//   const styles = useStyles(getStyles);
-
-//   const displayInput = useMemo(
-//     () => (
-//       <Input
-//         className={styles.displayInput}
-//         defaultValue={mapping.text || ''}
-//         onBlur={(event) => {
-//           onChange(index, { ...mapping, text: event.currentTarget.value });
-//         }}
-//         prefix={'Display'}
-//       />
-//     ),
-//     [onChange, mapping, index, styles]
-//   );
-
-//   const removeButton = useMemo(
-//     () => (
-//       <IconButton
-//         size="sm"
-//         name="times"
-//         surface="dashboard"
-//         onClick={() => onRemove(index)}
-//         className={styles.removeButton}
-//       />
-//     ),
-//     [onRemove, styles, index]
-//   );
-
-//   const renderMapping = useCallback(
-//     (mappingRow: React.ReactNode, dragHandleProps: DraggableProvidedDragHandleProps, label: string) => (
-//       <div className={styles.handleWrap}>
-//         <DraggableMappingRow label={label} {...dragHandleProps} />
-
-//         <VerticalGroup spacing={'xs'} width="100%">
-//           {mappingRow}
-//           {displayInput}
-//         </VerticalGroup>
-//       </div>
-//     ),
-//     [styles, displayInput]
-//   );
-
-//   return (
-//     <Draggable draggableId={`mapping-${index}`} index={index}>
-//       {(provided) => (
-//         <div
-//           className={cx('gf-form-inline', styles.row)}
-//           ref={provided.innerRef}
-//           {...provided.draggableProps}
-//           tabIndex={0}
-//         >
-//           <div className={styles.rowWrap}>
-//             {mapping.type === MappingType.ValueToText &&
-//               renderMapping(
-//                 <ValueMapRow mapping={(mapping as unknown) as ValueMap} index={index} onChange={onChange} />,
-//                 provided.dragHandleProps!,
-//                 'Value'
-//               )}
-
-//             {mapping.type === MappingType.RangeToText &&
-//               renderMapping(
-//                 <RangeMapRow mapping={(mapping as unknown) as RangeMap} index={index} onChange={onChange} />,
-//                 provided.dragHandleProps!,
-//                 'Range'
-//               )}
-//             {removeButton}
-//           </div>
-//         </div>
-//       )}
-//     </Draggable>
-//   );
-// };
 
 export function ValueMappingsEditor({ value, onChange }: Props) {
   const styles = useStyles2(getStyles);
@@ -124,7 +25,7 @@ export function ValueMappingsEditor({ value, onChange }: Props) {
       <Button variant="secondary" size="sm" fullWidth onClick={() => setIsEditorOpen(true)} icon="pen">
         Edit
       </Button>
-      <Modal isOpen={isEditorOpen} title="Value mappings editor" onDismiss={onCloseEditor} className={styles.modal}>
+      <Modal isOpen={isEditorOpen} title="Value mappings" onDismiss={onCloseEditor} className={styles.modal}>
         <ValueMappingsEditorModal value={value} onChange={onChange} onClose={onCloseEditor} />
       </Modal>
     </>
@@ -220,23 +121,44 @@ function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
   };
 
   const onUpdate = () => {
-    const maps: ValueMapping = {
+    const mappings: ValueMapping[] = [];
+    const valueMaps: ValueMapping = {
       type: MappingType.ValueToText,
       options: {},
     };
 
     rows.forEach((item, index) => {
-      if (item.key === undefined || item.key === null) {
-        return;
+      switch (item.type) {
+        case MappingType.ValueToText:
+          if (item.key != null) {
+            valueMaps.options[item.key] = {
+              ...item.result,
+              index,
+            };
+          }
+          break;
+        case MappingType.RangeToText:
+          if (item.from != null && item.to != null) {
+            mappings.push({
+              type: item.type,
+              options: {
+                from: item.from,
+                to: item.to,
+                result: {
+                  ...item.result,
+                  index,
+                },
+              },
+            });
+          }
       }
-
-      maps.options[item.key] = {
-        ...item.result,
-        index,
-      };
     });
 
-    onChange([maps]);
+    if (Object.keys(valueMaps.options).length > 0) {
+      mappings.unshift(valueMaps);
+    }
+
+    onChange(mappings);
     onClose();
   };
 
@@ -247,9 +169,8 @@ function ValueMappingsEditorModal({ value, onChange, onClose }: ModalProps) {
           <tr>
             <th style={{ width: '1%' }}></th>
             <th>Match</th>
-            <th>Map to value</th>
-            <th>Map to state</th>
-            <th>Map to color</th>
+            <th>Display text</th>
+            <th>Color</th>
             <th style={{ width: '1%' }}></th>
           </tr>
         </thead>

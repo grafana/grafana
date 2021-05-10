@@ -76,12 +76,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       const mappingResult = getValueMappingResult(mappings, value);
 
       if (mappingResult) {
-        if (mappingResult.state !== undefined) {
-          text = mappingResult.state;
-        }
-
-        if (mappingResult.value !== undefined && !isStringUnit) {
-          numeric = mappingResult.value;
+        if (mappingResult.text !== undefined) {
+          text = mappingResult.text;
         }
 
         if (mappingResult.color !== undefined) {

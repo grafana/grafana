@@ -7,7 +7,6 @@ import kbn from 'app/core/utils/kbn';
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
 import {
-  anyToNumber,
   DataLink,
   DataLinkBuiltInVars,
   MappingType,
@@ -914,38 +913,21 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
   for (const old of oldMappings) {
     switch (old.type) {
       case 1: // MappingType.ValueToText:
-        if (old.value !== null || old.value !== undefined) {
-          if (isNumeric(old.text)) {
-            valueMaps.options[String(old.value)] = {
-              value: anyToNumber(old.text),
-            };
-          } else {
-            valueMaps.options[String(old.value)] = {
-              state: old.text,
-            };
-          }
+        if (old.value != null) {
+          valueMaps.options[String(old.value)] = {
+            text: old.text,
+          };
         }
         break;
       case 2: // MappingType.RangeToText:
-        if (isNumeric(old.text)) {
-          newMappings.push({
-            type: MappingType.RangeToText,
-            options: {
-              from: +old.from,
-              to: +old.to,
-              result: { value: anyToNumber(old.text) },
-            },
-          });
-        } else {
-          newMappings.push({
-            type: MappingType.RangeToText,
-            options: {
-              from: +old.from,
-              to: +old.to,
-              result: { state: old.text },
-            },
-          });
-        }
+        newMappings.push({
+          type: MappingType.RangeToText,
+          options: {
+            from: +old.from,
+            to: +old.to,
+            result: { text: old.text },
+          },
+        });
         break;
     }
   }
@@ -955,9 +937,4 @@ function upgradeValueMappings(oldMappings: any): ValueMapping[] | undefined {
   }
 
   return newMappings;
-}
-
-// Ref https://stackoverflow.com/a/58550111
-function isNumeric(num: any) {
-  return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
 }

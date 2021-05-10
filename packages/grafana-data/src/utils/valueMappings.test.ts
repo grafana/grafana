@@ -4,18 +4,18 @@ import { ValueMapping, MappingType } from '../types';
 const testSet1: ValueMapping[] = [
   {
     type: MappingType.ValueToText,
-    options: { '11': { state: 'elva' } },
+    options: { '11': { text: 'elva' } },
   },
   {
     type: MappingType.ValueToText,
-    options: { null: { state: 'it is null' } },
+    options: { null: { text: 'it is null' } },
   },
   {
     type: MappingType.RangeToText,
     options: {
       from: 1,
       to: 9,
-      result: { state: '1-9' },
+      result: { text: '1-9' },
     },
   },
   {
@@ -23,7 +23,7 @@ const testSet1: ValueMapping[] = [
     options: {
       from: 8,
       to: 12,
-      result: { state: '8-12' },
+      result: { text: '8-12' },
     },
   },
 ];

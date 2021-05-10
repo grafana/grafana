@@ -13,9 +13,21 @@ export function Example() {
       type: MappingType.ValueToText,
       options: {
         LowLow: { color: 'red' },
-        Low: { value: -1, color: 'orange' },
-        Ok: { state: 'all good', color: 'green' },
-        NoColor: { state: 'Unknown' },
+        Low: { text: 'not good', color: 'orange' },
+        Ok: { text: 'all good', color: 'green' },
+        NoColor: { text: 'Unknown' },
+      },
+    },
+    {
+      type: MappingType.RangeToText,
+      options: {
+        from: 10,
+        to: 15,
+        result: {
+          index: 5,
+          text: 'bad',
+          color: 'red',
+        },
       },
     },
   ]);
