@@ -20,14 +20,14 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
     return {
       from: secondsToRelativeFormat(range.from),
       to: secondsToRelativeFormat(range.to),
-      display: `Last ${formatToOptionDisplay(range.from)}, ${formatToOptionDisplay(range.to)} ago`,
+      display: `${formatToOptionDisplay(range.from)} ago to ${formatToOptionDisplay(range.to)} ago`,
     };
   }
 
   return {
     from: secondsToRelativeFormat(range.from),
     to: secondsToRelativeFormat(range.to),
-    display: `Last ${formatToOptionDisplay(range.from)}`,
+    display: `${formatToOptionDisplay(range.from)} ago to now`,
   };
 };
 
@@ -44,13 +44,13 @@ const units: Record<string, number> = {
 type UnitKeys = keyof typeof units;
 
 const displayUnit: Record<UnitKeys, string> = {
-  y: 'year',
-  M: 'month',
-  w: 'week',
-  d: 'day',
-  h: 'hour',
-  m: 'minute',
-  s: 'second',
+  y: 'y',
+  M: 'M',
+  w: 'w',
+  d: 'd',
+  h: 'h',
+  m: 'min',
+  s: 's',
 };
 
 const formatToOptionDisplay = (seconds: number): string => {
@@ -82,7 +82,7 @@ const formatToOptionDisplay = (seconds: number): string => {
     return formatWithMaxTwoUnits(seconds, 'm', 's');
   }
 
-  return formatWithUnit(seconds, 'second');
+  return formatWithUnit(seconds, 's');
 };
 
 const formatWithMaxTwoUnits = (seconds: number, firstUnit: UnitKeys, secondUnit: UnitKeys): string => {
@@ -94,12 +94,11 @@ const formatWithMaxTwoUnits = (seconds: number, firstUnit: UnitKeys, secondUnit:
   }
 
   const amountLeft = Math.floor(left / units[secondUnit]);
-  return `${formatWithUnit(amount, displayUnit[firstUnit])} and ${formatWithUnit(amountLeft, displayUnit[secondUnit])}`;
+  return `${formatWithUnit(amount, displayUnit[firstUnit])} ${formatWithUnit(amountLeft, displayUnit[secondUnit])}`;
 };
 
 const formatWithUnit = (amount: number, unit: string): string => {
-  const suffix = amount > 1 ? 's' : '';
-  return `${amount} ${unit}${suffix}`;
+  return `${amount}${unit}`;
 };
 
 const secondsToRelativeFormat = (seconds: number): string => {

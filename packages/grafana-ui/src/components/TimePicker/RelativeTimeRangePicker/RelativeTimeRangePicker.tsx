@@ -14,6 +14,7 @@ import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { InputState } from '../TimeRangePicker/TimeRangeForm';
 import { Icon } from '../../Icon/Icon';
+import { isRelativeFormat } from './validator';
 
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
@@ -123,7 +124,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
 const setValue = (value: string): InputState => {
   return {
     value,
-    invalid: !rangeUtil.isRelativeTime(value),
+    invalid: !isRelativeFormat(value),
   };
 };
 
