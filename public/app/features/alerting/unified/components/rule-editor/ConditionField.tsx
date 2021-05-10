@@ -25,10 +25,12 @@ export const ConditionField: FC = () => {
     [queries]
   );
 
-  // if option no longer exists, reset it
+  // reset condition if option no longer exists or if it is unset, but there are options available
   useEffect(() => {
     if (condition && !options.find(({ value }) => value === condition)) {
-      setValue('condition', null);
+      setValue('condition', options.length ? options[options.length - 1].value : null);
+    } else if (!condition && options.length) {
+      setValue('condition', options[options.length - 1].value);
     }
   }, [condition, options, setValue]);
 

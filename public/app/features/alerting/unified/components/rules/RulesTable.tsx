@@ -1,4 +1,4 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, isRecordingRule, stringifyRuleIdentifier } from '../../utils/rules';
@@ -14,22 +14,25 @@ import { deleteRuleAction } from '../../state/actions';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertStateTag } from './AlertStateTag';
+import { useLocation } from 'react-router-dom';
 
 interface Props {
   rules: CombinedRule[];
   showGuidelines?: boolean;
   showGroupColumn?: boolean;
   emptyMessage?: string;
+  className?: string;
 }
 
 export const RulesTable: FC<Props> = ({
   rules,
+  className,
   showGuidelines = false,
   emptyMessage = 'No rules found.',
   showGroupColumn = false,
 }) => {
   const dispatch = useDispatch();
-
+  const location = useLocation();
   const hasRuler = useHasRuler();
 
   const styles = useStyles2(getStyles);
@@ -60,7 +63,7 @@ export const RulesTable: FC<Props> = ({
     }
   };
 
-  const wrapperClass = cx(styles.wrapper, { [styles.wrapperMargin]: showGuidelines });
+  const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
   if (!rules.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
@@ -153,11 +156,21 @@ export const RulesTable: FC<Props> = ({
                         <ActionIcon
                           icon="pen"
                           tooltip="edit rule"
-                          to={`/alerting/${encodeURIComponent(
-                            stringifyRuleIdentifier(
-                              getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
-                            )
-                          )}/edit`}
+                          to={urlUtil.renderUrl(
+                            `/alerting/${encodeURIComponent(
+                              stringifyRuleIdentifier(
+                                getRuleIdentifier(
+                                  getRulesSourceName(rulesSource),
+                                  namespace.name,
+                                  group.name,
+                                  rulerRule
+                                )
+                              )
+                            )}/edit`,
+                            {
+                              returnTo: location.pathname + location.search,
+                            }
+                          )}
                         />
                       )}
                       {!!rulerRule && (
@@ -206,7 +219,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
   `,
   wrapper: css`
-    margin-top: ${theme.spacing(3)};
     width: auto;
     background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};

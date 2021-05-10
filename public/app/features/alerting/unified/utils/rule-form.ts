@@ -1,5 +1,5 @@
-import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange, urlUtil } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
@@ -14,7 +14,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import { DASHBOARD_UID_ANNOTATION_KEY, PANEL_ID_ANNOTATION_KEY } from './constants';
+import { Annotation } from './constants';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
@@ -210,7 +210,7 @@ export const panelToRuleFormValues = (
 ): Partial<RuleFormValues> | undefined => {
   const { targets, datasource: dashboardDatasource } = panel;
 
-  if (!dashboardDatasource) {
+  if (!dashboardDatasource || !panel.editSourceId) {
     return undefined;
   }
 
@@ -223,7 +223,7 @@ export const panelToRuleFormValues = (
 
   const { folderId, folderTitle } = dashboard.meta;
 
-  return {
+  const formValues = {
     type: RuleFormType.threshold,
     folder:
       folderId && folderTitle
@@ -233,16 +233,33 @@ export const panelToRuleFormValues = (
           }
         : undefined,
     queries,
-    name: panel.title + ' alert',
+    name: panel.title,
     annotations: [
       {
-        key: DASHBOARD_UID_ANNOTATION_KEY,
+        key: Annotation.dashboardUID,
         value: dashboard.uid,
       },
       {
-        key: PANEL_ID_ANNOTATION_KEY,
-        value: String(panel.id),
+        key: Annotation.panelID,
+        value: String(panel.editSourceId),
       },
     ],
   };
+
+  if (dashboard.meta.url) {
+    formValues.annotations.push({
+      key: Annotation.dashboardURL,
+      value: `${config.appUrl}${dashboard.meta.url.slice(1)}`,
+    });
+    if (panel.editSourceId) {
+      formValues.annotations.push({
+        key: Annotation.panelURL,
+        value: urlUtil.renderUrl(`${config.appUrl}${dashboard.meta.url.slice(1)}`, {
+          viewPanel: panel.editSourceId,
+        }),
+      });
+    }
+  }
+
+  return formValues;
 };

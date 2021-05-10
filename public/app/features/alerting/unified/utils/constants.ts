@@ -6,5 +6,22 @@ export const ALERTMANAGER_NAME_QUERY_KEY = 'alertmanager';
 export const ALERTMANAGER_NAME_LOCAL_STORAGE_KEY = 'alerting-alertmanager';
 export const SILENCES_POLL_INTERVAL_MS = 20000;
 
-export const DASHBOARD_UID_ANNOTATION_KEY = '__dashboardUid__';
-export const PANEL_ID_ANNOTATION_KEY = '__panelId__';
+export enum Annotation {
+  description = 'description',
+  dashboardURL = 'dashboard_url',
+  panelURL = 'panel_url',
+  summary = 'summary',
+  runbookURL = 'runbook_url',
+  dashboardUID = '__dashboardUId__',
+  panelID = '__panelId__',
+}
+
+export const annotationLabels: Record<Annotation, string> = {
+  [Annotation.description]: 'Description',
+  [Annotation.dashboardURL]: 'Dashboard URL',
+  [Annotation.panelURL]: 'Panel URL',
+  [Annotation.summary]: 'Summary',
+  [Annotation.runbookURL]: 'Runbook URL',
+  [Annotation.dashboardUID]: 'Dashboard UID',
+  [Annotation.panelID]: 'Panel ID',
+};
