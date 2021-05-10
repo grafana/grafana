@@ -176,7 +176,6 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		Limit: perPage,
 		Page:  page,
 	}, c.SignedInUser)
-
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
