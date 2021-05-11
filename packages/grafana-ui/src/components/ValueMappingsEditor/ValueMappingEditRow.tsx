@@ -102,8 +102,9 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
     { label: 'Null', value: SpecialValueMatch.Null, description: 'Matches null and undefined values' },
     { label: 'NaN', value: SpecialValueMatch.NaN, description: 'Matches against Number.NaN (not a number)' },
     { label: 'Null + NaN', value: SpecialValueMatch.NullAndNaN, description: 'Matches null, undefined and NaN' },
-    { label: 'True', value: SpecialValueMatch.True, description: 'Any value that evaluates to true' },
-    { label: 'False', value: SpecialValueMatch.False, description: 'Any value that evaluates to false' },
+    { label: 'True', value: SpecialValueMatch.True, description: 'Boolean true values' },
+    { label: 'False', value: SpecialValueMatch.False, description: 'Boolean false values' },
+    { label: 'Empty', value: SpecialValueMatch.Empty, description: 'Empty string' },
   ];
 
   return (

@@ -40,6 +40,7 @@ export enum SpecialValueMatch {
   Null = 'null',
   NaN = 'nan',
   NullAndNaN = 'null+nan',
+  Empty = 'empty',
 }
 
 export interface SpecialValueMap extends BaseValueMap<SpecialValueOptions> {

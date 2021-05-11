@@ -58,13 +58,19 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
             break;
           }
           case SpecialValueMatch.True: {
-            if (value === true) {
+            if (value === true || value === 'true') {
               return vm.options.result;
             }
             break;
           }
           case SpecialValueMatch.False: {
-            if (value === false) {
+            if (value === false || value === 'false') {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.Empty: {
+            if (value === '') {
               return vm.options.result;
             }
             break;
