@@ -1,6 +1,6 @@
 import React, { FormEvent, PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
@@ -13,7 +13,6 @@ import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVaria
 import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
@@ -23,20 +22,22 @@ import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
 
+const mapStateToProps = (state: StoreState) => ({
+  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
+});
+
+const mapDispatchToProps = {
+  initQueryVariableEditor,
+  changeQueryVariableDataSource,
+  changeQueryVariableQuery,
+  changeVariableMultiValue,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
-interface ConnectedProps {
-  editor: VariableEditorState<QueryVariableEditorState>;
-}
-
-interface DispatchProps {
-  initQueryVariableEditor: typeof initQueryVariableEditor;
-  changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
-  changeQueryVariableQuery: typeof changeQueryVariableQuery;
-  changeVariableMultiValue: typeof changeVariableMultiValue;
-}
-
-export type Props = OwnProps & ConnectedProps & DispatchProps;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export interface State {
   regex: string | null;
@@ -65,7 +66,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   }
 
   onDataSourceChange = (dsSettings: DataSourceInstanceSettings) => {
-    this.props.onPropChange({ propName: 'query', propValue: '' });
     this.props.onPropChange({
       propName: 'datasource',
       propValue: dsSettings.isDefault ? null : dsSettings.name,
@@ -215,19 +215,4 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
-  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  initQueryVariableEditor,
-  changeQueryVariableDataSource,
-  changeQueryVariableQuery,
-  changeVariableMultiValue,
-};
-
-export const QueryVariableEditor = connectWithStore(
-  QueryVariableEditorUnConnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+export const QueryVariableEditor = connector(QueryVariableEditorUnConnected);
