@@ -13,7 +13,7 @@ import (
 	"golang.org/x/tools/txtar"
 )
 
-var CasesDir = filepath.Join("load", "testdata", "trimdefault")
+var CasesDir = filepath.Join("testdata", "trimapplydefaults")
 
 type Case struct {
 	Name    string
