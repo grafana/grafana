@@ -1,7 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { FieldType, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { BarChart, BarChartOptions, GraphNGLegendEvent, TooltipPlugin } from '@grafana/ui';
+import { GraphNGLegendEvent, TooltipPlugin } from '@grafana/ui';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+import { BarChartOptions } from './types';
+import { BarChart } from './BarChart';
 
 interface Props extends PanelProps<BarChartOptions> {}
 

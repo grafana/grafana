@@ -1,8 +1,8 @@
 import uPlot, { Axis, Series } from 'uplot';
 import { Quadtree, Rect, pointWithin } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { TooltipInterpolator } from '../uPlot/types';
-import { ScaleDirection, ScaleOrientation } from '../uPlot/config';
+import { TooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
+import { ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
