@@ -58,39 +58,6 @@ describe('QueryEditorRowHeader', () => {
 
     expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
   });
-
-  it('should show time range picker when callback and value is passed', async () => {
-    renderScenario({
-      onChangeTimeRange: () => {},
-      timeRange: {
-        from: 0,
-        to: 0,
-      },
-    });
-
-    expect(screen.queryByLabelText(selectors.components.TimePicker.openButton)).not.toBeNull();
-  });
-
-  it('should not show time range picker when no value is passed', async () => {
-    renderScenario({
-      onChangeTimeRange: () => {},
-      timeRange: undefined,
-    });
-
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
-  });
-
-  it('should not show time range picker when no callback is passed', async () => {
-    renderScenario({
-      onChangeTimeRange: undefined,
-      timeRange: {
-        from: 0,
-        to: 0,
-      },
-    });
-
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
-  });
 });
 
 function renderScenario(overrides: Partial<Props>) {

@@ -22,6 +22,7 @@ export interface RelativeTimeRangePickerProps {
 }
 
 const errorMessage = 'Value not in relative time format.';
+const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
 
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
   const { timeRange, onChange } = props;
@@ -79,7 +80,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
               <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
                 <TimeRangeList
                   title="Example time ranges"
-                  options={quickOptions}
+                  options={validOptions}
                   onChange={onChangeTimeOption}
                   value={timeOption}
                 />

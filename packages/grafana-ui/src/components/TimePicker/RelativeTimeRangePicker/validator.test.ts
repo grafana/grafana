@@ -26,18 +26,6 @@ describe('validator', () => {
       expect(isRelativeFormat('now-53w')).toBe(true);
     });
 
-    it('should consider now-9M as a relative format', () => {
-      expect(isRelativeFormat('now-9M')).toBe(true);
-    });
-
-    it('should consider now+9M as a relative format', () => {
-      expect(isRelativeFormat('now+9M')).toBe(false);
-    });
-
-    it('should consider asdfnow-9M as a relative format', () => {
-      expect(isRelativeFormat('asdfnow-9M')).toBe(false);
-    });
-
     it('should consider 123123123 as a relative format', () => {
       expect(isRelativeFormat('123123123')).toBe(false);
     });

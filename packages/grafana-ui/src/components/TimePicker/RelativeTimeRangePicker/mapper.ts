@@ -15,7 +15,7 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
 };
 
 const relativeToSeconds = (relative: string): number => {
-  const match = /^now\-(\d{1,16})([yMwdhms])$/g.exec(relative);
+  const match = /^now\-(\d{1,16})([wdhms])$/g.exec(relative);
 
   if (!match || match.length !== 3) {
     return 0;
@@ -32,8 +32,6 @@ const relativeToSeconds = (relative: string): number => {
 };
 
 const units: Record<string, number> = {
-  y: 31536000,
-  M: 2592000,
   w: 604800,
   d: 86400,
   h: 3600,
@@ -44,14 +42,6 @@ const units: Record<string, number> = {
 const secondsToRelativeFormat = (seconds: number): string => {
   if (seconds <= 0) {
     return 'now';
-  }
-
-  if (seconds >= units.y && seconds % units.y === 0) {
-    return `now-${seconds / units.y}y`;
-  }
-
-  if (seconds >= units.M && seconds % units.M === 0) {
-    return `now-${seconds / units.M}M`;
   }
 
   if (seconds >= units.w && seconds % units.w === 0) {

@@ -18,7 +18,7 @@ export interface Props {
 }
 
 export const QueryEditorRowHeader: React.FC<Props> = (props) => {
-  const { query, queries, onClick, onChange, collapsedText, renderExtras } = props;
+  const { query, queries, onClick, onChange, collapsedText, renderExtras, disabled } = props;
 
   const styles = useStyles(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -112,6 +112,7 @@ export const QueryEditorRowHeader: React.FC<Props> = (props) => {
       )}
       {renderDataSource(props, styles)}
       {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
+      {disabled && <em className={styles.contextInfo}>Disabled</em>}
 
       {collapsedText && (
         <div className={styles.collapsedText} onClick={onClick}>
@@ -123,20 +124,7 @@ export const QueryEditorRowHeader: React.FC<Props> = (props) => {
 };
 
 const renderDataSource = (props: Props, styles: ReturnType<typeof getStyles>): ReactNode => {
-  const { disabled, dataSource, onChangeDataSource } = props;
-
-  if (disabled && !dataSource) {
-    return <em className={styles.contextInfo}>Disabled</em>;
-  }
-
-  if (disabled && dataSource) {
-    return (
-      <>
-        <em className={styles.contextInfo}>({dataSource.name})</em>
-        <em className={styles.contextInfo}>Disabled</em>
-      </>
-    );
-  }
+  const { dataSource, onChangeDataSource } = props;
 
   if (!onChangeDataSource) {
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
