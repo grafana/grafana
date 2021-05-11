@@ -121,9 +121,12 @@ For more information and instructions, refer to [Thresholds]({{< relref "../thre
 
 ## Value mapping
 
-Lets you set rules that translate a field value or range of values into explicit text. You can add more than one value mapping.
+Value mappings come in different types. 
 
-- **Mapping type -** Click an option.
-  - **Value -** Enter a value. If the field value is greater than or equal to the value, then the **Text** is displayed.
-  - **From** and **To -** Enter a range. If the field value is between or equal to the values in the range, then the **Text** is displayed.
-- **Text -** Text that is displayed if the conditions are met in a field. This field accepts variables.
+* **Range** maps numerical ranges to a display text and color. 
+* **Value** maps text values to a color or different display text.
+* **Special** maps special values like `Null`, `NaN` and boolean values like `true` and `false` to a display text and color.
+
+The display text and color are both optional. If you only want to assign colors to text values you can leave the display text empty and the original value will be used for display. 
+
+Values mapped via value mappings will skip the unit formatting. This means that a text value mapped to a numerical value will not be formatted using the configured unit. 
