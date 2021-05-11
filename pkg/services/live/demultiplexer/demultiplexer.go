@@ -40,13 +40,13 @@ func (s *Demultiplexer) OnSubscribe(_ context.Context, _ *models.SignedInUser, _
 	return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 }
 
-func (s *Demultiplexer) OnPublish(ctx context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (s *Demultiplexer) OnPublish(ctx context.Context, u *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	urlValues, ok := livecontext.GetContextValues(ctx)
 	if !ok {
 		return models.PublishReply{}, 0, errors.New("error extracting context url values")
 	}
 
-	stream, err := s.managedStreamRunner.GetOrCreateStream(s.streamID)
+	stream, err := s.managedStreamRunner.GetOrCreateStream(u.OrgId, s.streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err, "streamId", s.streamID)
 		return models.PublishReply{}, 0, err
@@ -69,7 +69,7 @@ func (s *Demultiplexer) OnPublish(ctx context.Context, _ *models.SignedInUser, e
 		return models.PublishReply{}, 0, err
 	}
 	for _, mf := range metricFrames {
-		err := stream.Push(mf.Key(), mf.Frame(), unstableSchema)
+		err := stream.Push(u.OrgId, mf.Key(), mf.Frame(), unstableSchema)
 		if err != nil {
 			return models.PublishReply{}, 0, err
 		}
