@@ -120,7 +120,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         inputId="azure-monitor-subscriptions-field"
         onChange={onSubscriptionsChange}
         options={options}
-        width={40}
+        width={38}
       />
     </Field>
   ) : (

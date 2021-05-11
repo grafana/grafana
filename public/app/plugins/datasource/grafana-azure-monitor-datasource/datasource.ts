@@ -17,13 +17,14 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
 import { map } from 'rxjs/operators';
+import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
   insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
-  azureResourceGraphDatasource: DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData>;
+  azureResourceGraphDatasource: AzureResourceGraphDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
   optionsKey: Record<AzureQueryType, string>;
@@ -37,9 +38,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
-    this.azureResourceGraphDatasource = new DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData>(
-      instanceSettings
-    );
+    this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
 
     const pseudoDatasource: any = {};
     pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
