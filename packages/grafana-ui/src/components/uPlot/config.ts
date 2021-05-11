@@ -53,6 +53,15 @@ export enum BarAlignment {
 /**
  * @alpha
  */
+export enum BarValueVisibility {
+  Auto = 'auto',
+  Never = 'never',
+  Always = 'always',
+}
+
+/**
+ * @alpha
+ */
 export enum ScaleOrientation {
   Horizontal = 0,
   Vertical = 1,

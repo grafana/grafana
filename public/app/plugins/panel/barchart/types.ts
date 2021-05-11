@@ -1,15 +1,13 @@
 import { VizOrientation } from '@grafana/data';
-import { AxisConfig, GraphGradientMode, HideableFieldConfig, StackingMode } from '../uPlot/config';
-import { OptionsWithLegend, OptionsWithTooltip } from '../../options';
-
-/**
- * @alpha
- */
-export enum BarValueVisibility {
-  Auto = 'auto',
-  Never = 'never',
-  Always = 'always',
-}
+import {
+  AxisConfig,
+  BarValueVisibility,
+  GraphGradientMode,
+  HideableFieldConfig,
+  OptionsWithLegend,
+  OptionsWithTooltip,
+  StackingMode,
+} from '@grafana/ui';
 
 /**
  * @alpha

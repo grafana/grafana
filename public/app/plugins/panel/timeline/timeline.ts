@@ -1,10 +1,10 @@
 import uPlot, { Series, Cursor } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { Quadtree, Rect, pointWithin } from '@grafana/ui/src/components/BarChart/quadtree';
-import { distribute, SPACE_BETWEEN } from '@grafana/ui/src/components/BarChart/distribute';
+import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
+import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { TimelineMode } from './types';
 import { TimeRange } from '@grafana/data';
-import { BarValueVisibility } from '@grafana/ui/src/components/BarChart/types';
+import { BarValueVisibility } from '@grafana/ui';
 
 const { round, min, ceil } = Math;
 
