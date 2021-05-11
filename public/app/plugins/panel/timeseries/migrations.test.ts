@@ -49,15 +49,6 @@ describe('Graph Migrations', () => {
     expect(panel).toMatchSnapshot();
   });
 
-  it('hides series', () => {
-    const old: any = {
-      angular: legend,
-    };
-    const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
-    expect(panel).toMatchSnapshot();
-  });
-
   describe('stacking', () => {
     test('simple', () => {
       const old: any = {
