@@ -89,7 +89,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-// Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible be expanding
+// Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible by expanding
 // parts of the graph. The specific number is arbitrary but should be a number of nodes where panning, zooming and other
 // interactions will be without any lag for most users.
 const defaultNodeCountLimit = 200;

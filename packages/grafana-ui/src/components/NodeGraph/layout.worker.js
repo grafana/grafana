@@ -11,7 +11,7 @@ addEventListener('message', (event) => {
  * and also fills in node references in edges instead of node ids.
  */
 export function layout(nodes, edges, config) {
-  // Start withs some hardcoded positions so it starts laid out from left to right
+  // Start with some hardcoded positions so it starts laid out from left to right
   let { roots, secondLevelRoots } = initializePositions(nodes, edges);
 
   // There always seems to be one or more root nodes each with single edge and we want to have them static on the
