@@ -11,6 +11,14 @@ import (
 const GENERAL_FOLDER = "General Alerting"
 const DASHBOARD_FOLDER = "Migrated %s"
 
+// FOLDER_CREATED_BY us used to track folders created by this migration
+// during alert migration cleanup.
+const FOLDER_CREATED_BY = -8
+
+var migTitle = "move dashboard alerts to unified alerting"
+
+var rmMigTitle = "remove unified alerting data"
+
 type MigrationError struct {
 	AlertId int64
 	Err     error
@@ -26,7 +34,31 @@ func AddMigration(mg *migrator.Migrator) {
 	if os.Getenv("UALERT_MIG") == "iDidBackup" {
 		// TODO: unified alerting DB needs to be extacted into ../migrations.go
 		// so it runs and creates the tables before this migration runs.
-		mg.AddMigration("move dashboard alerts to unified alerting", &migration{})
+		logs, err := mg.GetMigrationLog()
+		if err != nil {
+			mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+			os.Exit(1)
+		}
+
+		_, migrationRun := logs[migTitle]
+
+		ngEnabled := mg.Cfg.IsNgAlertEnabled()
+
+		switch {
+		case ngEnabled && !migrationRun:
+			// clear the entry of the migration that
+			err = mg.ClearMigrationEntry(rmMigTitle)
+			if err != nil {
+				mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
+			}
+			mg.AddMigration(migTitle, &migration{})
+		case !ngEnabled && migrationRun:
+			err = mg.ClearMigrationEntry(migTitle)
+			if err != nil {
+				mg.Logger.Error("alert migration error: could not clear alert migration", "error", err)
+			}
+			mg.AddMigration(rmMigTitle, &rmMigration{})
+		}
 	}
 }
 
@@ -180,6 +212,48 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+type rmMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *rmMigration) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	_, err := sess.Exec("delete from alert_rule")
+	if err != nil {
+		return err
+	}
+
+	_, err = sess.Exec("delete from alert_rule_version")
+	if err != nil {
+		return err
+	}
+
+	_, err = sess.Exec("delete from dashboard_acl where dashboard_id IN (select id from dashboard where created_by = ?)", FOLDER_CREATED_BY)
+	if err != nil {
+		return err
+	}
+
+	_, err = sess.Exec("delete from dashboard where created_by = ?", FOLDER_CREATED_BY)
+	if err != nil {
+		return err
+	}
+
+	_, err = sess.Exec("delete from alert_configuration")
+	if err != nil {
+		return err
+	}
+
+	_, err = sess.Exec("delete from alert_instance")
+	if err != nil {
+		return err
 	}
 
 	return nil
