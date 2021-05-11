@@ -63,6 +63,7 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 
   render() {
+    const { showImage } = this.props.options;
     const { isError, news } = this.state;
     const styles = getStyles(config.theme);
 
@@ -87,6 +88,11 @@ export class NewsPanel extends PureComponent<Props, State> {
                 <div className={styles.title}>{item.title}</div>
                 <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
               </a>
+              {showImage && item.ogImage && (
+                <a href={textUtil.sanitizeUrl(item.link)}>
+                  <img className={styles.socialImage} src={item.ogImage} />
+                </a>
+              )}
               <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
             </div>
           );
@@ -106,6 +112,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-bottom: 4px;
     margin-right: ${theme.spacing.sm};
     border-bottom: 2px solid ${theme.colors.border1};
+  `,
+  socialImage: css`
+    width: 100%;
   `,
   link: css`
     color: ${theme.colors.linkExternal};
