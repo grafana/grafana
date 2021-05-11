@@ -1205,6 +1205,43 @@ describe('DashboardModel', () => {
       ]);
     });
   });
+
+  describe('when migrating tooltipOptions to tooltip', () => {
+    it('should rename options.tooltipOptions to options.tooltip', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'timeseries',
+            legend: true,
+            options: {
+              tooltipOptions: { mode: 'multi' },
+            },
+          },
+          {
+            type: 'xychart',
+            legend: true,
+            options: {
+              tooltipOptions: { mode: 'single' },
+            },
+          },
+        ],
+      });
+      expect(model.panels[0].options).toMatchInlineSnapshot(`
+        Object {
+          "tooltip": Object {
+            "mode": "multi",
+          },
+        }
+      `);
+      expect(model.panels[1].options).toMatchInlineSnapshot(`
+        Object {
+          "tooltip": Object {
+            "mode": "single",
+          },
+        }
+      `);
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {

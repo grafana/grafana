@@ -618,6 +618,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 30) {
       panelUpgrades.push(upgradeValueMappingsForPanel);
+      panelUpgrades.push(migrateTooltipOptions);
     }
 
     if (panelUpgrades.length === 0) {
@@ -969,4 +970,16 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
   }
 
   return newMappings;
+}
+
+function migrateTooltipOptions(panel: PanelModel) {
+  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+    if (panel.options.tooltipOptions) {
+      panel.options = {
+        ...panel.options,
+        tooltip: panel.options.tooltipOptions,
+      };
+      delete panel.options.tooltipOptions;
+    }
+  }
 }
