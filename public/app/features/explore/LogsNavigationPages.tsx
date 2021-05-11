@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { css, cx } from 'emotion';
 import { dateTimeFormat, systemDateFormats, TimeZone, GrafanaTheme, AbsoluteTimeRange } from '@grafana/data';
 import { useTheme, stylesFactory, CustomScrollbar, Spinner } from '@grafana/ui';
