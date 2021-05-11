@@ -466,16 +466,16 @@ func (c *PostableApiAlertingConfig) validate() error {
 }
 
 // Type requires validate has been called and just checks the first receiver type
-func (c *PostableApiAlertingConfig) Type() (backend Backend) {
+func (c *PostableApiAlertingConfig) ReceiverType() ReceiverType {
 	for _, r := range c.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			return GrafanaBackend
+			return GrafanaReceiverType
 		case AlertmanagerReceiverType:
-			return AlertmanagerBackend
+			return AlertmanagerReceiverType
 		}
 	}
-	return
+	return EmptyReceiverType
 }
 
 // AllReceivers will recursively walk a routing tree and return a list of all the
@@ -494,10 +494,50 @@ type PostableGrafanaReceiver models.CreateAlertNotificationCommand
 type ReceiverType int
 
 const (
-	GrafanaReceiverType ReceiverType = iota
+	GrafanaReceiverType ReceiverType = 1 << iota
 	AlertmanagerReceiverType
-	EmptyReceiverType
+	EmptyReceiverType = GrafanaReceiverType | AlertmanagerReceiverType
 )
+
+func (r ReceiverType) String() string {
+	switch r {
+	case GrafanaReceiverType:
+		return "grafana"
+	case AlertmanagerReceiverType:
+		return "alertmanager"
+	case EmptyReceiverType:
+		return "empty"
+	default:
+		return "unknown"
+	}
+}
+
+// Can determines whether a receiver type can implement another receiver type.
+// This is useful as receivers with just names but no contact points
+// are valid in all backends.
+func (r ReceiverType) Can(other ReceiverType) bool { return r&other != 0 }
+
+// MatchesBackend determines if a config payload can be sent to a particular backend type
+func (r ReceiverType) MatchesBackend(backend Backend) error {
+	msg := func(backend Backend, receiver ReceiverType) error {
+		return fmt.Errorf(
+			"unexpected backend type (%s) for receiver type (%s)",
+			backend.String(),
+			receiver.String(),
+		)
+	}
+	var ok bool
+	switch backend {
+	case GrafanaBackend:
+		ok = r.Can(GrafanaReceiverType)
+	case AlertmanagerBackend:
+		ok = r.Can(AlertmanagerReceiverType)
+	}
+	if !ok {
+		return msg(backend, r)
+	}
+	return nil
+}
 
 type GettableApiReceiver struct {
 	config.Receiver          `yaml:",inline"`

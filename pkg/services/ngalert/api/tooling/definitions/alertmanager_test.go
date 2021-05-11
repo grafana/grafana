@@ -405,3 +405,114 @@ func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, string(yamlEncoded), string(out))
 }
+
+func Test_ReceiverCompatibility(t *testing.T) {
+	for _, tc := range []struct {
+		desc     string
+		a, b     ReceiverType
+		expected bool
+	}{
+		{
+			desc:     "grafana=grafana",
+			a:        GrafanaReceiverType,
+			b:        GrafanaReceiverType,
+			expected: true,
+		},
+		{
+			desc:     "am=am",
+			a:        AlertmanagerReceiverType,
+			b:        AlertmanagerReceiverType,
+			expected: true,
+		},
+		{
+			desc:     "empty=grafana",
+			a:        EmptyReceiverType,
+			b:        AlertmanagerReceiverType,
+			expected: true,
+		},
+		{
+			desc:     "empty=am",
+			a:        EmptyReceiverType,
+			b:        AlertmanagerReceiverType,
+			expected: true,
+		},
+		{
+			desc:     "empty=empty",
+			a:        EmptyReceiverType,
+			b:        EmptyReceiverType,
+			expected: true,
+		},
+		{
+			desc:     "graf!=am",
+			a:        GrafanaReceiverType,
+			b:        AlertmanagerReceiverType,
+			expected: false,
+		},
+		{
+			desc:     "am!=graf",
+			a:        AlertmanagerReceiverType,
+			b:        GrafanaReceiverType,
+			expected: false,
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			require.Equal(t, tc.expected, tc.a.Can(tc.b))
+		})
+	}
+}
+
+func Test_ReceiverMatchesBackend(t *testing.T) {
+
+	for _, tc := range []struct {
+		desc string
+		rec  ReceiverType
+		b    Backend
+		err  bool
+	}{
+		{
+			desc: "graf=graf",
+			rec:  GrafanaReceiverType,
+			b:    GrafanaBackend,
+			err:  false,
+		},
+		{
+			desc: "empty=graf",
+			rec:  EmptyReceiverType,
+			b:    GrafanaBackend,
+			err:  false,
+		},
+		{
+			desc: "am=am",
+			rec:  AlertmanagerReceiverType,
+			b:    AlertmanagerBackend,
+			err:  false,
+		},
+		{
+			desc: "empty=am",
+			rec:  EmptyReceiverType,
+			b:    AlertmanagerBackend,
+			err:  false,
+		},
+		{
+			desc: "graf!=am",
+			rec:  GrafanaReceiverType,
+			b:    AlertmanagerBackend,
+			err:  true,
+		},
+		{
+			desc: "am!=ruler",
+			rec:  GrafanaReceiverType,
+			b:    LoTexRulerBackend,
+			err:  true,
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.rec.MatchesBackend(tc.b)
+			if tc.err {
+				require.NotNil(t, err)
+			} else {
+				require.Nil(t, err)
+			}
+		})
+	}
+}
