@@ -15,13 +15,13 @@ function setup(initial: RelativeTimeRange = { from: 900, to: 0 }): RenderResult 
 describe('RelativeTimePicker', () => {
   it('should render the picker button with an user friendly text', () => {
     const { getByText } = setup({ from: 900, to: 0 });
-    expect(getByText('Last 15 minutes')).toBeInTheDocument();
+    expect(getByText('now-15m to now')).toBeInTheDocument();
   });
 
   it('should open the picker when clicking the button', () => {
     const { getByText } = setup({ from: 900, to: 0 });
 
-    fireEvent.click(getByText('Last 15 minutes'));
+    fireEvent.click(getByText('now-15m to now'));
 
     expect(getByText('Specify time range')).toBeInTheDocument();
     expect(getByText('Example time ranges')).toBeInTheDocument();
