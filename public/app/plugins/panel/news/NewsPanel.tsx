@@ -89,8 +89,13 @@ export class NewsPanel extends PureComponent<Props, State> {
                 <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
               </a>
               {showImage && item.ogImage && (
-                <a href={textUtil.sanitizeUrl(item.link)}>
-                  <img className={styles.socialImage} src={item.ogImage} />
+                <a
+                  href={textUtil.sanitizeUrl(item.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.socialImage}
+                >
+                  <img src={item.ogImage} />
                 </a>
               )}
               <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
@@ -114,7 +119,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     border-bottom: 2px solid ${theme.colors.border1};
   `,
   socialImage: css`
-    width: 100%;
+    display: block;
+    margin-bottom: ${theme.spacing.sm};
+    > img {
+      width: 100%;
+    }
   `,
   link: css`
     color: ${theme.colors.linkExternal};
