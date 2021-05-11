@@ -2,6 +2,7 @@ import { XYFieldMatchers } from './types';
 import {
   ArrayVector,
   DataFrame,
+  EventBus,
   FieldType,
   GrafanaTheme2,
   outerJoinDataFrames,
@@ -9,13 +10,14 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
-export interface PrepConfigOpts {
+
+export type PrepConfigOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
   timeZone: TimeZone;
   getTimeRange: () => TimeRange;
-  [prop: string]: any;
-}
+  eventBus: EventBus;
+} & T;
 
 function applySpanNullsThresholds(frames: DataFrame[]) {
   for (const frame of frames) {

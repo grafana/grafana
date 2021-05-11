@@ -38,7 +38,7 @@ require (
 	github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07
 	github.com/go-openapi/strfmt v0.20.1
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.5.0
@@ -50,7 +50,7 @@ require (
 	github.com/grafana/grafana-live-sdk v0.0.5
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.93.0
-	github.com/grafana/loki v1.6.2-0.20210429132126-d88f3996eaa2
+	github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
 	github.com/hashicorp/go-plugin v1.4.0
