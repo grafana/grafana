@@ -84,7 +84,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	dialect = ss.Dialect
 
 	if !ss.dbCfg.SkipMigrations {
-		migrator := migrator.NewMigrator(ss.engine)
+		migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
 		migrations.AddMigrations(migrator)
 
 		for _, descriptor := range registry.GetServices() {
