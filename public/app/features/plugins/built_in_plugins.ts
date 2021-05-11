@@ -64,6 +64,7 @@ import * as livePanel from 'app/plugins/panel/live/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
+import * as histogramPanel from 'app/plugins/panel/histogram/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -111,6 +112,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,
+  'app/plugins/panel/histogram/module': histogramPanel,
 };
 
 export default builtInPlugins;

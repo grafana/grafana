@@ -1,4 +1,4 @@
-package librarypanels
+package libraryelements
 
 import (
 	"github.com/grafana/grafana/pkg/models"
@@ -10,7 +10,19 @@ func isGeneralFolder(folderID int64) bool {
 	return folderID == 0
 }
 
-func (lps *LibraryPanelService) requirePermissionsOnFolder(user *models.SignedInUser, folderID int64) error {
+func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) error {
+	kind := LibraryElementKind(kindAsInt)
+	switch kind {
+	case Panel:
+		return nil
+	case Variable:
+		return nil
+	default:
+		return errLibraryElementUnSupportedElementKind
+	}
+}
+
+func (l *LibraryElementService) requirePermissionsOnFolder(user *models.SignedInUser, folderID int64) error {
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_EDITOR) {
 		return nil
 	}
@@ -19,7 +31,7 @@ func (lps *LibraryPanelService) requirePermissionsOnFolder(user *models.SignedIn
 		return models.ErrFolderAccessDenied
 	}
 
-	s := dashboards.NewFolderService(user.OrgId, user, lps.SQLStore)
+	s := dashboards.NewFolderService(user.OrgId, user, l.SQLStore)
 	folder, err := s.GetFolderByID(folderID)
 	if err != nil {
 		return err

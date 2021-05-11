@@ -1,6 +1,4 @@
-import { VizTooltipOptions } from '@grafana/ui';
-import { OptionsWithLegend } from '../timeseries/types';
-
+import { VizTooltipOptions, OptionsWithLegend } from '@grafana/ui';
 export interface XYDimensionConfig {
   frame: number;
   x?: string; // name | first

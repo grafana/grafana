@@ -73,7 +73,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 		}
 	}
 
-	ss.readConfig()
 	if err := ss.initEngine(engine); err != nil {
 		return nil, errutil.Wrap("failed to connect to database", err)
 	}
@@ -207,6 +206,10 @@ func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
 }
 
 func (ss *SQLStore) buildConnectionString() (string, error) {
+	if err := ss.readConfig(); err != nil {
+		return "", err
+	}
+
 	cnnstr := ss.dbCfg.ConnectionString
 
 	// special case used by integration tests
@@ -234,6 +237,10 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			}
 
 			cnnstr += "&tls=custom"
+		}
+
+		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
+			cnnstr += "&tx_isolation=" + isolation
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
@@ -345,12 +352,15 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 }
 
 // readConfig initializes the SQLStore from its configuration.
-func (ss *SQLStore) readConfig() {
+func (ss *SQLStore) readConfig() error {
 	sec := ss.Cfg.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
-		dbURL, _ := url.Parse(cfgURL)
+		dbURL, err := url.Parse(cfgURL)
+		if err != nil {
+			return err
+		}
 		ss.dbCfg.Type = dbURL.Scheme
 		ss.dbCfg.Host = dbURL.Host
 
@@ -385,9 +395,11 @@ func (ss *SQLStore) readConfig() {
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	return nil
 }
 
 // ITestDB is an interface of arguments for testing db
@@ -529,6 +541,7 @@ type DatabaseConfig struct {
 	ClientCertPath   string
 	ServerCertName   string
 	ConnectionString string
+	IsolationLevel   string
 	MaxOpenConn      int
 	MaxIdleConn      int
 	ConnMaxLifetime  int
