@@ -73,10 +73,6 @@ type ListAlertInstancesQuery struct {
 	Result []*ListAlertInstancesQueryResult
 }
 
-type FetchUniqueOrgIdsQuery struct {
-	Result []*FetchUniqueOrgIdsQueryResult
-}
-
 // ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
 type ListAlertInstancesQueryResult struct {
 	RuleOrgID         int64             `xorm:"rule_org_id" json:"ruleOrgId"`
@@ -87,10 +83,6 @@ type ListAlertInstancesQueryResult struct {
 	CurrentStateSince time.Time         `json:"currentStateSince"`
 	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
 	LastEvalTime      time.Time         `json:"lastEvalTime"`
-}
-
-type FetchUniqueOrgIdsQueryResult struct {
-	DefinitionOrgID int64 `xorm:"rule_org_id" json:"definitionOrgId"`
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,

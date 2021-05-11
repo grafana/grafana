@@ -13,7 +13,7 @@ type InstanceStore interface {
 	GetAlertInstance(cmd *models.GetAlertInstanceQuery) error
 	ListAlertInstances(cmd *models.ListAlertInstancesQuery) error
 	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
-	FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error
+	FetchOrgIds() ([]int64, error)
 }
 
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
@@ -120,10 +120,10 @@ func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error 
 	})
 }
 
-func (st DBstore) FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		orgIds := make([]*models.FetchUniqueOrgIdsQueryResult, 0)
+func (st DBstore) FetchOrgIds() ([]int64, error) {
+	orgIds := []int64{}
 
+	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
 
@@ -137,8 +137,8 @@ func (st DBstore) FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error {
 		if err := sess.SQL(s.String(), params...).Find(&orgIds); err != nil {
 			return err
 		}
-
-		cmd.Result = orgIds
 		return nil
 	})
+
+	return orgIds, err
 }
