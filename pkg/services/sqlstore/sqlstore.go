@@ -85,7 +85,7 @@ func (ss *SQLStore) Init() error {
 	dialect = ss.Dialect
 
 	if !ss.dbCfg.SkipMigrations {
-		migrator := migrator.NewMigrator(ss.engine)
+		migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
 		migrations.AddMigrations(migrator)
 
 		for _, descriptor := range registry.GetServices() {
@@ -233,6 +233,10 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			}
 
 			cnnstr += "&tls=custom"
+		}
+
+		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
+			cnnstr += "&tx_isolation=" + isolation
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
@@ -384,6 +388,7 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
@@ -537,6 +542,7 @@ type DatabaseConfig struct {
 	ClientCertPath   string
 	ServerCertName   string
 	ConnectionString string
+	IsolationLevel   string
 	MaxOpenConn      int
 	MaxIdleConn      int
 	ConnMaxLifetime  int
