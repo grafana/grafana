@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { Checkbox, HorizontalGroup, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import React, { Fragment, useCallback } from 'react';
 import getStyles from './styles';
@@ -16,35 +17,41 @@ const NestedRows: React.FC<NestedRowsProps> = ({ rows, selected, level, onRowTog
 
   return (
     <>
-      {rows.map((row) => (
-        <Fragment key={row.id}>
-          <tr className={styles.row} key={row.id}>
-            <td className={styles.cell}>
-              <NestedEntry
-                level={level}
-                isSelected={selected.includes(row.id)}
-                entry={row}
-                onToggleCollapse={onRowToggleCollapse}
-                onSelectedChange={onRowSelectedChange}
+      {rows.map((row) => {
+        const isSelected = selected.includes(row.id);
+        const isDisabled = selected.length > 0 && !isSelected;
+
+        return (
+          <Fragment key={row.id}>
+            <tr className={cx(styles.row, isDisabled && styles.disabledRow)} key={row.id}>
+              <td className={styles.cell}>
+                <NestedEntry
+                  level={level}
+                  isSelected={isSelected}
+                  isDisabled={isDisabled}
+                  entry={row}
+                  onToggleCollapse={onRowToggleCollapse}
+                  onSelectedChange={onRowSelectedChange}
+                />
+              </td>
+
+              <td className={styles.cell}>{row.typeLabel}</td>
+
+              <td className={styles.cell}>{row.location ?? '-'}</td>
+            </tr>
+
+            {row.isOpen && row.children && (
+              <NestedRows
+                rows={row.children}
+                selected={selected}
+                level={level + 1}
+                onRowToggleCollapse={onRowToggleCollapse}
+                onRowSelectedChange={onRowSelectedChange}
               />
-            </td>
-
-            <td className={styles.cell}>{row.typeLabel}</td>
-
-            <td className={styles.cell}>{row.location ?? '-'}</td>
-          </tr>
-
-          {row.isOpen && row.children && (
-            <NestedRows
-              rows={row.children}
-              selected={selected}
-              level={level + 1}
-              onRowToggleCollapse={onRowToggleCollapse}
-              onRowSelectedChange={onRowSelectedChange}
-            />
-          )}
-        </Fragment>
-      ))}
+            )}
+          </Fragment>
+        );
+      })}
     </>
   );
 };
@@ -73,11 +80,19 @@ interface NestedEntryProps {
   level: number;
   entry: Row;
   isSelected: boolean;
+  isDisabled: boolean;
   onToggleCollapse: (row: Row) => void;
   onSelectedChange: (row: Row, selected: boolean) => void;
 }
 
-const NestedEntry: React.FC<NestedEntryProps> = ({ entry, isSelected, level, onToggleCollapse, onSelectedChange }) => {
+const NestedEntry: React.FC<NestedEntryProps> = ({
+  entry,
+  isSelected,
+  isDisabled,
+  level,
+  onToggleCollapse,
+  onSelectedChange,
+}) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -107,7 +122,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({ entry, isSelected, level, onT
           />
         )}
 
-        {entry.isSelectable && <Checkbox onChange={handleSelectedChanged} value={isSelected} />}
+        {entry.isSelectable && <Checkbox onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />}
 
         <EntryIcon entry={entry} />
 
