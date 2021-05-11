@@ -53,7 +53,9 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		logger.Error("Failed to set plugin route body content", "error", err)
 	}
 
-	if tokenProvider := getTokenProvider(ctx, ds, route, data); tokenProvider != nil {
+	if tokenProvider, err := getTokenProvider(ctx, ds, route, data); err != nil {
+		logger.Error("Failed to resolve auth token provider", "error", err)
+	} else if tokenProvider != nil {
 		if token, err := tokenProvider.getAccessToken(); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
@@ -65,25 +67,80 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 }
 
 func getTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
-	data templateData) accessTokenProvider {
-	authenticationType := ds.JsonData.Get("authenticationType").MustString()
+	data templateData) (accessTokenProvider, error) {
+	authType := pluginRoute.AuthType
 
-	switch authenticationType {
-	case "gce":
-		return newGceAccessTokenProvider(ctx, ds, pluginRoute)
-	case "jwt":
-		if pluginRoute.JwtTokenAuth != nil {
-			return newJwtAccessTokenProvider(ctx, ds, pluginRoute, data)
-		}
-	default:
-		// Fallback to authentication options when authentication type isn't explicitly configured
-		if pluginRoute.TokenAuth != nil {
-			return newGenericAccessTokenProvider(ds, pluginRoute, data)
-		}
-		if pluginRoute.JwtTokenAuth != nil {
-			return newJwtAccessTokenProvider(ctx, ds, pluginRoute, data)
-		}
+	// Plugin can override authentication type specified in route configuration
+	if authTypeOverride := ds.JsonData.Get("authenticationType").MustString(); authTypeOverride != "" {
+		authType = authTypeOverride
 	}
 
-	return nil
+	tokenAuth, err := interpolateAuthParams(pluginRoute.TokenAuth, data)
+	if err != nil {
+		return nil, err
+	}
+	jwtTokenAuth, err := interpolateAuthParams(pluginRoute.JwtTokenAuth, data)
+	if err != nil {
+		return nil, err
+	}
+
+	switch authType {
+	case "gce":
+		if jwtTokenAuth == nil {
+			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
+		}
+		provider := newGceAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth)
+		return provider, nil
+
+	case "jwt":
+		if jwtTokenAuth == nil {
+			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
+		}
+		provider := newJwtAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth)
+		return provider, nil
+
+	case "":
+		// Fallback to authentication methods when authentication type isn't explicitly configured
+		if tokenAuth != nil {
+			provider := newGenericAccessTokenProvider(ds, pluginRoute, tokenAuth)
+			return provider, nil
+		}
+		if jwtTokenAuth != nil {
+			provider := newJwtAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth)
+			return provider, nil
+		}
+
+		// No authentication
+		return nil, nil
+
+	default:
+		return nil, fmt.Errorf("authentication type '%s' not supported", authType)
+	}
+}
+
+func interpolateAuthParams(tokenAuth *plugins.JwtTokenAuth, data templateData) (*plugins.JwtTokenAuth, error) {
+	if tokenAuth == nil {
+		// Nothing to interpolate
+		return nil, nil
+	}
+
+	interpolatedUrl, err := interpolateString(tokenAuth.Url, data)
+	if err != nil {
+		return nil, err
+	}
+
+	interpolatedParams := make(map[string]string)
+	for key, value := range tokenAuth.Params {
+		interpolatedParam, err := interpolateString(value, data)
+		if err != nil {
+			return nil, err
+		}
+		interpolatedParams[key] = interpolatedParam
+	}
+
+	return &plugins.JwtTokenAuth{
+		Url:    interpolatedUrl,
+		Scopes: tokenAuth.Scopes,
+		Params: interpolatedParams,
+	}, nil
 }

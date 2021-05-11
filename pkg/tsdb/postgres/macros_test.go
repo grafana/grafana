@@ -91,25 +91,25 @@ func TestMacroEngine(t *testing.T) {
 		t.Run("interpolate __timeGroup function with TimescaleDB enabled", func(t *testing.T) {
 			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('300.0s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('300.000s',time_column)", sql)
 		})
 
 		t.Run("interpolate __timeGroup function with spaces between args and TimescaleDB enabled", func(t *testing.T) {
 			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('300.0s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('300.000s',time_column)", sql)
 		})
 
 		t.Run("interpolate __timeGroup function with large time range as an argument and TimescaleDB enabled", func(t *testing.T) {
 			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '12d')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('1036800.0s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('1036800.000s',time_column)", sql)
 		})
 
 		t.Run("interpolate __timeGroup function with small time range as an argument and TimescaleDB enabled", func(t *testing.T) {
-			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '200ms')")
+			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '20ms')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('0.2s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('0.020s',time_column)", sql)
 		})
 
 		t.Run("interpolate __unixEpochFilter function", func(t *testing.T) {

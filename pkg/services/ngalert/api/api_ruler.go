@@ -230,6 +230,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return response.Error(http.StatusBadRequest, "rule group name is not valid", nil)
 	}
 
+	var alertRuleUIDs []string
 	for _, r := range ruleGroupConfig.Rules {
 		cond := ngmodels.Condition{
 			Condition: r.GrafanaManagedAlert.Condition,
@@ -239,6 +240,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 			return response.Error(http.StatusBadRequest, fmt.Sprintf("failed to validate alert rule %s", r.GrafanaManagedAlert.Title), err)
 		}
+		alertRuleUIDs = append(alertRuleUIDs, r.GrafanaManagedAlert.UID)
 	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
@@ -252,6 +254,10 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
+	}
+
+	for _, uid := range alertRuleUIDs {
+		srv.manager.RemoveByRuleUID(c.OrgId, uid)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})

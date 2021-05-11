@@ -15,7 +15,7 @@ jobs:
         with:
           text: ${{ github.event.inputs.version }}
           regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
-          
+
       - name: Validate input version
         if: ${{ steps.regex-match.outputs.match == '' }}
         run: |
@@ -24,29 +24,29 @@ jobs:
           example: 7.4.3 or 7.4.3-beta.1"
           exit 1
       - uses: actions/checkout@v2
-      
+
       - name: Set intermedia variables
         id: intermedia
         run: |
           echo "::set-output name=short_ref::${GITHUB_REF#refs/*/}"
           echo "::set-output name=check_passed::false"
           echo "::set-output name=branch_name::v${{steps.regex-match.outputs.group1}}"
-          echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"      
-          
-      - name: Check input version is aligned with branch(not master)
+          echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"
+
+      - name: Check input version is aligned with branch(not main)
         if: steps.intermedia.outputs.branch_exist != '0' && !contains(steps.intermedia.outputs.short_ref, steps.intermedia.outputs.branch_name)
         run: |
           echo " You need to run the workflow on branch v${{steps.regex-match.outputs.group1}}.x
           exit 1
-      
-      - name: Check input version is aligned with branch(master)
+
+      - name: Check input version is aligned with branch(main)
         if: steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main')
         run: |
           echo "When you want to deliver a new new minor version, you might want to create a new branch first \
           with naming convention v[major].[minor].x, and just run the workflow on that branch. \
-          Run the workflow on master only when needed"
+          Run the workflow on main only when needed"
           exit 1
-          
+
       - name: Checkout Actions
         uses: actions/checkout@v2
         with:
