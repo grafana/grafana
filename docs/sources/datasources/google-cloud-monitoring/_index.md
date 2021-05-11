@@ -97,7 +97,7 @@ Google Cloud Monitoring supports different kinds of metrics like `GAUGE`, `DELTA
 
 #### Filter
 
-To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`. You can remove the filter by clicking on the filter name and select `--remove filter--`.
+To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`. You can remove the filter by clicking on the trash icon.
 
 ##### Simple wildcards
 
@@ -107,13 +107,39 @@ When the operator is set to `=` or `!=` it is possible to add wildcards to the f
 
 When the operator is set to `=~` or `!=~` it is possible to add regular expressions to the filter value field. E.g `us-central[1-3]-[af]` would match all values that starts with "us-central", is followed by a number in the range of 1 to 3, a dash and then either an "a" or an "f". Leading and trailing slashes are not needed when creating regular expressions.
 
-#### Aggregation
+#### Pre-processing
 
-The aggregation field lets you combine time series based on common statistics. For more information about aggregation, refer to [aggregation options](https://cloud.google.com/monitoring/charts/metrics-selector#aggregation-options).
+Preprocessing options are displayed in the UI when the selected metric has a metric kind of `delta` or `cumulative`. If the selected metric has a metric kind of `gauge`, no pre-processing option will be displayed.
 
-The `Aligner` field allows you to align multiple time series after the same group by time interval. For more information about aligner, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
+If you select 'Rate', data points are aligned and converted to a rate per time series. If you select 'Delta', data points are aligned by their delta (difference) per time series.
 
-##### Alignment Period/Group by Time
+#### Grouping
+
+You can reduce the amount of data returned for a metric by combining different time series. To combine multiple time series, you can specify a grouping and a function.
+
+##### Group by
+
+Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
+
+###### Metadata labels
+
+Resource metadata labels contain information to uniquely identify a resource in Google Cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels.
+
+User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
+
+##### Group by function
+
+The grouping function is used to combine the time series in the group into a single time series.
+
+#### Alignment
+
+The process of alignment consists of collecting all data points received in a fixed length of time, applying a function to combine those data points, and assigning a timestamp to the result.
+
+##### Alignment function
+
+Describes how to bring the data points in each individual time series into equal periods of time. Within each interval (determined by the alignment period) and for each time series, the data points are aggregated into a single point. The value of that point is determined by the type of alignment function used. For more information about aligner, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
+
+##### Alignment period
 
 The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Google Cloud Monitoring default groupings (which allows you to compare graphs in Grafana with graphs in the Google Cloud Monitoring UI).
 The option is called `cloud monitoring auto` and the defaults are:
@@ -126,21 +152,11 @@ The other automatic option is `grafana auto`. This will automatically set the gr
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
-#### Group By
-
-Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
-
-##### Metadata labels
-
-Resource metadata labels contain information to uniquely identify a resource in Google Cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels.
-
-User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
-
 #### Alias patterns
 
 The Alias By field allows you to control the format of the legend keys. The default is to show the metric name and labels. This can be long and hard to read. Using the following patterns in the alias field, you can format the legend key the way you want it.
 
-#### Metric Type Patterns
+#### Metric type patterns
 
 | Alias Pattern        | Description                  | Example Result                                    |
 | -------------------- | ---------------------------- | ------------------------------------------------- |
@@ -148,7 +164,7 @@ The Alias By field allows you to control the format of the legend keys. The defa
 | `{{metric.name}}`    | returns the metric name part | `instance/cpu/utilization`                        |
 | `{{metric.service}}` | returns the service part     | `compute`                                         |
 
-#### Label Patterns
+#### Label patterns
 
 In the Group By dropdown, you can see a list of metric and resource labels for a metric. These can be included in the legend key using alias patterns.
 
@@ -212,7 +228,7 @@ The friendly names for the time series selectors are shown in Grafana. Here is t
 | SLO Compliance             | select_slo_compliance                   |
 | SLO Error Budget Remaining | select_slo_budget_fraction              |
 
-#### Alias Patterns for SLO queries
+#### Alias patterns for SLO queries
 
 The Alias By field allows you to control the format of the legend keys for SLO queries too.
 
@@ -223,7 +239,7 @@ The Alias By field allows you to control the format of the legend keys for SLO q
 | `{{slo}}`      | returns the SLO              | `latency-slo`       |
 | `{{selector}}` | returns the selector         | `select_slo_health` |
 
-#### Alignment Period/Group by Time for SLO queries
+#### Alignment period/group by time for SLO queries
 
 SLO queries use the same [alignment period functionality as metric queries]({{< relref "#metric-queries" >}}).
 
