@@ -2,18 +2,29 @@ import { DataQueryRequest, DataSourceInstanceSettings, dateTime, FieldType, Plug
 import { backendSrv } from 'app/core/services/backend_srv';
 import { of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { JaegerDatasource, JaegerQuery } from './datasource';
+import { ALL_OPERATIONS_KEY } from './components/SearchForm';
+import { JaegerDatasource } from './datasource';
 import {
   testResponse,
   testResponseDataFrameFields,
   testResponseNodesFields,
   testResponseEdgesFields,
 } from './testResponse';
+import { JaegerQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
+
+const timeSrvStub: any = {
+  timeRange(): any {
+    return {
+      from: dateTime(1531468681),
+      to: dateTime(1531489712),
+    };
+  },
+};
 
 describe('JaegerDatasource', () => {
   beforeEach(() => {
@@ -59,6 +70,52 @@ describe('JaegerDatasource', () => {
     expect(field.name).toBe('trace');
     expect(field.type).toBe(FieldType.trace);
     expect(field.values.length).toBe(0);
+  });
+
+  it('should return search results when the query type is search', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const response = await ds
+      .query({
+        ...defaultQuery,
+        targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: '/api/services' }],
+      })
+      .toPromise();
+    expect(mock).toBeCalledWith({
+      url: `${defaultSettings.url}/api/traces?operation=%2Fapi%2Fservices&service=jaeger-query&start=1531468681000&end=1531489712000&lookback=custom`,
+    });
+    expect(response.data[0].meta.preferredVisualisationType).toBe('table');
+    // Make sure that traceID field has data link configured
+    expect(response.data[0].fields[0].config.links).toHaveLength(1);
+    expect(response.data[0].fields[0].name).toBe('traceID');
+  });
+
+  it('should remove operation from the query when all is selected', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    await ds
+      .query({
+        ...defaultQuery,
+        targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: ALL_OPERATIONS_KEY }],
+      })
+      .toPromise();
+    expect(mock).toBeCalledWith({
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&start=1531468681000&end=1531489712000&lookback=custom`,
+    });
+  });
+
+  it('should convert tags from logfmt format to an object', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    await ds
+      .query({
+        ...defaultQuery,
+        targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', tags: 'error=true' }],
+      })
+      .toPromise();
+    expect(mock).toBeCalledWith({
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1531468681000&end=1531489712000&lookback=custom`,
+    });
   });
 });
 

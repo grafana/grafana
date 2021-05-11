@@ -19,7 +19,7 @@ describe('Trace view', () => {
         e2e().contains('gdev-jaeger').scrollIntoView().should('be.visible').click();
       });
 
-    e2e.components.QueryField.container().should('be.visible').type('long-trace');
+    e2e.components.DataSource.Jaeger.traceIDInput().should('be.visible').type('long-trace');
 
     e2e.components.RefreshPicker.runButton().should('be.visible').click();
 
