@@ -15,6 +15,7 @@ import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
   locationUtil,
+  monacoLanguageRegistry,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -45,6 +46,7 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 import { SafeDynamicImport } from './core/components/DynamicImports/SafeDynamicImport';
 import { featureToggledRoutes } from './routes/routes';
+import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -96,6 +98,7 @@ export class GrafanaApp {
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
+    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
     setQueryRunnerFactory(() => new QueryRunner());
     setVariableQueryRunner(new VariableQueryRunner());

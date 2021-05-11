@@ -1,14 +1,7 @@
 import { concat, find, flattenDeep, forEach, map } from 'lodash';
 import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
-import {
-  AzureLogsTableData,
-  AzureLogsVariable,
-  KustoColumn,
-  KustoDatabase,
-  KustoFunction,
-  KustoSchema,
-  KustoTable,
-} from '../types';
+import { AzureLogsTableData, AzureLogsVariable } from '../types';
+import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class ResponseParser {
   columns: string[];
@@ -141,73 +134,6 @@ export default class ResponseParser {
     return list;
   }
 
-  parseSchemaResult(): KustoSchema {
-    return {
-      Plugins: [
-        {
-          Name: 'pivot',
-        },
-      ],
-      Databases: this.createSchemaDatabaseWithTables(),
-    };
-  }
-
-  createSchemaDatabaseWithTables(): { [key: string]: KustoDatabase } {
-    const databases = {
-      Default: {
-        Name: 'Default',
-        Tables: this.createSchemaTables(),
-        Functions: this.createSchemaFunctions(),
-      },
-    };
-
-    return databases;
-  }
-
-  createSchemaTables(): { [key: string]: KustoTable } {
-    const tables: { [key: string]: KustoTable } = {};
-
-    for (const table of this.results.tables) {
-      tables[table.name] = {
-        Name: table.name,
-        OrderedColumns: [],
-      };
-      for (const col of table.columns) {
-        tables[table.name].OrderedColumns.push(this.convertToKustoColumn(col));
-      }
-    }
-
-    return tables;
-  }
-
-  convertToKustoColumn(col: any): KustoColumn {
-    return {
-      Name: col.name,
-      Type: col.type,
-    };
-  }
-
-  createSchemaFunctions(): { [key: string]: KustoFunction } {
-    const functions: { [key: string]: KustoFunction } = {};
-    if (!this.results.functions) {
-      return functions;
-    }
-
-    for (const func of this.results.functions) {
-      functions[func.name] = {
-        Name: func.name,
-        Body: func.body,
-        DocString: func.displayName,
-        Folder: func.category,
-        FunctionKind: 'Unknown',
-        InputParameters: [],
-        OutputColumns: [],
-      };
-    }
-
-    return functions;
-  }
-
   static findOrCreateBucket(data: TimeSeries[], target: any): TimeSeries {
     let dataTarget: any = find(data, ['target', target]);
     if (!dataTarget) {
@@ -221,4 +147,65 @@ export default class ResponseParser {
   static dateTimeToEpoch(dateTimeValue: any) {
     return dateTime(dateTimeValue).valueOf();
   }
+}
+
+// matches (name):(type) = (defaultValue)
+// e.g. fromRangeStart:datetime = datetime(null)
+//  - name: fromRangeStart
+//  - type: datetime
+//  - defaultValue: datetime(null)
+const METADATA_FUNCTION_PARAMS = /([\w\W]+):([\w]+)(?:\s?=\s?([\w\W]+))?/;
+
+function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
+  if (!sourceSchema.functions) {
+    return [];
+  }
+
+  return sourceSchema.functions.map((fn) => {
+    const params =
+      fn.parameters &&
+      fn.parameters
+        .split(', ')
+        .map((arg) => {
+          const match = arg.match(METADATA_FUNCTION_PARAMS);
+          if (!match) {
+            return;
+          }
+
+          const [, name, type, defaultValue] = match;
+
+          return {
+            name,
+            type,
+            defaultValue,
+            cslDefaultValue: defaultValue,
+          };
+        })
+        .filter(<T>(v: T): v is Exclude<T, undefined> => !!v);
+
+    return {
+      name: fn.name,
+      body: fn.body,
+      inputParameters: params || [],
+    };
+  });
+}
+
+export function transformMetadataToKustoSchema(sourceSchema: AzureLogAnalyticsMetadata, nameOrIdOrSomething: string) {
+  const database = {
+    name: nameOrIdOrSomething,
+    tables: sourceSchema.tables,
+    functions: transformMetadataFunction(sourceSchema),
+    majorVersion: 0,
+    minorVersion: 0,
+  };
+
+  return {
+    clusterType: 'Engine',
+    cluster: {
+      connectionString: nameOrIdOrSomething,
+      databases: [database],
+    },
+    database: database,
+  };
 }

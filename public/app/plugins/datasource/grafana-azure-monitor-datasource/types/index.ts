@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
-import Datasource from './datasource';
+import Datasource from '../datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -137,37 +137,6 @@ export interface AzureMonitorResourceGroupsResponse {
   };
   status: number;
   statusText: string;
-}
-
-// Azure Log Analytics types
-export interface KustoSchema {
-  Databases: { [key: string]: KustoDatabase };
-  Plugins: any[];
-}
-export interface KustoDatabase {
-  Name: string;
-  Tables: { [key: string]: KustoTable };
-  Functions: { [key: string]: KustoFunction };
-}
-
-export interface KustoTable {
-  Name: string;
-  OrderedColumns: KustoColumn[];
-}
-
-export interface KustoColumn {
-  Name: string;
-  Type: string;
-}
-
-export interface KustoFunction {
-  Name: string;
-  DocString: string;
-  Body: string;
-  Folder: string;
-  FunctionKind: string;
-  InputParameters: any[];
-  OutputColumns: any[];
 }
 
 export interface AzureLogsVariable {
