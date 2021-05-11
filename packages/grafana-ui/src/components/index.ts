@@ -36,7 +36,7 @@ export { QueryField } from './QueryField/QueryField';
 
 // Code editor
 export { CodeEditor } from './Monaco/CodeEditorLazy';
-export { MonacoEditor, CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { Monaco, MonacoEditor, CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
@@ -227,6 +227,7 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
+export { ScaleDistribution } from './uPlot/models.gen';
 export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
