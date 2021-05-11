@@ -190,6 +190,48 @@ describe('Graph Migrations', () => {
         ]
       `);
     });
+
+    test('hide series', () => {
+      const panel = {} as PanelModel;
+      panel.fieldConfig = {
+        defaults: {
+          custom: {
+            hideFrom: {
+              tooltip: false,
+              graph: false,
+              legend: false,
+            },
+          },
+        },
+        overrides: [
+          {
+            matcher: {
+              id: 'byNames',
+              options: {
+                mode: 'exclude',
+                names: ['Bedroom'],
+                prefix: 'All except:',
+                readOnly: true,
+              },
+            },
+            properties: [
+              {
+                id: 'custom.hideFrom',
+                value: {
+                  graph: true,
+                  legend: false,
+                  tooltip: false,
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      panel.options = graphPanelChangedHandler(panel, 'graph', {});
+      expect(panel.fieldConfig.defaults.custom.hideFrom).toEqual({ viz: false, legend: false, tooltip: false });
+      expect(panel.fieldConfig.overrides[0].properties[0].value).toEqual({ viz: true, legend: false, tooltip: false });
+    });
   });
 });
 
