@@ -91,7 +91,6 @@ type SelSingleLoadProps = {
 
 const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: SelSingleLoadProps): JSX.Element => {
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
-  // useClickAway(ref, onClose);
 
   useEffect(() => {
     doLoad();
