@@ -1,5 +1,3 @@
-// +build integration
-
 package mysql
 
 import (
@@ -33,7 +31,7 @@ import (
 // devenv/README.md for setup instructions.
 func TestMySQL(t *testing.T) {
 	// change to true to run the MySQL tests
-	runMySQLTests := false
+	runMySQLTests := true
 	// runMySqlTests := true
 
 	if !(sqlstore.IsTestDbMySQL() || runMySQLTests) {
@@ -42,11 +40,6 @@ func TestMySQL(t *testing.T) {
 
 	x := InitMySQLTestDB(t)
 
-	exe, err := New(httpclient.NewProvider())(&models.DataSource{
-		JsonData:       simplejson.New(),
-		SecureJsonData: securejsondata.SecureJsonData{},
-	})
-	So(err, ShouldBeNil)
 	origXormEngine := sqleng.NewXormEngine
 	origInterpolate := sqleng.Interpolate
 	t.Cleanup(func() {
@@ -62,7 +55,7 @@ func TestMySQL(t *testing.T) {
 		return sql, nil
 	}
 
-	exe, err := NewExecutor(&models.DataSource{
+	exe, err := New(httpclient.NewProvider())(&models.DataSource{
 		JsonData:       simplejson.New(),
 		SecureJsonData: securejsondata.SecureJsonData{},
 	})
