@@ -97,12 +97,12 @@ func (l *libraryElementServiceImpl) AddMigration(mg *migrator.Migrator) {
 			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"org_id", "folder_id", "folder_id", "kind"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"org_id", "folder_id", "name", "kind"}, Type: migrator.UniqueIndex},
 		},
 	}
 
 	mg.AddMigration("create library_element table v1", migrator.NewAddTableMigration(libraryElementsV1))
-	mg.AddMigration("add index library_element org_id & folder_id & folder_id & kind", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
+	mg.AddMigration("add index library_element org_id & folder_id & name & kind", migrator.NewAddIndexMigration(libraryElementsV1, libraryElementsV1.Indices[0]))
 
 	libraryElementConnectionV1 := migrator.Table{
 		Name: connectionTableName,
