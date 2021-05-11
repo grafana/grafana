@@ -16,14 +16,14 @@ You can grant, change and revoke access to a resource by creating [built-in role
 
 ## Resources with fine-grained permissions 
 
-The access control is in beta and fine-grained [permissions]({{< relref "./concepts/permissions.md" >}}) are available only for a subset of resources. 
-Refer to the relevant API guide from below list to learn more about specific endpoints where access control is applied.
+Fine-grained access control is in beta and [permissions]({{< relref "./concepts/permissions.md" >}}) are available only for a subset of resources. 
+Refer to the relevant API guide from below list to learn more about specific endpoints where you can use access control.
 
 1. [Access Control API]({{< relref "../../http_api/access_control.md" >}})
-1. [Admin API]({{< relref "../../http_api/admin.md" >}})
-1. [Organization API]({{< relref "../../http_api/org.md" >}})
-1. [Reporting API]({{< relref "../../http_api/reporting.md" >}})
-1. [User API]({{< relref "../../http_api/user.md" >}})
+2. [Admin API]({{< relref "../../http_api/admin.md" >}})
+3. [Organization API]({{< relref "../../http_api/org.md" >}})
+4. [Reporting API]({{< relref "../../http_api/reporting.md" >}})
+5. [User API]({{< relref "../../http_api/user.md" >}})
 
 ## Create and manage custom roles
 
@@ -44,8 +44,8 @@ To create or remove _global_ custom role, you need to:
 
 ## Creating and removing built-in role assignments
 
-You can create or remove built-in role assignment by using an [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by [provisioning]({{< relref "./provisioning.md" >}}).
-By default, Grafana Admin already has a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage further assignments. 
+You can create or remove built-in role assignment by using the [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by updating [provisioning files]({{< relref "./provisioning.md" >}}).
+By default, Grafana Admin already has a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows any Grafana Admin user to manage further assignments. 
 
 Assignments can be either _global_ or _organization local_. Global assignments will take an effect across all organizations and all [predefined roles]({{< relref "./concepts/roles.md#predefined-roles" >}}) by default are _global_.
 

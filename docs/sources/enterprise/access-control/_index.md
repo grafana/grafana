@@ -11,11 +11,11 @@ weight = 100
 
 > **Note:** Fine-grained access control is available behind the `accesscontrol` feature flag in Grafana Enterprise 8.0+.
 
-Fine-grained access control provides a standardized way of granting, changing, and revoking access to Grafana resources. 
-Fine-grained access control works hand-in-hand with the existing [Grafana permissions]({{< relref "../../permissions/_index.md" >}}) and allows you to control actions users can perform in a granular way.
+Fine-grained access control provides a standardized way of granting, changing, and revoking access to view and modify Grafana resources, like dashboards, folders, notification channels, and users. 
+Fine-grained access control works hand-in-hand with the existing [Grafana permissions]({{< relref "../../permissions/_index.md" >}}) and allows you to control actions users can perform in a more granular way.
 
 To learn more about how fine-grained access control works, refer to [Concepts]({{< relref "./concepts/_index.md" >}}) and to [Manage roles and permissions]({{< relref "./managing-roles-permissions.md" >}}).
-[How-to guides]({{< relref "./how-to-examples.md" >}}) contain examples of using fine-grained roles and permissions.
+[How-to guides]({{< relref "./how-to-examples.md" >}}) contain step-by-step instructions on how to set up and modify fine-grained roles and permissions.
 
 ## Access management
 
