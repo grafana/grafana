@@ -29,7 +29,7 @@ describe('LogsNavigation', () => {
     expect(screen.getByTestId('scrollToTop')).toBeInTheDocument();
   });
 
-  it('should render 3 navigation buttons in correect order when default logs order', () => {
+  it('should render 3 navigation buttons in correct order when default logs order', () => {
     const { container } = setup();
     const expectedOrder = ['newerLogsButton', 'olderLogsButton', 'scrollToTop'];
     const elements = container.querySelectorAll(
