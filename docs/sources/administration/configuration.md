@@ -1448,7 +1448,7 @@ Custom install/learn more url for enterprise plugins. Defaults to https://grafan
 
 ### marketplace_app_enabled
 
-> **Note:** Only available in Grafana 8.0+.
+> **Note:** Available in Grafana 8.0 and later versions.
 
 Set to `true` if you want to enable the plugin marketplace app. Default is `false`. This app is only available to Grafana administrators.
 
