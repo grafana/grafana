@@ -42,7 +42,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 0
@@ -210,6 +210,71 @@
                 "value": 80
               }
             ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 9,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "mode": "spans",
+        "rowHeight": 0.9,
+        "showValue": "always"
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "a,a,b,b,b,b,c,a,a,d,d,d,d,d"
+        },
+        {
+          "alias": "",
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "null,null,e,e,e,null,null,e,null,null,e,null,e,e,e,e"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "true,null,false,null,true,false"
+        }
+      ],
+      "title": "Spans Mode (strings & booleans)",
+      "type": "timeline"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "short"
         },
@@ -219,7 +284,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 21
       },
       "id": 4,
       "interval": null,
@@ -271,7 +336,7 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 27,
+  "schemaVersion": 29,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -285,5 +350,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 1
+  "version": 7
 }

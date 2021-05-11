@@ -6,7 +6,6 @@ import {
   DataFrame,
   FieldMatcherID,
   fieldMatchers,
-  FieldType,
   LegacyGraphHoverClearEvent,
   LegacyGraphHoverEvent,
   TimeRange,
@@ -99,7 +98,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     if (alignedFrame) {
       state = {
         alignedFrame,
-        alignedData: preparePlotData(alignedFrame, [FieldType.number]),
+        alignedData: preparePlotData(alignedFrame),
       };
       pluginLog('GraphNG', false, 'data prepared', state.alignedData);
 
