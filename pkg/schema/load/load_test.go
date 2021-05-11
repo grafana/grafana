@@ -123,3 +123,20 @@ func TestPanelValidity(t *testing.T) {
 		return nil
 	}))
 }
+
+func TestCueErrorWrapper(t *testing.T) {
+	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
+		tempDir := os.DirFS(filepath.Join("testdata", "malformed_cue"))
+
+		var baseLoadPaths = BaseLoadPaths{
+			BaseCueFS:       tempDir,
+			DistPluginCueFS: GetDefaultLoadPaths().DistPluginCueFS,
+		}
+
+		_, err := BaseDashboardFamily(baseLoadPaths)
+		require.EqualError(t, err, "errors: [\"missing ',' in struct literal\" \"expected '}', found 'EOF'\"], in file: /cue/data/gen.cue, on line: 13")
+
+		_, err = DistDashboardFamily(baseLoadPaths)
+		require.EqualError(t, err, "errors: [\"missing ',' in struct literal\" \"expected '}', found 'EOF'\"], in file: /cue/data/gen.cue, on line: 13")
+	})
+}

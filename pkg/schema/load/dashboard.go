@@ -1,7 +1,7 @@
 package load
 
 import (
-	"errors"
+	errs "cuelang.org/go/cue/errors"
 	"fmt"
 
 	"cuelang.org/go/cue"
@@ -9,7 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-var panelSubpath cue.Path = cue.MakePath(cue.Def("#Panel"))
+// cueError wraps errors caused by malformed cue files.
+type cueError struct {
+	errors   []errs.Error
+	filename string
+	line     int
+}
+
+var panelSubpath = cue.MakePath(cue.Def("#Panel"))
 
 func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 	overlay := make(map[string]load.Source)
@@ -39,12 +46,15 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	cfg := &load.Config{Overlay: overlay}
 	inst, err := rt.Build(load.Instances([]string{"/cue/data/gen.cue"}, cfg)[0])
 	if err != nil {
-		return nil, err
+		cueErrors := wrapCUEError(err)
+		if err != nil {
+			return nil, fmt.Errorf("errors: %q, in file: %s, on line: %d", cueErrors.errors, cueErrors.filename, cueErrors.line)
+		}
 	}
 
 	famval := inst.Value().LookupPath(cue.MakePath(cue.Str("Family")))
 	if !famval.Exists() {
-		return nil, errors.New("dashboard schema family did not exist at expected path in expected file")
+		return nil, errs.New("dashboard schema family did not exist at expected path in expected file")
 	}
 
 	return buildGenericScuemata(famval)
@@ -198,4 +208,17 @@ func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.Ver
 type CompositeDashboardSchema interface {
 	schema.VersionedCueSchema
 	LatestPanelSchemaFor(id string) (schema.VersionedCueSchema, error)
+}
+
+func wrapCUEError(err error) cueError {
+	switch err.(type) {
+	case errs.Error:
+		return cueError{
+			errors:   errs.Errors(err),
+			filename: errs.Errors(err)[0].Position().File().Name(),
+			line:     errs.Errors(err)[0].Position().Line(),
+		}
+	default:
+		return cueError{}
+	}
 }
