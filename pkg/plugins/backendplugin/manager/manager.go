@@ -126,7 +126,7 @@ func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error 
 
 func (m *manager) Registered(pluginID string) bool {
 	m.pluginsMu.RLock()
-	p, _ := m.plugins[pluginID]
+	p := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 
 	return p != nil && !p.IsDecommissioned()
