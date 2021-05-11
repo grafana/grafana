@@ -8,7 +8,7 @@ export enum LibraryElementKind {
 }
 
 export enum LibraryElementConnectionKind {
-  Dashboard1 = 1,
+  Dashboard = 1,
 }
 
 export interface LibraryElementConnectionDTO {

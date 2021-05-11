@@ -35,7 +35,7 @@ type libraryElementServiceImpl struct {
 	log           log.Logger
 }
 
-var connectionTableName = "library_element_connection"
+const connectionTableName = "library_element_connection"
 
 func init() {
 	registry.RegisterService(&libraryElementServiceImpl{})

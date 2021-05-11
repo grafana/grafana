@@ -106,7 +106,7 @@ type LibraryElementDTOMeta struct {
 type LibraryElementDTOMetaUser struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
-	AvatarUrl string `json:"avatarUrl"`
+	AvatarURL string `json:"avatarUrl"`
 }
 
 // libraryElementConnection is the model for library element connections.

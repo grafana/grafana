@@ -123,12 +123,12 @@ func (lps *libraryPanelServiceImpl) LoadLibraryPanelsForDashboard(c *models.ReqC
 				"createdBy": map[string]interface{}{
 					"id":        elementInDB.Meta.CreatedBy.ID,
 					"name":      elementInDB.Meta.CreatedBy.Name,
-					"avatarUrl": elementInDB.Meta.CreatedBy.AvatarUrl,
+					"avatarUrl": elementInDB.Meta.CreatedBy.AvatarURL,
 				},
 				"updatedBy": map[string]interface{}{
 					"id":        elementInDB.Meta.UpdatedBy.ID,
 					"name":      elementInDB.Meta.UpdatedBy.Name,
-					"avatarUrl": elementInDB.Meta.UpdatedBy.AvatarUrl,
+					"avatarUrl": elementInDB.Meta.UpdatedBy.AvatarURL,
 				},
 			},
 		})
