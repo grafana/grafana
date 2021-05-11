@@ -1,17 +1,16 @@
 +++
-title = "Access control HTTP API "
-description = "Access Control API"
+title = "Fine-grained access control HTTP API "
+description = "Fine-grained access control API"
 keywords = ["grafana", "http", "documentation", "api", "fine-grained-access-control", "acl", "enterprise"]
 aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 +++
 
-# Fine-Grained Access Control API
+# Fine-grained access control API
 
-> Fine-Grained Access Control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Fine-grained access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-> Fine-Grained Access Control is available behind the `accesscontrol` feature flag in Grafana Enterprise 8.0+.
-
-The API can be used to create, update, get and list roles, and add or revoke role assignments for built-in roles. By default, the API assumes that the requests are done for the organization that users is signed in. Refer to [Access Control Roles]({{< relref "../enterprise/access-control/concepts" >}}) to learn more about how you can use access control.
+The API can be used to create, update, get and list roles, and create or remove built-in role assignments. 
+To use the API, you would need to [enable fine-grained access control]({{< relref "../enterprise/access-control/_index.md#enable-fine-grained-access-control" >}}).
 
 ## Create and manage custom roles
 
@@ -82,7 +81,7 @@ Get a role for the given UID.
 
 Action | Scope
 --- | --- | 
-roles:read | roles:* OR roles:<uid>/roles:<uid>
+roles:read | roles:*
 
 #### Example request
 
@@ -130,11 +129,11 @@ Code | Description
 
 `POST /api/access-control/roles`
 
-Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Predefined Roles](({{< relref "../enterprise/access-control/concepts/roles" >}})) can't be created.
+Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Predefined Roles]({{< relref "../enterprise/access-control/roles.md" >}}) can't be created.
 
 #### Required permissions
 
-User will be able to create a role only with permissions they themselves have.
+You can only create roles with a subset of your own permissions.
 
 Action | Scope
 --- | --- | 
@@ -172,18 +171,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 Field Name | Date Type | Required | Description
 --- | --- | --- | ---
 uid | string | No | UID of the role. If not present, the UID will be automatically created for you and returned in response.
-global | boolean | No | A flag indicating if the role is global or not. See [Access Control Global Roles]({{< relref "../enterprise/access-control/concepts" >}}) for more information.
+global | boolean | No | A flag indicating if the role is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
 version | number | No | Version of the role. If not present, version number 1 will be assigned to the role and returned in the response.
 name | string | Yes | Name of the role.
 description | string | No | Description of the role.
 permissions | Permission | No | If not present, the role will be created without any permissions.
 
-Permission
+**Permission**
 
 Field Name | Data   Type | Required | Description
 --- | --- | --- | ---
-action | string | Yes | For full list of available actions see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
-scope | string | No | If not present, no scope will be mapped to the permission. For full list of available scopes see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
+action | string | Yes | Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) for full list of available actions.
+scope | string | No | If not present, no scope will be mapped to the permission. Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md#scope-definitions" >}}) for full list of available scopes.
 
 #### Example response
 
@@ -272,18 +271,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 Field Name | Data Type | Required | Description
 --- | --- | --- | ---
 uid | string | No | UID of the role. If not present, the UID will be automatically created for you and returned in response.
-global | boolean | No | A flag indicating if the role is global or not. See [Access Control Global Roles]({{< relref "../enterprise/access-control/concepts" >}}) for more information.
-version | number | No | Version of the role. If not present, version number 1 will be assigned to the role and returned in the response.
+global | boolean | No | A flag indicating if the role is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
+version | number | No | Version of the role. If not present, the current version number will increment by 1.
 name | string | Yes | Name of the role.
 description | string | No | Description of the role.
-permissions | Permission | No | If not present, the role will be created without any permissions.
+permissions | List of Permissions | No | The full list of permissions the role should have after the update.
 
-Permission
+**Permission**
 
-Field Name | Data Type | Required | Description
+Field Name | Data   Type | Required | Description
 --- | --- | --- | ---
-action | string | Yes | For full list of available actions see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
-scope | string | No | If not present, no scope will be mapped to the permission. For full list of available scopes see [Access Control Permissions]({{< relref "../enterprise/access-control/concepts/permissions" >}}).
+action | string | Yes | Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) for full list of available actions.
+scope | string | No | If not present, no scope will be mapped to the permission. Refer to [Permissions]({{< relref "../enterprise/access-control/permissions.md#scope-definitions" >}}) for full list of available scopes.
 
 #### Example response
 
@@ -369,16 +368,15 @@ Code | Description
 403 | Access denied
 500 | Unexpected error. Refer to body and/or server logs for more details.
 
-## Grant and revoke roles to built-in roles
+## Create and remove built-in role assignments
 
-API set allows to grant, revoke and list roles for built-in roles. Built-in roles are one of `Grafana Admin`, `Admin`, `Editor` or `Viewer`.
-Refer to [Access Control Roles]({{< relref "../enterprise/access-control/concepts" >}}) for more information about built-in roles.
+API set allows to create or remove [built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) and list current assignments. 
 
-### Get all built-in role grants
+### Get all built-in role assignments
 
 `GET /api/access-control/builtin-roles`
 
-Gets all built-in role grants.
+Gets all built-in role assignments.
 
 #### Required permissions
 
@@ -433,15 +431,15 @@ Content-Type: application/json; charset=UTF-8
 
 Code | Description
 --- | --- | 
-200 | Built-in roles with assignments are returned.
+200 | Built-in role assignments are returned.
 403 | Access denied
 500 | Unexpected error. Refer to body and/or server logs for more details.
 
-### Create a built-in role grant
+### Create a built-in role assignment
 
 `POST /api/access-control/builtin-roles`
 
-Creates a new grant for the given built-in role.
+Creates a new built-in role assignment.
 
 #### Required permissions
 
@@ -462,8 +460,17 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
     "roleUid": "LPMGN99Mk",
     "builtinRole": "Grafana Admin",
+    "global": false
 }
 ```
+
+#### JSON body schema
+
+Field Name | Date Type | Required | Description
+--- | --- | --- | ---
+roleUid | string | Yes | UID of the role.
+builtinRole | boolean | Yes | Can be one of `Viewer`, `Editor`, `Admin` or `Grafana Admin`.
+global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
 
 #### Example response
 
@@ -486,11 +493,11 @@ Code | Description
 404 | Role not found
 500 | Unexpected error. Refer to body and/or server logs for more details.
 
-### Delete a built-in role grant
+### Remove a built-in role assignment
 
 `DELETE /api/access-control/builtin-roles`
 
-Revokes a grant for the given built-in role.
+Deletes a built-in role assignment.
 
 #### Required permissions
 
@@ -511,8 +518,16 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
     "roleUid": "LPMGN99Mk",
     "builtinRole": "Grafana Admin",
+    "global": false
 }
 ```
+#### JSON body schema
+
+Field Name | Date Type | Required | Description
+--- | --- | --- | ---
+roleUid | string | Yes | UID of the role.
+builtinRole | boolean | Yes | Can be one of `Viewer`, `Editor`, `Admin` or `Grafana Admin`. 
+global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
 
 #### Example response
 

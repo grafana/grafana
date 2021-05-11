@@ -36,7 +36,7 @@ dashboards, creating users and updating data sources.
 
 ### Grafana Enterprise HTTP APIs
 
-- [Access Control API]({{< relref "access_control.md" >}})
+- [Fine-Grained Access Control API]({{< relref "access_control.md" >}})
 - [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
 - [License API]({{< relref "licensing.md" >}})

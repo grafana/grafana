@@ -1,26 +1,25 @@
 +++
 title = "Permissions"
 description = "Understand permissions in fine-grained access control"
-keywords = ["grafana", "fine-grained access-control", "concepts", "roles", "permissions", "enterprise"]
-weight = 130
+keywords = ["grafana", "fine-grained access-control", "roles", "permissions", "enterprise"]
+weight = 115
 +++
 
 # Permissions 
 
-In access control, permissions define the action you can perform on a specific Grafana resource. 
+A permission is defined by an action and a scope. When evaluating a decision for access, user will be allowed to perform a specific action on a resource if they have a permission with relevant action and scope. 
 To grant permissions to your users, you can create [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
 
-A permission is defined by an `action` and a `scope`. 
-When evaluating a decision for access, user will be allowed to perform a specific action on a resource if they have a permission with relevant `action` and `scope`.
+Refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}) to learn more about which permissions are used for which resources.
 
-## Action
+### Action
 
-`action` describes what user is allowed to access to. For example, you can grant a user access to read user profiles, by associating a permission with action `users:read` to the relevant role.
+When evaluating a decision for access, a user is allowed to perform a specific _action_ on a resource if they have a permission with the relevant action assigned to it.
 
-## Scope
+### Scope
 
-`scope` describes where an action can be performed. For example, you can grant a user access to read a specific user profile, by associating a permission with scope `users:<userId>` to the relevant role.
-You can also combine multiple scopes if necessary, by using `/` as a delimiter. Refer to [Managing roles and permissions]({{< relref "../managing-roles-permissions.md" >}}) to learn more about which permissions are used for which resources.
+_scope_ describes where an action can be performed. For example, you can grant a user access to read a specific user profile, by associating a permission with scope `users:<userId>` to the relevant role.
+You can also combine multiple scopes if necessary, by using `/` as a delimiter. 
 
 ## Available permissions 
 
@@ -62,7 +61,7 @@ ldap.user:read | n/a | Allows to read LDAP users.
 ldap.user:sync | n/a | Allows to sync LDAP users.
 ldap.status:read | n/a | Allows to check LDAP status.
 
-### Scope definitions
+## Scope definitions
 
 Scope | Description
 --- | --- 
