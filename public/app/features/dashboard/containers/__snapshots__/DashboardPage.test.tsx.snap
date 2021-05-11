@@ -65,7 +65,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -201,7 +203,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                       },
                     },
                     "fieldConfig": Object {
-                      "defaults": Object {},
+                      "defaults": Object {
+                        "mappings": undefined,
+                      },
                       "overrides": Array [],
                     },
                     "gridPos": Object {
@@ -307,7 +311,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     },
                   },
                   "fieldConfig": Object {
-                    "defaults": Object {},
+                    "defaults": Object {
+                      "mappings": undefined,
+                    },
                     "overrides": Array [],
                   },
                   "gridPos": Object {
@@ -435,7 +441,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -571,7 +579,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                       },
                     },
                     "fieldConfig": Object {
-                      "defaults": Object {},
+                      "defaults": Object {
+                        "mappings": undefined,
+                      },
                       "overrides": Array [],
                     },
                     "gridPos": Object {
@@ -677,7 +687,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     },
                   },
                   "fieldConfig": Object {
-                    "defaults": Object {},
+                    "defaults": Object {
+                      "mappings": undefined,
+                    },
                     "overrides": Array [],
                   },
                   "gridPos": Object {
@@ -787,7 +799,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               },
             },
             "fieldConfig": Object {
-              "defaults": Object {},
+              "defaults": Object {
+                "mappings": undefined,
+              },
               "overrides": Array [],
             },
             "gridPos": Object {
