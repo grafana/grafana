@@ -25,8 +25,9 @@ var (
 func init() {
 	httpRequestsInFlight = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Name: "http_request_in_flight",
-			Help: "A gauge of requests currently being served by Grafana.",
+			Namespace: "grafana",
+			Name:      "http_request_in_flight",
+			Help:      "A gauge of requests currently being served by Grafana.",
 		},
 	)
 
