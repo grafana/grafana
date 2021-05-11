@@ -9,6 +9,7 @@ import {
   PreprocessorType,
   AlignmentTypes,
   CustomMetaData,
+  ValueTypes,
 } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
@@ -78,15 +79,19 @@ function Editor({
   );
 
   const onMetricTypeChange = useCallback(
-    ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
-      const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, state.perSeriesAligner);
+    ({ valueType, metricKind, type }: MetricDescriptor) => {
+      const preprocessor =
+        metricKind === MetricKind.GAUGE || valueType === ValueTypes.DISTRIBUTION
+          ? PreprocessorType.None
+          : PreprocessorType.Rate;
+      const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, state.perSeriesAligner, preprocessor);
       onChange({
         ...query,
         perSeriesAligner,
         metricType: type,
         valueType,
         metricKind,
-        preprocessor: PreprocessorType.None,
+        preprocessor,
       });
     },
     [onChange, query, state]

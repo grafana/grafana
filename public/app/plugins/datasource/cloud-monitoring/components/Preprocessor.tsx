@@ -38,7 +38,7 @@ const useOptions = (metricDescriptor?: MetricDescriptor): Array<SelectableValue<
   const valueType = metricDescriptor?.valueType;
 
   return useMemo(() => {
-    if (metricKind === MetricKind.GAUGE || valueType === ValueTypes.DISTRIBUTION) {
+    if (!metricKind || metricKind === MetricKind.GAUGE || valueType === ValueTypes.DISTRIBUTION) {
       return [NONE_OPTION];
     }
 
