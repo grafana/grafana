@@ -17,17 +17,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
+const (
 	usernameAdmin    = "admin"
 	usernameNonAdmin = "nonAdmin"
 	defaultPassword  = "password"
 )
 
 func TestPluginInstallAccess(t *testing.T) {
-	dir, path := testinfra.CreateGrafDir(t)
+	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		MarketplaceAppEnabled: true,
+	})
 	store := testinfra.SetUpDatabase(t, dir)
-	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+	store.Bus = bus.GetBus() // in order to allow successful user auth
+
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, cfgPath, store)
 
 	require.NoError(t, createUser(t, store, usernameNonAdmin, defaultPassword, false))
 	require.NoError(t, createUser(t, store, usernameAdmin, defaultPassword, true))
@@ -51,7 +54,7 @@ func TestPluginInstallAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 404, statusCode)
-		assert.Nil(t, body)
+		assert.Empty(t, body)
 	})
 }
 

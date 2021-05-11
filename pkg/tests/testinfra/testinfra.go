@@ -244,9 +244,10 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 }
 
 type GrafanaOpts struct {
-	EnableCSP            bool
-	EnableFeatureToggles []string
-	AnonymousUserRole    models.RoleType
-	EnableQuota          bool
-	DisableAnonymous     bool
+	EnableCSP             bool
+	EnableFeatureToggles  []string
+	AnonymousUserRole     models.RoleType
+	EnableQuota           bool
+	DisableAnonymous      bool
+	MarketplaceAppEnabled bool
 }
