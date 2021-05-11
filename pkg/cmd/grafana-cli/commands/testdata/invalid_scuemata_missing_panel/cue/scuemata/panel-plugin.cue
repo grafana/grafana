@@ -8,7 +8,7 @@ package scuemata
 // the larger Dashboard schema.
 #PanelSchema: {
     PanelOptions: {...}
-    PanelFieldConfig: {...}
+    PanelFieldConfig?: {...}
     ...
 }
 
