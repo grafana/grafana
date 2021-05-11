@@ -40,7 +40,6 @@ type PrepConfig = (
     rowHeight: number;
     colWidth?: number;
     showValue: BarValueVisibility;
-    mergeValues?: boolean;
   }>
 ) => UPlotConfigBuilder;
 
