@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// LibraryPanelService is a service for operating on dashboards.
+// LibraryPanelService is a service for operating on library panels.
 type LibraryPanelService interface {
 	LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
 	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
