@@ -222,7 +222,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
-  scrollToTopLogs = () => this.topLogsRef?.current?.scrollIntoView();
+  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
   render() {
     const {
