@@ -2,6 +2,7 @@ package load
 
 import (
 	errs "cuelang.org/go/cue/errors"
+	"errors"
 	"fmt"
 
 	"cuelang.org/go/cue"
@@ -54,7 +55,7 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 
 	famval := inst.Value().LookupPath(cue.MakePath(cue.Str("Family")))
 	if !famval.Exists() {
-		return nil, errs.New("dashboard schema family did not exist at expected path in expected file")
+		return nil, errors.New("dashboard schema family did not exist at expected path in expected file")
 	}
 
 	return buildGenericScuemata(famval)
