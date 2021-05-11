@@ -32,7 +32,7 @@ import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
-import { OptionsWithLegend } from './types';
+import { OptionsWithLegend, OptionsWithTooltip } from './types';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { StackingEditor } from './StackingEditor';
 
@@ -336,6 +336,23 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
       },
       showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
     });
+}
+
+export function addTooltipOptions<T extends OptionsWithTooltip>(builder: PanelOptionsEditorBuilder<T>) {
+  builder.addRadio({
+    path: 'tooltip.mode',
+    name: 'Tooltip mode',
+    category: ['Legend'],
+    description: '',
+    defaultValue: 'single',
+    settings: {
+      options: [
+        { value: 'single', label: 'Single' },
+        { value: 'multi', label: 'All' },
+        { value: 'none', label: 'Hidden' },
+      ],
+    },
+  });
 }
 
 export function addStackingConfig(

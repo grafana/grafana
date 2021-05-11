@@ -45,7 +45,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 29;
+    this.dashboard.schemaVersion = 30;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -610,6 +610,10 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 30) {
+      panelUpgrades.push(migrateTooltipOptions);
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -884,4 +888,14 @@ function migrateSinglestat(panel: PanelModel) {
     statPanelPlugin.meta = config.panels['stat'];
     panel.changePlugin(statPanelPlugin);
   }
+}
+
+function migrateTooltipOptions(panel: PanelModel) {
+  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+    panel.options = {
+      ...panel.options,
+      tooltip: panel.options.tooltipOptions,
+    };
+  }
+  delete panel.options.tooltipOptions;
 }
