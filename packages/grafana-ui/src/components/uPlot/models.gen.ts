@@ -27,6 +27,9 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
   StepBefore = 'stepBefore',
 }
+/**
+ * @alpha
+ */
 export enum ScaleDistribution {
   Linear = 'linear',
   Log = 'log',

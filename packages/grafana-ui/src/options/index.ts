@@ -1,4 +1,5 @@
 // namespace is too big
-export * as commonOptionsBuilder from './builder';
+import * as commonOptionsBuilder from './builder';
+export { commonOptionsBuilder };
 
 export * from './models.gen';
