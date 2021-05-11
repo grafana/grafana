@@ -892,10 +892,12 @@ function migrateSinglestat(panel: PanelModel) {
 
 function migrateTooltipOptions(panel: PanelModel) {
   if (panel.type === 'timeseries' || panel.type === 'xychart') {
-    panel.options = {
-      ...panel.options,
-      tooltip: panel.options.tooltipOptions,
-    };
+    if (panel.options.tooltipOptions) {
+      panel.options = {
+        ...panel.options,
+        tooltip: panel.options.tooltipOptions,
+      };
+      delete panel.options.tooltipOptions;
+    }
   }
-  delete panel.options.tooltipOptions;
 }
