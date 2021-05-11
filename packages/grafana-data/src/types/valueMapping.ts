@@ -1,21 +1,50 @@
 export enum MappingType {
-  ValueToText = 1,
-  RangeToText = 2,
+  ValueToText = 'value', // was 1
+  RangeToText = 'range', // was 2
+  SpecialValue = 'special',
 }
 
-interface BaseMap {
-  id: number; // this could/should just be the array index
-  text: string; // the final display value
+export interface ValueMappingResult {
+  text?: string;
+  color?: string;
+  index?: number;
+}
+
+interface BaseValueMap<T> {
   type: MappingType;
+  options: T;
 }
 
-export type ValueMapping = ValueMap | RangeMap;
-
-export interface ValueMap extends BaseMap {
-  value: string;
+export interface ValueMap extends BaseValueMap<Record<string, ValueMappingResult>> {
+  type: MappingType.ValueToText;
 }
 
-export interface RangeMap extends BaseMap {
-  from: string;
-  to: string;
+export interface RangeMapOptions {
+  from: number | null; // changed from string
+  to: number | null;
+  result: ValueMappingResult;
 }
+
+export interface RangeMap extends BaseValueMap<RangeMapOptions> {
+  type: MappingType.RangeToText;
+}
+
+export interface SpecialValueOptions {
+  match: SpecialValueMatch;
+  result: ValueMappingResult;
+}
+
+export enum SpecialValueMatch {
+  True = 'true',
+  False = 'false',
+  Null = 'null',
+  NaN = 'nan',
+  NullAndNaN = 'null+nan',
+  Empty = 'empty',
+}
+
+export interface SpecialValueMap extends BaseValueMap<SpecialValueOptions> {
+  type: MappingType.SpecialValue;
+}
+
+export type ValueMapping = ValueMap | RangeMap | SpecialValueMap;
