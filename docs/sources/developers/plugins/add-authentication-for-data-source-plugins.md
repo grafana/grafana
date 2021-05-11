@@ -281,3 +281,23 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
   // ...
 }
 ```
+
+## Forward OAuth identity for the logged-in user
+
+If your data source uses the same OAuth provider as Grafana itself, for example using [Generic OAuth Authentication]({{< relref "../../auth/generic-oauth.md" >}}), your data source plugin can reuse the access token for the logged-in Grafana user.
+
+To allow Grafana to pass the access token to the plugin, the user needs to enable **Forward OAuth Identity** on the data source configuration page. This tells Grafana to pass the token to the plugin in a Authorization header. Note that your plugin needs to use the [DataSourceHttpSettings]({{< relref "https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic" >}}) component in the configuration editor to expose the setting for your data source plugin.
+
+The Authorization header is available on the `DataQuery` object on the query data request in your backend data source.
+
+```go
+func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+    for _, q := range req.Queries {
+        token := q.Headers.Get("Authorization")
+
+        // ...
+    }
+}
+```
+
+> **Note:** Due to a bug in Grafana, using this feature with PostgreSQL can cause a deadlock. For more information, refer to [Grafana causes deadlocks in PostgreSQL, while trying to refresh users token](https://github.com/grafana/grafana/issues/20515).
