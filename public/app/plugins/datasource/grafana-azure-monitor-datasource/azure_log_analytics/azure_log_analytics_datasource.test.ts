@@ -85,7 +85,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should use the loganalyticsazure plugin route', () => {
-      expect(workspacesUrl).toContain('azuremonitor');
+      expect(workspacesUrl).toContain('workspacesloganalytics');
       expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
     });
   });

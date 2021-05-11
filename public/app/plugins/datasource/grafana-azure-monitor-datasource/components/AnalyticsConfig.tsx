@@ -1,209 +1,195 @@
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { FunctionComponent, useEffect, useMemo, useReducer, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
-import { AzureDataSourceSettings } from '../types';
-
-export interface State {
-  sameAsSwitched: boolean;
-}
+import { AzureDataSourceSettings, AzureCredentials } from '../types';
+import {
+  getCredentials,
+  getLogAnalyticsCredentials,
+  isCredentialsComplete,
+  updateLogAnalyticsCredentials,
+  updateLogAnalyticsSameAs,
+} from '../credentials';
 
 export interface Props {
   options: AzureDataSourceSettings;
-  subscriptions: SelectableValue[];
-  workspaces: SelectableValue[];
-  makeSameAs: () => void;
-  onUpdateDatasourceOptions: (options: AzureDataSourceSettings) => void;
-  onUpdateJsonDataOption: (key: string, val: any) => void;
-  onUpdateSecureJsonDataOption: (key: string, val: any) => void;
-  onResetOptionKey: (key: string) => void;
-  onLoadSubscriptions: (type?: string) => void;
-  onLoadWorkspaces: (type?: string) => void;
+  updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
+  getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
+  getWorkspaces: (subscriptionId: string) => Promise<Array<SelectableValue<string>>>;
 }
-export class AnalyticsConfig extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
 
-    this.state = {
-      sameAsSwitched: false,
+export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
+  const { updateOptions, getSubscriptions, getWorkspaces } = props;
+  const primaryCredentials = useMemo(() => getCredentials(props.options), [props.options]);
+  const logAnalyticsCredentials = useMemo(() => getLogAnalyticsCredentials(props.options), [props.options]);
+  const subscriptionId = logAnalyticsCredentials
+    ? props.options.jsonData.logAnalyticsSubscriptionId
+    : props.options.jsonData.subscriptionId;
+
+  const hasRequiredFields =
+    subscriptionId &&
+    (logAnalyticsCredentials
+      ? isCredentialsComplete(logAnalyticsCredentials)
+      : isCredentialsComplete(primaryCredentials));
+
+  const defaultWorkspace = props.options.jsonData.logAnalyticsDefaultWorkspace;
+
+  const [workspaces, setWorkspaces] = useState<SelectableValue[]>([]);
+  const [loadWorkspaces, onLoadWorkspaces] = useReducer((val) => val + 1, 0);
+  useEffect(() => {
+    if (!hasRequiredFields || !subscriptionId) {
+      updateWorkspaces([]);
+      return;
+    }
+    let canceled = false;
+    getWorkspaces(subscriptionId).then((result) => {
+      if (!canceled) {
+        updateWorkspaces(result);
+      }
+    });
+    return () => {
+      canceled = true;
     };
-  }
+    // This effect is intended to be called only once initially and on Load Workspaces click
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadWorkspaces, subscriptionId]);
 
-  onLogAnalyticsTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateJsonDataOption('logAnalyticsTenantId', event.target.value);
+  const updateWorkspaces = (received: Array<SelectableValue<string>>) => {
+    setWorkspaces(received);
+    if (!defaultWorkspace && received.length > 0) {
+      // Setting the default workspace if workspaces received but no default workspace selected
+      updateOptions((options) => {
+        return {
+          ...options,
+          jsonData: {
+            ...options.jsonData,
+            logAnalyticsDefaultWorkspace: received[0].value,
+          },
+        };
+      });
+    } else if (defaultWorkspace) {
+      const found = received.find((opt) => opt.value === defaultWorkspace);
+      if (!found) {
+        // Unsetting the default workspace if it isn't found among the received workspaces
+        updateOptions((options) => {
+          return {
+            ...options,
+            jsonData: {
+              ...options.jsonData,
+              logAnalyticsDefaultWorkspace: undefined,
+            },
+          };
+        });
+      }
+    }
   };
 
-  onLogAnalyticsClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateJsonDataOption('logAnalyticsClientId', event.target.value);
+  const [sameAsSwitched, setSameAsSwitched] = useState(false);
+
+  const onCredentialsChange = (updatedCredentials: AzureCredentials) => {
+    updateOptions((options) => updateLogAnalyticsCredentials(options, updatedCredentials));
   };
 
-  onLogAnalyticsClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onUpdateSecureJsonDataOption('logAnalyticsClientSecret', event.target.value);
+  const onLogAnalyticsSameAsChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+    const sameAs = event.currentTarget.checked;
+    updateOptions((options) => updateLogAnalyticsSameAs(options, sameAs));
+    setSameAsSwitched(true);
   };
 
-  onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
-    this.props.onUpdateJsonDataOption('logAnalyticsSubscriptionId', logAnalyticsSubscription.value);
-  };
-
-  onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
-    this.props.onUpdateJsonDataOption('logAnalyticsDefaultWorkspace', logAnalyticsDefaultWorkspace.value);
-  };
-
-  onAzureLogAnalyticsSameAsChange = () => {
-    const { options, onUpdateDatasourceOptions, makeSameAs } = this.props;
-
-    if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData!.clientSecret) {
-      makeSameAs();
-    } else if (!options.jsonData.azureLogAnalyticsSameAs) {
-      // if currently off, clear monitor secret
-      onUpdateDatasourceOptions({
+  const onLogAnalyticsDefaultSubscriptionChange = (subscriptionId: string | undefined) => {
+    updateOptions((options) => {
+      return {
         ...options,
         jsonData: {
           ...options.jsonData,
-          azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
+          logAnalyticsSubscriptionId: subscriptionId || '',
         },
-        secureJsonData: {
-          ...options.secureJsonData,
-          clientSecret: '',
-        },
-        secureJsonFields: {
-          clientSecret: false,
-        },
-      });
-
-      this.setState({
-        sameAsSwitched: true,
-      });
-    } else {
-      this.props.onUpdateJsonDataOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs);
-    }
+      };
+    });
   };
 
-  onLogAnalyticsResetClientSecret = () => {
-    this.props.onResetOptionKey('logAnalyticsClientSecret');
+  const onDefaultWorkspaceChange = (selected: SelectableValue<string>) => {
+    updateOptions((options) => {
+      return {
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          logAnalyticsDefaultWorkspace: selected.value || '',
+        },
+      };
+    });
   };
 
-  hasWorkspaceRequiredFields = () => {
-    const {
-      options: { jsonData, secureJsonData, secureJsonFields },
-    } = this.props;
-
-    if (jsonData.azureLogAnalyticsSameAs) {
-      return (
-        jsonData.tenantId &&
-        jsonData.clientId &&
-        jsonData.subscriptionId &&
-        (secureJsonData!.clientSecret || secureJsonFields.clientSecret)
-      );
-    }
-
-    return (
-      jsonData.logAnalyticsTenantId &&
-      jsonData.logAnalyticsTenantId.length &&
-      jsonData.logAnalyticsClientId &&
-      jsonData.logAnalyticsClientId.length &&
-      jsonData.logAnalyticsSubscriptionId &&
-      (secureJsonFields.logAnalyticsClientSecret || secureJsonData!.logAnalyticsClientSecret)
-    );
+  const tooltipAttribute = {
+    ...(!logAnalyticsCredentials && {
+      tooltip: 'Workspaces are pulled from default subscription selected above.',
+    }),
   };
 
-  render() {
-    const {
-      options: { jsonData, secureJsonData, secureJsonFields },
-      subscriptions,
-      workspaces,
-    } = this.props;
+  const showSameAsHelpMsg = sameAsSwitched && !primaryCredentials.clientSecret;
 
-    const { sameAsSwitched } = this.state;
-
-    if (!jsonData.hasOwnProperty('azureLogAnalyticsSameAs')) {
-      jsonData.azureLogAnalyticsSameAs = true;
-    }
-
-    const addtlAttrs = {
-      ...(jsonData.azureLogAnalyticsSameAs && {
-        tooltip: 'Workspaces are pulled from default subscription selected above.',
-      }),
-    };
-
-    const showSameAsHelpMsg =
-      sameAsSwitched &&
-      jsonData.azureLogAnalyticsSameAs &&
-      secureJsonFields &&
-      !secureJsonFields.clientSecret &&
-      !secureJsonData!.clientSecret;
-
-    return (
-      <>
-        <h3 className="page-heading">Azure Monitor Logs Details</h3>
-        <Switch
-          label="Same details as Azure Monitor API"
-          checked={jsonData.azureLogAnalyticsSameAs ?? false}
-          onChange={this.onAzureLogAnalyticsSameAsChange}
-          {...addtlAttrs}
+  return (
+    <>
+      <h3 className="page-heading">Azure Monitor Logs Details</h3>
+      <Switch
+        label="Same details as Azure Monitor API"
+        checked={!logAnalyticsCredentials}
+        onChange={onLogAnalyticsSameAsChange}
+        {...tooltipAttribute}
+      />
+      {showSameAsHelpMsg && (
+        <div className="grafana-info-box m-t-2">
+          <div className="alert-body">
+            <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
+          </div>
+        </div>
+      )}
+      {logAnalyticsCredentials && (
+        <AzureCredentialsForm
+          credentials={logAnalyticsCredentials}
+          defaultSubscription={subscriptionId}
+          onCredentialsChange={onCredentialsChange}
+          onDefaultSubscriptionChange={onLogAnalyticsDefaultSubscriptionChange}
+          getSubscriptions={getSubscriptions}
         />
-        {showSameAsHelpMsg && (
-          <div className="grafana-info-box m-t-2">
-            <div className="alert-body">
-              <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
-            </div>
-          </div>
-        )}
-        {!jsonData.azureLogAnalyticsSameAs && (
-          <AzureCredentialsForm
-            subscriptionOptions={subscriptions}
-            selectedSubscription={jsonData.logAnalyticsSubscriptionId}
-            tenantId={jsonData.logAnalyticsTenantId}
-            clientId={jsonData.logAnalyticsClientId}
-            clientSecret={secureJsonData!.logAnalyticsClientSecret}
-            clientSecretConfigured={secureJsonFields.logAnalyticsClientSecret}
-            onSubscriptionSelectChange={this.onLogAnalyticsSubscriptionSelect}
-            onTenantIdChange={this.onLogAnalyticsTenantIdChange}
-            onClientIdChange={this.onLogAnalyticsClientIdChange}
-            onClientSecretChange={this.onLogAnalyticsClientSecretChange}
-            onResetClientSecret={this.onLogAnalyticsResetClientSecret}
-            onLoadSubscriptions={() => this.props.onLoadSubscriptions('workspacesloganalytics')}
-          />
-        )}
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel
-                className="width-12"
-                tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
-              >
-                Default Workspace
-              </InlineFormLabel>
-              <div className="width-25">
-                <Select
-                  value={workspaces.find((workspace) => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}
-                  options={workspaces}
-                  defaultValue={jsonData.logAnalyticsDefaultWorkspace}
-                  onChange={this.onWorkspaceSelectChange}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="max-width-30 gf-form-inline">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  onClick={() => this.props.onLoadWorkspaces()}
-                  disabled={!this.hasWorkspaceRequiredFields()}
-                >
-                  Load Workspaces
-                </Button>
-              </div>
+      )}
+      <div className="gf-form-group">
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              className="width-12"
+              tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
+            >
+              Default Workspace
+            </InlineFormLabel>
+            <div className="width-25">
+              <Select
+                value={workspaces.find((opt) => opt.value === defaultWorkspace)}
+                options={workspaces}
+                onChange={onDefaultWorkspaceChange}
+              />
             </div>
           </div>
         </div>
-      </>
-    );
-  }
-}
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <div className="max-width-30 gf-form-inline">
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                onClick={onLoadWorkspaces}
+                disabled={!hasRequiredFields}
+              >
+                Load Workspaces
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 export default AnalyticsConfig;
