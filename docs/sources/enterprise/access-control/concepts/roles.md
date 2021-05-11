@@ -48,7 +48,7 @@ See [Custom roles]({{< relref "./custom-roles.md" >}}) to understand how it work
 
 ## Built-in role assignments
 
-To control what your users can access or not, you can assign or unassign [Custom roles]({{< relref "./custom-roles.md" >}}) or [Predefined roles]({{< relref "./roles.md#predefined-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Admin role]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}). 
+To control what your users can access or not, you can assign or unassign [Custom roles]({{< relref "./custom-roles.md" >}}) or [Predefined roles]({{< relref "./roles.md#predefined-roles" >}}) to the existing [Organization roles]({{< relref "../../../permissions/organization_roles.md" >}}) or to [Grafana Admin role]({{< relref "../../../permissions/_index.md#grafana-server-admin-role" >}}). 
 These assignments are called built-in role assignments.
 
 During startup, Grafana will create default assignments for you. You can update assignments using [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or using Grafana [Provisioning]({{< relref "../provisioning">}}). 
