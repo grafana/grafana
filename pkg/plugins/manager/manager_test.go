@@ -131,8 +131,8 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("With external back-end plugin with valid v2 signature", func(t *testing.T) {
-		pluginsDir := "testdata/valid-v2-signature"
-		pluginFolder := pluginsDir + "/plugin"
+		const pluginsDir = "testdata/valid-v2-signature"
+		const pluginFolder = pluginsDir + "/plugin"
 		pm := createManager(t, func(manager *PluginManager) {
 			manager.Cfg.PluginsPath = pluginsDir
 		})

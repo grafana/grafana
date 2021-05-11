@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -29,36 +30,29 @@ func TestPluginInstallAccess(t *testing.T) {
 	})
 	store := testinfra.SetUpDatabase(t, dir)
 	store.Bus = bus.GetBus() // in order to allow successful user auth
-
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, cfgPath, store)
 
-	require.NoError(t, createUser(t, store, usernameNonAdmin, defaultPassword, false))
-	require.NoError(t, createUser(t, store, usernameAdmin, defaultPassword, true))
+	createUser(t, store, usernameNonAdmin, defaultPassword, false)
+	createUser(t, store, usernameAdmin, defaultPassword, true)
 
 	t.Run("Cannot install or uninstall plugin if request is not from an admin", func(t *testing.T) {
-		statusCode, body, err := makePOSTRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
-		require.NoError(t, err)
-
+		statusCode, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
 		assert.Equal(t, 403, statusCode)
-		assert.Equal(t, "{\n  \"message\": \"Permission denied\"\n}", body)
+		assert.JSONEq(t, "{\"message\": \"Permission denied\"}", body)
 
-		statusCode, body, err = makePOSTRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/uninstall"))
-		require.NoError(t, err)
-
+		statusCode, body = makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/uninstall"))
 		assert.Equal(t, 403, statusCode)
-		assert.Equal(t, "{\n  \"message\": \"Permission denied\"\n}", body)
+		assert.JSONEq(t, "{\"message\": \"Permission denied\"}", body)
 	})
 
 	t.Run("Can install or uninstall plugin if request is from an admin", func(t *testing.T) {
-		statusCode, body, err := makePOSTRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/install"))
-		require.NoError(t, err)
-
+		statusCode, body := makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/install"))
 		assert.Equal(t, 404, statusCode)
 		assert.Empty(t, body)
 	})
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, username, password string, isAdmin bool) error {
+func createUser(t *testing.T, store *sqlstore.SQLStore, username, password string, isAdmin bool) {
 	t.Helper()
 
 	cmd := models.CreateUserCommand{
@@ -67,19 +61,22 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, username, password strin
 		IsAdmin:  isAdmin,
 	}
 	_, err := store.CreateUser(context.Background(), cmd)
-	return err
+	require.NoError(t, err)
 }
 
-func makePOSTRequest(t *testing.T, URL string) (int, string, error) {
+func makePostRequest(t *testing.T, URL string) (int, string) {
+	t.Helper()
+
 	resp, err := http.Post(URL, "application/json", bytes.NewBufferString(""))
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		err := resp.Body.Close()
-		require.NoError(t, err)
+		_ = resp.Body.Close()
+		log.Warn("Failed to close response body", "err", err)
 	})
 	b, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
 
-	return resp.StatusCode, string(b), err
+	return resp.StatusCode, string(b)
 }
 
 func grafanaAPIURL(username string, grafanaListedAddr string, path string) string {
