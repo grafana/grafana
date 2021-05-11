@@ -371,40 +371,34 @@ func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
-	if !hs.Cfg.MarketplaceAppEnabled {
-		return response.JSON(404, []byte{})
-	}
 	pluginID := c.Params("pluginId")
 
 	err := hs.PluginManager.Install(c.Req.Context(), pluginID, dto.Version)
 	if err != nil {
 		var dupeErr plugins.DuplicatePluginError
 		if errors.As(err, &dupeErr) {
-			return response.Error(409, "Plugin already installed", err)
+			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
 
-		return response.Error(500, "Failed to install plugin", err)
+		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
-	return response.JSON(200, []byte{})
+	return response.JSON(http.StatusOK, []byte{})
 }
 
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
-	if !hs.Cfg.MarketplaceAppEnabled {
-		return response.JSON(404, []byte{})
-	}
 	pluginID := c.Params("pluginId")
 
 	err := hs.PluginManager.Uninstall(c.Req.Context(), pluginID)
 	if err != nil {
 		var notFoundErr plugins.PluginNotFoundError
 		if errors.As(err, &notFoundErr) {
-			return response.Error(404, "Plugin not found", err)
+			return response.Error(http.StatusNotFound, "Plugin not found", err)
 		}
 
-		return response.Error(500, "Failed to uninstall plugin", err)
+		return response.Error(http.StatusInternalServerError, "Failed to uninstall plugin", err)
 	}
-	return response.JSON(200, []byte{})
+	return response.JSON(http.StatusOK, []byte{})
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {

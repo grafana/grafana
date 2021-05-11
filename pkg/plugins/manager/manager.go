@@ -221,7 +221,7 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	var rslt []*plugins.DataSourcePlugin
+	rslt := make([]*plugins.DataSourcePlugin, len(pm.dataSources))
 	for _, ds := range pm.dataSources {
 		rslt = append(rslt, ds)
 	}
@@ -254,7 +254,7 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	var rslt []*plugins.PluginBase
+	rslt := make([]*plugins.PluginBase, len(pm.plugins))
 	for _, p := range pm.plugins {
 		rslt = append(rslt, p)
 	}
@@ -266,7 +266,7 @@ func (pm *PluginManager) Apps() []*plugins.AppPlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	var rslt []*plugins.AppPlugin
+	rslt := make([]*plugins.AppPlugin, len(pm.apps))
 	for _, p := range pm.apps {
 		rslt = append(rslt, p)
 	}
@@ -278,7 +278,7 @@ func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	var rslt []*plugins.PanelPlugin
+	rslt := make([]*plugins.PanelPlugin, len(pm.panels))
 	for _, p := range pm.panels {
 		rslt = append(rslt, p)
 	}
@@ -841,15 +841,10 @@ func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
 }
 
 func (pm *PluginManager) removeStaticRoute(pluginID string) {
-	routes := pm.staticRoutes
-
-	for i, route := range routes {
+	for i, route := range pm.staticRoutes {
 		if pluginID == route.PluginId {
-			r := make([]*plugins.PluginStaticRoute, 0)
-			r = append(r, routes[:i]...)
-
-			pm.staticRoutes = append(r, routes[i+1:]...)
-			break
+			pm.staticRoutes = append(pm.staticRoutes[:i], pm.staticRoutes[i+1:]...)
+			return
 		}
 	}
 }
