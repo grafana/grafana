@@ -15,6 +15,7 @@ require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
 	github.com/BurntSushi/toml v0.3.1
+	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.38.34
 	github.com/beevik/etree v1.1.0
