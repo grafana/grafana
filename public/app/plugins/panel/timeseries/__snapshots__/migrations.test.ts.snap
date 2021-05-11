@@ -46,7 +46,7 @@ Object {
       "displayMode": "table",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -72,7 +72,7 @@ Object {
       "displayMode": "list",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -159,7 +159,7 @@ Object {
       "displayMode": "table",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -216,7 +216,7 @@ Object {
       "displayMode": "table",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -255,7 +255,7 @@ Object {
       "displayMode": "table",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -302,7 +302,7 @@ Object {
       "displayMode": "list",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -382,7 +382,7 @@ Object {
       "displayMode": "list",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },

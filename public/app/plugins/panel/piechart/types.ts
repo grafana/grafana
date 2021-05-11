@@ -1,4 +1,4 @@
-import { SingleStatBaseOptions, VizLegendOptions, VizTooltipOptions } from '@grafana/ui';
+import { OptionsWithTooltip, SingleStatBaseOptions, VizLegendOptions } from '@grafana/ui';
 
 /**
  * @beta
@@ -32,9 +32,8 @@ export interface PieChartLegendOptions extends VizLegendOptions {
   values: PieChartLegendValues[];
 }
 
-export interface PieChartOptions extends SingleStatBaseOptions {
+export interface PieChartOptions extends SingleStatBaseOptions, OptionsWithTooltip {
   pieType: PieChartType;
   displayLabels: PieChartLabels[];
   legend: PieChartLegendOptions;
-  tooltip: VizTooltipOptions;
 }

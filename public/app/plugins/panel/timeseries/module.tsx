@@ -2,28 +2,14 @@ import { PanelPlugin } from '@grafana/data';
 import { GraphFieldConfig, commonOptionsBuilder } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
-import { Options } from './types';
+import { TimeSeriesOptions } from './types';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 
-export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
+export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
-    builder.addRadio({
-      path: 'tooltipOptions.mode',
-      name: 'Tooltip mode',
-      category: ['Legend'],
-      description: '',
-      defaultValue: 'single',
-      settings: {
-        options: [
-          { value: 'single', label: 'Single' },
-          { value: 'multi', label: 'All' },
-          { value: 'none', label: 'Hidden' },
-        ],
-      },
-    });
-
+    commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true });

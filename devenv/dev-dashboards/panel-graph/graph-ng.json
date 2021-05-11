@@ -122,7 +122,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -246,7 +246,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -370,7 +370,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -494,7 +494,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -618,7 +618,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -742,7 +742,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -866,7 +866,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -990,7 +990,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1193,7 +1193,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1473,7 +1473,7 @@
           "displayMode": "list",
           "placement": "right"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1608,7 +1608,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1746,7 +1746,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -1884,7 +1884,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2022,7 +2022,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2188,7 +2188,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2328,7 +2328,7 @@
           "isVisible": false,
           "placement": "right"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2482,7 +2482,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2635,7 +2635,7 @@
           "isVisible": true,
           "placement": "right"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2777,7 +2777,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -2885,7 +2885,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "multi"
         }
       },
@@ -2992,7 +2992,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "none"
         }
       },
@@ -3100,7 +3100,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "multi"
         }
       },
@@ -3224,7 +3224,7 @@
           "isVisible": true,
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -3363,7 +3363,7 @@
           "displayMode": "hidden",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
