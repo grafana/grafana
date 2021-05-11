@@ -3,7 +3,6 @@ const path = require('path');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const getBabelConfig = require('./babel.config');
-// const WorkerPlugin = require('worker-plugin');
 
 class CopyUniconsPlugin {
   apply(compiler) {
@@ -95,7 +94,6 @@ module.exports = {
         // },
       ],
     }),
-    // new WorkerPlugin(),
   ],
   module: {
     rules: [
