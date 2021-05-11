@@ -293,6 +293,7 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
 
+	// See a detailed comment for StripOrgID about orgID management in Live.
 	orgID, channel, err := orgchannel.StripOrgID(e.Channel)
 	if err != nil {
 		logger.Error("Error parsing channel", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
@@ -343,6 +344,7 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
 
+	// See a detailed comment for StripOrgID about orgID management in Live.
 	orgID, channel, err := orgchannel.StripOrgID(e.Channel)
 	if err != nil {
 		logger.Error("Error parsing channel", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
