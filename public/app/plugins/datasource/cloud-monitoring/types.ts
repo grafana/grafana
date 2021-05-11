@@ -5,9 +5,9 @@ export enum AuthType {
   GCE = 'gce',
 }
 
-export const authTypes = [
-  { value: 'Google JWT File', key: AuthType.JWT },
-  { value: 'GCE Default Service Account', key: AuthType.GCE },
+export const authTypes: Array<SelectableValue<string>> = [
+  { label: 'Google JWT File', value: AuthType.JWT },
+  { label: 'GCE Default Service Account', value: AuthType.GCE },
 ];
 
 export enum MetricFindQueryTypes {
@@ -111,6 +111,12 @@ export interface CloudMonitoringOptions extends DataSourceJsonData {
   defaultProject?: string;
   gceDefaultProject?: string;
   authenticationType?: string;
+  clientEmail?: string;
+  tokenUri?: string;
+}
+
+export interface CloudMonitoringSecureJsonData {
+  privateKey?: string;
 }
 
 export interface AnnotationTarget {
