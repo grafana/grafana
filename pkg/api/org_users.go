@@ -29,7 +29,6 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) response.Response {
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
 	err := bus.Dispatch(&userQuery)
-
 	if err != nil {
 		return response.Error(404, "User not found", nil)
 	}
