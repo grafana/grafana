@@ -1,4 +1,4 @@
-import { ValueMapping, MappingType, ValueMappingResult, NullToTextMatchType } from '../types';
+import { ValueMapping, MappingType, ValueMappingResult, SpecialValueMatch } from '../types';
 
 type TimeSeriesValue = string | number | null;
 
@@ -19,6 +19,7 @@ export function getValueMappingResult(
         }
 
         break;
+
       case MappingType.RangeToText:
         if (value === null || value === undefined) {
           continue;
@@ -40,18 +41,39 @@ export function getValueMappingResult(
         }
 
         return vm.options.result;
-      case MappingType.NullToText:
-        if (vm.options.match === NullToTextMatchType.Null && (value === null || value === undefined)) {
-          return vm.options.result;
-        }
-        if (vm.options.match === NullToTextMatchType.NaN && isNaN(value as number)) {
-          return vm.options.result;
-        }
-        if (
-          vm.options.match === NullToTextMatchType.NullAndNaN &&
-          (value === null || value === undefined || value === Number.NaN)
-        ) {
-          return vm.options.result;
+
+      case MappingType.SpecialValue:
+        switch (vm.options.match) {
+          case SpecialValueMatch.Null: {
+            if (value == null) {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.NaN: {
+            if (isNaN(value as any)) {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.NullAndNaN: {
+            if (isNaN(value as any) || value == null) {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.True: {
+            if (Boolean(value)) {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.False: {
+            if (!Boolean(value)) {
+              return vm.options.result;
+            }
+            break;
+          }
         }
     }
   }

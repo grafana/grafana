@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Input } from '../Input/Input';
-import { GrafanaTheme2, MappingType, NullToTextMatchType, SelectableValue, ValueMappingResult } from '@grafana/data';
+import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
 import { Draggable } from 'react-beautiful-dnd';
 import { Icon } from '../Icon/Icon';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
@@ -9,7 +9,7 @@ import { HorizontalGroup } from '../Layout/Layout';
 import { IconButton } from '../IconButton/IconButton';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
-import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Select } from '../Select/Select';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
@@ -17,7 +17,7 @@ export interface ValueMappingEditRowModel {
   to?: number;
   key?: string;
   isNew?: boolean;
-  nullMatch?: NullToTextMatchType;
+  specialMatch?: SpecialValueMatch;
   result: ValueMappingResult;
 }
 
@@ -92,16 +92,18 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
     });
   };
 
-  const onChangeNullMatch = (value: NullToTextMatchType) => {
+  const onChangeSpecialMatch = (sel: SelectableValue<SpecialValueMatch>) => {
     update((mapping) => {
-      mapping.nullMatch = value;
+      mapping.specialMatch = sel.value;
     });
   };
 
-  const nullMatchOptions: Array<SelectableValue<NullToTextMatchType>> = [
-    { label: 'Null', value: NullToTextMatchType.Null, description: 'Matches null and undefined values' },
-    { label: 'NaN', value: NullToTextMatchType.NaN, description: 'Matches against Number.NaN (not a number)' },
-    { label: 'Null + NaN', value: NullToTextMatchType.NullAndNaN, description: 'Matches null, undefined and NaN' },
+  const specialMatchOptions: Array<SelectableValue<SpecialValueMatch>> = [
+    { label: 'Null', value: SpecialValueMatch.Null, description: 'Matches null and undefined values' },
+    { label: 'NaN', value: SpecialValueMatch.NaN, description: 'Matches against Number.NaN (not a number)' },
+    { label: 'Null + NaN', value: SpecialValueMatch.NullAndNaN, description: 'Matches null, undefined and NaN' },
+    { label: 'True', value: SpecialValueMatch.True, description: 'Any value that evaluates to true' },
+    { label: 'False', value: SpecialValueMatch.False, description: 'Any value that evaluates to false' },
   ];
 
   return (
@@ -142,12 +144,11 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
                 />
               </div>
             )}
-            {mapping.type === MappingType.NullToText && (
-              <RadioButtonGroup
-                value={mapping.nullMatch}
-                options={nullMatchOptions}
-                onChange={onChangeNullMatch}
-                fullWidth
+            {mapping.type === MappingType.SpecialValue && (
+              <Select
+                value={specialMatchOptions.find((v) => v.value === mapping.specialMatch)}
+                options={specialMatchOptions}
+                onChange={onChangeSpecialMatch}
               />
             )}
           </td>
