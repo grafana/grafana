@@ -1,9 +1,9 @@
 import { PanelPlugin } from '@grafana/data';
-import { GraphFieldConfig } from '@grafana/ui';
+import { GraphFieldConfig, commonOptionsBuilder } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
-import { addLegendOptions, defaultGraphConfig, getGraphFieldConfig } from './config';
+import { defaultGraphConfig, getGraphFieldConfig } from './config';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
@@ -24,6 +24,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
       },
     });
 
-    addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true });
