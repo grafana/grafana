@@ -62,15 +62,15 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      backgroundPositionY: '-800px',
-      transition: 'background-position-y 3.5s ease-in-out',
 
       [theme.breakpoints.up('md')]: {
         justifyContent: 'center',
       },
     }),
     loginAnim: css`
-      background-position-y: 0px;
+      &:before {
+        opacity: 1;
+      }
 
       .login-content-box {
         opacity: 1;
@@ -115,7 +115,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius(4)};
       padding: ${theme.spacing(2, 0)};
       opacity: 0;
-      transition: opacity 3.5s ease;
+      transition: opacity 1s ease-in-out;
     `,
     loginOuterBox: css`
       display: flex;
