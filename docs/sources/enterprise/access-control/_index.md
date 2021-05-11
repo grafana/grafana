@@ -7,7 +7,7 @@ weight = 100
 
 # Fine-grained access control
 
-> The fine-grained access control is currently in beta. Expect changes in future releases.
+> **Note:** Fine-grained access control is currently in beta. Expect changes in future releases.
 
 > Fine-grained access control is available behind the `accesscontrol` feature flag in Grafana Enterprise 8.0+.
 
