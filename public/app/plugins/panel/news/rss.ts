@@ -25,6 +25,11 @@ export async function loadRSSFeed(url: string): Promise<RssFeed> {
       pubDate: getProperty(node, 'pubDate'),
     };
 
+    const imageNode = node.querySelector("meta[property='og:image']");
+    if (imageNode) {
+      item.ogImage = imageNode.getAttribute('content');
+    }
+
     feed.items.push(item);
   });
 
