@@ -73,4 +73,4 @@ Code | Description
 401 | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}}).
 403 | User is authenticated but is not authorized to generate the report.
 404 | Report not found.
-500 | Unexpected error or server misconfiguration. Refer to body and/or server logs for more details.
+500 | Unexpected error or server misconfiguration. Refer to server logs for more details.

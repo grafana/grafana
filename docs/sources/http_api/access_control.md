@@ -247,22 +247,15 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-    "orgId": 1,
-    "version": 2,    
-    "uid": "PYnDO3rMk",
+    "version": 2,
     "name": "custom:role:new",
     "description": "My new custom role",
     "permissions": [
         {
             "action": "users:create",
             "scope": "",
-            "updated": "2021-05-04T13:25:43.994903+02:00",
-            "created": "2021-05-04T13:25:43.994903+02:00"
         }
     ],
-    "global": false,
-    "updated": "2021-05-04T13:25:43.99269+02:00",
-    "created": "2021-05-04T13:25:43.992689+02:00"
 }
 ```
 
@@ -270,9 +263,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 Field Name | Data Type | Required | Description
 --- | --- | --- | ---
-uid | string | No | UID of the role. If not present, the UID will be automatically created for you and returned in response.
-global | boolean | No | A flag indicating if the role is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
-version | number | No | Version of the role. If not present, the current version number will increment by 1.
+version | number | Yes | Version of the role. Must be incremented for update to work.
 name | string | Yes | Name of the role.
 description | string | No | Description of the role.
 permissions | List of Permissions | No | The full list of permissions the role should have after the update.
