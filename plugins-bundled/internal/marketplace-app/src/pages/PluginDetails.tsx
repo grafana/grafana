@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
@@ -7,42 +7,25 @@ import { useStyles2, TabsBar, TabContent, Tab, Icon, LoadingPlaceholder } from '
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
 import { PLUGIN_ROOT, GRAFANA_API_ROOT } from '../constants';
-import { PluginDetails as PluginDeets } from '../types';
-import API from '../api';
+import { usePlugin } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 
 export const PluginDetails = ({ query }: AppRootProps) => {
   const { slug } = query;
-
-  const [state, setState] = useState<PluginDeets>();
-  const [loading, setLoading] = useState(false);
-
   const [tabs, setTabs] = useState([
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
-
+  const { status, local, remote, remoteVersions } = usePlugin({ slug });
   const styles = useStyles2(getStyles);
 
-  const onRefresh = useCallback(async () => {
-    const api = new API();
-    const plugin = await api.getPlugin(slug);
-    setState(plugin);
-    setLoading(false);
-  }, [slug]);
+  const description = remote?.description;
+  const readme = remote?.readme;
+  const version = local?.info?.version || remote?.version;
+  const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
+  const downloads = remote?.downloads;
 
-  useEffect(() => {
-    setLoading(true);
-    onRefresh();
-  }, [onRefresh]);
-
-  const description = state?.remote?.description;
-  const readme = state?.remote?.readme;
-  const version = state?.local?.info?.version || state?.remote?.version;
-  const links = (state?.local?.info?.links || state?.remote?.json?.info?.links) ?? [];
-  const downloads = state?.remote?.downloads;
-
-  if (loading) {
+  if (status === 'LOADING') {
     return (
       <Page>
         <div className="page-loader-wrapper">
@@ -56,7 +39,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
     <Page>
       <div className={styles.headerContainer}>
         <img
-          src={`${GRAFANA_API_ROOT}/plugins/${slug}/versions/${state?.remote?.version}/logos/small`}
+          src={`${GRAFANA_API_ROOT}/plugins/${slug}/versions/${remote?.version}/logos/small`}
           className={css`
             object-fit: cover;
             width: 100%;
@@ -65,10 +48,10 @@ export const PluginDetails = ({ query }: AppRootProps) => {
           `}
         />
         <div className={styles.headerWrapper}>
-          <h1>{state?.remote?.name}</h1>
+          <h1>{remote?.name}</h1>
           <div className={styles.headerLinks}>
-            <a className={styles.headerOrgName} href={`${PLUGIN_ROOT}?tab=org&orgSlug=${state?.remote?.orgSlug}`}>
-              {state?.remote?.orgName}
+            <a className={styles.headerOrgName} href={`${PLUGIN_ROOT}?tab=org&orgSlug=${remote?.orgSlug}`}>
+              {remote?.orgName}
             </a>
             {links.map((link: any) => (
               <a key={link.name} href={link.url}>
@@ -84,14 +67,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
             {version && <span>{version}</span>}
           </div>
           <p>{description}</p>
-          {state?.remote && (
-            <InstallControls
-              localPlugin={state?.local}
-              remotePlugin={state?.remote}
-              slug={slug}
-              onRefresh={onRefresh}
-            />
-          )}
+          {remote && <InstallControls localPlugin={local} remotePlugin={remote} slug={slug} />}
         </div>
       </div>
       <TabsBar>
@@ -110,9 +86,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
         {tabs.find((_) => _.label === 'Overview')?.active && (
           <div className={styles.readme} dangerouslySetInnerHTML={{ __html: readme ?? '' }} />
         )}
-        {tabs.find((_) => _.label === 'Version history')?.active && (
-          <VersionList versions={state?.remoteVersions ?? []} />
-        )}
+        {tabs.find((_) => _.label === 'Version history')?.active && <VersionList versions={remoteVersions ?? []} />}
       </TabContent>
     </Page>
   );

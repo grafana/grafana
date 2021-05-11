@@ -19,9 +19,7 @@ export const usePlugins = ({
   const [state, setState] = useState<PluginsState>({ status: 'LOADING', items: [], installedPlugins: [] });
 
   useEffect(() => {
-    setState((state) => ({ ...state, status: 'LOADING' }));
-
-    (async () => {
+    const fetchPluginData = async () => {
       const api = new API();
       const items = await api.getRemotePlugins();
       const filteredItems = items
@@ -31,7 +29,9 @@ export const usePlugins = ({
       const installedPlugins = await api.getInstalledPlugins();
 
       setState((state) => ({ ...state, items: filteredItems, installedPlugins, status: 'DONE' }));
-    })();
+    };
+
+    fetchPluginData();
   }, [includeEnterprise, includeUnsigned]);
 
   return state;
@@ -50,13 +50,12 @@ export const usePlugin = ({ slug }: { slug: string }): PluginState => {
   });
 
   useEffect(() => {
-    setState((state) => ({ ...state, status: 'LOADING' }));
-
-    (async () => {
+    const fetchPluginData = async () => {
       const api = new API();
       const plugin = await api.getPlugin(slug);
       setState({ ...plugin, status: 'DONE' });
-    })();
+    };
+    fetchPluginData();
   }, [slug]);
 
   return state;
