@@ -7,8 +7,9 @@ package scuemata
 // rather, they are composed into panel structures as they are defined within
 // the larger Dashboard schema.
 #PanelSchema: {
-    PanelOptions: {...}
-    PanelFieldConfig: {...}
+	PanelOptions: {...}
+	PanelFieldConfig?: {...}
+	...
 }
 
 // A lineage of panel schema
@@ -16,6 +17,6 @@ package scuemata
 
 // Panel plugin-specific Family
 #PanelFamily: {
-    lineages: [#PanelLineage, ...#PanelLineage]
-    migrations: [...#Migration]
+	lineages: [#PanelLineage, ...#PanelLineage]
+	migrations: [...#Migration]
 }
