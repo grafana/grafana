@@ -48,11 +48,12 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
 
   let seriesIndex = 0;
 
-  let xScaleKey = '_x';
+  const xScaleKey = 'x';
+  let xScaleUnit = '_x';
   let yScaleKey = '';
 
   if (xField.type === FieldType.time) {
-    xScaleKey = 'time';
+    xScaleUnit = 'time';
     builder.addScale({
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
@@ -74,7 +75,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
   } else {
     // Not time!
     if (xField.config.unit) {
-      xScaleKey = xField.config.unit;
+      xScaleUnit = xField.config.unit;
     }
 
     builder.addScale({
@@ -231,12 +232,12 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
           pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
             payload.columnIndex = dataIdx;
             if (x < 0 && y < 0) {
-              payload.point[xScaleKey] = null;
+              payload.point[xScaleUnit] = null;
               payload.point[yScaleKey] = null;
               eventBus.publish(new DataHoverClearEvent(payload));
             } else {
               // convert the points
-              payload.point[xScaleKey] = src.posToVal(x, xScaleKey);
+              payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
               payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
               eventBus.publish(hoverEvent);
               hoverEvent.payload.down = undefined;

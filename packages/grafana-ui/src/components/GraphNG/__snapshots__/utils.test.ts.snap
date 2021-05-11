@@ -12,7 +12,7 @@ Object {
         "width": 1,
       },
       "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
-      "scale": "time",
+      "scale": "x",
       "show": true,
       "side": 2,
       "size": [Function],
@@ -89,7 +89,7 @@ Object {
         [Function],
       ],
       "scales": Array [
-        "time",
+        "x",
         "__fixed",
       ],
     },
@@ -105,7 +105,7 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "time": Object {
+    "x": Object {
       "auto": false,
       "dir": 1,
       "ori": 0,
