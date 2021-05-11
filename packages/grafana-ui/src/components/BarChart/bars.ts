@@ -4,6 +4,8 @@ import { distribute, SPACE_BETWEEN } from './distribute';
 import { TooltipInterpolator } from '../uPlot/types';
 import { ScaleDirection, ScaleOrientation } from '../uPlot/config';
 
+const groupDistr = SPACE_BETWEEN;
+const barDistr = SPACE_BETWEEN;
 const font = Math.round(10 * devicePixelRatio) + 'px Arial';
 
 type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
@@ -18,14 +20,14 @@ function walkTwo(
   xDraw?: WalkTwoCb,
   yDraw?: WalkTwoCb
 ) {
-  distribute(xCount, groupWidth, SPACE_BETWEEN, null, (ix, offPct, dimPct) => {
+  distribute(xCount, groupWidth, groupDistr, null, (ix, offPct, dimPct) => {
     let groupOffPx = xDim * offPct;
     let groupWidPx = xDim * dimPct;
 
     xDraw && xDraw(ix, groupOffPx, groupWidPx);
 
     yDraw &&
-      distribute(yCount, barWidth, SPACE_BETWEEN, yIdx, (iy, offPct, dimPct) => {
+      distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
         let barOffPx = groupWidPx * offPct;
         let barWidPx = groupWidPx * dimPct;
 
@@ -126,13 +128,14 @@ export function getConfig(opts: BarsOptions) {
                 let lft = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
                 let barWid = Math.round(wid);
 
+                // prettier-ignore
                 if (dataY[ix] != null) {
                   let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
                   let x = ori === 0 ? Math.round(lft + barWid / 2) : Math.round(yPos);
-                  let y = ori === 0 ? Math.round(yPos) : Math.round(lft + barWid / 2);
+                  let y = ori === 0 ? Math.round(yPos)             : Math.round(lft + barWid / 2);
 
-                  u.ctx.textAlign = ori === 0 ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
+                  u.ctx.textAlign    = ori === 0 ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
                   u.ctx.textBaseline = ori === 1 ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
 
                   u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
@@ -150,7 +153,7 @@ export function getConfig(opts: BarsOptions) {
 
     let splits: number[] = [];
 
-    distribute(u.data[0].length, groupWidth, SPACE_BETWEEN, null, (di, lftPct, widPct) => {
+    distribute(u.data[0].length, groupWidth, groupDistr, null, (di, lftPct, widPct) => {
       let groupLftPx = (dim * lftPct) / devicePixelRatio;
       let groupWidPx = (dim * widPct) / devicePixelRatio;
 
@@ -207,11 +210,12 @@ export function getConfig(opts: BarsOptions) {
       });
 
       if (found) {
+        // prettier-ignore
         if (found !== hovered) {
           barMark.style.display = '';
-          barMark.style.left = found!.x / devicePixelRatio + 'px';
-          barMark.style.top = found!.y / devicePixelRatio + 'px';
-          barMark.style.width = found!.w / devicePixelRatio + 'px';
+          barMark.style.left   = found!.x / devicePixelRatio + 'px';
+          barMark.style.top    = found!.y / devicePixelRatio + 'px';
+          barMark.style.width  = found!.w / devicePixelRatio + 'px';
           barMark.style.height = found!.h / devicePixelRatio + 'px';
           hovered = found;
           updateActiveSeriesIdx(hovered!.sidx);
