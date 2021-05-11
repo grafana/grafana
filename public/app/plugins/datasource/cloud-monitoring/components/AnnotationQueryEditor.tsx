@@ -4,7 +4,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
 
 import CloudMonitoringDatasource from '../datasource';
-import { AnnotationsHelp, LabelFilter, Metrics, Project } from './';
+import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, EditorMode, MetricDescriptor, MetricKind } from '../types';
 
@@ -122,29 +122,23 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
             </>
           )}
         </Metrics>
-        <div className="gf-form gf-form-inline">
-          <div className="gf-form">
-            <span className="gf-form-label query-keyword width-9">Title</span>
-            <Input
-              type="text"
-              className="gf-form-input width-20"
-              value={title}
-              onChange={(e) => this.onChange('title', e.target.value)}
-            />
-          </div>
-          <div className="gf-form">
-            <span className="gf-form-label query-keyword width-9">Text</span>
-            <Input
-              type="text"
-              className="gf-form-input width-20"
-              value={text}
-              onChange={(e) => this.onChange('text', e.target.value)}
-            />
-          </div>
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow" />
-          </div>
-        </div>
+
+        <QueryEditorRow label="Title">
+          <Input
+            type="text"
+            className="gf-form-input width-20"
+            value={title}
+            onChange={(e) => this.onChange('title', e.target.value)}
+          />
+        </QueryEditorRow>
+        <QueryEditorRow label="Text">
+          <Input
+            type="text"
+            className="gf-form-input width-20"
+            value={text}
+            onChange={(e) => this.onChange('text', e.target.value)}
+          />
+        </QueryEditorRow>
 
         <AnnotationsHelp />
       </>

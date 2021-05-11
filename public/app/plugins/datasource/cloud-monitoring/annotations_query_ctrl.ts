@@ -7,6 +7,8 @@ export class CloudMonitoringAnnotationsQueryCtrl {
   /** @ngInject */
   constructor($scope: any) {
     this.annotation = $scope.ctrl.annotation || {};
+    this.annotation.target = $scope.ctrl.annotation.target || {};
+
     this.onQueryChange = this.onQueryChange.bind(this);
   }
 
