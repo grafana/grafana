@@ -254,7 +254,7 @@ func (g *GrafanaLive) Init() error {
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.RouteRegister.Group("/live", func(group routing.RouteRegister) {
+	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
 	}, middleware.ReqSignedIn)
 

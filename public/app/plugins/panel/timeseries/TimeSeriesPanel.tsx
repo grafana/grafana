@@ -5,13 +5,12 @@ import React from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { Options } from './types';
+import { TimeSeriesOptions } from './types';
 
-interface TimeSeriesPanelProps extends PanelProps<Options> {}
+interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
 export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
-  id,
   timeRange,
   timeZone,
   width,
@@ -51,7 +50,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             <TooltipPlugin
               data={alignedDataFrame}
               config={config}
-              mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltipOptions.mode}
+              mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltip.mode}
               timeZone={timeZone}
             />
             <ContextMenuPlugin
