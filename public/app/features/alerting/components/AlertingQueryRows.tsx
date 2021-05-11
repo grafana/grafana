@@ -1,10 +1,17 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceInstanceSettings, PanelData, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  getDefaultRelativeTimeRange,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { RelativeTimeRangePicker } from '@grafana/ui';
 
 interface Props {
   // The query configuration
@@ -84,6 +91,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         }
         return {
           ...item,
+          refId: query.refId,
           model: {
             ...item.model,
             ...query,
@@ -155,14 +163,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       data={data}
                       query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
-                      timeRange={
-                        !isExpressionQuery(query.model) && query.relativeTimeRange ? query.relativeTimeRange : undefined
-                      }
-                      onChangeTimeRange={
-                        !isExpressionQuery(query.model)
-                          ? (timeRange) => this.onChangeTimeRange(timeRange, index)
-                          : undefined
-                      }
+                      renderHeaderExtras={() => this.renderTimePicker(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={(duplicate) => this.onDuplicateQuery(duplicate, query)}
                       onRunQuery={this.props.onRunQueries}
@@ -176,6 +177,19 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           }}
         </Droppable>
       </DragDropContext>
+    );
+  }
+
+  renderTimePicker(query: GrafanaQuery, index: number): ReactNode {
+    if (isExpressionQuery(query.model)) {
+      return null;
+    }
+
+    return (
+      <RelativeTimeRangePicker
+        timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+        onChange={(range) => this.onChangeTimeRange(range, index)}
+      />
     );
   }
 }

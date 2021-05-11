@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
 import { has, cloneDeep } from 'lodash';
 // Utils & Services
@@ -16,7 +16,6 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
-  RelativeTimeRange,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
@@ -36,10 +35,9 @@ interface Props {
   queries: DataQuery[];
   id: string;
   index: number;
-  timeRange?: RelativeTimeRange;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
-  onChangeTimeRange?: (timeRange: RelativeTimeRange) => void;
+  renderHeaderExtras?: () => ReactNode;
   onAddQuery: (query: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
@@ -305,20 +303,19 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { query, dataSource, onChangeDataSource, onChange, queries, onChangeTimeRange, timeRange } = this.props;
+    const { query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
 
     return (
       <QueryEditorRowHeader
         query={query}
         queries={queries}
-        onChangeTimeRange={onChangeTimeRange}
-        timeRange={timeRange}
         onChangeDataSource={onChangeDataSource}
         dataSource={dataSource}
         disabled={query.hide}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
+        renderExtras={renderHeaderExtras}
       />
     );
   };

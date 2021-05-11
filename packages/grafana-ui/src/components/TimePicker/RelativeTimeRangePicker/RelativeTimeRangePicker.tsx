@@ -153,7 +153,8 @@ const getStyles = (from: InputState, to: InputState) => (theme: GrafanaTheme2) =
       top: 116%;
       border-radius: 2px;
       border: 1px solid ${theme.colors.border.weak};
-      right: 0;
+      left: 0;
+      white-space: normal;
     `,
     body: css`
       display: flex;
