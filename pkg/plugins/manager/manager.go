@@ -221,7 +221,7 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	rslt := make([]*plugins.DataSourcePlugin, len(pm.dataSources))
+	var rslt []*plugins.DataSourcePlugin
 	for _, ds := range pm.dataSources {
 		rslt = append(rslt, ds)
 	}
@@ -254,7 +254,7 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	rslt := make([]*plugins.PluginBase, len(pm.plugins))
+	var rslt []*plugins.PluginBase
 	for _, p := range pm.plugins {
 		rslt = append(rslt, p)
 	}
@@ -266,7 +266,7 @@ func (pm *PluginManager) Apps() []*plugins.AppPlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	rslt := make([]*plugins.AppPlugin, len(pm.apps))
+	var rslt []*plugins.AppPlugin
 	for _, p := range pm.apps {
 		rslt = append(rslt, p)
 	}
@@ -278,7 +278,7 @@ func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	rslt := make([]*plugins.PanelPlugin, len(pm.panels))
+	var rslt []*plugins.PanelPlugin
 	for _, p := range pm.panels {
 		rslt = append(rslt, p)
 	}
