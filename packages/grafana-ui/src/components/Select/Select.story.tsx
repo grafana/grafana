@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
 import { SelectCommonProps } from './types';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { kebabCase } from 'lodash';
 import { generateOptions } from './mockOptions';
 import mdx from './Select.mdx';
@@ -63,7 +63,7 @@ export default {
       },
     },
   },
-};
+} as Meta;
 
 const loadAsyncOptions = () => {
   return new Promise<Array<SelectableValue<string>>>((resolve) => {
