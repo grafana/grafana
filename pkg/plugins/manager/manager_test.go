@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -156,16 +158,39 @@ func TestPluginManager_Init(t *testing.T) {
 			// verify plugin has been loaded successfully
 			const pluginID = "test"
 
-			assert.NotNil(t, pm.plugins[pluginID])
-			assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
-			assert.Equal(t, "Test", pm.plugins[pluginID].Name)
-			assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
-			assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
-			assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
-			assert.Equal(t, plugins.GrafanaType, pm.plugins[pluginID].SignatureType)
-			assert.Equal(t, "Grafana Labs", pm.plugins[pluginID].SignatureOrg)
-			assert.Equal(t, pluginFolder, pm.plugins[pluginID].PluginDir)
-			assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+			if diff := cmp.Diff(&plugins.PluginBase{
+				Type:  "datasource",
+				Name:  "Test",
+				State: "alpha",
+				Id:    pluginID,
+				Info: plugins.PluginInfo{
+					Author: plugins.PluginInfoLink{
+						Name: "Will Browne",
+						Url:  "https://willbrowne.com",
+					},
+					Description: "Test",
+					Logos: plugins.PluginLogos{
+						Small: "public/img/icn-datasource.svg",
+						Large: "public/img/icn-datasource.svg",
+					},
+					Build:   plugins.PluginBuildInfo{},
+					Version: "1.0.0",
+				},
+				PluginDir:     pluginFolder,
+				Backend:       false,
+				IsCorePlugin:  false,
+				Signature:     plugins.PluginSignatureValid,
+				SignatureType: plugins.GrafanaType,
+				SignatureOrg:  "Grafana Labs",
+				Dependencies: plugins.PluginDependencies{
+					GrafanaVersion: "*",
+					Plugins:        []plugins.PluginDependencyItem{},
+				},
+				Module:  "plugins/test/module",
+				BaseUrl: "public/plugins/test",
+			}, pm.plugins[pluginID]); diff != "" {
+				t.Errorf("result mismatch (-want +got) %s\n", diff)
+			}
 
 			ds := pm.GetDataSource(pluginID)
 			assert.NotNil(t, ds)
@@ -183,9 +208,9 @@ func TestPluginManager_Init(t *testing.T) {
 			err = pm.initExternalPlugins()
 			require.NoError(t, err)
 
+			// verify plugin state remains the same as previous
 			verifyPluginManagerState()
 
-			// verify plugin state remains the same as previous
 			assert.Empty(t, pm.scanningErrors)
 			assert.True(t, reflect.DeepEqual(datasources, pm.dataSources))
 			assert.True(t, reflect.DeepEqual(panels, pm.panels))
@@ -325,15 +350,39 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		// verify plugin has been loaded successfully
 		assert.NotNil(t, pm.plugins[pluginID])
-		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
-		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
-		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
-		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
-		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
-		assert.Equal(t, plugins.GrafanaType, pm.plugins[pluginID].SignatureType)
-		assert.Equal(t, "Grafana Labs", pm.plugins[pluginID].SignatureOrg)
-		assert.Equal(t, pluginFolder, pm.plugins[pluginID].PluginDir)
-		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+		if diff := cmp.Diff(&plugins.PluginBase{
+			Type:  "datasource",
+			Name:  "Test",
+			State: "alpha",
+			Id:    pluginID,
+			Info: plugins.PluginInfo{
+				Author: plugins.PluginInfoLink{
+					Name: "Will Browne",
+					Url:  "https://willbrowne.com",
+				},
+				Description: "Test",
+				Logos: plugins.PluginLogos{
+					Small: "public/img/icn-datasource.svg",
+					Large: "public/img/icn-datasource.svg",
+				},
+				Build:   plugins.PluginBuildInfo{},
+				Version: "1.0.0",
+			},
+			PluginDir:     pluginFolder,
+			Backend:       false,
+			IsCorePlugin:  false,
+			Signature:     plugins.PluginSignatureValid,
+			SignatureType: plugins.GrafanaType,
+			SignatureOrg:  "Grafana Labs",
+			Dependencies: plugins.PluginDependencies{
+				GrafanaVersion: "*",
+				Plugins:        []plugins.PluginDependencyItem{},
+			},
+			Module:  "plugins/test/module",
+			BaseUrl: "public/plugins/test",
+		}, pm.plugins[pluginID]); diff != "" {
+			t.Errorf("result mismatch (-want +got) %s\n", diff)
+		}
 
 		ds := pm.GetDataSource(pluginID)
 		assert.NotNil(t, ds)
