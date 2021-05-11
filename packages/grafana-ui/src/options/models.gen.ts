@@ -2,6 +2,9 @@
 
 import { VizLegendOptions } from '../components';
 
+/**
+ * @alpha
+ */
 export interface OptionsWithLegend {
   legend: VizLegendOptions;
 }
