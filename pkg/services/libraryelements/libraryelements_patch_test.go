@@ -1,4 +1,4 @@
-package librarypanels
+package libraryelements
 
 import (
 	"testing"
@@ -7,26 +7,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPatchLibraryPanel(t *testing.T) {
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
+func TestPatchLibraryElement(t *testing.T) {
+	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{}
+			cmd := patchLibraryElementCommand{Kind: int64(Panel)}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, resp.Status())
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "1"})
-			resp := sc.service.connectHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": "2"})
-			resp = sc.service.connectHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: newFolder.Id,
 				Name:     "Panel - New name",
 				Model: []byte(`
@@ -38,19 +31,21 @@ func TestPatchLibraryPanel(t *testing.T) {
 								  "type": "graph"
 								}
 							`),
+				Kind:    int64(Panel),
 				Version: 1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
-			resp = sc.service.patchHandler(sc.reqContext, cmd)
+			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
-			var expected = libraryPanelResult{
-				Result: libraryPanel{
+			var expected = libraryElementResult{
+				Result: libraryElement{
 					ID:          1,
 					OrgID:       1,
 					FolderID:    newFolder.Id,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Panel - New name",
+					Kind:        int64(Panel),
 					Type:        "graph",
 					Description: "An updated description",
 					Model: map[string]interface{}{
@@ -61,20 +56,19 @@ func TestPatchLibraryPanel(t *testing.T) {
 						"type":        "graph",
 					},
 					Version: 2,
-					Meta: LibraryPanelDTOMeta{
-						CanEdit:             true,
-						ConnectedDashboards: 2,
-						Created:             sc.initialResult.Result.Meta.Created,
-						Updated:             result.Result.Meta.Updated,
-						CreatedBy: LibraryPanelDTOMetaUser{
+					Meta: LibraryElementDTOMeta{
+						Connections: 0,
+						Created:     sc.initialResult.Result.Meta.Created,
+						Updated:     result.Result.Meta.Updated,
+						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
-							Name:      UserInDbName,
-							AvatarUrl: UserInDbAvatar,
+							Name:      userInDbName,
+							AvatarURL: userInDbAvatar,
 						},
-						UpdatedBy: LibraryPanelDTOMetaUser{
+						UpdatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
-							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -84,11 +78,12 @@ func TestPatchLibraryPanel(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: newFolder.Id,
+				Kind:     int64(Panel),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -96,27 +91,28 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.FolderID = newFolder.Id
-			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with name only, it should change name successfully, sync title and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with name only, it should change name successfully, sync title and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Name:     "New Name",
+				Kind:     int64(Panel),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Name = "New Name"
-			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Model["title"] = "New Name"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -124,11 +120,12 @@ func TestPatchLibraryPanel(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully, sync name, type and description fields and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully, sync name, type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "title": "New Model Title", "name": "New Model Name", "type":"graph", "description": "New description" }`),
+				Kind:     int64(Panel),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -142,19 +139,20 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"type":        "graph",
 				"description": "New description",
 			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with model.description only, it should change model successfully, sync name, type and description fields and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.description only, it should change model successfully, sync name, type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "description": "New description" }`),
+				Kind:     int64(Panel),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -167,19 +165,20 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"type":        "text",
 				"description": "New description",
 			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with model.type only, it should change model successfully, sync name, type and description fields and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.type only, it should change model successfully, sync name, type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "type": "graph" }`),
+				Kind:     int64(Panel),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -192,64 +191,67 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"type":        "graph",
 				"description": "A description",
 			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
+	scenarioWithPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{FolderID: -1, Version: 1}
+			cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(Panel)}
 			sc.reqContext.UserId = 2
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
-			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommand(sc.folder.Id, "Another Panel")
+			command := getCreatePanelCommand(sc.folder.Id, "Another Panel")
 			resp := sc.service.createHandler(sc.reqContext, command)
 			var result = validateAndUnMarshalResponse(t, resp)
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				Name:    "Text - Library Panel",
 				Version: 1,
+				Kind:    int64(Panel),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			command := getCreateCommand(newFolder.Id, "Text - Library Panel")
+			command := getCreatePanelCommand(newFolder.Id, "Text - Library Panel")
 			resp := sc.service.createHandler(sc.reqContext, command)
 			var result = validateAndUnMarshalResponse(t, resp)
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: 1,
 				Version:  1,
+				Kind:     int64(Panel),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, resp.Status())
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel in another org, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
+				Kind:     int64(Panel),
 			}
 			sc.reqContext.OrgId = 2
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -257,16 +259,46 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.Equal(t, 404, resp.Status())
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with an old version number, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with an old version number, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryPanelCommand{
+			cmd := patchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
+				Kind:     int64(Panel),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, resp.Status())
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 412, resp.Status())
+		})
+
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with an other kind, it should succeed but panel should not change",
+		func(t *testing.T, sc scenarioContext) {
+			cmd := patchLibraryElementCommand{
+				FolderID: sc.folder.Id,
+				Version:  1,
+				Kind:     int64(Variable),
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, resp.Status())
+			var result = validateAndUnMarshalResponse(t, resp)
+			sc.initialResult.Result.Type = "text"
+			sc.initialResult.Result.Kind = int64(Panel)
+			sc.initialResult.Result.Description = "A description"
+			sc.initialResult.Result.Model = map[string]interface{}{
+				"datasource":  "${DS_GDEV-TESTDATA}",
+				"id":          float64(1),
+				"title":       "Text - Library Panel",
+				"type":        "text",
+				"description": "A description",
+			}
+			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Version = 2
+			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 }
