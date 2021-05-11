@@ -85,7 +85,7 @@ func (l *libraryElementServiceImpl) AddMigration(mg *migrator.Migrator) {
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "folder_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 100, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 150, Nullable: false},
 			{Name: "kind", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "type", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "description", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
