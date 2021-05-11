@@ -33,23 +33,26 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
 
 ## Query traces
 
 You can query and display traces from Jaeger via [Explore]({{< relref "../explore/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
+{{< docs-imagebox img="/img/docs/explore/jaeger-search-form.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
-The Jaeger query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
+You can query by trace ID or use the search form to find traces. To query by trace ID, select the TraceID from the Query type selector and insert the ID into the text input.
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
+{{< docs-imagebox img="/img/docs/explore/jaeger-trace-id.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace ID selected" >}}
 
-Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
+To perform a search, set the query type selector to Search, then use the following fields to find traces:
 
-1. The service you are interested in.
-1. Particular operation is part of the selected service.
-1. Specific trace in which the selected operation occurred, represented by the root operation name and trace duration.
+- Service - Returns a list of services.
+- Operation - Field gets populated once you select a service. It then lists the operations related to the selected service. Select `All` option to query all operations.
+- Tags - Use values in the [logfmt](https://brandur.org/logfmt) format. For example `error=true db.statement="select * from User"`.
+- Min Duration - Filter all traces with a duration higher than the set value. Possible values are `1.2s, 100ms, 500us`.
+- Max Duration - Filter all traces with a duration lower than the set value. Possible values are `1.2s, 100ms, 500us`.
+- Limit - Limits the number of traces returned.
 
 ## Linking Trace ID from logs
 
@@ -57,7 +60,7 @@ You can link to Jaeger trace from logs in Loki by configuring a derived field wi
 
 ## Configure the data source with provisioning
 
-You can set up the data source via configuration files with Grafana’s provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for information on various settings and how it works.
+You can set up the data source via configuration files with Grafana's provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for more information on configuring various settings.
 
 Here is an example with basic auth and trace-to-logs field.
 
@@ -75,14 +78,15 @@ datasources:
     editable: true
     isDefault: false
     jsonData:
-        tracesToLogs:
-            # Field with internal link pointing to a Loki data source in Grafana.
-            # datasourceUid value must match the `datasourceUid` value of the Loki data source.
-            datasourceUid: loki
-            tags:
-              - cluster
-              - hostname
-              - namespace
-              - pod
+      tracesToLogs:
+        # Field with internal link pointing to a Loki data source in Grafana.
+        # datasourceUid value must match the `datasourceUid` value of the Loki data source.
+        datasourceUid: loki
+        tags:
+          - cluster
+          - hostname
+          - namespace
+          - pod
     secureJsonData:
-        basicAuthPassword: my_password
+      basicAuthPassword: my_password
+```
