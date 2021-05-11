@@ -142,7 +142,7 @@ var (
 	// MAccessSummary is a metric summary for access request duration
 	MAccessSummary prometheus.Histogram
 
-	// MAccessSummary is a metric summary for access request duration
+	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessPermissionsSummary prometheus.Histogram
 
 	// MProvisionRolesSummary is a metric summary for access request duration
