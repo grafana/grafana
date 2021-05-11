@@ -1,23 +1,25 @@
-import { AzureCredentials, AzureDataSourceInstanceSettings, AzureDataSourceSettings } from './types';
+import { AzureCredentials, AzureDataSourceInstanceSettings, AzureDataSourceSettings, ConcealedSecret } from './types';
+
+const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
 export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): string {
   return options.jsonData.cloudName || 'azuremonitor';
 }
 
-function getSecret(options: AzureDataSourceSettings): undefined | string | object {
+function getSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
   if (options.secureJsonFields.clientSecret) {
     // The secret is concealed on server
-    return {};
+    return concealed;
   } else {
     const secret = options.secureJsonData?.clientSecret;
     return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
   }
 }
 
-function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | string | object {
+function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
   if (options.secureJsonFields.logAnalyticsClientSecret) {
     // The secret is concealed on server
-    return {};
+    return concealed;
   } else {
     const secret = options.secureJsonData?.logAnalyticsClientSecret;
     return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
@@ -75,7 +77,7 @@ export function updateCredentials(
     },
     secureJsonFields: {
       ...options.secureJsonFields,
-      clientSecret: typeof credentials.clientSecret === 'object',
+      clientSecret: typeof credentials.clientSecret === 'symbol',
     },
   };
 
@@ -106,7 +108,7 @@ export function updateLogAnalyticsCredentials(
     },
     secureJsonFields: {
       ...options.secureJsonFields,
-      logAnalyticsClientSecret: typeof credentials.clientSecret === 'object',
+      logAnalyticsClientSecret: typeof credentials.clientSecret === 'symbol',
     },
   };
 
@@ -129,7 +131,7 @@ export function updateLogAnalyticsSameAs(options: AzureDataSourceSettings, sameA
       let credentials = getCredentials(options);
 
       // Check whether the client secret is concealed
-      if (typeof credentials.clientSecret === 'object') {
+      if (typeof credentials.clientSecret === 'symbol') {
         // Log Analytics credentials need to be synchronized but the client secret is concealed,
         // so we have to reset the primary client secret to ensure that user enters a new secret
         credentials.clientSecret = undefined;

@@ -30,11 +30,13 @@ export interface AzureMonitorQuery extends DataQuery {
   insightsAnalytics: InsightsAnalyticsQuery;
 }
 
+export type ConcealedSecret = symbol;
+
 export interface AzureCredentials {
   azureCloud?: string;
   tenantId?: string;
   clientId?: string;
-  clientSecret?: string | object;
+  clientSecret?: string | ConcealedSecret;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {

@@ -161,7 +161,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
             </div>
           </div>
         </div>
-        {typeof credentials.clientSecret === 'object' ? (
+        {typeof credentials.clientSecret === 'symbol' ? (
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
