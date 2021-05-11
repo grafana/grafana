@@ -52,6 +52,8 @@ func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds 
 	mg.AddMigration("Add column paused in alert_definition", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
 		Name: "paused", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("drop alert_definition table", migrator.NewDropTableMigration("alert_definition"))
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -84,6 +86,7 @@ func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alter alert_definition_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition_version MODIFY data MEDIUMTEXT;"))
+	mg.AddMigration("drop alert_definition_version table", migrator.NewDropTableMigration("alert_definition_version"))
 }
 
 func AlertInstanceMigration(mg *migrator.Migrator) {
