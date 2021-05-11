@@ -231,6 +231,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("enabled", "false")
 			require.NoError(t, err)
 		}
+		if o.MarketplaceAppEnabled {
+			anonSect, err := cfg.NewSection("plugins")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("marketplace_app_enabled", "true")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")

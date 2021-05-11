@@ -35,7 +35,7 @@ func TestPluginInstallAccess(t *testing.T) {
 	createUser(t, store, usernameNonAdmin, defaultPassword, false)
 	createUser(t, store, usernameAdmin, defaultPassword, true)
 
-	t.Run("Cannot install or uninstall plugin if request is not from an admin", func(t *testing.T) {
+	t.Run("Request is forbidden if not from an admin", func(t *testing.T) {
 		statusCode, body := makePostRequest(t, grafanaAPIURL(usernameNonAdmin, grafanaListedAddr, "plugins/grafana-plugin/install"))
 		assert.Equal(t, 403, statusCode)
 		assert.JSONEq(t, "{\"message\": \"Permission denied\"}", body)
@@ -45,10 +45,15 @@ func TestPluginInstallAccess(t *testing.T) {
 		assert.JSONEq(t, "{\"message\": \"Permission denied\"}", body)
 	})
 
-	t.Run("Can install or uninstall plugin if request is from an admin", func(t *testing.T) {
+	t.Run("Request is not forbidden if from an admin", func(t *testing.T) {
 		statusCode, body := makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/install"))
+		assert.Equal(t, 500, statusCode)
+		assert.JSONEq(t, "{\"error\":\"failed to find plugin \\\"test\\\" in plugin repository. "+
+			"Please check if plugin ID is correct\",\"message\":\"Failed to install plugin\"}", body)
+
+		statusCode, body = makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/uninstall"))
 		assert.Equal(t, 404, statusCode)
-		assert.Empty(t, body)
+		assert.JSONEq(t, "{\"error\":\"plugin with ID 'test' not found\", \"message\":\"Plugin not found\"}", body)
 	})
 }
 
