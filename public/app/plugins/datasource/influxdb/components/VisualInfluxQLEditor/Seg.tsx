@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import debouncePromise from 'debounce-promise';
 import { cx, css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
-import { useClickAway, useAsyncFn } from 'react-use';
+import { useAsyncFn } from 'react-use';
 import { InlineLabel, Select, AsyncSelect, Input } from '@grafana/ui';
 import { useShadowedState } from '../useShadowedState';
 
@@ -59,9 +59,6 @@ type SelReloadProps = {
 };
 
 const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelReloadProps): JSX.Element => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useClickAway(ref, onClose);
-
   // here we rely on the fact that writing text into the <AsyncSelect/>
   // does not cause a re-render of the current react component.
   // this way there is only a single render-call,
@@ -71,11 +68,12 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
   // and probably have an useEffect
   const debouncedLoadOptions = debouncePromise(loadOptions, 1000, { leading: true });
   return (
-    <div ref={ref} className={selectClass}>
+    <div className={selectClass}>
       <AsyncSelect
         defaultOptions
         autoFocus
         isOpen
+        onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         loadOptions={debouncedLoadOptions}
         onChange={onChange}
@@ -92,19 +90,18 @@ type SelSingleLoadProps = {
 };
 
 const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: SelSingleLoadProps): JSX.Element => {
-  const ref = useRef<HTMLDivElement | null>(null);
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
-  useClickAway(ref, onClose);
 
   useEffect(() => {
     doLoad();
   }, [doLoad, loadOptions]);
 
   return (
-    <div ref={ref} className={selectClass}>
+    <div className={selectClass}>
       <Select
         autoFocus
         isOpen
+        onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         options={loadState.value ?? []}
         onChange={onChange}
