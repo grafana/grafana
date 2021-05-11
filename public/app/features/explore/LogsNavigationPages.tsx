@@ -63,8 +63,6 @@ export function LogsNavigationPages({
   );
 }
 
-export default memo(LogsNavigationPages);
-
 const getStyles = stylesFactory((theme: GrafanaTheme, loading: boolean) => {
   return {
     pagesWrapper: css`

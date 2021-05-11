@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { css } from 'emotion';
 import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme } from '@grafana/data';
 import { Button, Icon, Spinner, useTheme, stylesFactory } from '@grafana/ui';
-import LogsNavigationPages from './LogsNavigationPages';
+import { LogsNavigationPages } from './LogsNavigationPages';
 
 type Props = {
   absoluteRange: AbsoluteTimeRange;
