@@ -1,4 +1,4 @@
-import { LibraryPanelDTO, PanelModelLibraryPanel } from './types';
+import { LibraryElementDTO, PanelModelLibraryPanel } from './types';
 import { PanelModel } from '../dashboard/state';
 import { addLibraryPanel, updateLibraryPanel } from './state/api';
 import { createErrorNotification, createSuccessNotification } from '../../core/copy/appNotification';
@@ -12,12 +12,12 @@ export function createPanelLibrarySuccessNotification(message: string): AppNotif
   return createSuccessNotification(message);
 }
 
-export function toPanelModelLibraryPanel(libraryPanelDto: LibraryPanelDTO): PanelModelLibraryPanel {
+export function toPanelModelLibraryPanel(libraryPanelDto: LibraryElementDTO): PanelModelLibraryPanel {
   const { uid, name, meta, version } = libraryPanelDto;
   return { uid, name, meta, version };
 }
 
-export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderId: number): Promise<LibraryPanelDTO> {
+export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderId: number): Promise<LibraryElementDTO> {
   const panelSaveModel = toPanelSaveModel(panel);
   const savedPanel = await saveOrUpdateLibraryPanel(panelSaveModel, folderId);
   updatePanelModelWithUpdate(panel, savedPanel);
@@ -37,7 +37,7 @@ function toPanelSaveModel(panel: PanelModel): any {
   return panelSaveModel;
 }
 
-function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryPanelDTO): void {
+function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDTO): void {
   panel.restoreModel({
     ...updated.model,
     configRev: 0, // reset config rev, since changes have been saved
@@ -46,7 +46,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryPanelDTO)
   panel.refresh();
 }
 
-function saveOrUpdateLibraryPanel(panel: any, folderId: number): Promise<LibraryPanelDTO> {
+function saveOrUpdateLibraryPanel(panel: any, folderId: number): Promise<LibraryElementDTO> {
   if (!panel.libraryPanel) {
     return Promise.reject();
   }

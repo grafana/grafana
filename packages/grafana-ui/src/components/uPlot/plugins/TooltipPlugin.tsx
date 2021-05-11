@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import {
@@ -12,8 +12,9 @@ import {
 } from '@grafana/data';
 import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { pluginLog } from '../utils';
+import { findMidPointYPosition, pluginLog } from '../utils';
 import { useTheme2 } from '../../../themes/ThemeContext';
+import uPlot from 'uplot';
 
 interface TooltipPluginProps {
   mode?: TooltipDisplayMode;
@@ -21,6 +22,8 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
 }
+
+const TOOLTIP_OFFSET = 10;
 
 /**
  * @alpha
@@ -33,46 +36,41 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 }) => {
   const theme = useTheme2();
   const plotCtx = usePlotContext();
-  const plotCanvas = useRef<HTMLDivElement>();
-  const plotCanvasBBox = useRef<any>({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 });
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; plotCanvas: CartesianCoords2D } | null>(null);
+
+  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+
+  const pluginId = `TooltipPlugin`;
 
   // Debug logs
   useEffect(() => {
-    pluginLog('TooltipPlugin', true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
+    pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
   }, [focusedPointIdx, focusedSeriesIdx]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    const onMouseCapture = (e: MouseEvent) => {
-      setCoords({
-        plotCanvas: {
-          x: e.clientX - plotCanvasBBox.current.left,
-          y: e.clientY - plotCanvasBBox.current.top,
-        },
-        viewport: {
-          x: e.clientX,
-          y: e.clientY,
-        },
-      });
-    };
-
-    config.addHook('init', (u) => {
-      const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
-      plotCanvas.current = canvas || undefined;
-      plotCanvas.current?.addEventListener('mousemove', onMouseCapture);
-      plotCanvas.current?.addEventListener('mouseleave', () => {});
-    });
-
     config.addHook('setCursor', (u) => {
-      setFocusedPointIdx(u.cursor.idx === undefined ? null : u.cursor.idx);
+      const bbox = plotCtx.getCanvasBoundingBox();
+      if (!bbox) {
+        return;
+      }
+
+      const { x, y } = positionTooltip(u, bbox);
+
+      if (x !== undefined && y !== undefined) {
+        setCoords({ x, y });
+      } else {
+        setCoords(null);
+      }
+
+      setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
     });
+
     config.addHook('setSeries', (_, idx) => {
       setFocusedSeriesIdx(idx);
     });
-  }, [config]);
+  }, [plotCtx, config]);
 
   const plotInstance = plotCtx.plot;
   if (!plotInstance || focusedPointIdx === null) {
@@ -142,15 +140,52 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     tooltip = <SeriesTable series={series} timestamp={xVal} />;
   }
 
-  if (!tooltip || !coords) {
-    return null;
-  }
-
   return (
     <Portal>
-      <VizTooltipContainer position={{ x: coords.viewport.x, y: coords.viewport.y }} offset={{ x: 10, y: 10 }}>
-        {tooltip}
-      </VizTooltipContainer>
+      {tooltip && coords && (
+        <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
+          {tooltip}
+        </VizTooltipContainer>
+      )}
     </Portal>
   );
 };
+
+function isCursourOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
+  if (left === undefined || top === undefined) {
+    return false;
+  }
+  return left < 0 || left > canvas.width || top < 0 || top > canvas.height;
+}
+
+/**
+ * Given uPlot cursor position, figure out position of the tooltip withing the canvas bbox
+ * Tooltip is positioned relatively to a viewport
+ * @internal
+ **/
+export function positionTooltip(u: uPlot, bbox: DOMRect) {
+  let x, y;
+  const cL = u.cursor.left || 0;
+  const cT = u.cursor.top || 0;
+
+  if (isCursourOutsideCanvas(u.cursor, bbox)) {
+    const idx = u.posToIdx(cL);
+    // when cursor outside of uPlot's canvas
+    if (cT < 0 || cT > bbox.height) {
+      let pos = findMidPointYPosition(u, idx);
+
+      if (pos) {
+        y = bbox.top + pos;
+        if (cL >= 0 && cL <= bbox.width) {
+          // find x-scale position for a current cursor left position
+          x = bbox.left + u.valToPos(u.data[0][u.posToIdx(cL)], u.series[0].scale!);
+        }
+      }
+    }
+  } else {
+    x = bbox.left + cL;
+    y = bbox.top + cT;
+  }
+
+  return { x, y };
+}
