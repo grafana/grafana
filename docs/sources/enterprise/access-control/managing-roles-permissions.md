@@ -16,7 +16,7 @@ You can grant, change and revoke access to a resource by creating [built-in role
 
 ## Resources with fine-grained permissions 
 
-The access control is in Beta and fine-grained [permissions]({{< relref "./concepts/permissions.md" >}}) are available only for a subset of resources. 
+The access control is in beta and fine-grained [permissions]({{< relref "./concepts/permissions.md" >}}) are available only for a subset of resources. 
 Refer to the relevant API guide from below list to learn more about specific endpoints where access control is applied.
 
 1. [Access Control API]({{< relref "../../http_api/access_control.md" >}})
@@ -33,26 +33,27 @@ By default, Grafana Admin has a [built-in role assignment]({{< relref "./concept
 If a Grafana Admin wants to delegate that privilege to other users, they can create a custom role with relevant [permissions]({{< relref "./concepts/permissions.md" >}}) and `permissions:delegate` scope will allow those users to manage roles themselves.
 Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
 
-Custom roles can be created either as `global` or `organization local`.
+Custom roles can be created either as _global_ or _organization local_.
 
-To create or delete `organization local` custom role, you need to:
+To create or delete _organization local_ custom roles, you need to:
 1. Be authenticated with the relevant organization
-1. Set `global` to `false` in the relevant API request or in the provisioning file.
+1. Set the `global` field to `false` or omit it in the relevant API request or provisioning file.
 
-To create or remove `global` custom role, you need to:
-1. Set `global` to `true` in the relevant API request or in the provisioning file.
+To create or remove _global_ custom role, you need to:
+1. Set the `global` field to `true` in the relevant API request or provisioning file.
 
 ## Creating and removing built-in role assignments
 
 You can create or remove built-in role assignment by using an [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by [provisioning]({{< relref "./provisioning.md" >}}).
 By default, Grafana Admin already has a [built-in role assignment]({{< relref "./concepts/roles.md" >}}) which allows a user to manage further assignments. 
 
-Assignments can be either `global` or `organization local`. Global assignments will take an effect across all organizations and all [predefined roles]({{< relref "./concepts/roles.md#predefined-roles" >}}) by default are `global`.
+Assignments can be either _global_ or _organization local_. Global assignments will take an effect across all organizations and all [predefined roles]({{< relref "./concepts/roles.md#predefined-roles" >}}) by default are _global_.
 
-To create or remove `organization local` assignment, you need to:
+To create or remove _organization local_ assignment, you need to:
 1. Be authenticated with the relevant organization
 1. Set `global` to `false` in the relevant API request or in the provisioning file.
 1. You will be able to assign a role only to an organization for which a role has been created.
 
-To create or remove `global` assignment, you need to:
+To create or remove _global_ assignment, you need to:
+1. Ensure the related role is _global_.
 1. Set `global` to `true` in the relevant API request or in the provisioning file.

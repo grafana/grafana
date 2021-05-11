@@ -19,7 +19,7 @@ When evaluating a decision for access, user will be allowed to perform a specifi
 
 ## Scope
 
-`scope` describes where ant action can be performed. For example, you can grant a user access to read a specific user profile, by associating a permission with scope `users:<userId>` to the relevant role.
+`scope` describes where an action can be performed. For example, you can grant a user access to read a specific user profile, by associating a permission with scope `users:<userId>` to the relevant role.
 You can also combine multiple scopes if necessary, by using `/` as a delimiter. Refer to [Managing roles and permissions]({{< relref "../managing-roles-permissions.md" >}}) to learn more about which permissions are used for which resources.
 
 ## Available permissions 

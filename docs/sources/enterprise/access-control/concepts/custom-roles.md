@@ -26,7 +26,7 @@ To manage access to the Grafana resources, you must map permissions to the role.
 
 ## Role UID
 
-Each custom role has a UID defined which is a unique identifier associated with the role allowing you to change or delete the role. You can either generate UID yourself, or let the API generate one for you.
+Each custom role has a unique identifier (UID) defined, which is a unique identifier associated with the role allowing you to change or delete the role. You can either generate UID yourself, or let the API generate one for you.
 See [Permissions]({{< relref "./permissions.md" >}}) for full list of available permissions which you can use for your custom roles.
 
 ## Scope of the role

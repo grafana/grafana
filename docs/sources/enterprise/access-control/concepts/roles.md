@@ -54,7 +54,7 @@ These assignments are called built-in role assignments.
 During startup, Grafana will create default assignments for you. You can update assignments using [Access Control API]({{< relref "../../../http_api/access_control.md" >}}) or using Grafana [Provisioning]({{< relref "../provisioning">}}). 
 When you make any changes to the built-on role assignments, Grafana will take them into account and won’t overwrite during next start.
 
-Currently, the following built-in role assignments are available by default:
+The following built-in role assignments are available by default:
 
 Built-in role | Associated role | Description
 --- | --- | ---
