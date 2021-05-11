@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
-import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType } from '../types';
+import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import { QueryEditorRow } from '.';
 
@@ -35,9 +35,10 @@ export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor
 
 const useOptions = (metricDescriptor?: MetricDescriptor): Array<SelectableValue<string>> => {
   const metricKind = metricDescriptor?.metricKind;
+  const valueType = metricDescriptor?.valueType;
 
   return useMemo(() => {
-    if (metricKind === MetricKind.GAUGE) {
+    if (metricKind === MetricKind.GAUGE || valueType === ValueTypes.DISTRIBUTION) {
       return [NONE_OPTION];
     }
 
@@ -60,5 +61,5 @@ const useOptions = (metricDescriptor?: MetricDescriptor): Array<SelectableValue<
           },
         ]
       : options;
-  }, [metricKind]);
+  }, [metricKind, valueType]);
 };
