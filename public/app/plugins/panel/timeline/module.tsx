@@ -17,44 +17,14 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         },
       },
     },
-    /*
     useCustomConfig: (builder) => {
-      const cfg = defaultBarChartFieldConfig;
-
-      builder
-        .addSliderInput({
-          path: 'lineWidth',
-          name: 'Line width',
-          defaultValue: cfg.lineWidth,
-          settings: {
-            min: 0,
-            max: 10,
-            step: 1,
-          },
-        })
-        .addSliderInput({
-          path: 'fillOpacity',
-          name: 'Fill opacity',
-          defaultValue: cfg.fillOpacity,
-          settings: {
-            min: 0,
-            max: 100,
-            step: 1,
-          },
-        })
-        .addRadio({
-          path: 'gradientMode',
-          name: 'Gradient mode',
-          defaultValue: graphFieldOptions.fillGradient[0].value,
-          settings: {
-            options: graphFieldOptions.fillGradient,
-          },
-        });
-
-      // addAxisConfig(builder, cfg, true);
-      addHideFrom(builder);
+      builder.addBooleanSwitch({
+        path: 'mergeValues',
+        name: 'Merge equal consecutive values',
+        defaultValue: true,
+        //showIf: ({ mode }) => mode === TimelineMode.Spans,
+      });
     },
-    */
   })
   .setPanelOptions((builder) => {
     builder

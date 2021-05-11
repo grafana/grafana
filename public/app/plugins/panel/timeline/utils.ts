@@ -1,12 +1,10 @@
 import React from 'react';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   DataFrame,
   FieldColorModeId,
   FieldConfig,
   formattedValueToString,
   getFieldDisplayName,
-  outerJoinDataFrames,
   classicColors,
   Field,
 } from '@grafana/data';
@@ -36,21 +34,13 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
   return SeriesVisibilityChangeMode.ToggleSelection;
 }
 
-export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
-  return outerJoinDataFrames({
-    frames: data,
-    joinBy: dimFields.x,
-    keep: dimFields.y,
-    keepOriginIndices: true,
-  });
-}
-
 type PrepConfig = (
   opts: PrepConfigOpts<{
     mode: TimelineMode;
     rowHeight: number;
     colWidth?: number;
     showValue: BarValueVisibility;
+    mergeValues?: boolean;
   }>
 ) => UPlotConfigBuilder;
 
