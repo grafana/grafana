@@ -1,12 +1,13 @@
+import { gte, lt } from 'semver';
 import { ElasticQueryBuilder } from '../query_builder';
 import { ElasticsearchQuery } from '../types';
 
 describe('ElasticQueryBuilder', () => {
-  const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 2 });
-  const builder5x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 5 });
-  const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 56 });
-  const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 60 });
-  const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 70 });
+  const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '2.0.0' });
+  const builder5x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '5.0.0' });
+  const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '5.6.0' });
+  const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '6.0.0' });
+  const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.0.0' });
 
   const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
 
@@ -91,7 +92,7 @@ describe('ElasticQueryBuilder', () => {
         const query = builder.build(target, 100, '1000');
         const firstLevel = query.aggs['2'];
 
-        if (builder.esVersion >= 60) {
+        if (gte(builder.esVersion, '6.0.0')) {
           expect(firstLevel.terms.order._key).toBe('asc');
         } else {
           expect(firstLevel.terms.order._term).toBe('asc');
@@ -642,7 +643,7 @@ describe('ElasticQueryBuilder', () => {
         }
 
         function checkSort(order: any, expected: string) {
-          if (builder.esVersion < 60) {
+          if (lt(builder.esVersion, '6.0.0')) {
             expect(order._term).toBe(expected);
             expect(order._key).toBeUndefined();
           } else {
