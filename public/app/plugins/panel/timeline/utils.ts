@@ -2,7 +2,6 @@ import React from 'react';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   DataFrame,
-  FieldColorModeId,
   FieldConfig,
   formattedValueToString,
   getFieldDisplayName,
@@ -74,8 +73,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({
 
   const colorLookup = (seriesIdx: number, valueIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
-    const mode = field.config?.color?.mode;
-    if (mode && field.display && (mode === FieldColorModeId.Thresholds || mode.startsWith('continuous-'))) {
+    if (field.display) {
       const disp = field.display(value); // will apply color modes
       if (disp.color) {
         return disp.color;

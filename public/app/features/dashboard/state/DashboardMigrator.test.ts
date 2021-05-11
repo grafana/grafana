@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
@@ -1066,6 +1066,143 @@ describe('DashboardModel', () => {
       expect(model.templating.list[11].refresh).toBeUndefined();
       expect(model.templating.list[12].refresh).toBeUndefined();
       expect(model.templating.list[13].refresh).toBeUndefined();
+    });
+  });
+
+  describe('when migrating old value mapping model', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            fieldConfig: {
+              defaults: {
+                thresholds: {
+                  mode: 'absolute',
+                  steps: [
+                    {
+                      color: 'green',
+                      value: null,
+                    },
+                    {
+                      color: 'red',
+                      value: 80,
+                    },
+                  ],
+                },
+                mappings: [
+                  {
+                    id: 0,
+                    text: '1',
+                    type: 1,
+                    value: 'up',
+                  },
+                  {
+                    id: 1,
+                    text: 'BAD',
+                    type: 1,
+                    value: 'down',
+                  },
+                  {
+                    from: '0',
+                    id: 2,
+                    text: 'below 30',
+                    to: '30',
+                    type: 2,
+                  },
+                  {
+                    from: '30',
+                    id: 3,
+                    text: '100',
+                    to: '100',
+                    type: 2,
+                  },
+                  {
+                    type: 1,
+                    value: 'null',
+                    text: 'it is null',
+                  },
+                ],
+              },
+              overrides: [
+                {
+                  matcher: { id: 'byName', options: 'D-series' },
+                  properties: [
+                    {
+                      id: 'mappings',
+                      value: [
+                        {
+                          id: 0,
+                          text: 'OverrideText',
+                          type: 1,
+                          value: 'up',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+    });
+
+    it('should migrate value mapping model', () => {
+      expect(model.panels[0].fieldConfig.defaults.mappings).toEqual([
+        {
+          type: MappingType.ValueToText,
+          options: {
+            down: { text: 'BAD', color: undefined },
+            up: { text: '1', color: 'green' },
+          },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: 0,
+            to: 30,
+            result: { text: 'below 30' },
+          },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: 30,
+            to: 100,
+            result: { text: '100', color: 'red' },
+          },
+        },
+        {
+          type: MappingType.SpecialValue,
+          options: {
+            match: 'null',
+            result: { text: 'it is null', color: undefined },
+          },
+        },
+      ]);
+
+      expect(model.panels[0].fieldConfig.overrides).toEqual([
+        {
+          matcher: { id: 'byName', options: 'D-series' },
+          properties: [
+            {
+              id: 'mappings',
+              value: [
+                {
+                  type: MappingType.ValueToText,
+                  options: {
+                    up: { text: 'OverrideText' },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
     });
   });
 

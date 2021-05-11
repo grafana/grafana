@@ -2,7 +2,7 @@ import { merge } from 'lodash';
 import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
-import { MappingType } from '../types';
+import { MappingType, SpecialValueMatch, ValueMapping } from '../types';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { createTheme } from '../themes';
 
@@ -100,11 +100,11 @@ describe('FieldDisplay', () => {
         defaults: {
           mappings: [
             {
-              id: 1,
-              operator: '',
-              text: mapEmptyToText,
-              type: MappingType.ValueToText,
-              value: 'null',
+              type: MappingType.SpecialValue,
+              options: {
+                match: SpecialValueMatch.Null,
+                result: { text: mapEmptyToText },
+              },
             },
           ],
         },
@@ -123,11 +123,11 @@ describe('FieldDisplay', () => {
         overrides: {
           mappings: [
             {
-              id: 1,
-              operator: '',
-              text: mapEmptyToText,
-              type: MappingType.ValueToText,
-              value: 'null',
+              type: MappingType.SpecialValue,
+              options: {
+                match: SpecialValueMatch.Null,
+                result: { text: mapEmptyToText },
+              },
             },
           ],
         },
@@ -152,13 +152,12 @@ describe('FieldDisplay', () => {
 
   describe('Value mapping', () => {
     it('should apply value mapping', () => {
-      const mappingConfig = [
+      const mappingConfig: ValueMapping[] = [
         {
-          id: 1,
-          operator: '',
-          text: 'Value mapped to text',
           type: MappingType.ValueToText,
-          value: '1',
+          options: {
+            '1': { text: 'Value mapped to text' },
+          },
         },
       ];
       const options = createDisplayOptions({
@@ -173,17 +172,17 @@ describe('FieldDisplay', () => {
       const result = getFieldDisplayValues(options);
       expect(result[0].display.text).toEqual('Value mapped to text');
     });
+
     it('should apply range value mapping', () => {
       const mappedValue = 'Range mapped to text';
-      const mappingConfig = [
+      const mappingConfig: ValueMapping[] = [
         {
-          id: 1,
-          operator: '',
-          text: mappedValue,
           type: MappingType.RangeToText,
-          value: 1,
-          from: '1',
-          to: '3',
+          options: {
+            from: 1,
+            to: 3,
+            result: { text: mappedValue },
+          },
         },
       ];
       const options = createDisplayOptions({
