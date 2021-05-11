@@ -153,6 +153,7 @@ function LogsNavigation({
         className={styles.scrollToTopButton}
         variant="secondary"
         onClick={scrollToTopLogs}
+        title="Scroll to top"
       >
         <Icon name="arrow-up" size="lg" />
       </Button>
