@@ -32,6 +32,7 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	client, err := es.NewClient(ctx, dsInfo, *tsdbQuery.TimeRange)
+
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
