@@ -1,10 +1,10 @@
-import React, { Context, createContext, FunctionComponent, useCallback, useContext } from 'react';
+import React, { Context, createContext, PropsWithChildren, useCallback, useContext } from 'react';
 import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
 import { ElasticsearchQuery } from '../../types';
 
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
-import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
+import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
 import { TimeRange } from '@grafana/data';
 
@@ -20,14 +20,14 @@ interface Props {
   range: TimeRange;
 }
 
-export const ElasticsearchProvider: FunctionComponent<Props> = ({
+export const ElasticsearchProvider = ({
   children,
   onChange,
   onRunQuery,
   query,
   datasource,
   range,
-}) => {
+}: PropsWithChildren<Props>) => {
   const onStateChange = useCallback(
     (query: ElasticsearchQuery) => {
       onChange(query);
@@ -40,7 +40,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({
     query: queryReducer,
     alias: aliasPatternReducer,
     metrics: metricsReducer,
-    bucketAggs: bucketAggsReducer,
+    bucketAggs: createBucketAggsReducer(datasource.timeField),
   });
 
   const dispatch = useStatelessReducer(

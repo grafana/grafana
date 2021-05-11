@@ -53,7 +53,7 @@ type InputType string
 const (
 	// InputTypeText will render a text field in the frontend
 	InputTypeText = "text"
-	// InputTypePassword will render a text field in the frontend
+	// InputTypePassword will render a password field in the frontend
 	InputTypePassword = "password"
 )
 

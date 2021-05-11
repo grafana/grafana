@@ -115,7 +115,7 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 // AddMigration defines database migrations.
 // This is an implementation of registry.DatabaseMigrator.
 func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
-	if !g.IsEnabled() {
+	if g == nil || g.Cfg == nil || !g.Cfg.IsLiveConfigEnabled() {
 		return
 	}
 	database.AddLiveChannelMigrations(mg)
@@ -135,11 +135,6 @@ var clientConcurrency = 8
 // Required to implement the registry.Service interface.
 func (g *GrafanaLive) Init() error {
 	logger.Debug("GrafanaLive initialization")
-
-	if !g.IsEnabled() {
-		logger.Debug("GrafanaLive feature not enabled, skipping initialization")
-		return nil
-	}
 
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
@@ -253,17 +248,18 @@ func (g *GrafanaLive) Init() error {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
+		newCtx = livecontext.SetContextStreamID(newCtx, ctx.Params(":streamId"))
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.RouteRegister.Group("/live", func(group routing.RouteRegister) {
+	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
 	}, middleware.ReqSignedIn)
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
-		group.Get("/push", g.pushWebsocketHandler)
+		group.Get("/push/:streamId", g.pushWebsocketHandler)
 	}, middleware.ReqOrgAdmin)
 
 	return nil
@@ -528,14 +524,6 @@ func (g *GrafanaLive) ClientCount(channel string) (int, error) {
 		return 0, err
 	}
 	return len(p.Presence), nil
-}
-
-// IsEnabled returns true if the Grafana Live feature is enabled.
-func (g *GrafanaLive) IsEnabled() bool {
-	if g == nil || g.Cfg == nil {
-		return false
-	}
-	return g.Cfg.IsLiveEnabled()
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
