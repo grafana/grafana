@@ -1,5 +1,5 @@
-import React from 'react';
-import { GrafanaThemeV2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
+import React, { MouseEventHandler } from 'react';
+import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,7 +8,7 @@ interface Props {
   isCurrent: boolean;
   plugin: PanelPluginMeta;
   title: string;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLDivElement>;
   onDelete?: () => void;
   disabled?: boolean;
   showBadge?: boolean;
@@ -24,6 +24,7 @@ export const PanelTypeCard: React.FC<Props> = ({
   disabled,
   showBadge,
   description,
+  children,
 }) => {
   const styles = useStyles2(getStyles);
   const cssClass = cx({
@@ -44,6 +45,7 @@ export const PanelTypeCard: React.FC<Props> = ({
       <div className={styles.itemContent}>
         <div className={styles.name}>{title}</div>
         {description ? <span className={styles.description}>{description}</span> : null}
+        {children}
       </div>
       {showBadge && (
         <div className={cx(styles.badge, disabled && styles.disabled)}>
@@ -57,6 +59,7 @@ export const PanelTypeCard: React.FC<Props> = ({
             e.stopPropagation();
             onDelete();
           }}
+          aria-label="Delete button on panel type card"
         />
       )}
     </div>
@@ -65,7 +68,7 @@ export const PanelTypeCard: React.FC<Props> = ({
 
 PanelTypeCard.displayName = 'PanelTypeCard';
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css`
       position: relative;
@@ -75,12 +78,12 @@ const getStyles = (theme: GrafanaThemeV2) => {
       background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius()};
       box-shadow: ${theme.shadows.z1};
+      border: 1px solid ${theme.colors.background.secondary};
       align-items: center;
       padding: 8px;
       width: 100%;
       position: relative;
       overflow: hidden;
-      height: 55px;
       transition: ${theme.transitions.create(['background'], {
         duration: theme.transitions.duration.short,
       })};
@@ -92,10 +95,15 @@ const getStyles = (theme: GrafanaThemeV2) => {
     itemContent: css`
       position: relative;
       width: 100%;
+      padding: ${theme.spacing(0, 1)};
     `,
     current: css`
       label: currentVisualizationItem;
+<<<<<<< HEAD
       border: 1px solid ${theme.colors.primary.border};
+=======
+      background: ${theme.colors.action.selected};
+>>>>>>> main
     `,
     disabled: css`
       opacity: 0.2;
@@ -109,16 +117,15 @@ const getStyles = (theme: GrafanaThemeV2) => {
       white-space: nowrap;
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
-      padding: 0 10px;
       width: 100%;
     `,
     description: css`
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
+      color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.fontWeightLight};
-      padding: 0 ${theme.spacing(1.25)};
       width: 100%;
     `,
     img: css`

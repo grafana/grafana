@@ -6,11 +6,12 @@ import {
   AxisPlacement,
   DrawStyle,
   PointVisibility,
-  ScaleDistribution,
   ScaleOrientation,
   ScaleDirection,
+  GraphTresholdsStyleMode,
 } from '../config';
-import { createTheme } from '@grafana/data';
+import { createTheme, ThresholdsMode } from '@grafana/data';
+import { ScaleDistribution } from '../models.gen';
 
 describe('UPlotConfigBuilder', () => {
   const darkTheme = createTheme();
@@ -656,6 +657,39 @@ describe('UPlotConfigBuilder', () => {
           "tzDate": [Function],
         }
       `);
+    });
+  });
+
+  describe('Thresholds', () => {
+    it('Only adds one threshold per scale', () => {
+      const builder = new UPlotConfigBuilder();
+      const addHookFn = jest.fn();
+      builder.addHook = addHookFn;
+
+      builder.addThresholds({
+        scaleKey: 'A',
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [],
+        },
+        config: {
+          mode: GraphTresholdsStyleMode.Area,
+        },
+        theme: darkTheme,
+      });
+      builder.addThresholds({
+        scaleKey: 'A',
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [],
+        },
+        config: {
+          mode: GraphTresholdsStyleMode.Area,
+        },
+        theme: darkTheme,
+      });
+
+      expect(addHookFn).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -5,7 +5,7 @@ import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/t
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
-  GrafanaAlertState,
+  GrafanaAlertStateDecision,
   GrafanaQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
@@ -16,6 +16,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
+import { parseInterval } from './time';
 
 export const defaultFormValues: RuleFormValues = Object.freeze({
   name: '',
@@ -27,8 +28,8 @@ export const defaultFormValues: RuleFormValues = Object.freeze({
   folder: null,
   queries: [],
   condition: '',
-  noDataState: GrafanaAlertState.NoData,
-  execErrState: GrafanaAlertState.Alerting,
+  noDataState: GrafanaAlertStateDecision.NoData,
+  execErrState: GrafanaAlertStateDecision.Alerting,
   evaluateEvery: '1m',
   evaluateFor: '5m',
 
@@ -49,14 +50,6 @@ export function formValuesToRulerAlertingRuleDTO(values: RuleFormValues): RulerA
     labels: arrayToRecord(values.labels || []),
     expr: expression,
   };
-}
-
-function parseInterval(value: string): [number, string] {
-  const match = value.match(/(\d+)(\w+)/);
-  if (match) {
-    return [Number(match[1]), match[2]];
-  }
-  throw new Error(`Invalid interval description: ${value}`);
 }
 
 function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Array<{ key: string; value: string }> {

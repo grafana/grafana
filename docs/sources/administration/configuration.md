@@ -329,6 +329,10 @@ Set to `true` to log the sql calls and execution times.
 For Postgres, use either `disable`, `require` or `verify-full`.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
+### isolation_level
+
+Only the MySQL driver supports isolation levels in Grafana. In case the value is empty, the driver's default isolation level is applied. Available options are "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
+
 ### ca_cert_path
 
 The path to the CA certificate to use. On many Linux systems, certs can be found in `/etc/ssl/certs`.
@@ -1021,6 +1025,10 @@ Limit the number of data sources allowed per organization. Default is 10.
 
 Limit the number of API keys that can be entered per organization. Default is 10.
 
+### org_alert_rule
+
+Limit the number of alert rules that can be entered per organization. Default is 100.
+
 ### user_org
 
 Limit the number of organizations a user can create. Default is 10.
@@ -1044,6 +1052,10 @@ Sets global limit of API keys that can be entered. Default is -1 (unlimited).
 ### global_session
 
 Sets a global limit on number of users that can be logged in at one time. Default is -1 (unlimited).
+
+### global_alert_rule
+
+Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
 <hr>
 

@@ -34,7 +34,7 @@ export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
 };
 
 /** @internal */
-export function preparePlotData(frame: DataFrame, keepFieldTypes?: FieldType[]): AlignedData {
+export function preparePlotData(frame: DataFrame): AlignedData {
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
   let seriesIndex = 0;
@@ -54,10 +54,6 @@ export function preparePlotData(frame: DataFrame, keepFieldTypes?: FieldType[]):
       }
       result.push(f.values.toArray());
       seriesIndex++;
-      continue;
-    }
-
-    if (keepFieldTypes && keepFieldTypes.indexOf(f.type) < 0) {
       continue;
     }
 
@@ -96,7 +92,7 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
   if (
     customConfig.stacking?.mode !== StackingMode.None &&
     customConfig.stacking?.group &&
-    !customConfig.hideFrom?.graph
+    !customConfig.hideFrom?.viz
   ) {
     if (!groups.has(customConfig.stacking.group)) {
       groups.set(customConfig.stacking.group, [seriesIdx]);
@@ -104,6 +100,57 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
       groups.set(customConfig.stacking.group, groups.get(customConfig.stacking.group)!.concat(seriesIdx));
     }
   }
+}
+
+/**
+ * Finds y axis midpoind for point at given idx (css pixels relative to uPlot canvas)
+ * @internal
+ **/
+
+export function findMidPointYPosition(u: uPlot, idx: number) {
+  let y;
+  let sMaxIdx = 1;
+  let sMinIdx = 1;
+  // assume min/max being values of 1st series
+  let max = u.data[1][idx];
+  let min = u.data[1][idx];
+
+  // find min max values AND ids of the corresponding series to get the scales
+  for (let i = 1; i < u.data.length; i++) {
+    const sData = u.data[i];
+    const sVal = sData[idx];
+    if (sVal !== null) {
+      if (max === null) {
+        max = sVal;
+      } else {
+        if (sVal > max) {
+          max = u.data[i][idx];
+          sMaxIdx = i;
+        }
+      }
+      if (min === null) {
+        min = sVal;
+      } else {
+        if (sVal < min) {
+          min = u.data[i][idx];
+          sMinIdx = i;
+        }
+      }
+    }
+  }
+
+  if (min === null && max === null) {
+    // no tooltip to show
+    y = undefined;
+  } else if (min !== null && max !== null) {
+    // find median position
+    y = (u.valToPos(min, u.series[sMinIdx].scale!) + u.valToPos(max, u.series[sMaxIdx].scale!)) / 2;
+  } else {
+    // snap tooltip to min OR max point, one of thos is not null :)
+    y = u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
+  }
+
+  return y;
 }
 
 // Dev helpers

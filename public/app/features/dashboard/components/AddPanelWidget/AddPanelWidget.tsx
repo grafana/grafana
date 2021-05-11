@@ -12,7 +12,7 @@ import store from 'app/core/store';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LibraryPanelDTO } from '../../../library-panels/types';
+import { LibraryElementDTO } from '../../../library-panels/types';
 import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
 import {
   LibraryPanelsSearch,
@@ -72,7 +72,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     const { gridPos } = panel;
 
     const newPanel: Partial<PanelModel> = {
-      type: 'graph',
+      type: 'timeseries',
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
@@ -108,7 +108,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     dashboard.removePanel(panel);
   };
 
-  const onAddLibraryPanel = (panelInfo: LibraryPanelDTO) => {
+  const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
     const newPanel: PanelModel = {
@@ -141,12 +141,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
-        <LibraryPanelsSearch
-          onClick={onAddLibraryPanel}
-          perPage={40}
-          variant={LibraryPanelsSearchVariant.Tight}
-          showFilter
-        />
+        <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>

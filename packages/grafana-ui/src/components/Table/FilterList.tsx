@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Checkbox, Input, Label, VerticalGroup } from '..';
@@ -78,7 +78,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   filterList: css`
     label: filterList;
   `,

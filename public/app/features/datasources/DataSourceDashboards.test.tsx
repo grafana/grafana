@@ -11,7 +11,7 @@ const setup = (propOverrides?: object) => {
     navModel: {} as NavModel,
     dashboards: [] as PluginDashboard[],
     dataSource: {} as DataSourceSettings,
-    dataSourceId: 1,
+    dataSourceId: 'x',
     importDashboard: jest.fn(),
     loadDataSource: jest.fn(),
     loadPluginDashboards: jest.fn(),

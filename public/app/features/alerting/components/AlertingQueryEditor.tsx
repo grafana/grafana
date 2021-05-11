@@ -1,6 +1,13 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataQuery, GrafanaTheme, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  getDefaultRelativeTimeRange,
+  GrafanaTheme2,
+  LoadingState,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config } from '@grafana/runtime';
@@ -27,7 +34,6 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-
     this.state = { panelDataByRefId: {} };
     this.runner = new AlertingQueryRunner();
   }
@@ -53,7 +59,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   onDuplicateQuery = (query: GrafanaQuery) => {
     const { onChange, value = [] } = this.props;
-    onChange([...value, query]);
+    onChange(addQuery(value, query));
   };
 
   onNewAlertingQuery = () => {
@@ -120,13 +126,13 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   isRunning() {
-    const data = Object.values(this.state.panelDataByRefId).find((d) => !!d);
+    const data = Object.values(this.state.panelDataByRefId).find((d) => Boolean(d));
     return data?.state === LoadingState.Loading;
   }
 
   renderRunQueryButton() {
     const isRunning = this.isRunning();
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     if (isRunning) {
       return (
@@ -150,7 +156,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   render() {
     const { value = [] } = this.props;
     const { panelDataByRefId } = this.state;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     return (
       <div className={styles.container}>
@@ -194,28 +200,24 @@ const defaultTimeRange = (model: DataQuery): RelativeTimeRange | undefined => {
     return;
   }
 
-  return {
-    from: 21600,
-    to: 0,
-  };
+  return getDefaultRelativeTimeRange();
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
-      background-color: ${theme.colors.panelBg};
-      width: ${theme.breakpoints.lg};
+      background-color: ${theme.colors.background.primary};
       height: 100%;
     `,
     runWrapper: css`
-      margin-top: ${theme.spacing.md};
+      margin-top: ${theme.spacing(1)};
     `,
     editorWrapper: css`
-      border: 1px solid ${theme.colors.panelBorder};
-      border-radius: ${theme.border.radius.md};
+      border: 1px solid ${theme.colors.border.medium};
+      border-radius: ${theme.shape.borderRadius()};
     `,
     expressionButton: css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(0.5)};
     `,
   };
 });

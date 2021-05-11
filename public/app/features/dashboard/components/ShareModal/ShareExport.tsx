@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
 import { saveAs } from 'file-saver';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { appEvents } from 'app/core/core';
 import { ShowModalReactEvent } from 'app/types/events';
 import { ViewJsonModal } from './ViewJsonModal';
+import { config } from '@grafana/runtime';
 
 interface Props {
   dashboard: DashboardModel;
@@ -15,6 +17,7 @@ interface Props {
 
 interface State {
   shareExternally: boolean;
+  trimDefaults: boolean;
 }
 
 export class ShareExport extends PureComponent<Props, State> {
@@ -24,6 +27,7 @@ export class ShareExport extends PureComponent<Props, State> {
     super(props);
     this.state = {
       shareExternally: false,
+      trimDefaults: false,
     };
 
     this.exporter = new DashboardExporter();
@@ -35,29 +39,69 @@ export class ShareExport extends PureComponent<Props, State> {
     });
   };
 
+  onTrimDefaultsChange = () => {
+    this.setState({
+      trimDefaults: !this.state.trimDefaults,
+    });
+  };
+
   onSaveAsFile = () => {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
+    const { trimDefaults } = this.state;
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        this.openSaveAsDialog(dashboardJson);
+        if (trimDefaults) {
+          getBackendSrv()
+            .post('/api/dashboards/trim', { dashboard: dashboardJson })
+            .then((resp: any) => {
+              this.openSaveAsDialog(resp.dashboard);
+            });
+        } else {
+          this.openSaveAsDialog(dashboardJson);
+        }
       });
     } else {
-      this.openSaveAsDialog(dashboard.getSaveModelClone());
+      if (trimDefaults) {
+        getBackendSrv()
+          .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
+          .then((resp: any) => {
+            this.openSaveAsDialog(resp.dashboard);
+          });
+      } else {
+        this.openSaveAsDialog(dashboard.getSaveModelClone());
+      }
     }
   };
 
   onViewJson = () => {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
+    const { trimDefaults } = this.state;
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
-        this.openJsonModal(dashboardJson);
+        if (trimDefaults) {
+          getBackendSrv()
+            .post('/api/dashboards/trim', { dashboard: dashboardJson })
+            .then((resp: any) => {
+              this.openJsonModal(resp.dashboard);
+            });
+        } else {
+          this.openJsonModal(dashboardJson);
+        }
       });
     } else {
-      this.openJsonModal(dashboard.getSaveModelClone());
+      if (trimDefaults) {
+        getBackendSrv()
+          .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
+          .then((resp: any) => {
+            this.openJsonModal(resp.dashboard);
+          });
+      } else {
+        this.openJsonModal(dashboard.getSaveModelClone());
+      }
     }
   };
 
@@ -86,6 +130,7 @@ export class ShareExport extends PureComponent<Props, State> {
   render() {
     const { onDismiss } = this.props;
     const { shareExternally } = this.state;
+    const { trimDefaults } = this.state;
 
     return (
       <>
@@ -93,6 +138,11 @@ export class ShareExport extends PureComponent<Props, State> {
         <Field label="Export for sharing externally">
           <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
         </Field>
+        {config.featureToggles.trimDefaults && (
+          <Field label="Export with trimed dashboard json">
+            <Switch value={trimDefaults} onChange={this.onTrimDefaultsChange} />
+          </Field>
+        )}
         <Modal.ButtonRow>
           <Button variant="secondary" onClick={onDismiss} fill="outline">
             Cancel

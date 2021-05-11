@@ -114,6 +114,13 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
+  onDuplicateQuery = (query: DataQuery, source: GrafanaQuery): void => {
+    this.props.onDuplicateQuery({
+      ...source,
+      model: query,
+    });
+  };
+
   getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
@@ -137,18 +144,18 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
                   return (
                     <AlertingQueryWrapper
-                      key={`${query.refId}-${index}`}
-                      data={data}
-                      dsSettings={dsSettings}
                       index={index}
+                      key={`${query.refId}-${index}`}
+                      dsSettings={dsSettings}
+                      data={data}
                       query={query}
+                      onChangeTimeRange={(timeRange) => this.onChangeTimeRange(timeRange, index)}
+                      onRemoveQuery={this.onRemoveQuery}
                       queries={queries}
                       onChangeDataSource={this.onChangeDataSource}
                       onDuplicateQuery={onDuplicateQuery}
                       onRunQueries={onRunQueries}
-                      onChangeTimeRange={this.onChangeTimeRange}
                       onChangeQuery={this.onChangeQuery}
-                      onRemoveQuery={this.onRemoveQuery}
                     />
                   );
                 })}

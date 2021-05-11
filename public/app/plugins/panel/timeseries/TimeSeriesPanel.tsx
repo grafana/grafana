@@ -1,9 +1,7 @@
-import { Field, PanelProps } from '@grafana/data';
-import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { TooltipDisplayMode, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import React, { useCallback } from 'react';
-import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
-import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
+import React from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
@@ -13,33 +11,20 @@ interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
 export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
+  id,
   timeRange,
   timeZone,
   width,
   height,
   options,
-  fieldConfig,
   onChangeTimeRange,
-  onFieldConfigChange,
   replaceVariables,
 }) => {
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
-    },
-    [fieldConfig, onFieldConfigChange, data.series]
-  );
-
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
 
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
+  const { sync } = usePanelContext();
 
   if (!data || !data.series?.length) {
     return (
@@ -50,16 +35,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   }
 
   return (
-    <GraphNG
-      data={data.series}
+    <TimeSeries
+      frames={data.series}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
       height={height}
       legend={options.legend}
-      onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
     >
       {(config, alignedDataFrame) => {
         return (
@@ -68,7 +51,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             <TooltipPlugin
               data={alignedDataFrame}
               config={config}
-              mode={options.tooltipOptions.mode}
+              mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltipOptions.mode}
               timeZone={timeZone}
             />
             <ContextMenuPlugin
@@ -92,6 +75,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
           </>
         );
       }}
-    </GraphNG>
+    </TimeSeries>
   );
 };

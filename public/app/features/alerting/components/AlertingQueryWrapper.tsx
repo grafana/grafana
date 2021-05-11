@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { DataQuery, DataSourceInstanceSettings, GrafanaThemeV2, PanelData, rangeUtil, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, TimeRange } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { QueryEditorRow } from '../../query/components/QueryEditorRow';
 import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
@@ -14,7 +14,7 @@ interface Props {
   dsSettings: DataSourceInstanceSettings;
   onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
   onChangeQuery: (query: DataQuery, index: number) => void;
-  onChangeTimeRange: (timeRange: TimeRange, index: number) => void;
+  onChangeTimeRange?: (timeRange: TimeRange, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onDuplicateQuery: (query: GrafanaQuery) => void;
   onRunQueries: () => void;
@@ -51,7 +51,9 @@ export const AlertingQueryWrapper: FC<Props> = ({
         timeRange={
           !isExpression && query.relativeTimeRange ? rangeUtil.relativeToTimeRange(query.relativeTimeRange) : undefined
         }
-        onChangeTimeRange={!isExpression ? (timeRange) => onChangeTimeRange(timeRange, index) : undefined}
+        onChangeTimeRange={
+          !isExpression && onChangeTimeRange ? (timeRange) => onChangeTimeRange(timeRange, index) : undefined
+        }
         onRemoveQuery={onRemoveQuery}
         onAddQuery={onDuplicateQuery}
         onRunQuery={onRunQueries}
@@ -62,7 +64,7 @@ export const AlertingQueryWrapper: FC<Props> = ({
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.medium};

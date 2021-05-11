@@ -20,7 +20,7 @@ export class TestInfoTab extends PureComponent<Props> {
         <br />
         <LinkButton
           variant="secondary"
-          href="https://github.com/grafana/grafana/tree/master/devenv"
+          href="https://github.com/grafana/grafana/tree/main/devenv"
           target="_blank"
           rel="noopener noreferrer"
         >

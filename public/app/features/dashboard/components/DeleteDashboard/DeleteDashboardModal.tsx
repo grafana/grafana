@@ -64,7 +64,6 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
     icon="trash-alt"
     onDismiss={hideModal}
     className={css`
-      text-align: center;
       width: 500px;
     `}
   >
@@ -89,7 +88,7 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
       File path: {provisionedId}
     </p>
     <Modal.ButtonRow>
-      <Button variant="secondary" onClick={hideModal}>
+      <Button variant="primary" onClick={hideModal}>
         OK
       </Button>
     </Modal.ButtonRow>

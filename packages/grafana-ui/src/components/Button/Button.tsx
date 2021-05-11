@@ -3,7 +3,7 @@ import { css, CSSObject, cx } from '@emotion/css';
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
-import { colorManipulator, GrafanaThemeV2, ThemeRichColor } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 import { ComponentSize } from '../../types/size';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
@@ -105,7 +105,7 @@ export interface StyleProps {
   variant: ButtonVariant;
   fill?: ButtonFill;
   iconOnly?: boolean;
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
   fullWidth?: boolean;
   narrow?: boolean;
 }
@@ -163,7 +163,7 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
   if (fill === 'outline') {
     return {
       background: 'transparent',
@@ -218,7 +218,7 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemeRichColor, fi
   };
 }
 
-function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant, fill: ButtonFill) {
+function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
     boxShadow: 'none',
@@ -250,7 +250,7 @@ function getPropertiesForDisabled(theme: GrafanaThemeV2, variant: ButtonVariant,
   };
 }
 
-export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVariant, fill: ButtonFill) {
+export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   const buttonVariant = variant === 'link' ? 'primary' : variant;
   const buttonFill = variant === 'link' ? 'text' : fill;
 

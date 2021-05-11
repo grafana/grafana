@@ -1,12 +1,16 @@
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import React, { FC } from 'react';
-import { config } from '@grafana/runtime';
+import { makeAMLink } from '../../utils/misc';
 
-export const NoSilencesSplash: FC = () => (
+type Props = {
+  alertManagerSourceName: string;
+};
+
+export const NoSilencesSplash: FC<Props> = ({ alertManagerSourceName }) => (
   <EmptyListCTA
     title="You haven't created any silences yet"
     buttonIcon="bell-slash"
-    buttonLink={`${config.appSubUrl ?? ''}alerting/silences/new`}
+    buttonLink={makeAMLink('alerting/silence/new', alertManagerSourceName)}
     buttonTitle="New silence"
   />
 );
