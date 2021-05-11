@@ -26,11 +26,14 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const searchRef = useRef<HTMLInputElement | null>(null);
 
   const onPluginTypeChange = useCallback(
-    (meta: PanelPluginMeta) => {
-      if (meta.id === plugin.meta.id) {
-        dispatch(toggleVizPicker(false));
-      } else {
+    (meta: PanelPluginMeta, withModKey: boolean) => {
+      if (meta.id !== plugin.meta.id) {
         dispatch(changePanelPlugin(panel, meta.id));
+      }
+
+      // close viz picker unless a mod key is pressed while clicking
+      if (!withModKey) {
+        dispatch(toggleVizPicker(false));
       }
     },
     [dispatch, panel, plugin.meta.id]
@@ -53,8 +56,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         const query = e.currentTarget.value;
         const plugins = getAllPanelPluginMeta();
         const match = filterPluginList(plugins, query, plugin.meta);
+
         if (match && match.length) {
-          onPluginTypeChange(match[0]);
+          onPluginTypeChange(match[0], true);
         }
       }
     },
@@ -63,7 +67,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const suffix =
     searchQuery !== '' ? (
-      <Button icon="times" variant="link" size="sm" onClick={() => setSearchQuery('')}>
+      <Button icon="times" fill="text" size="sm" onClick={() => setSearchQuery('')}>
         Clear
       </Button>
     ) : null;
@@ -74,7 +78,11 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const radioOptions: Array<SelectableValue<ListMode>> = [
     { label: 'Visualizations', value: ListMode.Visualizations },
-    { label: 'Global panels', value: ListMode.Globals },
+    {
+      label: 'Library panels',
+      value: ListMode.LibraryPanels,
+      description: 'Reusable panels you can share between multiple dashboards.',
+    },
   ];
 
   return (
@@ -116,7 +124,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === ListMode.Globals && (
+            {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
@@ -128,7 +136,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
 enum ListMode {
   Visualizations,
-  Globals,
+  LibraryPanels,
 }
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';

@@ -1,5 +1,5 @@
 import React from 'react';
-import debounce from 'lodash/debounce';
+import { debounce } from 'lodash';
 import { css } from '@emotion/css';
 import { GrafanaTheme, DataFrame, CSVConfig, readCSV } from '@grafana/data';
 import { Icon } from '../Icon/Icon';

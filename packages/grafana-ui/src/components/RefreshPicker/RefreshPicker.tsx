@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
@@ -68,16 +67,15 @@ export class RefreshPicker extends PureComponent<Props> {
     return (
       <div className="refresh-picker">
         <ButtonGroup className="refresh-picker-buttons">
-          <Tooltip placement="bottom" content={tooltip!}>
-            <ToolbarButton
-              onClick={onRefresh}
-              variant={variant}
-              icon={isLoading ? 'fa fa-spinner' : 'sync'}
-              aria-label={selectors.components.RefreshPicker.runButton}
-            >
-              {text}
-            </ToolbarButton>
-          </Tooltip>
+          <ToolbarButton
+            tooltip={tooltip}
+            onClick={onRefresh}
+            variant={variant}
+            icon={isLoading ? 'fa fa-spinner' : 'sync'}
+            aria-label={selectors.components.RefreshPicker.runButton}
+          >
+            {text}
+          </ToolbarButton>
           {!noIntervalPicker && (
             <ButtonSelect
               value={selectedValue}

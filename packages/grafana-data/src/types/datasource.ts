@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
-import { AnnotationEvent, AnnotationSupport } from './annotations';
+import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
 import { DataTopic, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
@@ -170,7 +170,8 @@ export interface DataSourceConstructor<
  */
 abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TQueryImportConfiguration extends Record<string, object> = {}
 > {
   /**
    *  Set in constructor
@@ -208,7 +209,12 @@ abstract class DataSourceApi<
   /**
    * Imports queries from a different datasource
    */
-  importQueries?(queries: TQuery[], originMeta: PluginMeta): Promise<TQuery[]>;
+  async importQueries?(queries: DataQuery[], originDataSource: DataSourceApi): Promise<TQuery[]>;
+
+  /**
+   * Returns configuration for importing queries from other data sources
+   */
+  getImportQueryConfiguration?(): TQueryImportConfiguration;
 
   /**
    * Initializes a datasource after instantiation
@@ -540,6 +546,7 @@ export interface DataSourceJsonData {
  */
 export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJsonData, S = {}> {
   id: number;
+  uid: string;
   orgId: number;
   name: string;
   typeLogoUrl: string;
@@ -609,11 +616,7 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
   rangeRaw: RawTimeRange;
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
-  annotation: {
-    datasource: string;
-    enable: boolean;
-    name: string;
-  } & MoreOptions;
+  annotation: AnnotationQuery;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
@@ -621,7 +624,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
 }
 
-export abstract class LanguageProvider {
+abstract class LanguageProvider {
   abstract datasource: DataSourceApi<any, any>;
   abstract request: (url: string, params?: any) => Promise<any>;
 
@@ -632,6 +635,10 @@ export abstract class LanguageProvider {
   abstract start: () => Promise<Array<Promise<any>>>;
   startTask?: Promise<any[]>;
 }
+
+//@ts-ignore
+LanguageProvider = makeClassES5Compatible(LanguageProvider);
+export { LanguageProvider };
 
 //@ts-ignore
 DataSourceApi = makeClassES5Compatible(DataSourceApi);

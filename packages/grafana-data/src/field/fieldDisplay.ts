@@ -1,5 +1,4 @@
-import toString from 'lodash/toString';
-import isEmpty from 'lodash/isEmpty';
+import { toString, isEmpty } from 'lodash';
 
 import { getDisplayProcessor } from './displayProcessor';
 import {
@@ -16,7 +15,7 @@ import {
   TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
-import { GrafanaTheme } from '../types/theme';
+import { GrafanaTheme2 } from '../themes';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
@@ -72,7 +71,7 @@ export interface GetFieldDisplayValuesOptions {
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   timeZone?: TimeZone;
 }
 

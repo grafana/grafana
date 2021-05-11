@@ -14,6 +14,9 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
 
   const nsMap: { [key: string]: RuleNamespace } = {};
   response.data.data.groups.forEach((group) => {
+    group.rules.forEach((rule) => {
+      rule.query = rule.query || ''; // @TODO temp fix, backend response ism issing query. remove once it's there
+    });
     if (!nsMap[group.file]) {
       nsMap[group.file] = {
         dataSourceName,

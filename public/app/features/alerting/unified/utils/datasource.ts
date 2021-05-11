@@ -51,6 +51,12 @@ export function isCloudRulesSource(rulesSource: RulesSource | string): rulesSour
   return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
 
+export function isGrafanaRulesSource(
+  rulesSource: RulesSource | string
+): rulesSource is typeof GRAFANA_RULES_SOURCE_NAME {
+  return rulesSource === GRAFANA_RULES_SOURCE_NAME;
+}
+
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
 }

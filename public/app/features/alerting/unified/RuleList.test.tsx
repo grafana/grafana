@@ -14,11 +14,14 @@ import {
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  MockDataSourceSrv,
 } from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import userEvent from '@testing-library/user-event';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { Router } from 'react-router-dom';
 
 jest.mock('./api/prometheus');
 jest.mock('./utils/config');
@@ -36,7 +39,9 @@ const renderRuleList = () => {
 
   return render(
     <Provider store={store}>
-      <RuleList />
+      <Router history={locationService.getHistory()}>
+        <RuleList />
+      </Router>
     </Provider>
   );
 };
@@ -66,10 +71,15 @@ const ui = {
 };
 
 describe('RuleList', () => {
-  afterEach(() => jest.resetAllMocks());
+  afterEach(() => {
+    jest.resetAllMocks();
+    setDataSourceSrv(undefined as any);
+  });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
+
+    setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === dataSources.prom.name) {
@@ -113,11 +123,16 @@ describe('RuleList', () => {
       } else if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         return Promise.resolve([
           mockPromRuleNamespace({
-            name: '',
+            name: 'foofolder',
             dataSourceName: GRAFANA_RULES_SOURCE_NAME,
             groups: [
               mockPromRuleGroup({
                 name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
               }),
             ],
           }),
@@ -132,7 +147,7 @@ describe('RuleList', () => {
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(5);
 
-    expect(groups[0]).toHaveTextContent('grafana-group');
+    expect(groups[0]).toHaveTextContent('foofolder');
     expect(groups[1]).toHaveTextContent('default > group-1');
     expect(groups[2]).toHaveTextContent('default > group-1');
     expect(groups[3]).toHaveTextContent('default > group-2');
@@ -145,6 +160,7 @@ describe('RuleList', () => {
 
   it('expand rule group, rule and alert details', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         return Promise.resolve([]);

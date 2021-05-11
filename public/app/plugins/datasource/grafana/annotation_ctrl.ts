@@ -7,11 +7,13 @@ export const annotationTypes: Array<SelectableValue<GrafanaAnnotationType>> = [
 ];
 
 export class GrafanaAnnotationsQueryCtrl {
-  annotation: any;
+  declare annotation: any;
 
   types = annotationTypes;
 
-  constructor() {
+  /** @ngInject */
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation;
     this.annotation.type = this.annotation.type || GrafanaAnnotationType.Tags;
     this.annotation.limit = this.annotation.limit || 100;
   }

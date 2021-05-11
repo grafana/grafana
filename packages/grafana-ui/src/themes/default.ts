@@ -43,7 +43,7 @@ const theme: GrafanaThemeCommons = {
   typography: {
     fontFamily: {
       sansSerif: "'Roboto', 'Helvetica Neue', Arial, sans-serif",
-      monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
+      monospace: "'Roboto Mono', monospace",
     },
     size: {
       base: '14px',
@@ -64,7 +64,7 @@ const theme: GrafanaThemeCommons = {
       light: 300,
       regular: 400,
       semibold: 500,
-      bold: 600,
+      bold: 500,
     },
     lineHeight: {
       xs: 1,

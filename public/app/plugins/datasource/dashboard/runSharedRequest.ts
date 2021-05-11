@@ -33,7 +33,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
       return undefined;
     }
 
-    const listenToPanel = dashboard.getPanelById(listenToPanelId);
+    const listenToPanel = dashboard?.getPanelById(listenToPanelId);
 
     if (!listenToPanel) {
       subscriber.next(getQueryError('Unknown Panel: ' + listenToPanelId));

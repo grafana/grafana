@@ -36,7 +36,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
 
@@ -168,7 +168,7 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any [plugins](https://grafana.com/docs/grafana/latest/plugins/installation/) here.
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../plugins/installation.md" >}}).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
@@ -328,6 +328,10 @@ Set to `true` to log the sql calls and execution times.
 
 For Postgres, use either `disable`, `require` or `verify-full`.
 For MySQL, use either `true`, `false`, or `skip-verify`.
+
+### isolation_level
+
+Only the MySQL driver supports isolation levels in Grafana. In case the value is empty, the driver's default isolation level is applied. Available options are "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
 
 ### ca_cert_path
 
@@ -625,6 +629,10 @@ Text used as placeholder text on login page for password input.
 ### default_theme
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
+
+### home_page
+
+Path to a custom home page. Users are only redirected to this if the default home dashboard is used. It should match a frontend route and contain a leading slash.
 
 ### External user management
 
@@ -1017,6 +1025,10 @@ Limit the number of data sources allowed per organization. Default is 10.
 
 Limit the number of API keys that can be entered per organization. Default is 10.
 
+### org_alert_rule
+
+Limit the number of alert rules that can be entered per organization. Default is 100.
+
 ### user_org
 
 Limit the number of organizations a user can create. Default is 10.
@@ -1040,6 +1052,10 @@ Sets global limit of API keys that can be entered. Default is -1 (unlimited).
 ### global_session
 
 Sets a global limit on number of users that can be logged in at one time. Default is -1 (unlimited).
+
+### global_alert_rule
+
+Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
 <hr>
 

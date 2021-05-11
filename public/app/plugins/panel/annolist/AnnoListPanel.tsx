@@ -56,8 +56,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
   async doSearch() {
     // http://docs.grafana.org/http_api/annotations/
-    // https://github.com/grafana/grafana/blob/master/public/app/core/services/backend_srv.ts
-    // https://github.com/grafana/grafana/blob/master/public/app/features/annotations/annotations_srv.ts
+    // https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts
+    // https://github.com/grafana/grafana/blob/main/public/app/features/annotations/annotations_srv.ts
 
     const { options } = this.props;
     const { queryUser, queryTags } = this.state;
@@ -69,7 +69,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     };
 
     if (options.onlyFromThisDashboard) {
-      params.dashboardId = getDashboardSrv().getCurrent().id;
+      params.dashboardId = getDashboardSrv().getCurrent()?.id;
     }
 
     let timeInfo = '';
@@ -120,7 +120,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.viewPanel = anno.panelId;
     }
 
-    if (current.id === anno.dashboardId) {
+    if (current?.id === anno.dashboardId) {
       getLocationSrv().update({
         query: params,
         partial: true,
@@ -188,6 +188,9 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   renderItem = (anno: AnnotationEvent, index: number): JSX.Element => {
     const { options } = this.props;
     const dashboard = getDashboardSrv().getCurrent();
+    if (!dashboard) {
+      return <></>;
+    }
 
     return (
       <AnnotationListItem

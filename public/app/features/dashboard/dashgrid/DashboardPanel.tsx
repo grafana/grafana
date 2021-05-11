@@ -15,6 +15,8 @@ import { initDashboardPanel } from '../state/actions';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
+import { css } from 'emotion';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -111,6 +113,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   render() {
     const { isViewing, plugin } = this.props;
     const { isLazy } = this.state;
+    const styles = getStyles();
 
     // If we have not loaded plugin exports yet, wait
     if (!plugin) {
@@ -122,13 +125,27 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
-    const panelWrapperClass = classNames({
-      'panel-wrapper': true,
-      'panel-wrapper--view': isViewing,
-    });
-
-    return <div className={panelWrapperClass}>{this.renderPanel(plugin)}</div>;
+    return (
+      <div
+        className={isViewing === true ? classNames(styles.panelWrapper, styles.panelWrapperView) : styles.panelWrapper}
+      >
+        {this.renderPanel(plugin)}
+      </div>
+    );
   }
 }
+
+export const getStyles = stylesFactory(() => {
+  return {
+    panelWrapper: css`
+      height: 100%;
+      position: relative;
+    `,
+    panelWrapperView: css`
+      flex: 1 1 0;
+      height: 90%;
+    `,
+  };
+});
 
 export const DashboardPanel = connector(DashboardPanelUnconnected);

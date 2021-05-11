@@ -4,7 +4,6 @@ const merge = require('webpack-merge');
 const TerserPlugin = require('terser-webpack-plugin');
 const common = require('./webpack.common.js');
 const path = require('path');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
@@ -50,20 +49,6 @@ module.exports = merge(common, {
     ],
   },
   plugins: [
-    new ForkTsCheckerWebpackPlugin({
-      eslint: {
-        enabled: true,
-        files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
-      },
-      typescript: {
-        mode: 'write-references',
-        memoryLimit: 4096,
-        diagnosticOptions: {
-          semantic: true,
-          syntactic: true,
-        },
-      },
-    }),
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[hash].css',
     }),

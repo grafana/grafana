@@ -19,6 +19,7 @@ export const ThemedDocsContainer: React.FC<Props> = ({ children, context }) => {
         parameters: {
           ...context.parameters,
           docs: {
+            ...context.parameters.docs,
             theme: dark ? GrafanaDark : GrafanaLight,
           },
         },

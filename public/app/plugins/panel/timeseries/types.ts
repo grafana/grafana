@@ -1,14 +1,4 @@
-import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
-
-export interface GraphOptions {
-  // nothing for now
-}
-
-export interface OptionsWithLegend {
-  legend: VizLegendOptions;
-}
-
+import { VizTooltipOptions, OptionsWithLegend } from '@grafana/ui';
 export interface Options extends OptionsWithLegend {
-  graph: GraphOptions;
-  tooltipOptions: GraphTooltipOptions;
+  tooltipOptions: VizTooltipOptions;
 }

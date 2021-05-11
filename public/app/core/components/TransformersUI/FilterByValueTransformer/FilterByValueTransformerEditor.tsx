@@ -13,7 +13,7 @@ import {
   valueMatchers,
 } from '@grafana/data';
 import { Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import {
   FilterByValueFilter,
   FilterByValueMatch,

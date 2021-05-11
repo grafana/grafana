@@ -17,6 +17,7 @@ import { sortByTransformer } from './transformers/sortBy';
 import { mergeTransformer } from './transformers/merge';
 import { renameByRegexTransformer } from './transformers/renameByRegex';
 import { filterByValueTransformer } from './transformers/filterByValue';
+import { histogramTransformer } from './transformers/histogram';
 
 export const standardTransformers = {
   noopTransformer,
@@ -39,4 +40,5 @@ export const standardTransformers = {
   sortByTransformer,
   mergeTransformer,
   renameByRegexTransformer,
+  histogramTransformer,
 };

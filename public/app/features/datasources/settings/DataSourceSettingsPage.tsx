@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { PluginSettings } from './PluginSettings';
@@ -21,7 +21,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 // Types
 import { StoreState } from 'app/types/';
 import { DataSourceSettings } from '@grafana/data';
-import { Alert, InfoBox } from '@grafana/ui';
+import { Alert, Button, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
@@ -32,10 +32,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
+export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 function mapStateToProps(state: StoreState, props: OwnProps) {
-  const dataSourceId = props.match.params.id;
+  const dataSourceId = props.match.params.uid;
   const params = new URLSearchParams(props.location.search);
   const dataSource = getDataSource(state.dataSources, dataSourceId);
   const { plugin, loadError, testingStatus } = state.dataSourceSettings;
@@ -49,7 +49,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     ),
     dataSource: getDataSource(state.dataSources, dataSourceId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
-    dataSourceId: parseInt(dataSourceId, 10),
+    dataSourceId: dataSourceId,
     page,
     plugin,
     loadError,
@@ -127,10 +127,10 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderIsReadOnlyMessage() {
     return (
-      <InfoBox aria-label={selectors.pages.DataSource.readOnly} severity="info">
+      <Alert aria-label={selectors.pages.DataSource.readOnly} severity="info" title="Provisioned data source">
         This data source was added by config and cannot be modified using the UI. Please contact your server admin to
         update this data source.
-      </InfoBox>
+      </Alert>
     );
   }
 
@@ -170,13 +170,13 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           <div>
             <div className="gf-form-button-row">
               {showDelete && (
-                <button type="submit" className="btn btn-danger" onClick={this.onDelete}>
+                <Button type="submit" variant="destructive" onClick={this.onDelete}>
                   Delete
-                </button>
+                </Button>
               )}
-              <a className="btn btn-inverse" href="datasources">
+              <LinkButton variant="secondary" href="datasources" fill="outline">
                 Back
-              </a>
+              </LinkButton>
             </div>
           </div>
         </Page.Contents>
@@ -198,6 +198,19 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     }
 
     return <div>Page not found: {page}</div>;
+  }
+
+  renderAlertDetails() {
+    const { testingStatus } = this.props;
+
+    return (
+      <>
+        {testingStatus?.details?.message}
+        {testingStatus?.details?.verboseMessage ? (
+          <details style={{ whiteSpace: 'pre-wrap' }}>{testingStatus?.details?.verboseMessage}</details>
+        ) : null}
+      </>
+    );
   }
 
   renderSettings() {
@@ -233,17 +246,17 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           />
         )}
 
-        <div className="gf-form-group">
-          {testingStatus?.message && (
+        {testingStatus?.message && (
+          <div className="gf-form-group p-t-2">
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}
               title={testingStatus.message}
               aria-label={selectors.pages.DataSource.alert}
             >
-              {testingStatus.details?.message ?? null}
+              {testingStatus.details && this.renderAlertDetails()}
             </Alert>
-          )}
-        </div>
+          </div>
+        )}
 
         <ButtonRow
           onSubmit={(event) => this.onSubmit(event)}

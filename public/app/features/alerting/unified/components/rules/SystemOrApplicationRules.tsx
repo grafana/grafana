@@ -36,16 +36,16 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
         )}
       </div>
 
-      {namespaces.map(({ rulesSource, name, groups }) =>
-        groups.map((group) => (
+      {namespaces.map((namespace) => {
+        const { groups, rulesSource } = namespace;
+        return groups.map((group) => (
           <RulesGroup
             group={group}
             key={`${getRulesSourceName(rulesSource)}-${name}-${group.name}`}
-            namespace={name}
-            rulesSource={rulesSource}
+            namespace={namespace}
           />
-        ))
-      )}
+        ));
+      })}
       {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
       {!rulesDataSources.length && <p>There are no Prometheus or Loki datas sources configured.</p>}
     </section>

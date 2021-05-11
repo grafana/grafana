@@ -1,47 +1,158 @@
-import React, { FC, useState } from 'react';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { PageToolbar, ToolbarButton, stylesFactory, Form, FormAPI } from '@grafana/ui';
+import React, { FC, useMemo } from 'react';
+import { GrafanaTheme2 } from '@grafana/data';
+import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-import { config } from 'app/core/config';
-import AlertTypeSection from './AlertTypeSection';
-import AlertConditionsSection from './AlertConditionsSection';
-import AlertDetails from './AlertDetails';
-import Expression from './Expression';
+import { AlertTypeStep } from './AlertTypeStep';
+import { ConditionsStep } from './ConditionsStep';
+import { DetailsStep } from './DetailsStep';
+import { QueryStep } from './QueryStep';
+import { useForm, FormProvider } from 'react-hook-form';
 
-import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
-import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
-import { locationService } from '@grafana/runtime';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { initialAsyncRequestState } from '../../utils/redux';
+import { saveRuleFormAction } from '../../state/actions';
+import { RuleWithLocation } from 'app/types/unified-alerting';
+import { useDispatch } from 'react-redux';
+import { useCleanup } from 'app/core/hooks/useCleanup';
+import { rulerRuleToFormValues, defaultFormValues, getDefaultQueries } from '../../utils/rule-form';
+import { Link } from 'react-router-dom';
 
-type Props = {};
+type Props = {
+  existing?: RuleWithLocation;
+};
 
-interface AlertRuleFormFields {
-  name: string;
-  type: SelectableValue;
-  folder: SelectableValue;
-  forTime: string;
-  dataSource: SelectableValue;
-  expression: string;
-  timeUnit: SelectableValue;
-  labels: Array<{ key: string; value: string }>;
-  annotations: Array<{ key: SelectableValue; value: string }>;
-}
+export const AlertRuleForm: FC<Props> = ({ existing }) => {
+  const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
 
-export type AlertRuleFormMethods = FormAPI<AlertRuleFormFields>;
+  const defaultValues: RuleFormValues = useMemo(() => {
+    if (existing) {
+      return rulerRuleToFormValues(existing);
+    }
+    return {
+      ...defaultFormValues,
+      queries: getDefaultQueries(),
+    };
+  }, [existing]);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const formAPI = useForm<RuleFormValues>({
+    mode: 'onSubmit',
+    defaultValues,
+  });
+
+  const {
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = formAPI;
+
+  const hasErrors = !!Object.values(errors).filter((x) => !!x).length;
+
+  const type = watch('type');
+  const dataSourceName = watch('dataSourceName');
+
+  const showStep2 = Boolean(type && (type === RuleFormType.threshold || !!dataSourceName));
+
+  const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
+  useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
+
+  const submit = (values: RuleFormValues, exitOnSave: boolean) => {
+    dispatch(
+      saveRuleFormAction({
+        values: {
+          ...defaultValues,
+          ...values,
+          annotations: values.annotations?.filter(({ key }) => !!key) ?? [],
+          labels: values.labels?.filter(({ key }) => !!key) ?? [],
+        },
+        existing,
+        exitOnSave,
+      })
+    );
+  };
+
+  return (
+    <FormProvider {...formAPI}>
+      <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
+        <PageToolbar title="Create alert rule" pageIcon="bell">
+          <Link to="/alerting/list">
+            <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, false))}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+            Save
+          </Button>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, true))}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+            Save and exit
+          </Button>
+        </PageToolbar>
+        <div className={styles.contentOuter}>
+          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
+            <div className={styles.contentInner}>
+              {hasErrors && (
+                <Alert
+                  severity="error"
+                  title="There are errors in the form below. Please fix them and try saving again"
+                />
+              )}
+              {submitState.error && (
+                <Alert severity="error" title="Error saving rule">
+                  {submitState.error.message || (submitState.error as any)?.data?.message || String(submitState.error)}
+                </Alert>
+              )}
+              <AlertTypeStep editingExistingRule={!!existing} />
+              {showStep2 && (
+                <>
+                  <QueryStep />
+                  <ConditionsStep />
+                  <DetailsStep />
+                </>
+              )}
+            </div>
+          </CustomScrollbar>
+        </div>
+      </form>
+    </FormProvider>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    fullWidth: css`
+    buttonSpinner: css`
+      margin-right: ${theme.spacing(1)};
+    `,
+    form: css`
       width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     `,
-    formWrapper: css`
-      padding: 0 ${theme.spacing.md};
+    contentInner: css`
+      flex: 1;
+      padding: ${theme.spacing(2)};
     `,
-    formInput: css`
-      width: 400px;
-      & + & {
-        margin-left: ${theme.spacing.sm};
-      }
+    contentOuter: css`
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(2)};
+      overflow: hidden;
+      flex: 1;
     `,
     flexRow: css`
       display: flex;
@@ -49,81 +160,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: flex-start;
     `,
   };
-});
-
-const AlertRuleForm: FC<Props> = () => {
-  const styles = getStyles(config.theme);
-
-  const [folder, setFolder] = useState<{ namespace: string; group: string }>();
-
-  const handleSubmit = (alertRule: AlertRuleFormFields) => {
-    const { name, expression, forTime, dataSource, timeUnit, labels, annotations } = alertRule;
-    console.log('saving', alertRule);
-    const { namespace, group: groupName } = folder || {};
-    if (namespace && groupName) {
-      fetchRulerRulesNamespace(dataSource?.value, namespace)
-        .then((ruleGroup) => {
-          const group: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === groupName) || {
-            name: groupName,
-            rules: [] as RulerRuleDTO[],
-          };
-          const alertRule: RulerRuleDTO = {
-            alert: name,
-            expr: expression,
-            for: `${forTime}${timeUnit.value}`,
-            labels: labels.reduce((acc, { key, value }) => {
-              if (key && value) {
-                acc[key] = value;
-              }
-              return acc;
-            }, {} as Record<string, string>),
-            annotations: annotations.reduce((acc, { key, value }) => {
-              if (key && value) {
-                acc[key.value] = value;
-              }
-              return acc;
-            }, {} as Record<string, string>),
-          };
-
-          group.rules = group?.rules.concat(alertRule);
-          return setRulerRuleGroup(dataSource?.value, namespace, group);
-        })
-        .then(() => {
-          console.log('Alert rule saved successfully');
-          locationService.push('/alerting/list');
-        })
-        .catch((error) => console.error(error));
-    }
-  };
-  return (
-    <Form
-      onSubmit={handleSubmit}
-      className={styles.fullWidth}
-      defaultValues={{ labels: [{ key: '', value: '' }], annotations: [{ key: {}, value: '' }] }}
-    >
-      {(formApi) => (
-        <>
-          <PageToolbar title="Create alert rule" pageIcon="bell">
-            <ToolbarButton variant="primary" type="submit">
-              Save
-            </ToolbarButton>
-            <ToolbarButton variant="primary">Save and exit</ToolbarButton>
-            <a href="/alerting/list">
-              <ToolbarButton variant="destructive" type="button">
-                Cancel
-              </ToolbarButton>
-            </a>
-          </PageToolbar>
-          <div className={styles.formWrapper}>
-            <AlertTypeSection {...formApi} setFolder={setFolder} />
-            <Expression {...formApi} />
-            <AlertConditionsSection {...formApi} />
-            <AlertDetails {...formApi} />
-          </div>
-        </>
-      )}
-    </Form>
-  );
 };
-
-export default AlertRuleForm;

@@ -52,8 +52,7 @@ import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as oldTablePanel from 'app/plugins/panel/table-old/module';
-import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
-import * as singlestatPanel2 from 'app/plugins/panel/stat/module';
+import * as statPanel from 'app/plugins/panel/stat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
@@ -65,6 +64,7 @@ import * as livePanel from 'app/plugins/panel/live/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
+import * as histogramPanel from 'app/plugins/panel/histogram/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -102,9 +102,8 @@ const builtInPlugins: any = {
   'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/live/module': livePanel,
+  'app/plugins/panel/stat/module': statPanel,
   'app/plugins/panel/debug/module': debugPanel,
-  'app/plugins/panel/singlestat/module': singlestatPanel,
-  'app/plugins/panel/stat/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,
@@ -113,6 +112,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,
+  'app/plugins/panel/histogram/module': histogramPanel,
 };
 
 export default builtInPlugins;

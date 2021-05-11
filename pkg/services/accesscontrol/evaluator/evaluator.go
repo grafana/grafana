@@ -9,29 +9,28 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-const roleGrafanaAdmin = "Grafana Admin"
-
-// Evaluate evaluates access to the given resource, using provided AccessControl instance
-func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	roles := []string{string(user.OrgRole)}
-	for _, role := range user.OrgRole.Children() {
-		roles = append(roles, string(role))
-	}
-	if user.IsGrafanaAdmin {
-		roles = append(roles, roleGrafanaAdmin)
-	}
-
-	res, err := ac.GetUserPermissions(ctx, user, roles)
+// Evaluate evaluates access to the given resource, using provided AccessControl instance.
+// Scopes are evaluated with an `OR` relationship.
+func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, scope ...string) (bool, error) {
+	userPermissions, err := ac.GetUserPermissions(ctx, user)
 	if err != nil {
 		return false, err
 	}
 
-	ok, dbScopes := extractPermission(res, permission)
+	ok, dbScopes := extractScopes(userPermissions, action)
 	if !ok {
 		return false, nil
 	}
 
-	for _, s := range scope {
+	return evaluateScope(dbScopes, scope...)
+}
+
+func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {
+	if len(targetScopes) == 0 {
+		return true, nil
+	}
+
+	for _, s := range targetScopes {
 		var match bool
 		for dbScope := range dbScopes {
 			rule, err := glob.Compile(dbScope, ':', '/')
@@ -41,19 +40,15 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 
 			match = rule.Match(s)
 			if match {
-				break
+				return true, nil
 			}
-		}
-
-		if !match {
-			return false, nil
 		}
 	}
 
-	return true, nil
+	return false, nil
 }
 
-func extractPermission(permissions []*accesscontrol.Permission, permission string) (bool, map[string]struct{}) {
+func extractScopes(permissions []*accesscontrol.Permission, targetAction string) (bool, map[string]struct{}) {
 	scopes := map[string]struct{}{}
 	ok := false
 
@@ -61,7 +56,7 @@ func extractPermission(permissions []*accesscontrol.Permission, permission strin
 		if p == nil {
 			continue
 		}
-		if p.Permission == permission {
+		if p.Action == targetAction {
 			ok = true
 			scopes[p.Scope] = struct{}{}
 		}

@@ -10,7 +10,7 @@ weight = 15
 Along with metrics, Explore allows you to investigate your logs in the following data sources:
 
 - [Elasticsearch]({{< relref "../datasources/elasticsearch.md" >}})
-- [InfluxDB]({{< relref "../datasources/influxdb.md" >}})
+- [InfluxDB]({{< relref "../datasources/influxdb/_index.md" >}})
 - [Loki]({{< relref "../datasources/loki.md" >}})
 
 During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow:

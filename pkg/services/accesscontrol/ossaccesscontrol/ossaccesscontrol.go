@@ -38,16 +38,17 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*accesscontrol.Permission, error) {
+func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
-	for _, legacyRole := range roles {
-		if builtInRoleNames, ok := builtInRoleGrants[legacyRole]; ok {
-			for _, builtInRoleName := range builtInRoleNames {
-				builtInRole := getBuiltInRole(builtInRoleName)
-				if builtInRole == nil {
+	for _, builtin := range builtinRoles {
+		if roleNames, ok := accesscontrol.PredefinedRoleGrants[builtin]; ok {
+			for _, name := range roleNames {
+				r, exists := accesscontrol.PredefinedRoles[name]
+				if !exists {
 					continue
 				}
-				for _, p := range builtInRole.Permissions {
+				for _, p := range r.Permissions {
 					permission := p
 					permissions = append(permissions, &permission)
 				}
@@ -56,4 +57,16 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	}
 
 	return permissions, nil
+}
+
+func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
+	roles := []string{string(user.OrgRole)}
+	for _, role := range user.OrgRole.Children() {
+		roles = append(roles, string(role))
+	}
+	if user.IsGrafanaAdmin {
+		roles = append(roles, accesscontrol.RoleGrafanaAdmin)
+	}
+
+	return roles
 }

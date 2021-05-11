@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map, find, filter, indexOf } from 'lodash';
 import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
 import { InfluxQuery, InfluxQueryTag } from './types';
@@ -39,26 +39,26 @@ export default class InfluxQueryModel {
   }
 
   updateProjection() {
-    this.selectModels = _.map(this.target.select, (parts: any) => {
-      return _.map(parts, queryPart.create);
+    this.selectModels = map(this.target.select, (parts: any) => {
+      return map(parts, queryPart.create);
     });
-    this.groupByParts = _.map(this.target.groupBy, queryPart.create);
+    this.groupByParts = map(this.target.groupBy, queryPart.create);
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectModels, (selectParts) => {
-      return _.map(selectParts, (part: any) => {
+    this.target.select = map(this.selectModels, (selectParts) => {
+      return map(selectParts, (part: any) => {
         return { type: part.def.type, params: part.params };
       });
     });
   }
 
   hasGroupByTime() {
-    return _.find(this.target.groupBy, (g: any) => g.type === 'time');
+    return find(this.target.groupBy, (g: any) => g.type === 'time');
   }
 
   hasFill() {
-    return _.find(this.target.groupBy, (g: any) => g.type === 'fill');
+    return find(this.target.groupBy, (g: any) => g.type === 'fill');
   }
 
   addGroupBy(value: string) {
@@ -95,10 +95,10 @@ export default class InfluxQueryModel {
 
     if (part.def.type === 'time') {
       // remove fill
-      this.target.groupBy = _.filter(this.target.groupBy, (g: any) => g.type !== 'fill');
+      this.target.groupBy = filter(this.target.groupBy, (g: any) => g.type !== 'fill');
       // remove aggregations
-      this.target.select = _.map(this.target.select, (s: any) => {
-        return _.filter(s, (part: any) => {
+      this.target.select = map(this.target.select, (s: any) => {
+        return filter(s, (part: any) => {
           const partModel = queryPart.create(part);
           if (partModel.def.category === categories.Aggregations) {
             return false;
@@ -124,11 +124,11 @@ export default class InfluxQueryModel {
     // if we remove the field remove the whole statement
     if (part.def.type === 'field') {
       if (this.selectModels.length > 1) {
-        const modelsIndex = _.indexOf(this.selectModels, selectParts);
+        const modelsIndex = indexOf(this.selectModels, selectParts);
         this.selectModels.splice(modelsIndex, 1);
       }
     } else {
-      const partIndex = _.indexOf(selectParts, part);
+      const partIndex = indexOf(selectParts, part);
       selectParts.splice(partIndex, 1);
     }
 
@@ -201,7 +201,7 @@ export default class InfluxQueryModel {
       return kbn.regexEscape(value);
     }
 
-    const escapedValues = _.map(value, kbn.regexEscape);
+    const escapedValues = map(value, kbn.regexEscape);
     return '(' + escapedValues.join('|') + ')';
   }
 
@@ -233,7 +233,7 @@ export default class InfluxQueryModel {
     }
 
     query += ' FROM ' + this.getMeasurementAndPolicy(interpolate) + ' WHERE ';
-    const conditions = _.map(target.tags, (tag, index) => {
+    const conditions = map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
 
@@ -281,7 +281,7 @@ export default class InfluxQueryModel {
   }
 
   renderAdhocFilters(filters: any[]) {
-    const conditions = _.map(filters, (tag, index) => {
+    const conditions = map(filters, (tag, index) => {
       return this.renderTagCondition(tag, index, true);
     });
     return conditions.join(' ');

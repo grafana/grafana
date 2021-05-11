@@ -1,12 +1,18 @@
-import { getTheme } from '@grafana/ui';
 import { ThemeChangedEvent } from 'app/types/events';
 import appEvents from '../app_events';
 import { config } from '../config';
 import { PreferencesService } from './PreferencesService';
+import { contextSrv } from '../core';
+import { createTheme } from '@grafana/data';
 
 export async function toggleTheme(runtimeOnly: boolean) {
   const currentTheme = config.theme;
-  const newTheme = getTheme(currentTheme.isDark ? 'light' : 'dark');
+  const newTheme = createTheme({
+    colors: {
+      mode: currentTheme.isDark ? 'light' : 'dark',
+    },
+  });
+
   appEvents.publish(new ThemeChangedEvent(newTheme));
 
   if (runtimeOnly) {
@@ -16,7 +22,7 @@ export async function toggleTheme(runtimeOnly: boolean) {
   // Add css file for new theme
   const newCssLink = document.createElement('link');
   newCssLink.rel = 'stylesheet';
-  newCssLink.href = config.bootData.themePaths[newTheme.type];
+  newCssLink.href = config.bootData.themePaths[newTheme.colors.mode];
   document.body.appendChild(newCssLink);
 
   // Remove old css file
@@ -32,12 +38,16 @@ export async function toggleTheme(runtimeOnly: boolean) {
     }
   }
 
+  if (!contextSrv.isSignedIn) {
+    return;
+  }
+
   // Persist new theme
   const service = new PreferencesService('user');
   const currentPref = await service.load();
 
   await service.update({
     ...currentPref,
-    theme: newTheme.type,
+    theme: newTheme.colors.mode,
   });
 }

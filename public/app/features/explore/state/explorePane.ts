@@ -1,5 +1,5 @@
 import { AnyAction } from 'redux';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 
 import {
   DEFAULT_RANGE,
@@ -21,16 +21,7 @@ import {
   getUrlStateFromPaneState,
 } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import {
-  EventBusExtended,
-  DataQuery,
-  ExploreUrlState,
-  LogLevel,
-  LogsDedupStrategy,
-  TimeRange,
-  HistoryItem,
-  DataSourceApi,
-} from '@grafana/data';
+import { EventBusExtended, DataQuery, ExploreUrlState, TimeRange, HistoryItem, DataSourceApi } from '@grafana/data';
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -52,15 +43,6 @@ export interface ChangeSizePayload {
   height: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
-
-/**
- * Change deduplication strategy for logs.
- */
-export interface ChangeDedupStrategyPayload {
-  exploreId: ExploreId;
-  dedupStrategy: LogsDedupStrategy;
-}
-export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');
 
 /**
  * Highlight expressions in the log results
@@ -89,12 +71,6 @@ export interface InitializeExplorePayload {
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
-export interface ToggleLogLevelPayload {
-  exploreId: ExploreId;
-  hiddenLogLevels: LogLevel[];
-}
-export const toggleLogLevelAction = createAction<ToggleLogLevelPayload>('explore/toggleLogLevel');
-
 export interface SetUrlReplacedPayload {
   exploreId: ExploreId;
 }
@@ -112,22 +88,12 @@ export function changeSize(
 }
 
 /**
- * Change logs deduplication strategy.
- */
-export const changeDedupStrategy = (
-  exploreId: ExploreId,
-  dedupStrategy: LogsDedupStrategy
-): PayloadAction<ChangeDedupStrategyPayload> => {
-  return changeDedupStrategyAction({ exploreId, dedupStrategy });
-};
-
-/**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceName: string,
+  datasourceNameOrUid: string,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
@@ -141,7 +107,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceName);
+      const loadResult = await loadAndInitDatasource(orgId, datasourceNameOrUid);
       instance = loadResult.instance;
       history = loadResult.history;
     }
@@ -255,14 +221,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     };
   }
 
-  if (changeDedupStrategyAction.match(action)) {
-    const { dedupStrategy } = action.payload;
-    return {
-      ...state,
-      dedupStrategy,
-    };
-  }
-
   if (initializeExploreAction.match(action)) {
     const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
 
@@ -280,14 +238,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       logsHighlighterExpressions: undefined,
-    };
-  }
-
-  if (toggleLogLevelAction.match(action)) {
-    const { hiddenLogLevels } = action.payload;
-    return {
-      ...state,
-      hiddenLogLevels: Array.from(hiddenLogLevels),
     };
   }
 
