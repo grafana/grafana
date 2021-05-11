@@ -29,6 +29,12 @@ func setUpGetOrgUsersHandler() {
 func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	t.Helper()
 	
+	origAutoAssignOrg := setting.AutoAssignOrg
+	origAutoAssignOrgId := setting.AutoAssignOrgId
+	t.Cleanup(func() {
+		setting.AutoAssignOrg = origAutoAssignOrg
+		setting.AutoAssignOrgId = origAutoAssignOrgId
+	})
 	setting.AutoAssignOrg = true
 	setting.AutoAssignOrgId = 1
 
