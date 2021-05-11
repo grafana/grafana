@@ -108,14 +108,14 @@ func (l *libraryElementServiceImpl) AddMigration(mg *migrator.Migrator) {
 		Name: connectionTableName,
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "library_element_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "connection_kind", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "element_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "kind", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "connection_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"library_element_id", "connection_kind", "connection_id"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"element_id", "kind", "connection_id"}, Type: migrator.UniqueIndex},
 		},
 	}
 
