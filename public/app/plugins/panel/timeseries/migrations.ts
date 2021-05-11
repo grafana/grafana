@@ -44,6 +44,7 @@ export const graphPanelChangedHandler = (
     return options;
   }
 
+  //fixes graph -> viz renaming in custom.hideFrom field config by mutation.
   migrateHideFrom(panel);
 
   return {};
