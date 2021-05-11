@@ -1,11 +1,11 @@
 package load
 
 import (
-	errs "cuelang.org/go/cue/errors"
 	"errors"
 	"fmt"
 
 	"cuelang.org/go/cue"
+	errs "cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
 )
@@ -212,14 +212,13 @@ type CompositeDashboardSchema interface {
 }
 
 func wrapCUEError(err error) cueError {
-	switch err.(type) {
-	case errs.Error:
+	var cErr errs.Error
+	if ok := errors.As(err, &cErr); ok {
 		return cueError{
 			errors:   errs.Errors(err),
 			filename: errs.Errors(err)[0].Position().File().Name(),
 			line:     errs.Errors(err)[0].Position().Line(),
 		}
-	default:
-		return cueError{}
 	}
+	return cueError{}
 }
