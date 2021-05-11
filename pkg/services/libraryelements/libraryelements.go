@@ -19,7 +19,7 @@ type LibraryElementService interface {
 	DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error
 }
 
-// NewService is a factory for creating a new library panel service.
+// NewService is a factory for creating a new library element service.
 var NewService = func(store *sqlstore.SQLStore) LibraryElementService {
 	return &libraryElementServiceImpl{
 		SQLStore: store,
