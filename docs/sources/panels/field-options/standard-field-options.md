@@ -129,4 +129,4 @@ Value mappings come in different types.
 
 The display text and color are both optional. If you only want to assign colors to text values you can leave the display text empty and the original value will be used for display. 
 
-Values mapped via value mappings will skip the unit formatting. This means that a text value mapepd to a numerical value will not be formatted using the configured unit. 
+Values mapped via value mappings will skip the unit formatting. This means that a text value mapped to a numerical value will not be formatted using the configured unit. 
