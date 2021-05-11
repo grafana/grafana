@@ -2,8 +2,8 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
 
-const setup = (propOverrides?: object) => {
-  const props: Props = {
+const setup = (propsFunc?: (props: Props) => Props) => {
+  let props: Props = {
     credentials: {
       azureCloud: 'azuremonitor',
       tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
@@ -22,7 +22,9 @@ const setup = (propOverrides?: object) => {
     getSubscriptions: jest.fn(),
   };
 
-  Object.assign(props, propOverrides);
+  if (propsFunc) {
+    props = propsFunc(props);
+  }
 
   return shallow(<AzureCredentialsForm {...props} />);
 };
@@ -34,16 +36,28 @@ describe('Render', () => {
   });
 
   it('should disable azure monitor secret input', () => {
-    const wrapper = setup({
-      clientSecretConfigured: true,
-    });
+    const wrapper = setup((props) => ({
+      ...props,
+      credentials: {
+        azureCloud: 'azuremonitor',
+        tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
+        clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
+        clientSecret: {},
+      },
+    }));
     expect(wrapper).toMatchSnapshot();
   });
 
   it('should enable azure monitor load subscriptions button', () => {
-    const wrapper = setup({
-      clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
-    });
+    const wrapper = setup((props) => ({
+      ...props,
+      credentials: {
+        azureCloud: 'azuremonitor',
+        tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
+        clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
+        clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
+      },
+    }));
     expect(wrapper).toMatchSnapshot();
   });
 });
