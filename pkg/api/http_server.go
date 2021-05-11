@@ -13,6 +13,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -100,6 +103,8 @@ type HTTPServer struct {
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
 	LoadSchemaService      *schemaloader.SchemaLoaderService       `inject:""`
 	Alertmanager           *notifier.Alertmanager                  `inject:""`
+	LibraryPanelService    librarypanels.LibraryPanelService
+	LibraryElementService  libraryelements.LibraryElementService
 	Listener               net.Listener
 }
 
@@ -108,6 +113,8 @@ func (hs *HTTPServer) Init() error {
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
+	hs.LibraryElementService = libraryelements.NewService(hs.SQLStore)
+	hs.LibraryPanelService = librarypanels.NewService(hs.SQLStore, hs.LibraryElementService)
 
 	return nil
 }

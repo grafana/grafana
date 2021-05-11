@@ -723,8 +723,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
-		service := NewService(sqlStore)
 		elementService := libraryelements.NewService(sqlStore)
+		service := NewService(sqlStore, elementService)
 
 		user := models.SignedInUser{
 			UserId:     1,

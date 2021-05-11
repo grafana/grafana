@@ -21,11 +21,10 @@ type LibraryPanelService interface {
 }
 
 // NewService is a factory for creating a new library panel service.
-var NewService = func(store *sqlstore.SQLStore) LibraryPanelService {
-	elementService := libraryelements.NewService(store)
+var NewService = func(store *sqlstore.SQLStore, service libraryelements.LibraryElementService) LibraryPanelService {
 	return &libraryPanelServiceImpl{
 		SQLStore:              store,
-		libraryElementService: elementService,
+		libraryElementService: service,
 		log:                   log.New("library-panels"),
 	}
 }

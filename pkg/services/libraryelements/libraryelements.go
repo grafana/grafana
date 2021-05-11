@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// LibraryElementService is a service for operating on dashboards.
+// LibraryElementService is a service for operating on library elements.
 type LibraryElementService interface {
 	CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error)
 	GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error)
