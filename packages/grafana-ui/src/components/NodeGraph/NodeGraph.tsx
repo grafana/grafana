@@ -20,7 +20,7 @@ import { Icon, Spinner } from '..';
 import { Marker } from './Marker';
 import { Legend } from './Legend';
 import { useHighlight } from './useHighlight';
-import { useFocusPositiononLayout } from './useFocusPositionOnLayout';
+import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
@@ -139,7 +139,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   // If we move from grid to graph layout and we have focused node lets get it's position to center there. We want do
   // do it specifically only in that case.
-  const focusPosition = useFocusPositiononLayout(config, nodes, focusedNodeId);
+  const focusPosition = useFocusPositionOnLayout(config, nodes, focusedNodeId);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
     bounds,
     focusPosition
