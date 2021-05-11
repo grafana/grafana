@@ -195,13 +195,16 @@ func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
 	}
 
 	count, err := countSess.Count(&orgUser)
+	if err != nil {
+		return err
+	}
 	query.Result.TotalCount = count
 
 	for _, user := range query.Result.OrgUsers {
 		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
 	}
 
-	return err
+	return nil
 }
 
 func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
