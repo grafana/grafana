@@ -74,9 +74,11 @@ export const preparePlotConfigBuilder: PrepConfig = ({
 
   const colorLookup = (seriesIdx: number, valueIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
-    const mode = field.config?.color?.mode;
-    if (mode && field.display && (mode === FieldColorModeId.Thresholds || mode.startsWith('continuous-'))) {
+    //const mode = field.config?.color?.mode;
+    //if (mode && field.display && (mode === FieldColorModeId.Thresholds || mode.startsWith('continuous-'))) {
+    if (field.display) {
       const disp = field.display(value); // will apply color modes
+      console.log('DISPLAY', value, disp);
       if (disp.color) {
         return disp.color;
       }

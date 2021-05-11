@@ -1,15 +1,10 @@
 import { ValueMapping, MappingType, ValueMappingResult, SpecialValueMatch } from '../types';
 
-type TimeSeriesValue = string | number | null;
-
-export function getValueMappingResult(
-  valueMappings: ValueMapping[],
-  value: TimeSeriesValue
-): ValueMappingResult | null {
+export function getValueMappingResult(valueMappings: ValueMapping[], value: any): ValueMappingResult | null {
   for (const vm of valueMappings) {
     switch (vm.type) {
       case MappingType.ValueToText:
-        if (value === null || value === undefined) {
+        if (value == null) {
           continue;
         }
 
@@ -21,7 +16,7 @@ export function getValueMappingResult(
         break;
 
       case MappingType.RangeToText:
-        if (value === null || value === undefined) {
+        if (value == null) {
           continue;
         }
 
@@ -63,13 +58,13 @@ export function getValueMappingResult(
             break;
           }
           case SpecialValueMatch.True: {
-            if (Boolean(value)) {
+            if (value === true) {
               return vm.options.result;
             }
             break;
           }
           case SpecialValueMatch.False: {
-            if (!Boolean(value)) {
+            if (value === false) {
               return vm.options.result;
             }
             break;

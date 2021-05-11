@@ -167,13 +167,15 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
   };
 
   rows.forEach((item, index) => {
+    const result = {
+      ...item.result,
+      index,
+    };
+
     switch (item.type) {
       case MappingType.ValueToText:
         if (item.key != null) {
-          valueMaps.options[item.key] = {
-            ...item.result,
-            index,
-          };
+          valueMaps.options[item.key] = result;
         }
         break;
       case MappingType.RangeToText:
@@ -183,10 +185,7 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
             options: {
               from: item.from,
               to: item.to,
-              result: {
-                ...item.result,
-                index,
-              },
+              result,
             },
           });
         }
@@ -196,10 +195,7 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
           type: item.type,
           options: {
             match: item.specialMatch!,
-            result: {
-              ...item.result,
-              index,
-            },
+            result,
           },
         });
     }
