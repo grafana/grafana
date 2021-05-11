@@ -7,6 +7,7 @@ import $ from 'jquery';
 import { colors } from '@grafana/ui';
 import {
   setBackendSrv,
+  setContextSrv,
   setDataSourceSrv,
   setLegacyAngularInjector,
   setLocationSrv,
@@ -48,6 +49,7 @@ export class GrafanaCtrl {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);
+    setContextSrv(contextSrv);
     setDataSourceSrv(datasourceSrv);
     setLinkSrv(linkSrv);
     setDashboardSrv(dashboardSrv);

@@ -1,4 +1,5 @@
 export * from './backendSrv';
+export * from './contextSrv';
 export * from './AngularLoader';
 export * from './dataSourceSrv';
 export * from './LocationSrv';
