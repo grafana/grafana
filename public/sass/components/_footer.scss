@@ -49,6 +49,15 @@
     bottom: $spacer;
     position: absolute;
     padding: $space-md 0 $space-md 0;
+    color: $text-color;
+
+    a {
+      color: $text-color;
+
+      &:hover {
+        color: $text-color-strong;
+      }
+    }
   }
 }
 
