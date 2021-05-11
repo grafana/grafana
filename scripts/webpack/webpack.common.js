@@ -88,10 +88,10 @@ module.exports = {
             ],
           },
         },
-        // {
-        //   from: './node_modules/@kusto/monaco-kusto/release/min/',
-        //   to: 'monaco/min/vs/language/kusto/',
-        // },
+        {
+          from: './node_modules/@kusto/monaco-kusto/release/min/',
+          to: '../lib/monaco/min/vs/language/kusto/',
+        },
       ],
     }),
   ],
