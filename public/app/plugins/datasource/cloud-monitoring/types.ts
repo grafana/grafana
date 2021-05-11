@@ -116,7 +116,6 @@ export interface BaseQuery {
 
 export interface MetricQuery extends BaseQuery {
   editorMode: EditorMode;
-  unit?: string;
   metricType: string;
   crossSeriesReducer: string;
   groupBys?: string[];
