@@ -10,14 +10,7 @@ import {
   MenuItem,
   UPlotConfigBuilder,
 } from '@grafana/ui';
-import {
-  CartesianCoords2D,
-  DataFrame,
-  DataFrameView,
-  getFieldDisplayName,
-  InterpolateFunction,
-  TimeZone,
-} from '@grafana/data';
+import { CartesianCoords2D, DataFrame, DataFrameView, getFieldDisplayName, InterpolateFunction } from '@grafana/data';
 import { useClickAway } from 'react-use';
 import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/linkSuppliers';
 import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
@@ -26,7 +19,6 @@ interface ContextMenuPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   defaultItems?: MenuItemsGroup[];
-  timeZone: TimeZone;
   onOpen?: () => void;
   onClose?: () => void;
   replaceVariables?: InterpolateFunction;
@@ -37,7 +29,6 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   config,
   defaultItems,
   onClose,
-  timeZone,
   replaceVariables,
 }) => {
   const plotCanvas = useRef<HTMLDivElement>();
@@ -139,7 +130,6 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
         <ContextMenuView
           data={data}
           defaultItems={defaultItems}
-          timeZone={timeZone}
           selection={{ point, coords }}
           replaceVariables={replaceVariables}
           onClose={() => {
@@ -158,7 +148,6 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 interface ContextMenuProps {
   data: DataFrame;
   defaultItems?: MenuItemsGroup[];
-  timeZone: TimeZone;
   onClose?: () => void;
   selection: {
     point?: { seriesIdx: number | null; dataIdx: number | null } | null;
@@ -169,7 +158,6 @@ interface ContextMenuProps {
 
 export const ContextMenuView: React.FC<ContextMenuProps> = ({
   selection,
-  timeZone,
   defaultItems,
   replaceVariables,
   data,

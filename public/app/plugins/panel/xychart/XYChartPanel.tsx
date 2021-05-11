@@ -10,7 +10,6 @@ interface XYChartPanelProps extends PanelProps<Options> {}
 export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   data,
   timeRange,
-  timeZone,
   width,
   height,
   options,
@@ -48,21 +47,13 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       structureRev={data.structureRev}
       fields={dims.fields}
       timeRange={timeRange}
-      timeZone={timeZone}
       width={width}
       height={height}
       legend={options.legend}
       onLegendClick={onLegendClick}
     >
       {(config, alignedDataFrame) => {
-        return (
-          <TooltipPlugin
-            config={config}
-            data={alignedDataFrame}
-            mode={options.tooltipOptions.mode as any}
-            timeZone={timeZone}
-          />
-        );
+        return <TooltipPlugin config={config} data={alignedDataFrame} mode={options.tooltipOptions.mode as any} />;
       }}
     </TimeSeries>
   );

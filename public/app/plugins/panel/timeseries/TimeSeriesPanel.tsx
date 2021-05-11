@@ -13,7 +13,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
   id,
   timeRange,
-  timeZone,
   width,
   height,
   options,
@@ -39,7 +38,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       frames={data.series}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
       width={width}
       height={height}
       legend={options.legend}
@@ -52,25 +50,12 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
               data={alignedDataFrame}
               config={config}
               mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltipOptions.mode}
-              timeZone={timeZone}
             />
-            <ContextMenuPlugin
-              data={alignedDataFrame}
-              config={config}
-              timeZone={timeZone}
-              replaceVariables={replaceVariables}
-            />
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
-            )}
+            <ContextMenuPlugin data={alignedDataFrame} config={config} replaceVariables={replaceVariables} />
+            {data.annotations && <AnnotationsPlugin annotations={data.annotations} config={config} />}
 
             {data.annotations && (
-              <ExemplarsPlugin
-                config={config}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-              />
+              <ExemplarsPlugin config={config} exemplars={data.annotations} getFieldLinks={getFieldLinks} />
             )}
           </>
         );

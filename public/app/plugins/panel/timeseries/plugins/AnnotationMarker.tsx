@@ -1,16 +1,16 @@
 import React, { CSSProperties, useCallback, useRef, useState } from 'react';
-import { GrafanaTheme2, dateTimeFormat, systemDateFormats, TimeZone, textUtil, getColorForTheme } from '@grafana/data';
-import { HorizontalGroup, Portal, Tag, VizTooltipContainer, useStyles2, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil, getColorForTheme } from '@grafana/data';
+import { HorizontalGroup, Portal, Tag, VizTooltipContainer, useStyles2, useTheme2, usePanelContext } from '@grafana/ui';
 import { css } from '@emotion/css';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 interface Props {
-  timeZone: TimeZone;
   annotation: AnnotationsDataFrameViewDTO;
 }
 
-export function AnnotationMarker({ annotation, timeZone }: Props) {
+export function AnnotationMarker({ annotation }: Props) {
   const theme = useTheme2();
+  const panelCtx = usePanelContext();
   const styles = useStyles2(getAnnotationMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
@@ -34,10 +34,10 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
     (value: number) => {
       return dateTimeFormat(value, {
         format: systemDateFormats.fullDate,
-        timeZone,
+        timeZone: panelCtx.timeZone,
       });
     },
-    [timeZone]
+    [panelCtx.timeZone]
   );
 
   const markerStyles: CSSProperties = {

@@ -1,11 +1,4 @@
-import {
-  DataFrame,
-  Field,
-  LinkModel,
-  TimeZone,
-  TIME_SERIES_TIME_FIELD_NAME,
-  TIME_SERIES_VALUE_FIELD_NAME,
-} from '@grafana/data';
+import { DataFrame, Field, LinkModel, TIME_SERIES_TIME_FIELD_NAME, TIME_SERIES_VALUE_FIELD_NAME } from '@grafana/data';
 import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder, usePlotContext } from '@grafana/ui';
 import React, { useCallback } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
@@ -13,11 +6,10 @@ import { ExemplarMarker } from './ExemplarMarker';
 interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;
   exemplars: DataFrame[];
-  timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
+export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, getFieldLinks, config }) => {
   const plotCtx = usePlotContext();
 
   const mapExemplarToXYCoords = useCallback(
@@ -57,9 +49,9 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, index: number) => {
-      return <ExemplarMarker timeZone={timeZone} getFieldLinks={getFieldLinks} dataFrame={dataFrame} index={index} />;
+      return <ExemplarMarker getFieldLinks={getFieldLinks} dataFrame={dataFrame} index={index} />;
     },
-    [timeZone, getFieldLinks]
+    [getFieldLinks]
   );
 
   return (

@@ -65,7 +65,6 @@ export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, .
         placement: placement,
         calcs: [],
       }}
-      timeZone="browser"
     />
   );
 };
@@ -83,5 +82,4 @@ Lines.args = {
   legendDisplayMode: 'list',
   placement: 'bottom',
   unit: 'short',
-  timeZone: 'browser',
 };

@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameView, getColorForTheme, TimeZone } from '@grafana/data';
+import { DataFrame, DataFrameView, getColorForTheme } from '@grafana/data';
 import { EventsCanvas, UPlotConfigBuilder, usePlotContext, useTheme } from '@grafana/ui';
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { AnnotationMarker } from './AnnotationMarker';
@@ -6,10 +6,9 @@ import { AnnotationMarker } from './AnnotationMarker';
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
   annotations: DataFrame[];
-  timeZone: TimeZone;
 }
 
-export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone, config }) => {
+export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, config }) => {
   const theme = useTheme();
   const plotCtx = usePlotContext();
 
@@ -81,14 +80,11 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     [plotCtx]
   );
 
-  const renderMarker = useCallback(
-    (frame: DataFrame, index: number) => {
-      const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
-      const annotation = view.get(index);
-      return <AnnotationMarker annotation={annotation} timeZone={timeZone} />;
-    },
-    [timeZone]
-  );
+  const renderMarker = useCallback((frame: DataFrame, index: number) => {
+    const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
+    const annotation = view.get(index);
+    return <AnnotationMarker annotation={annotation} />;
+  }, []);
 
   return (
     <EventsCanvas

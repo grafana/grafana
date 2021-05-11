@@ -71,7 +71,6 @@ export const TestStuffPage: FC = () => {
                     frames={data.series}
                     legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
                     timeRange={data.timeRange}
-                    timeZone="browser"
                   />
                   <Table data={data.series[0]} width={width} height={300} />
                 </div>

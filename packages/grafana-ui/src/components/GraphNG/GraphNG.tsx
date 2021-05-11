@@ -10,7 +10,6 @@ import {
   LegacyGraphHoverClearEvent,
   LegacyGraphHoverEvent,
   TimeRange,
-  TimeZone,
 } from '@grafana/data';
 import { preparePlotFrame } from './utils';
 
@@ -34,7 +33,6 @@ export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
   timeRange: TimeRange;
-  timeZone: TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
@@ -165,7 +163,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, propsToDiff } = this.props;
+    const { frames, structureRev, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
@@ -174,11 +172,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
       if (newState) {
         const shouldReconfig =
-          this.state.config === undefined ||
-          timeZone !== prevProps.timeZone ||
-          structureRev !== prevProps.structureRev ||
-          !structureRev ||
-          propsChanged;
+          this.state.config === undefined || structureRev !== prevProps.structureRev || !structureRev || propsChanged;
 
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);

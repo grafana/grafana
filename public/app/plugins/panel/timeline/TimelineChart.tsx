@@ -28,6 +28,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
       frame: alignedFrame,
       getTimeRange,
       eventBus,
+      timeZone: this.panelContext.timeZone,
       ...this.props,
     });
   };

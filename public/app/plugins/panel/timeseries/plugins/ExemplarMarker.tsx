@@ -1,25 +1,16 @@
-import {
-  DataFrame,
-  dateTimeFormat,
-  Field,
-  FieldType,
-  GrafanaTheme,
-  LinkModel,
-  systemDateFormats,
-  TimeZone,
-} from '@grafana/data';
-import { FieldLinkList, Portal, VizTooltipContainer, useStyles } from '@grafana/ui';
+import { DataFrame, dateTimeFormat, Field, FieldType, GrafanaTheme, LinkModel, systemDateFormats } from '@grafana/data';
+import { FieldLinkList, Portal, VizTooltipContainer, useStyles, usePanelContext } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useRef, useState } from 'react';
 
 interface ExemplarMarkerProps {
-  timeZone: TimeZone;
   dataFrame: DataFrame;
   index: number;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFrame, index, getFieldLinks }) => {
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ dataFrame, index, getFieldLinks }) => {
+  const panelCtx = usePanelContext();
   const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
@@ -30,10 +21,10 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
     (value: number) => {
       return dateTimeFormat(value, {
         format: systemDateFormats.fullDate,
-        timeZone,
+        timeZone: panelCtx.timeZone,
       });
     },
-    [timeZone]
+    [panelCtx.timeZone]
   );
 
   const onMouseEnter = useCallback(() => {

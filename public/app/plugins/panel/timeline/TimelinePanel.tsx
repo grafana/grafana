@@ -43,7 +43,6 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
       frames={data.series}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZone={timeZone}
       width={width}
       height={height}
       onLegendClick={onLegendClick}

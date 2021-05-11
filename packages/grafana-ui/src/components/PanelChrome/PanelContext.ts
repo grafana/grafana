@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBus, DashboardCursorSync } from '@grafana/data';
+import { EventBusSrv, EventBus, DashboardCursorSync, TimeZone, DefaultTimeZone } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
 
@@ -9,6 +9,9 @@ export interface PanelContext {
   /** Dashboard panels sync */
   sync?: DashboardCursorSync;
 
+  /** The dashboard/panel timezone */
+  timeZone: TimeZone;
+
   /**
    * Called when a component wants to change the color for a series
    *
@@ -16,11 +19,17 @@ export interface PanelContext {
    */
   onSeriesColorChange?: (label: string, color: string) => void;
 
+  /**
+   * Called when a series should be toggled
+   *
+   * @alpha -- experimental
+   */
   onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
   eventBus: new EventBusSrv(),
+  timeZone: DefaultTimeZone,
 });
 
 /**

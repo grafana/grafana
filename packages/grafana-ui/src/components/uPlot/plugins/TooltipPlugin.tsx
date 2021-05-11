@@ -8,17 +8,16 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
-  TimeZone,
 } from '@grafana/data';
 import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { findMidPointYPosition, pluginLog } from '../utils';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import uPlot from 'uplot';
+import { usePanelContext } from '../../PanelChrome';
 
 interface TooltipPluginProps {
   mode?: TooltipDisplayMode;
-  timeZone: TimeZone;
   data: DataFrame;
   config: UPlotConfigBuilder;
 }
@@ -30,12 +29,12 @@ const TOOLTIP_OFFSET = 10;
  */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
-  timeZone,
   config,
   ...otherProps
 }) => {
   const theme = useTheme2();
   const plotCtx = usePlotContext();
+  const panelCtx = usePanelContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
 
@@ -82,7 +81,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   if (!xField) {
     return null;
   }
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone: panelCtx.timeZone, theme });
   let tooltip = null;
 
   const xVal = xFieldFmt(xField!.values.get(focusedPointIdx)).text;
@@ -92,7 +91,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     const field = otherProps.data.fields[focusedSeriesIdx];
     const plotSeries = plotInstance.series;
 
-    const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
+    const fieldFmt = field.display || getDisplayProcessor({ field, timeZone: panelCtx.timeZone, theme });
     const value = fieldFmt(field.values.get(focusedPointIdx));
 
     tooltip = (
