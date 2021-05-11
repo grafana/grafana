@@ -203,7 +203,7 @@ describe('ElasticDatasource', function (this: any) {
     async function setupDataSource(jsonData?: Partial<ElasticsearchOptions>) {
       jsonData = {
         interval: 'Daily',
-        esVersion: 2,
+        esVersion: '2.0.0',
         timeField: '@timestamp',
         ...(jsonData || {}),
       };
