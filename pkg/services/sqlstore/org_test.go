@@ -93,7 +93,6 @@ func TestAccountDataAccess(t *testing.T) {
 				So(q1.Result[0].OrgId, ShouldEqual, q2.Result[0].OrgId)
 				So(q1.Result[0].Role, ShouldEqual, "Viewer")
 			})
-
 		})
 
 		Convey("Given single org and 2 users inserted", func() {
