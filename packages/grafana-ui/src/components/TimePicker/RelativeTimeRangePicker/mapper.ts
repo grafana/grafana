@@ -1,17 +1,9 @@
-import { dateMath, dateTime, RelativeTimeRange, TimeOption } from '@grafana/data';
+import { RelativeTimeRange, TimeOption } from '@grafana/data';
 
 export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRange | undefined => {
-  const now = dateTime().unix();
-  const from = dateMath.parse(option.from)?.unix();
-  const to = dateMath.parse(option.to)?.unix();
-
-  if (!from || !to) {
-    return;
-  }
-
   return {
-    from: now - from,
-    to: now - to,
+    from: relativeToSeconds(option.from),
+    to: relativeToSeconds(option.to),
   };
 };
 
@@ -20,6 +12,23 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
   const to = secondsToRelativeFormat(range.to);
 
   return { from, to, display: `${from} to ${to}` };
+};
+
+const relativeToSeconds = (relative: string): number => {
+  const match = /^now\-(\d{1,16})([yMwdhms])$/g.exec(relative);
+
+  if (!match || match.length !== 3) {
+    return 0;
+  }
+
+  const [, value, unit] = match;
+  const parsed = parseInt(value, 10);
+
+  if (isNaN(parsed)) {
+    return 0;
+  }
+
+  return parsed * units[unit];
 };
 
 const units: Record<string, number> = {
