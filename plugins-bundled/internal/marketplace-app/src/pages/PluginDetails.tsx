@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Icon, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
 import { PLUGIN_ROOT, GRAFANA_API_ROOT } from '../constants';
 import { usePlugin } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
+import { Loader } from 'components/Loader';
 
 export const PluginDetails = ({ query }: AppRootProps) => {
   const { slug } = query;
@@ -26,13 +27,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
   const downloads = remote?.downloads;
 
   if (status === 'LOADING') {
-    return (
-      <Page>
-        <div className="page-loader-wrapper">
-          <LoadingPlaceholder text="Loading..." />
-        </div>
-      </Page>
-    );
+    return <Loader />;
   }
 
   return (

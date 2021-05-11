@@ -2,7 +2,7 @@ import React from 'react';
 import { cx, css } from '@emotion/css';
 
 import { dateTimeParse, AppRootProps, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Legend, LinkButton, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2, Legend, LinkButton } from '@grafana/ui';
 
 import { PLUGIN_ROOT } from '../constants';
 import { Card } from '../components/Card';
@@ -14,6 +14,7 @@ import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
 import { MarketplaceAppSettings, Plugin } from '../types';
 import { Page } from 'components/Page';
+import { Loader } from 'components/Loader';
 
 export const Discover = ({ meta }: AppRootProps) => {
   const { includeUnsigned, includeEnterprise } = meta.jsonData as MarketplaceAppSettings;
@@ -44,13 +45,7 @@ export const Discover = ({ meta }: AppRootProps) => {
   });
 
   if (status === 'LOADING') {
-    return (
-      <Page>
-        <div className="page-loader-wrapper">
-          <LoadingPlaceholder text="Loading..." />
-        </div>
-      </Page>
-    );
+    return <Loader />;
   }
 
   return (

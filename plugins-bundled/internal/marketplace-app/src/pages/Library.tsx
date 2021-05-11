@@ -2,12 +2,13 @@ import React from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { PluginList } from '../components/PluginList';
 import { usePlugins } from '../hooks/usePlugins';
 import { MarketplaceAppSettings } from '../types';
 import { Page } from 'components/Page';
+import { Loader } from 'components/Loader';
 
 export const Library = ({ meta }: AppRootProps) => {
   const { includeUnsigned } = meta.jsonData as MarketplaceAppSettings;
@@ -18,13 +19,7 @@ export const Library = ({ meta }: AppRootProps) => {
   const filteredPlugins = items.filter((plugin) => !!installedPlugins.find((_) => _.id === plugin.slug));
 
   if (status === 'LOADING') {
-    return (
-      <Page>
-        <div className="page-loader-wrapper">
-          <LoadingPlaceholder text="Loading..." />
-        </div>
-      </Page>
-    );
+    return <Loader />;
   }
 
   return (
