@@ -54,6 +54,11 @@ func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		return plugins.DataResponse{}, err
 	}
 
+	transport, err := dsInfo.GetHttpTransport()
+	if err != nil {
+		return plugins.DataResponse{}, err
+	}
+
 	client := &client.DefaultClient{
 		Address:  dsInfo.Url,
 		Username: dsInfo.BasicAuthUser,
@@ -61,11 +66,7 @@ func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		TLSConfig: config.TLSConfig{
 			InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
 		},
-		Tripperware: func(tr http.RoundTripper) http.RoundTripper {
-			transport, err := dsInfo.GetHttpTransport()
-			if err != nil {
-				return tr
-			}
+		Tripperware: func(t http.RoundTripper) http.RoundTripper {
 			return transport
 		},
 	}
