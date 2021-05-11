@@ -44,6 +44,9 @@ export const graphPanelChangedHandler = (
     return options;
   }
 
+  //fixes graph -> viz renaming in custom.hideFrom field config by mutation.
+  migrateHideFrom(panel);
+
   return {};
 };
 
@@ -512,4 +515,25 @@ function getReducersFromLegend(obj: Record<string, any>): string[] {
     }
   }
   return ids;
+}
+
+function migrateHideFrom(panel: {
+  fieldConfig?: { defaults?: { custom?: { hideFrom?: any } }; overrides: ConfigOverrideRule[] };
+}) {
+  if (panel.fieldConfig?.defaults?.custom?.hideFrom?.graph !== undefined) {
+    panel.fieldConfig.defaults.custom.hideFrom.viz = panel.fieldConfig.defaults.custom.hideFrom.graph;
+    delete panel.fieldConfig.defaults.custom.hideFrom.graph;
+  }
+  if (panel.fieldConfig?.overrides) {
+    panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((fr) => {
+      fr.properties = fr.properties.map((p) => {
+        if (p.id === 'custom.hideFrom' && p.value.graph) {
+          p.value.viz = p.value.graph;
+          delete p.value.graph;
+        }
+        return p;
+      });
+      return fr;
+    });
+  }
 }
