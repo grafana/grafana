@@ -1,4 +1,4 @@
-package librarypanels
+package libraryelements
 
 import (
 	"bytes"
@@ -8,35 +8,41 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func writePerPageSQL(query searchLibraryPanelsQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writePerPageSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
 	if query.perPage != 0 {
 		offset := query.perPage * (query.page - 1)
 		builder.Write(sqlStore.Dialect.LimitOffset(int64(query.perPage), int64(offset)))
 	}
 }
 
-func writePanelFilterSQL(panelFilter []string, builder *sqlstore.SQLBuilder) {
-	if len(panelFilter) > 0 {
+func writeKindSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuilder) {
+	if LibraryElementKind(query.kind) == Panel || LibraryElementKind(query.kind) == Variable {
+		builder.Write(" AND le.kind = ?", query.kind)
+	}
+}
+
+func writeTypeFilterSQL(typeFilter []string, builder *sqlstore.SQLBuilder) {
+	if len(typeFilter) > 0 {
 		var sql bytes.Buffer
 		params := make([]interface{}, 0)
-		sql.WriteString(` AND lp.type IN (?` + strings.Repeat(",?", len(panelFilter)-1) + ")")
-		for _, filter := range panelFilter {
+		sql.WriteString(` AND le.type IN (?` + strings.Repeat(",?", len(typeFilter)-1) + ")")
+		for _, filter := range typeFilter {
 			params = append(params, filter)
 		}
 		builder.Write(sql.String(), params...)
 	}
 }
 
-func writeSearchStringSQL(query searchLibraryPanelsQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
+func writeSearchStringSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLStore, builder *sqlstore.SQLBuilder) {
 	if len(strings.TrimSpace(query.searchString)) > 0 {
-		builder.Write(" AND (lp.name "+sqlStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
-		builder.Write(" OR lp.description "+sqlStore.Dialect.LikeStr()+" ?)", "%"+query.searchString+"%")
+		builder.Write(" AND (le.name "+sqlStore.Dialect.LikeStr()+" ?", "%"+query.searchString+"%")
+		builder.Write(" OR le.description "+sqlStore.Dialect.LikeStr()+" ?)", "%"+query.searchString+"%")
 	}
 }
 
-func writeExcludeSQL(query searchLibraryPanelsQuery, builder *sqlstore.SQLBuilder) {
+func writeExcludeSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuilder) {
 	if len(strings.TrimSpace(query.excludeUID)) > 0 {
-		builder.Write(" AND lp.uid <> ?", query.excludeUID)
+		builder.Write(" AND le.uid <> ?", query.excludeUID)
 	}
 }
 
@@ -46,8 +52,8 @@ type FolderFilter struct {
 	parseError           error
 }
 
-func parseFolderFilter(query searchLibraryPanelsQuery) FolderFilter {
-	var folderIDs []string
+func parseFolderFilter(query searchLibraryElementsQuery) FolderFilter {
+	folderIDs := make([]string, 0)
 	if len(strings.TrimSpace(query.folderFilter)) == 0 {
 		return FolderFilter{
 			includeGeneralFolder: true,
@@ -94,7 +100,7 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *sqlsto
 		params = append(params, filter)
 	}
 	if len(params) > 0 {
-		sql.WriteString(` AND lp.folder_id IN (?` + strings.Repeat(",?", len(params)-1) + ")")
+		sql.WriteString(` AND le.folder_id IN (?` + strings.Repeat(",?", len(params)-1) + ")")
 		builder.Write(sql.String(), params...)
 	}
 

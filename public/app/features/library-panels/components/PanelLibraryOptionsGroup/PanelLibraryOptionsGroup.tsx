@@ -8,7 +8,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -23,7 +23,7 @@ interface Props {
 export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
   const styles = useStyles2(getStyles);
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
-  const [changeToPanel, setChangeToPanel] = useState<LibraryPanelDTO | undefined>(undefined);
+  const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
   const onPanelFilterChange = useCallback(
     (plugins: PanelPluginMeta[]) => {
@@ -63,7 +63,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
     setShowingAddPanelModal(true);
   };
 
-  const onChangeLibraryPanel = (panel: LibraryPanelDTO) => {
+  const onChangeLibraryPanel = (panel: LibraryElementDTO) => {
     setChangeToPanel(panel);
   };
 
