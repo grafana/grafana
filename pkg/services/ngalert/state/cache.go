@@ -47,6 +47,8 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
 		c.states[alertRule.OrgID] = make(map[string]map[string]*State)
+	}
+	if _, ok := c.states[alertRule.OrgID][alertRule.UID]; !ok {
 		c.states[alertRule.OrgID][alertRule.UID] = make(map[string]*State)
 	}
 

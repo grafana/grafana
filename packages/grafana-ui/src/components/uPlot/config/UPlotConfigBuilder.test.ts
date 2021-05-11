@@ -6,12 +6,12 @@ import {
   AxisPlacement,
   DrawStyle,
   PointVisibility,
-  ScaleDistribution,
   ScaleOrientation,
   ScaleDirection,
   GraphTresholdsStyleMode,
 } from '../config';
 import { createTheme, ThresholdsMode } from '@grafana/data';
+import { ScaleDistribution } from '../models.gen';
 
 describe('UPlotConfigBuilder', () => {
   const darkTheme = createTheme();
