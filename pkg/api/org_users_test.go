@@ -27,6 +27,8 @@ func setUpGetOrgUsersHandler() {
 }
 
 func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
+	t.Helper()
+	
 	setting.AutoAssignOrg = true
 	setting.AutoAssignOrgId = 1
 
