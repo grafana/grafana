@@ -36,7 +36,7 @@ const setup = (spy?: any, propOverrides?: object) => {
 describe('Render', () => {
   it('should render component', () => {
     setup();
-    const button = screen.getByText('Edit');
+    const button = screen.getByText('Edit value mappings');
     expect(button).toBeInTheDocument();
   });
 });
