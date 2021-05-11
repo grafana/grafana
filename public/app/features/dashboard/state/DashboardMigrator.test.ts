@@ -1085,7 +1085,6 @@ describe('DashboardModel', () => {
             legend: true,
             options: {
               tooltipOptions: { mode: 'single' },
-              t,
             },
           },
         ],

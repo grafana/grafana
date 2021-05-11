@@ -1,10 +1,3 @@
-import { VizLegendOptions, VizTooltipOptions } from '@grafana/ui';
-
-export interface OptionsWithLegend {
-  legend: VizLegendOptions;
-}
-export interface OptionsWithTooltip {
-  tooltip: VizTooltipOptions;
-}
+import { OptionsWithLegend, OptionsWithTooltip } from '@grafana/ui';
 
 export interface TimeSeriesOptions extends OptionsWithLegend, OptionsWithTooltip {}

@@ -1,5 +1,4 @@
-import { OptionsWithLegend, OptionsWithTooltip } from '../timeseries/types';
-
+import { OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
 export interface XYDimensionConfig {
   frame: number;
   x?: string; // name | first
