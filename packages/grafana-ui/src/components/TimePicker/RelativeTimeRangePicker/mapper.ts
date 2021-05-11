@@ -16,19 +16,10 @@ export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRa
 };
 
 export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOption => {
-  if (range.to > 0) {
-    return {
-      from: secondsToRelativeFormat(range.from),
-      to: secondsToRelativeFormat(range.to),
-      display: `${formatToOptionDisplay(range.from)} ago to ${formatToOptionDisplay(range.to)} ago`,
-    };
-  }
+  const from = secondsToRelativeFormat(range.from);
+  const to = secondsToRelativeFormat(range.to);
 
-  return {
-    from: secondsToRelativeFormat(range.from),
-    to: secondsToRelativeFormat(range.to),
-    display: `${formatToOptionDisplay(range.from)} ago to now`,
-  };
+  return { from, to, display: `${from} to ${to}` };
 };
 
 const units: Record<string, number> = {
@@ -39,66 +30,6 @@ const units: Record<string, number> = {
   h: 3600,
   m: 60,
   s: 1,
-};
-
-type UnitKeys = keyof typeof units;
-
-const displayUnit: Record<UnitKeys, string> = {
-  y: 'y',
-  M: 'M',
-  w: 'w',
-  d: 'd',
-  h: 'h',
-  m: 'min',
-  s: 's',
-};
-
-const formatToOptionDisplay = (seconds: number): string => {
-  if (seconds <= 0) {
-    return '';
-  }
-
-  if (seconds >= units.y) {
-    return formatWithMaxTwoUnits(seconds, 'y', 'M');
-  }
-
-  if (seconds >= units.M) {
-    return formatWithMaxTwoUnits(seconds, 'M', 'w');
-  }
-
-  if (seconds >= units.w) {
-    return formatWithMaxTwoUnits(seconds, 'w', 'd');
-  }
-
-  if (seconds >= units.d) {
-    return formatWithMaxTwoUnits(seconds, 'd', 'h');
-  }
-
-  if (seconds >= units.h) {
-    return formatWithMaxTwoUnits(seconds, 'h', 'm');
-  }
-
-  if (seconds >= units.m) {
-    return formatWithMaxTwoUnits(seconds, 'm', 's');
-  }
-
-  return formatWithUnit(seconds, 's');
-};
-
-const formatWithMaxTwoUnits = (seconds: number, firstUnit: UnitKeys, secondUnit: UnitKeys): string => {
-  const left = seconds % units[firstUnit];
-  const amount = Math.floor(seconds / units[firstUnit]);
-
-  if (left < units[secondUnit]) {
-    return formatWithUnit(amount, displayUnit[firstUnit]);
-  }
-
-  const amountLeft = Math.floor(left / units[secondUnit]);
-  return `${formatWithUnit(amount, displayUnit[firstUnit])} ${formatWithUnit(amountLeft, displayUnit[secondUnit])}`;
-};
-
-const formatWithUnit = (amount: number, unit: string): string => {
-  return `${amount}${unit}`;
 };
 
 const secondsToRelativeFormat = (seconds: number): string => {

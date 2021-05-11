@@ -6,28 +6,28 @@ describe('mapper', () => {
       const relativeTimeRange = { from: 600, to: 0 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
-      expect(timeOption).toEqual({ from: 'now-10m', to: 'now', display: '10min ago to now' });
+      expect(timeOption).toEqual({ from: 'now-10m', to: 'now', display: 'now-10m to now' });
     });
 
     it('should map relative time range from one hour to time option', () => {
       const relativeTimeRange = { from: 3600, to: 0 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
-      expect(timeOption).toEqual({ from: 'now-1h', to: 'now', display: '1h ago to now' });
+      expect(timeOption).toEqual({ from: 'now-1h', to: 'now', display: 'now-1h to now' });
     });
 
     it('should map relative time range from hours to time option', () => {
       const relativeTimeRange = { from: 7200, to: 0 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
-      expect(timeOption).toEqual({ from: 'now-2h', to: 'now', display: '2h ago to now' });
+      expect(timeOption).toEqual({ from: 'now-2h', to: 'now', display: 'now-2h to now' });
     });
 
     it('should handle two relative ranges', () => {
       const relativeTimeRange = { from: 600, to: 300 };
       const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
 
-      expect(timeOption).toEqual({ from: 'now-10m', to: 'now-5m', display: '10min ago to 5min ago' });
+      expect(timeOption).toEqual({ from: 'now-10m', to: 'now-5m', display: 'now-10m to now-5m' });
     });
 
     it('should handle two relative ranges with single/multiple units', () => {
@@ -37,29 +37,7 @@ describe('mapper', () => {
       expect(timeOption).toEqual({
         from: 'now-100m',
         to: 'now-5m',
-        display: '1h 40min ago to 5min ago',
-      });
-    });
-
-    it('should handle two relative ranges with two units', () => {
-      const relativeTimeRange = { from: 8460, to: 300 };
-      const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
-
-      expect(timeOption).toEqual({
-        from: 'now-141m',
-        to: 'now-5m',
-        display: '2h 21min ago to 5min ago',
-      });
-    });
-
-    it('should handle two relative ranges with two units where the second one is singular', () => {
-      const relativeTimeRange = { from: 7260, to: 300 };
-      const timeOption = mapRelativeTimeRangeToOption(relativeTimeRange);
-
-      expect(timeOption).toEqual({
-        from: 'now-121m',
-        to: 'now-5m',
-        display: '2h 1min ago to 5min ago',
+        display: 'now-100m to now-5m',
       });
     });
   });
