@@ -3,10 +3,10 @@ package setting
 import "strings"
 
 const (
-	AzureCloud        = "AzureCloud"
-	AzureChinaCloud   = "AzureChinaCloud"
+	AzurePublic       = "AzureCloud"
+	AzureChina        = "AzureChinaCloud"
 	AzureUSGovernment = "AzureUSGovernment"
-	AzureGermanCloud  = "AzureGermanCloud"
+	AzureGermany      = "AzureGermanCloud"
 )
 
 type AzureSettings struct {
@@ -19,7 +19,7 @@ func (cfg *Cfg) readAzureSettings() {
 	azureSection := cfg.Raw.Section("azure")
 
 	// Cloud
-	cloudName := azureSection.Key("cloud").MustString(AzureCloud)
+	cloudName := azureSection.Key("cloud").MustString(AzurePublic)
 	cfg.Azure.Cloud = normalizeAzureCloud(cloudName)
 
 	// Managed Identity
@@ -31,27 +31,32 @@ func normalizeAzureCloud(cloudName string) string {
 	switch strings.ToLower(cloudName) {
 	// Public
 	case "azurecloud":
+	case "azurepublic":
 	case "azurepubliccloud":
 	case "public":
-		return AzureCloud
+		return AzurePublic
 
 	// China
+	case "azurechina":
 	case "azurechinacloud":
 	case "china":
-		return AzureChinaCloud
+		return AzureChina
 
 	// US Government
 	case "azureusgovernment":
 	case "azureusgovernmentcloud":
+	case "usgov":
 	case "usgovernment":
 		return AzureUSGovernment
 
 	// Germany
 	case "azuregermancloud":
+	case "azuregermany":
 	case "german":
-		return AzureGermanCloud
+	case "germany":
+		return AzureGermany
 	}
 
-	// Default to public cloud
-	return AzureCloud
+	// Pass the name unchanged if it's not known
+	return cloudName
 }
