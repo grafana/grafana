@@ -124,7 +124,7 @@ const getStyles = stylesFactory(() => {
       display: flex;
       flex-direction: column;
       height: 100%;
-      background: url(public/img/getting_started_bg_${theme.type}.svg) no-repeat;
+      // background: url(public/img/getting_started_bg_${theme.type}.svg) no-repeat;
       background-size: cover;
       padding: ${theme.spacing.xl} ${theme.spacing.md} 0;
     `,
