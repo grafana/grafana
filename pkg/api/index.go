@@ -323,7 +323,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			HideFromTabs: true,
 			Id:           "admin",
 			Icon:         "shield",
-			Url:          hs.Cfg.AppSubURL + "/admin/users",
+			Url:          adminNavLinks[0].Url,
 			SortWeight:   dtos.WeightAdmin,
 			Children:     adminNavLinks,
 		})
