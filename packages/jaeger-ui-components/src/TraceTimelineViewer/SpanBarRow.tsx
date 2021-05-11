@@ -31,83 +31,68 @@ import { TNil } from '../types';
 import { TraceSpan } from '../types/trace';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
+const spanBarClassName = 'spanBar';
+const spanBarLabelClassName = 'spanBarLabel';
+const nameWrapperClassName = 'nameWrapper';
+const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
+const viewClassName = 'jaegerView';
+const nameColumnClassName = 'nameColumn';
+
 const getStyles = createStyle((theme: Theme) => {
-  const spanBar = css`
-    label: spanBar;
-  `;
-  const spanBarLabel = css`
-    label: spanBarLabel;
-  `;
-  const nameWrapper = css`
-    label: nameWrapper;
-    background: ${autoColor(theme, '#f8f8f8')};
-    line-height: 27px;
-    overflow: hidden;
-    display: flex;
-    &:hover {
-      border-right: 1px solid ${autoColor(theme, '#bbb')};
-      float: left;
-      min-width: calc(100% + 1px);
-      overflow: visible;
-    }
-  `;
-
-  const nameWrapperMatchingFilter = css`
-    label: nameWrapperMatchingFilter;
-    background-color: ${autoColor(theme, '#fffce4')};
-  `;
-
-  const endpointName = css`
-    label: endpointName;
-    color: ${autoColor(theme, '#808080')};
-  `;
-
-  const view = css`
-    label: view;
-    position: relative;
-  `;
-
-  const viewExpanded = css`
-    label: viewExpanded;
-    background: ${autoColor(theme, '#f8f8f8')};
-    outline: 1px solid ${autoColor(theme, '#ddd')};
-  `;
-
-  const viewExpandedAndMatchingFilter = css`
-    label: viewExpandedAndMatchingFilter;
-    background: ${autoColor(theme, '#fff3d7')};
-    outline: 1px solid ${autoColor(theme, '#ddd')};
-  `;
-
-  const nameColumn = css`
-    label: nameColumn;
-    position: relative;
-    white-space: nowrap;
-    z-index: 1;
-    &:hover {
-      z-index: 1;
-    }
-  `;
-
   return {
-    spanBar,
-    spanBarLabel,
-    nameWrapper,
-    nameWrapperMatchingFilter,
-    nameColumn,
-    endpointName,
-    view,
-    viewExpanded,
-    viewExpandedAndMatchingFilter,
+    nameWrapper: css`
+      label: nameWrapper;
+      background: ${autoColor(theme, '#f8f8f8')};
+      line-height: 27px;
+      overflow: hidden;
+      display: flex;
+      &:hover {
+        border-right: 1px solid ${autoColor(theme, '#bbb')};
+        float: left;
+        min-width: calc(100% + 1px);
+        overflow: visible;
+      }
+    `,
+    nameWrapperMatchingFilter: css`
+      label: nameWrapperMatchingFilter;
+      background-color: ${autoColor(theme, '#fffce4')};
+    `,
+    nameColumn: css`
+      label: nameColumn;
+      position: relative;
+      white-space: nowrap;
+      z-index: 1;
+      &:hover {
+        z-index: 1;
+      }
+    `,
+    endpointName: css`
+      label: endpointName;
+      color: ${autoColor(theme, '#808080')};
+    `,
+    view: css`
+      label: view;
+      position: relative;
+    `,
+    viewExpanded: css`
+      label: viewExpanded;
+      background: ${autoColor(theme, '#f8f8f8')};
+      outline: 1px solid ${autoColor(theme, '#ddd')};
+    `,
+    viewExpandedAndMatchingFilter: css`
+      label: viewExpandedAndMatchingFilter;
+      background: ${autoColor(theme, '#fff3d7')};
+      outline: 1px solid ${autoColor(theme, '#ddd')};
+    `,
     row: css`
       label: row;
-      &:hover .${spanBar} {
+      &:hover .${spanBarClassName} {
         opacity: 1;
       }
-      &:hover .${spanBarLabel} {
+      &:hover .${spanBarLabelClassName} {
         color: ${autoColor(theme, '#000')};
       }
-      &:hover .${nameWrapper} {
+      &:hover .${nameWrapperClassName} {
         background: #f8f8f8;
         background: linear-gradient(
           90deg,
@@ -116,14 +101,14 @@ const getStyles = createStyle((theme: Theme) => {
           ${autoColor(theme, '#eee')}
         );
       }
-      &:hover .${view} {
+      &:hover .${viewClassName} {
         background-color: ${autoColor(theme, '#f5f5f5')};
         outline: 1px solid ${autoColor(theme, '#ddd')};
       }
     `,
     rowClippingLeft: css`
       label: rowClippingLeft;
-      & .${nameColumn}::before {
+      & .${nameColumnClassName}::before {
         content: ' ';
         height: 100%;
         position: absolute;
@@ -139,7 +124,7 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     rowClippingRight: css`
       label: rowClippingRight;
-      & .${view}::before {
+      & .${viewClassName}::before {
         content: ' ';
         height: 100%;
         position: absolute;
@@ -155,27 +140,27 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     rowExpanded: css`
       label: rowExpanded;
-      & .${spanBar} {
+      & .${spanBarClassName} {
         opacity: 1;
       }
-      & .${spanBarLabel} {
+      & .${spanBarLabelClassName} {
         color: ${autoColor(theme, '#000')};
       }
-      & .${nameWrapper}, &:hover .${nameWrapper} {
+      & .${nameWrapperClassName}, &:hover .${nameWrapperClassName} {
         background: ${autoColor(theme, '#f0f0f0')};
         box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
       }
-      & .${nameWrapperMatchingFilter} {
+      & .${nameWrapperMatchingFilterClassName} {
         background: ${autoColor(theme, '#fff3d7')};
       }
-      &:hover .${view} {
+      &:hover .${viewClassName} {
         background: ${autoColor(theme, '#eee')};
       }
     `,
     rowMatchingFilter: css`
       label: rowMatchingFilter;
       background-color: ${autoColor(theme, '#fffce4')};
-      &:hover .${nameWrapper} {
+      &:hover .${nameWrapperClassName} {
         background: linear-gradient(
           90deg,
           ${autoColor(theme, '#fff5e1')},
@@ -183,7 +168,7 @@ const getStyles = createStyle((theme: Theme) => {
           ${autoColor(theme, '#ffe6c9')}
         );
       }
-      &:hover .${view} {
+      &:hover .${viewClassName} {
         background-color: ${autoColor(theme, '#fff3d7')};
         outline: 1px solid ${autoColor(theme, '#ddd')};
       }
@@ -191,7 +176,7 @@ const getStyles = createStyle((theme: Theme) => {
 
     rowExpandedAndMatchingFilter: css`
       label: rowExpandedAndMatchingFilter;
-      &:hover .${view} {
+      &:hover .${viewClassName} {
         background: ${autoColor(theme, '#ffeccf')};
       }
     `,
@@ -230,7 +215,7 @@ const getStyles = createStyle((theme: Theme) => {
       &:focus {
         text-decoration: none;
       }
-      &:hover > .${endpointName} {
+      &:hover > small {
         color: ${autoColor(theme, '#000')};
       }
     `,
@@ -398,8 +383,13 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
           className
         )}
       >
-        <TimelineRow.Cell className={styles.nameColumn} width={columnDivision}>
-          <div className={cx(styles.nameWrapper, { [styles.nameWrapperMatchingFilter]: isMatchingFilter })}>
+        <TimelineRow.Cell className={cx(styles.nameColumn, nameColumnClassName)} width={columnDivision}>
+          <div
+            className={cx(styles.nameWrapper, nameWrapperClassName, {
+              [styles.nameWrapperMatchingFilter]: isMatchingFilter,
+              nameWrapperMatchingFilter: isMatchingFilter,
+            })}
+          >
             <SpanTreeOffset
               childrenVisible={isChildrenExpanded}
               span={span}
@@ -490,7 +480,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
           </div>
         </TimelineRow.Cell>
         <TimelineRow.Cell
-          className={cx(styles.view, {
+          className={cx(styles.view, viewClassName, {
             [styles.viewExpanded]: isDetailExpanded,
             [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
           })}
@@ -511,8 +501,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             longLabel={longLabel}
             traceStartTime={traceStartTime}
             span={span}
-            labelClassName={`${styles.spanBarLabel} ${hintClassName}`}
-            className={styles.spanBar}
+            labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
+            className={spanBarClassName}
           />
         </TimelineRow.Cell>
       </TimelineRow>
