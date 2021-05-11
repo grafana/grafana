@@ -244,3 +244,11 @@ datasources:
     jsonData:
       graphiteVersion: "1.1"
 ```
+
+## Integration with Loki
+
+Graphite queries are automatically converted to Loki queries when the data source changes in Explore. Loki label names and
+values are extracted from Graphite queries according to mappings provided in Graphite data source configuration. Queries using
+tags with `seriesByTags()` are transformed automatically without any extra setup.
+
+Please check Graphite data source settings for more details.
