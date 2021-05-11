@@ -1,8 +1,7 @@
 import { DataFrame } from '../types/dataFrame';
 
 /**
- * Returns true if both frames have the same list of fields and configs.
- * Field may have diferent names, labels and values but share the same structure
+ * Returns true if both frames have the same name, fields, labels and configs.
  *
  * @example
  * To compare multiple frames use:
@@ -24,17 +23,26 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
     return false;
   }
 
+  if (a.name !== b.name) {
+    return false;
+  }
+
   for (let i = 0; i < a.fields.length; i++) {
     const fA = a.fields[i];
     const fB = b.fields[i];
 
-    if (fA.type !== fB.type) {
+    if (fA.type !== fB.type || fA.name !== fB.name) {
       return false;
     }
 
     // Do not check the config fields
     if (skipConfig) {
       continue;
+    }
+
+    // Check if labels are different
+    if (fA.labels && fB.labels && !shallowCompare(fA.labels, fB.labels)) {
+      return false;
     }
 
     const cfgA = fA.config as any;
