@@ -90,7 +90,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
         <thead>
           <tr>
             <th style={{ width: '1%' }}></th>
-            <th>Type</th>
+            <th style={{ width: '1%' }}>Type</th>
             <th style={{ width: '40%' }}>Match</th>
             <th>Display text</th>
             <th>Color</th>
@@ -144,18 +144,17 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     marginBottom: theme.spacing(2),
 
-    'thead tr': {},
+    'thead th': {
+      textAlign: 'center',
+    },
 
-    'tbody tr:nth-child(odd)': {
-      background: theme.colors.background.secondary,
+    'tbody tr:hover': {
+      background: theme.colors.action.hover,
     },
 
     ' th, td': {
       padding: theme.spacing(1),
-      textAlign: 'center',
     },
-
-    ' td': {},
   }),
 });
 

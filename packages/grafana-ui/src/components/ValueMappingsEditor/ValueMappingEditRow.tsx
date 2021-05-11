@@ -156,7 +156,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
           <td>
             <Input type="text" value={result.text ?? ''} onChange={onChangeText} placeholder="Display text" />
           </td>
-          <td>
+          <td className={styles.textAlignCenter}>
             {result.color && (
               <HorizontalGroup spacing="sm" justify="center">
                 <ColorPicker color={result.color} onChange={onChangeColor} enableNamedColors={true} />
@@ -173,7 +173,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
               </ColorPicker>
             )}
           </td>
-          <td>
+          <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">
               <IconButton name="trash-alt" onClick={() => onRemove(index)} data-testid="remove-value-mapping" />
             </HorizontalGroup>
@@ -196,5 +196,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   typeColumn: css({
     textTransform: 'capitalize',
+    textAlign: 'center',
+  }),
+  textAlignCenter: css({
+    textAlign: 'center',
   }),
 });
