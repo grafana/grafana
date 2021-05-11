@@ -1,4 +1,3 @@
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import {
   DataFrame,
   FieldType,
@@ -9,14 +8,18 @@ import {
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarChartFieldConfig } from './types';
-import { AxisPlacement, ScaleDirection, ScaleOrientation } from '../uPlot/config';
+import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import { FIXED_UNIT } from '../GraphNG/GraphNG';
-import { ScaleDistribution } from '../uPlot/models.gen';
-import { PrepConfigOpts } from '../GraphNG/utils';
-
-type PrepConfig = (opts: PrepConfigOpts<BarChartOptions>) => UPlotConfigBuilder;
+import {
+  AxisPlacement,
+  BarValueVisibility,
+  FIXED_UNIT,
+  ScaleDirection,
+  ScaleDistribution,
+  ScaleOrientation,
+  UPlotConfigBuilder,
+} from '@grafana/ui';
+import { UPlotConfigPrepFn } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -37,7 +40,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
   };
 }
 
-export const preparePlotConfigBuilder: PrepConfig = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   frame,
   theme,
   orientation,

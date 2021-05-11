@@ -13,7 +13,7 @@ import {
   getFieldSeriesColor,
 } from '@grafana/data';
 
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
@@ -25,7 +25,6 @@ import {
   ScaleOrientation,
 } from '../uPlot/config';
 import { collectStackingGroups } from '../uPlot/utils';
-import { PrepConfigOpts } from '../GraphNG/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -35,9 +34,14 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-type PrepConfig = (opts: PrepConfigOpts<{ sync: DashboardCursorSync }>) => UPlotConfigBuilder;
-
-export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, getTimeRange, eventBus, sync }) => {
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursorSync }> = ({
+  frame,
+  theme,
+  timeZone,
+  getTimeRange,
+  eventBus,
+  sync,
+}) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
   // X is the first field in the aligned frame

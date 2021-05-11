@@ -1,12 +1,8 @@
 import React from 'react';
 import { DataFrame, TimeRange } from '@grafana/data';
+import { GraphNG, GraphNGProps, LegendDisplayMode, PlotLegend, UPlotConfigBuilder, withTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
-import { withTheme2 } from '../../themes/ThemeContext';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
-import { PlotLegend } from '../uPlot/PlotLegend';
-import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 /**
  * @alpha

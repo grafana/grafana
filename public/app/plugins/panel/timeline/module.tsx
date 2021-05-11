@@ -1,9 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TimelinePanel } from './TimelinePanel';
-import { BarValueVisibility } from '@grafana/ui';
-//import { addHideFrom, addLegendOptions } from '../timeseries/config';
-//import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 import { TimelineOptions, TimelineFieldConfig, TimelineMode } from './types';
+import { BarValueVisibility } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
   .useFieldConfig({

@@ -9,10 +9,14 @@ import {
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions, BarValueVisibility } from './types';
-import { GraphGradientMode, StackingMode } from '../uPlot/config';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
-import { TooltipDisplayMode } from '../VizTooltip';
+import { BarChartFieldConfig, BarChartOptions } from './types';
+import {
+  BarValueVisibility,
+  GraphGradientMode,
+  LegendDisplayMode,
+  StackingMode,
+  TooltipDisplayMode,
+} from '@grafana/ui';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({

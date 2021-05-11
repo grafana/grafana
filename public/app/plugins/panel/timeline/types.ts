@@ -1,13 +1,4 @@
-import { VizLegendOptions, GraphGradientMode, HideableFieldConfig } from '@grafana/ui';
-
-/**
- * @alpha
- */
-export enum BarValueVisibility {
-  Auto = 'auto',
-  Never = 'never',
-  Always = 'always',
-}
+import { VizLegendOptions, GraphGradientMode, HideableFieldConfig, BarValueVisibility } from '@grafana/ui';
 
 /**
  * @alpha

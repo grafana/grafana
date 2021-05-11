@@ -1,11 +1,19 @@
+import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
+import { defaultsDeep } from 'lodash';
 import { PlotConfig, TooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
-import { defaultsDeep } from 'lodash';
-import { DefaultTimeZone, getTimeZoneInfo, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  DefaultTimeZone,
+  EventBus,
+  getTimeZoneInfo,
+  GrafanaTheme2,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { pluginLog } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
@@ -205,3 +213,15 @@ export class UPlotConfigBuilder {
     return this.tz ? uPlot.tzDate(date, this.tz) : date;
   };
 }
+
+/** @alpha */
+type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
+  frame: DataFrame;
+  theme: GrafanaTheme2;
+  timeZone: TimeZone;
+  getTimeRange: () => TimeRange;
+  eventBus: EventBus;
+} & T;
+
+/** @alpha */
+export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;

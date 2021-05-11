@@ -1,8 +1,15 @@
 import React from 'react';
-import { PanelContext, PanelContextRoot, UPlotConfigBuilder, GraphNG, GraphNGProps } from '@grafana/ui';
+import {
+  PanelContext,
+  PanelContextRoot,
+  UPlotConfigBuilder,
+  GraphNG,
+  GraphNGProps,
+  BarValueVisibility,
+} from '@grafana/ui';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
-import { BarValueVisibility, TimelineMode } from './types';
+import { TimelineMode } from './types';
 
 /**
  * @alpha
