@@ -11,7 +11,7 @@ export const Settings = ({ plugin }: Props) => {
   const [state, setState] = useState<MarketplaceAppSettings>(meta.jsonData ?? {});
 
   const { pinned, enabled } = meta;
-  const { includeEnterprise, includeUnsigned } = state;
+  const { includeEnterprise } = state;
 
   const onSave = () => {
     updateAndReload('grafana-marketplace-app', {
@@ -49,14 +49,6 @@ export const Settings = ({ plugin }: Props) => {
           value={includeEnterprise}
           onChange={(e) => {
             setState({ ...state, includeEnterprise: e.currentTarget.checked });
-          }}
-        />
-      </Field>
-      <Field label="Show unsigned plugins" description="Grafana can't guarantee the integrity of unsigned plugins.">
-        <Switch
-          value={includeUnsigned}
-          onChange={(e) => {
-            setState({ ...state, includeUnsigned: e.currentTarget.checked });
           }}
         />
       </Field>

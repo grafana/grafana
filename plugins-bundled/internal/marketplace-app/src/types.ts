@@ -1,5 +1,4 @@
 export interface MarketplaceAppSettings {
-  includeUnsigned?: boolean;
   includeEnterprise?: boolean;
 }
 
