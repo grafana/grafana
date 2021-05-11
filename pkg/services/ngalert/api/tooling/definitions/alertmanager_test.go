@@ -69,6 +69,50 @@ func Test_ApiReceiver_Marshaling(t *testing.T) {
 	}
 }
 
+func Test_APIReceiverType(t *testing.T) {
+	for _, tc := range []struct {
+		desc     string
+		input    PostableApiReceiver
+		expected ReceiverType
+	}{
+		{
+			desc: "empty",
+			input: PostableApiReceiver{
+				Receiver: config.Receiver{
+					Name: "foo",
+				},
+			},
+			expected: EmptyReceiverType,
+		},
+		{
+			desc: "am",
+			input: PostableApiReceiver{
+				Receiver: config.Receiver{
+					Name:         "foo",
+					EmailConfigs: []*config.EmailConfig{{}},
+				},
+			},
+			expected: AlertmanagerReceiverType,
+		},
+		{
+			desc: "graf",
+			input: PostableApiReceiver{
+				Receiver: config.Receiver{
+					Name: "foo",
+				},
+				PostableGrafanaReceivers: PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
+				},
+			},
+			expected: GrafanaReceiverType,
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			require.Equal(t, tc.expected, tc.input.Type())
+		})
+	}
+}
+
 func Test_AllReceivers(t *testing.T) {
 	input := &config.Route{
 		Receiver: "foo",
@@ -88,6 +132,10 @@ func Test_AllReceivers(t *testing.T) {
 	}
 
 	require.Equal(t, []string{"foo", "bar", "bazz", "buzz"}, AllReceivers(input))
+
+	// test empty
+	var empty []string
+	require.Equal(t, empty, AllReceivers(&config.Route{}))
 }
 
 func Test_ApiAlertingConfig_Marshaling(t *testing.T) {

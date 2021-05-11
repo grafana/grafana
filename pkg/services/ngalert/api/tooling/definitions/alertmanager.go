@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
@@ -398,19 +399,6 @@ func (c *GettableApiAlertingConfig) validate() error {
 	return nil
 }
 
-// Type requires validate has been called and just checks the first receiver type
-func (c *GettableApiAlertingConfig) Type() (backend Backend) {
-	for _, r := range c.Receivers {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			return GrafanaBackend
-		case AlertmanagerReceiverType:
-			return AlertmanagerBackend
-		}
-	}
-	return
-}
-
 // Config is the top-level configuration for Alertmanager's config files.
 type Config struct {
 	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
@@ -481,7 +469,9 @@ func (c *PostableApiAlertingConfig) ReceiverType() ReceiverType {
 // AllReceivers will recursively walk a routing tree and return a list of all the
 // referenced receiver names.
 func AllReceivers(route *config.Route) (res []string) {
-	res = append(res, route.Receiver)
+	if route.Receiver != "" {
+		res = append(res, route.Receiver)
+	}
 	for _, subRoute := range route.Routes {
 		res = append(res, AllReceivers(subRoute)...)
 	}
@@ -647,6 +637,13 @@ func (r *PostableApiReceiver) Type() ReceiverType {
 	if len(r.PostableGrafanaReceivers.GrafanaManagedReceivers) > 0 {
 		return GrafanaReceiverType
 	}
+
+	cpy := r.Receiver
+	cpy.Name = ""
+	if reflect.ValueOf(cpy).IsZero() {
+		return EmptyReceiverType
+	}
+
 	return AlertmanagerReceiverType
 }
 
