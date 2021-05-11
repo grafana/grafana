@@ -2,14 +2,14 @@ import React, { FC, useEffect, useMemo, useReducer } from 'react';
 import { Button, Modal, useStyles } from '@grafana/ui';
 import { LoadingState } from '@grafana/data';
 
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { asyncDispatcher } from '../LibraryPanelsView/actions';
 import { deleteLibraryPanelModalReducer, initialDeleteLibraryPanelModalState } from './reducer';
 import { getConnectedDashboards } from './actions';
 import { getModalStyles } from '../../styles';
 
 interface Props {
-  libraryPanel: LibraryPanelDTO;
+  libraryPanel: LibraryElementDTO;
   onConfirm: () => void;
   onDismiss: () => void;
 }

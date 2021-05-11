@@ -1,6 +1,6 @@
 import { VizOrientation } from '@grafana/data';
 import { AxisConfig, GraphGradientMode, HideableFieldConfig, StackingMode } from '../uPlot/config';
-import { VizLegendOptions } from '../VizLegend/models.gen';
+import { OptionsWithLegend, OptionsWithTooltip } from '../../options';
 
 /**
  * @alpha
@@ -14,9 +14,8 @@ export enum BarValueVisibility {
 /**
  * @alpha
  */
-export interface BarChartOptions {
+export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip {
   orientation: VizOrientation;
-  legend: VizLegendOptions;
   stacking: StackingMode;
   showValue: BarValueVisibility;
   barWidth: number;

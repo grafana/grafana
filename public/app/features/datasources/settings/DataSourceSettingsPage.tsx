@@ -32,10 +32,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
+export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 function mapStateToProps(state: StoreState, props: OwnProps) {
-  const dataSourceId = props.match.params.id;
+  const dataSourceId = props.match.params.uid;
   const params = new URLSearchParams(props.location.search);
   const dataSource = getDataSource(state.dataSources, dataSourceId);
   const { plugin, loadError, testingStatus } = state.dataSourceSettings;
@@ -49,7 +49,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     ),
     dataSource: getDataSource(state.dataSources, dataSourceId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
-    dataSourceId: parseInt(dataSourceId, 10),
+    dataSourceId: dataSourceId,
     page,
     plugin,
     loadError,
@@ -200,6 +200,19 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     return <div>Page not found: {page}</div>;
   }
 
+  renderAlertDetails() {
+    const { testingStatus } = this.props;
+
+    return (
+      <>
+        {testingStatus?.details?.message}
+        {testingStatus?.details?.verboseMessage ? (
+          <details style={{ whiteSpace: 'pre-wrap' }}>{testingStatus?.details?.verboseMessage}</details>
+        ) : null}
+      </>
+    );
+  }
+
   renderSettings() {
     const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, plugin, testingStatus } = this.props;
 
@@ -233,20 +246,17 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           />
         )}
 
-        <div className="gf-form-group p-t-2">
-          {testingStatus?.message && (
+        {testingStatus?.message && (
+          <div className="gf-form-group p-t-2">
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}
               title={testingStatus.message}
               aria-label={selectors.pages.DataSource.alert}
             >
-              {testingStatus.details?.message ?? null}
-              {testingStatus.details?.verboseMessage ? (
-                <details style={{ whiteSpace: 'pre-wrap' }}>{testingStatus.details?.verboseMessage}</details>
-              ) : null}
+              {testingStatus.details && this.renderAlertDetails()}
             </Alert>
-          )}
-        </div>
+          </div>
+        )}
 
         <ButtonRow
           onSubmit={(event) => this.onSubmit(event)}

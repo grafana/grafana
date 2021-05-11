@@ -17,7 +17,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     text-overflow: ellipsis;
     box-sizing: border-box;
     max-width: 100%;
-    /* padding-right: 40px; */
   `;
   const container = css`
     width: 16px;
