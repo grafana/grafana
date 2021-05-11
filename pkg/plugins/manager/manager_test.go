@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -37,10 +38,11 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Empty(t, pm.scanningErrors)
-		assert.Len(t, pm.Plugins(), 45)
-		assert.Len(t, pm.DataSources(), 21)
-		assert.Len(t, pm.Panels(), 24)
-		assert.Len(t, pm.Apps(), 0)
+		verifyCorePluginCatalogue(t, pm)
+
+		// verify bundled plugins
+		assert.NotNil(t, pm.plugins["input"])
+		assert.NotNil(t, pm.dataSources["input"])
 
 		assert.Len(t, pm.StaticRoutes(), 1)
 		assert.Equal(t, "input", pm.StaticRoutes()[0].PluginId)
@@ -59,8 +61,8 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Empty(t, pm.scanningErrors)
-		assert.NotEmpty(t, pm.dataSources)
-		assert.NotEmpty(t, pm.panels)
+		verifyCorePluginCatalogue(t, pm)
+
 		assert.NotEmpty(t, pm.apps)
 		assert.Equal(t, "app/plugins/datasource/graphite/module", pm.dataSources["graphite"].Module)
 		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", pm.apps["test-app"].Info.Logos.Large)
@@ -148,12 +150,8 @@ func TestPluginManager_Init(t *testing.T) {
 		apps := pm.apps
 
 		verifyPluginManagerState := func() {
-			// verify plugin manager has loaded core plugins successfully
 			assert.Empty(t, pm.scanningErrors)
-			assert.Len(t, pm.Plugins(), 45)
-			assert.Len(t, datasources, 21)
-			assert.Len(t, panels, 24)
-			assert.Len(t, apps, 0)
+			verifyCorePluginCatalogue(t, pm)
 
 			// verify plugin has been loaded successfully
 			const pluginID = "test"
@@ -343,10 +341,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		// verify plugin manager has loaded core plugins successfully
 		assert.Empty(t, pm.scanningErrors)
-		assert.Len(t, pm.Plugins(), 45)
-		assert.Len(t, pm.DataSources(), 21)
-		assert.Len(t, pm.Panels(), 24)
-		assert.Len(t, pm.Apps(), 0)
+		verifyCorePluginCatalogue(t, pm)
 
 		// verify plugin has been loaded successfully
 		assert.NotNil(t, pm.plugins[pluginID])
@@ -420,6 +415,72 @@ func TestPluginManager_Installer(t *testing.T) {
 			})
 		})
 	})
+}
+
+func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
+	t.Helper()
+
+	panels := []string{
+		"alertlist",
+		"annolist",
+		"barchart",
+		"bargauge",
+		"dashlist",
+		"debug",
+		"gauge",
+		"gettingstarted",
+		"graph",
+		"heatmap",
+		"live",
+		"logs",
+		"news",
+		"nodeGraph",
+		"piechart",
+		"pluginlist",
+		"stat",
+		"table",
+		"table-old",
+		"text",
+		"timeline",
+		"timeseries",
+		"welcome",
+		"xychart",
+	}
+
+	datasources := []string{
+		"alertmanager",
+		"stackdriver",
+		"cloudwatch",
+		"dashboard",
+		"elasticsearch",
+		"grafana",
+		"grafana-azure-monitor-datasource",
+		"graphite",
+		"influxdb",
+		"jaeger",
+		"loki",
+		"mixed",
+		"mssql",
+		"mysql",
+		"opentsdb",
+		"postgres",
+		"prometheus",
+		"tempo",
+		"testdata",
+		"zipkin",
+	}
+
+	for _, p := range panels {
+		log.Printf("Panel = %s\n", p)
+		assert.NotNil(t, pm.plugins[p])
+		assert.NotNil(t, pm.panels[p])
+	}
+
+	for _, ds := range datasources {
+		log.Printf("DS = %s\n", ds)
+		assert.NotNil(t, pm.plugins[ds])
+		assert.NotNil(t, pm.dataSources[ds])
+	}
 }
 
 type fakeBackendPluginManager struct {
