@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  PanelContext,
-  PanelContextRoot,
-  UPlotConfigBuilder,
-  GraphNG,
-  GraphNGProps,
-  BarValueVisibility,
-} from '@grafana/ui';
+import { PanelContext, PanelContextRoot, GraphNG, GraphNGProps, BarValueVisibility } from '@grafana/ui';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
 import { TimelineMode } from './types';
@@ -39,9 +32,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
     });
   };
 
-  renderLegend = (config: UPlotConfigBuilder) => {
-    return;
-  };
+  renderLegend = () => null;
 
   render() {
     return (
@@ -53,7 +44,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
         }}
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
-        renderLegend={this.renderLegend as any}
+        renderLegend={this.renderLegend}
       />
     );
   }

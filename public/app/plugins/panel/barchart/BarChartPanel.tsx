@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { FieldType, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { GraphNGLegendEvent, TooltipPlugin } from '@grafana/ui';
-import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+import { TooltipPlugin } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 
@@ -10,15 +9,7 @@ interface Props extends PanelProps<BarChartOptions> {}
 /**
  * @alpha
  */
-export const BarChartPanel: React.FunctionComponent<Props> = ({
-  data,
-  options,
-  width,
-  height,
-  fieldConfig,
-  timeZone,
-  onFieldConfigChange,
-}) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -26,13 +17,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
     return options.orientation;
   }, [width, height, options.orientation]);
-
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
-    },
-    [fieldConfig, onFieldConfigChange, data.series]
-  );
 
   if (!data || !data.series?.length) {
     return (
@@ -66,7 +50,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       structureRev={data.structureRev}
       width={width}
       height={height}
-      onLegendClick={onLegendClick}
       {...options}
       orientation={orientation}
     >

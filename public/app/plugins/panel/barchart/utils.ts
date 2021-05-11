@@ -18,8 +18,8 @@ import {
   ScaleDistribution,
   ScaleOrientation,
   UPlotConfigBuilder,
+  UPlotConfigPrepFn,
 } from '@grafana/ui';
-import { UPlotConfigPrepFn } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {

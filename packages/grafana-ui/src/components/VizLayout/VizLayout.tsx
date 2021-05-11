@@ -9,7 +9,7 @@ import { LegendPlacement } from '..';
 export interface VizLayoutProps {
   width: number;
   height: number;
-  legend?: React.ReactElement<VizLayoutLegendProps>;
+  legend?: React.ReactElement<VizLayoutLegendProps> | null;
   children: (width: number, height: number) => React.ReactNode;
 }
 
