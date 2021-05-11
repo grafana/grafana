@@ -307,7 +307,8 @@
       "**/@types/*/**",
       "@storybook",
       "**/@storybook",
-      "**/@storybook/**"
+      "**/@storybook/**",
+      "@icons/material"
     ]
   },
   "_moduleAliases": {
