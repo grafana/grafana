@@ -22,6 +22,7 @@ export const ThemeContext = React.createContext(createTheme());
 ThemeContext.displayName = 'ThemeContext';
 
 /** @deprecated use withTheme2 */
+/** @public */
 export const withTheme = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
   const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = (props) => {
     /**
@@ -62,6 +63,7 @@ export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: R
 };
 
 /** @deprecated use useTheme2 */
+/** @public */
 export function useTheme(): GrafanaTheme {
   return useContext(ThemeContextMock || ThemeContext).v1;
 }
@@ -114,6 +116,7 @@ export function useStyles2<T>(getStyles: (theme: GrafanaTheme2) => T) {
 /**
  * Enables theme context  mocking
  */
+/** @public */
 export const mockThemeContext = (theme: Partial<GrafanaTheme2>) => {
   ThemeContextMock = React.createContext(theme as GrafanaTheme2);
 
