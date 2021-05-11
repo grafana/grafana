@@ -44,7 +44,7 @@ export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
                     [{row.from} - {row.to}]
                   </span>
                 )}
-                {row.type === MappingType.NullToText && row.nullMatch}
+                {row.type === MappingType.SpecialValue && row.specialMatch}
               </td>
               <td>
                 <Icon name="arrow-right" />
