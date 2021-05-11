@@ -167,16 +167,14 @@ describe('Format value', () => {
     expect(result.color).toEqual('#F2495C');
   });
 
-  // Wonder what this is scenario is for?
+  it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
+    const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { '1': { text: '' } } }];
+    const value = '1';
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
 
-  // it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
-  //   const valueMappings: ValueMapping[] = [{ id: 1, text: '', type: MappingType.ValueToText, value: '1' }];
-  //   const value = '1';
-  //   const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
-
-  //   expect(instance(value).text).toEqual('');
-  //   expect(instance(value).numeric).toEqual(1);
-  // });
+    expect(instance(value).text).toEqual('');
+    expect(instance(value).numeric).toEqual(1);
+  });
 
   it('should not map 1kW to the value for 1W', () => {
     const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { '1': { text: 'mapped' } } }];
