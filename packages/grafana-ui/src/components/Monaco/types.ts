@@ -21,10 +21,8 @@ export interface CodeEditorProps {
 
   /**
    * Callback after the editor has mounted that gives you raw access to monaco
-   *
-   * @alpha -- experimental
    */
-  onEditorDidMount?: (editor: monacoType.editor.IStandaloneCodeEditor) => void;
+  onEditorDidMount?: (editor: MonacoEditor, monaco: Monaco) => void;
 
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;

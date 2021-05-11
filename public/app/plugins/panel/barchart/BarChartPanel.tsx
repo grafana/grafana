@@ -1,7 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
-import { FieldType, PanelProps, VizOrientation } from '@grafana/data';
-import { BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
+import { FieldType, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
+import { GraphNGLegendEvent, TooltipPlugin } from '@grafana/ui';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+import { BarChartOptions } from './types';
+import { BarChart } from './BarChart';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
@@ -14,6 +16,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   width,
   height,
   fieldConfig,
+  timeZone,
   onFieldConfigChange,
 }) => {
   const orientation = useMemo(() => {
@@ -57,13 +60,19 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
   return (
     <BarChart
-      data={data.series}
+      frames={data.series}
+      timeZone={timeZone}
+      timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
       structureRev={data.structureRev}
       width={width}
       height={height}
       onLegendClick={onLegendClick}
       {...options}
       orientation={orientation}
-    />
+    >
+      {(config, alignedFrame) => {
+        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+      }}
+    </BarChart>
   );
 };

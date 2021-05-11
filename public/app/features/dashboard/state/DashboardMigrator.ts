@@ -10,10 +10,16 @@ import {
   DataLink,
   DataLinkBuiltInVars,
   DatasourceRef,
+  MappingType,
+  SpecialValueMatch,
   PanelPlugin,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  ThresholdsConfig,
   urlUtil,
+  ValueMap,
+  ValueMapping,
+  getActiveThreshold,
 } from '@grafana/data';
 // Constants
 import {
@@ -48,7 +54,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 30;
+    this.dashboard.schemaVersion = 31;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -613,8 +619,13 @@ export class DashboardMigrator {
       }
     }
 
-    // Replace datasource name with reference, uid and type
     if (oldVersion < 30) {
+      panelUpgrades.push(upgradeValueMappingsForPanel);
+      panelUpgrades.push(migrateTooltipOptions);
+    }
+
+    // Replace datasource name with reference, uid and type
+    if (oldVersion < 31) {
       for (const variable of this.dashboard.templating.list) {
         if (variable.type !== 'query') {
           continue;
@@ -937,4 +948,91 @@ function migrateDatasourceNameToRef(name: string): DatasourceRef | null {
     return { uid: name }; // not found
   }
   return { type: ds.meta.id, uid: ds.uid };
+}
+
+function upgradeValueMappingsForPanel(panel: PanelModel) {
+  const fieldConfig = panel.fieldConfig;
+  if (!fieldConfig) {
+    return;
+  }
+
+  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings, fieldConfig.defaults.thresholds);
+
+  for (const override of fieldConfig.overrides) {
+    for (const prop of override.properties) {
+      if (prop.id === 'mappings') {
+        prop.value = upgradeValueMappings(prop.value);
+      }
+    }
+  }
+}
+
+function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {
+  if (!oldMappings) {
+    return undefined;
+  }
+
+  const valueMaps: ValueMap = { type: MappingType.ValueToText, options: {} };
+  const newMappings: ValueMapping[] = [];
+
+  for (const old of oldMappings) {
+    // Use the color we would have picked from thesholds
+    let color: string | undefined = undefined;
+    const numeric = parseFloat(old.text);
+    if (thresholds && !isNaN(numeric)) {
+      const level = getActiveThreshold(numeric, thresholds.steps);
+      if (level && level.color) {
+        color = level.color;
+      }
+    }
+
+    switch (old.type) {
+      case 1: // MappingType.ValueToText:
+        if (old.value != null) {
+          if (old.value === 'null') {
+            newMappings.push({
+              type: MappingType.SpecialValue,
+              options: {
+                match: SpecialValueMatch.Null,
+                result: { text: old.text, color },
+              },
+            });
+          } else {
+            valueMaps.options[String(old.value)] = {
+              text: old.text,
+              color,
+            };
+          }
+        }
+        break;
+      case 2: // MappingType.RangeToText:
+        newMappings.push({
+          type: MappingType.RangeToText,
+          options: {
+            from: +old.from,
+            to: +old.to,
+            result: { text: old.text, color },
+          },
+        });
+        break;
+    }
+  }
+
+  if (Object.keys(valueMaps.options).length > 0) {
+    newMappings.unshift(valueMaps);
+  }
+
+  return newMappings;
+}
+
+function migrateTooltipOptions(panel: PanelModel) {
+  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+    if (panel.options.tooltipOptions) {
+      panel.options = {
+        ...panel.options,
+        tooltip: panel.options.tooltipOptions,
+      };
+      delete panel.options.tooltipOptions;
+    }
+  }
 }
