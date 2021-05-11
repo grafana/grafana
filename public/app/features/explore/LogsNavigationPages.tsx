@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { css, cx } from 'emotion';
 import { dateTimeFormat, systemDateFormats, TimeZone, GrafanaTheme, AbsoluteTimeRange } from '@grafana/data';
-import { useTheme, stylesFactory, CustomScrollbar } from '@grafana/ui';
+import { useTheme, stylesFactory, CustomScrollbar, Spinner } from '@grafana/ui';
 import { LogsPage } from './LogsNavigation';
 
 type Props = {
@@ -29,6 +29,9 @@ export function LogsNavigationPages({
   };
 
   const createPageContent = (page: LogsPage, index: number) => {
+    if (currentPageIndex === index && loading) {
+      return <Spinner />;
+    }
     const topContent = formatTime(oldestLogsFirst ? page.logsRange.from : page.logsRange.to);
     const bottomContent = formatTime(oldestLogsFirst ? page.logsRange.to : page.logsRange.from);
     return `${topContent} — ${bottomContent}`;
