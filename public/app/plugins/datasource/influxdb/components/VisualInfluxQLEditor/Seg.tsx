@@ -136,7 +136,6 @@ type InpProps = {
 const Inp = ({ initialValue, onChange }: InpProps): JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(initialValue);
 
-  console.log(initialValue, currentValue);
   const onBlur = () => {
     // we send empty-string as undefined
     onChange(currentValue);
