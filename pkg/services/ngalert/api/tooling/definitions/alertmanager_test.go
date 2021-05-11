@@ -510,7 +510,6 @@ func Test_ReceiverCompatibility(t *testing.T) {
 }
 
 func Test_ReceiverMatchesBackend(t *testing.T) {
-
 	for _, tc := range []struct {
 		desc string
 		rec  ReceiverType

@@ -382,6 +382,8 @@ func (c *GettableApiAlertingConfig) validate() error {
 			hasGrafReceivers = true
 		case AlertmanagerReceiverType:
 			hasAMReceivers = true
+		default:
+			continue
 		}
 	}
 
@@ -436,6 +438,8 @@ func (c *PostableApiAlertingConfig) validate() error {
 			hasGrafReceivers = true
 		case AlertmanagerReceiverType:
 			hasAMReceivers = true
+		default:
+			continue
 		}
 	}
 
@@ -461,6 +465,8 @@ func (c *PostableApiAlertingConfig) ReceiverType() ReceiverType {
 			return GrafanaReceiverType
 		case AlertmanagerReceiverType:
 			return AlertmanagerReceiverType
+		default:
+			continue
 		}
 	}
 	return EmptyReceiverType
@@ -522,6 +528,7 @@ func (r ReceiverType) MatchesBackend(backend Backend) error {
 		ok = r.Can(GrafanaReceiverType)
 	case AlertmanagerBackend:
 		ok = r.Can(AlertmanagerReceiverType)
+	default:
 	}
 	if !ok {
 		return msg(backend, r)
