@@ -26,7 +26,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
       background: url(public/img/g8_login_${theme.isDark ? 'dark' : 'light'}.svg);
       background-size: cover;
       opacity: 0;
-      transition: opacity 3.5s ease-in-out;
+      transition: opacity 3s ease-in-out;
     }
   `;
 
@@ -39,10 +39,8 @@ const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
 
 const LoginBoxBackground = () => {
   const theme = useTheme2();
-  const color = theme.isLight ? 'rgba(6, 30, 200, 0.1 )' : colorManipulator.alpha(theme.colors.background.primary, 0.7);
-
   return css`
-    background: ${color};
+    background: ${colorManipulator.alpha(theme.colors.background.primary, 0.7)};
     background-size: cover;
   `;
 };

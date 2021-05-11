@@ -115,7 +115,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius(4)};
       padding: ${theme.spacing(2, 0)};
       opacity: 0;
-      transition: opacity 1s ease-in-out;
+      transition: opacity 0.5s ease-in-out;
     `,
     loginOuterBox: css`
       display: flex;
