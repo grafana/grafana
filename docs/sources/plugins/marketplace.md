@@ -8,5 +8,4 @@ Marketplace for Grafana is a plugin bundled with Grafana versions 8.0+. It allow
 
 [screenshot placeholder]
 
-In order to use the Marketplace for Grafana, it must be enabled in the Grafana [configuration]({{< relref "../administration/configuration.md#marketplace_app_enabled" >}}).
-
+To use the Marketplace for Grafana, you first need to enable it in the Grafana [configuration]({{< relref "../administration/configuration.md#marketplace_app_enabled" >}}).
