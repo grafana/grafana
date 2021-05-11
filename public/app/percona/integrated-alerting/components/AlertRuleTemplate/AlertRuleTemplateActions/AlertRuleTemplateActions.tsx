@@ -11,7 +11,10 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const { source, yaml, name, summary } = template;
-  const isActionDisabled = useMemo(() => source === SourceDescription.BUILT_IN, [template]);
+  const isActionDisabled = useMemo(
+    () => source === SourceDescription.BUILT_IN || source === SourceDescription.USER_FILE,
+    [template]
+  );
 
   return (
     <div className={styles.actionsWrapper}>

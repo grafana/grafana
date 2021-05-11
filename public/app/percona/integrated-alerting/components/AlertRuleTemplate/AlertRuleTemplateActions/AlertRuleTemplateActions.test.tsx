@@ -51,4 +51,16 @@ describe('AlertRuleTemplateActions', () => {
     expect(editButton.prop('disabled')).toBeTruthy();
     expect(deleteButton.prop('disabled')).toBeTruthy();
   });
+
+  it('should disable edit and delete buttons when template is from a file', () => {
+    const wrapper = mount(
+      <AlertRuleTemplateActions template={formattedTemplateStubs[2]} getAlertRuleTemplates={jest.fn()} />
+    );
+
+    const editButton = wrapper.find(dataQa('edit-template-button')).find('button');
+    const deleteButton = wrapper.find(dataQa('delete-template-button')).find('button');
+
+    expect(editButton.prop('disabled')).toBeTruthy();
+    expect(deleteButton.prop('disabled')).toBeTruthy();
+  });
 });
