@@ -19,7 +19,7 @@ export const UserSignup: FC<{}> = () => {
         variant="secondary"
         fill="outline"
       >
-        Sign Up
+        Sign up
       </LinkButton>
     </VerticalGroup>
   );
