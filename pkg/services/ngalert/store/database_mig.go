@@ -115,8 +115,11 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 
 	mg.AddMigration("remove index def_org_id, def_uid, current_state on alert_instance", migrator.NewDropIndexMigration(alertInstance, alertInstance.Indices[0]))
 	mg.AddMigration("remove index def_org_id, current_state on alert_instance", migrator.NewDropIndexMigration(alertInstance, alertInstance.Indices[1]))
+
 	mg.AddMigration("rename def to rule in alert_instance", migrator.NewRawSQLMigration("").
-		Default("ALTER TABLE alert_instance RENAME COLUMN def_org_id TO rule_org_id ; ALTER TABLE alert_instance RENAME COLUMN def_uid TO rule_uid ;"))
+		Default("ALTER TABLE alert_instance RENAME COLUMN def_org_id TO rule_org_id ; ALTER TABLE alert_instance RENAME COLUMN def_uid TO rule_uid ;").
+		Mysql("ALTER TABLE alert_instance CHANGE def_org_id rule_org_id BIGINT; ALTER TABLE alert_instance CHANGE def_uid rule_uid VARCHAR(40);"))
+
 	mg.AddMigration("add index rule_org_id, rule_uid, current_state on alert_instance", migrator.NewAddIndexMigration(alertInstance, &migrator.Index{
 		Cols: []string{"rule_org_id", "rule_uid", "current_state"}, Type: migrator.IndexType,
 	}))
