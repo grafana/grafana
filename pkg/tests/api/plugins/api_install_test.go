@@ -72,6 +72,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, username, password strin
 func makePostRequest(t *testing.T, URL string) (int, string) {
 	t.Helper()
 
+	// nolint:gosec
 	resp, err := http.Post(URL, "application/json", bytes.NewBufferString(""))
 	require.NoError(t, err)
 	t.Cleanup(func() {
