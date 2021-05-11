@@ -247,6 +247,6 @@ datasources:
 
 ## Integration with Loki
 
-Graphite queries are automatically converted to Loki queries when the data source changes in Explore. Loki label names and values are extracted from Graphite queries according to mappings provided in Graphite data source configuration. Queries using tags with `seriesByTags()` are transformed automatically without any extra setup.
+Graphite queries get converted to Loki queries when the data source selection changes in Explore. Loki label names and values are extracted from the Graphite queries according to mappings information provided in Graphite data source configuration. Queries using tags with `seriesByTags()` are also transformed without any additional setup.
 
-Please check Graphite data source settings for more details.
+Refer to the Graphite data source settings for more details.
