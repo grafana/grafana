@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { ScaleDistribution } from './models.gen';
 
 /**
  * @alpha
@@ -47,15 +48,6 @@ export enum BarAlignment {
   Before = -1,
   Center = 0,
   After = 1,
-}
-
-/**
- * @alpha
- */
-export enum ScaleDistribution {
-  Linear = 'linear',
-  Logarithmic = 'log',
-  Ordinal = 'ordinal',
 }
 
 /**

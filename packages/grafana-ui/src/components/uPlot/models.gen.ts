@@ -30,6 +30,7 @@ export enum LineInterpolation {
 export enum ScaleDistribution {
   Linear = 'linear',
   Log = 'log',
+  Ordinal = 'ordinal',
 }
 export enum GraphGradientMode {
   Hue = 'hue',

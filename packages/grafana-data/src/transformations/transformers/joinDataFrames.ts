@@ -216,7 +216,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-type AlignedData = [number[], ...Array<Array<number | null>>];
+export type AlignedData = [number[], ...Array<Array<number | null>>];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
