@@ -1,8 +1,6 @@
 import React from 'react';
-import { withTheme2 } from '../../themes/ThemeContext';
-import { DataFrame, TimeRange } from '@grafana/data';
-import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { PanelContext, PanelContextRoot, UPlotConfigBuilder, GraphNG, GraphNGProps } from '@grafana/ui';
+import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
 import { BarValueVisibility, TimelineMode } from './types';
 
@@ -18,11 +16,18 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
 
 const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue'];
 
-export class UnthemedTimelineChart extends React.Component<TimelineProps> {
+export class TimelineChart extends React.Component<TimelineProps> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+
   prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
+    this.panelContext = this.context as PanelContext;
+    const { eventBus } = this.panelContext;
+
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
+      eventBus,
       ...this.props,
     });
   };
@@ -35,6 +40,10 @@ export class UnthemedTimelineChart extends React.Component<TimelineProps> {
     return (
       <GraphNG
         {...this.props}
+        fields={{
+          x: (f) => f.type === FieldType.time,
+          y: (f) => f.type === FieldType.number || f.type === FieldType.boolean || f.type === FieldType.string,
+        }}
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
         renderLegend={this.renderLegend as any}
@@ -42,6 +51,3 @@ export class UnthemedTimelineChart extends React.Component<TimelineProps> {
     );
   }
 }
-
-export const TimelineChart = withTheme2(UnthemedTimelineChart);
-TimelineChart.displayName = 'TimelineChart';

@@ -124,6 +124,17 @@ var usersAdminEditRole = RoleDTO{
 	}),
 }
 
+var provisioningAdminRole = RoleDTO{
+	Name:    provisioningAdmin,
+	Version: 1,
+	Permissions: []Permission{
+		{
+			Action: ActionProvisioningReload,
+			Scope:  ScopeServicesAll,
+		},
+	},
+}
+
 // PredefinedRoles provides a map of permission sets/roles which can be
 // assigned to a set of users. When adding a new resource protected by
 // Grafana access control the default permissions should be added to a
@@ -139,6 +150,8 @@ var PredefinedRoles = map[string]RoleDTO{
 
 	ldapAdminRead: ldapAdminReadRole,
 	ldapAdminEdit: ldapAdminEditRole,
+
+	provisioningAdmin: provisioningAdminRole,
 }
 
 const (
@@ -150,6 +163,8 @@ const (
 
 	ldapAdminEdit = "grafana:roles:ldap:admin:edit"
 	ldapAdminRead = "grafana:roles:ldap:admin:read"
+
+	provisioningAdmin = "grafana:roles:provisioning:admin"
 )
 
 // PredefinedRoleGrants specifies which organization roles are assigned
@@ -158,6 +173,7 @@ var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
 		ldapAdminEdit,
 		ldapAdminRead,
+		provisioningAdmin,
 		usersAdminEdit,
 		usersAdminRead,
 		usersOrgEdit,

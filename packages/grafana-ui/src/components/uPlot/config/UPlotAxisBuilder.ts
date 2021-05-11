@@ -16,6 +16,7 @@ export interface AxisProps {
   grid?: boolean;
   ticks?: boolean;
   formatValue?: (v: any) => string;
+  incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: any;
   isTime?: boolean;
