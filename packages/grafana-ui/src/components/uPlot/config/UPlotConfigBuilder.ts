@@ -1,4 +1,4 @@
-import { PlotConfig } from '../types';
+import { PlotConfig, TooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
@@ -23,6 +23,11 @@ export class UPlotConfigBuilder {
   private tz: string | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
+  /**
+   * Custom handler for closest datapoint and series lookup. Technicaly returns uPlots setCursor hook
+   * that sets tooltips state.
+   */
+  tooltipInterpolator: TooltipInterpolator | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -114,6 +119,10 @@ export class UPlotConfigBuilder {
 
   addBand(band: Band) {
     this.bands.push(band);
+  }
+
+  setTooltipInterpolator(interpolator: TooltipInterpolator) {
+    this.tooltipInterpolator = interpolator;
   }
 
   getConfig() {

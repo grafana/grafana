@@ -38,7 +38,6 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
-
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
 
   const pluginId = `TooltipPlugin`;
@@ -50,27 +49,50 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    config.addHook('setCursor', (u) => {
-      const bbox = plotCtx.getCanvasBoundingBox();
-      if (!bbox) {
-        return;
-      }
+    if (config.tooltipInterpolator) {
+      // Custom toolitp positioning
+      config.addHook('setCursor', (u) => {
+        config.tooltipInterpolator!(setFocusedSeriesIdx, setFocusedPointIdx, (clear) => {
+          if (clear) {
+            setCoords(null);
+            return;
+          }
 
-      const { x, y } = positionTooltip(u, bbox);
+          const bbox = plotCtx.getCanvasBoundingBox();
+          if (!bbox) {
+            return;
+          }
 
-      if (x !== undefined && y !== undefined) {
-        setCoords({ x, y });
-      } else {
-        setCoords(null);
-      }
+          const { x, y } = positionTooltip(u, bbox);
+          if (x !== undefined && y !== undefined) {
+            setCoords({ x, y });
+          }
+        })(u);
+      });
+    } else {
+      // default series/datapoint idx retireval
+      config.addHook('setCursor', (u) => {
+        const bbox = plotCtx.getCanvasBoundingBox();
+        if (!bbox) {
+          return;
+        }
 
-      setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
-    });
+        const { x, y } = positionTooltip(u, bbox);
 
-    config.addHook('setSeries', (_, idx) => {
-      setFocusedSeriesIdx(idx);
-    });
-  }, [plotCtx, config]);
+        if (x !== undefined && y !== undefined) {
+          setCoords({ x, y });
+        } else {
+          setCoords(null);
+        }
+
+        setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
+      });
+
+      config.addHook('setSeries', (_, idx) => {
+        setFocusedSeriesIdx(idx);
+      });
+    }
+  }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
 
   const plotInstance = plotCtx.plot;
   if (!plotInstance || focusedPointIdx === null) {

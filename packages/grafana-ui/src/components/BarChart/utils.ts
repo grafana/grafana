@@ -6,7 +6,6 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
-  GrafanaTheme2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
@@ -14,76 +13,79 @@ import { BarChartFieldConfig, BarChartOptions, BarValueVisibility, defaultBarCha
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '../uPlot/config';
 import { BarsOptions, getConfig } from './bars';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
-import { Select } from 'uplot';
 import { ScaleDistribution } from '../uPlot/models.gen';
+import { PrepConfigOpts } from '../GraphNG/utils';
+
+type PrepConfig = (opts: PrepConfigOpts<BarChartOptions>) => UPlotConfigBuilder;
 
 /** @alpha */
-export function preparePlotConfigBuilder(
-  data: DataFrame,
-  theme: GrafanaTheme2,
-  { orientation, showValue, groupWidth, barWidth }: BarChartOptions
-) {
-  const builder = new UPlotConfigBuilder();
-
-  // bar orientation -> x scale orientation & direction
-  let xOri = ScaleOrientation.Vertical;
-  let xDir = ScaleDirection.Down;
-  let yOri = ScaleOrientation.Horizontal;
-  let yDir = ScaleDirection.Right;
-
+function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
-    xOri = ScaleOrientation.Horizontal;
-    xDir = ScaleDirection.Right;
-    yOri = ScaleOrientation.Vertical;
-    yDir = ScaleDirection.Up;
+    return {
+      xOri: ScaleOrientation.Horizontal,
+      xDir: ScaleDirection.Right,
+      yOri: ScaleOrientation.Vertical,
+      yDir: ScaleDirection.Up,
+    };
   }
 
-  const formatValue =
-    showValue !== BarValueVisibility.Never
-      ? (seriesIdx: number, value: any) => formattedValueToString(data.fields[seriesIdx].display!(value))
-      : undefined;
+  return {
+    xOri: ScaleOrientation.Vertical,
+    xDir: ScaleDirection.Down,
+    yOri: ScaleOrientation.Horizontal,
+    yDir: ScaleDirection.Right,
+  };
+}
+
+export const preparePlotConfigBuilder: PrepConfig = ({
+  frame,
+  theme,
+  orientation,
+  showValue,
+  groupWidth,
+  barWidth,
+}) => {
+  const builder = new UPlotConfigBuilder();
+  const defaultValueFormatter = (seriesIdx: number, value: any) =>
+    formattedValueToString(frame.fields[seriesIdx].display!(value));
+
+  // bar orientation -> x scale orientation & direction
+  const vizOrientation = getBarCharScaleOrientation(orientation);
+
+  const formatValue = showValue !== BarValueVisibility.Never ? defaultValueFormatter : undefined;
 
   // Use bar width when only one field
-  if (data.fields.length === 2) {
+  if (frame.fields.length === 2) {
     groupWidth = barWidth;
     barWidth = 1;
   }
 
   const opts: BarsOptions = {
-    xOri,
-    xDir,
+    xOri: vizOrientation.xOri,
+    xDir: vizOrientation.xDir,
     groupWidth,
     barWidth,
     formatValue,
-    onHover: (seriesIdx: number, valueIdx: number) => {
-      console.log('hover', { seriesIdx, valueIdx });
-    },
-    onLeave: (seriesIdx: number, valueIdx: number) => {
-      console.log('leave', { seriesIdx, valueIdx });
-    },
   };
 
   const config = getConfig(opts);
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
-  builder.addHook('setCursor', config.setCursor);
-
-  builder.setCursor(config.cursor);
-  builder.setSelect(config.select as Select);
+  builder.setTooltipInterpolator(config.interpolateBarChartTooltip);
 
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
     distribution: ScaleDistribution.Ordinal,
-    orientation: xOri,
-    direction: xDir,
+    orientation: vizOrientation.xOri,
+    direction: vizOrientation.xDir,
   });
 
   builder.addAxis({
     scaleKey: 'x',
     isTime: false,
-    placement: xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
+    placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
     splits: config.xSplits,
     values: config.xValues,
     grid: false,
@@ -95,8 +97,8 @@ export function preparePlotConfigBuilder(
   let seriesIndex = 0;
 
   // iterate the y values
-  for (let i = 1; i < data.fields.length; i++) {
-    const field = data.fields[i];
+  for (let i = 1; i < frame.fields.length; i++) {
+    const field = frame.fields[i];
 
     field.state!.seriesIndex = seriesIndex++;
 
@@ -127,7 +129,7 @@ export function preparePlotConfigBuilder(
         fieldIndex: i,
         frameIndex: 0,
       },
-      fieldName: getFieldDisplayName(field, data),
+      fieldName: getFieldDisplayName(field, frame),
       hideInLegend: customConfig.hideFrom?.legend,
     });
 
@@ -138,8 +140,8 @@ export function preparePlotConfigBuilder(
       max: field.config.max,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
-      orientation: yOri,
-      direction: yDir,
+      orientation: vizOrientation.yOri,
+      direction: vizOrientation.yDir,
     });
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
@@ -147,7 +149,7 @@ export function preparePlotConfigBuilder(
       if (!placement || placement === AxisPlacement.Auto) {
         placement = AxisPlacement.Left;
       }
-      if (xOri === 1) {
+      if (vizOrientation.xOri === 1) {
         if (placement === AxisPlacement.Left) {
           placement = AxisPlacement.Bottom;
         }
@@ -168,7 +170,7 @@ export function preparePlotConfigBuilder(
   }
 
   return builder;
-}
+};
 
 /** @internal */
 export function preparePlotFrame(data: DataFrame[]) {

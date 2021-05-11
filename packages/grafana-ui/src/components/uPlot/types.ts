@@ -27,3 +27,9 @@ export abstract class PlotConfigBuilder<P, T> {
   constructor(public props: P) {}
   abstract getConfig(): T;
 }
+
+export type TooltipInterpolator = (
+  updateActiveSeriesIdx: (sIdx: number | null) => void,
+  updateActiveDatapointIdx: (dIdx: number | null) => void,
+  updateTooltipPosition: (clear?: boolean) => void
+) => (u: uPlot) => void;

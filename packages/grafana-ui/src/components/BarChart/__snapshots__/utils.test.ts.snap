@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`GraphNG utils preparePlotConfigBuilder orientation 1`] = `
+exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
 Object {
   "axes": Array [
     Object {
@@ -61,22 +61,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -100,9 +94,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {
@@ -126,7 +118,7 @@ Object {
 }
 `;
 
-exports[`GraphNG utils preparePlotConfigBuilder orientation 2`] = `
+exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
 Object {
   "axes": Array [
     Object {
@@ -187,22 +179,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -226,9 +212,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {
@@ -252,7 +236,7 @@ Object {
 }
 `;
 
-exports[`GraphNG utils preparePlotConfigBuilder orientation 3`] = `
+exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
 Object {
   "axes": Array [
     Object {
@@ -313,22 +297,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -352,9 +330,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {
@@ -378,7 +354,7 @@ Object {
 }
 `;
 
-exports[`GraphNG utils preparePlotConfigBuilder stacking 1`] = `
+exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
 Object {
   "axes": Array [
     Object {
@@ -439,22 +415,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -478,9 +448,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {
@@ -504,7 +472,7 @@ Object {
 }
 `;
 
-exports[`GraphNG utils preparePlotConfigBuilder stacking 2`] = `
+exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
 Object {
   "axes": Array [
     Object {
@@ -565,22 +533,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -604,9 +566,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {
@@ -630,7 +590,7 @@ Object {
 }
 `;
 
-exports[`GraphNG utils preparePlotConfigBuilder stacking 3`] = `
+exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
 Object {
   "axes": Array [
     Object {
@@ -691,22 +651,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -730,9 +684,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {
@@ -756,7 +708,7 @@ Object {
 }
 `;
 
-exports[`GraphNG utils preparePlotConfigBuilder value visibility 1`] = `
+exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
 Object {
   "axes": Array [
     Object {
@@ -817,22 +769,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -856,9 +802,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {
@@ -882,7 +826,7 @@ Object {
 }
 `;
 
-exports[`GraphNG utils preparePlotConfigBuilder value visibility 2`] = `
+exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
 Object {
   "axes": Array [
     Object {
@@ -943,22 +887,16 @@ Object {
     },
     "points": Object {
       "fill": [Function],
-      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
     },
-    "x": false,
-    "y": false,
   },
   "hooks": Object {
     "drawClear": Array [
       [Function],
     ],
     "init": Array [
-      [Function],
-    ],
-    "setCursor": Array [
       [Function],
     ],
   },
@@ -982,9 +920,7 @@ Object {
       "time": false,
     },
   },
-  "select": Object {
-    "show": false,
-  },
+  "select": undefined,
   "series": Array [
     Object {},
     Object {

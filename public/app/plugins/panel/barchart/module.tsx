@@ -15,6 +15,7 @@ import {
   graphFieldOptions,
   commonOptionsBuilder,
 } from '@grafana/ui';
+
 import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
@@ -119,6 +120,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       });
 
+    commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   });
 
