@@ -1,4 +1,4 @@
-#group,false,false,false,false,true,true,false,false,false,true
+#group,false,false,true,true,true,true,false,false,true,true
 #datatype,string,long,string,string,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,long,boolean,string
 #default,_result,,,,,,,,,
 ,result,table,_field,_measurement,_start,_stop,_time,_value,dead,train

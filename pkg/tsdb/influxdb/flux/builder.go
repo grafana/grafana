@@ -24,8 +24,10 @@ const (
 )
 
 type columnInfo struct {
-	name      string
-	converter *data.FieldConverter
+	name             string
+	converter        *data.FieldConverter
+	shouldGetLabels  bool
+	isTheSingleValue bool
 }
 
 // frameBuilder is an interface to help testing.
@@ -34,19 +36,40 @@ type frameBuilder struct {
 	groupKeyColumnNames []string
 	active              *data.Frame
 	frames              []*data.Frame
-	value               *data.FieldConverter
 	columns             []columnInfo
 	labels              []string
 	maxPoints           int // max points in a series
 	maxSeries           int // max number of series
 	totalSeries         int
-	isTimeSeries        bool
-	timeColumn          string // sometimes it is not `_time`
-	timeDisplay         string
+	hasUsualStartStop   bool // has _start and _stop timestamp-labels
 }
 
-func isTag(schk string) bool {
-	return (schk != "result" && schk != "table" && schk[0] != '_')
+// some csv-columns contain metadata about the data, like what is part of a "table",
+// we skip these
+func isDataColumn(col *query.FluxColumn) bool {
+	index := col.Index()
+	name := col.Name()
+	dataType := col.DataType()
+	if index == 0 && name == "result" && dataType == stringDatatype {
+		return false
+	}
+	if index == 1 && name == "table" && dataType == longDatatype {
+		return false
+	}
+
+	return true
+}
+
+func getDataColumns(cols []*query.FluxColumn) []*query.FluxColumn {
+	var dataCols []*query.FluxColumn
+
+	for _, col := range cols {
+		if isDataColumn(col) {
+			dataCols = append(dataCols, col)
+		}
+	}
+
+	return dataCols
 }
 
 var timeToOptionalTime = data.FieldConverter{
@@ -90,96 +113,113 @@ func getConverter(t string) (*data.FieldConverter, error) {
 	return nil, fmt.Errorf("no matching converter found for [%v]", t)
 }
 
-// Init initializes the frame to be returned
-// fields points at entries in the frame, and provides easier access
-// names indexes the columns encountered
-func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
-	columns := metadata.Columns()
-	fb.frames = make([]*data.Frame, 0)
-	fb.currentGroupKey = nil
-	fb.value = nil
-	fb.columns = make([]columnInfo, 0)
-	fb.isTimeSeries = false
-	fb.timeColumn = ""
-	fb.groupKeyColumnNames = make([]string, 0)
-
-	for _, col := range columns {
+func getGroupColumnNames(cols []*query.FluxColumn) []string {
+	var colNames []string
+	for _, col := range cols {
 		if col.IsGroup() {
-			fb.groupKeyColumnNames = append(fb.groupKeyColumnNames, col.Name())
+			colNames = append(colNames, col.Name())
 		}
 	}
 
-	for _, col := range columns {
-		switch {
-		case col.Name() == "_value":
-			if fb.value != nil {
-				return fmt.Errorf("multiple values found")
+	return colNames
+}
+
+func isTimestampType(dataType string) bool {
+	return (dataType == timeDatatypeRFC) || (dataType == timeDatatypeRFCNano)
+}
+
+func hasUsualStartStop(dataCols []*query.FluxColumn) bool {
+	starts := 0
+	stops := 0
+
+	for _, col := range dataCols {
+		if col.IsGroup() && isTimestampType(col.DataType()) {
+			name := col.Name()
+			if name == "_start" {
+				starts += 1
 			}
-			converter, err := getConverter(col.DataType())
+			if name == "_stop" {
+				stops += 1
+			}
+		}
+	}
+
+	return (starts == 1) && (stops == 1)
+}
+
+func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
+	columns := metadata.Columns()
+	// FIXME: the following line should very probably simply be
+	// `fb.frames = nil`, but in executor.go there is an explicit
+	// check to make sure it is not `nil`, so that check should be
+	// removed too, and double-checked if everything is ok.
+	fb.frames = make([]*data.Frame, 0)
+	fb.currentGroupKey = nil
+	fb.columns = nil
+	fb.labels = nil
+	fb.groupKeyColumnNames = getGroupColumnNames(columns)
+	fb.active = nil
+	fb.hasUsualStartStop = false
+
+	var timestampCols []*columnInfo
+	var nonTimestampCols []*columnInfo
+
+	dataColumns := getDataColumns(columns)
+	fb.hasUsualStartStop = hasUsualStartStop(dataColumns)
+
+	// first we store the column-info structures as pointers,
+	// because we need to modify some items in the list
+	var columnInfos []*columnInfo
+
+	for _, col := range dataColumns {
+		if col.IsGroup() {
+			fb.labels = append(fb.labels, col.Name())
+		} else {
+			dataType := col.DataType()
+			name := col.Name()
+			isTimestamp := isTimestampType(dataType)
+
+			converter, err := getConverter(dataType)
 			if err != nil {
 				return err
 			}
 
-			fb.value = converter
-			fb.isTimeSeries = true
-		case isTag(col.Name()):
-			fb.labels = append(fb.labels, col.Name())
-		}
-	}
-
-	// Timeseries has a "_value" and a time
-	if fb.isTimeSeries {
-		col := getTimeSeriesTimeColumn(columns)
-		if col != nil {
-			fb.timeColumn = col.Name()
-			fb.timeDisplay = "Time"
-			if fb.timeColumn != "_time" {
-				fb.timeDisplay = col.Name()
+			info := &columnInfo{
+				name:             name,
+				converter:        converter,
+				shouldGetLabels:  true, // we default to get-labels
+				isTheSingleValue: false,
 			}
-			return nil
+
+			columnInfos = append(columnInfos, info)
+
+			if isTimestamp {
+				timestampCols = append(timestampCols, info)
+			} else {
+				nonTimestampCols = append(nonTimestampCols, info)
+			}
 		}
 	}
 
-	// reset any timeseries properties
-	fb.value = nil
-	fb.isTimeSeries = false
-	fb.labels = make([]string, 0)
-	for _, col := range columns {
-		// Skip the result column
-		if col.Index() == 0 && col.Name() == "result" && col.DataType() == stringDatatype {
-			continue
-		}
-		if col.Index() == 1 && col.Name() == "table" && col.DataType() == longDatatype {
-			continue
-		}
-
-		converter, err := getConverter(col.DataType())
-		if err != nil {
-			return err
-		}
-
-		fb.columns = append(fb.columns, columnInfo{
-			name:      col.Name(),
-			converter: converter,
-		})
-	}
-	return nil
-}
-
-func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
-	// First look for '_time' column
-	for _, col := range columns {
-		if col.Name() == "_time" && col.DataType() == timeDatatypeRFC || col.DataType() == timeDatatypeRFCNano {
-			return col
-		}
+	hasSimpleTimeCol := false
+	if (len(timestampCols) == 1) && (timestampCols[0].name == "_time") {
+		// there is only one timestamp-data-column, and has the correct name.
+		// based on this info, we decide that this is "the" timestamp-column.
+		// as such it gets no label
+		timestampCols[0].shouldGetLabels = false
+		hasSimpleTimeCol = true
 	}
 
-	// Then any time column
-	for _, col := range columns {
-		if col.DataType() == timeDatatypeRFC || col.DataType() == timeDatatypeRFCNano {
-			return col
-		}
+	if hasSimpleTimeCol && (len(nonTimestampCols) == 1) && (nonTimestampCols[0].name == "_value") {
+		// there is a simple timestamp column, and there is a single non-timestamp value column
+		// named "_value". we decide that this is "the" value-column.
+		nonTimestampCols[0].isTheSingleValue = true
 	}
+
+	for _, colInfo := range columnInfos {
+		fb.columns = append(fb.columns, *colInfo)
+	}
+
 	return nil
 }
 
@@ -229,11 +269,6 @@ func isTableIDEqual(id1 []interface{}, id2 []interface{}) bool {
 	return true
 }
 
-// Append appends a single entry from an influxdb2 record to a data frame
-// Values are appended to _value
-// Tags are appended as labels
-// _measurement holds the dataframe name
-// _field holds the field name.
 func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 	table := getTableID(record, fb.groupKeyColumnNames)
 	if (fb.currentGroupKey == nil) || !isTableIDEqual(table, fb.currentGroupKey) {
@@ -242,70 +277,69 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 			return fmt.Errorf("results are truncated, max series reached (%d)", fb.maxSeries)
 		}
 
-		if fb.isTimeSeries {
-			frameName, ok := record.ValueByKey("_measurement").(string)
-			if !ok {
-				frameName = "" // empty frame name
+		// labels have the same value for every row in the same "table",
+		// so we collect them here
+		labels := make(map[string]string)
+		for _, name := range fb.labels {
+			val := record.ValueByKey(name)
+			str := fmt.Sprintf("%v", val)
+			if val != nil && str != "" {
+				labels[name] = str
 			}
+		}
 
-			fb.active = data.NewFrame(
-				frameName,
-				data.NewFieldFromFieldType(data.FieldTypeTime, 0),
-				data.NewFieldFromFieldType(fb.value.OutputFieldType, 0),
-			)
+		// we will try to use the _measurement label as the frame-name.
+		// if it works, we remove _measurement from the labels.
+		frameName := ""
+		measurementLabel := labels["_measurement"]
+		if measurementLabel != "" {
+			frameName = measurementLabel
+			delete(labels, "_measurement")
+		}
 
-			fb.active.Fields[0].Name = fb.timeDisplay
-			name, ok := record.ValueByKey("_field").(string)
-			if ok {
-				fb.active.Fields[1].Name = name
-			}
+		fields := make([]*data.Field, len(fb.columns))
+		for idx, col := range fb.columns {
+			fields[idx] = data.NewFieldFromFieldType(col.converter.OutputFieldType, 0)
+			fields[idx].Name = col.name
 
-			// set the labels
-			labels := make(map[string]string)
-			for _, name := range fb.labels {
-				val := record.ValueByKey(name)
-				str := fmt.Sprintf("%v", val)
-				if val != nil && str != "" {
-					labels[name] = str
+			if col.isTheSingleValue {
+				fieldLabel := labels["_field"]
+				if fieldLabel != "" {
+					fields[idx].Name = fieldLabel
+					delete(labels, "_field")
+				}
+
+				// when the data-structure is "simple"
+				// (meaning simple-time and simple-value),
+				// we remove the "_start" and "_stop"
+				// labels if they are the usual type,
+				// because they are usually not wanted,
+				// because they are the start and stop
+				// of the time-interval.
+
+				if fb.hasUsualStartStop {
+					delete(labels, "_start")
+					delete(labels, "_stop")
 				}
 			}
-			fb.active.Fields[1].Labels = labels
-		} else {
-			fields := make([]*data.Field, len(fb.columns))
-			for idx, col := range fb.columns {
-				fields[idx] = data.NewFieldFromFieldType(col.converter.OutputFieldType, 0)
-				fields[idx].Name = col.name
+
+			if col.shouldGetLabels {
+				fields[idx].Labels = labels
 			}
-			fb.active = data.NewFrame("", fields...)
 		}
+		fb.active = data.NewFrame(frameName, fields...)
 
 		fb.frames = append(fb.frames, fb.active)
 		fb.currentGroupKey = table
 	}
 
-	if fb.isTimeSeries {
-		time, ok := record.ValueByKey(fb.timeColumn).(time.Time)
-		if !ok {
-			return fmt.Errorf("unable to get time colum: %q", fb.timeColumn)
-		}
-
-		val, err := fb.value.Converter(record.Value())
+	for idx, col := range fb.columns {
+		val, err := col.converter.Converter(record.ValueByKey(col.name))
 		if err != nil {
 			return err
 		}
 
-		fb.active.Fields[0].Append(time)
-		fb.active.Fields[1].Append(val)
-	} else {
-		// Table view
-		for idx, col := range fb.columns {
-			val, err := col.converter.Converter(record.ValueByKey(col.name))
-			if err != nil {
-				return err
-			}
-
-			fb.active.Fields[idx].Append(val)
-		}
+		fb.active.Fields[idx].Append(val)
 	}
 
 	pointsCount := fb.active.Fields[0].Len()
