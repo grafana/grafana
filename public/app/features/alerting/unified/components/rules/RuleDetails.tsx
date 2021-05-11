@@ -12,6 +12,7 @@ import { DetailsField } from '../DetailsField';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { Expression } from '../Expression';
+import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 
 interface Props {
   rule: CombinedRule;
@@ -50,6 +51,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
 
   return (
     <div>
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {!!rule.labels && !!Object.keys(rule.labels).length && (

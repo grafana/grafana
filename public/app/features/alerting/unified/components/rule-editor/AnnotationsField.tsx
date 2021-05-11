@@ -29,7 +29,7 @@ const AnnotationsField: FC = () => {
           return (
             <div className={styles.flexColumn}>
               {fields.map((field, index) => (
-                <div key={`${field.annotationKey}-${index}`} className={styles.flexRow}>
+                <div key={field.id} className={styles.flexRow}>
                   <Field
                     className={styles.field}
                     invalid={!!errors.annotations?.[index]?.key?.message}

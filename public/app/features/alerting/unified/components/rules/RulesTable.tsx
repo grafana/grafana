@@ -1,20 +1,15 @@
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
-import { getRuleIdentifier, isAlertingRule, isRecordingRule, stringifyRuleIdentifier } from '../../utils/rules';
+import { isAlertingRule, isRecordingRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
-import { ActionIcon } from './ActionIcon';
-import { createExploreLink } from '../../utils/misc';
-import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { useDispatch } from 'react-redux';
-import { deleteRuleAction } from '../../state/actions';
+import { isCloudRulesSource } from '../../utils/datasource';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertStateTag } from './AlertStateTag';
-import { useLocation } from 'react-router-dom';
 
 interface Props {
   rules: CombinedRule[];
@@ -31,8 +26,6 @@ export const RulesTable: FC<Props> = ({
   emptyMessage = 'No rules found.',
   showGroupColumn = false,
 }) => {
-  const dispatch = useDispatch();
-  const location = useLocation();
   const hasRuler = useHasRuler();
 
   const styles = useStyles2(getStyles);
@@ -40,28 +33,10 @@ export const RulesTable: FC<Props> = ({
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-  const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
-
   const toggleExpandedState = (ruleKey: string) =>
     setExpandedKeys(
       expandedKeys.includes(ruleKey) ? expandedKeys.filter((key) => key !== ruleKey) : [...expandedKeys, ruleKey]
     );
-
-  const deleteRule = () => {
-    if (ruleToDelete && ruleToDelete.rulerRule) {
-      dispatch(
-        deleteRuleAction(
-          getRuleIdentifier(
-            getRulesSourceName(ruleToDelete.namespace.rulesSource),
-            ruleToDelete.namespace.name,
-            ruleToDelete.group.name,
-            ruleToDelete.rulerRule
-          )
-        )
-      );
-      setRuleToDelete(undefined);
-    }
-  };
 
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
@@ -78,7 +53,6 @@ export const RulesTable: FC<Props> = ({
           <col />
           <col />
           <col />
-          <col />
           {showGroupColumn && <col />}
         </colgroup>
         <thead>
@@ -90,7 +64,6 @@ export const RulesTable: FC<Props> = ({
             <th>Name</th>
             {showGroupColumn && <th>Group</th>}
             <th>Status</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -143,40 +116,6 @@ export const RulesTable: FC<Props> = ({
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
                     )}
                     <td>{statuses.join(', ') || 'n/a'}</td>
-                    <td className={tableStyles.actionsCell}>
-                      {isCloudRulesSource(rulesSource) && (
-                        <ActionIcon
-                          icon="chart-line"
-                          tooltip="view in explore"
-                          target="__blank"
-                          to={createExploreLink(rulesSource.name, rule.query)}
-                        />
-                      )}
-                      {!!rulerRule && (
-                        <ActionIcon
-                          icon="pen"
-                          tooltip="edit rule"
-                          to={urlUtil.renderUrl(
-                            `/alerting/${encodeURIComponent(
-                              stringifyRuleIdentifier(
-                                getRuleIdentifier(
-                                  getRulesSourceName(rulesSource),
-                                  namespace.name,
-                                  group.name,
-                                  rulerRule
-                                )
-                              )
-                            )}/edit`,
-                            {
-                              returnTo: location.pathname + location.search,
-                            }
-                          )}
-                        />
-                      )}
-                      {!!rulerRule && (
-                        <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => setRuleToDelete(rule)} />
-                      )}
-                    </td>
                   </tr>
                   {isExpanded && (
                     <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -185,7 +124,7 @@ export const RulesTable: FC<Props> = ({
                           <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
                         )}
                       </td>
-                      <td colSpan={showGroupColumn ? 5 : 4}>
+                      <td colSpan={showGroupColumn ? 4 : 3}>
                         <RuleDetails rulesSource={rulesSource} rule={rule} />
                       </td>
                     </tr>
@@ -196,17 +135,6 @@ export const RulesTable: FC<Props> = ({
           })()}
         </tbody>
       </table>
-      {!!ruleToDelete && (
-        <ConfirmModal
-          isOpen={true}
-          title="Delete rule"
-          body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
-          confirmText="Yes, delete"
-          icon="exclamation-triangle"
-          onConfirm={deleteRule}
-          onDismiss={() => setRuleToDelete(undefined)}
-        />
-      )}
     </div>
   );
 };
