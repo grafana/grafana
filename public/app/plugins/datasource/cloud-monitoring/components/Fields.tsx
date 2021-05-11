@@ -46,8 +46,8 @@ export const QueryEditorRow: FC<Props> = ({
   children,
   label,
   tooltip,
-  noFillEnd,
   fillComponent,
+  noFillEnd = false,
   labelWidth = LABEL_WIDTH,
   ...rest
 }) => {

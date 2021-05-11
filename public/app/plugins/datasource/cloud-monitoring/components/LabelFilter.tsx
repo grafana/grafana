@@ -18,9 +18,11 @@ export interface Props {
 
 const operators = ['=', '!=', '=~', '!=~'];
 
-const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(({ value, ...rest }, ref) => {
-  return <Button ref={ref} {...rest} variant="secondary" icon="plus"></Button>;
-});
+const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(
+  ({ value, isOpen, invalid, ...rest }, ref) => {
+    return <Button ref={ref} {...rest} variant="secondary" icon="plus"></Button>;
+  }
+);
 FilterButton.displayName = 'FilterButton';
 
 const OperatorButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(({ value, ...rest }, ref) => {

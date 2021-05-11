@@ -121,7 +121,7 @@ export function Metrics(props: Props) {
   return (
     <>
       <QueryEditorRow>
-        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" noFillEnd>
+        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service">
           <Select
             width={SELECT_WIDTH}
             onChange={onServiceChange}
@@ -136,7 +136,7 @@ export function Metrics(props: Props) {
             placeholder="Select Services"
           ></Select>
         </QueryEditorField>
-        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} noFillEnd>
+        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH}>
           <Select
             width={SELECT_WIDTH}
             onChange={onMetricTypeChange}
