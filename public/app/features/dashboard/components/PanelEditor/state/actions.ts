@@ -107,7 +107,7 @@ function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: Dash
     const pluginChanged = panel.plugin?.meta.id !== modifiedPanel.plugin?.meta.id;
     panel.plugin = modifiedPanel.plugin;
 
-    if (panel.type !== modifiedPanel.type || pluginChanged) {
+    if (pluginChanged) {
       dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin: panel.plugin! }));
     }
 
