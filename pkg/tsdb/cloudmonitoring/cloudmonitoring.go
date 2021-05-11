@@ -356,11 +356,17 @@ func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds 
 
 	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
 	// and the aggregation that is specified in the UI becomes the secondary aggregation
+	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
 	if query.PreprocessorType != PreprocessorTypeNone {
 		params.Add("secondaryAggregation.alignmentPeriod", alignmentPeriod)
-		params.Add("aggregation.crossSeriesReducer", crossSeriesReducerDefault)
 		params.Add("secondaryAggregation.crossSeriesReducer", query.CrossSeriesReducer)
 		params.Add("secondaryAggregation.perSeriesAligner", query.PerSeriesAligner)
+
+		primaryCrossSeriesReducer := crossSeriesReducerDefault
+		if len(query.GroupBys) > 0 {
+			primaryCrossSeriesReducer = query.CrossSeriesReducer
+		}
+		params.Add("aggregation.crossSeriesReducer", primaryCrossSeriesReducer)
 
 		aligner := "ALIGN_RATE"
 		if query.PreprocessorType == PreprocessorTypeDelta {
