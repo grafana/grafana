@@ -11,7 +11,6 @@ import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
-import { getColorForTheme } from '../utils/namedColorsPalette';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -81,7 +80,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         }
 
         if (mappingResult.color != null) {
-          color = getColorForTheme(mappingResult.color, options.theme.v1);
+          color = options.theme.vizColors.getByName(mappingResult.color);
         }
 
         shouldFormat = false;

@@ -35,7 +35,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
           const thresholdSafe = threshold ?? fallBackTreshold;
-          return getColorForTheme(thresholdSafe.color, theme.v1);
+          return theme.vizColors.getByName(thresholdSafe.color);
         };
       },
     },
@@ -232,6 +232,6 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
 
 function getFixedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
-    return getColorForTheme(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme.v1);
+    return theme.vizColors.getByName(field.config.color?.fixedColor ?? FALLBACK_COLOR);
   };
 }

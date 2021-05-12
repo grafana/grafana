@@ -14,7 +14,7 @@ describe('createVizColors', () => {
   });
 
   it('Can get color from palette', () => {
-    expect(vizColors.palette[0]).toBe('green');
+    expect(vizColors.palette[0]).not.toBeUndefined();
   });
 
   it('returns color if specified as hex or rgb/a', () => {

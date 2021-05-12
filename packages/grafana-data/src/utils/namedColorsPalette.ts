@@ -1,5 +1,8 @@
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
+/**
+ * @deprecated use theme.vizColors.getByName
+ */
 export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   return theme.vizColors.getByName(color);
 }
