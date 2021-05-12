@@ -1,30 +1,46 @@
 import React from 'react';
 import { RangeSlider } from '@grafana/ui';
-import { select, number, boolean } from '@storybook/addon-knobs';
+import { RangeSliderProps } from './types';
+import { Meta, Story } from '@storybook/react';
 
 export default {
   title: 'Forms/Slider/Range',
   component: RangeSlider,
-};
+  parameters: {
+    controls: {
+      exclude: ['tooltipAlwaysVisible'],
+    },
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    isStep: { name: 'step' },
+    orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },
+  },
+} as Meta;
 
-const getKnobs = () => {
-  return {
-    min: number('min', 0),
-    max: number('max', 100),
-    step: boolean('enable step', false),
-    orientation: select('orientation', ['horizontal', 'vertical'], 'horizontal'),
-    reverse: boolean('reverse', false),
-  };
-};
+interface StoryProps extends Partial<RangeSliderProps> {
+  isStep: boolean;
+}
 
-const SliderWrapper = () => {
-  const { min, max, orientation, reverse, step } = getKnobs();
-  const stepValue = step ? 10 : undefined;
+export const Basic: Story<StoryProps> = (args) => {
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <RangeSlider min={min} max={max} step={stepValue} orientation={orientation} value={[10, 20]} reverse={reverse} />
+      <RangeSlider
+        step={args.isStep ? 10 : undefined}
+        value={[10, 20]}
+        min={args.min as number}
+        max={args.max as number}
+        {...args}
+      />
     </div>
   );
 };
-
-export const basic = () => <SliderWrapper />;
+Basic.args = {
+  min: 0,
+  max: 100,
+  isStep: false,
+  orientation: 'horizontal',
+  reverse: false,
+};
