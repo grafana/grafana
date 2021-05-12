@@ -44,6 +44,7 @@ type RenderingService struct {
 	log             log.Logger
 	pluginInfo      *plugins.RendererPlugin
 	renderAction    renderFunc
+	renderCSVAction renderCSVFunc
 	domain          string
 	inProgressCount int
 
@@ -59,6 +60,12 @@ func (rs *RenderingService) Init() error {
 	err := os.MkdirAll(rs.Cfg.ImagesDir, 0700)
 	if err != nil {
 		return fmt.Errorf("failed to create images directory %q: %w", rs.Cfg.ImagesDir, err)
+	}
+
+	// ensure CSVsDir exists
+	err = os.MkdirAll(rs.Cfg.CSVsDir, 0700)
+	if err != nil {
+		return fmt.Errorf("failed to create CSVs directory %q: %w", rs.Cfg.CSVsDir, err)
 	}
 
 	// set value used for domain attribute of renderKey cookie
@@ -80,7 +87,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
-		rs.renderAction = rs.renderViaHttp
+		rs.renderAction = rs.renderViaHTTP
+		rs.renderCSVAction = rs.renderCSVViaHTTP
 		<-ctx.Done()
 		return nil
 	}
@@ -94,6 +102,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		}
 
 		rs.renderAction = rs.renderViaPlugin
+		rs.renderCSVAction = rs.renderCSVViaPlugin
 		<-ctx.Done()
 		return nil
 	}
@@ -136,23 +145,12 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	startTime := time.Now()
-	elapsedTime := time.Since(startTime).Milliseconds()
 	result, err := rs.render(ctx, opts)
-	if err != nil {
-		if errors.Is(err, ErrTimeout) {
-			metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
-			metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
-		} else {
-			metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
-			metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
-		}
 
-		return nil, err
-	}
+	elapsedTime := time.Since(startTime).Milliseconds()
+	saveMetrics(elapsedTime, err, RenderPNG)
 
-	metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
-	metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
-	return result, nil
+	return result, err
 }
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
@@ -173,7 +171,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor <= 0 {
 		opts.DeviceScaleFactor = 1
 	}
-	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgID, opts.UserID, opts.OrgRole)
 	if err != nil {
 		return nil, err
 	}
@@ -188,6 +186,43 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	rs.inProgressCount++
 	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
 	return rs.renderAction(ctx, renderKey, opts)
+}
+
+func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+	startTime := time.Now()
+	result, err := rs.renderCSV(ctx, opts)
+
+	elapsedTime := time.Since(startTime).Milliseconds()
+	saveMetrics(elapsedTime, err, RenderCSV)
+
+	return result, err
+}
+
+func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+	if rs.inProgressCount > opts.ConcurrentLimit {
+		return nil, ErrConcurrentLimitReached
+	}
+
+	if !rs.IsAvailable() {
+		return nil, ErrRenderUnavailable
+	}
+
+	rs.log.Info("Rendering", "path", opts.Path)
+	renderKey, err := rs.generateAndStoreRenderKey(opts.OrgID, opts.UserID, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rs.deleteRenderKey(renderKey)
+
+	defer func() {
+		rs.inProgressCount--
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	}()
+
+	rs.inProgressCount++
+	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 
 func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
@@ -205,17 +240,20 @@ func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
 	return nil, false
 }
 
-func (rs *RenderingService) getFilePathForNewImage() (string, error) {
+func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	rand, err := util.GetRandomString(20)
 	if err != nil {
 		return "", err
 	}
-	pngPath, err := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, rand))
-	if err != nil {
-		return "", err
+
+	ext := "png"
+	folder := rs.Cfg.ImagesDir
+	if rt == RenderCSV {
+		ext = "csv"
+		folder = rs.Cfg.CSVsDir
 	}
 
-	return pngPath + ".png", nil
+	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))
 }
 
 func (rs *RenderingService) getURL(path string) string {
@@ -281,4 +319,20 @@ func isoTimeOffsetToPosixTz(isoOffset string) string {
 		return strings.Replace(isoOffset, "UTC-", "UTC+", 1)
 	}
 	return isoOffset
+}
+
+func saveMetrics(elapsedTime int64, err error, renderType RenderType) {
+	if err == nil {
+		metrics.MRenderingRequestTotal.WithLabelValues("success", string(renderType)).Inc()
+		metrics.MRenderingSummary.WithLabelValues("success", string(renderType)).Observe(float64(elapsedTime))
+		return
+	}
+
+	if errors.Is(err, ErrTimeout) {
+		metrics.MRenderingRequestTotal.WithLabelValues("timeout", string(renderType)).Inc()
+		metrics.MRenderingSummary.WithLabelValues("timeout", string(renderType)).Observe(float64(elapsedTime))
+	} else {
+		metrics.MRenderingRequestTotal.WithLabelValues("failure", string(renderType)).Inc()
+		metrics.MRenderingSummary.WithLabelValues("failure", string(renderType)).Observe(float64(elapsedTime))
+	}
 }

@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -57,8 +55,8 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		Width:             width,
 		Height:            height,
 		Timeout:           time.Duration(timeout) * time.Second,
-		OrgId:             c.OrgId,
-		UserId:            c.UserId,
+		OrgID:             c.OrgId,
+		UserID:            c.UserId,
 		OrgRole:           c.OrgRole,
 		Path:              c.Params("*") + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
@@ -70,14 +68,6 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {
 			c.Handle(hs.Cfg, 500, err.Error(), err)
-			return
-		}
-		if errors.Is(err, rendering.ErrPhantomJSNotInstalled) {
-			if strings.HasPrefix(runtime.GOARCH, "arm") {
-				c.Handle(hs.Cfg, 500, "Rendering failed - PhantomJS isn't included in arm build per default", err)
-			} else {
-				c.Handle(hs.Cfg, 500, "Rendering failed - PhantomJS isn't installed correctly", err)
-			}
 			return
 		}
 
