@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -111,20 +110,4 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.IsNgAlertEnabled()
-}
-
-// AddMigration defines database migrations.
-// If Alerting NG is not enabled does nothing.
-func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
-	if ng.IsDisabled() {
-		return
-	}
-	store.AddAlertDefinitionMigrations(mg, defaultIntervalSeconds)
-	store.AddAlertDefinitionVersionMigrations(mg)
-	// Create alert_instance table
-	store.AlertInstanceMigration(mg)
-
-	// Create alert_rule
-	store.AddAlertRuleMigrations(mg, defaultIntervalSeconds)
-	store.AddAlertRuleVersionMigrations(mg)
 }

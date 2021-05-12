@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -23,33 +24,53 @@ import (
 )
 
 type PrometheusExecutor struct {
-	Transport http.RoundTripper
-
-	intervalCalculator interval.Calculator
+	baseRoundTripperFactory func(dsInfo *models.DataSource) (http.RoundTripper, error)
+	intervalCalculator      interval.Calculator
 }
 
-type basicAuthTransport struct {
+type prometheusTransport struct {
 	Transport http.RoundTripper
 
-	username string
-	password string
+	hasBasicAuth bool
+	username     string
+	password     string
+
+	customQueryParameters string
 }
 
-func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.SetBasicAuth(bat.username, bat.password)
-	return bat.Transport.RoundTrip(req)
+func (transport *prometheusTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if transport.hasBasicAuth {
+		req.SetBasicAuth(transport.username, transport.password)
+	}
+
+	if transport.customQueryParameters != "" {
+		params := url.Values{}
+		for _, param := range strings.Split(transport.customQueryParameters, "&") {
+			parts := strings.Split(param, "=")
+			if len(parts) == 1 {
+				// This is probably a mistake on the users part in defining the params but we don't want to crash.
+				params.Add(parts[0], "")
+			} else {
+				params.Add(parts[0], parts[1])
+			}
+		}
+		if req.URL.RawQuery != "" {
+			req.URL.RawQuery = fmt.Sprintf("%s&%s", req.URL.RawQuery, params.Encode())
+		} else {
+			req.URL.RawQuery = params.Encode()
+		}
+	}
+
+	return transport.Transport.RoundTrip(req)
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	transport, err := dsInfo.GetHttpTransport()
-	if err != nil {
-		return nil, err
-	}
-
 	return &PrometheusExecutor{
-		Transport:          transport,
 		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+		baseRoundTripperFactory: func(ds *models.DataSource) (http.RoundTripper, error) {
+			return ds.GetHttpTransport()
+		},
 	}, nil
 }
 
@@ -63,17 +84,23 @@ func init() {
 }
 
 func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
-	cfg := api.Config{
-		Address:      dsInfo.Url,
-		RoundTripper: e.Transport,
+	// Would make sense to cache this but executor is recreated on every alert request anyway.
+	transport, err := e.baseRoundTripperFactory(dsInfo)
+	if err != nil {
+		return nil, err
 	}
 
-	if dsInfo.BasicAuth {
-		cfg.RoundTripper = basicAuthTransport{
-			Transport: e.Transport,
-			username:  dsInfo.BasicAuthUser,
-			password:  dsInfo.DecryptedBasicAuthPassword(),
-		}
+	promTransport := &prometheusTransport{
+		Transport:             transport,
+		hasBasicAuth:          dsInfo.BasicAuth,
+		username:              dsInfo.BasicAuthUser,
+		password:              dsInfo.DecryptedBasicAuthPassword(),
+		customQueryParameters: dsInfo.JsonData.Get("customQueryParameters").MustString(""),
+	}
+
+	cfg := api.Config{
+		Address:      dsInfo.Url,
+		RoundTripper: promTransport,
 	}
 
 	client, err := api.NewClient(cfg)

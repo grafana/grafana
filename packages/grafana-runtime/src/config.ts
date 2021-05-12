@@ -13,6 +13,11 @@ import {
   SystemDateFormatSettings,
 } from '@grafana/data';
 
+export interface AzureSettings {
+  cloud?: string;
+  managedIdentityEnabled: boolean;
+}
+
 export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -55,7 +60,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   featureToggles: FeatureToggles = {
     meta: false,
     ngalert: false,
-    panelLibrary: false,
     reportVariables: false,
     accesscontrol: false,
     trimDefaults: false,
@@ -75,6 +79,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
+  azure: AzureSettings = {
+    managedIdentityEnabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
