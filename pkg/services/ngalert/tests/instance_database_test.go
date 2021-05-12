@@ -172,7 +172,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.Len(t, listQuery.Result, 1)
 
 		require.Equal(t, saveCmdTwo.RuleOrgID, listQuery.Result[0].RuleOrgID)
-		require.Equal(t, saveCmdTwo.RuleUID, listQuery.Result[0].RuleDefinitionUID)
+		require.Equal(t, saveCmdTwo.RuleUID, listQuery.Result[0].RuleUID)
 		require.Equal(t, saveCmdTwo.Labels, listQuery.Result[0].Labels)
 		require.Equal(t, saveCmdTwo.State, listQuery.Result[0].CurrentState)
 	})

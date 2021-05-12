@@ -3,6 +3,7 @@ package loki
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -53,12 +54,20 @@ func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		return plugins.DataResponse{}, err
 	}
 
+	transport, err := dsInfo.GetHttpTransport()
+	if err != nil {
+		return plugins.DataResponse{}, err
+	}
+
 	client := &client.DefaultClient{
 		Address:  dsInfo.Url,
 		Username: dsInfo.BasicAuthUser,
 		Password: dsInfo.DecryptedBasicAuthPassword(),
 		TLSConfig: config.TLSConfig{
 			InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
+		},
+		Tripperware: func(t http.RoundTripper) http.RoundTripper {
+			return transport
 		},
 	}
 

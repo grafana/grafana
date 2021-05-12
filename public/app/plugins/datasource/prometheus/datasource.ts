@@ -804,11 +804,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return Math.ceil(date.valueOf() / 1000);
   }
 
-  getTimeRange(): { start: number; end: number } {
+  getTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
     return {
-      start: this.getPrometheusTime(range.from, false),
-      end: this.getPrometheusTime(range.to, true),
+      start: this.getPrometheusTime(range.from, false).toString(),
+      end: this.getPrometheusTime(range.to, true).toString(),
     };
   }
 
