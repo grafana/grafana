@@ -4,6 +4,8 @@ aliases = ["/docs/grafana/latest/plugins/marketplace/"]
 weight = 1
 +++
 
+# Plugin marketplace
+
 Marketplace for Grafana is a plugin bundled with Grafana versions 8.0+. It allows users to browse and manage plugins from within Grafana. Only Grafana Admins can access and use the Marketplace.
 
 [screenshot placeholder]
