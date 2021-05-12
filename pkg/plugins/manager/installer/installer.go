@@ -57,6 +57,35 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
+type ErrVersionUnsupported struct {
+	PluginID           string
+	RequestedVersion   string
+	RecommendedVersion string
+}
+
+func (e ErrVersionUnsupported) Error() string {
+	if len(e.RecommendedVersion) > 0 {
+		return fmt.Sprintf("%s v%s is not supported on your architecture and OS, latest suitable version is %s",
+			e.PluginID, e.RequestedVersion, e.RecommendedVersion)
+	}
+	return fmt.Sprintf("%s v%s is not supported on your architecture and OS", e.PluginID, e.RequestedVersion)
+}
+
+type ErrVersionNotFound struct {
+	PluginID           string
+	RequestedVersion   string
+	RecommendedVersion string
+}
+
+func (e ErrVersionNotFound) Error() string {
+	if len(e.RecommendedVersion) > 0 {
+		return fmt.Sprintf("%s v%s is not supported on your architecture and OS, latest suitable version is %s",
+			e.PluginID, e.RequestedVersion, e.RecommendedVersion)
+	}
+	return fmt.Sprintf("could not find a version %s for %s. The latest suitable version is %s", e.RequestedVersion,
+		e.PluginID, e.RecommendedVersion)
+}
+
 func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstallerLogger) *Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
@@ -405,7 +434,10 @@ func selectVersion(plugin *Plugin, version string) (*Version, error) {
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
-		return nil, fmt.Errorf("%s is not supported on your architecture and OS", plugin.ID)
+		return nil, ErrVersionUnsupported{
+			PluginID:         plugin.ID,
+			RequestedVersion: version,
+		}
 	}
 
 	if version == "" {
@@ -419,14 +451,19 @@ func selectVersion(plugin *Plugin, version string) (*Version, error) {
 	}
 
 	if len(ver.Version) == 0 {
-		return nil, fmt.Errorf("could not find a version %s for %s. The latest suitable version is %s",
-			version, plugin.ID, latestForArch.Version)
+		return nil, ErrVersionNotFound{
+			PluginID:           plugin.ID,
+			RequestedVersion:   version,
+			RecommendedVersion: latestForArch.Version,
+		}
 	}
 
 	if !supportsCurrentArch(&ver) {
-		return nil, fmt.Errorf(
-			"the version you requested is not supported on your architecture and OS, latest suitable version is %s",
-			latestForArch.Version)
+		return nil, ErrVersionUnsupported{
+			PluginID:           plugin.ID,
+			RequestedVersion:   version,
+			RecommendedVersion: latestForArch.Version,
+		}
 	}
 
 	return &ver, nil

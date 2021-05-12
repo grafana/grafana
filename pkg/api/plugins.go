@@ -381,6 +381,14 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
+		var versionUnsupportedErr installer.ErrVersionUnsupported
+		if errors.As(err, &versionUnsupportedErr) {
+			return response.Error(http.StatusConflict, "Plugin version not supported", err)
+		}
+		var versionNotFoundErr installer.ErrVersionNotFound
+		if errors.As(err, &versionNotFoundErr) {
+			return response.Error(http.StatusNotFound, "Plugin version not found", err)
+		}
 		if errors.Is(err, installer.ErrPluginNotFound) {
 			return response.Error(http.StatusNotFound, "Plugin not found", err)
 		}
