@@ -13,6 +13,7 @@ export type FieldValueColorCalculator = (value: number, percent: number, Thresho
 /** @beta */
 export interface FieldColorMode extends RegistryItem {
   getCalculator: (field: Field, theme: GrafanaTheme2) => FieldValueColorCalculator;
+  //getColors?: (theme: GrafanaTheme2) => string[];
   colors?: string[];
   isContinuous?: boolean;
   isByValue?: boolean;
@@ -39,26 +40,6 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         };
       },
     },
-    // new FieldColorSchemeMode({
-    //   id: FieldColorModeId.PaletteSaturated,
-    //   name: 'Saturated palette',
-    //   //description: 'Assigns color based on series or field index',
-    //   isContinuous: false,
-    //   isByValue: false,
-    //   colors: [
-    //     'blue',
-    //     'red',
-    //     'green',
-    //     'orange',
-    //     'purple',
-    //     'orange',
-    //     'dark-blue',
-    //     'dark-red',
-    //     'dark-yellow',
-    //     'dark-purple',
-    //     'dark-orange',
-    //   ],
-    // }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteClassic,
       name: 'Classic palette',
