@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
@@ -52,7 +52,7 @@ describe('Wrapper', () => {
 
     // At this point url should be initialised to some defaults
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
     });
     expect(datasources.loki.query).not.toBeCalled();
@@ -74,7 +74,7 @@ describe('Wrapper', () => {
 
     // We did not change the url
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       ...query,
     });
 
@@ -141,7 +141,7 @@ describe('Wrapper', () => {
     await screen.findByText('elastic Editor input:');
     expect(datasources.elastic.query).not.toBeCalled();
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       left: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
     });
   });
@@ -183,7 +183,7 @@ describe('Wrapper', () => {
 
     // We did not change the url
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       ...query,
     });
 
