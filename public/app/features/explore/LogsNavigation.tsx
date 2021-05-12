@@ -98,9 +98,10 @@ function LogsNavigation({
             from: pages[currentPageIndex + 1].queryRange.from,
             to: pages[currentPageIndex + 1].queryRange.to,
           });
+        } else {
+          //If we are on the last page, create new range
+          changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
         }
-        //If we are on the last page, create new range
-        changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
       }}
       disabled={loading}
     >
