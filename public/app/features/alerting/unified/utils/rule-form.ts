@@ -186,20 +186,36 @@ const getDefaultExpression = (refId: string): GrafanaQuery => {
 
 const dataQueriesToGrafanaQueries = (
   queries: DataQuery[],
-  datasourceName: string,
+  datasourceName: string | null,
   relativeTimeRange: RelativeTimeRange
 ): GrafanaQuery[] => {
   return queries.reduce<GrafanaQuery[]>((queries, target) => {
-    const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
-    if (datasource && datasource.meta.alerting) {
-      const newQuery: GrafanaQuery = {
-        refId: target.refId,
-        queryType: target.queryType ?? '',
-        relativeTimeRange,
-        datasourceUid: datasource.uid,
-        model: target,
-      };
-      return [...queries, newQuery];
+    const dsName = target.datasource || datasourceName;
+    if (dsName) {
+      // expressions
+      if (dsName === ExpressionDatasourceID) {
+        const newQuery: GrafanaQuery = {
+          refId: target.refId,
+          queryType: '',
+          relativeTimeRange,
+          datasourceUid: ExpressionDatasourceUID,
+          model: target,
+        };
+        return [...queries, newQuery];
+        // queries
+      } else {
+        const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
+        if (datasource && datasource.meta.alerting) {
+          const newQuery: GrafanaQuery = {
+            refId: target.refId,
+            queryType: target.queryType ?? '',
+            relativeTimeRange,
+            datasourceUid: datasource.uid,
+            model: target,
+          };
+          return [...queries, newQuery];
+        }
+      }
     }
     return queries;
   }, []);
@@ -211,7 +227,9 @@ export const panelToRuleFormValues = (
 ): Partial<RuleFormValues> | undefined => {
   const { targets, datasource: dashboardDatasource } = panel;
 
-  if (!dashboardDatasource || !panel.editSourceId) {
+  //@TODO figure out what do if datasource=null ... seems default is implied? what's going on?
+
+  if (!panel.editSourceId) {
     return undefined;
   }
 
@@ -220,6 +238,10 @@ export const panelToRuleFormValues = (
 
   if (!queries.length) {
     return undefined;
+  }
+
+  if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
+    queries.push(getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model))));
   }
 
   const { folderId, folderTitle } = dashboard.meta;
@@ -233,7 +255,7 @@ export const panelToRuleFormValues = (
             title: folderTitle,
           }
         : undefined,
-    queries: [...queries, getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model)))],
+    queries,
     name: panel.title,
     annotations: [
       {
