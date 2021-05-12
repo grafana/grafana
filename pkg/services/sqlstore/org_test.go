@@ -96,14 +96,6 @@ func TestAccountDataAccess(t *testing.T) {
 		})
 
 		Convey("Given single org and 2 users inserted", func() {
-			origAutoAssignOrg := setting.AutoAssignOrg
-			origAutoAssignOrgId := setting.AutoAssignOrgId
-			origAutoAssignOrgRole := setting.AutoAssignOrgRole
-			t.Cleanup(func() {
-				setting.AutoAssignOrg = origAutoAssignOrg
-				setting.AutoAssignOrgId = origAutoAssignOrgId
-				setting.AutoAssignOrgRole = origAutoAssignOrgRole
-			})
 			setting.AutoAssignOrg = true
 			setting.AutoAssignOrgId = 1
 			setting.AutoAssignOrgRole = "Viewer"
