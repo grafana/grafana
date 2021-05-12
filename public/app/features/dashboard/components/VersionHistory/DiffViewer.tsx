@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import ReactDiffViewer, { ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer';
 import { useTheme } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
@@ -9,7 +9,7 @@ export const DiffViewer: React.FC<ReactDiffViewerProps> = ({ oldValue, newValue 
 
   const styles = {
     variables: {
-      // the light theme supplied by ReactDiffViewer is very similar to grafana
+      // the light theme supplied by ReactDiffViewer is very similar to Grafana
       // the dark theme needs some tweaks.
       dark: {
         diffViewerBackground: theme.colors.dashboardBg,

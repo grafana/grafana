@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import React from 'react';
 import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
 interface DynamicConfigValueEditorProps {

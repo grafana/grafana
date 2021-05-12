@@ -1,11 +1,4 @@
-import {
-  arrowTableToBase64String,
-  DataFrame,
-  DataSourceInstanceSettings,
-  grafanaDataFrameToArrowTable,
-  MutableDataFrame,
-  PluginType,
-} from '@grafana/data';
+import { DataFrame, dataFrameToJSON, DataSourceInstanceSettings, MutableDataFrame, PluginType } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
@@ -16,6 +9,12 @@ describe('Tempo data source', () => {
     setupBackendSrv(
       new MutableDataFrame({
         fields: [
+          { name: 'traceID', values: ['04450900759028499335'] },
+          { name: 'spanID', values: ['4322526419282105830'] },
+          { name: 'parentSpanID', values: [''] },
+          { name: 'operationName', values: ['store.validateQueryTimeRange'] },
+          { name: 'startTime', values: [1619712655875.4539] },
+          { name: 'duration', values: [14.984] },
           { name: 'serviceTags', values: ['{"key":"servicetag1","value":"service"}'] },
           { name: 'logs', values: ['{"timestamp":12345,"fields":[{"key":"count","value":1}]}'] },
           { name: 'tags', values: ['{"key":"tag1","value":"val1"}'] },
@@ -24,20 +23,50 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    await expect(ds.query({ targets: [{ query: '12345' }] } as any)).toEmitValuesWith((response) => {
-      const fields = (response[0].data[0] as DataFrame).fields;
-      expect(
-        fields.map((f) => ({
-          name: f.name,
-          values: f.values.toArray(),
-        }))
-      ).toMatchObject([
-        { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
-        { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
-        { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
-        { name: 'serviceName', values: ['service'] },
-      ]);
-    });
+    const response = await ds.query({ targets: [{ refId: 'refid1' }] } as any).toPromise();
+
+    expect(
+      (response.data[0] as DataFrame).fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchObject([
+      { name: 'traceID', values: ['04450900759028499335'] },
+      { name: 'spanID', values: ['4322526419282105830'] },
+      { name: 'parentSpanID', values: [''] },
+      { name: 'operationName', values: ['store.validateQueryTimeRange'] },
+      { name: 'startTime', values: [1619712655875.4539] },
+      { name: 'duration', values: [14.984] },
+      { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
+      { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
+      { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
+      { name: 'serviceName', values: ['service'] },
+    ]);
+
+    expect(
+      (response.data[1] as DataFrame).fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchObject([
+      { name: 'id', values: ['4322526419282105830'] },
+      { name: 'title', values: ['service'] },
+      { name: 'subTitle', values: ['store.validateQueryTimeRange'] },
+      { name: 'mainStat', values: ['total: 14.98ms (100%)'] },
+      { name: 'secondaryStat', values: ['self: 14.98ms (100%)'] },
+      { name: 'color', values: [1.000007560204647] },
+    ]);
+
+    expect(
+      (response.data[2] as DataFrame).fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchObject([
+      { name: 'id', values: [] },
+      { name: 'target', values: [] },
+      { name: 'source', values: [] },
+    ]);
   });
 });
 
@@ -48,18 +77,13 @@ function setupBackendSrv(frame: DataFrame) {
         createFetchResponse({
           results: {
             refid1: {
-              dataframes: [encode(frame)],
+              frames: [dataFrameToJSON(frame)],
             },
           },
         })
       );
     },
   } as any);
-}
-
-function encode(frame: DataFrame) {
-  const table = grafanaDataFrameToArrowTable(frame);
-  return arrowTableToBase64String(table);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {

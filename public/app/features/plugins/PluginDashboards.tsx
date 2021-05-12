@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import extend from 'lodash/extend';
+import { extend } from 'lodash';
 
 import { PluginDashboard } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';

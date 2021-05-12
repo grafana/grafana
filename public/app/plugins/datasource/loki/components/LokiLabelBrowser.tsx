@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 

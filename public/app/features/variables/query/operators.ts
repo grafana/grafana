@@ -5,10 +5,9 @@ import { QueryVariableModel } from '../types';
 import { ThunkDispatch } from '../../../types';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { validateVariableSelectionState } from '../state/actions';
-import { DataSourceApi, FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
-import { updateVariableOptions, updateVariableTags } from './reducer';
-import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
+import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
+import { updateVariableOptions } from './reducer';
+import { getTemplatedRegex } from '../utils';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
@@ -110,46 +109,6 @@ export function updateOptionsState(args: {
     );
 }
 
-export function runUpdateTagsRequest(
-  args: {
-    variable: QueryVariableModel;
-    datasource: DataSourceApi;
-    searchFilter?: string;
-  },
-  timeSrv: TimeSrv = getTimeSrv()
-): OperatorFunction<void, MetricFindValue[]> {
-  return (source) =>
-    source.pipe(
-      mergeMap(() => {
-        const { datasource, searchFilter, variable } = args;
-
-        if (variable.useTags && datasource.metricFindQuery) {
-          return from(
-            datasource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter, timeSrv))
-          );
-        }
-
-        return of([]);
-      })
-    );
-}
-
-export function updateTagsState(args: {
-  variable: QueryVariableModel;
-  dispatch: ThunkDispatch;
-}): OperatorFunction<MetricFindValue[], void> {
-  return (source) =>
-    source.pipe(
-      map((tagResults) => {
-        const { dispatch, variable } = args;
-
-        if (variable.useTags) {
-          dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
-        }
-      })
-    );
-}
-
 export function validateVariableSelection(args: {
   variable: QueryVariableModel;
   dispatch: ThunkDispatch;
@@ -162,7 +121,7 @@ export function validateVariableSelection(args: {
 
         // If we are searching options there is no need to validate selection state
         // This condition was added to as validateVariableSelectionState will update the current value of the variable
-        // So after search and selection the current value is already update so no setValue, refresh & url update is performed
+        // So after search and selection the current value is already update so no setValue, refresh and URL update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
         if (!searchFilter) {
           return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
@@ -193,7 +152,11 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
       continue;
     }
 
-    if (typeof firstValue[firstValueKey] !== 'string' && typeof firstValue[firstValueKey] !== 'number') {
+    if (
+      firstValue[firstValueKey] !== null &&
+      typeof firstValue[firstValueKey] !== 'string' &&
+      typeof firstValue[firstValueKey] !== 'number'
+    ) {
       continue;
     }
 

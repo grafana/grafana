@@ -84,7 +84,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
           metricNamespace: undefined,
           resourceName: undefined,
           metricName: undefined,
-          aggregation: '',
+          aggregation: undefined,
           timeGrain: '',
           dimensionFilters: [],
         };

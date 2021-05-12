@@ -1,8 +1,11 @@
+import { createTheme } from '@grafana/data';
 import { makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
 
 describe('processNodes', () => {
+  const theme = createTheme();
+
   it('handles empty args', async () => {
-    expect(processNodes()).toEqual({ nodes: [], edges: [] });
+    expect(processNodes(undefined, undefined, theme)).toEqual({ nodes: [], edges: [] });
   });
 
   it('returns proper nodes and edges', async () => {
@@ -13,7 +16,8 @@ describe('processNodes', () => {
           [0, 1],
           [0, 2],
           [1, 2],
-        ])
+        ]),
+        theme
       )
     ).toEqual({
       nodes: [
@@ -28,6 +32,7 @@ describe('processNodes', () => {
               value: 0.5,
             },
           ],
+          color: 'rgb(226, 192, 61)',
           dataFrameRowIndex: 0,
           id: '0',
           incoming: 0,
@@ -47,6 +52,7 @@ describe('processNodes', () => {
               value: 0.5,
             },
           ],
+          color: 'rgb(226, 192, 61)',
           dataFrameRowIndex: 1,
           id: '1',
           incoming: 1,
@@ -66,6 +72,7 @@ describe('processNodes', () => {
               value: 0.5,
             },
           ],
+          color: 'rgb(226, 192, 61)',
           dataFrameRowIndex: 2,
           id: '2',
           incoming: 2,

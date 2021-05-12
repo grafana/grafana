@@ -1,26 +1,25 @@
 import React, { useCallback } from 'react';
 import { DataFrame, DisplayValue, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { VizLegendItem, VizLegendOptions } from '../VizLegend/types';
+import { VizLegendItem } from '../VizLegend/types';
+import { VizLegendOptions } from '../VizLegend/models.gen';
 import { AxisPlacement } from './config';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
-import { mapMouseEventToMode } from '../GraphNG/utils';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { GraphNGLegendEvent } from '..';
+import { mapMouseEventToMode } from '../VizLegend/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   config: UPlotConfigBuilder;
-  onSeriesColorChange?: (label: string, color: string) => void;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
 
 export const PlotLegend: React.FC<PlotLegendProps> = ({
   data,
   config,
-  onSeriesColorChange,
   onLegendClick,
   placement,
   calcs,
@@ -98,7 +97,6 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
         placement={placement}
         items={legendItems}
         displayMode={displayMode}
-        onSeriesColorChange={onSeriesColorChange}
       />
     </VizLayout.Legend>
   );

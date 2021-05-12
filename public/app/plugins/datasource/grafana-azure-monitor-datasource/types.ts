@@ -3,6 +3,8 @@ import Datasource from './datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
+export type AzureResultFormat = 'time_series' | 'table';
+
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   ApplicationInsights = 'Application Insights',
@@ -61,7 +63,7 @@ export interface AzureMetricQuery {
   timeGrainUnit?: string;
   timeGrain: string;
   allowedTimeGrainsMs: number[];
-  aggregation: string;
+  aggregation: string | undefined;
   dimensionFilters: AzureMetricDimension[];
   alias: string;
   top: string;
@@ -75,9 +77,10 @@ export interface AzureLogsQuery {
 
 export interface ApplicationInsightsQuery {
   metricName: string;
-  timeGrainUnit: string;
   timeGrain: string;
-  allowedTimeGrainsMs: number[];
+  timeGrainCount: string;
+  timeGrainType: string;
+  timeGrainUnit: string;
   aggregation: string;
   dimension: string[]; // Was string before 7.1
   // dimensions: string[]; why is this metadata stored on the object!

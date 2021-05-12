@@ -14,7 +14,7 @@ export interface Props {
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   return (
     <VerticalGroup>
-      <FieldSet label="Team Settings">
+      <FieldSet label="Team settings">
         <Form
           defaultValues={{ ...team }}
           onSubmit={(formTeam: Team) => {
@@ -24,14 +24,14 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           {({ register }) => (
             <>
               <Field label="Name">
-                <Input name="name" ref={register({ required: true })} />
+                <Input {...register('name', { required: true })} />
               </Field>
 
               <Field
                 label="Email"
-                description="This is optional and is primarily used to set the team profile avatar (via gravatar service)"
+                description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
               >
-                <Input placeholder="team@email.com" type="email" name="email" ref={register} />
+                <Input {...register('email')} placeholder="team@email.com" type="email" />
               </Field>
               <Button type="submit">Update</Button>
             </>

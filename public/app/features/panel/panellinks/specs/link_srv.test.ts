@@ -19,19 +19,13 @@ describe('linkSrv', () => {
   let templateSrv: TemplateSrv;
 
   function initLinkSrv() {
-    const timer = {
-      register: jest.fn(),
-      cancel: jest.fn(),
-      cancelAll: jest.fn(),
-    };
-
     const _dashboard: any = {
       time: { from: 'now-6h', to: 'now' },
       getTimezone: jest.fn(() => 'browser'),
       timeRangeUpdated: () => {},
     };
 
-    const timeSrv = new TimeSrv(jest.fn() as any, timer, {} as any);
+    const timeSrv = new TimeSrv({} as any);
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
@@ -126,10 +120,8 @@ describe('linkSrv', () => {
         ({ url, appSubUrl, expected }) => {
           locationUtil.initialize({
             config: { appSubUrl } as any,
-            // @ts-ignore
-            buildParamsFromVariables: () => {},
-            // @ts-ignore
-            getTimeRangeForUrl: () => {},
+            getVariablesUrlParams: (() => {}) as any,
+            getTimeRangeForUrl: (() => {}) as any,
           });
 
           const link = linkSrv.getDataLinkUIModel(

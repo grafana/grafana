@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -15,7 +16,7 @@ import (
 	"github.com/timberio/go-datemath"
 )
 
-// DataSubQuery represents a data sub-query.
+// DataSubQuery represents a data sub-query.  New work should use the plugin SDK.
 type DataSubQuery struct {
 	RefID         string             `json:"refId"`
 	Model         *simplejson.Json   `json:"model,omitempty"`
@@ -25,7 +26,7 @@ type DataSubQuery struct {
 	QueryType     string             `json:"queryType"`
 }
 
-// DataQuery contains all information about a data query request.
+// DataQuery contains all information about a data query request.  New work should use the plugin SDK.
 type DataQuery struct {
 	TimeRange *DataTimeRange
 	Queries   []DataSubQuery
@@ -54,6 +55,7 @@ type DataTimeSeriesPoints []DataTimePoint
 type DataTimeSeriesSlice []DataTimeSeries
 type DataRowValues []interface{}
 
+// Deprecated: DataQueryResult should use backend.QueryDataResponse
 type DataQueryResult struct {
 	Error       error               `json:"-"`
 	ErrorString string              `json:"error,omitempty"`
@@ -178,17 +180,58 @@ func (r *DataQueryResult) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK
 type DataTimeSeries struct {
 	Name   string               `json:"name"`
 	Points DataTimeSeriesPoints `json:"points"`
 	Tags   map[string]string    `json:"tags,omitempty"`
 }
 
+// Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse
 type DataResponse struct {
 	Results map[string]DataQueryResult `json:"results"`
 	Message string                     `json:"message,omitempty"`
 }
 
+// ToBackendDataResponse converts the legacy format to the standard SDK format
+func (r DataResponse) ToBackendDataResponse() (*backend.QueryDataResponse, error) {
+	qdr := &backend.QueryDataResponse{
+		Responses: make(map[string]backend.DataResponse, len(r.Results)),
+	}
+
+	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
+	// Only error, Series, and encoded Dataframes responses are mapped.
+	for refID, res := range r.Results {
+		pRes := backend.DataResponse{}
+		if res.Error != nil {
+			pRes.Error = res.Error
+		}
+
+		if res.Dataframes != nil {
+			decoded, err := res.Dataframes.Decoded()
+			if err != nil {
+				return qdr, err
+			}
+			pRes.Frames = decoded
+			qdr.Responses[refID] = pRes
+			continue
+		}
+
+		for _, series := range res.Series {
+			frame, err := SeriesToFrame(series)
+			if err != nil {
+				return nil, err
+			}
+			frame.RefID = refID
+			pRes.Frames = append(pRes.Frames, frame)
+		}
+
+		qdr.Responses[refID] = pRes
+	}
+	return qdr, nil
+}
+
+// Deprecated: use the plugin SDK
 type DataPlugin interface {
 	DataQuery(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error)
 }

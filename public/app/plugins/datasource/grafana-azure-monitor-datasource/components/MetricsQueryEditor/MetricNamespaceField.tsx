@@ -16,15 +16,16 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   setError,
 }) => {
   const [metricNamespaces, setMetricNamespaces] = useState<AzureMonitorOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const { resourceGroup, metricDefinition, resourceName } = query.azureMonitor;
-
     if (!(subscriptionId && resourceGroup && metricDefinition && resourceName)) {
       metricNamespaces.length > 0 && setMetricNamespaces([]);
       return;
     }
 
+    setIsLoading(true);
     datasource
       .getMetricNamespaces(subscriptionId, resourceGroup, metricDefinition, resourceName)
       .then((results) => {
@@ -38,8 +39,12 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
           });
         }
         setMetricNamespaces(results.map(toOption));
+        setIsLoading(false);
       })
-      .catch((err) => setError(ERROR_SOURCE, err));
+      .catch((err) => {
+        setError(ERROR_SOURCE, err);
+        setIsLoading(false);
+      });
   }, [datasource, metricNamespaces.length, onQueryChange, query, setError, subscriptionId]);
 
   const handleChange = useCallback(
@@ -65,13 +70,14 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   const options = useMemo(() => [...metricNamespaces, variableOptionGroup], [metricNamespaces, variableOptionGroup]);
 
   return (
-    <Field label="Metric Namespace">
+    <Field label="Metric namespace">
       <Select
         inputId="azure-monitor-metrics-metric-namespace-field"
         value={findOption(metricNamespaces, query.azureMonitor.metricNamespace)}
         onChange={handleChange}
         options={options}
         width={38}
+        isLoading={isLoading}
       />
     </Field>
   );

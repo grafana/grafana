@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { ToolbarButton, ButtonGroup, useStyles } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -51,7 +51,7 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
       <ButtonGroup>
         <ToolbarButton
           className={styles.vizButton}
-          tooltip="Click to change visualisation"
+          tooltip="Click to change visualization"
           imgSrc={plugin.meta.info.logos.small}
           isOpen={isVizPickerOpen}
           onClick={onToggleOpen}

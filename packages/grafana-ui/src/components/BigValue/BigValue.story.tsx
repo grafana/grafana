@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import {
   BigValue,
   BigValueColorMode,
@@ -10,8 +10,7 @@ import {
 } from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
-import { useTheme } from '../../themes';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
+import { useTheme2 } from '../../themes';
 import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
 
 export default {
@@ -24,6 +23,9 @@ export default {
     },
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: ['value', 'sparkline', 'onClick', 'className', 'alignmentFactors', 'text', 'count', 'theme'],
     },
   },
   argTypes: {
@@ -45,16 +47,8 @@ export default {
       },
     },
     color: { control: 'color' },
-    value: NOOP_CONTROL,
-    sparkline: NOOP_CONTROL,
-    onClick: NOOP_CONTROL,
-    className: NOOP_CONTROL,
-    alignmentFactors: NOOP_CONTROL,
-    text: NOOP_CONTROL,
-    count: NOOP_CONTROL,
-    theme: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 interface StoryProps extends Partial<Props> {
   numeric: number;
@@ -74,7 +68,7 @@ export const Basic: Story<StoryProps> = ({
   textMode,
   justifyMode,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const sparkline: FieldSparkline = {
     y: {
       name: '',

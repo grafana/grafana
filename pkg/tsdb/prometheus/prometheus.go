@@ -64,6 +64,7 @@ func (transport *prometheusTransport) RoundTrip(req *http.Request) (*http.Respon
 	return transport.Transport.RoundTrip(req)
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	return &PrometheusExecutor{
 		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
@@ -110,6 +111,7 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 	return apiv1.NewAPI(client), nil
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *PrometheusExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -218,6 +220,7 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 	return qs, nil
 }
 
+//nolint: staticcheck // plugins.DataQueryResult deprecated
 func parseResponse(value model.Value, query *PrometheusQuery) (plugins.DataQueryResult, error) {
 	var queryRes plugins.DataQueryResult
 	frames := data.Frames{}

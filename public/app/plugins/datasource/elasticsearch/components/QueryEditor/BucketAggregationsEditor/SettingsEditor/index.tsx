@@ -1,5 +1,5 @@
 import { InlineField, Input, Select } from '@grafana/ui';
-import React, { ComponentProps, FunctionComponent } from 'react';
+import React, { ComponentProps } from 'react';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
@@ -23,7 +23,7 @@ interface Props {
   bucketAgg: BucketAggregation;
 }
 
-export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
+export const SettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
   const { metrics } = useQuery();
   const settingsDescription = useDescription(bucketAgg);

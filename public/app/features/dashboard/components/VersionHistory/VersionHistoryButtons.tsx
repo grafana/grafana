@@ -21,7 +21,7 @@ export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
         Show more versions
       </Button>
     )}
-    <Tooltip content="Select 2 versions to start comparing" placement="bottom">
+    <Tooltip content="Select two versions to start comparing" placement="bottom">
       <Button type="button" disabled={canCompare} onClick={getDiff} icon="code-branch">
         Compare versions
       </Button>

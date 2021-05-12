@@ -69,6 +69,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					Path:    "api/restricted",
 					ReqRole: models.ROLE_ADMIN,
 				},
+				{
+					Path: "api/body",
+					URL:  "http://www.test.com",
+					Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
+				},
 			},
 		}
 
@@ -134,6 +139,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
+		})
+
+		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/body", &setting.Cfg{})
+			require.NoError(t, err)
+			proxy.route = plugin.Routes[5]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+
+			content, err := ioutil.ReadAll(req.Body)
+			require.NoError(t, err)
+			require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 		})
 
 		t.Run("Validating request", func(t *testing.T) {
@@ -232,7 +249,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				json, err := ioutil.ReadFile("./test-data/access-token-1.json")
 				require.NoError(t, err)
 
+				originalClient := client
 				client = newFakeHTTPClient(t, json)
+				defer func() { client = originalClient }()
+
 				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
 				require.NoError(t, err)
 				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, plugin.Routes[0], proxy.ds)
@@ -877,4 +897,41 @@ func runDatasourceAuthTest(t *testing.T, test *testCase) {
 	proxy.director(req)
 
 	test.checkReq(req)
+}
+
+func Test_PathCheck(t *testing.T) {
+	// Ensure that we test routes appropriately. This test reproduces a historical bug where two routes were defined with different role requirements but the same method and the more privileged route was tested first. Here we ensure auth checks are applied based on the correct route, not just the method.
+	plugin := &plugins.DataSourcePlugin{
+		Routes: []*plugins.AppPluginRoute{
+			{
+				Path:    "a",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_EDITOR,
+				Method:  http.MethodGet,
+			},
+			{
+				Path:    "b",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_VIEWER,
+				Method:  http.MethodGet,
+			},
+		},
+	}
+	setUp := func() (*models.ReqContext, *http.Request) {
+		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
+		require.NoError(t, err)
+		ctx := &models.ReqContext{
+			Context: &macaron.Context{
+				Req: macaron.Request{Request: req},
+			},
+			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_VIEWER},
+		}
+		return ctx, req
+	}
+	ctx, _ := setUp()
+	proxy, err := NewDataSourceProxy(&models.DataSource{}, plugin, ctx, "b", &setting.Cfg{})
+	require.NoError(t, err)
+
+	require.Nil(t, proxy.validateRequest())
+	require.Equal(t, plugin.Routes[1], proxy.route)
 }

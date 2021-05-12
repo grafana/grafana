@@ -1,11 +1,13 @@
+import { NavModel, NavModelItem } from '@grafana/data';
+
 import { FolderDTO } from 'app/types';
-import { NavModelItem, NavModel } from '@grafana/data';
+import { getConfig } from '../../../core/config';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
   const model = {
     icon: 'folder',
     id: 'manage-folder',
-    subTitle: 'Manage folder dashboards & permissions',
+    subTitle: 'Manage folder dashboards and permissions',
     url: '',
     text: folder.title,
     breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
@@ -19,6 +21,16 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       },
     ],
   };
+
+  if (getConfig().featureToggles.panelLibrary) {
+    model.children.push({
+      active: false,
+      icon: 'library-panel',
+      id: `folder-library-panels-${folder.uid}`,
+      text: 'Panels',
+      url: `${folder.url}/library-panels`,
+    });
+  }
 
   if (folder.canAdmin) {
     model.children.push({

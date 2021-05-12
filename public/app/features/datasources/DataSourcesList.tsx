@@ -2,10 +2,9 @@
 import React, { FC } from 'react';
 
 // Types
-import { DataSourceSettings } from '@grafana/data';
-import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
+import { DataSourceSettings, LayoutMode } from '@grafana/data';
 import { Card, Tag, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export interface Props {
   dataSources: DataSourceSettings[];
@@ -20,7 +19,7 @@ export const DataSourcesList: FC<Props> = ({ dataSources, layoutMode }) => {
       {dataSources.map((dataSource, index) => {
         return (
           <li key={dataSource.id}>
-            <Card heading={dataSource.name} href={`datasources/edit/${dataSource.id}`}>
+            <Card heading={dataSource.name} href={`datasources/edit/${dataSource.uid}`}>
               <Card.Figure>
                 <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
               </Card.Figure>

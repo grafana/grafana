@@ -1,8 +1,10 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import Graph from './Graph';
-import Chart from '../Chart';
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
+import { VizTooltip, TooltipDisplayMode } from '../VizTooltip';
+import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId, DisplayProcessor } from '@grafana/data';
+
+const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
 
 const series: GraphSeriesXY[] = [
   {
@@ -26,6 +28,7 @@ const series: GraphSeriesXY[] = [
       name: 'a-series',
       values: new ArrayVector([10, 20, 10]),
       config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
+      display,
     },
     timeStep: 3600000,
     yAxis: {
@@ -53,6 +56,7 @@ const series: GraphSeriesXY[] = [
       name: 'b-series',
       values: new ArrayVector([20, 30, 40]),
       config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } },
+      display,
     },
     timeStep: 3600000,
     yAxis: {
@@ -92,7 +96,7 @@ describe('Graph', () => {
       it("doesn't render tooltip when not hovering over a datapoint", () => {
         const graphWithTooltip = (
           <Graph {...mockGraphProps()}>
-            <Chart.Tooltip mode="single" />
+            <VizTooltip mode={TooltipDisplayMode.Single} />
           </Graph>
         );
 
@@ -105,7 +109,7 @@ describe('Graph', () => {
         // Given
         const graphWithTooltip = (
           <Graph {...mockGraphProps()}>
-            <Chart.Tooltip mode="single" />
+            <VizTooltip mode={TooltipDisplayMode.Single} />
           </Graph>
         );
         const container = mount(graphWithTooltip);
@@ -145,7 +149,7 @@ describe('Graph', () => {
         // Given
         const graphWithTooltip = (
           <Graph {...mockGraphProps(true)}>
-            <Chart.Tooltip mode="multi" />
+            <VizTooltip mode={TooltipDisplayMode.Multi} />
           </Graph>
         );
         const container = mount(graphWithTooltip);

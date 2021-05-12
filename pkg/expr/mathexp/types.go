@@ -123,3 +123,23 @@ func (n Number) GetMeta() interface{} {
 func (n Number) SetMeta(v interface{}) {
 	n.Frame.SetMeta(&data.FrameMeta{Custom: v})
 }
+
+// FloatField is a *float64 or a float64 data.Field with methods to always
+// get a *float64.
+type Float64Field data.Field
+
+// GetValue returns the value at idx as *float64.
+func (ff *Float64Field) GetValue(idx int) *float64 {
+	field := data.Field(*ff)
+	if field.Type() == data.FieldTypeNullableFloat64 {
+		return field.At(idx).(*float64)
+	}
+	f := field.At(idx).(float64)
+	return &f
+}
+
+// Len returns the the length of the field.
+func (ff *Float64Field) Len() int {
+	df := data.Field(*ff)
+	return df.Len()
+}

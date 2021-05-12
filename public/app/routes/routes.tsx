@@ -11,6 +11,7 @@ import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 
 export const extraRoutes: RouteDescriptor[] = [];
+export const featureToggledRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
   return [
@@ -23,15 +24,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d/:uid/:slug',
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Normal,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
-      ),
-    },
-    {
-      path: '/d/:uid',
+      path: '/d/:uid/:slug?',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -93,7 +86,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/datasources/edit/:id/',
+      path: '/datasources/edit/:uid/',
       component: SafeDynamicImport(
         () =>
           import(
@@ -102,7 +95,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/datasources/edit/:id/dashboards',
+      path: '/datasources/edit/:uid/dashboards',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/DataSourceDashboards')
       ),
@@ -347,13 +340,68 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/alerting/list',
       component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/AlertRuleListIndex')
+      ),
+    },
+    {
+      path: '/alerting/ng/list',
+      component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')
+      ),
+    },
+    {
+      path: '/alerting/routes',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
+      ),
+    },
+    {
+      path: '/alerting/silences',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+      ),
+    },
+    {
+      path: '/alerting/silence/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+      ),
+    },
+    {
+      path: '/alerting/silence/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
       ),
     },
     {
       path: '/alerting/notifications',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/templates/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/templates/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {
@@ -374,11 +422,25 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/new',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+      ),
+    },
+    {
+      path: '/alerting/ng/new',
+      pageClass: 'page-alerting',
+      component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
       ),
     },
     {
       path: '/alerting/:id/edit',
+      pageClass: 'page-alerting',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+      ),
+    },
+    {
+      path: '/alerting/ng/:id/edit',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
@@ -408,7 +470,14 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
       ),
     },
+    {
+      path: '/sandbox/benchmarks',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
+      ),
+    },
     ...extraRoutes,
+    ...featureToggledRoutes,
     {
       path: '/*',
       component: ErrorPage,

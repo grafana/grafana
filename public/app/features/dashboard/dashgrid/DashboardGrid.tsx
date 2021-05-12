@@ -153,7 +153,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
     this.props.dashboard.sortPanelsByGridPos();
 
-    // Call render() after any changes.  This is called when the layour loads
+    // Call render() after any changes.  This is called when the layout loads
     this.forceUpdate();
   };
 

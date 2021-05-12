@@ -9,14 +9,18 @@ describe('HeatmapCtrl', () => {
     get: () => {},
   };
 
-  const $scope = {
-    $on: () => {},
-  };
-
   HeatmapCtrl.prototype.panel = {
     events: {
       on: () => {},
       emit: () => {},
+    },
+  };
+
+  const $scope = {
+    $on: () => {},
+    $parent: {
+      panel: HeatmapCtrl.prototype.panel,
+      dashboard: {},
     },
   };
 

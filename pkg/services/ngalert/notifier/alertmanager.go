@@ -2,28 +2,36 @@ package notifier
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/url"
 	"path/filepath"
-	"sort"
 	"sync"
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/grafana/alerting-api/pkg/api"
-	"github.com/pkg/errors"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/dispatch"
+	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
 	"github.com/prometheus/alertmanager/nflog/nflogpb"
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/alertmanager/silence"
-	"github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -32,7 +40,40 @@ import (
 )
 
 const (
-	workingDir = "alerting"
+	pollInterval = 1 * time.Minute
+	workingDir   = "alerting"
+	// How long should we keep silences and notification entries on-disk after they've served their purpose.
+	retentionNotificationsAndSilences = 5 * 24 * time.Hour
+	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications and silences
+	maintenanceNotificationAndSilences = 15 * time.Minute
+	// defaultResolveTimeout is the default timeout used for resolving an alert
+	// if the end time is not specified.
+	defaultResolveTimeout = 5 * time.Minute
+	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
+	memoryAlertsGCInterval = 30 * time.Minute
+	// To start, the alertmanager needs at least one route defined.
+	// TODO: we should move this to Grafana settings and define this as the default.
+	alertmanagerDefaultConfiguration = `
+{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
 )
 
 type Alertmanager struct {
@@ -40,20 +81,29 @@ type Alertmanager struct {
 	Settings *setting.Cfg       `inject:""`
 	SQLStore *sqlstore.SQLStore `inject:""`
 	Store    store.AlertingStore
+	Metrics  *metrics.Metrics `inject:""`
 
-	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
-	// silences keeps the track of which notifications we should not fire due to user configuration.
+	marker          types.Marker
+	alerts          *mem.Alerts
+	route           *dispatch.Route
+
+	dispatcher *dispatch.Dispatcher
+	inhibitor  *inhibit.Inhibitor
+	// wg is for dispatcher, inhibitor, silences and notifications
+	// Across configuration changes dispatcher and inhibitor are completely replaced, however, silences, notification log and alerts remain the same.
+	// stopc is used to let silences and notifications know we are done.
+	wg    sync.WaitGroup
+	stopc chan struct{}
+
+	silencer *silence.Silencer
 	silences *silence.Silences
-	marker   types.Marker
-	alerts   *AlertProvider
 
-	dispatcher   *dispatch.Dispatcher
-	dispatcherWG sync.WaitGroup
+	stageMetrics      *notify.Metrics
+	dispatcherMetrics *dispatch.DispatcherMetrics
 
-	stageMetrics *notify.Metrics
-
-	reloadConfigMtx sync.Mutex
+	reloadConfigMtx sync.RWMutex
+	config          []byte
 }
 
 func init() {
@@ -61,34 +111,57 @@ func init() {
 }
 
 func (am *Alertmanager) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	if am.Settings == nil {
+		return true
+	}
+	return !am.Settings.IsNgAlertEnabled()
 }
 
-func (am *Alertmanager) Init() (err error) {
+func (am *Alertmanager) Init() error {
+	return am.InitWithMetrics(am.Metrics)
+}
+
+// InitWithMetrics uses the supplied metrics for instantiation and
+// allows testware to circumvent duplicate registration errors.
+func (am *Alertmanager) InitWithMetrics(m *metrics.Metrics) (err error) {
+	am.stopc = make(chan struct{})
 	am.logger = log.New("alertmanager")
-	r := prometheus.NewRegistry()
-	am.marker = types.NewMarker(r)
-	am.stageMetrics = notify.NewMetrics(r)
+	am.marker = types.NewMarker(m.Registerer)
+	am.stageMetrics = notify.NewMetrics(m.Registerer)
+	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(m.Registerer)
+	am.Metrics = m
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
+	// Initialize the notification log
+	am.wg.Add(1)
 	am.notificationLog, err = nflog.New(
-		nflog.WithRetention(time.Hour*24),                         //TODO: This is a setting.
-		nflog.WithSnapshot(filepath.Join("dir", "notifications")), //TODO: This should be a setting
+		nflog.WithRetention(retentionNotificationsAndSilences),
+		nflog.WithSnapshot(filepath.Join(am.WorkingDirPath(), "notifications")),
+		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done),
 	)
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize the notification log component of alerting")
+		return fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
+	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
-		SnapshotFile: filepath.Join("dir", "silences"), //TODO: This is a setting
-		Retention:    time.Hour * 24,                   //TODO: This is also a setting
+		Metrics:      m.Registerer,
+		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
+		Retention:    retentionNotificationsAndSilences,
 	})
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
+		return fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
-	am.alerts, err = NewAlertProvider(nil, am.marker)
+	am.wg.Add(1)
+	go func() {
+		am.silences.Maintenance(15*time.Minute, filepath.Join(am.WorkingDirPath(), "silences"), am.stopc)
+		am.wg.Done()
+	}()
+
+	// Initialize in-memory alerts
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, gokit_log.NewNopLogger())
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize the alert provider component of alerting")
+		return fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
 
 	return nil
@@ -96,23 +169,18 @@ func (am *Alertmanager) Init() (err error) {
 
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.SyncAndApplyConfigFromDatabase(); err != nil && !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-		return err
+	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+		am.logger.Error("unable to sync configuration", "err", err)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			am.StopAndWait()
-			return nil
-		case <-time.After(1 * time.Minute):
-			// TODO: once we have a check to skip reload on same config, uncomment this.
-			//if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-			//	if err == store.ErrNoAlertmanagerConfiguration {
-			//		am.logger.Warn(errors.Wrap(err, "unable to sync configuration").Error())
-			//	}
-			//	am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
-			//}
+			return am.StopAndWait()
+		case <-time.After(pollInterval):
+			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+				am.logger.Error("unable to sync configuration", "err", err)
+			}
 		}
 	}
 }
@@ -122,11 +190,45 @@ func (am *Alertmanager) AddMigration(mg *migrator.Migrator) {
 	alertmanagerConfigurationMigration(mg)
 }
 
-func (am *Alertmanager) StopAndWait() {
+func (am *Alertmanager) StopAndWait() error {
 	if am.dispatcher != nil {
 		am.dispatcher.Stop()
 	}
-	am.dispatcherWG.Wait()
+
+	if am.inhibitor != nil {
+		am.inhibitor.Stop()
+	}
+
+	am.alerts.Close()
+
+	close(am.stopc)
+
+	am.wg.Wait()
+	return nil
+}
+
+func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
+	rawConfig, err := json.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+	}
+
+	am.reloadConfigMtx.Lock()
+	defer am.reloadConfigMtx.Unlock()
+
+	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(rawConfig),
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+	}
+
+	if err := am.Store.SaveAlertmanagerConfiguration(cmd); err != nil {
+		return fmt.Errorf("failed to save Alertmanager configuration: %w", err)
+	}
+	if err := am.applyConfig(cfg, rawConfig); err != nil {
+		return fmt.Errorf("unable to reload configuration: %w", err)
+	}
+
+	return nil
 }
 
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
@@ -135,47 +237,72 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
-	// TODO: check if config is same as before using hashes and skip reload in case they are same.
-	cfg, err := am.getConfigFromDatabase()
-	if err != nil {
-		return errors.Wrap(err, "get config from database")
-	}
-	return errors.Wrap(am.applyConfig(cfg), "reload from config")
-}
-
-func (am *Alertmanager) getConfigFromDatabase() (*api.PostableUserConfig, error) {
 	// First, let's get the configuration we need from the database.
-	q := &models.GetLatestAlertmanagerConfigurationQuery{}
+	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
-		return nil, err
+		// If there's no configuration in the database, let's use the default configuration.
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration}
+		} else {
+			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
+		}
 	}
 
-	// Then, let's parse and return the alertmanager configuration.
-	return Load(q.Result.AlertmanagerConfiguration)
-}
-
-// ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
-func (am *Alertmanager) ApplyConfig(cfg *api.PostableUserConfig) error {
-	am.reloadConfigMtx.Lock()
-	defer am.reloadConfigMtx.Unlock()
-
-	return am.applyConfig(cfg)
-}
-
-// applyConfig applies a new configuration by re-initializing all components using the configuration provided.
-// It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
-	// First, we need to make sure we persist the templates to disk.
-	paths, _, err := PersistTemplates(cfg, am.WorkingDirPath())
+	cfg, err := Load([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return err
 	}
+
+	if err := am.applyConfig(cfg, nil); err != nil {
+		return fmt.Errorf("unable to reload configuration: %w", err)
+	}
+
+	return nil
+}
+
+const defaultTemplate = "templates/default.tmpl"
+
+// applyConfig applies a new configuration by re-initializing all components using the configuration provided.
+// It is not safe to call concurrently.
+func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+	// First, let's make sure this config is not already loaded
+	var configChanged bool
+	if rawConfig == nil {
+		enc, err := json.Marshal(cfg.AlertmanagerConfig)
+		if err != nil {
+			// In theory, this should never happen.
+			return err
+		}
+		rawConfig = enc
+	}
+
+	if md5.Sum(am.config) != md5.Sum(rawConfig) {
+		configChanged = true
+	}
+	// next, we need to make sure we persist the templates to disk.
+	paths, templatesChanged, err := PersistTemplates(cfg, am.WorkingDirPath())
+	if err != nil {
+		return err
+	}
+
+	// If neither the configuration nor templates have changed, we've got nothing to do.
+	if !configChanged && !templatesChanged {
+		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
+		return nil
+	}
+
+	paths = append([]string{defaultTemplate}, paths...)
 
 	// With the templates persisted, create the template list using the paths.
 	tmpl, err := template.FromGlobs(paths...)
 	if err != nil {
 		return err
 	}
+	externalURL, err := url.Parse(am.Settings.AppURL)
+	if err != nil {
+		return err
+	}
+	tmpl.ExternalURL = externalURL
 
 	// Finally, build the integrations map using the receiver configuration and templates.
 	integrationsMap, err := am.buildIntegrationsMap(cfg.AlertmanagerConfig.Receivers, tmpl)
@@ -185,26 +312,39 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(integrationsMap))
 
-	silencingStage := notify.NewMuteStage(silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger()))
-	for name := range integrationsMap {
-		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{silencingStage, stage}
+	if am.inhibitor != nil {
+		am.inhibitor.Stop()
+	}
+	if am.dispatcher != nil {
+		am.dispatcher.Stop()
 	}
 
-	am.alerts.SetStage(routingStage)
+	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, gokit_log.NewNopLogger())
+	am.silencer = silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger())
 
-	am.StopAndWait()
-	//TODO: Verify this is correct
-	route := dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	//TODO: This needs the metrics
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
+	inhibitionStage := notify.NewMuteStage(am.inhibitor)
+	silencingStage := notify.NewMuteStage(am.silencer)
+	for name := range integrationsMap {
+		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{silencingStage, inhibitionStage, stage}
+	}
 
-	am.dispatcherWG.Add(1)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
+
+	am.wg.Add(1)
 	go func() {
-		defer am.dispatcherWG.Done()
+		defer am.wg.Done()
 		am.dispatcher.Run()
 	}()
 
+	am.wg.Add(1)
+	go func() {
+		defer am.wg.Done()
+		am.inhibitor.Run()
+	}()
+
+	am.config = rawConfig
 	return nil
 }
 
@@ -213,7 +353,7 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*api.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
+func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
 	integrationsMap := make(map[string][]notify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
@@ -226,89 +366,158 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*api.PostableApiReceive
 	return integrationsMap, nil
 }
 
+type NotificationChannel interface {
+	notify.Notifier
+	notify.ResolvedSender
+}
+
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, _ *template.Template) ([]notify.Integration, error) {
+func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
+		// secure settings are already encrypted at this point
+		secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
+
+		for k, v := range r.SecureSettings {
+			d, err := base64.StdEncoding.DecodeString(v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode secure setting")
+			}
+			secureSettings[k] = d
+		}
+		var (
+			cfg = &models.AlertNotification{
+				Uid:                   r.Uid,
+				Name:                  r.Name,
+				Type:                  r.Type,
+				IsDefault:             r.IsDefault,
+				SendReminder:          r.SendReminder,
+				DisableResolveMessage: r.DisableResolveMessage,
+				Settings:              r.Settings,
+				SecureSettings:        secureSettings,
+			}
+			n   NotificationChannel
+			err error
+		)
 		switch r.Type {
 		case "email":
-			n, err := channels.NewEmailNotifier(r.Result)
-			if err != nil {
-				return nil, err
-			}
-
-			integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
+			n, err = channels.NewEmailNotifier(cfg, tmpl.ExternalURL) // Email notifier already has a default template.
+		case "pagerduty":
+			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+		case "slack":
+			n, err = channels.NewSlackNotifier(cfg, tmpl)
+		case "telegram":
+			n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		case "teams":
+			n, err = channels.NewTeamsNotifier(cfg, tmpl)
+		case "dingding":
+			n, err = channels.NewDingDingNotifier(cfg, tmpl)
+		case "webhook":
+			n, err = channels.NewWebHookNotifier(cfg, tmpl)
+		default:
+			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
 	}
 
 	return integrations, nil
 }
 
-// CreateAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *Alertmanager) CreateAlerts(alerts ...*PostableAlert) error {
-	return am.alerts.PutPostableAlert(alerts...)
-}
-
-func (am *Alertmanager) ListSilences(matchers []*labels.Matcher) ([]types.Silence, error) {
-	pbsilences, _, err := am.silences.Query()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to query for the list of silences")
-	}
-	r := []types.Silence{}
-	for _, pbs := range pbsilences {
-		s, err := silenceFromProto(pbs)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to marshal silence")
+// PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
+func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error {
+	now := time.Now()
+	alerts := make([]*types.Alert, 0, len(postableAlerts.PostableAlerts))
+	var validationErr *AlertValidationError
+	for _, a := range postableAlerts.PostableAlerts {
+		alert := &types.Alert{
+			Alert: model.Alert{
+				Labels:       model.LabelSet{},
+				Annotations:  model.LabelSet{},
+				StartsAt:     time.Time(a.StartsAt),
+				EndsAt:       time.Time(a.EndsAt),
+				GeneratorURL: a.GeneratorURL.String(),
+			},
+			UpdatedAt: now,
+		}
+		for k, v := range a.Labels {
+			if len(v) == 0 { // Skip empty labels.
+				continue
+			}
+			alert.Alert.Labels[model.LabelName(k)] = model.LabelValue(v)
+		}
+		for k, v := range a.Annotations {
+			if len(v) == 0 { // Skip empty annotation.
+				continue
+			}
+			alert.Alert.Annotations[model.LabelName(k)] = model.LabelValue(v)
 		}
 
-		sms := make(map[string]string)
-		for _, m := range s.Matchers {
-			sms[m.Name] = m.Value
+		// Ensure StartsAt is set.
+		if alert.StartsAt.IsZero() {
+			if alert.EndsAt.IsZero() {
+				alert.StartsAt = now
+			} else {
+				alert.StartsAt = alert.EndsAt
+			}
+		}
+		// If no end time is defined, set a timeout after which an alert
+		// is marked resolved if it is not updated.
+		if alert.EndsAt.IsZero() {
+			alert.Timeout = true
+			alert.EndsAt = now.Add(defaultResolveTimeout)
 		}
 
-		if !matchFilterLabels(matchers, sms) {
+		if alert.EndsAt.After(now) {
+			am.Metrics.Firing().Inc()
+		} else {
+			am.Metrics.Resolved().Inc()
+		}
+
+		if err := alert.Validate(); err != nil {
+			if validationErr == nil {
+				validationErr = &AlertValidationError{}
+			}
+			validationErr.Alerts = append(validationErr.Alerts, a)
+			validationErr.Errors = append(validationErr.Errors, err)
+			am.Metrics.Invalid().Inc()
 			continue
 		}
 
-		r = append(r, *s)
+		alerts = append(alerts, alert)
 	}
 
-	var active, pending, expired []types.Silence
-	for _, s := range r {
-		switch s.Status.State {
-		case types.SilenceStateActive:
-			active = append(active, s)
-		case types.SilenceStatePending:
-			pending = append(pending, s)
-		case types.SilenceStateExpired:
-			expired = append(expired, s)
-		}
+	if err := am.alerts.Put(alerts...); err != nil {
+		// Notification sending alert takes precedence over validation errors.
+		return err
 	}
-
-	sort.Slice(active, func(i int, j int) bool {
-		return active[i].EndsAt.Before(active[j].EndsAt)
-	})
-	sort.Slice(pending, func(i int, j int) bool {
-		return pending[i].EndsAt.Before(pending[j].EndsAt)
-	})
-	sort.Slice(expired, func(i int, j int) bool {
-		return expired[i].EndsAt.After(expired[j].EndsAt)
-	})
-
-	// Initialize silences explicitly to an empty list (instead of nil)
-	// So that it does not get converted to "null" in JSON.
-	silences := []types.Silence{}
-	silences = append(silences, active...)
-	silences = append(silences, pending...)
-	silences = append(silences, expired...)
-
-	return silences, nil
+	if validationErr != nil {
+		// Even if validationErr is nil, the require.NoError fails on it.
+		return validationErr
+	}
+	return nil
 }
 
-func (am *Alertmanager) GetSilence(silence *types.Silence)    {}
-func (am *Alertmanager) CreateSilence(silence *types.Silence) {}
-func (am *Alertmanager) DeleteSilence(silence *types.Silence) {}
+// AlertValidationError is the error capturing the validation errors
+// faced on the alerts.
+type AlertValidationError struct {
+	Alerts []amv2.PostableAlert
+	Errors []error // Errors[i] refers to Alerts[i].
+}
+
+func (e AlertValidationError) Error() string {
+	errMsg := ""
+	if len(e.Errors) != 0 {
+		errMsg := e.Errors[0].Error()
+		for _, e := range e.Errors[1:] {
+			errMsg += ";" + e.Error()
+		}
+	}
+	return errMsg
+}
 
 // createReceiverStage creates a pipeline of stages for a receiver.
 func (am *Alertmanager) createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
@@ -322,7 +531,6 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 		var s notify.MultiStage
 		s = append(s, notify.NewWaitStage(wait))
 		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
-		//TODO: This probably won't work w/o the metrics
 		s = append(s, notify.NewRetryStage(integrations[i], name, am.stageMetrics))
 		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
 
@@ -341,64 +549,4 @@ func timeoutFunc(d time.Duration) time.Duration {
 		d = notify.MinTimeout
 	}
 	return d + waitFunc()
-}
-
-// copied from the Alertmanager
-func silenceFromProto(s *silencepb.Silence) (*types.Silence, error) {
-	sil := &types.Silence{
-		ID:        s.Id,
-		StartsAt:  s.StartsAt,
-		EndsAt:    s.EndsAt,
-		UpdatedAt: s.UpdatedAt,
-		Status: types.SilenceStatus{
-			State: types.CalcSilenceState(s.StartsAt, s.EndsAt),
-		},
-		Comment:   s.Comment,
-		CreatedBy: s.CreatedBy,
-	}
-	for _, m := range s.Matchers {
-		var t labels.MatchType
-		switch m.Type {
-		case silencepb.Matcher_EQUAL:
-			t = labels.MatchEqual
-		case silencepb.Matcher_REGEXP:
-			t = labels.MatchRegexp
-		case silencepb.Matcher_NOT_EQUAL:
-			t = labels.MatchNotEqual
-		case silencepb.Matcher_NOT_REGEXP:
-			t = labels.MatchNotRegexp
-		}
-		matcher, err := labels.NewMatcher(t, m.Name, m.Pattern)
-		if err != nil {
-			return nil, err
-		}
-
-		sil.Matchers = append(sil.Matchers, matcher)
-	}
-
-	return sil, nil
-}
-
-func matchFilterLabels(matchers []*labels.Matcher, sms map[string]string) bool {
-	for _, m := range matchers {
-		v, prs := sms[m.Name]
-		switch m.Type {
-		case labels.MatchNotRegexp, labels.MatchNotEqual:
-			if m.Value == "" && prs {
-				continue
-			}
-			if !m.Matches(v) {
-				return false
-			}
-		default:
-			if m.Value == "" && !prs {
-				continue
-			}
-			if !m.Matches(v) {
-				return false
-			}
-		}
-	}
-
-	return true
 }

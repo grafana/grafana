@@ -36,7 +36,7 @@ const (
 )
 
 const (
-	redactedPassword = "*********"
+	RedactedPassword = "*********"
 	DefaultHTTPAddr  = "0.0.0.0"
 	Dev              = "development"
 	Prod             = "production"
@@ -297,9 +297,16 @@ type Cfg struct {
 	// OAuth
 	OAuthCookieMaxAge int
 
-	// SAML Auth
-	SAMLEnabled             bool
-	SAMLSingleLogoutEnabled bool
+	// JWT Auth
+	JWTAuthEnabled       bool
+	JWTAuthHeaderName    string
+	JWTAuthEmailClaim    string
+	JWTAuthUsernameClaim string
+	JWTAuthExpectClaims  string
+	JWTAuthJWKSetURL     string
+	JWTAuthCacheTTL      time.Duration
+	JWTAuthKeyFile       string
+	JWTAuthJWKSetFile    string
 
 	// Dataproxy
 	SendUserHeader bool
@@ -355,6 +362,7 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	DefaultTheme string
+	HomePage     string
 
 	AutoAssignOrg     bool
 	AutoAssignOrgId   int
@@ -366,14 +374,19 @@ type Cfg struct {
 	ImageUploadProvider string
 }
 
-// IsLiveEnabled returns if grafana live should be enabled
-func (cfg Cfg) IsLiveEnabled() bool {
-	return cfg.FeatureToggles["live"]
+// IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
+func (cfg Cfg) IsLiveConfigEnabled() bool {
+	return cfg.FeatureToggles["live-config"]
 }
 
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
 func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
+}
+
+// IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
+func (cfg Cfg) IsTrimDefaultsEnabled() bool {
+	return cfg.FeatureToggles["trimDefaults"]
 }
 
 // IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
@@ -418,14 +431,33 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
-func shouldRedactKey(s string) bool {
-	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET") || strings.Contains(uppercased, "PROVIDER_CONFIG")
-}
-
-func shouldRedactURLKey(s string) bool {
-	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "DATABASE_URL")
+func RedactedValue(key, value string) string {
+	uppercased := strings.ToUpper(key)
+	// Sensitive information: password, secrets etc
+	for _, pattern := range []string{
+		"PASSWORD",
+		"SECRET",
+		"PROVIDER_CONFIG",
+		"PRIVATE_KEY",
+		"SECRET_KEY",
+		"CERTIFICATE",
+	} {
+		if strings.Contains(uppercased, pattern) {
+			return RedactedPassword
+		}
+	}
+	// Sensitive URLs that might contain username and password
+	for _, pattern := range []string{
+		"DATABASE_URL",
+	} {
+		if strings.Contains(uppercased, pattern) {
+			if u, err := url.Parse(value); err == nil {
+				return u.Redacted()
+			}
+		}
+	}
+	// Otherwise return unmodified value
+	return value
 }
 
 func applyEnvVariableOverrides(file *ini.File) error {
@@ -437,24 +469,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
-				if shouldRedactKey(envKey) {
-					envValue = redactedPassword
-				}
-				if shouldRedactURLKey(envKey) {
-					u, err := url.Parse(envValue)
-					if err != nil {
-						return fmt.Errorf("could not parse environment variable. key: %s, value: %s. error: %v", envKey, envValue, err)
-					}
-					ui := u.User
-					if ui != nil {
-						_, exists := ui.Password()
-						if exists {
-							u.User = url.UserPassword(ui.Username(), "-redacted-")
-							envValue = u.String()
-						}
-					}
-				}
-				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
+				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 			}
 		}
 	}
@@ -536,10 +551,8 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
-				if shouldRedactKey(keyString) {
-					value = redactedPassword
-				}
-				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				appliedCommandLineProperties = append(appliedCommandLineProperties,
+					fmt.Sprintf("%s=%s", keyString, RedactedValue(keyString, value)))
 			}
 		}
 	}
@@ -1046,10 +1059,7 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	}
 
 	key.SetValue(envValue)
-	if shouldRedactKey(envKey) {
-		envValue = redactedPassword
-	}
-	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
+	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
 }
@@ -1163,10 +1173,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
 
-	// SAML auth
-	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
-	cfg.SAMLSingleLogoutEnabled = iniFile.Section("auth.saml").Key("single_logout").MustBool(false)
-
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousEnabled = AnonymousEnabled
@@ -1178,6 +1184,18 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authBasic := iniFile.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthEnabled = BasicAuthEnabled
+
+	// JWT auth
+	authJWT := iniFile.Section("auth.jwt")
+	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
+	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
+	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
+	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
+	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
+	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
+	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
@@ -1229,6 +1247,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
+	cfg.HomePage = valueAsString(users, "home_page", "")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")

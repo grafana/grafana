@@ -2,11 +2,12 @@ import { toDataFrame, FieldType, VizOrientation } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { BarChart } from './BarChart';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { select } from '@storybook/addon-knobs';
-import { BarChartOptions, BarStackingMode, BarValueVisibility } from './types';
+import { BarChartOptions, BarValueVisibility } from './types';
+import { StackingMode } from '../uPlot/config';
 
 export default {
   title: 'Visualizations/BarChart',
@@ -41,7 +42,7 @@ const getKnobs = () => {
 export const Basic: React.FC = () => {
   const { legendPlacement, orientation } = getKnobs();
 
-  const theme = useTheme();
+  const theme = useTheme2();
   const frame = toDataFrame({
     fields: [
       { name: 'x', type: FieldType.string, values: ['group 1', 'group 2'] },
@@ -55,7 +56,7 @@ export const Basic: React.FC = () => {
   const options: BarChartOptions = {
     orientation: orientation,
     legend: { displayMode: LegendDisplayMode.List, placement: legendPlacement, calcs: [] },
-    stacking: BarStackingMode.None,
+    stacking: StackingMode.None,
     showValue: BarValueVisibility.Always,
     barWidth: 0.97,
     groupWidth: 0.7,

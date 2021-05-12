@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, LogLevel } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 
@@ -48,10 +48,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       font-family: ${theme.typography.fontFamily.monospace};
       font-size: ${theme.typography.size.sm};
       width: 100%;
-    `,
-    logsRowsHorizontalScroll: css`
-      label: logs-rows__horizontal-scroll;
-      overflow: auto;
     `,
     context: css`
       label: context;

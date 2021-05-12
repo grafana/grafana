@@ -6,6 +6,7 @@ import mdx from './Card.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 import { TagList } from '../Tags/TagList';
+import { VerticalGroup } from '../Layout/Layout';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
@@ -20,13 +21,9 @@ export default {
     knobs: {
       disable: true,
     },
-  },
-  argTypes: {
-    heading: { control: { disable: true } },
-    description: { control: { disable: true } },
-    href: { control: { disable: true } },
-    tooltip: { control: { disable: true } },
-    onClick: { control: { disable: true } },
+    controls: {
+      exclude: ['onClick', 'href', 'heading', 'description', 'className'],
+    },
   },
 };
 
@@ -42,23 +39,23 @@ export const Basic: Story<Props> = ({ disabled }) => {
 
 export const AsLink: Story<Props> = ({ disabled }) => {
   return (
-    <Card
-      href="https://grafana.com"
-      heading="Filter by name"
-      description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
-      disabled={disabled}
-    />
-  );
-};
-
-export const WithTooltip: Story<Props> = ({ disabled }) => {
-  return (
-    <Card
-      heading="Reduce"
-      description="Reduce all rows or data points to a single value using a function like max, min, mean or last."
-      tooltip="Click to apply this transformation."
-      disabled={disabled}
-    />
+    <VerticalGroup>
+      <Card
+        href="https://grafana.com"
+        heading="Filter by name"
+        description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+        disabled={disabled}
+      />
+      <Card
+        href="https://grafana.com"
+        heading="Filter by name2"
+        description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+        disabled={disabled}
+      />
+      <Card href="https://grafana.com" heading="Production system overview" disabled={disabled}>
+        <Card.Meta>Meta tags</Card.Meta>
+      </Card>
+    </VerticalGroup>
   );
 };
 
@@ -75,7 +72,7 @@ export const WithTags: Story<Props> = ({ disabled }) => {
 
 export const WithMedia: Story<Props> = ({ disabled }) => {
   return (
-    <Card href="https://ops-us-east4.grafana.net/api/prom" heading="1-ops-tools1-fallback" disabled={disabled}>
+    <Card heading="1-ops-tools1-fallback" disabled={disabled}>
       <Card.Meta>
         Prometheus
         <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">

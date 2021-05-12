@@ -23,8 +23,9 @@
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
     <script nonce="[[.Nonce]]">
-      performance.mark('css done blocking');
+      performance.mark('frontend_boot_css_time_seconds');
     </script>
+
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
@@ -199,7 +200,7 @@
           >.
         </p>
       </div>
-      <script>
+      <script nonce="[[.Nonce]]">
         // Check to see if browser is not supported by Grafana
         // Source file in app/core/utils/browser.ts & tests make edits there and copy compiled typescript here
         function checkBrowserCompatibility() {
@@ -262,6 +263,9 @@
         [[if .ContentDeliveryURL]]
           window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
         [[end]]
+        [[if .Nonce]]
+          window.nonce = '[[.Nonce]]';
+        [[end]]
     </script>
 
     [[if .GoogleTagManagerId]]
@@ -314,8 +318,9 @@
       type="text/javascript"
     ></script>
     <% } %> <% } %>
+
     <script nonce="[[.Nonce]]">
-      performance.mark('js done blocking');
+      performance.mark('frontend_boot_js_done_time_seconds');
     </script>
   </body>
 </html>

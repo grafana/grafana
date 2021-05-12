@@ -1,7 +1,7 @@
 import React from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
-import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
@@ -19,7 +19,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     options: currentOptions,
     eventBus: dashboard.events,
     getSuggestions: (scope?: VariableSuggestionsScope) => {
-      return getPanelOptionsVariableSuggestions(plugin, data?.series);
+      return data ? getDataLinksVariableSuggestions(data.series, scope) : [];
     },
   };
 
@@ -41,6 +41,10 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Panel options
    */
   for (const pluginOption of plugin.optionEditors.list()) {
+    if (pluginOption.showIf && !pluginOption.showIf(currentOptions, data?.series)) {
+      continue;
+    }
+
     const category = getOptionsPaneCategory(pluginOption.category);
     const Editor = pluginOption.editor;
 
@@ -48,7 +52,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: pluginOption.name,
         description: pluginOption.description,
-        Component: function renderEditor() {
+        render: function renderEditor() {
           const onChange = (value: any) => {
             const newOptions = lodashSet({ ...currentOptions }, pluginOption.path, value);
             onPanelOptionsChanged(newOptions);
@@ -101,7 +105,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         description: fieldOption.description,
-        Component: function renderEditor() {
+        render: function renderEditor() {
           const onChange = (v: any) => {
             onFieldConfigsChange(
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)

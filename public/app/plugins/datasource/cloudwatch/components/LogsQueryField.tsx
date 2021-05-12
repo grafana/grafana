@@ -1,8 +1,6 @@
 // Libraries
 import React, { ReactNode } from 'react';
-import intersectionBy from 'lodash/intersectionBy';
-import debounce from 'lodash/debounce';
-import unionBy from 'lodash/unionBy';
+import { intersectionBy, debounce, unionBy } from 'lodash';
 
 import {
   BracesPlugin,
@@ -26,7 +24,7 @@ import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../typ
 import { CloudWatchDatasource } from '../datasource';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ExploreId } from 'app/types';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';

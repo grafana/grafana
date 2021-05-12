@@ -1,4 +1,4 @@
-import uPlot, { Axis, Series, Cursor, BBox } from 'uplot';
+import uPlot, { Axis, Series, Cursor, Select } from 'uplot';
 import { Quadtree, Rect, pointWithin } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 
@@ -46,8 +46,8 @@ export interface BarsOptions {
   groupWidth: number;
   barWidth: number;
   formatValue?: (seriesIdx: number, value: any) => string;
-  onHover?: (seriesIdx: number, valueIdx: any) => void;
-  onLeave?: (seriesIdx: number, valueIdx: any) => void;
+  onHover?: (seriesIdx: number, valueIdx: number) => void;
+  onLeave?: (seriesIdx: number, valueIdx: number) => void;
 }
 
 /**
@@ -212,7 +212,7 @@ export function getConfig(opts: BarsOptions) {
 
   // disable selection
   // uPlot types do not export the Select interface prior to 1.6.4
-  const select: Partial<BBox> = {
+  const select: Partial<Select> = {
     show: false,
   };
 

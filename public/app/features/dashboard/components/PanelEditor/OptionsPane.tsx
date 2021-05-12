@@ -2,7 +2,7 @@ import React from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisualizationButton } from './VisualizationButton';
 import { OptionsPaneOptions } from './OptionsPaneOptions';
@@ -32,7 +32,7 @@ export const OptionsPane: React.FC<Props> = ({
 }: Props) => {
   const styles = useStyles(getStyles);
   const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
-  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
@@ -74,7 +74,7 @@ const getStyles = (theme: GrafanaTheme) => {
       min-height: 0;
     `,
     vizButtonWrapper: css`
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.md} 0;
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
     `,
     legacyOptions: css`
       label: legacy-options;

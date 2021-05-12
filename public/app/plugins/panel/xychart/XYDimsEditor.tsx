@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconButton, Label, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   SelectableValue,

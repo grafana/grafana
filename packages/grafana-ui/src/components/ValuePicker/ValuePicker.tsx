@@ -7,7 +7,7 @@ import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { ComponentSize } from '../../types/size';
 import { selectors } from '@grafana/e2e-selectors';
 
-interface ValuePickerProps<T> {
+export interface ValuePickerProps<T> {
   /** Label to display on the picker button */
   label: string;
   /** Icon to display on the picker button */
@@ -44,7 +44,7 @@ export function ValuePicker<T>({
       icon={icon || 'plus'}
       onClick={() => setIsPicking(true)}
       variant={variant}
-      aria-label={selectors.components.ValuePicker.button}
+      aria-label={selectors.components.ValuePicker.button(label)}
     >
       {label}
     </Button>

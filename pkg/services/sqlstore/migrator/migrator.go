@@ -1,10 +1,12 @@
 package migrator
 
 import (
+	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -16,6 +18,7 @@ type Migrator struct {
 	Dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
+	Cfg        *setting.Cfg
 }
 
 type MigrationLog struct {
@@ -27,12 +30,13 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(engine *xorm.Engine) *Migrator {
+func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 	mg := &Migrator{}
 	mg.x = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
 	mg.Dialect = NewDialect(mg.x)
+	mg.Cfg = cfg
 	return mg
 }
 
@@ -117,7 +121,7 @@ func (mg *Migrator) Start() error {
 			return err
 		})
 		if err != nil {
-			return errutil.Wrap("migration failed", err)
+			return errutil.Wrap(fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
 		}
 	}
 
@@ -164,6 +168,16 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 		return err
 	}
 
+	return nil
+}
+
+func (mg *Migrator) ClearMigrationEntry(id string) error {
+	sess := mg.x.NewSession()
+	defer sess.Close()
+	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, id).Query()
+	if err != nil {
+		return fmt.Errorf("failed to clear migration entry %v: %w", id, err)
+	}
 	return nil
 }
 
