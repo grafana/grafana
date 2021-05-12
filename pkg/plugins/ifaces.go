@@ -47,6 +47,8 @@ type Manager interface {
 	GetPluginDashboards(orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
 	// GetPluginMarkdown gets markdown for a certain plugin/name.
 	GetPluginMarkdown(pluginID string, name string) ([]byte, error)
+	// GetPluginSchema gets cue schema for a certain plugin/name.
+	GetPluginSchema(pluginID string) ([]byte, error)
 	// ImportDashboard imports a dashboard.
 	ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,

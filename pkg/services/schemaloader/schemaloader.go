@@ -34,10 +34,17 @@ type RenderUser struct {
 	OrgRole string
 }
 
+type InstanceFS struct {
+}
+
 type SchemaLoaderService struct {
 	log        log.Logger
 	DashFamily schema.VersionedCueSchema
 	Cfg        *setting.Cfg `inject:""`
+}
+
+func (rs *SchemaLoaderService) LoadNewPanelPluginSchema(name, content string) error {
+	return nil
 }
 
 func (rs *SchemaLoaderService) Init() error {

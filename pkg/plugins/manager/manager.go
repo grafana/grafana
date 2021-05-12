@@ -608,6 +608,32 @@ func (pm *PluginManager) ScanningErrors() []plugins.PluginError {
 	return scanningErrs
 }
 
+func (pm *PluginManager) GetPluginSchema(pluginId string) ([]byte, error) {
+	plug, exists := pm.plugins[pluginId]
+	if !exists {
+		return nil, plugins.PluginNotFoundError{PluginID: pluginId}
+	}
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
+	path := filepath.Join(plug.PluginDir, "models.cue")
+	exists, err := fs.Exists(path)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return make([]byte, 0), nil
+	}
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 	plug, exists := pm.plugins[pluginId]
 	if !exists {
