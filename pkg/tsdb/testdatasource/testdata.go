@@ -1,6 +1,7 @@
 package testdatasource
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -35,7 +36,7 @@ func (p *testDataPlugin) Init() error {
 		CallResourceHandler: httpadapter.New(resourceMux),
 		StreamHandler:       newTestStreamHandler(p.logger),
 	})
-	err := p.BackendPluginManager.Register("testdata", factory)
+	err := p.BackendPluginManager.RegisterAndStart(context.Background(), "testdata", factory)
 	if err != nil {
 		p.logger.Error("Failed to register plugin", "error", err)
 	}

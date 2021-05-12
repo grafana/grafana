@@ -19,12 +19,13 @@ type pluginClient interface {
 }
 
 type grpcPlugin struct {
-	descriptor    PluginDescriptor
-	clientFactory func() *plugin.Client
-	client        *plugin.Client
-	pluginClient  pluginClient
-	logger        log.Logger
-	mutex         sync.RWMutex
+	descriptor     PluginDescriptor
+	clientFactory  func() *plugin.Client
+	client         *plugin.Client
+	pluginClient   pluginClient
+	logger         log.Logger
+	mutex          sync.RWMutex
+	decommissioned bool
 }
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
@@ -98,6 +99,19 @@ func (p *grpcPlugin) Exited() bool {
 		return p.client.Exited()
 	}
 	return true
+}
+
+func (p *grpcPlugin) Decommission() error {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	p.decommissioned = true
+
+	return nil
+}
+
+func (p *grpcPlugin) IsDecommissioned() bool {
+	return p.decommissioned
 }
 
 func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {

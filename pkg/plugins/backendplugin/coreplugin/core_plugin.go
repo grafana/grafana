@@ -68,6 +68,14 @@ func (cp *corePlugin) Exited() bool {
 	return false
 }
 
+func (cp *corePlugin) Decommission() error {
+	return nil
+}
+
+func (cp *corePlugin) IsDecommissioned() bool {
+	return false
+}
+
 func (cp *corePlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }

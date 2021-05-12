@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -19,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
@@ -368,6 +369,56 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
 	return response.JSON(200, hs.PluginManager.ScanningErrors())
+}
+
+func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
+	pluginID := c.Params("pluginId")
+
+	err := hs.PluginManager.Install(c.Req.Context(), pluginID, dto.Version)
+	if err != nil {
+		var dupeErr plugins.DuplicatePluginError
+		if errors.As(err, &dupeErr) {
+			return response.Error(http.StatusConflict, "Plugin already installed", err)
+		}
+		var versionUnsupportedErr installer.ErrVersionUnsupported
+		if errors.As(err, &versionUnsupportedErr) {
+			return response.Error(http.StatusConflict, "Plugin version not supported", err)
+		}
+		var versionNotFoundErr installer.ErrVersionNotFound
+		if errors.As(err, &versionNotFoundErr) {
+			return response.Error(http.StatusNotFound, "Plugin version not found", err)
+		}
+		if errors.Is(err, installer.ErrPluginNotFound) {
+			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		}
+		if errors.Is(err, plugins.ErrInstallCorePlugin) {
+			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
+	}
+
+	return response.JSON(http.StatusOK, []byte{})
+}
+
+func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
+	pluginID := c.Params("pluginId")
+
+	err := hs.PluginManager.Uninstall(c.Req.Context(), pluginID)
+	if err != nil {
+		if errors.Is(err, plugins.ErrPluginNotInstalled) {
+			return response.Error(http.StatusNotFound, "Plugin not installed", err)
+		}
+		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
+			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
+		}
+		if errors.Is(err, plugins.ErrUninstallOutsideOfPluginDir) {
+			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to uninstall plugin", err)
+	}
+	return response.JSON(http.StatusOK, []byte{})
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {

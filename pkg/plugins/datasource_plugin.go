@@ -51,7 +51,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 			OnLegacyStart: p.onLegacyPluginStart,
 			OnStart:       p.onPluginStart,
 		})
-		if err := backendPluginManager.Register(p.Id, factory); err != nil {
+		if err := backendPluginManager.RegisterAndStart(context.Background(), p.Id, factory); err != nil {
 			return nil, errutil.Wrapf(err, "failed to register backend plugin")
 		}
 	}

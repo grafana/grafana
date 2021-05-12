@@ -231,6 +231,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("enabled", "false")
 			require.NoError(t, err)
 		}
+		if o.MarketplaceAppEnabled {
+			anonSect, err := cfg.NewSection("plugins")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("marketplace_app_enabled", "true")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -244,9 +250,10 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 }
 
 type GrafanaOpts struct {
-	EnableCSP            bool
-	EnableFeatureToggles []string
-	AnonymousUserRole    models.RoleType
-	EnableQuota          bool
-	DisableAnonymous     bool
+	EnableCSP             bool
+	EnableFeatureToggles  []string
+	AnonymousUserRole     models.RoleType
+	EnableQuota           bool
+	DisableAnonymous      bool
+	MarketplaceAppEnabled bool
 }

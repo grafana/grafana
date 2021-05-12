@@ -66,3 +66,7 @@ type ImportDashboardCommand struct {
 	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
 	FolderId  int64                          `json:"folderId"`
 }
+
+type InstallPluginCommand struct {
+	Version string `json:"version"`
+}

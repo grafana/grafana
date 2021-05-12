@@ -10,8 +10,14 @@ import (
 
 // Manager manages backend plugins.
 type Manager interface {
-	// Register registers a backend plugin
+	//Register registers a backend plugin
 	Register(pluginID string, factory PluginFactoryFunc) error
+	// RegisterAndStart registers and starts a backend plugin
+	RegisterAndStart(ctx context.Context, pluginID string, factory PluginFactoryFunc) error
+	// UnregisterAndStop unregisters and stops a backend plugin
+	UnregisterAndStop(ctx context.Context, pluginID string) error
+	// IsRegistered checks if a plugin is registered with the manager
+	IsRegistered(pluginID string) bool
 	// StartPlugin starts a non-managed backend plugin
 	StartPlugin(ctx context.Context, pluginID string) error
 	// CollectMetrics collects metrics from a registered backend plugin.
@@ -35,6 +41,8 @@ type Plugin interface {
 	Stop(ctx context.Context) error
 	IsManaged() bool
 	Exited() bool
+	Decommission() error
+	IsDecommissioned() bool
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
