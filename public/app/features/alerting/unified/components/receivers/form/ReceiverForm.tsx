@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
-import { useForm, FormContext, NestDataObject, FieldError, Validate } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
+import { DeletedSubForm } from './fields/DeletedSubform';
 
 interface Props<R extends ChannelValues> {
+  config: AlertManagerCortexConfig;
   notifiers: NotifierDTO[];
   defaultItem: R;
   alertManagerSourceName: string;
@@ -22,6 +25,7 @@ interface Props<R extends ChannelValues> {
 }
 
 export function ReceiverForm<R extends ChannelValues>({
+  config,
   initialValues,
   defaultItem,
   notifiers,
@@ -29,7 +33,7 @@ export function ReceiverForm<R extends ChannelValues>({
   onSubmit,
   takenReceiverNames,
   commonSettingsComponent,
-}: Props<ChannelValues>): JSX.Element {
+}: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
 
   const defaultValues = initialValues || {
@@ -43,18 +47,24 @@ export function ReceiverForm<R extends ChannelValues>({
   };
 
   const formAPI = useForm<ReceiverFormValues<R>>({
-    defaultValues,
+    // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
+    defaultValues: JSON.parse(JSON.stringify(defaultValues)),
   });
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
-  const { handleSubmit, register, errors, getValues } = formAPI;
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+    getValues,
+  } = formAPI;
 
-  const { items, append, remove } = useControlledFieldArray<R>('items', formAPI);
+  const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
-  const validateNameIsAvailable: Validate = useCallback(
+  const validateNameIsAvailable: Validate<string> = useCallback(
     (name: string) =>
       takenReceiverNames.map((name) => name.trim().toLowerCase()).includes(name.trim().toLowerCase())
         ? 'Another receiver with this name already exists.'
@@ -62,41 +72,66 @@ export function ReceiverForm<R extends ChannelValues>({
     [takenReceiverNames]
   );
 
+  const submitCallback = (values: ReceiverFormValues<R>) => {
+    onSubmit({
+      ...values,
+      items: values.items.filter((item) => !item.__deleted),
+    });
+  };
+
   return (
-    <FormContext {...formAPI}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+    <FormProvider {...formAPI}>
+      {!config.alertmanager_config.route && (
+        <Alert severity="warning" title="Attention">
+          Because there is no default policy configured yet, this contact point will automatically be set as default.
+        </Alert>
+      )}
+      <form onSubmit={handleSubmit(submitCallback)}>
         <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
         {error && (
-          <Alert severity="error" title="Error saving template">
-            {error.message || (error as any)?.data?.message || String(error)}
+          <Alert severity="error" title="Error saving receiver">
+            {error.message || String(error)}
           </Alert>
         )}
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
           <Input
+            id="name"
+            {...register('name', {
+              required: 'Name is required',
+              validate: { nameIsAvailable: validateNameIsAvailable },
+            })}
             width={39}
-            name="name"
-            ref={register({ required: 'Name is required', validate: { nameIsAvailable: validateNameIsAvailable } })}
           />
         </Field>
-        {items.map((item, index) => {
-          const initialItem = initialValues?.items.find(({ __id }) => __id === item.__id);
+        {fields.map((field, index) => {
+          const pathPrefix = `items.${index}.`;
+          if (field.__deleted) {
+            return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
+          }
+          const initialItem = initialValues?.items.find(({ __id }) => __id === field.__id);
           return (
             <ChannelSubForm<R>
-              key={item.__id}
+              defaultValues={field}
+              key={field.__id}
               onDuplicate={() => {
-                const currentValues = getValues({ nest: true }).items[index];
+                const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
               onDelete={() => remove(index)}
-              pathPrefix={`items.${index}.`}
+              pathPrefix={pathPrefix}
               notifiers={notifiers}
               secureFields={initialItem?.secureFields}
-              errors={errors?.items?.[index] as NestDataObject<R, FieldError>}
+              errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
             />
           );
         })}
-        <Button type="button" icon="plus" onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}>
+        <Button
+          type="button"
+          icon="plus"
+          variant="secondary"
+          onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
+        >
           New contact point type
         </Button>
         <div className={styles.buttons}>
@@ -108,18 +143,19 @@ export function ReceiverForm<R extends ChannelValues>({
           {!loading && <Button type="submit">Save contact point</Button>}
           <LinkButton
             disabled={loading}
+            fill="outline"
             variant="secondary"
-            href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
+            href={makeAMLink('alerting/notifications', alertManagerSourceName)}
           >
             Cancel
           </LinkButton>
         </div>
       </form>
-    </FormContext>
+    </FormProvider>
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   heading: css`
     margin: ${theme.spacing(4, 0)};
   `,

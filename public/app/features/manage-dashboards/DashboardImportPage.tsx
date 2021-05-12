@@ -1,7 +1,7 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from '@emotion/css';
-import { AppEvents, GrafanaThemeV2, NavModel } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, NavModel } from '@grafana/data';
 import {
   Button,
   stylesFactory,
@@ -98,10 +98,9 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             {({ register, errors }) => (
               <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
                 <Input
-                  name="gcomDashboard"
                   placeholder="Grafana.com dashboard URL or ID"
                   type="text"
-                  ref={register({
+                  {...register('gcomDashboard', {
                     required: 'A Grafana dashboard URL or ID is required',
                     validate: validateGcomDashboard,
                   })}
@@ -118,8 +117,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
               <>
                 <Field invalid={!!errors.dashboardJson} error={errors.dashboardJson && errors.dashboardJson.message}>
                   <TextArea
-                    name="dashboardJson"
-                    ref={register({
+                    {...register('dashboardJson', {
                       required: 'Need a dashboard JSON model',
                       validate: validateDashboardJson,
                     })}
@@ -167,7 +165,7 @@ export default DashboardImportPage;
 
 DashboardImportPage.displayName = 'DashboardImport';
 
-const importStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const importStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     option: css`
       margin-bottom: ${theme.spacing(4)};

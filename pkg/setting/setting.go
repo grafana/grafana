@@ -36,7 +36,7 @@ const (
 )
 
 const (
-	redactedPassword = "*********"
+	RedactedPassword = "*********"
 	DefaultHTTPAddr  = "0.0.0.0"
 	Dev              = "development"
 	Prod             = "production"
@@ -374,9 +374,9 @@ type Cfg struct {
 	ImageUploadProvider string
 }
 
-// IsLiveEnabled returns if grafana live should be enabled
-func (cfg Cfg) IsLiveEnabled() bool {
-	return cfg.FeatureToggles["live"]
+// IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
+func (cfg Cfg) IsLiveConfigEnabled() bool {
+	return cfg.FeatureToggles["live-config"]
 }
 
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
@@ -397,11 +397,6 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 // IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
 func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
 	return cfg.FeatureToggles["http_request_histogram"]
-}
-
-// IsPanelLibraryEnabled returns whether the panel library feature is enabled.
-func (cfg Cfg) IsPanelLibraryEnabled() bool {
-	return cfg.FeatureToggles["panelLibrary"]
 }
 
 type CommandLineArgs struct {
@@ -431,14 +426,33 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
-func shouldRedactKey(s string) bool {
-	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET") || strings.Contains(uppercased, "PROVIDER_CONFIG")
-}
-
-func shouldRedactURLKey(s string) bool {
-	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "DATABASE_URL")
+func RedactedValue(key, value string) string {
+	uppercased := strings.ToUpper(key)
+	// Sensitive information: password, secrets etc
+	for _, pattern := range []string{
+		"PASSWORD",
+		"SECRET",
+		"PROVIDER_CONFIG",
+		"PRIVATE_KEY",
+		"SECRET_KEY",
+		"CERTIFICATE",
+	} {
+		if strings.Contains(uppercased, pattern) {
+			return RedactedPassword
+		}
+	}
+	// Sensitive URLs that might contain username and password
+	for _, pattern := range []string{
+		"DATABASE_URL",
+	} {
+		if strings.Contains(uppercased, pattern) {
+			if u, err := url.Parse(value); err == nil {
+				return u.Redacted()
+			}
+		}
+	}
+	// Otherwise return unmodified value
+	return value
 }
 
 func applyEnvVariableOverrides(file *ini.File) error {
@@ -450,24 +464,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
-				if shouldRedactKey(envKey) {
-					envValue = redactedPassword
-				}
-				if shouldRedactURLKey(envKey) {
-					u, err := url.Parse(envValue)
-					if err != nil {
-						return fmt.Errorf("could not parse environment variable. key: %s, value: %s. error: %v", envKey, envValue, err)
-					}
-					ui := u.User
-					if ui != nil {
-						_, exists := ui.Password()
-						if exists {
-							u.User = url.UserPassword(ui.Username(), "-redacted-")
-							envValue = u.String()
-						}
-					}
-				}
-				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
+				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 			}
 		}
 	}
@@ -549,10 +546,8 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
-				if shouldRedactKey(keyString) {
-					value = redactedPassword
-				}
-				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				appliedCommandLineProperties = append(appliedCommandLineProperties,
+					fmt.Sprintf("%s=%s", keyString, RedactedValue(keyString, value)))
 			}
 		}
 	}
@@ -1059,10 +1054,7 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	}
 
 	key.SetValue(envValue)
-	if shouldRedactKey(envKey) {
-		envValue = redactedPassword
-	}
-	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
+	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
 }

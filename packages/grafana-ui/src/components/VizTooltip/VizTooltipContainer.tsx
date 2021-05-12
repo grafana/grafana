@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { useStyles2 } from '../../themes';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import useWindowSize from 'react-use/lib/useWindowSize';
-import { Dimensions2D, GrafanaThemeV2 } from '@grafana/data';
+import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
 
 /**
  * @public
@@ -94,6 +94,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
         left: 0,
         top: 0,
         transform: `translate3d(${placement.x}px, ${placement.y}px, 0)`,
+        transition: 'all ease-out 0.1s',
       }}
       {...otherProps}
       className={cx(styles.wrapper, className)}
@@ -105,7 +106,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
 
 VizTooltipContainer.displayName = 'VizTooltipContainer';
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     ${getTooltipContainerStyles(theme)}
   `,

@@ -1,4 +1,4 @@
-import { Field, Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
@@ -50,9 +50,11 @@ const Receivers: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="receivers">
-      <Field label={disableAmSelect ? 'Alert manager' : 'Choose alert manager'} disabled={disableAmSelect}>
-        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      </Field>
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        disabled={disableAmSelect}
+        onChange={setAlertManagerSourceName}
+      />
       {error && !loading && (
         <Alert severity="error" title="Error loading alert manager config">
           {error.message || 'Unknown error.'}

@@ -13,12 +13,14 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery, DataSourceApi } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import { Grammar } from 'prismjs';
+import fromGraphite from './importing/fromGraphite';
+import { GraphiteDatasource } from '../graphite/datasource';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -331,11 +333,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(queries: LokiQuery[], datasourceType: string): Promise<LokiQuery[]> {
+  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
+    const datasourceType = originDataSource.meta.id;
     if (datasourceType === 'prometheus') {
       return Promise.all(
         queries.map(async (query) => {
-          const expr = await this.importPrometheusQuery(query.expr);
+          const expr = await this.importPrometheusQuery((query as PromQuery).expr);
           const { ...rest } = query as PromQuery;
           return {
             ...rest,
@@ -343,6 +346,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
           };
         })
       );
+    }
+    if (datasourceType === 'graphite') {
+      return fromGraphite(queries, originDataSource as GraphiteDatasource);
     }
     // Return a cleaned LokiQuery
     return queries.map((query) => ({

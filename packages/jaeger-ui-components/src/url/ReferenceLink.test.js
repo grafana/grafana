@@ -55,9 +55,14 @@ describe(ReferenceLink, () => {
     });
 
     it('throws if ExternalLinkContext is not set', () => {
+      // Prevent writing to stderr during this render.
+      const err = console.error;
+      console.error = jest.fn();
       expect(() => mount(<ReferenceLink reference={externalRef} focusSpan={focusMock} />)).toThrow(
         'ExternalLinkContext'
       );
+      // Restore writing to stderr.
+      console.error = err;
     });
   });
   describe('focus span', () => {

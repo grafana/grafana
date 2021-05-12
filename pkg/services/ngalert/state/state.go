@@ -20,6 +20,7 @@ type State struct {
 	LastEvaluationTime time.Time
 	EvaluationDuration time.Duration
 	Annotations        map[string]string
+	Error              error
 }
 
 type Evaluation struct {
@@ -31,7 +32,9 @@ func resultNormal(alertState *State, result eval.Result) *State {
 	newState := alertState
 	if alertState.State != eval.Normal {
 		newState.EndsAt = result.EvaluatedAt
+		newState.StartsAt = result.EvaluatedAt
 	}
+	newState.Error = result.Error // should be nil since state is not error
 	newState.State = eval.Normal
 	return newState
 }
@@ -51,19 +54,16 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 			a.State = eval.Alerting
 			a.StartsAt = result.EvaluatedAt
 			a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
-			a.Annotations["alerting_at"] = result.EvaluatedAt.String()
 		}
 	default:
 		a.StartsAt = result.EvaluatedAt
 		if !(alertRule.For > 0) {
 			a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
 			a.State = eval.Alerting
-			a.Annotations["alerting_at"] = result.EvaluatedAt.String()
 		} else {
 			a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
 			if result.EvaluatedAt.Sub(a.StartsAt) > alertRule.For {
 				a.State = eval.Alerting
-				a.Annotations["alerting_at"] = result.EvaluatedAt.String()
 			} else {
 				a.State = eval.Pending
 			}
@@ -73,6 +73,7 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 }
 
 func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) *State {
+	a.Error = result.Error
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
 	}
@@ -80,9 +81,6 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) *
 		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
 	} else {
 		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
-	}
-	if a.State != eval.Error {
-		a.Annotations["last_error"] = result.EvaluatedAt.String()
 	}
 
 	switch alertRule.ExecErrState {
@@ -101,9 +99,6 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
 	} else {
 		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
-	}
-	if a.State != eval.NoData {
-		a.Annotations["no_data"] = result.EvaluatedAt.String()
 	}
 
 	switch alertRule.NoDataState {
@@ -126,5 +121,6 @@ func (a *State) Equals(b *State) bool {
 		a.State.String() == b.State.String() &&
 		a.StartsAt == b.StartsAt &&
 		a.EndsAt == b.EndsAt &&
-		a.LastEvaluationTime == b.LastEvaluationTime
+		a.LastEvaluationTime == b.LastEvaluationTime &&
+		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }

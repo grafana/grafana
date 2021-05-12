@@ -16,7 +16,6 @@ import { StoreState } from 'app/types';
 import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
 import { PANEL_BORDER } from 'app/core/constants';
 import { selectors } from '@grafana/e2e-selectors';
-import { RenderEvent } from 'app/types/events';
 
 interface OwnProps {
   panel: PanelModel;
@@ -42,7 +41,6 @@ export type Props = OwnProps & ConnectedProps & DispatchProps;
 export interface State {
   data: PanelData;
   errorMessage?: string;
-  alertState?: string;
 }
 
 interface AngularScopeProps {
@@ -84,28 +82,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
         next: (data: PanelData) => this.onPanelDataUpdate(data),
       })
     );
-
-    this.subs.add(panel.events.subscribe(RenderEvent, this.onPanelRenderEvent));
   }
-
-  onPanelRenderEvent = (event: RenderEvent) => {
-    const { alertState } = this.state;
-    // graph sends these old render events with payloads
-    const payload = event.payload;
-
-    if (payload && payload.alertState && this.props.panel.alert) {
-      this.setState({ alertState: payload.alertState });
-    } else if (payload && payload.alertState && !this.props.panel.alert) {
-      // when user deletes alert in panel editor the source panel needs to refresh as this is in the mutable state and
-      // will not automatically re render
-      this.setState({ alertState: undefined });
-    } else if (payload && alertState) {
-      this.setState({ alertState: undefined });
-    } else {
-      // only needed for detecting title updates right now fix before 7.0
-      this.forceUpdate();
-    }
-  };
 
   onPanelDataUpdate(data: PanelData) {
     let errorMessage: string | undefined;
@@ -213,8 +190,10 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, panel, isViewing, isEditing, plugin } = this.props;
-    const { errorMessage, data, alertState } = this.state;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
+
+    let alertState = data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,

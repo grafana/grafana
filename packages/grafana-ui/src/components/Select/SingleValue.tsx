@@ -6,9 +6,9 @@ import { useStyles2 } from '../../themes';
 import { SlideOutTransition } from '../transitions/SlideOutTransition';
 import { FadeTransition } from '../transitions/FadeTransition';
 import { Spinner } from '../Spinner/Spinner';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const singleValue = css`
     label: singleValue;
     color: ${theme.components.input.text};
@@ -17,7 +17,6 @@ const getStyles = (theme: GrafanaThemeV2) => {
     text-overflow: ellipsis;
     box-sizing: border-box;
     max-width: 100%;
-    /* padding-right: 40px; */
   `;
   const container = css`
     width: 16px;

@@ -1,9 +1,9 @@
-import { GrafanaThemeV2, createTheme } from '@grafana/data';
+import { GrafanaTheme2, createTheme } from '@grafana/data';
 //@ts-ignore
 import { create } from '@storybook/theming/create';
 import '../src/components/Icon/iconBundle';
 
-const createStorybookTheme = (theme: GrafanaThemeV2) => {
+const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
@@ -21,8 +21,8 @@ const createStorybookTheme = (theme: GrafanaThemeV2) => {
     fontCode: theme.typography.fontFamilyMonospace,
 
     // Text colors
-    textColor: theme.colors.primary.text,
-    textInverseColor: theme.colors.primary.contrastText,
+    textColor: theme.colors.text.primary,
+    textInverseColor: theme.colors.background.primary,
 
     // Toolbar default and active colors
     barTextColor: theme.colors.text.primary,

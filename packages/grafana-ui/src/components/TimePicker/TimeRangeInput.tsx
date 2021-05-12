@@ -1,6 +1,6 @@
 import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { dateMath, dateTime, getDefaultTimeRange, GrafanaThemeV2, TimeRange, TimeZone } from '@grafana/data';
+import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
@@ -9,6 +9,7 @@ import { getFocusStyle } from '../Forms/commonStyles';
 import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { otherOptions, quickOptions } from './rangeOptions';
+import { selectors } from '@grafana/e2e-selectors';
 
 const isValidTimeRange = (range: any) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);
@@ -66,7 +67,12 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
 
   return (
     <div className={styles.container}>
-      <div tabIndex={0} className={styles.pickerInput} aria-label="TimePicker Open Button" onClick={onOpen}>
+      <div
+        tabIndex={0}
+        className={styles.pickerInput}
+        aria-label={selectors.components.TimePicker.openButton}
+        onClick={onOpen}
+      >
         {isValidTimeRange(value) ? (
           <TimePickerButtonLabel value={value as TimeRange} timeZone={timeZone} />
         ) : (
@@ -100,7 +106,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const inputStyles = getInputStyles({ theme, invalid: false });
   return {
     container: css`

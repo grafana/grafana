@@ -36,7 +36,7 @@ export interface AlertRule {
   evalData?: { noData?: boolean; evalMatches?: any };
 }
 
-export type NotifierType =
+export type GrafanaNotifierType =
   | 'discord'
   | 'hipchat'
   | 'email'
@@ -57,6 +57,17 @@ export type NotifierType =
   | 'LINE'
   | 'kafka';
 
+export type CloudNotifierType =
+  | 'email'
+  | 'pagerduty'
+  | 'pushover'
+  | 'slack'
+  | 'opsgenie'
+  | 'victorops'
+  | 'webhook'
+  | 'wechat';
+
+export type NotifierType = GrafanaNotifierType | CloudNotifierType;
 export interface NotifierDTO {
   name: string;
   description: string;
@@ -103,7 +114,15 @@ export interface ChannelTypeSettings {
 }
 
 export interface NotificationChannelOption {
-  element: 'input' | 'select' | 'checkbox' | 'textarea';
+  element:
+    | 'input'
+    | 'select'
+    | 'checkbox'
+    | 'textarea'
+    | 'subform'
+    | 'subform_array'
+    | 'key_value_map'
+    | 'string_array';
   inputType: string;
   label: string;
   description: string;
@@ -111,9 +130,10 @@ export interface NotificationChannelOption {
   propertyName: string;
   required: boolean;
   secure: boolean;
-  selectOptions?: Array<SelectableValue<string>>;
+  selectOptions?: Array<SelectableValue<string>> | null;
   showWhen: { field: string; is: string };
   validationRule: string;
+  subformOptions?: NotificationChannelOption[];
 }
 
 export interface NotificationChannelState {
