@@ -10,7 +10,7 @@ type Props = {
   timeZone: TimeZone;
   queries: DataQuery[];
   loading: boolean;
-  visibleRange?: AbsoluteTimeRange;
+  visibleRange: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
@@ -28,8 +28,8 @@ function LogsNavigation({
   loading,
   onChangeTime,
   scrollToTopLogs,
-  visibleRange = absoluteRange,
-  queries = [],
+  visibleRange,
+  queries,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -98,9 +98,10 @@ function LogsNavigation({
             from: pages[currentPageIndex + 1].queryRange.from,
             to: pages[currentPageIndex + 1].queryRange.to,
           });
+        } else {
+          //If we are on the last page, create new range
+          changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
         }
-        //If we are on the last page, create new range
-        changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
       }}
       disabled={loading}
     >
