@@ -150,7 +150,7 @@ export function createVizColors(colors: ThemeColors): ThemeVizColors {
   };
 
   const byIndex = (index: number) => {
-    return bySeriesIndex[index % bySeriesIndex.length];
+    return byName(bySeriesIndex[index % bySeriesIndex.length]);
   };
 
   return {
