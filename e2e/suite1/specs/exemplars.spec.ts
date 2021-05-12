@@ -65,7 +65,7 @@ describe('Exemplars', () => {
     e2e.components.TimePicker.applyTimeRange().click();
     e2e.components.QueryField.container().should('be.visible').type('exemplar-query{shift}{enter}');
 
-    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
+    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover', { force: true });
     e2e().contains('Query with gdev-tempo').click();
 
     e2e().get('[aria-label="Node: app"]').should('be.visible');
