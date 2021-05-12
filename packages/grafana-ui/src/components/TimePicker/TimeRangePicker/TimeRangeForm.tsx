@@ -24,7 +24,7 @@ interface Props {
   isReversed?: boolean;
 }
 
-interface InputState {
+export interface InputState {
   value: string;
   invalid: boolean;
 }

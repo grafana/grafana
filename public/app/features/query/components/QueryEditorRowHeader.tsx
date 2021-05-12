@@ -1,26 +1,24 @@
-import React, { useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Icon, Input, FieldValidationMessage, TimeRangeInput, useStyles } from '@grafana/ui';
+import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
 
 export interface Props {
   query: DataQuery;
   queries: DataQuery[];
   disabled?: boolean;
-  timeRange?: TimeRange;
   dataSource: DataSourceInstanceSettings;
+  renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
-  onChangeTimeRange?: (timeRange: TimeRange) => void;
   onChange: (query: DataQuery) => void;
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
 }
 
 export const QueryEditorRowHeader: React.FC<Props> = (props) => {
-  const { dataSource, onChangeDataSource, disabled, query, queries, onClick, onChange, collapsedText } = props;
+  const { query, queries, onClick, onChange, collapsedText, renderExtras, disabled } = props;
 
   const styles = useStyles(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -112,9 +110,9 @@ export const QueryEditorRowHeader: React.FC<Props> = (props) => {
           {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
-      <PickerRenderer {...props} />
-      {dataSource && !onChangeDataSource && <em className={styles.contextInfo}> ({dataSource.name})</em>}
-      {disabled && <em className={styles.contextInfo}> Disabled</em>}
+      {renderDataSource(props, styles)}
+      {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
+      {disabled && <em className={styles.contextInfo}>Disabled</em>}
 
       {collapsedText && (
         <div className={styles.collapsedText} onClick={onClick}>
@@ -125,22 +123,16 @@ export const QueryEditorRowHeader: React.FC<Props> = (props) => {
   );
 };
 
-const PickerRenderer: React.FC<Props> = (props) => {
-  const { onChangeTimeRange, timeRange, onChangeDataSource, dataSource } = props;
-  const styles = useStyles(getStyles);
+const renderDataSource = (props: Props, styles: ReturnType<typeof getStyles>): ReactNode => {
+  const { dataSource, onChangeDataSource } = props;
 
-  if (!onChangeTimeRange && !onChangeDataSource) {
-    return null;
-  }
-
-  if (dataSource.uid === ExpressionDatasourceUID) {
-    return null;
+  if (!onChangeDataSource) {
+    return <em className={styles.contextInfo}>({dataSource.name})</em>;
   }
 
   return (
-    <div className={styles.pickerWrapper}>
-      {onChangeDataSource && <DataSourcePicker current={dataSource.name} onChange={onChangeDataSource} />}
-      {onChangeTimeRange && timeRange && <TimeRangeInput onChange={onChangeTimeRange} value={timeRange} />}
+    <div className={styles.itemWrapper}>
+      <DataSourcePicker current={dataSource.name} onChange={onChangeDataSource} />
     </div>
   );
 };
@@ -222,9 +214,9 @@ const getStyles = (theme: GrafanaTheme) => {
       color: ${theme.colors.textWeak};
       padding-left: 10px;
     `,
-    pickerWrapper: css`
+    itemWrapper: css`
       display: flex;
-      margin-left: 8px;
+      margin-left: 4px;
     `,
   };
 };
