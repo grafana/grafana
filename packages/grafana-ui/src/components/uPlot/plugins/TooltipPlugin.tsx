@@ -49,6 +49,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
+    if (plotCtx && plotCtx.plot) {
+      plotCtx.plot.root.onmouseleave = (event) => {
+        setCoords(null);
+      };
+    }
     if (config.tooltipInterpolator) {
       // Custom toolitp positioning
       config.addHook('setCursor', (u) => {
