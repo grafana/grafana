@@ -40,9 +40,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
           newSubscription = datasource.azureMonitorDatasource.subscriptionId;
         } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
-          newSubscription =
-            datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId ||
-            datasource.azureLogAnalyticsDatasource.subscriptionId;
+          newSubscription = datasource.azureLogAnalyticsDatasource.subscriptionId;
         }
 
         if (!newSubscription && newSubscriptions.length > 0) {
@@ -57,7 +55,6 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       })
       .catch((err) => setError(ERROR_SOURCE, err));
   }, [
-    datasource.azureLogAnalyticsDatasource?.logAnalyticsSubscriptionId,
     datasource.azureLogAnalyticsDatasource?.subscriptionId,
     datasource.azureMonitorDatasource,
     onQueryChange,

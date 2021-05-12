@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
@@ -10,7 +10,7 @@ import { GrafanaTheme } from '@grafana/data';
 /**
  * @internal
  */
-export const VizLegendTable: FC<VizLegendTableProps> = ({
+export const VizLegendTable = <T extends unknown>({
   items,
   sortBy: sortKey,
   sortDesc,
@@ -20,7 +20,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
-}) => {
+}: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles(getStyles);
 
   const columns = items

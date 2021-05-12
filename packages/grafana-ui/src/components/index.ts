@@ -101,6 +101,7 @@ export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps
 export { VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
 export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
+export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
@@ -189,14 +190,13 @@ export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
+export { RelativeTimeRangePicker } from './TimePicker/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
-
-// Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
@@ -228,8 +228,9 @@ export { LegacyForms, LegacyInputStatus };
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
 export { ScaleDistribution } from './uPlot/models.gen';
-export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
+export { UPlotConfigBuilder, UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export { UPlotChart } from './uPlot/Plot';
+export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { usePlotContext } from './uPlot/context';
@@ -237,9 +238,6 @@ export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { preparePlotFrame } from './GraphNG/utils';
-export { BarChart } from './BarChart/BarChart';
-export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
-export * from './NodeGraph';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

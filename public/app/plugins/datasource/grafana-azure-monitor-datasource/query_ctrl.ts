@@ -34,9 +34,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   reactQueryEditors = [
     AzureQueryType.AzureMonitor,
     AzureQueryType.LogAnalytics,
-    AzureQueryType.ApplicationInsights,
-    AzureQueryType.InsightsAnalytics,
     AzureQueryType.AzureResourceGraph,
+    // AzureQueryType.ApplicationInsights,
+    // AzureQueryType.InsightsAnalytics,
   ];
 
   // target: AzureMonitorQuery;
@@ -330,7 +330,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       if (!this.target.subscription && this.target.queryType === 'Azure Monitor') {
         this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
       } else if (!this.target.subscription && this.target.queryType === 'Azure Log Analytics') {
-        this.target.subscription = this.datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId;
+        this.target.subscription = this.datasource.azureLogAnalyticsDatasource.subscriptionId;
       }
 
       if (!this.target.subscription && this.subscriptions.length > 0) {
