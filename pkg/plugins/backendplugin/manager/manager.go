@@ -52,8 +52,8 @@ func (m *manager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// RegisterAndStart registers and starts a backend plugin
-func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+// Register registers a backend plugin
+func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -92,8 +92,22 @@ func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory
 
 	m.plugins[pluginID] = plugin
 	m.logger.Debug("Backend plugin registered", "pluginId", pluginID)
+	return nil
+}
 
-	m.start(ctx, plugin)
+// RegisterAndStart registers and starts a backend plugin
+func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	err := m.Register(pluginID, factory)
+	if err != nil {
+		return err
+	}
+
+	p, exists := m.Get(pluginID)
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	m.start(ctx, p)
 
 	return nil
 }

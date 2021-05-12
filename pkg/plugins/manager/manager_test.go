@@ -484,6 +484,11 @@ type fakeBackendPluginManager struct {
 	registeredPlugins []string
 }
 
+func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	f.registeredPlugins = append(f.registeredPlugins, pluginID)
+	return nil
+}
+
 func (f *fakeBackendPluginManager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
