@@ -51,7 +51,7 @@ describe('parseKeyValue', () => {
   });
 
   it('should parse number like params as strings', () => {
-    const obj = urlUtil.parseKeyValue('custom=&custom1=001&custom2=002');
-    expect(obj).toEqual({ custom: '', custom1: '001', custom2: '002' });
+    const obj = urlUtil.parseKeyValue('custom=&custom1=001&custom2=002&custom3');
+    expect(obj).toEqual({ custom: '', custom1: '001', custom2: '002', custom3: true });
   });
 });
