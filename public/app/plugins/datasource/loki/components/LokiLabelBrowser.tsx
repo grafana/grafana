@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from 'react';
 import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
+import PromQlLanguageProvider from '../../prometheus/language_provider';
 import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
@@ -16,7 +17,8 @@ const EMPTY_SELECTOR = '{}';
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
 export interface BrowserProps {
-  languageProvider: LokiLanguageProvider;
+  // TODO #33976: Is it possible to use a common interface here? For example: LabelsLanguageProvider
+  languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
   onChange: (selector: string) => void;
   theme: GrafanaTheme;
   autoSelect?: number;
@@ -333,7 +335,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
       if (Object.keys(possibleLabels).length === 0) {
         // Sometimes the backend does not return a valid set
         console.error('No results for label combination, but should not occur.');

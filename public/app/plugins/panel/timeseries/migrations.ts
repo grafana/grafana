@@ -25,7 +25,7 @@ import {
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/ui';
-import { Options } from './types';
+import { TimeSeriesOptions } from './types';
 import { omitBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';
 
@@ -33,7 +33,7 @@ import { defaultGraphConfig } from './config';
  * This is called when the panel changes from another panel
  */
 export const graphPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<TimeSeriesOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
@@ -44,10 +44,13 @@ export const graphPanelChangedHandler = (
     return options;
   }
 
+  //fixes graph -> viz renaming in custom.hideFrom field config by mutation.
+  migrateHideFrom(panel);
+
   return {};
 };
 
-export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
+export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: TimeSeriesOptions } {
   const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
@@ -286,13 +289,13 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 
-  const options: Options = {
+  const options: TimeSeriesOptions = {
     legend: {
       displayMode: LegendDisplayMode.List,
       placement: 'bottom',
       calcs: [],
     },
-    tooltipOptions: {
+    tooltip: {
       mode: TooltipDisplayMode.Single,
     },
   };
@@ -512,4 +515,25 @@ function getReducersFromLegend(obj: Record<string, any>): string[] {
     }
   }
   return ids;
+}
+
+function migrateHideFrom(panel: {
+  fieldConfig?: { defaults?: { custom?: { hideFrom?: any } }; overrides: ConfigOverrideRule[] };
+}) {
+  if (panel.fieldConfig?.defaults?.custom?.hideFrom?.graph !== undefined) {
+    panel.fieldConfig.defaults.custom.hideFrom.viz = panel.fieldConfig.defaults.custom.hideFrom.graph;
+    delete panel.fieldConfig.defaults.custom.hideFrom.graph;
+  }
+  if (panel.fieldConfig?.overrides) {
+    panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((fr) => {
+      fr.properties = fr.properties.map((p) => {
+        if (p.id === 'custom.hideFrom' && p.value.graph) {
+          p.value.viz = p.value.graph;
+          delete p.value.graph;
+        }
+        return p;
+      });
+      return fr;
+    });
+  }
 }

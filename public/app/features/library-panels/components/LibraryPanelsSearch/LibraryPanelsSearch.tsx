@@ -7,7 +7,7 @@ import { SortPicker } from '../../../../core/components/Select/SortPicker';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../core/constants';
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { FolderFilter } from '../../../../core/components/FolderFilter/FolderFilter';
 import { FolderInfo } from '../../../../types';
 import {
@@ -25,7 +25,7 @@ export enum LibraryPanelsSearchVariant {
 }
 
 export interface LibraryPanelsSearchProps {
-  onClick: (panel: LibraryPanelDTO) => void;
+  onClick: (panel: LibraryElementDTO) => void;
   variant?: LibraryPanelsSearchVariant;
   showSort?: boolean;
   showPanelFilter?: boolean;

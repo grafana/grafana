@@ -1,13 +1,13 @@
-import { Field, PanelProps } from '@grafana/data';
-import { TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { anySeriesWithTimeField, DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { TooltipDisplayMode, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { Options } from './types';
+import { TimeSeriesOptions } from './types';
 
-interface TimeSeriesPanelProps extends PanelProps<Options> {}
+interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
 export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
@@ -19,6 +19,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   replaceVariables,
 }) => {
+  const { sync } = usePanelContext();
+
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
@@ -27,6 +29,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
+      </div>
+    );
+  }
+
+  if (!anySeriesWithTimeField(data.series)) {
+    return (
+      <div className="panel-empty">
+        <p>Missing time field in the data</p>
       </div>
     );
   }
@@ -48,7 +58,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
             <TooltipPlugin
               data={alignedDataFrame}
               config={config}
-              mode={options.tooltipOptions.mode}
+              mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltip.mode}
               timeZone={timeZone}
             />
             <ContextMenuPlugin

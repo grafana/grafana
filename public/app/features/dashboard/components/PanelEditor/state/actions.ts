@@ -104,9 +104,11 @@ function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: Dash
 
     // Loaded plugin is not included in the persisted properties
     // So is not handled by restoreModel
-    panel.plugin = modifiedSaveModel.plugin;
+    const pluginChanged = panel.plugin?.meta.id !== modifiedPanel.plugin?.meta.id;
+    panel.plugin = modifiedPanel.plugin;
+    panel.configRev++;
 
-    if (panel.type !== modifiedPanel.type) {
+    if (pluginChanged) {
       dispatch(panelModelAndPluginReady({ panelId: panel.id, plugin: panel.plugin! }));
     }
 
