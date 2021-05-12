@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/database"
-	"github.com/grafana/grafana/pkg/services/live/demultiplexer"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
@@ -472,8 +471,6 @@ func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope 
 		return g.handleDatasourceScope(user, namespace)
 	case live.ScopeStream:
 		return g.handleStreamScope(user, namespace)
-	case live.ScopePush:
-		return g.handlePushScope(user, namespace)
 	default:
 		return nil, fmt.Errorf("invalid scope: %q", scope)
 	}
@@ -509,10 +506,6 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 
 func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, namespace)
-}
-
-func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return demultiplexer.New(namespace, g.ManagedStreamRunner), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
