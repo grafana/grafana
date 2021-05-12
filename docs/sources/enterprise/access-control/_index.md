@@ -1,39 +1,37 @@
 +++
 title = "Fine-grained access control"
-description = "Understand how to grant, change or revoke access to the Grafana resources"
+description = "Grant, change, or revoke access to Grafana resources"
 keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "enterprise"]
 weight = 100
 +++
 
 # Fine-grained access control
 
-> **Note:** Fine-grained access control is currently in beta. Expect changes in future releases.
+> **Note:** Fine-grained access control is in beta, and you can expect changes in future releases.
 
-Fine-grained access control provides a standardized way of granting, changing, and revoking access to view and modify Grafana resources, like users and reports. 
-Fine-grained access control works hand-in-hand with the existing [Grafana permissions]({{< relref "../../permissions/_index.md" >}}) and allows you to control actions users can perform in a more granular way.
+Fine-grained access control provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as users and reports. 
+Fine-grained access control works with [Grafana permissions]({{< relref "../../permissions/_index.md" >}}), and it allows you granular control of users’ actions.
 
 To learn more about how fine-grained access control works, refer to [Roles]({{< relref "./roles.md" >}}) and [Permissions]({{< relref "./permissions.md" >}}).
-Refer to [fine-grained access control usage scenarios]({{< relref "./usage-scenarios.md" >}}) to see step-by-step instructions and understand how you can use the fine-grained access control system.
+To use the fine-grained access control system, refer to [Fine-grained access control usage scenarios]({{< relref "./usage-scenarios.md" >}}).
 
 ## Enable fine-grained access control
 
 Fine-grained access control is available behind the `accesscontrol` [feature toggle]({{< relref "../../administration/configuration.md#feature_toggles" >}}) in Grafana Enterprise 8.0+.
-Refer to [Configuration]({{< relref "../../administration/configuration.md" >}}) to understand how you can enable it in different environments.
+To enable it in different environments, refer to [Configuration]({{< relref "../../administration/configuration.md" >}}).
 
 ## Access management
 
-When making a decision about access, the fine-grained access control takes into the account the following main parts:
-- _who_ has an access (`identity`).
-- _what they can do_ and on which _Grafana resource_ (`role`).
+Fine-grained access control considers a) _who_ has an access (`identity`), and b) _what they can do_ and on which _Grafana resource_ (`role`).
 
-You can grant, change, or revoke access to _users_ (`identity`). When an authenticated user tries to access a Grafana resource, the authorization system checks the required [fine-grained permissions]({{< relref "./permissions.md" >}}) for the resource and determines whether the action is allowed or not. 
+You can grant, change, or revoke access to _users_ (`identity`). When an authenticated user tries to access a Grafana resource, the authorization system checks the required fine-grained permissions for the resource and determines whether or not the action is allowed. Refer to [Fine-grained permissions]({{< relref "./permissions.md" >}}).
 
-To grant or revoke access to your users, you can create or remove a [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
+To grant or revoke access to your users, create or remove built-in role assignments. For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
 
 ## Resources with fine-grained permissions
 
-Fine-grained access control is in beta and [permissions]({{< relref "./permissions.md" >}}) are available only for a subset of resources.
-Refer to the relevant API guide from below list to learn more about specific endpoints where you can use access control.
+Fine-grained access control permissions are available for a subset of resources. For more information, refer to [Permissions]({{< relref "./permissions.md" >}}).
+To learn more about specific endpoints where you can use access control, refer to the relevant API guide:
 
 - [Access Control API]({{< relref "../../http_api/access_control.md" >}})
 - [Admin API]({{< relref "../../http_api/admin.md" >}})

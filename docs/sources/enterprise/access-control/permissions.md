@@ -1,16 +1,17 @@
 +++
 title = "Permissions"
-description = "Understand permissions in fine-grained access control"
+description = "Understand fine-grained access control permissions"
 keywords = ["grafana", "fine-grained access-control", "roles", "permissions", "enterprise"]
 weight = 115
 +++
 
 # Permissions 
 
-A permission is defined by an action and a scope. When evaluating a decision for access, user will be allowed to perform a specific action on a resource if they have a permission with relevant action and scope. 
-To grant permissions to your users, you can create [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
+Each permission is defined by an action and a scope. When evaluating a fine-grained access decision, consider what specific action a user will be allowed to perform and on what resource.
 
-Refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}) to learn more about which permissions are used for which resources.
+To grant permissions to a user, create built-in role assignments. For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
+
+To learn more about what permissions are used for what resources, refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}).
 
 ### Action
 
