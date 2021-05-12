@@ -112,11 +112,11 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 		}
 	}()
 
-	var downloadFileName string
 	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
-	if err == nil {
-		downloadFileName = params["filename"]
+	if err != nil {
+		return nil, err
 	}
+	downloadFileName := params["filename"]
 
 	err = rs.readFileResponse(reqContext, resp, filePath)
 	if err != nil {
