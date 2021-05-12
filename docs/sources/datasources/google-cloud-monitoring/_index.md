@@ -81,7 +81,7 @@ The Google Cloud Monitoring query editor allows you to build two types of querie
 
 ### Metric Queries
 
-{{< docs-imagebox img="/img/docs/v70/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/v80/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -115,21 +115,23 @@ If you select 'Rate', data points are aligned and converted to a rate per time s
 
 #### Grouping
 
-You can reduce the amount of data returned for a metric by combining different time series. To combine multiple time series, you can specify a grouping and a function.
+You can reduce the amount of data returned for a metric by combining different time series. To combine multiple time series, specify a grouping and a function.
 
 ##### Group by
 
-Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
+Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group. For example, group by `instance_name` to view an aggregated metric for a Compute instance.
 
 ###### Metadata labels
 
-Resource metadata labels contain information to uniquely identify a resource in Google Cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels.
+Resource metadata labels contain information that can uniquely identify a resource in Google Cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request.
 
-User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
+There's no API for retrieving metadata labels. As a result, you cannot populate the group by list with the metadata labels that are available for the selected service and metric. However, the **Group By** field list comes with a pre-defined set of common system labels.
+
+User labels cannot be predefined, but you can enter them manually in the **Group By** field. If a metadata label, user label, or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
 
 ##### Group by function
 
-The grouping function is used to combine the time series in the group into a single time series.
+Select a grouping function to combine the time series in the group into a single time series.
 
 #### Alignment
 
@@ -137,7 +139,7 @@ The process of alignment consists of collecting all data points received in a fi
 
 ##### Alignment function
 
-Describes how to bring the data points in each individual time series into equal periods of time. Within each interval (determined by the alignment period) and for each time series, the data points are aggregated into a single point. The value of that point is determined by the type of alignment function used. For more information about aligner, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
+During alignment, all data points received in a fixed length of time, applies a function to combine those data points, and then assigns a timestamp to the result.
 
 ##### Alignment period
 
@@ -150,7 +152,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 
 The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
-It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
+You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
 #### Alias patterns
 
@@ -206,7 +208,7 @@ Grafana issues one query to the Cloud Monitoring API per query editor row, and e
 
 > **Note:** Available in Grafana v7.0 and later versions.
 
-{{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/v80/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Google Cloud Monitoring data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Cloud Monitoring's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
@@ -301,7 +303,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/v80/annotations.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
