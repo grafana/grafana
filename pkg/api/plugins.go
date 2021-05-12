@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 
@@ -379,6 +381,12 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
+		if errors.Is(err, installer.ErrNotFoundError) {
+			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		}
+		if errors.Is(err, plugins.ErrInstallCorePlugin) {
+			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
+		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
@@ -391,9 +399,14 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 
 	err := hs.PluginManager.Uninstall(c.Req.Context(), pluginID)
 	if err != nil {
-		var notFoundErr plugins.PluginNotFoundError
-		if errors.As(err, &notFoundErr) {
-			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		if errors.Is(err, plugins.ErrPluginNotInstalled) {
+			return response.Error(http.StatusNotFound, "Plugin not installed", err)
+		}
+		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
+			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
+		}
+		if errors.Is(err, plugins.ErrUninstallOutsideOfPluginDir) {
+			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to uninstall plugin", err)

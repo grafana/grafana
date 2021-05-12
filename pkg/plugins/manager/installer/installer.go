@@ -255,9 +255,8 @@ func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL stri
 	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
-			return Plugin{},
-				fmt.Errorf("failed to find plugin \"%s\" in plugin repository. Please check if plugin ID is correct",
-					pluginID)
+			i.log.Errorf("failed to find plugin '%s' in plugin repository. Please check if plugin ID is correct", pluginID)
+			return Plugin{}, err
 		}
 		return Plugin{}, errutil.Wrap("Failed to send request", err)
 	}

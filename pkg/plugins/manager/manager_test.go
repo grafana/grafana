@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -409,9 +408,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 			t.Run("Won't uninstall if not installed", func(t *testing.T) {
 				err := pm.Uninstall(context.Background(), pluginID)
-				require.Equal(t, plugins.PluginNotFoundError{
-					PluginID: pluginID,
-				}, err)
+				require.Equal(t, plugins.ErrPluginNotInstalled, err)
 			})
 		})
 	})
@@ -471,13 +468,11 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 	}
 
 	for _, p := range panels {
-		log.Printf("Panel = %s\n", p)
 		assert.NotNil(t, pm.plugins[p])
 		assert.NotNil(t, pm.panels[p])
 	}
 
 	for _, ds := range datasources {
-		log.Printf("DS = %s\n", ds)
 		assert.NotNil(t, pm.plugins[ds])
 		assert.NotNil(t, pm.dataSources[ds])
 	}
@@ -507,7 +502,7 @@ func (f *fakeBackendPluginManager) UnregisterAndStop(ctx context.Context, plugin
 	return nil
 }
 
-func (f *fakeBackendPluginManager) Registered(pluginID string) bool {
+func (f *fakeBackendPluginManager) IsRegistered(pluginID string) bool {
 	for _, existingPlugin := range f.registeredPlugins {
 		if pluginID == existingPlugin {
 			return true

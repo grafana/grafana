@@ -124,10 +124,8 @@ func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error 
 	return nil
 }
 
-func (m *manager) Registered(pluginID string) bool {
-	m.pluginsMu.RLock()
-	p := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
+func (m *manager) IsRegistered(pluginID string) bool {
+	p, _ := m.Get(pluginID)
 
 	return p != nil && !p.IsDecommissioned()
 }
@@ -154,15 +152,13 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (m *manager) GetDataPlugin(pluginID string) interface{} {
-	m.pluginsMu.RLock()
-	plugin := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
+	p, _ := m.Get(pluginID)
 
-	if plugin == nil {
+	if p == nil {
 		return nil
 	}
 
-	if dataPlugin, ok := plugin.(plugins.DataPlugin); ok {
+	if dataPlugin, ok := p.(plugins.DataPlugin); ok {
 		return dataPlugin
 	}
 

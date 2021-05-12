@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -11,6 +12,13 @@ import (
 const (
 	PluginTypeApp       = "app"
 	PluginTypeDashboard = "dashboard"
+)
+
+var (
+	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
+	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
+	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
+	ErrPluginNotInstalled          = errors.New("plugin is not installed")
 )
 
 type PluginNotFoundError struct {

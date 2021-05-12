@@ -770,6 +770,10 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
 	plugin := pm.GetPlugin(pluginID)
 	if plugin != nil {
+		if plugin.IsCorePlugin {
+			return plugins.ErrInstallCorePlugin
+		}
+
 		if plugin.Info.Version == version {
 			return plugins.DuplicatePluginError{
 				PluginID:          pluginID,
@@ -800,17 +804,27 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
 	plugin := pm.GetPlugin(pluginID)
 	if plugin == nil {
-		return plugins.PluginNotFoundError{PluginID: pluginID}
+		return plugins.ErrPluginNotInstalled
 	}
 
-	if pm.BackendPluginManager.Registered(pluginID) {
+	if plugin.IsCorePlugin {
+		return plugins.ErrUninstallCorePlugin
+	}
+
+	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
+	path, err := filepath.Rel(pm.Cfg.PluginsPath, plugin.PluginDir)
+	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
+		return plugins.ErrUninstallOutsideOfPluginDir
+	}
+
+	if pm.BackendPluginManager.IsRegistered(pluginID) {
 		err := pm.BackendPluginManager.UnregisterAndStop(ctx, pluginID)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := pm.unregister(plugin)
+	err = pm.unregister(plugin)
 	if err != nil {
 		return err
 	}
