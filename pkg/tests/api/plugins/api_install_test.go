@@ -48,7 +48,7 @@ func TestPluginInstallAccess(t *testing.T) {
 	t.Run("Request is not forbidden if from an admin", func(t *testing.T) {
 		statusCode, body := makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/install"))
 		assert.Equal(t, 404, statusCode)
-		assert.JSONEq(t, "{\"error\":\"404 not found error\", \"message\":\"Plugin not found\"}", body)
+		assert.JSONEq(t, "{\"error\":\"plugin not found\", \"message\":\"Plugin not found\"}", body)
 
 		statusCode, body = makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/uninstall"))
 		assert.Equal(t, 404, statusCode)

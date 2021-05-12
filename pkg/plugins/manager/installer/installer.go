@@ -41,8 +41,8 @@ const (
 )
 
 var (
-	ErrNotFoundError = errors.New("404 not found error")
-	reGitBuild       = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+	ErrPluginNotFound = errors.New("plugin not found")
+	reGitBuild        = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 )
 
 type BadRequestError struct {
@@ -254,7 +254,7 @@ func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL stri
 	i.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, pluginRepoURL)
 	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
-		if errors.Is(err, ErrNotFoundError) {
+		if errors.Is(err, ErrPluginNotFound) {
 			i.log.Errorf("failed to find plugin '%s' in plugin repository. Please check if plugin ID is correct", pluginID)
 			return Plugin{}, err
 		}
@@ -335,7 +335,7 @@ func (i *Installer) createRequest(URL string, subPaths ...string) (*http.Request
 
 func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode == 404 {
-		return nil, ErrNotFoundError
+		return nil, ErrPluginNotFound
 	}
 
 	if res.StatusCode/100 != 2 && res.StatusCode/100 != 4 {
