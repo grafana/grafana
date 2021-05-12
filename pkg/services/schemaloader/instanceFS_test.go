@@ -9,11 +9,16 @@ import (
 )
 
 func TestSchemaLoader(t *testing.T) {
-	dashFamily, _ := load.BaseDashboardFamily(baseLoadPath)
+
+	Lpath := load.GetDefaultLoadPaths()
+	Lpath.InstanceCueFS = NewInstanceFS()
+	dashFamily, _ := load.BaseDashboardFamily(Lpath)
+
 	rs := &SchemaLoaderService{
-		log:        log.New("schemaloader"),
-		DashFamily: dashFamily,
-		Cfg:        setting.NewCfg(),
+		log:          log.New("schemaloader"),
+		DashFamily:   dashFamily,
+		Cfg:          setting.NewCfg(),
+		baseLoadPath: Lpath,
 	}
 
 	t.Run("Write to virtual file system with new external plugin schema", func(t *testing.T) {
@@ -23,7 +28,7 @@ func TestSchemaLoader(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		f, err := baseLoadPath.InstanceCueFS.Open(name)
+		f, err := rs.baseLoadPath.InstanceCueFS.Open(name)
 		if err != nil {
 			t.Fatal(err)
 		}
