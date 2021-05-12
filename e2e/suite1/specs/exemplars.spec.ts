@@ -38,11 +38,9 @@ describe('Exemplars', () => {
     e2e().intercept('POST', '/api/v1/query_exemplars', {
       fixture: 'exemplars-query-response.json',
     });
-    e2e()
-      .intercept('POST', '/api/v1/query_range', {
-        fixture: 'prometheus-query-range-response.json',
-      })
-      .as('range-response');
+    e2e().intercept('POST', '/api/v1/query_range', {
+      fixture: 'prometheus-query-range-response.json',
+    });
     e2e().intercept('POST', '/api/v1/query', {
       fixture: 'prometheus-query-response.json',
     });
@@ -65,8 +63,8 @@ describe('Exemplars', () => {
     e2e.components.TimePicker.applyTimeRange().click();
     e2e.components.QueryField.container().should('be.visible').type('exemplar-query{shift}{enter}');
 
-    e2e().wait('@range-response');
-    e2e().location('search').should('contain', 'requestId');
+    e2e().wait(5000);
+
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
     e2e().contains('Query with gdev-tempo').click();
 
