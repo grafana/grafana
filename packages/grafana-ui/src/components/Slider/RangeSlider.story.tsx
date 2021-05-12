@@ -7,8 +7,11 @@ export default {
   title: 'Forms/Slider/Range',
   component: RangeSlider,
   parameters: {
+    controls: {
+      exclude: ['tooltipAlwaysVisible'],
+    },
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   argTypes: {
@@ -40,5 +43,4 @@ Basic.args = {
   isStep: false,
   orientation: 'horizontal',
   reverse: false,
-  tooltipAlwaysVisible: false,
 };
