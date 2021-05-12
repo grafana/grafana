@@ -148,7 +148,8 @@ function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: Gr
 }
 
 /**
- * @internal
+ * Converts a string into a numeric value -- we just need it to be different
+ * enough so that it has a reasonable distribution across a color pallet
  */
 function strHashCode(str: string) {
   return str.split('').reduce((prevHash, currVal) => ((prevHash << 5) - prevHash + currVal.charCodeAt(0)) | 0, 0);

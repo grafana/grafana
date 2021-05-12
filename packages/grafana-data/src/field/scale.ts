@@ -1,7 +1,7 @@
 import { isNumber } from 'lodash';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { Field, FieldColorModeId, FieldConfig, FieldType, NumericRange, Threshold } from '../types';
+import { Field, FieldConfig, FieldType, NumericRange, Threshold } from '../types';
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
@@ -14,7 +14,6 @@ export interface ColorScaleValue {
 export type ScaleCalculator = (value: number) => ColorScaleValue;
 
 export function getScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCalculator {
-  // Special boolean support
   if (field.type === FieldType.boolean) {
     return getBooleanScaleCalculator(field, theme);
   }
