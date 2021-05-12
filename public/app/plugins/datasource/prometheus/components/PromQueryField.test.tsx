@@ -3,7 +3,7 @@ import RCCascader from 'rc-cascader';
 import React from 'react';
 import PromQlLanguageProvider from '../language_provider';
 import PromQueryField from './PromQueryField';
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '../types';
 import { render, screen } from '@testing-library/react';
 
@@ -93,100 +93,6 @@ describe('PromQueryField', () => {
     // If we check the label browser right away it should be in loading state
     let labelBrowser = screen.getByRole('button');
     expect(labelBrowser.textContent).toContain('Loading');
-  });
-
-  it.skip('does not refreshes metrics when after rounding to minute time range does not change', async () => {
-    const defaultProps = {
-      query: { expr: '', refId: '' },
-      onRunQuery: () => {},
-      onChange: () => {},
-      history: [],
-    };
-    const metrics = ['foo', 'bar'];
-    const changedMetrics = ['foo', 'baz'];
-    const range = {
-      from: dateTime('2020-10-28T00:00:00Z'),
-      to: dateTime('2020-10-28T01:00:00Z'),
-    };
-
-    const languageProvider = makeLanguageProvider({ metrics: [metrics, changedMetrics] });
-    const queryField = render(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...range,
-          raw: range,
-        }}
-        {...defaultProps}
-      />
-    );
-
-    const newRange = {
-      from: dateTime('2020-10-28T00:00:01Z'),
-      to: dateTime('2020-10-28T01:00:01Z'),
-    };
-    queryField.rerender(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...newRange,
-          raw: newRange,
-        }}
-        {...defaultProps}
-      />
-    );
-    let cascader = screen.getByRole('button');
-    // Should not show loading
-    expect(cascader.textContent).toContain('Metrics');
-  });
-
-  it.skip('refreshes metrics when time range changes but dont show loading state', async () => {
-    const defaultProps = {
-      query: { expr: '', refId: '' },
-      onRunQuery: () => {},
-      onChange: () => {},
-      history: [],
-    };
-    const metrics = ['foo', 'bar'];
-    const changedMetrics = ['baz', 'moo'];
-    const range = {
-      from: dateTime('2020-10-28T00:00:00Z'),
-      to: dateTime('2020-10-28T01:00:00Z'),
-    };
-
-    const languageProvider = makeLanguageProvider({ metrics: [metrics, changedMetrics] });
-    const queryField = render(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...range,
-          raw: range,
-        }}
-        {...defaultProps}
-      />
-    );
-
-    const newRange = {
-      from: dateTime('2020-10-28T01:00:00Z'),
-      to: dateTime('2020-10-28T02:00:00Z'),
-    };
-    queryField.rerender(
-      <PromQueryField
-        // @ts-ignore
-        datasource={{ languageProvider }}
-        range={{
-          ...newRange,
-          raw: newRange,
-        }}
-        {...defaultProps}
-      />
-    );
-    let cascader = screen.getByRole('button');
-    // Should not show loading
-    expect(cascader.textContent).toContain('Metrics');
   });
 });
 
