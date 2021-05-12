@@ -8,6 +8,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -111,9 +112,7 @@ func (s *GRPCAPIServer) IsEnabled() bool {
 	return s.Cfg.IsPluginAPIServerEnabled()
 }
 
-func (s *GRPCAPIServer) PublishStream(ctx context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
-	// TODO: permission checks still need to be improved.
-	// For now we don't apply any scope or namespace rules here.
+func (s *GRPCAPIServer) GetOrgToken(ctx context.Context, req *server.GetOrgTokenRequest) (*server.GetOrgTokenResponse, error) {
 	identity, ok := GetIdentity(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "no authentication found")
@@ -121,8 +120,47 @@ func (s *GRPCAPIServer) PublishStream(ctx context.Context, request *server.Publi
 	if identity.Type != authtoken.IdentityTypePlugin {
 		return nil, status.Error(codes.Unauthenticated, "unsupported identity type")
 	}
-
 	pluginIdentity := identity.PluginIdentity
+	if pluginIdentity.OrgID != 0 {
+		return nil, status.Error(codes.PermissionDenied, "organization ID already in identity")
+	}
+	pluginID := pluginIdentity.PluginID
+
+	query := &models.GetDataSourcesByTypeQuery{
+		Type: pluginID,
+	}
+	err := bus.Dispatch(query)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ds := range query.Result {
+		if ds.OrgId == req.OrgId {
+			token, err := s.JWT.IssuePluginToken(pluginID, req.OrgId)
+			if err != nil {
+				return nil, err
+			}
+			return &server.GetOrgTokenResponse{
+				Token: token,
+			}, nil
+		}
+	}
+
+	return nil, status.Error(codes.NotFound, `datasource not found in organization`)
+}
+
+func (s *GRPCAPIServer) PublishStream(ctx context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
+	identity, ok := GetIdentity(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "no authentication found")
+	}
+	if identity.Type != authtoken.IdentityTypePlugin {
+		return nil, status.Error(codes.Unauthenticated, "unsupported identity type")
+	}
+	pluginIdentity := identity.PluginIdentity
+	if pluginIdentity.OrgID <= 0 {
+		return nil, status.Error(codes.PermissionDenied, "no organization ID context in identity")
+	}
 	logger.Debug("plugin publishes data to a channel", "pluginId", pluginIdentity.PluginID, "orgId", pluginIdentity.OrgID, "channel", request.Channel)
 
 	channel := liveDto.ParseChannel(request.Channel)
