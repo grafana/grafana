@@ -6,7 +6,7 @@ weight = 1200
 
 # Time series panel
 
-> **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
+> **Note:** Time series panel is going to replace the Graph panel in a future release.
 
 Time series panel is a robust visualization to plot time series data. It can render as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
