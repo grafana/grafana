@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { PluginMeta } from '@grafana/data';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { Plugin, PluginDetails, Org } from './types';
 
