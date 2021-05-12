@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
 import mdx from './Switch.mdx';
@@ -23,7 +23,7 @@ export default {
     value: false,
     transparent: false,
   },
-};
+} as Meta;
 
 export const Controlled: Story = (args) => {
   return (
