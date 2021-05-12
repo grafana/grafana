@@ -640,7 +640,7 @@ def e2e_tests_step(edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests' + enterprise2_sfx(edition),
-        'image': 'grafana/ci-e2e:12.19.0-1',
+        'image': 'bezoo/grafana-ci',
         'depends_on': [
             'end-to-end-tests-server' + enterprise2_sfx(edition),
         ],
