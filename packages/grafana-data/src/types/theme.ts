@@ -1,4 +1,4 @@
-import { ThemeVizColors } from '../themes';
+import { ThemeVisualizationColors } from '../themes';
 
 export enum GrafanaThemeType {
   Light = 'light',
@@ -240,5 +240,5 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
   shadows: {
     listItem: string;
   };
-  vizColors: ThemeVizColors;
+  visualizations: ThemeVisualizationColors;
 }

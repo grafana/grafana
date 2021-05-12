@@ -4,11 +4,11 @@ import { ThemeColors } from './createColors';
 /**
  * @alpha
  */
-export interface ThemeVizColors {
+export interface ThemeVisualizationColors {
   /** Only for internal use by color schemes */
   palette: string[];
   /** Lookup the real color given the name */
-  getByName: (color: string) => string;
+  getColorByName: (color: string) => string;
   /** Colors organized by hue */
   hues: ThemeVizHue[];
 }
@@ -34,7 +34,7 @@ export interface ThemeVizHue {
 /**
  * @internal
  */
-export function createVizColors(colors: ThemeColors): ThemeVizColors {
+export function createVisualizationColors(colors: ThemeColors): ThemeVisualizationColors {
   let hues: ThemeVizHue[] = [];
 
   if (colors.mode === 'dark') {
@@ -61,7 +61,7 @@ export function createVizColors(colors: ThemeColors): ThemeVizColors {
   byNameIndex['panel-bg'] = colors.background.primary;
   byNameIndex['text'] = colors.text.primary;
 
-  const getByName = (colorName: string) => {
+  const getColorByName = (colorName: string) => {
     if (!colorName) {
       return FALLBACK_COLOR;
     }
@@ -93,7 +93,7 @@ export function createVizColors(colors: ThemeColors): ThemeVizColors {
   return {
     hues,
     palette,
-    getByName,
+    getColorByName,
   };
 }
 
@@ -233,14 +233,14 @@ function getClassicPalette() {
   return [
     'green', // '#7EB26D', // 0: pale green
     'semi-dark-yellow', // '#EAB839', // 1: mustard
-    'light-dark', // #6ED0E0', // 2: light blue
+    'light-blue', // #6ED0E0', // 2: light blue
     'semi-dark-orange', // '#EF843C', // 3: orange
     'red', // '#E24D42', // 4: red
     'blue', // #1F78C1', // 5: ocean
     'purple', // '#BA43A9', // 6: purple
     '#705DA0', // 7: violet
-    '#508642', // 8: dark green
-    '#CCA300', // 9: dark sand
+    'dark-green', // '#508642', // 8: dark green
+    'yellow', //'#CCA300', // 9: dark sand
     '#447EBC',
     '#C15C17',
     '#890F02',

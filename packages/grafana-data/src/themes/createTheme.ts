@@ -9,7 +9,7 @@ import { createTypography, ThemeTypographyInput } from './createTypography';
 import { createV1Theme } from './createV1Theme';
 import { GrafanaTheme2 } from './types';
 import { zIndex } from './zIndex';
-import { createVizColors } from './createVizColors';
+import { createVisualizationColors } from './createVisualizationColors';
 
 /** @internal */
 export interface NewThemeOptions {
@@ -38,7 +38,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const shadows = createShadows(colors);
   const transitions = createTransitions();
   const components = createComponents(colors, shadows);
-  const vizColors = createVizColors(colors);
+  const visualizations = createVisualizationColors(colors);
 
   const theme = {
     name,
@@ -52,7 +52,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
     typography,
     shadows,
     transitions,
-    vizColors,
+    visualizations,
     zIndex: {
       ...zIndex,
     },

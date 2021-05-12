@@ -229,7 +229,7 @@ export function createV1Theme(theme: Omit<GrafanaTheme2, 'v1'>): GrafanaTheme {
     shadows: {
       listItem: 'none',
     },
-    vizColors: theme.vizColors,
+    visualizations: theme.visualizations,
   };
 }
 

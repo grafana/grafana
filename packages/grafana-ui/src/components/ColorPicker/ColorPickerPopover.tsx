@@ -59,7 +59,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     if (enableNamedColors) {
       return changeHandler(color);
     }
-    changeHandler(theme.vizColors.getByName(color));
+    changeHandler(theme.visualizations.getColorByName(color));
   };
 
   onTabChange = (tab: PickerType | keyof T) => {

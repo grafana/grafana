@@ -75,7 +75,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    color={theme.vizColors.getByName(this.props.color || '#000000')}
+                    color={theme.visualizations.getColorByName(this.props.color || '#000000')}
                   />
                 )}
               </>

@@ -535,7 +535,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
-      const color = props.theme.vizColors.getByName(threshold.color);
+      const color = props.theme.visualizations.getColorByName(threshold.color);
       const valuePercent =
         thresholds.mode === ThresholdsMode.Percentage
           ? threshold.value / 100

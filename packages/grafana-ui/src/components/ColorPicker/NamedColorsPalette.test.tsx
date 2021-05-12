@@ -6,7 +6,7 @@ import { ColorSwatch } from './ColorSwatch';
 
 describe('NamedColorsPalette', () => {
   const theme = createTheme();
-  const greenHue = theme.vizColors.hues.find((x) => x.name === 'green')!;
+  const greenHue = theme.visualizations.hues.find((x) => x.name === 'green')!;
   const selectedShade = greenHue.shades[2];
 
   describe('theme support for named colors', () => {

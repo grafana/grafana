@@ -13,7 +13,7 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
   const theme = useTheme2();
 
   const swatches: JSX.Element[] = [];
-  for (const hue of theme.vizColors.hues) {
+  for (const hue of theme.visualizations.hues) {
     swatches.push(<NamedColorsGroup key={hue.name} selectedColor={color} hue={hue} onColorSelect={onChange} />);
   }
 
