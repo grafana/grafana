@@ -37,6 +37,7 @@ import {
 } from './scopes';
 import { registerLiveFeatures } from './features';
 import { perf } from './perf';
+import { greet, increment } from './live.worker';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -339,7 +340,19 @@ export function getGrafanaLiveCentrifugeSrv() {
   return getGrafanaLiveSrv() as CentrifugeSrv;
 }
 
+async function init() {
+  console.log('-------------------------------------------------');
+  console.log(await greet('dog'));
+
+  console.log(await increment());
+  console.log(await increment());
+  console.log(await increment());
+  console.log('-------------------------------------------------');
+}
+
 export function initGrafanaLive() {
   setGrafanaLiveSrv(new CentrifugeSrv());
   registerLiveFeatures();
+
+  init();
 }
