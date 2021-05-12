@@ -228,6 +228,8 @@ function getLightHues(): ThemeVizHue[] {
 }
 
 function getClassicPalette() {
+  // Todo replace these with named colors (as many as possible)
+
   return [
     '#7EB26D', // 0: pale green
     '#EAB839', // 1: mustard
