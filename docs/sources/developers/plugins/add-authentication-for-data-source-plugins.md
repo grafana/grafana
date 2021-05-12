@@ -293,13 +293,11 @@ The Authorization header is available on the `DataQuery` object on the query dat
 ```go
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
     for _, q := range req.Queries {
-        token := q.Headers.Get("Authorization")
-
-        tokenFields := strings.Fields(token)
+        token := strings.Fields(q.Headers.Get("Authorization"))
 
         var (
-          tokenType = tokenFields[0]
-          accessToken = tokenFields[0]
+          tokenType = token[0]
+          accessToken = token[1]
         )
 
         // ...
