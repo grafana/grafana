@@ -295,6 +295,13 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
     for _, q := range req.Queries {
         token := q.Headers.Get("Authorization")
 
+        tokenFields := strings.Fields(token)
+
+        var (
+          tokenType = tokenFields[0]
+          accessToken = tokenFields[0]
+        )
+
         // ...
     }
 }
