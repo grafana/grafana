@@ -14,14 +14,6 @@ var TimeNow = time.Now
 // AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
 const AlertDefinitionMaxTitleLength = 190
 
-// Store is the interface for persisting alert definitions and instances
-type Store interface {
-	GetAlertInstance(*models.GetAlertInstanceQuery) error
-	ListAlertInstances(*models.ListAlertInstancesQuery) error
-	SaveAlertInstance(*models.SaveAlertInstanceCommand) error
-	FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error
-}
-
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error

@@ -52,6 +52,8 @@ func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds 
 	mg.AddMigration("Add column paused in alert_definition", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
 		Name: "paused", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("drop alert_definition table", migrator.NewDropTableMigration("alert_definition"))
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -84,6 +86,7 @@ func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alter alert_definition_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition_version MODIFY data MEDIUMTEXT;"))
+	mg.AddMigration("drop alert_definition_version table", migrator.NewDropTableMigration("alert_definition_version"))
 }
 
 func AlertInstanceMigration(mg *migrator.Migrator) {
@@ -111,6 +114,24 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add index in alert_instance table on def_org_id, current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[1]))
 	mg.AddMigration("add column current_state_end to alert_instance", migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
 		Name: "current_state_end", Type: migrator.DB_BigInt, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("remove index def_org_id, def_uid, current_state on alert_instance", migrator.NewDropIndexMigration(alertInstance, alertInstance.Indices[0]))
+	mg.AddMigration("remove index def_org_id, current_state on alert_instance", migrator.NewDropIndexMigration(alertInstance, alertInstance.Indices[1]))
+
+	mg.AddMigration("rename def_org_id to rule_org_id in alert_instance", migrator.NewRawSQLMigration("").
+		Default("ALTER TABLE alert_instance RENAME COLUMN def_org_id TO rule_org_id;").
+		Mysql("ALTER TABLE alert_instance CHANGE def_org_id rule_org_id BIGINT;"))
+
+	mg.AddMigration("rename def_uid to rule_uid in alert_instance", migrator.NewRawSQLMigration("").
+		Default("ALTER TABLE alert_instance RENAME COLUMN def_uid TO rule_uid;").
+		Mysql("ALTER TABLE alert_instance CHANGE def_uid rule_uid VARCHAR(40);"))
+
+	mg.AddMigration("add index rule_org_id, rule_uid, current_state on alert_instance", migrator.NewAddIndexMigration(alertInstance, &migrator.Index{
+		Cols: []string{"rule_org_id", "rule_uid", "current_state"}, Type: migrator.IndexType,
+	}))
+	mg.AddMigration("add index rule_org_id, current_state on alert_instance", migrator.NewAddIndexMigration(alertInstance, &migrator.Index{
+		Cols: []string{"rule_org_id", "current_state"}, Type: migrator.IndexType,
 	}))
 }
 
