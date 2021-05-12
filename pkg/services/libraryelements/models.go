@@ -55,15 +55,15 @@ type LibraryElementWithMeta struct {
 	Created time.Time
 	Updated time.Time
 
-	FolderName     string
-	FolderUID      string `xorm:"folder_uid"`
-	Connections    int64
-	CreatedBy      int64
-	UpdatedBy      int64
-	CreatedByName  string
-	CreatedByEmail string
-	UpdatedByName  string
-	UpdatedByEmail string
+	FolderName          string
+	FolderUID           string `xorm:"folder_uid"`
+	ConnectedDashboards int64
+	CreatedBy           int64
+	UpdatedBy           int64
+	CreatedByName       string
+	CreatedByEmail      string
+	UpdatedByName       string
+	UpdatedByEmail      string
 }
 
 // LibraryElementDTO is the frontend DTO for entities.
@@ -91,9 +91,9 @@ type LibraryElementSearchResult struct {
 
 // LibraryElementDTOMeta is the meta information for LibraryElementDTO.
 type LibraryElementDTOMeta struct {
-	FolderName  string `json:"folderName"`
-	FolderUID   string `json:"folderUid"`
-	Connections int64  `json:"connections"`
+	FolderName          string `json:"folderName"`
+	FolderUID           string `json:"folderUid"`
+	ConnectedDashboards int64  `json:"connectedDashboards"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`

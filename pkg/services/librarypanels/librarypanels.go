@@ -106,7 +106,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 			"meta": map[string]interface{}{
 				"folderName":          elementInDB.Meta.FolderName,
 				"folderUid":           elementInDB.Meta.FolderUID,
-				"connectedDashboards": elementInDB.Meta.Connections,
+				"connectedDashboards": elementInDB.Meta.ConnectedDashboards,
 				"created":             elementInDB.Meta.Created,
 				"updated":             elementInDB.Meta.Updated,
 				"createdBy": map[string]interface{}{

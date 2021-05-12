@@ -22,7 +22,7 @@ SELECT DISTINCT
 	, u1.email AS created_by_email
 	, u2.login AS updated_by_name
 	, u2.email AS updated_by_email
-	, (SELECT COUNT(connection_id) FROM ` + connectionTableName + ` WHERE element_id = le.id AND kind=1) AS connections`
+	, (SELECT COUNT(connection_id) FROM ` + connectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 	fromLibraryElementDTOWithMeta = `
 FROM library_element AS le
 	LEFT JOIN user AS u1 ON le.created_by = u1.id
@@ -134,9 +134,9 @@ func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd C
 		Model:       element.Model,
 		Version:     element.Version,
 		Meta: LibraryElementDTOMeta{
-			Connections: 0,
-			Created:     element.Created,
-			Updated:     element.Updated,
+			ConnectedDashboards: 0,
+			Created:             element.Created,
+			Updated:             element.Updated,
 			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        element.CreatedBy,
 				Name:      c.SignedInUser.Login,
@@ -239,11 +239,11 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid stri
 		Model:       libraryElement.Model,
 		Version:     libraryElement.Version,
 		Meta: LibraryElementDTOMeta{
-			FolderName:  libraryElement.FolderName,
-			FolderUID:   libraryElement.FolderUID,
-			Connections: libraryElement.Connections,
-			Created:     libraryElement.Created,
-			Updated:     libraryElement.Updated,
+			FolderName:          libraryElement.FolderName,
+			FolderUID:           libraryElement.FolderUID,
+			ConnectedDashboards: libraryElement.ConnectedDashboards,
+			Created:             libraryElement.Created,
+			Updated:             libraryElement.Updated,
 			CreatedBy: LibraryElementDTOMetaUser{
 				ID:        libraryElement.CreatedBy,
 				Name:      libraryElement.CreatedByName,
@@ -332,11 +332,11 @@ func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, quer
 				Model:       element.Model,
 				Version:     element.Version,
 				Meta: LibraryElementDTOMeta{
-					FolderName:  element.FolderName,
-					FolderUID:   element.FolderUID,
-					Connections: element.Connections,
-					Created:     element.Created,
-					Updated:     element.Updated,
+					FolderName:          element.FolderName,
+					FolderUID:           element.FolderUID,
+					ConnectedDashboards: element.ConnectedDashboards,
+					Created:             element.Created,
+					Updated:             element.Updated,
 					CreatedBy: LibraryElementDTOMetaUser{
 						ID:        element.CreatedBy,
 						Name:      element.CreatedByName,
@@ -467,9 +467,9 @@ func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd pa
 			Model:       libraryElement.Model,
 			Version:     libraryElement.Version,
 			Meta: LibraryElementDTOMeta{
-				Connections: elementInDB.Connections,
-				Created:     libraryElement.Created,
-				Updated:     libraryElement.Updated,
+				ConnectedDashboards: elementInDB.ConnectedDashboards,
+				Created:             libraryElement.Created,
+				Updated:             libraryElement.Updated,
 				CreatedBy: LibraryElementDTOMetaUser{
 					ID:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,
@@ -562,11 +562,11 @@ func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, 
 				Model:       element.Model,
 				Version:     element.Version,
 				Meta: LibraryElementDTOMeta{
-					FolderName:  element.FolderName,
-					FolderUID:   element.FolderUID,
-					Connections: element.Connections,
-					Created:     element.Created,
-					Updated:     element.Updated,
+					FolderName:          element.FolderName,
+					FolderUID:           element.FolderUID,
+					ConnectedDashboards: element.ConnectedDashboards,
+					Created:             element.Created,
+					Updated:             element.Updated,
 					CreatedBy: LibraryElementDTOMetaUser{
 						ID:        element.CreatedBy,
 						Name:      element.CreatedByName,
