@@ -1,15 +1,14 @@
 import React from 'react';
 import { css } from '@emotion/css';
-
-import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-
+import { PLUGIN_ROOT } from '../constants';
 import { PluginList } from '../components/PluginList';
 import { usePlugins } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const Library = ({ meta }: AppRootProps) => {
+export const Library = () => {
   const { status, items, installedPlugins } = usePlugins(true);
   const styles = useStyles2(getStyles);
 
@@ -25,7 +24,13 @@ export const Library = ({ meta }: AppRootProps) => {
       {filteredPlugins.length > 0 ? (
         <PluginList plugins={filteredPlugins} />
       ) : (
-        <p>You haven&#39;t installed any plugins!</p>
+        <p>
+          You haven&#39;t installed any plugins. Browse the{' '}
+          <a className={styles.link} href={`${PLUGIN_ROOT}/?tab=browse&sortBy=popularity`}>
+            marketplace
+          </a>{' '}
+          for plugins to install.
+        </p>
       )}
     </Page>
   );
@@ -36,6 +41,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     header: css`
       margin-bottom: ${theme.spacing(3)};
       margin-top: ${theme.spacing(3)};
+    `,
+    link: css`
+      text-decoration: underline;
     `,
   };
 };
