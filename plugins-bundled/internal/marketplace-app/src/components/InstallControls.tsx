@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { gt, satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, Select, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
 import { AppEvents, GrafanaTheme2, OrgRole } from '@grafana/data';
 
 import { Metadata, Plugin } from '../types';
@@ -21,7 +21,6 @@ interface Props {
 }
 
 export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
-  const [arch, setArch] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [isInstalled, setIsInstalled] = useState(Boolean(localPlugin));
   const [shouldUpdate, setShouldUpdate] = useState(
@@ -66,28 +65,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
 
   const isDevelopmentBuild = Boolean(localPlugin?.dev);
   const isEnterprise = remotePlugin?.status === 'enterprise';
-  const hasPackages = Object.keys(remotePlugin?.packages ?? {}).length > 1;
   const hasPermission = hasRole(OrgRole.Admin);
-
-  const archOptions = Object.values(remotePlugin?.packages ?? {}).map((_) => {
-    const pair = _.packageName.split('-');
-
-    if (pair.length === 2) {
-      switch (pair[0]) {
-        case 'windows':
-          return { label: 'Windows', value: _.packageName };
-        case 'linux':
-          return { label: 'Linux', value: _.packageName };
-        case 'darwin':
-          return { label: 'macOS', value: _.packageName };
-      }
-    }
-
-    return {
-      label: _.packageName,
-      value: _.packageName,
-    };
-  });
 
   if (isEnterprise) {
     return (
@@ -125,28 +103,6 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
         <Icon name="exclamation-triangle" />
         &nbsp;This plugin doesn&#39;t support your version of Grafana.
       </div>
-    );
-  }
-
-  if (hasPackages) {
-    return (
-      <HorizontalGroup height="auto">
-        <Select
-          disabled={loading || !hasPermission}
-          width={25}
-          placeholder="Select your architecture"
-          options={archOptions}
-          onChange={(e) => {
-            setArch(e.value);
-          }}
-        />
-        {arch && (
-          <Button disabled={loading || !hasPermission} onClick={() => onInstall(slug, remotePlugin.version)}>
-            {loading ? 'Installing' : 'Install'}
-          </Button>
-        )}
-        {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
-      </HorizontalGroup>
     );
   }
 
