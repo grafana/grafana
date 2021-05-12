@@ -154,7 +154,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
             )}
           </td>
           <td>
-            <Input type="text" value={result.text ?? ''} onChange={onChangeText} placeholder="Display text" />
+            <Input type="text" value={result.text ?? ''} onChange={onChangeText} placeholder="Optional display text" />
           </td>
           <td className={styles.textAlignCenter}>
             {result.color && (
