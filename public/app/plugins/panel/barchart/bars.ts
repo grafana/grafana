@@ -1,13 +1,12 @@
-import uPlot, { Axis, Series, Cursor, Select } from 'uplot';
+import uPlot, { Axis, Series } from 'uplot';
 import { Quadtree, Rect, pointWithin } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-
-const pxRatio = devicePixelRatio;
+import { TooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
+import { ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
-
-const font = Math.round(10 * pxRatio) + 'px Arial';
+const font = Math.round(10 * devicePixelRatio) + 'px Arial';
 
 type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
 
@@ -41,8 +40,8 @@ function walkTwo(
  * @internal
  */
 export interface BarsOptions {
-  xOri: 1 | 0;
-  xDir: 1 | -1;
+  xOri: ScaleOrientation;
+  xDir: ScaleDirection;
   groupWidth: number;
   barWidth: number;
   formatValue?: (seriesIdx: number, value: any) => string;
@@ -54,11 +53,11 @@ export interface BarsOptions {
  * @internal
  */
 export function getConfig(opts: BarsOptions) {
-  const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue, onHover, onLeave } = opts;
+  const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue } = opts;
 
   let qt: Quadtree;
 
-  const drawBars: Series.PathBuilder = (u, sidx, i0, i1) => {
+  const drawBars: Series.PathBuilder = (u, sidx) => {
     return uPlot.orient(
       u,
       sidx,
@@ -112,29 +111,14 @@ export function getConfig(opts: BarsOptions) {
   const drawPoints: Series.Points.Show =
     formatValue == null
       ? false
-      : (u, sidx, i0, i1) => {
+      : (u, sidx) => {
           u.ctx.font = font;
           u.ctx.fillStyle = 'white';
 
           uPlot.orient(
             u,
             sidx,
-            (
-              series,
-              dataX,
-              dataY,
-              scaleX,
-              scaleY,
-              valToPosX,
-              valToPosY,
-              xOff,
-              yOff,
-              xDim,
-              yDim,
-              moveTo,
-              lineTo,
-              rect
-            ) => {
+            (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
               let numGroups = dataX.length;
               let barsPerGroup = u.series.length - 1;
 
@@ -148,13 +132,11 @@ export function getConfig(opts: BarsOptions) {
                 if (dataY[ix] != null) {
                   let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
-                  /* eslint-disable no-multi-spaces */
                   let x = ori === 0 ? Math.round(lft + barWid / 2) : Math.round(yPos);
                   let y = ori === 0 ? Math.round(yPos)             : Math.round(lft + barWid / 2);
 
                   u.ctx.textAlign    = ori === 0 ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
                   u.ctx.textBaseline = ori === 1 ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
-                  /* eslint-enable */
 
                   u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
                 }
@@ -165,23 +147,15 @@ export function getConfig(opts: BarsOptions) {
           return false;
         };
 
-  /*
-    const yRange: Scale.Range = (u, dataMin, dataMax) => {
-      // @ts-ignore
-      let [min, max] = uPlot.rangeNum(0, dataMax, 0.05, true);
-      return [0, max];
-    };
-  */
-
-  const xSplits: Axis.Splits = (u: uPlot, axisIdx: number) => {
+  const xSplits: Axis.Splits = (u: uPlot) => {
     const dim = ori === 0 ? u.bbox.width : u.bbox.height;
     const _dir = dir * (ori === 0 ? 1 : -1);
 
     let splits: number[] = [];
 
     distribute(u.data[0].length, groupWidth, groupDistr, null, (di, lftPct, widPct) => {
-      let groupLftPx = (dim * lftPct) / pxRatio;
-      let groupWidPx = (dim * widPct) / pxRatio;
+      let groupLftPx = (dim * lftPct) / devicePixelRatio;
+      let groupWidPx = (dim * widPct) / devicePixelRatio;
 
       let groupCenterPx = groupLftPx + groupWidPx / 2;
 
@@ -191,7 +165,6 @@ export function getConfig(opts: BarsOptions) {
     return _dir === 1 ? splits : splits.reverse();
   };
 
-  // @ts-ignore
   const xValues: Axis.Values = (u) => u.data[0];
 
   let hovered: Rect | null = null;
@@ -200,21 +173,6 @@ export function getConfig(opts: BarsOptions) {
   barMark.classList.add('bar-mark');
   barMark.style.position = 'absolute';
   barMark.style.background = 'rgba(255,255,255,0.4)';
-
-  // hide crosshair cursor & hover points
-  const cursor: Cursor = {
-    x: false,
-    y: false,
-    points: {
-      show: false,
-    },
-  };
-
-  // disable selection
-  // uPlot types do not export the Select interface prior to 1.6.4
-  const select: Partial<Select> = {
-    show: false,
-  };
 
   const init = (u: uPlot) => {
     let over = u.root.querySelector('.u-over')! as HTMLElement;
@@ -235,50 +193,49 @@ export function getConfig(opts: BarsOptions) {
   };
 
   // handle hover interaction with quadtree probing
-  const setCursor = (u: uPlot) => {
-    let found: Rect | null = null;
-    let cx = u.cursor.left! * pxRatio;
-    let cy = u.cursor.top! * pxRatio;
+  const interpolateBarChartTooltip: TooltipInterpolator = (
+    updateActiveSeriesIdx,
+    updateActiveDatapointIdx,
+    updateTooltipPosition
+  ) => {
+    return (u: uPlot) => {
+      let found: Rect | null = null;
+      let cx = u.cursor.left! * devicePixelRatio;
+      let cy = u.cursor.top! * devicePixelRatio;
 
-    qt.get(cx, cy, 1, 1, (o) => {
-      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-        found = o;
-      }
-    });
-
-    if (found) {
-      // prettier-ignore
-      if (found !== hovered) {
-        /* eslint-disable no-multi-spaces */
-        barMark.style.display = '';
-        barMark.style.left   = found!.x / pxRatio + 'px';
-        barMark.style.top    = found!.y / pxRatio + 'px';
-        barMark.style.width  = found!.w / pxRatio + 'px';
-        barMark.style.height = found!.h / pxRatio + 'px';
-        hovered = found;
-        /* eslint-enable */
-
-        if (onHover != null) {
-          onHover(hovered!.sidx, hovered!.didx);
+      qt.get(cx, cy, 1, 1, (o) => {
+        if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+          found = o;
         }
-      }
-    } else if (hovered != null) {
-      if (onLeave != null) {
-        onLeave(hovered!.sidx, hovered!.didx);
-      }
+      });
 
-      hovered = null;
-      barMark.style.display = 'none';
-    }
+      if (found) {
+        // prettier-ignore
+        if (found !== hovered) {
+          barMark.style.display = '';
+          barMark.style.left   = found!.x / devicePixelRatio + 'px';
+          barMark.style.top    = found!.y / devicePixelRatio + 'px';
+          barMark.style.width  = found!.w / devicePixelRatio + 'px';
+          barMark.style.height = found!.h / devicePixelRatio + 'px';
+          hovered = found;
+          updateActiveSeriesIdx(hovered!.sidx);
+          updateActiveDatapointIdx(hovered!.didx);
+          updateTooltipPosition();
+        }
+      } else if (hovered != null) {
+        updateActiveSeriesIdx(hovered!.sidx);
+        updateActiveDatapointIdx(hovered!.didx);
+        updateTooltipPosition();
+        hovered = null;
+        barMark.style.display = 'none';
+      } else {
+        updateTooltipPosition(true);
+      }
+    };
   };
 
   return {
-    // cursor & select opts
-    cursor,
-    select,
-
     // scale & axis opts
-    // yRange,
     xValues,
     xSplits,
 
@@ -289,6 +246,6 @@ export function getConfig(opts: BarsOptions) {
     // hooks
     init,
     drawClear,
-    setCursor,
+    interpolateBarChartTooltip,
   };
 }
