@@ -31,7 +31,7 @@ export function Project({ projectName, datasource, onChange, templateVariableOpt
       <Select
         width={SELECT_WIDTH}
         allowCustomValue
-        formatCreateLabel={(v) => `Use project: {v}`}
+        formatCreateLabel={(v) => `Use project: ${v}`}
         onChange={({ value }) => onChange(value!)}
         options={projects}
         value={{ value: projectName, label: projectName }}
