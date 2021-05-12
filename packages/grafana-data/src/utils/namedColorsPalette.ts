@@ -93,57 +93,14 @@ export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, strin
 }
 
 export function getColorForTheme(color: string, theme: GrafanaTheme): string {
-  if (!color) {
-    return 'gray';
-  }
-
-  // check if we need to rebuild cache
-  if (!colorsMap || colorsMapTheme !== theme) {
-    colorsMap = buildColorsMapForTheme(theme);
-    colorsMapTheme = theme;
-  }
-
-  let realColor = colorsMap[color as Color];
-  if (realColor) {
-    return realColor;
-  }
-
-  if (color[0] === '#') {
-    return (colorsMap[color as Color] = color);
-  }
-
-  if (color.indexOf('rgb') > -1) {
-    return (colorsMap[color as Color] = color);
-  }
-
-  return (colorsMap[color as Color] = tinycolor(color).toHexString());
+  return theme.vizColors.byName(color);
 }
 
 /**
  * @deprecated use getColorForTheme
  */
 export function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string {
-  const themeType = type ?? GrafanaThemeType.Dark;
-
-  if (themeType === GrafanaThemeType.Dark) {
-    const darkTheme = ({
-      type: themeType,
-      colors: {
-        panelBg: '#141619',
-      },
-    } as unknown) as GrafanaTheme;
-
-    return getColorForTheme(color, darkTheme);
-  }
-
-  const lightTheme = ({
-    type: themeType,
-    colors: {
-      panelBg: '#000000',
-    },
-  } as unknown) as GrafanaTheme;
-
-  return getColorForTheme(color, lightTheme);
+  return 'gray';
 }
 
 const buildNamedColorsPalette = () => {

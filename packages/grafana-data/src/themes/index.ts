@@ -8,7 +8,7 @@ export { ThemeTypography, ThemeTypographyVariant } from './createTypography';
 export { ThemeTransitions } from './createTransitions';
 export { ThemeSpacing } from './createSpacing';
 export { ThemeZIndices } from './zIndex';
-export { palette } from './palette';
+export { ThemeVizColors, ThemeVizColor, ThemeVizHue } from './createVizColors';
 
 /** Exporting the module like this to be able to generate docs properly. */
 import * as colorManipulator from './colorManipulator';
