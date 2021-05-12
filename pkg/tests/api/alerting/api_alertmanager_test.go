@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +26,283 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
+
+func TestAMConfigAccess(t *testing.T) {
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		DisableAnonymous:     true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create a users to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+
+	type testCase struct {
+		desc      string
+		url       string
+		expStatus int
+		expBody   string
+	}
+
+	t.Run("when creating alertmanager configuration", func(t *testing.T) {
+		body := `
+		{
+			"alertmanager_config": {
+				"route": {
+					"receiver": "grafana-default-email"
+				},
+				"receivers": [{
+					"name": "grafana-default-email",
+					"grafana_managed_receiver_configs": [{
+						"uid": "",
+						"name": "email receiver",
+						"type": "email",
+						"isDefault": true,
+						"settings": {
+							"addresses": "<example@email.com>"
+						}
+					}]
+				}]
+			}
+		}
+		`
+
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should fail",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusForbidden,
+				expBody:   `{"message": "Permission denied"}`,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"message":"configuration created"}`,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"message":"configuration created"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				buf := bytes.NewReader([]byte(body))
+				// nolint:gosec
+				resp, err := http.Post(url, "application/json", buf)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+
+	t.Run("when creating silence", func(t *testing.T) {
+		body := `
+		{
+			"comment": "string",
+			"createdBy": "string",
+			"endsAt": "2023-03-31T14:17:04.419Z",
+			"matchers": [
+			  {
+				"isRegex": true,
+				"name": "string",
+				"value": "string"
+			  }
+			],
+			"startsAt": "2021-03-31T13:17:04.419Z"
+		  }
+		`
+
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/config/api/v2/silences",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should fail",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusForbidden,
+				expBody:   `{"message": "Permission denied"}`,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"id": "0", "message":"silence created"}`,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"id": "0", "message":"silence created"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				buf := bytes.NewReader([]byte(body))
+				// nolint:gosec
+				resp, err := http.Post(url, "application/json", buf)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+				if tc.expStatus == http.StatusAccepted {
+					re := regexp.MustCompile(`"id":"([\w|-]+)"`)
+					b = re.ReplaceAll(b, []byte(`"id":"0"`))
+				}
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+
+	var blob []byte
+	t.Run("when getting silences", func(t *testing.T) {
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should succeed",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusOK,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusOK,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusOK,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				// nolint:gosec
+				resp, err := http.Get(url)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				require.NoError(t, err)
+				if tc.expStatus == http.StatusOK {
+					b, err := ioutil.ReadAll(resp.Body)
+					require.NoError(t, err)
+					blob = b
+				}
+			})
+		}
+	})
+
+	var silences apimodels.GettableSilences
+	err := json.Unmarshal(blob, &silences)
+	require.NoError(t, err)
+	assert.Len(t, silences, 2)
+	silenceIDs := make([]string, 0, len(silences))
+	for _, s := range silences {
+		silenceIDs = append(silenceIDs, *s.ID)
+	}
+
+	unconsumedSilenceIdx := 0
+	t.Run("when deleting a silence", func(t *testing.T) {
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should fail",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusForbidden,
+				expBody:   `{"message": "Permission denied"}`,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusOK,
+				expBody:   `{"message": "silence deleted"}`,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusOK,
+				expBody:   `{"message": "silence deleted"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr, silenceIDs[unconsumedSilenceIdx])
+
+				// Create client
+				client := &http.Client{}
+
+				// Create request
+				req, err := http.NewRequest("DELETE", url, nil)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+
+				// Fetch Request
+				resp, err := client.Do(req)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+				if tc.expStatus == http.StatusOK {
+					unconsumedSilenceIdx++
+				}
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+}
 
 func TestAlertAndGroupsQuery(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
