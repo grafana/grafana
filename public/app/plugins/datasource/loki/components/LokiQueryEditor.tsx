@@ -2,7 +2,7 @@
 import React, { memo } from 'react';
 
 // Types
-import { QueryEditorProps } from '@grafana/data';
+import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
@@ -12,8 +12,21 @@ import { LokiOptionFields } from './LokiOptionFields';
 type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions>;
 
 export function LokiQueryEditor(props: Props) {
-  const { range, query, data, datasource, onChange, onRunQuery } = props;
-  const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
+  const { app, query, data, datasource, onChange, onRunQuery } = props;
+
+  if (app === CoreApp.CloudAlerting) {
+    return (
+      <LokiQueryField
+        datasource={datasource}
+        query={query}
+        onChange={onChange}
+        onRunQuery={onRunQuery}
+        onBlur={onRunQuery}
+        history={[]}
+        data={data}
+      />
+    );
+  }
 
   const onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const nextQuery = { ...query, legendFormat: e.currentTarget.value };
@@ -51,7 +64,6 @@ export function LokiQueryEditor(props: Props) {
       onBlur={onRunQuery}
       history={[]}
       data={data}
-      absoluteRange={absoluteTimeRange}
       ExtraFieldElement={
         <>
           <LokiOptionFields

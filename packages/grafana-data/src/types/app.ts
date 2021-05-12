@@ -6,6 +6,7 @@ import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 export enum CoreApp {
   Dashboard = 'dashboard',
   Explore = 'explore',
+  CloudAlerting = 'cloud-alerting',
   Unknown = 'unknown',
 }
 

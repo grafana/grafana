@@ -63,7 +63,6 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 
 export interface LokiQueryFieldProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
-  absoluteRange: AbsoluteTimeRange;
   ExtraFieldElement?: ReactNode;
 }
 

@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PromOptions, PromQuery } from '../types';
 
@@ -106,8 +106,12 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, range, data } = this.props;
+    const { datasource, query, range, data, app } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
+
+    if (app === CoreApp.CloudAlerting) {
+      return this.renderEditorForCloudAlerting();
+    }
 
     return (
       <PromQueryField
@@ -194,6 +198,22 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
           </div>
         }
+      />
+    );
+  }
+
+  renderEditorForCloudAlerting(): React.ReactNode {
+    const { datasource, query, range, data } = this.props;
+
+    return (
+      <PromQueryField
+        datasource={datasource}
+        query={query}
+        onRunQuery={this.onRunQuery}
+        onChange={this.onFieldChange}
+        history={[]}
+        range={range}
+        data={data}
       />
     );
   }
