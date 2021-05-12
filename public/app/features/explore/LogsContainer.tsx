@@ -1,13 +1,11 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
+import { css } from 'emotion';
 import { Collapse } from '@grafana/ui';
-
 import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
-
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-
 import { splitOpen } from './state/main';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
@@ -85,6 +83,16 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       return null;
     }
 
+    // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
+    const styleOverridesForStickyNavigation = css`
+      & > div {
+        overflow: visible;
+        & > div {
+          overflow: visible;
+        }
+      }
+    `;
+
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
@@ -104,7 +112,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
           </Collapse>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
-          <Collapse label="Logs" loading={loading} isOpen>
+          <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
             <Logs
               logRows={logRows}
               logsMeta={logsMeta}
