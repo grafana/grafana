@@ -1,7 +1,14 @@
-import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourceSettings,
+  TableData,
+} from '@grafana/data';
 import Datasource from '../datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
+export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
 
 export type AzureResultFormat = 'time_series' | 'table';
 
@@ -23,19 +30,28 @@ export interface AzureMonitorQuery extends DataQuery {
   insightsAnalytics: InsightsAnalyticsQuery;
 }
 
+export type ConcealedSecret = symbol;
+
+export interface AzureCredentials {
+  azureCloud?: string;
+  tenantId?: string;
+  clientId?: string;
+  clientSecret?: string | ConcealedSecret;
+}
+
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
-  subscriptionId: string;
   cloudName: string;
 
   // monitor
   tenantId?: string;
   clientId?: string;
+  subscriptionId: string;
 
   // logs
-  logAnalyticsSubscriptionId?: string;
+  azureLogAnalyticsSameAs?: boolean;
   logAnalyticsTenantId?: string;
   logAnalyticsClientId?: string;
-  azureLogAnalyticsSameAs?: boolean;
+  logAnalyticsSubscriptionId?: string;
   logAnalyticsDefaultWorkspace?: string;
 
   // App Insights

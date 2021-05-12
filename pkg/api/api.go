@@ -160,7 +160,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// users (admin permission required)
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
-			const userIDScope = `users:{{ index . ":id" }}`
+			const userIDScope = `global:users:{{ index . ":id" }}`
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(SearchUsers))
 			usersRoute.Get("/search", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, userIDScope), routing.Wrap(GetUserByID))
@@ -203,6 +203,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Put("/", reqOrgAdmin, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", reqOrgAdmin, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddressCurrent))
 			orgRoute.Get("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
+			orgRoute.Get("/users/search", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(hs.SearchOrgUsersWithPaging))
 			orgRoute.Post("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeUsersAll), quota("user"), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRoleUpdate, usersScope), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUserForCurrentOrg))
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRemove, usersScope), routing.Wrap(RemoveOrgUserForCurrentOrg))

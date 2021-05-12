@@ -12,6 +12,8 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
+import { getAzureCloud } from '../credentials';
+import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
@@ -22,11 +24,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   baseUrl: string;
   applicationId: string;
 
-  /**
-   * @deprecated
-   * TODO: Which one of these values should be used? Was there a migration?
-   * */
-  logAnalyticsSubscriptionId: string;
   subscriptionId: string;
 
   azureMonitorUrl: string;
@@ -37,56 +34,20 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     super(instanceSettings);
     this.cache = new Map();
 
-    switch (this.instanceSettings.jsonData.cloudName) {
-      case 'govazuremonitor': // Azure US Government
-        this.baseUrl = '/govloganalyticsazure';
-        break;
-      case 'germanyazuremonitor': // Azure Germany
-        break;
-      case 'chinaazuremonitor': // Azure China
-        this.baseUrl = '/chinaloganalyticsazure';
-        break;
-      default:
-        // Azure Global
-        this.baseUrl = '/loganalyticsazure';
-    }
+    const cloud = getAzureCloud(instanceSettings);
+    const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
+    this.baseUrl = `/${logAnalyticsRoute}`;
+
+    const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
+    this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
+    this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
-
-    this.setWorkspaceUrl();
   }
 
   isConfigured(): boolean {
-    return (
-      (!!this.instanceSettings.jsonData.logAnalyticsSubscriptionId &&
-        this.instanceSettings.jsonData.logAnalyticsSubscriptionId.length > 0) ||
-      !!this.instanceSettings.jsonData.azureLogAnalyticsSameAs
-    );
-  }
-
-  setWorkspaceUrl() {
-    if (!!this.instanceSettings.jsonData.subscriptionId || !!this.instanceSettings.jsonData.azureLogAnalyticsSameAs) {
-      this.subscriptionId = this.instanceSettings.jsonData.subscriptionId;
-      const azureCloud = this.instanceSettings.jsonData.cloudName || 'azuremonitor';
-      this.azureMonitorUrl = `/${azureCloud}/subscriptions`;
-    } else {
-      this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
-
-      switch (this.instanceSettings.jsonData.cloudName) {
-        case 'govazuremonitor': // Azure US Government
-          this.azureMonitorUrl = `/govworkspacesloganalytics/subscriptions`;
-          break;
-        case 'germanyazuremonitor': // Azure Germany
-          break;
-        case 'chinaazuremonitor': // Azure China
-          this.azureMonitorUrl = `/chinaworkspacesloganalytics/subscriptions`;
-          break;
-        default:
-          // Azure Global
-          this.azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
-      }
-    }
+    return !!this.subscriptionId && this.subscriptionId.length > 0;
   }
 
   async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {

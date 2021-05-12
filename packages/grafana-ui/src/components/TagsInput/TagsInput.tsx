@@ -11,9 +11,16 @@ export interface Props {
   tags?: string[];
   onChange: (tags: string[]) => void;
   width?: number;
+  className?: string;
 }
 
-export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange, width }) => {
+export const TagsInput: FC<Props> = ({
+  placeholder = 'New tag (enter key to add)',
+  tags = [],
+  onChange,
+  width,
+  className,
+}) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
   const theme = useTheme2();
@@ -28,7 +35,9 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
 
   const onAdd = (event: React.MouseEvent) => {
     event.preventDefault();
-    onChange(tags.concat(newTagName));
+    if (!tags.includes(newTagName)) {
+      onChange(tags.concat(newTagName));
+    }
     setNewName('');
   };
 
@@ -41,7 +50,7 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
   };
 
   return (
-    <div className={cx(styles.wrapper, width ? css({ width: theme.spacing(width) }) : '')}>
+    <div className={cx(styles.wrapper, className, width ? css({ width: theme.spacing(width) }) : '')}>
       <div className={tags?.length ? styles.tags : undefined}>
         {tags?.map((tag: string, index: number) => {
           return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;

@@ -121,8 +121,8 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 		IconEmoji:      model.Settings.Get("icon_emoji").MustString(),
 		IconURL:        model.Settings.Get("icon_url").MustString(),
 		Token:          token,
-		Text:           model.Settings.Get("text").MustString(`{{ template "slack.default.text" . }}`),
-		Title:          model.Settings.Get("title").MustString(`{{ template "slack.default.title" . }}`),
+		Text:           model.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
+		Title:          model.Settings.Get("title").MustString(`{{ template "default.title" . }}`),
 		log:            log.New("alerting.notifier.slack"),
 		tmpl:           t,
 	}, nil
