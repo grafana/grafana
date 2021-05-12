@@ -1,13 +1,8 @@
 package load
 
 import (
-	"bytes"
-	"fmt"
-	"strings"
-
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
-	cuejson "cuelang.org/go/pkg/encoding/json"
 	"github.com/grafana/grafana/pkg/schema"
 )
 
@@ -106,142 +101,6 @@ func (gvs *genericVersionedSchema) Validate(r schema.Resource) error {
 		return err
 	}
 	return gvs.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
-}
-
-// ApplyDefaults returns a new, concrete copy of the Resource with all paths
-// that are 1) missing in the Resource AND 2) specified by the schema,
-// filled with default values specified by the schema.
-func (gvs *genericVersionedSchema) ApplyDefaults(r schema.Resource) (schema.Resource, error) {
-	rv, err := rt.Compile("resource", r.Value)
-	if err != nil {
-		return r, err
-	}
-	rvUnified := rv.Value().Unify(gvs.CUE())
-	re, err := convertCUEValueToString(rvUnified)
-	if err != nil {
-		return r, err
-	}
-	return schema.Resource{Value: re}, nil
-}
-
-func convertCUEValueToString(inputCUE cue.Value) (string, error) {
-	re, err := cuejson.Marshal(inputCUE)
-	if err != nil {
-		return re, err
-	}
-
-	result := []byte(re)
-	result = bytes.Replace(result, []byte("\\u003c"), []byte("<"), -1)
-	result = bytes.Replace(result, []byte("\\u003e"), []byte(">"), -1)
-	result = bytes.Replace(result, []byte("\\u0026"), []byte("&"), -1)
-	return string(result), nil
-}
-
-// TrimDefaults returns a new, concrete copy of the Resource where all paths
-// in the  where the values at those paths are the same as the default value
-// given in the schema.
-func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resource, error) {
-	rvInstance, err := rt.Compile("resource", r.Value)
-	if err != nil {
-		return r, err
-	}
-	rv, _, err := removeDefaultHelper(gvs.CUE(), rvInstance.Value())
-	if err != nil {
-		return r, err
-	}
-	re, err := convertCUEValueToString(rv)
-	fmt.Println("the trimed fields would be: ", re)
-	if err != nil {
-		return r, err
-	}
-	return schema.Resource{Value: re}, nil
-}
-
-func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
-	// Since for now, panel definition is open validation,
-	// we need to loop on the input CUE for trimming
-	rvInstance, err := rt.Compile("resource", []byte{})
-	if err != nil {
-		return input, false, err
-	}
-	rv := rvInstance.Value()
-
-	switch inputdef.IncompleteKind() {
-	case cue.StructKind:
-		// Get all fields including optional fields
-		iter, err := inputdef.Fields(cue.Optional(true))
-		if err != nil {
-			return rv, false, err
-		}
-		keySet := make(map[string]bool)
-		for iter.Next() {
-			lable, _ := iter.Value().Label()
-			keySet[lable] = true
-			lv := input.LookupPath(cue.MakePath(cue.Str(lable)))
-			if err != nil {
-				continue
-			}
-			if lv.Exists() {
-				re, isEqual, err := removeDefaultHelper(iter.Value(), lv)
-				if err == nil && !isEqual {
-					rv = rv.FillPath(cue.MakePath(cue.Str(lable)), re)
-				}
-			}
-		}
-		// Get all the fields that are not defined in schema yet for panel
-		iter, err = input.Fields()
-		if err != nil {
-			return rv, false, err
-		}
-		for iter.Next() {
-			lable, _ := iter.Value().Label()
-			if exists := keySet[lable]; !exists {
-				rv = rv.FillPath(cue.MakePath(cue.Str(lable)), iter.Value())
-			}
-		}
-		return rv, false, nil
-	case cue.ListKind:
-		val, _ := inputdef.Default()
-		err1 := input.Subsume(val)
-		err2 := val.Subsume(input)
-		if val.IsConcrete() && err1 == nil && err2 == nil {
-			return rv, true, nil
-		}
-		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
-		if ele.IncompleteKind() == cue.BottomKind {
-			return rv, true, nil
-		}
-
-		iter, err := input.List()
-		if err != nil {
-			return rv, true, nil
-		}
-		var iterlist []string
-		for iter.Next() {
-			re, isEqual, err := removeDefaultHelper(ele, iter.Value())
-			if err == nil && !isEqual {
-				reString, err := convertCUEValueToString(re)
-				if err != nil {
-					return rv, true, nil
-				}
-				iterlist = append(iterlist, reString)
-			}
-		}
-		iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
-		liInstance, err := rt.Compile("resource", []byte(iterlistContent))
-		if err != nil {
-			return rv, false, err
-		}
-		return liInstance.Value(), false, nil
-	default:
-		val, _ := inputdef.Default()
-		err1 := input.Subsume(val)
-		err2 := val.Subsume(input)
-		if val.IsConcrete() && err1 == nil && err2 == nil {
-			return input, true, nil
-		}
-		return input, false, nil
-	}
 }
 
 // CUE returns the cue.Value representing the actual schema.
