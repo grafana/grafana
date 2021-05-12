@@ -47,7 +47,7 @@ interface Props {
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
-  logsQueries: DataQuery[];
+  logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
   width: number;
   theme: GrafanaTheme;
@@ -358,7 +358,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             timeZone={timeZone}
             onChangeTime={onChangeTime}
             loading={loading}
-            queries={logsQueries || []}
+            queries={logsQueries ?? []}
             scrollToTopLogs={this.scrollToTopLogs}
           />
         </div>

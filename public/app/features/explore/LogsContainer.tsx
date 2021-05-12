@@ -117,6 +117,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
+              logsQueries={logsQueries}
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
@@ -133,7 +134,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
-              logsQueries={logsQueries || []}
             />
           </Collapse>
         </LogsCrossFadeTransition>
