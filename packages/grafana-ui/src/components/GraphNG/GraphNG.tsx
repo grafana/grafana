@@ -11,7 +11,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { preparePlotFrame } from './utils';
+import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
@@ -38,10 +38,10 @@ export interface GraphNGProps extends Themeable2 {
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-
   prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: string[];
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
+  preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
 }
 
 function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
@@ -84,9 +84,11 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   prepState(props: GraphNGProps, withConfig = true) {
     let state: GraphNGState = null as any;
 
-    const { frames, fields } = props;
+    const { frames, fields, preparePlotFrame } = props;
 
-    const alignedFrame = preparePlotFrame(
+    const preparePlotFrameFn = preparePlotFrame || defaultPreparePlotFrame;
+
+    const alignedFrame = preparePlotFrameFn(
       frames,
       fields || {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
