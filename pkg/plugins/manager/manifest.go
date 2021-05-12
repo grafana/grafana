@@ -205,7 +205,33 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		var unsignedFiles []string
 		for _, f := range plugin.Files {
 			if _, exists := manifestFiles[f]; !exists {
-				unsignedFiles = append(unsignedFiles, f)
+				fullPath, err := filepath.Abs(filepath.Join(plugin.PluginDir, f))
+				if err != nil || !filepath.IsAbs(fullPath) {
+					log.Error("Absolute file path is required to provide plugin symlink verification", "file", f)
+					return plugins.PluginSignatureState{}, err
+				}
+				info, err := os.Lstat(fullPath)
+				if err != nil {
+					return plugins.PluginSignatureState{}, err
+				}
+
+				// if we find a symlinked plugin file, ensure that it links to a file within the plugin directory
+				if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+					symlinkPath, err := filepath.EvalSymlinks(fullPath)
+					if err != nil {
+						return plugins.PluginSignatureState{}, err
+					}
+
+					s, err := filepath.Rel(plugin.PluginDir, symlinkPath)
+					if err != nil {
+						return plugins.PluginSignatureState{}, err
+					}
+					if strings.HasPrefix(s, ".."+string(filepath.Separator)) {
+						unsignedFiles = append(unsignedFiles, f)
+					}
+				} else {
+					unsignedFiles = append(unsignedFiles, f)
+				}
 			}
 		}
 

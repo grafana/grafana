@@ -199,6 +199,39 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
 	})
+
+	t.Run("With plugin that contains symlink", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = "http://localhost:3000/"
+
+		// this needs to be an absolute path otherwise the plugin's dir will not
+		// provide enough information to compute os.Lstat
+		path, _ := filepath.Abs("testdata/symlink")
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = path
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		const pluginID = "test"
+		p := pm.GetPlugin(pluginID)
+
+		assert.NotNil(t, p)
+		assert.NotNil(t, pm.GetDataSource(pluginID))
+		assert.Equal(t, pluginID, p.Id)
+		assert.Equal(t, "datasource", p.Type)
+		assert.Equal(t, "Test", p.Name)
+		assert.Equal(t, "1.0.0", p.Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, p.Signature)
+		assert.Equal(t, plugins.PrivateType, p.SignatureType)
+		assert.Equal(t, "Will Browne", p.SignatureOrg)
+		assert.False(t, p.IsCorePlugin)
+	})
 }
 
 func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
