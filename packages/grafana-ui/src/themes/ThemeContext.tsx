@@ -22,6 +22,7 @@ export const ThemeContext = React.createContext(createTheme());
 ThemeContext.displayName = 'ThemeContext';
 
 /** @deprecated use withTheme2 */
+/** @public */
 export const withTheme = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
   const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = (props) => {
     /**
@@ -62,10 +63,12 @@ export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: R
 };
 
 /** @deprecated use useTheme2 */
+/** @public */
 export function useTheme(): GrafanaTheme {
   return useContext(ThemeContextMock || ThemeContext).v1;
 }
 
+/** @public */
 export function useTheme2(): GrafanaTheme2 {
   return useContext(ThemeContextMock || ThemeContext);
 }
@@ -77,6 +80,7 @@ export function useTheme2(): GrafanaTheme2 {
  * you pass in doesn't change, or only if it needs to. (i.e. declare
  * your style creator outside of a function component or use `useCallback()`.)
  * */
+/** @public */
 export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
   const theme = useTheme();
 
@@ -96,6 +100,7 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
  * you pass in doesn't change, or only if it needs to. (i.e. declare
  * your style creator outside of a function component or use `useCallback()`.)
  * */
+/** @public */
 export function useStyles2<T>(getStyles: (theme: GrafanaTheme2) => T) {
   const theme = useTheme2();
 
@@ -111,6 +116,7 @@ export function useStyles2<T>(getStyles: (theme: GrafanaTheme2) => T) {
 /**
  * Enables theme context  mocking
  */
+/** @public */
 export const mockThemeContext = (theme: Partial<GrafanaTheme2>) => {
   ThemeContextMock = React.createContext(theme as GrafanaTheme2);
 
