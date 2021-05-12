@@ -1,12 +1,17 @@
 package schema
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math/bits"
+	"strings"
 
 	"cuelang.org/go/cue"
+	cuejson "cuelang.org/go/pkg/encoding/json"
 )
+
+var rt = &cue.Runtime{}
 
 // CueSchema represents a single, complete CUE-based schema that can perform
 // operations on Resources.
@@ -22,16 +27,6 @@ import (
 type CueSchema interface {
 	// Validate checks that the resource is correct with respect to the schema.
 	Validate(Resource) error
-
-	// ApplyDefaults returns a new, concrete copy of the Resource with all paths
-	// that are 1) missing in the Resource AND 2) specified by the schema,
-	// filled with default values specified by the schema.
-	ApplyDefaults(Resource) (Resource, error)
-
-	// TrimDefaults returns a new, concrete copy of the Resource where all paths
-	// in the  where the values at those paths are the same as the default value
-	// given in the schema.
-	TrimDefaults(Resource) (Resource, error)
 
 	// Migrate transforms a Resource into a new Resource that is correct with
 	// respect to its Successor schema. It returns the transformed resource,
@@ -254,6 +249,142 @@ func LatestInCurrentMajor() SearchOption {
 func Exact(maj, min int) SearchOption {
 	return func(p *ssopt) {
 		p.exact = [2]int{maj, min}
+	}
+}
+
+// ApplyDefaults returns a new, concrete copy of the Resource with all paths
+// that are 1) missing in the Resource AND 2) specified by the schema,
+// filled with default values specified by the schema.
+func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
+	rv, err := rt.Compile("resource", r.Value)
+	if err != nil {
+		return r, err
+	}
+	rvUnified := rv.Value().Unify(scue)
+	re, err := convertCUEValueToString(rvUnified)
+	if err != nil {
+		return r, err
+	}
+	return Resource{Value: re}, nil
+}
+
+func convertCUEValueToString(inputCUE cue.Value) (string, error) {
+	re, err := cuejson.Marshal(inputCUE)
+	if err != nil {
+		return re, err
+	}
+
+	result := []byte(re)
+	result = bytes.Replace(result, []byte("\\u003c"), []byte("<"), -1)
+	result = bytes.Replace(result, []byte("\\u003e"), []byte(">"), -1)
+	result = bytes.Replace(result, []byte("\\u0026"), []byte("&"), -1)
+	return string(result), nil
+}
+
+// TrimDefaults returns a new, concrete copy of the Resource where all paths
+// in the  where the values at those paths are the same as the default value
+// given in the schema.
+func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
+	rvInstance, err := rt.Compile("resource", r.Value)
+	if err != nil {
+		return r, err
+	}
+	rv, _, err := removeDefaultHelper(scue, rvInstance.Value())
+	if err != nil {
+		return r, err
+	}
+	re, err := convertCUEValueToString(rv)
+	if err != nil {
+		return r, err
+	}
+	return Resource{Value: re}, nil
+}
+
+func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
+	val, _ := inputdef.Default()
+	return input.Subsume(val) == nil && val.Subsume(input) == nil
+}
+
+func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
+	// To include all optional fields, we need to use inputdef for iteration,
+	// since the lookuppath with optional field doesn't work very well
+	rvInstance, err := rt.Compile("resource", []byte{})
+	if err != nil {
+		return input, false, err
+	}
+	rv := rvInstance.Value()
+
+	switch inputdef.IncompleteKind() {
+	case cue.StructKind:
+		// Get all fields including optional fields
+		iter, err := inputdef.Fields(cue.Optional(true))
+		if err != nil {
+			return rv, false, err
+		}
+		keySet := make(map[string]bool)
+		for iter.Next() {
+			lable, _ := iter.Value().Label()
+			keySet[lable] = true
+			lv := input.LookupPath(cue.MakePath(cue.Str(lable)))
+			if err != nil {
+				continue
+			}
+			if lv.Exists() {
+				re, isEqual, err := removeDefaultHelper(iter.Value(), lv)
+				if err == nil && !isEqual {
+					rv = rv.FillPath(cue.MakePath(cue.Str(lable)), re)
+				}
+			}
+		}
+		// Get all the fields that are not defined in schema yet for panel
+		iter, err = input.Fields()
+		if err != nil {
+			return rv, false, err
+		}
+		for iter.Next() {
+			lable, _ := iter.Value().Label()
+			if exists := keySet[lable]; !exists {
+				rv = rv.FillPath(cue.MakePath(cue.Str(lable)), iter.Value())
+			}
+		}
+		return rv, false, nil
+	case cue.ListKind:
+		if isCueValueEqual(inputdef, input) {
+			return rv, true, nil
+		}
+		ele := inputdef.LookupPath(cue.MakePath(cue.AnyIndex))
+		if ele.IncompleteKind() == cue.BottomKind {
+			return rv, true, nil
+		}
+
+		iter, err := input.List()
+		if err != nil {
+			return rv, true, nil
+		}
+
+		// The following code is workaround since today overwrite list element doesn't work
+		var iterlist []string
+		for iter.Next() {
+			re, isEqual, err := removeDefaultHelper(ele, iter.Value())
+			if err == nil && !isEqual {
+				reString, err := convertCUEValueToString(re)
+				if err != nil {
+					return rv, true, nil
+				}
+				iterlist = append(iterlist, reString)
+			}
+		}
+		iterlistContent := fmt.Sprintf("[%s]", strings.Join(iterlist, ","))
+		liInstance, err := rt.Compile("resource", []byte(iterlistContent))
+		if err != nil {
+			return rv, false, err
+		}
+		return liInstance.Value(), false, nil
+	default:
+		if isCueValueEqual(inputdef, input) {
+			return input, true, nil
+		}
+		return input, false, nil
 	}
 }
 
