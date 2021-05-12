@@ -1,29 +1,16 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { PanelProps } from '@grafana/data';
-import { GraphNGLegendEvent, TimelineChart, TimelineOptions } from '@grafana/ui';
-import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+import { useTheme2 } from '@grafana/ui';
+import { TimelineOptions } from './types';
+import { TimelineChart } from './TimelineChart';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
 /**
  * @alpha
  */
-export const TimelinePanel: React.FC<TimelinePanelProps> = ({
-  data,
-  timeRange,
-  timeZone,
-  options,
-  width,
-  height,
-  fieldConfig,
-  onFieldConfigChange,
-}) => {
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
-    },
-    [fieldConfig, onFieldConfigChange, data.series]
-  );
+export const TimelinePanel: React.FC<TimelinePanelProps> = ({ data, timeRange, timeZone, options, width, height }) => {
+  const theme = useTheme2();
 
   if (!data || !data.series?.length) {
     return (
@@ -35,13 +22,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
 
   return (
     <TimelineChart
+      theme={theme}
       frames={data.series}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
       height={height}
-      onLegendClick={onLegendClick}
       {...options}
     />
   );

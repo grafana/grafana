@@ -11,7 +11,6 @@ import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 
 export const extraRoutes: RouteDescriptor[] = [];
-export const featureToggledRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
   return [
@@ -24,15 +23,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d/:uid/:slug',
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Normal,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
-      ),
-    },
-    {
-      path: '/d/:uid',
+      path: '/d/:uid/:slug?',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -484,8 +475,19 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
       ),
     },
+    {
+      path: '/dashboards/f/:uid/:slug/library-panels',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
+      ),
+    },
+    {
+      path: '/library-panels',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
+      ),
+    },
     ...extraRoutes,
-    ...featureToggledRoutes,
     {
       path: '/*',
       component: ErrorPage,

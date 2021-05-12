@@ -5,13 +5,13 @@ import { Pagination, useStyles } from '@grafana/ui';
 import { GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { changePage, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
 
 interface LibraryPanelViewProps {
   className?: string;
-  onClickCard: (panel: LibraryPanelDTO) => void;
+  onClickCard: (panel: LibraryElementDTO) => void;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
   searchString: string;
@@ -58,7 +58,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
     300,
     [searchString, sortDirection, panelFilter, folderFilter, page, asyncDispatch]
   );
-  const onDelete = ({ uid }: LibraryPanelDTO) =>
+  const onDelete = ({ uid }: LibraryElementDTO) =>
     asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
 

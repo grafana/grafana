@@ -62,6 +62,8 @@ export class HeatmapRenderer {
   margin: any;
   dataRangeWidingFactor: number;
 
+  hoverEvent: LegacyGraphHoverEvent;
+
   constructor(private scope: any, private elem: any, attrs: any, private ctrl: any) {
     // $heatmap is JQuery object, but heatmap is D3
     this.$heatmap = this.elem.find('.heatmap-panel');
@@ -91,6 +93,8 @@ export class HeatmapRenderer {
     this.$heatmap.on('mousedown', this.onMouseDown.bind(this));
     this.$heatmap.on('mousemove', this.onMouseMove.bind(this));
     this.$heatmap.on('mouseleave', this.onMouseLeave.bind(this));
+
+    this.hoverEvent = new LegacyGraphHoverEvent({ pos: {}, point: {}, panel: this.panel });
   }
 
   onGraphHoverClear() {
@@ -740,7 +744,10 @@ export class HeatmapRenderer {
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
-    this.ctrl.dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
+    this.hoverEvent.payload.pos = pos;
+    this.hoverEvent.payload.panel = this.panel;
+    this.hoverEvent.payload.point['time'] = (pos as any).x;
+    this.ctrl.dashboard.events.publish(this.hoverEvent);
   }
 
   limitSelection(x2: number) {
