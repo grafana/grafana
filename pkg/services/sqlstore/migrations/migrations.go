@@ -38,7 +38,8 @@ func AddMigrations(mg *Migrator) {
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
-	ualert.AddMigration(mg)
+	ualert.AddTablesMigrations(mg)
+	ualert.AddDashAlertMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

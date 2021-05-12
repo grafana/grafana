@@ -30,7 +30,7 @@ func (e MigrationError) Error() string {
 
 func (e *MigrationError) Unwrap() error { return e.Err }
 
-func AddMigration(mg *migrator.Migrator) {
+func AddDashAlertMigration(mg *migrator.Migrator) {
 	if os.Getenv("UALERT_MIG") == "iDidBackup" {
 		// TODO: unified alerting DB needs to be extacted into ../migrations.go
 		// so it runs and creates the tables before this migration runs.
