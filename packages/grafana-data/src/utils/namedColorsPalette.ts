@@ -4,7 +4,7 @@ import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
  * @deprecated use theme.vizColors.getByName
  */
 export function getColorForTheme(color: string, theme: GrafanaTheme): string {
-  return theme.visualizations.getColorByName(color);
+  return theme.visualization.getColorByName(color);
 }
 
 /**

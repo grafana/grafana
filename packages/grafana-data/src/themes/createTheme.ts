@@ -38,7 +38,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const shadows = createShadows(colors);
   const transitions = createTransitions();
   const components = createComponents(colors, shadows);
-  const visualizations = createVisualizationColors(colors);
+  const visualization = createVisualizationColors(colors);
 
   const theme = {
     name,
@@ -52,7 +52,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
     typography,
     shadows,
     transitions,
-    visualizations,
+    visualization,
     zIndex: {
       ...zIndex,
     },

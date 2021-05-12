@@ -26,7 +26,7 @@ export interface GrafanaTheme2 {
   typography: ThemeTypography;
   zIndex: ThemeZIndices;
   shadows: ThemeShadows;
-  visualizations: ThemeVisualizationColors;
+  visualization: ThemeVisualizationColors;
   transitions: ThemeTransitions;
   v1: GrafanaTheme;
 }

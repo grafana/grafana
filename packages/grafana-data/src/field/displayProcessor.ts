@@ -80,7 +80,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         }
 
         if (mappingResult.color != null) {
-          color = options.theme.visualizations.getColorByName(mappingResult.color);
+          color = options.theme.visualization.getColorByName(mappingResult.color);
         }
 
         shouldFormat = false;

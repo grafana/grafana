@@ -112,7 +112,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
     return null;
   }
 
-  const colors = mode.getColors(theme).map(theme.visualizations.getColorByName);
+  const colors = mode.getColors(theme).map(theme.visualization.getColorByName);
   const style: CSSProperties = {
     height: '8px',
     width: '100%',

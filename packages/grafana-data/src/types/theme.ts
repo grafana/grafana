@@ -240,5 +240,5 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
   shadows: {
     listItem: string;
   };
-  visualizations: ThemeVisualizationColors;
+  visualization: ThemeVisualizationColors;
 }

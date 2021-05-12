@@ -35,7 +35,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
           const thresholdSafe = threshold ?? fallBackTreshold;
-          return theme.visualizations.getColorByName(thresholdSafe.color);
+          return theme.visualization.getColorByName(thresholdSafe.color);
         };
       },
     },
@@ -45,7 +45,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       isContinuous: false,
       isByValue: false,
       getColors: (theme: GrafanaTheme2) => {
-        return theme.visualizations.palette;
+        return theme.visualization.palette;
       },
     }),
     new FieldColorSchemeMode({
@@ -159,7 +159,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
       return this.colorCache;
     }
 
-    this.colorCache = this.getNamedColors(theme).map(theme.visualizations.getColorByName);
+    this.colorCache = this.getNamedColors(theme).map(theme.visualization.getColorByName);
     this.colorCacheTheme = theme;
 
     return this.colorCache;
@@ -232,6 +232,6 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
 
 function getFixedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
-    return theme.visualizations.getColorByName(field.config.color?.fixedColor ?? FALLBACK_COLOR);
+    return theme.visualization.getColorByName(field.config.color?.fixedColor ?? FALLBACK_COLOR);
   };
 }
