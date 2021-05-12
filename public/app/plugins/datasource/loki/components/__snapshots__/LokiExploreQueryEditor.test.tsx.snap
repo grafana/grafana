@@ -68,6 +68,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         "getBeginningCompletionItems": [Function],
         "getPipeCompletionItem": [Function],
         "getTermCompletionItems": [Function],
+        "labelFetchTs": 0,
         "labelKeys": Array [],
         "labelsCache": LRUCache {
           Symbol(max): 10,
@@ -85,7 +86,6 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           },
           Symbol(length): 0,
         },
-        "logLabelFetchTs": 0,
         "lookupsDisabled": false,
         "request": [Function],
         "seriesCache": LRUCache {
