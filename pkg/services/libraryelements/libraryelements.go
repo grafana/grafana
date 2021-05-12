@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// LibraryElementService is a service for operating on library elements.
-type LibraryElementService interface {
+// Service is a service for operating on library elements.
+type Service interface {
 	CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error)
 	GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error)
 	ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error
@@ -19,8 +19,8 @@ type LibraryElementService interface {
 	DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error
 }
 
-// libraryElementServiceImpl is the service for the Library Element feature.
-type libraryElementServiceImpl struct {
+// LibraryElementService is the service for the Library Element feature.
+type LibraryElementService struct {
 	Cfg           *setting.Cfg          `inject:""`
 	SQLStore      *sqlstore.SQLStore    `inject:""`
 	RouteRegister routing.RouteRegister `inject:""`
@@ -30,11 +30,11 @@ type libraryElementServiceImpl struct {
 const connectionTableName = "library_element_connection"
 
 func init() {
-	registry.RegisterService(&libraryElementServiceImpl{})
+	registry.RegisterService(&LibraryElementService{})
 }
 
 // Init initializes the LibraryElement service
-func (l *libraryElementServiceImpl) Init() error {
+func (l *LibraryElementService) Init() error {
 	l.log = log.New("library-elements")
 
 	l.registerAPIEndpoints()
@@ -43,33 +43,33 @@ func (l *libraryElementServiceImpl) Init() error {
 }
 
 // CreateElement creates a Library Element.
-func (l *libraryElementServiceImpl) CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
+func (l *LibraryElementService) CreateElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
 	return l.createLibraryElement(c, cmd)
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
-func (l *libraryElementServiceImpl) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
+func (l *LibraryElementService) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
 	return l.getElementsForDashboardID(c, dashboardID)
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *libraryElementServiceImpl) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
+func (l *LibraryElementService) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
 	return l.connectElementsToDashboardID(c, elementUIDs, dashboardID)
 }
 
 // DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
-func (l *libraryElementServiceImpl) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
+func (l *LibraryElementService) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
 	return l.disconnectElementsFromDashboardID(c, dashboardID)
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *libraryElementServiceImpl) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
+func (l *LibraryElementService) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
 	return l.deleteLibraryElementsInFolderUID(c, folderUID)
 }
 
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
-func (l *libraryElementServiceImpl) AddMigration(mg *migrator.Migrator) {
+func (l *LibraryElementService) AddMigration(mg *migrator.Migrator) {
 	libraryElementsV1 := migrator.Table{
 		Name: "library_element",
 		Columns: []*migrator.Column{

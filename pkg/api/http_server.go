@@ -103,8 +103,8 @@ type HTTPServer struct {
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
 	LoadSchemaService      *schemaloader.SchemaLoaderService       `inject:""`
 	Alertmanager           *notifier.Alertmanager                  `inject:""`
-	LibraryPanelService    librarypanels.LibraryPanelService       `inject:""`
-	LibraryElementService  libraryelements.LibraryElementService   `inject:""`
+	LibraryPanelService    librarypanels.Service                   `inject:""`
+	LibraryElementService  libraryelements.Service                 `inject:""`
 	Listener               net.Listener
 }
 

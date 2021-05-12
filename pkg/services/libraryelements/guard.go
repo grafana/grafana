@@ -10,7 +10,7 @@ func isGeneralFolder(folderID int64) bool {
 	return folderID == 0
 }
 
-func (l *libraryElementServiceImpl) requireSupportedElementKind(kindAsInt int64) error {
+func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) error {
 	kind := LibraryElementKind(kindAsInt)
 	switch kind {
 	case Panel:
@@ -22,7 +22,7 @@ func (l *libraryElementServiceImpl) requireSupportedElementKind(kindAsInt int64)
 	}
 }
 
-func (l *libraryElementServiceImpl) requirePermissionsOnFolder(user *models.SignedInUser, folderID int64) error {
+func (l *LibraryElementService) requirePermissionsOnFolder(user *models.SignedInUser, folderID int64) error {
 	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_EDITOR) {
 		return nil
 	}

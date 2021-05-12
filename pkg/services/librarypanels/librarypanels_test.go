@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const UserInDbName = "user_in_db"
@@ -590,8 +591,8 @@ type libraryPanelResult struct {
 
 type scenarioContext struct {
 	ctx            *macaron.Context
-	service        LibraryPanelService
-	elementService libraryelements.LibraryElementService
+	service        Service
+	elementService libraryelements.Service
 	reqContext     *models.ReqContext
 	user           models.SignedInUser
 	folder         *models.Folder
@@ -720,11 +721,19 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		ctx := macaron.Context{
 			Req: macaron.Request{Request: &http.Request{}},
 		}
+		cfg := setting.NewCfg()
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
-		elementService := libraryelements.NewService(sqlStore)
-		service := NewService(sqlStore, elementService)
+		elementService := libraryelements.LibraryElementService{
+			Cfg:      cfg,
+			SQLStore: sqlStore,
+		}
+		service := LibraryPanelService{
+			Cfg:                   cfg,
+			SQLStore:              sqlStore,
+			LibraryElementService: &elementService,
+		}
 
 		user := models.SignedInUser{
 			UserId:     1,
@@ -750,8 +759,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sc := scenarioContext{
 			user:           user,
 			ctx:            &ctx,
-			service:        service,
-			elementService: elementService,
+			service:        &service,
+			elementService: &elementService,
 			sqlStore:       sqlStore,
 			reqContext: &models.ReqContext{
 				Context:      &ctx,

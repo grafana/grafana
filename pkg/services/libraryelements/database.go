@@ -85,7 +85,7 @@ func getLibraryElement(session *sqlstore.DBSession, uid string, orgID int64) (Li
 }
 
 // createLibraryElement adds a library element.
-func (l *libraryElementServiceImpl) createLibraryElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
+func (l *LibraryElementService) createLibraryElement(c *models.ReqContext, cmd CreateLibraryElementCommand) (LibraryElementDTO, error) {
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
 	}
@@ -154,7 +154,7 @@ func (l *libraryElementServiceImpl) createLibraryElement(c *models.ReqContext, c
 }
 
 // deleteLibraryElement deletes a library element.
-func (l *libraryElementServiceImpl) deleteLibraryElement(c *models.ReqContext, uid string) error {
+func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid string) error {
 	return l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		element, err := getLibraryElement(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
@@ -188,7 +188,7 @@ func (l *libraryElementServiceImpl) deleteLibraryElement(c *models.ReqContext, u
 }
 
 // getLibraryElement gets a Library Element.
-func (l *libraryElementServiceImpl) getLibraryElement(c *models.ReqContext, uid string) (LibraryElementDTO, error) {
+func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid string) (LibraryElementDTO, error) {
 	var libraryElement LibraryElementWithMeta
 	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		libraryElements := make([]LibraryElementWithMeta, 0)
@@ -261,7 +261,7 @@ func (l *libraryElementServiceImpl) getLibraryElement(c *models.ReqContext, uid 
 }
 
 // getAllLibraryElements gets all Library Elements.
-func (l *libraryElementServiceImpl) getAllLibraryElements(c *models.ReqContext, query searchLibraryElementsQuery) (LibraryElementSearchResult, error) {
+func (l *LibraryElementService) getAllLibraryElements(c *models.ReqContext, query searchLibraryElementsQuery) (LibraryElementSearchResult, error) {
 	elements := make([]LibraryElementWithMeta, 0)
 	result := LibraryElementSearchResult{}
 	if query.perPage <= 0 {
@@ -379,7 +379,7 @@ func (l *libraryElementServiceImpl) getAllLibraryElements(c *models.ReqContext, 
 	return result, err
 }
 
-func (l *libraryElementServiceImpl) handleFolderIDPatches(elementToPatch *LibraryElement, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
+func (l *LibraryElementService) handleFolderIDPatches(elementToPatch *LibraryElement, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
@@ -403,7 +403,7 @@ func (l *libraryElementServiceImpl) handleFolderIDPatches(elementToPatch *Librar
 }
 
 // patchLibraryElement updates a Library Element.
-func (l *libraryElementServiceImpl) patchLibraryElement(c *models.ReqContext, cmd patchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
+func (l *LibraryElementService) patchLibraryElement(c *models.ReqContext, cmd patchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
 	var dto LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
@@ -490,7 +490,7 @@ func (l *libraryElementServiceImpl) patchLibraryElement(c *models.ReqContext, cm
 }
 
 // getConnections gets all connections for a Library Element.
-func (l *libraryElementServiceImpl) getConnections(c *models.ReqContext, uid string) ([]LibraryElementConnectionDTO, error) {
+func (l *LibraryElementService) getConnections(c *models.ReqContext, uid string) ([]LibraryElementConnectionDTO, error) {
 	connections := make([]LibraryElementConnectionDTO, 0)
 	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		element, err := getLibraryElement(session, uid, c.SignedInUser.OrgId)
@@ -533,7 +533,7 @@ func (l *libraryElementServiceImpl) getConnections(c *models.ReqContext, uid str
 }
 
 //getElementsForDashboardID gets all elements for a specific dashboard
-func (l *libraryElementServiceImpl) getElementsForDashboardID(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
+func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, dashboardID int64) (map[string]LibraryElementDTO, error) {
 	libraryElementMap := make(map[string]LibraryElementDTO)
 	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		var libraryElements []LibraryElementWithMeta
@@ -588,7 +588,7 @@ func (l *libraryElementServiceImpl) getElementsForDashboardID(c *models.ReqConte
 }
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
-func (l *libraryElementServiceImpl) connectElementsToDashboardID(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
+func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
 	err := l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		_, err := session.Exec("DELETE FROM "+connectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
@@ -624,7 +624,7 @@ func (l *libraryElementServiceImpl) connectElementsToDashboardID(c *models.ReqCo
 }
 
 // disconnectElementsFromDashboardID deletes connections for all Library Elements in a Dashboard.
-func (l *libraryElementServiceImpl) disconnectElementsFromDashboardID(c *models.ReqContext, dashboardID int64) error {
+func (l *LibraryElementService) disconnectElementsFromDashboardID(c *models.ReqContext, dashboardID int64) error {
 	return l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		_, err := session.Exec("DELETE FROM "+connectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
@@ -635,7 +635,7 @@ func (l *libraryElementServiceImpl) disconnectElementsFromDashboardID(c *models.
 }
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
-func (l *libraryElementServiceImpl) deleteLibraryElementsInFolderUID(c *models.ReqContext, folderUID string) error {
+func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqContext, folderUID string) error {
 	return l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		var folderUIDs []struct {
 			ID int64 `xorm:"id"`

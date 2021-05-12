@@ -13,35 +13,35 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// LibraryPanelService is a service for operating on library panels.
-type LibraryPanelService interface {
+// Service is a service for operating on library panels.
+type Service interface {
 	LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
 	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
 	ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
 }
 
-// libraryPanelServiceImpl is the service for the Panel Library feature.
-type libraryPanelServiceImpl struct {
-	Cfg                   *setting.Cfg                          `inject:""`
-	SQLStore              *sqlstore.SQLStore                    `inject:""`
-	RouteRegister         routing.RouteRegister                 `inject:""`
-	LibraryElementService libraryelements.LibraryElementService `inject:""`
+// LibraryPanelService is the service for the Panel Library feature.
+type LibraryPanelService struct {
+	Cfg                   *setting.Cfg            `inject:""`
+	SQLStore              *sqlstore.SQLStore      `inject:""`
+	RouteRegister         routing.RouteRegister   `inject:""`
+	LibraryElementService libraryelements.Service `inject:""`
 	log                   log.Logger
 }
 
 func init() {
-	registry.RegisterService(&libraryPanelServiceImpl{})
+	registry.RegisterService(&LibraryPanelService{})
 }
 
 // Init initializes the LibraryPanel service
-func (lps *libraryPanelServiceImpl) Init() error {
+func (lps *LibraryPanelService) Init() error {
 	lps.log = log.New("library-panels")
 	return nil
 }
 
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
-func (lps *libraryPanelServiceImpl) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	elements, err := lps.LibraryElementService.GetElementsForDashboard(c, dash.Id)
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (lps *libraryPanelServiceImpl) LoadLibraryPanelsForDashboard(c *models.ReqC
 
 // CleanLibraryPanelsForDashboard loops through all panels in dashboard JSON and cleans up any library panel JSON so that
 // only the necessary JSON properties remain when storing the dashboard JSON.
-func (lps *libraryPanelServiceImpl) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
+func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
 	for i, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
@@ -164,7 +164,7 @@ func (lps *libraryPanelServiceImpl) CleanLibraryPanelsForDashboard(dash *models.
 }
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
-func (lps *libraryPanelServiceImpl) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
 	var libraryPanels []string
 	for _, panel := range panels {

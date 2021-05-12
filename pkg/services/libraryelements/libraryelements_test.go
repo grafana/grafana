@@ -161,7 +161,7 @@ func getCreateCommandWithModel(folderID int64, name string, kind LibraryElementK
 
 type scenarioContext struct {
 	ctx           *macaron.Context
-	service       *libraryElementServiceImpl
+	service       *LibraryElementService
 	reqContext    *models.ReqContext
 	user          models.SignedInUser
 	folder        *models.Folder
@@ -274,7 +274,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
-		service := libraryElementServiceImpl{
+		service := LibraryElementService{
 			Cfg:      setting.NewCfg(),
 			SQLStore: sqlStore,
 		}
