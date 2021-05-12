@@ -104,6 +104,10 @@ func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey str
 }
 
 func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey string, opts CSVOpts) (*RenderCSVResult, error) {
+	// gives plugin some additional time to timeout and return possible errors.
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	defer cancel()
+
 	filePath, err := rs.getNewFilePath(RenderCSV)
 	if err != nil {
 		return nil, err
