@@ -47,6 +47,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
       await api.uninstallPlugin(slug);
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${remotePlugin?.name}`]);
       setLoading(false);
+      setIsInstalled(false);
     } catch (error) {
       setLoading(false);
     }
