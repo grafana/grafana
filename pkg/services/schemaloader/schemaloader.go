@@ -1,12 +1,8 @@
 package schemaloader
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/fs"
-	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/schema"
@@ -46,9 +42,9 @@ func (rs *SchemaLoaderService) LoadNewPanelPluginSchema(name, content string) er
 }
 
 func (rs *SchemaLoaderService) Init() error {
-
 	rs.baseLoadPath = load.GetDefaultLoadPaths()
 	rs.baseLoadPath.InstanceCueFS = NewInstanceFS()
+	rs.baseLoadPath.InstanceCueFS.(*InstanceFS).MkdirAll(rs.Cfg.PluginsPath)
 
 	rs.log = log.New("schemaloader")
 	var err error
@@ -152,102 +148,4 @@ func removeNilArray(initialArray []interface{}) []interface{} {
 		}
 	}
 	return withoutNils
-}
-
-type file struct {
-	name    string
-	content *bytes.Buffer
-	modTime time.Time
-	closed  bool
-}
-
-func (f *file) Read(p []byte) (int, error) {
-	if f.closed {
-		return 0, errors.New("file closed")
-	}
-	return f.content.Read(p)
-}
-
-func (f *file) Stat() (fs.FileInfo, error) {
-	if f.closed {
-		return nil, errors.New("file closed")
-	}
-	return f, nil
-}
-
-func (f *file) Close() error {
-	f.closed = true
-	return nil
-}
-
-func (f *file) Name() string {
-	return f.name
-}
-
-func (f *file) Size() int64 {
-	return int64(f.content.Len())
-}
-
-func (f *file) Mode() fs.FileMode {
-	return 0444
-}
-
-func (f *file) ModTime() time.Time {
-	return f.modTime
-}
-
-func (f *file) IsDir() bool {
-	return false
-}
-
-func (f *file) Sys() interface{} {
-	return nil
-}
-
-type InstanceFS struct {
-	files map[string]*file
-}
-
-func NewInstanceFS() *InstanceFS {
-	return &InstanceFS{
-		files: make(map[string]*file),
-	}
-}
-
-func (fsys InstanceFS) Open(name string) (fs.File, error) {
-	if !fs.ValidPath(name) {
-		return nil, &fs.PathError{
-			Op:   "open",
-			Path: name,
-			Err:  fs.ErrInvalid,
-		}
-	}
-
-	if f, ok := fsys.files[name]; !ok {
-		return nil, &fs.PathError{
-			Op:   "open",
-			Path: name,
-			Err:  fs.ErrNotExist,
-		}
-	} else {
-		return f, nil
-	}
-}
-
-func (fsys *InstanceFS) WriteFile(name, content string) error {
-	if !fs.ValidPath(name) {
-		return &fs.PathError{
-			Op:   "write",
-			Path: name,
-			Err:  fs.ErrInvalid,
-		}
-	}
-
-	f := &file{
-		name:    name,
-		content: bytes.NewBufferString(content),
-		modTime: time.Now(),
-	}
-	fsys.files[name] = f
-	return nil
 }

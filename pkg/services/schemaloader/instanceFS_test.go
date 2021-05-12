@@ -22,7 +22,8 @@ func TestSchemaLoader(t *testing.T) {
 	}
 
 	t.Run("Write to virtual file system with new external plugin schema", func(t *testing.T) {
-		name := "x/y/name.txt"
+		rs.baseLoadPath.InstanceCueFS.(*InstanceFS).MkdirAll("x/y")
+		name := "x/y/panelId.cue"
 		content := "This is a test file for the virtual file system"
 		err := rs.LoadNewPanelPluginSchema(name, content)
 		if err != nil {
