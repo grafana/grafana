@@ -26,4 +26,23 @@ describe('getScaleCalculator', () => {
       color: '#EAB839',
     });
   });
+
+  it('reasonable boolean values', () => {
+    const field: Field = {
+      name: 'test',
+      config: {},
+      type: FieldType.boolean,
+      values: new ArrayVector([true, false, true]),
+    };
+
+    const calc = getScaleCalculator(field, createTheme());
+    expect(calc(true as any)).toEqual({
+      percent: 1,
+      color: '#1A7F4B',
+    });
+    expect(calc(false as any)).toEqual({
+      percent: 0,
+      color: '#D10E5C',
+    });
+  });
 });
