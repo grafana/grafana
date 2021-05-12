@@ -538,7 +538,6 @@ func init() {
 		Help:      "number of evaluation calls",
 		Namespace: ExporterName,
 	})
-
 }
 
 // SetBuildInformation sets the build information for this binary
