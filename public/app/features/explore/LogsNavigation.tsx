@@ -10,7 +10,7 @@ type Props = {
   timeZone: TimeZone;
   queries: DataQuery[];
   loading: boolean;
-  visibleRange?: AbsoluteTimeRange;
+  visibleRange: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
