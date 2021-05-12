@@ -1,7 +1,10 @@
+load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret')
+
 grabpl_version = '2.0.0'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
+deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.13'
 windows_image = 'mcr.microsoft.com/windows:1809'
 dockerize_version = '0.6.1'
@@ -38,6 +41,7 @@ def pipeline(
     }
 
     if edition in ('enterprise', 'enterprise2'):
+        pipeline['image_pull_secrets'] = [pull_secret]
         # We have a custom clone step for enterprise
         pipeline['clone'] = {
             'disable': True,
@@ -67,9 +71,7 @@ def slack_step(channel):
         'name': 'slack',
         'image': 'plugins/slack',
         'settings': {
-            'webhook': {
-                'from_secret': 'slack_webhook',
-            },
+            'webhook': from_secret('slack_webhook'),
             'channel': channel,
             'template': 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}',
         },
@@ -137,9 +139,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'name': 'clone',
                 'image': build_image,
                 'environment': {
-                    'GITHUB_TOKEN': {
-                        'from_secret': 'github_token',
-                    },
+                    'GITHUB_TOKEN': from_secret(github_token),
                 },
                 'commands': download_grabpl_cmds + [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
@@ -192,9 +192,7 @@ def enterprise_downstream_step(edition):
         'image': 'grafana/drone-downstream',
         'settings': {
             'server': 'https://drone.grafana.net',
-            'token': {
-                'from_secret': 'drone_token',
-            },
+            'token': from_secret('drone_token'),
             'repositories': [
                 'grafana/grafana-enterprise@main',
             ],
@@ -300,9 +298,7 @@ def publish_storybook_step(edition, ver_mode):
             'end-to-end-tests',
         ],
         'environment': {
-            'GCP_KEY': {
-                'from_secret': 'gcp_key',
-            },
+            'GCP_KEY': from_secret('gcp_key'),
         },
         'commands': commands,
     }
@@ -315,9 +311,7 @@ def upload_cdn(edition):
             'package' + enterprise2_sfx(edition),
         ],
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': {
-                'from_secret': 'gcp_key',
-            },
+            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
         },
         'commands': [
              './bin/grabpl upload-cdn --edition {} --bucket "grafana-static-assets"'.format(edition),
@@ -332,9 +326,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
     # TODO: Convert number of jobs to percentage
     if ver_mode == 'release':
         env = {
-            'GITHUB_TOKEN': {
-                'from_secret': 'github_token',
-            },
+            'GITHUB_TOKEN': from_secret(github_token),
         }
         cmds = [
             './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
@@ -343,9 +335,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         ]
     elif ver_mode == 'test-release':
         env = {
-            'GITHUB_TOKEN': {
-                'from_secret': 'github_token',
-            },
+            'GITHUB_TOKEN': from_secret(github_token),
         }
         cmds = [
             './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise {}'.format(
@@ -424,9 +414,7 @@ def build_frontend_docs_step(edition):
 def build_plugins_step(edition, sign=False):
     if sign:
         env = {
-            'GRAFANA_API_KEY': {
-                'from_secret': 'grafana_api_key',
-            },
+            'GRAFANA_API_KEY': from_secret('grafana_api_key'),
         }
         sign_args = ' --sign --signing-admin'
     else:
@@ -489,9 +477,7 @@ def frontend_metrics_step(edition):
             'initialize',
         ],
         'environment': {
-            'GRAFANA_MISC_STATS_API_KEY': {
-                'from_secret': 'grafana_misc_stats_api_key',
-            },
+            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
         },
         'failure': 'ignore',
         'commands': [
@@ -572,21 +558,11 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     if ver_mode in ('main', 'release', 'test-release', 'release-branch'):
         sign_args = ' --sign'
         env = {
-            'GRAFANA_API_KEY': {
-                'from_secret': 'grafana_api_key',
-            },
-            'GITHUB_TOKEN': {
-                'from_secret': 'github_token',
-            },
-            'GPG_PRIV_KEY': {
-                'from_secret': 'gpg_priv_key',
-            },
-            'GPG_PUB_KEY': {
-                'from_secret': 'gpg_pub_key',
-            },
-            'GPG_KEY_PASSWORD': {
-                'from_secret': 'gpg_key_password',
-            },
+            'GRAFANA_API_KEY': from_secret('grafana_api_key'),
+            'GITHUB_TOKEN': from_secret(github_token),
+            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
+            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
+            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
         }
         test_args = ''
     else:
@@ -724,12 +700,8 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     }
 
     if publish:
-        settings['username'] = {
-            'from_secret': 'docker_user',
-        }
-        settings['password'] = {
-            'from_secret': 'docker_password',
-        }
+        settings['username'] = from_secret('docker_user')
+        settings['password'] = from_secret('docker_password')
     if archs:
         settings['archs'] = ','.join(archs)
     return {
@@ -832,33 +804,31 @@ def release_canary_npm_packages_step(edition):
             'end-to-end-tests',
         ],
         'environment': {
-            'GITHUB_PACKAGE_TOKEN': {
-                'from_secret': 'github_package_token',
-            },
+            'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
         },
         'commands': [
             './scripts/circle-release-canary-packages.sh',
         ],
     }
 
-def deploy_to_kubernetes_step(edition, is_downstream=False):
+def push_to_deployment_tools_step(edition, is_downstream=False):
     if edition != 'enterprise' or not is_downstream:
         return None
 
     return {
-        'name': 'deploy-to-kubernetes',
-        'image': alpine_image,
+        'name': 'push-to-deployment_tools',
+        'image': deploy_docker_image,
         'depends_on': [
             'build-docker-images',
+            # This step should have all the dependencies required for packaging, and should generate
+            # dist/grafana.version
+            'gen-version',
         ],
-        'environment': {
-            'CIRCLE_TOKEN': {
-                'from_secret': 'deployment_tools_circle_token',
-            },
+        'settings': {
+            'github_token': from_secret(github_token),
+            'images_file': './deployment_tools_config.json',
+            'docker_tag_file': './dist/grafana.version'
         },
-        'commands': [
-            './bin/grabpl deploy-to-k8s',
-        ],
     }
 
 def enterprise2_sfx(edition):
@@ -894,9 +864,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         'image': publish_image,
         'depends_on': dependencies,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': {
-                'from_secret': 'gcp_key',
-            },
+            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
         },
         'commands': [cmd,],
     }
@@ -930,21 +898,11 @@ def publish_packages_step(edition, ver_mode, is_downstream=False):
             'initialize',
         ],
         'environment': {
-            'GRAFANA_COM_API_KEY': {
-                'from_secret': 'grafana_api_key',
-            },
-            'GCP_KEY': {
-                'from_secret': 'gcp_key',
-            },
-            'GPG_PRIV_KEY': {
-                'from_secret': 'gpg_priv_key',
-            },
-            'GPG_PUB_KEY': {
-                'from_secret': 'gpg_pub_key',
-            },
-            'GPG_KEY_PASSWORD': {
-                'from_secret': 'gpg_key_password',
-            },
+            'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+            'GCP_KEY': from_secret('gcp_key'),
+            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
+            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
+            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
         },
         'commands': [
             'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
@@ -1017,9 +975,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'name': 'build-windows-installer',
             'image': wix_image,
             'environment': {
-                'GCP_KEY': {
-                    'from_secret': 'gcp_key',
-                },
+                'GCP_KEY': from_secret('gcp_key'),
             },
             'commands': installer_commands,
             'depends_on': [
@@ -1053,9 +1009,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'name': 'clone',
             'image': wix_image,
             'environment': {
-                'GITHUB_TOKEN': {
-                    'from_secret': 'github_token',
-                },
+                'GITHUB_TOKEN': from_secret(github_token),
             },
             'commands': download_grabpl_cmds + clone_cmds,
         })
