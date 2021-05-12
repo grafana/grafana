@@ -228,6 +228,7 @@ type Cfg struct {
 
 	// Rendering
 	ImagesDir                      string
+	CSVsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
 	RendererConcurrentRequestLimit int
@@ -283,6 +284,9 @@ type Cfg struct {
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
+
+	// Azure Cloud settings
+	Azure AzureSettings
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -900,6 +904,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
+	cfg.readAzureSettings()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -1293,6 +1298,7 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
+	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
 	return nil
 }
