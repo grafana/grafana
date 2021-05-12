@@ -3,6 +3,7 @@ import { sortThresholds } from './thresholds';
 import { ArrayVector } from '../vector/ArrayVector';
 import { getScaleCalculator } from './scale';
 import { createTheme } from '../themes';
+import { getColorForTheme } from '../utils';
 
 describe('getScaleCalculator', () => {
   it('should return percent, threshold and color', () => {
@@ -35,14 +36,17 @@ describe('getScaleCalculator', () => {
       values: new ArrayVector([true, false, true]),
     };
 
-    const calc = getScaleCalculator(field, createTheme());
+    const theme = createTheme();
+    const calc = getScaleCalculator(field, theme);
     expect(calc(true as any)).toEqual({
       percent: 1,
-      color: '#1A7F4B',
+      color: getColorForTheme('green', theme.v1),
+      threshold: undefined,
     });
     expect(calc(false as any)).toEqual({
       percent: 0,
-      color: '#D10E5C',
+      color: getColorForTheme('red', theme.v1),
+      threshold: undefined,
     });
   });
 });
