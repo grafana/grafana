@@ -1,5 +1,5 @@
 import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
-import { getColorForTheme, RegistryItem } from '../utils';
+import { RegistryItem } from '../utils';
 import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
 import { fallBackTreshold } from './thresholds';
