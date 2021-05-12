@@ -648,6 +648,5 @@ func newCounterVecStartingAtZero(opts prometheus.CounterOpts, labels []string, l
 func newCounterStartingAtZero(opts prometheus.CounterOpts, labelValues ...string) prometheus.Counter {
 	counter := prometheus.NewCounter(opts)
 	counter.Add(0)
-
 	return counter
 }
