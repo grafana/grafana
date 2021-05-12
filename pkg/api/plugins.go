@@ -9,9 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-
-	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -21,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
