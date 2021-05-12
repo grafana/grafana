@@ -497,7 +497,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 		return nil
 	}
 
-	err := getSignedInUser(ctx, query)
+	err := GetSignedInUser(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -507,7 +507,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 	return nil
 }
 
-func getSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
+func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	orgId := "u.org_id"
 	if query.OrgId > 0 {
 		orgId = strconv.FormatInt(query.OrgId, 10)
