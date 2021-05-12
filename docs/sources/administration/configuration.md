@@ -807,6 +807,31 @@ Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/A
 
 <hr />
 
+## [azure]
+
+Grafana supports additional integration with Azure services when hosted in the Azure Cloud.
+
+### cloud
+
+Azure cloud environment where Grafana is hosted:
+
+| Azure Cloud                                      | Value                  |
+| ------------------------------------------------ | ---------------------- |
+| Microsoft Azure public cloud                     | AzureCloud (*default*) |
+| Microsoft Chinese national cloud                 | AzureChinaCloud        |
+| US Government cloud                              | AzureUSGovernment      |
+| Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
+
+### managed_identity_enabled
+
+Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
+
+### managed_identity_client_id
+
+The client ID to use for user-assigned managed identity.
+
+Should be set for user-assigned identity and should be empty for system-assigned identity.
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
