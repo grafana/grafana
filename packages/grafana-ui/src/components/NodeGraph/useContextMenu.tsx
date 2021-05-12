@@ -26,60 +26,58 @@ export function useContextMenu(
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
   MenuComponent: React.ReactNode;
 } {
-  const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
-  const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
+  const [menu, setMenu] = useState<JSX.Element | undefined>(undefined);
 
-  const [openedEdge, setOpenedEdge] = useState<{ edge: EdgeDatum; event: MouseEvent } | undefined>(undefined);
-  const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
+  const onNodeOpen = useCallback(
+    (event, node) => {
+      const extraNodeItem = config.gridLayout
+        ? [
+            {
+              label: 'Show in Graph layout',
+              onClick: (node: NodeDatum) => {
+                setFocusedNodeId(node.id);
+                setConfig({ ...config, gridLayout: false });
+              },
+            },
+          ]
+        : undefined;
+      const renderer = getItemsRenderer(getLinks(nodes, node.dataFrameRowIndex), node, extraNodeItem);
 
-  if (!(openedNode || openedEdge)) {
-    return { onEdgeOpen, onNodeOpen, MenuComponent: null };
-  }
+      if (renderer) {
+        setMenu(
+          <ContextMenu
+            renderHeader={() => <NodeHeader node={node} nodes={nodes} />}
+            renderMenuItems={renderer}
+            onClose={() => setMenu(undefined)}
+            x={event.pageX}
+            y={event.pageY}
+          />
+        );
+      }
+    },
+    [config, nodes, getLinks, setMenu, setConfig, setFocusedNodeId]
+  );
 
-  // In grid view, we want to add extra link to show the node back in graph view.
-  const extraNodeItem = config.gridLayout
-    ? [
-        {
-          label: 'Show in Graph layout',
-          onClick: (node: NodeDatum) => {
-            setFocusedNodeId(node.id);
-            setConfig({ ...config, gridLayout: false });
-          },
-        },
-      ]
-    : undefined;
+  const onEdgeOpen = useCallback(
+    (event, edge) => {
+      const renderer = getItemsRenderer(getLinks(edges, edge.dataFrameRowIndex), edge);
 
-  const renderer = openedNode
-    ? getItemsRenderer(getLinks(nodes, openedNode.node.dataFrameRowIndex), openedNode.node, extraNodeItem)
-    : getItemsRenderer(getLinks(edges, openedEdge!.edge.dataFrameRowIndex), openedEdge!.edge);
+      if (renderer) {
+        setMenu(
+          <ContextMenu
+            renderHeader={() => <EdgeHeader edge={edge} edges={edges} />}
+            renderMenuItems={renderer}
+            onClose={() => setMenu(undefined)}
+            x={event.pageX}
+            y={event.pageY}
+          />
+        );
+      }
+    },
+    [edges, getLinks, setMenu]
+  );
 
-  let MenuComponent = null;
-  if (renderer) {
-    if (openedNode) {
-      MenuComponent = (
-        <ContextMenu
-          renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
-          renderMenuItems={renderer}
-          onClose={() => setOpenedNode(undefined)}
-          x={openedNode.event.pageX}
-          y={openedNode.event.pageY}
-        />
-      );
-    }
-    if (openedEdge) {
-      MenuComponent = (
-        <ContextMenu
-          renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
-          renderMenuItems={renderer}
-          onClose={() => setOpenedEdge(undefined)}
-          x={openedEdge.event.pageX}
-          y={openedEdge.event.pageY}
-        />
-      );
-    }
-  }
-
-  return { onEdgeOpen, onNodeOpen, MenuComponent };
+  return { onEdgeOpen, onNodeOpen, MenuComponent: menu };
 }
 
 function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
