@@ -684,7 +684,7 @@ describe('applyRawFieldOverrides', () => {
     });
 
     expect(getDisplayValue(frames, frameIndex, 3)).toEqual({
-      color: '#808080',
+      color: '#F2495C', // red
       numeric: 0,
       percent: expect.any(Number),
       prefix: undefined,
@@ -693,9 +693,9 @@ describe('applyRawFieldOverrides', () => {
     });
 
     expect(getDisplayValue(frames, frameIndex, 4)).toEqual({
-      color: '#808080',
+      color: '#73BF69', // value from classic pallet
       numeric: NaN,
-      percent: 0,
+      percent: 1,
       prefix: undefined,
       suffix: undefined,
       text: 'A - string',
