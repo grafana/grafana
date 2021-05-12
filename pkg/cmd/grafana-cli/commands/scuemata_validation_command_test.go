@@ -11,12 +11,15 @@ import (
 )
 
 func TestValidateScuemataBasics(t *testing.T) {
+	defaultBaseLoadPaths := load.GetDefaultLoadPaths()
+
 	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
 		tempDir := os.DirFS(filepath.Join("testdata", "valid_scuemata"))
+		mergedFS := load.Merge(tempDir, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       tempDir,
-			DistPluginCueFS: load.GetDefaultLoadPaths().DistPluginCueFS,
+			BaseCueFS:       mergedFS,
+			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
 		err := validate(baseLoadPaths, load.BaseDashboardFamily)
@@ -28,10 +31,11 @@ func TestValidateScuemataBasics(t *testing.T) {
 
 	t.Run("Testing scuemata validity with invalid cue schemas - family missing", func(t *testing.T) {
 		tempDir := os.DirFS(filepath.Join("testdata", "invalid_scuemata_missing_family"))
+		mergedFS := load.Merge(tempDir, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       tempDir,
-			DistPluginCueFS: load.GetDefaultLoadPaths().DistPluginCueFS,
+			BaseCueFS:       mergedFS,
+			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
 		err := validate(baseLoadPaths, load.BaseDashboardFamily)
@@ -40,10 +44,11 @@ func TestValidateScuemataBasics(t *testing.T) {
 
 	t.Run("Testing scuemata validity with invalid cue schemas - panel missing", func(t *testing.T) {
 		tempDir := os.DirFS(filepath.Join("testdata", "invalid_scuemata_missing_panel"))
+		mergedFS := load.Merge(tempDir, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       tempDir,
-			DistPluginCueFS: load.GetDefaultLoadPaths().DistPluginCueFS,
+			BaseCueFS:       mergedFS,
+			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
 		err := validate(baseLoadPaths, load.BaseDashboardFamily)

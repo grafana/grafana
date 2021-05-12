@@ -1,14 +1,16 @@
 package load
 
 import (
-	"fmt"
-	"io"
-	"io/fs"
-	"path/filepath"
-
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
+	"errors"
+	"fmt"
 	"github.com/grafana/grafana"
+	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"sort"
 )
 
 var rt = &cue.Runtime{}
@@ -38,6 +40,11 @@ type BaseLoadPaths struct {
 	// external tools could always create their own dirs shaped like a Grafana
 	// plugin dir, and point to those.
 	InstanceCueFS fs.FS
+}
+
+// MergedFS contains a slice of different filesystems that can be merged together
+type MergedFS struct {
+	filesystems []fs.FS
 }
 
 func GetDefaultLoadPaths() BaseLoadPaths {
@@ -92,4 +99,57 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
 	}
 
 	return nil
+}
+
+// Merge filesystems
+func Merge(filesystems ...fs.FS) fs.FS {
+	return MergedFS{filesystems: filesystems}
+}
+
+// Open opens the named file.
+func (mfs MergedFS) Open(name string) (fs.File, error) {
+	for _, filesystem := range mfs.filesystems {
+		file, err := filesystem.Open(name)
+		if err == nil {
+			return file, nil
+		}
+	}
+	return nil, os.ErrNotExist
+}
+
+// ReadDir reads from the directory, and produces a DirEntry array of different
+// directories.
+//
+// It iterates through all different filesystems that exist in the mfs MergedFS
+// filesystem slice and it identifies overlapping directories that exist in different
+// filesystems
+func (mfs MergedFS) ReadDir(name string) ([]fs.DirEntry, error) {
+	dirs := make([]fs.DirEntry, 0)
+	for _, filesystem := range mfs.filesystems {
+
+		if fsys, ok := filesystem.(fs.ReadDirFS); ok {
+			dir, err := fsys.ReadDir(name)
+			if err != nil {
+				return nil, err
+			}
+			dirs = append(dirs, dir...)
+			continue
+		}
+
+		file, err := filesystem.Open(name)
+		if err != nil {
+			continue
+		}
+		defer file.Close()
+
+		dir, ok := file.(fs.ReadDirFile)
+		if !ok {
+			return nil, &fs.PathError{Op: "readdir", Path: name, Err: errors.New("not implemented")}
+		}
+
+		fsDirs, err := dir.ReadDir(-1)
+		sort.Slice(fsDirs, func(i, j int) bool { return fsDirs[i].Name() < fsDirs[j].Name() })
+		dirs = append(dirs, fsDirs...)
+	}
+	return dirs, nil
 }
