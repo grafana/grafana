@@ -1,66 +1,98 @@
 import { cx } from '@emotion/css';
 import { Checkbox, HorizontalGroup, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import React, { Fragment, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import getStyles from './styles';
-import { EntryType, Row } from './types';
+import { EntryType, Row, RowGroup } from './types';
 
 interface NestedRowsProps {
-  rows: Row[];
+  rows: RowGroup;
   level: number;
-  selected: string[];
-  onRowToggleCollapse: (row: Row) => void;
+  selectedRows: RowGroup;
+  fetchNested: (row: Row) => Promise<void>;
   onRowSelectedChange: (row: Row, selected: boolean) => void;
 }
 
-const NestedRows: React.FC<NestedRowsProps> = ({ rows, selected, level, onRowToggleCollapse, onRowSelectedChange }) => {
+const NestedRows: React.FC<NestedRowsProps> = ({ rows, selectedRows, level, fetchNested, onRowSelectedChange }) => (
+  <>
+    {Object.keys(rows).map((rowId) => (
+      <NestedRow
+        key={rowId}
+        row={rows[rowId]}
+        selectedRows={selectedRows}
+        level={level}
+        fetchNested={fetchNested}
+        onRowSelectedChange={onRowSelectedChange}
+      />
+    ))}
+  </>
+);
+
+interface NestedRowProps {
+  row: Row;
+  level: number;
+  selectedRows: RowGroup;
+  fetchNested: (row: Row) => Promise<void>;
+  onRowSelectedChange: (row: Row, selected: boolean) => void;
+}
+
+const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, fetchNested, onRowSelectedChange }) => {
   const styles = useStyles2(getStyles);
+
+  const isSelected = !!selectedRows[row.id];
+  const isDisabled = Object.keys(selectedRows).length > 0 && !isSelected;
+  const initialOpenStatus = row.type === EntryType.Collection ? 'open' : 'closed';
+  const [openStatus, setOpenStatus] = useState<'open' | 'closed' | 'loading'>(initialOpenStatus);
+  const isOpen = openStatus === 'open';
+
+  const onRowToggleCollapse = async () => {
+    if (openStatus === 'open') {
+      setOpenStatus('closed');
+      return;
+    }
+    setOpenStatus('loading');
+    await fetchNested(row);
+    setOpenStatus('open');
+  };
 
   return (
     <>
-      {rows.map((row) => {
-        const isSelected = selected.includes(row.id);
-        const isDisabled = selected.length > 0 && !isSelected;
+      <tr className={cx(styles.row, isDisabled && styles.disabledRow)} key={row.id}>
+        <td className={styles.cell}>
+          <NestedEntry
+            level={level}
+            isSelected={isSelected}
+            isDisabled={isDisabled}
+            isOpen={isOpen}
+            entry={row}
+            onToggleCollapse={onRowToggleCollapse}
+            onSelectedChange={onRowSelectedChange}
+          />
+        </td>
 
-        return (
-          <Fragment key={row.id}>
-            <tr className={cx(styles.row, isDisabled && styles.disabledRow)} key={row.id}>
-              <td className={styles.cell}>
-                <NestedEntry
-                  level={level}
-                  isSelected={isSelected}
-                  isDisabled={isDisabled}
-                  entry={row}
-                  onToggleCollapse={onRowToggleCollapse}
-                  onSelectedChange={onRowSelectedChange}
-                />
-              </td>
+        <td className={styles.cell}>{row.typeLabel}</td>
 
-              <td className={styles.cell}>{row.typeLabel}</td>
+        <td className={styles.cell}>{row.location ?? '-'}</td>
+      </tr>
 
-              <td className={styles.cell}>{row.location ?? '-'}</td>
-            </tr>
-
-            {row.isOpen && row.children && (
-              <NestedRows
-                rows={row.children}
-                selected={selected}
-                level={level + 1}
-                onRowToggleCollapse={onRowToggleCollapse}
-                onRowSelectedChange={onRowSelectedChange}
-              />
-            )}
-          </Fragment>
-        );
-      })}
+      {isOpen && row.children && Object.keys(row.children).length > 0 && (
+        <NestedRows
+          rows={row.children}
+          selectedRows={selectedRows}
+          level={level + 1}
+          fetchNested={fetchNested}
+          onRowSelectedChange={onRowSelectedChange}
+        />
+      )}
     </>
   );
 };
 
 interface EntryIconProps {
   entry: Row;
+  isOpen: boolean;
 }
 
-const EntryIcon: React.FC<EntryIconProps> = ({ entry: { type, isOpen } }) => {
+const EntryIcon: React.FC<EntryIconProps> = ({ isOpen, entry: { type } }) => {
   switch (type) {
     case EntryType.Collection:
       return <Icon name="layer-group" />;
@@ -80,6 +112,7 @@ interface NestedEntryProps {
   level: number;
   entry: Row;
   isSelected: boolean;
+  isOpen: boolean;
   isDisabled: boolean;
   onToggleCollapse: (row: Row) => void;
   onSelectedChange: (row: Row, selected: boolean) => void;
@@ -89,12 +122,15 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   entry,
   isSelected,
   isDisabled,
+  isOpen,
   level,
   onToggleCollapse,
   onSelectedChange,
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const hasChildren = !!entry.children;
+  const isSelectable = entry.type === EntryType.Resource;
 
   const handleToggleCollapse = useCallback(() => {
     onToggleCollapse(entry);
@@ -113,18 +149,18 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
       <HorizontalGroup align="center" spacing="sm">
         {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
             of the collapse button for leaf rows that have no children to get them to align */}
-        {entry.hasChildren && (
+        {hasChildren && (
           <IconButton
             className={styles.collapseButton}
-            name={entry.isOpen ? 'angle-down' : 'angle-right'}
-            aria-label={entry.isOpen ? 'Collapse' : 'Expand'}
+            name={isOpen ? 'angle-down' : 'angle-right'}
+            aria-label={isOpen ? 'Collapse' : 'Expand'}
             onClick={handleToggleCollapse}
           />
         )}
 
-        {entry.isSelectable && <Checkbox onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />}
+        {isSelectable && <Checkbox onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />}
 
-        <EntryIcon entry={entry} />
+        <EntryIcon entry={entry} isOpen={isOpen} />
 
         {entry.name}
       </HorizontalGroup>

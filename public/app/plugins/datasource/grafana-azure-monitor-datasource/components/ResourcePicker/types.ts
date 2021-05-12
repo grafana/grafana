@@ -3,17 +3,17 @@ export enum EntryType {
   SubCollection,
   Resource,
 }
-
 export interface Row {
   id: string;
   name: string;
   type: EntryType;
   typeLabel: string;
+  subscriptionId: string;
+  resourceGroup: string;
   location?: string;
-  children?: Row[];
+  children?: RowGroup;
+}
 
-  hasChildren?: boolean;
-  isSelectable?: boolean;
-
-  isOpen?: boolean;
+export interface RowGroup {
+  [subscriptionIdOrResourceGroupName: string]: Row;
 }

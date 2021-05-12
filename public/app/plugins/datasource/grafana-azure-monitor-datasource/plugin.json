@@ -133,6 +133,26 @@
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
+      "path": "resourcepickerdata",
+      "method": "POST",
+      "url": "https://management.azure.com",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://management.azure.com/"
+        }
+      },
+      "headers": [
+        {
+          "name": "x-ms-app",
+          "content": "Grafana"
+        }
+      ]
+    },
+    {
       "path": "chinaworkspacesloganalytics",
       "method": "GET",
       "url": "https://management.chinacloudapi.cn",

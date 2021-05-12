@@ -5,21 +5,21 @@ import { useStyles2 } from '@grafana/ui';
 
 import NestedRows from './NestedRows';
 import getStyles from './styles';
-import { Row } from './types';
+import { Row, RowGroup } from './types';
 
 interface NestedResourceTableProps {
-  rows: Row[];
-  selected: string[];
+  rows: RowGroup;
+  selectedRows: RowGroup;
   noHeader?: boolean;
-  onRowToggleCollapse: (row: Row) => void;
+  fetchNested: (row: Row) => Promise<void>;
   onRowSelectedChange: (row: Row, selected: boolean) => void;
 }
 
 const NestedResourceTable: React.FC<NestedResourceTableProps> = ({
   rows,
-  selected,
+  selectedRows,
   noHeader,
-  onRowToggleCollapse,
+  fetchNested,
   onRowSelectedChange,
 }) => {
   const styles = useStyles2(getStyles);
@@ -39,9 +39,9 @@ const NestedResourceTable: React.FC<NestedResourceTableProps> = ({
       <tbody>
         <NestedRows
           rows={rows}
-          selected={selected}
+          selectedRows={selectedRows}
           level={0}
-          onRowToggleCollapse={onRowToggleCollapse}
+          fetchNested={fetchNested}
           onRowSelectedChange={onRowSelectedChange}
         />
       </tbody>
