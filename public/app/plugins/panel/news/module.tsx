@@ -16,6 +16,15 @@ export const plugin = new PanelPlugin<PanelOptions>(NewsPanel).setPanelOptions((
       defaultValue: defaultPanelOptions.feedUrl,
     })
     .addBooleanSwitch({
+      path: 'showImage',
+      name: 'Show image',
+      description: 'Controls if the news item social (og:image) image is shown above text content',
+      showIf: (currentConfig: PanelOptions) => {
+        return isString(currentConfig.feedUrl) && !currentConfig.feedUrl.startsWith(PROXY_PREFIX);
+      },
+      defaultValue: defaultPanelOptions.showImage,
+    })
+    .addBooleanSwitch({
       path: 'useProxy',
       name: 'Use Proxy',
       description: 'If the feed is unable to connect, consider a CORS proxy',

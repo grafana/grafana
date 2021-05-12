@@ -58,8 +58,8 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 		NotifierBase: old_notifiers.NewNotifierBase(model),
 		Key:          key,
 		CustomDetails: map[string]string{
-			"firing":       `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
-			"resolved":     `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
+			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
+			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
 			"num_firing":   `{{ .Alerts.Firing | len }}`,
 			"num_resolved": `{{ .Alerts.Resolved | len }}`,
 		},
@@ -67,7 +67,7 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 		Class:     model.Settings.Get("class").MustString("default"),
 		Component: model.Settings.Get("component").MustString("Grafana"),
 		Group:     model.Settings.Get("group").MustString("default"),
-		Summary:   model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
+		Summary:   model.Settings.Get("summary").MustString(`{{ template "default.title" . }}`),
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + model.Name),
 	}, nil

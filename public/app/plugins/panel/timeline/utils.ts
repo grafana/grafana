@@ -2,7 +2,6 @@ import React from 'react';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   DataFrame,
-  FieldColorModeId,
   FieldConfig,
   formattedValueToString,
   getFieldDisplayName,
@@ -10,7 +9,13 @@ import {
   classicColors,
   Field,
 } from '@grafana/data';
-import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode } from '@grafana/ui';
+import {
+  UPlotConfigBuilder,
+  FIXED_UNIT,
+  SeriesVisibilityChangeMode,
+  BarValueVisibility,
+  UPlotConfigPrepFn,
+} from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import {
   AxisPlacement,
@@ -19,9 +24,8 @@ import {
   ScaleOrientation,
 } from '@grafana/ui/src/components/uPlot/config';
 import { measureText } from '@grafana/ui/src/utils/measureText';
-import { PrepConfigOpts } from '@grafana/ui/src/components/GraphNG/utils';
 
-import { BarValueVisibility, TimelineFieldConfig, TimelineMode } from './types';
+import { TimelineFieldConfig, TimelineMode } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -45,16 +49,12 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-type PrepConfig = (
-  opts: PrepConfigOpts<{
-    mode: TimelineMode;
-    rowHeight: number;
-    colWidth?: number;
-    showValue: BarValueVisibility;
-  }>
-) => UPlotConfigBuilder;
-
-export const preparePlotConfigBuilder: PrepConfig = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
+  mode: TimelineMode;
+  rowHeight: number;
+  colWidth?: number;
+  showValue: BarValueVisibility;
+}> = ({
   frame,
   theme,
   timeZone,
@@ -74,8 +74,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({
 
   const colorLookup = (seriesIdx: number, valueIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
-    const mode = field.config?.color?.mode;
-    if (mode && field.display && (mode === FieldColorModeId.Thresholds || mode.startsWith('continuous-'))) {
+    if (field.display) {
       const disp = field.display(value); // will apply color modes
       if (disp.color) {
         return disp.color;

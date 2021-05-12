@@ -53,7 +53,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
       margin-bottom: ${theme.spacing.md};
     `,
     title: css`
-      margin-bottom: 48px;
+      margin-bottom: ${theme.spacing.md};
     `,
     url: css`
       border-top: 1px solid ${theme.colors.border1};

@@ -1,4 +1,21 @@
 
+<!-- 7.5.6 START -->
+
+# 7.5.6 (2021-05-11)
+
+### Features and enhancements
+
+* **Database**: Add isolation level configuration parameter for MySQL. [#33830](https://github.com/grafana/grafana/pull/33830), [@zserge](https://github.com/zserge)
+* **InfluxDB**: Improve measurement-autocomplete behavior. [#33494](https://github.com/grafana/grafana/pull/33494), [@gabor](https://github.com/gabor)
+* **Instrumentation**: Don't consider invalid email address a failed email. [#33671](https://github.com/grafana/grafana/pull/33671), [@bergquist](https://github.com/bergquist)
+
+### Bug fixes
+
+* **Loki**: fix label browser crashing when + typed. [#33900](https://github.com/grafana/grafana/pull/33900), [@zoltanbedi](https://github.com/zoltanbedi)
+* **Prometheus**: Sanitize PromLink button. [#33874](https://github.com/grafana/grafana/pull/33874), [@ivanahuckova](https://github.com/ivanahuckova)
+
+<!-- 7.5.6 END -->
+
 <!-- 7.5.5 START -->
 
 # 7.5.5 (2021-04-28)

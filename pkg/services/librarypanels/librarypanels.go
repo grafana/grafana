@@ -13,12 +13,19 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// Service is a service for operating on library panels.
+type Service interface {
+	LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
+	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
+	ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
+}
+
 // LibraryPanelService is the service for the Panel Library feature.
 type LibraryPanelService struct {
-	Cfg                   *setting.Cfg                           `inject:""`
-	SQLStore              *sqlstore.SQLStore                     `inject:""`
-	RouteRegister         routing.RouteRegister                  `inject:""`
-	LibraryElementService *libraryelements.LibraryElementService `inject:""`
+	Cfg                   *setting.Cfg            `inject:""`
+	SQLStore              *sqlstore.SQLStore      `inject:""`
+	RouteRegister         routing.RouteRegister   `inject:""`
+	LibraryElementService libraryelements.Service `inject:""`
 	log                   log.Logger
 }
 
@@ -32,22 +39,9 @@ func (lps *LibraryPanelService) Init() error {
 	return nil
 }
 
-// IsEnabled returns true if the Panel Library feature is enabled for this instance.
-func (lps *LibraryPanelService) IsEnabled() bool {
-	if lps.Cfg == nil {
-		return false
-	}
-
-	return lps.Cfg.IsPanelLibraryEnabled()
-}
-
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
 func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
-	if !lps.IsEnabled() {
-		return nil
-	}
-
 	elements, err := lps.LibraryElementService.GetElementsForDashboard(c, dash.Id)
 	if err != nil {
 		return err
@@ -112,7 +106,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 			"meta": map[string]interface{}{
 				"folderName":          elementInDB.Meta.FolderName,
 				"folderUid":           elementInDB.Meta.FolderUID,
-				"connectedDashboards": elementInDB.Meta.Connections,
+				"connectedDashboards": elementInDB.Meta.ConnectedDashboards,
 				"created":             elementInDB.Meta.Created,
 				"updated":             elementInDB.Meta.Updated,
 				"createdBy": map[string]interface{}{
@@ -135,10 +129,6 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 // CleanLibraryPanelsForDashboard loops through all panels in dashboard JSON and cleans up any library panel JSON so that
 // only the necessary JSON properties remain when storing the dashboard JSON.
 func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
-	if !lps.IsEnabled() {
-		return nil
-	}
-
 	panels := dash.Data.Get("panels").MustArray()
 	for i, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
@@ -175,10 +165,6 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
-	if !lps.IsEnabled() {
-		return nil
-	}
-
 	panels := dash.Data.Get("panels").MustArray()
 	var libraryPanels []string
 	for _, panel := range panels {

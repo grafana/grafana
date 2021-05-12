@@ -4,7 +4,6 @@ import { css } from '@emotion/css';
 import { GrafanaTheme, PanelData, VizOrientation } from '@grafana/data';
 import { config, PanelRenderer } from '@grafana/runtime';
 import { LegendDisplayMode, SingleStatBaseOptions, TooltipDisplayMode, RadioButtonGroup, useStyles } from '@grafana/ui';
-import { Options } from 'app/plugins/panel/timeseries/types';
 
 interface Props {
   data: PanelData;
@@ -65,7 +64,7 @@ const getOptionsForPanelPlugin = (panelPlugin: string) => {
   }
 };
 
-const timeSeriesOptions: Options = {
+const timeSeriesOptions = {
   legend: {
     displayMode: LegendDisplayMode.List,
     placement: 'bottom',

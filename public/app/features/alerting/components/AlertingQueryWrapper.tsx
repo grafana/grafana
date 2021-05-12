@@ -1,7 +1,14 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 import { css } from '@emotion/css';
-import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, TimeRange } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  GrafanaTheme2,
+  PanelData,
+  RelativeTimeRange,
+  getDefaultRelativeTimeRange,
+} from '@grafana/data';
+import { useStyles2, RelativeTimeRangePicker } from '@grafana/ui';
 import { QueryEditorRow } from '../../query/components/QueryEditorRow';
 import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 import { isExpressionQuery } from '../../expressions/guards';
@@ -14,7 +21,7 @@ interface Props {
   dsSettings: DataSourceInstanceSettings;
   onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
   onChangeQuery: (query: DataQuery, index: number) => void;
-  onChangeTimeRange?: (timeRange: TimeRange, index: number) => void;
+  onChangeTimeRange?: (timeRange: RelativeTimeRange, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onDuplicateQuery: (query: GrafanaQuery) => void;
   onRunQueries: () => void;
@@ -37,6 +44,19 @@ export const AlertingQueryWrapper: FC<Props> = ({
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
 
+  const renderTimePicker = (query: GrafanaQuery, index: number): ReactNode => {
+    if (isExpressionQuery(query.model) || !onChangeTimeRange) {
+      return null;
+    }
+
+    return (
+      <RelativeTimeRangePicker
+        timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+        onChange={(range) => onChangeTimeRange(range, index)}
+      />
+    );
+  };
+
   return (
     <div className={styles.wrapper}>
       <QueryEditorRow
@@ -48,16 +68,11 @@ export const AlertingQueryWrapper: FC<Props> = ({
         data={data}
         query={query.model}
         onChange={(query) => onChangeQuery(query, index)}
-        timeRange={
-          !isExpression && query.relativeTimeRange ? rangeUtil.relativeToTimeRange(query.relativeTimeRange) : undefined
-        }
-        onChangeTimeRange={
-          !isExpression && onChangeTimeRange ? (timeRange) => onChangeTimeRange(timeRange, index) : undefined
-        }
         onRemoveQuery={onRemoveQuery}
         onAddQuery={onDuplicateQuery}
         onRunQuery={onRunQueries}
         queries={queries}
+        renderHeaderExtras={() => renderTimePicker(query, index)}
       />
       {data && <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} />}
     </div>

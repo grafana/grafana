@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, PanelData, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryWrapper } from './AlertingQueryWrapper';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
@@ -31,7 +31,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange = (timeRange: TimeRange, index: number) => {
+  onChangeTimeRange = (timeRange: RelativeTimeRange, index: number) => {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -40,7 +40,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         }
         return {
           ...item,
-          relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange),
+          relativeTimeRange: timeRange,
         };
       })
     );
@@ -85,6 +85,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         }
         return {
           ...item,
+          refId: query.refId,
           model: {
             ...item.model,
             ...query,
