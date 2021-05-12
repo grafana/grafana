@@ -11,9 +11,16 @@ export interface Props {
   tags?: string[];
   onChange: (tags: string[]) => void;
   width?: number;
+  disabled?: boolean;
 }
 
-export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange, width }) => {
+export const TagsInput: FC<Props> = ({
+  placeholder = 'New tag (enter key to add)',
+  tags = [],
+  onChange,
+  width,
+  disabled,
+}) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
   const theme = useTheme2();
@@ -49,6 +56,7 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
       </div>
       <div>
         <Input
+          disabled={disabled}
           placeholder={placeholder}
           onChange={onNameChange}
           value={newTagName}
