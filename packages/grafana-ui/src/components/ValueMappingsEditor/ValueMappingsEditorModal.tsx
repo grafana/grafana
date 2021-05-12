@@ -47,7 +47,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
   };
 
   const mappingTypes: Array<SelectableValue<MappingType>> = [
-    { label: 'Value', value: MappingType.ValueToText, description: 'Match on a specific text value' },
+    { label: 'Value', value: MappingType.ValueToText, description: 'Match a specific text value' },
     { label: 'Range', value: MappingType.RangeToText, description: 'Match a numerical range of values' },
     { label: 'Special', value: MappingType.SpecialValue, description: 'Match on null, NaN, boolean and empty values' },
   ];
