@@ -1,26 +1,29 @@
-import React, { memo, MutableRefObject, useCallback, useMemo, useState, MouseEvent } from 'react';
+import React, { memo, MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
 import cx from 'classnames';
 import useMeasure from 'react-use/lib/useMeasure';
+import { Icon, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { usePanning } from './usePanning';
-import { EdgeDatum, NodeDatum } from './types';
+import { EdgeDatum, NodeDatum, NodesMarker } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
-import { Bounds, Config, defaultConfig, useLayout } from './layout';
+import { Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
-import { stylesFactory, useTheme2 } from '../../themes';
 import { css } from '@emotion/css';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
-import { processNodes } from './utils';
-import { Icon } from '..';
-import { useNodeLimit } from './useNodeLimit';
+import { processNodes, Bounds } from './utils';
+import { Marker } from './Marker';
+import { Legend } from './Legend';
+import { useHighlight } from './useHighlight';
+import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
+    label: wrapper;
     height: 100%;
     width: 100%;
     overflow: hidden;
@@ -28,6 +31,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
 
   svg: css`
+    label: svg;
     height: 100%;
     width: 100%;
     overflow: visible;
@@ -36,19 +40,34 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
 
   svgPanning: css`
+    label: svgPanning;
     user-select: none;
   `,
 
   mainGroup: css`
+    label: mainGroup;
     will-change: transform;
   `,
 
   viewControls: css`
+    label: viewControls;
     position: absolute;
-    left: 10px;
-    top: 10px;
+    left: 2px;
+    bottom: 3px;
+    right: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  `,
+  legend: css`
+    label: legend;
+    background: ${theme.colors.background.secondary};
+    box-shadow: ${theme.shadows.z1};
+    padding-bottom: 5px;
+    margin-right: 10px;
   `,
   alert: css`
+    label: alert;
     padding: 5px 8px;
     font-size: 10px;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
@@ -60,10 +79,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     background: ${theme.colors.warning.main};
     color: ${theme.colors.warning.contrastText};
   `,
-}));
+  loadingWrapper: css`
+    label: loadingWrapper;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `,
+});
 
-// This is mainly for performance reasons.
-const defaultNodeCountLimit = 1500;
+// Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible by expanding
+// parts of the graph. The specific number is arbitrary but should be a number of nodes where panning, zooming and other
+// interactions will be without any lag for most users.
+const defaultNodeCountLimit = 200;
 
 interface Props {
   dataFrames: DataFrame[];
@@ -79,10 +107,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
   // sure they are visible on top of everything else
-  const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
-  const clearNodeHover = useCallback(() => setNodeHover(undefined), [setNodeHover]);
-  const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
-  const clearEdgeHover = useCallback(() => setEdgeHover(undefined), [setEdgeHover]);
+  const { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover } = useHover();
 
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
@@ -97,15 +122,38 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     theme,
   ]);
 
-  const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.edges, nodeCountLimit);
-  const hiddenNodesCount = processed.nodes.length - rawNodes.length;
+  // This is used for navigation from grid to graph view. This node will be centered and briefly highlighted.
+  const [focusedNodeId, setFocusedNodeId] = useState<string>();
+  const setFocused = useCallback((e: MouseEvent, m: NodesMarker) => setFocusedNodeId(m.node.id), [setFocusedNodeId]);
 
-  const { nodes, edges, bounds } = useLayout(rawNodes, rawEdges, config);
-  const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
-    bounds
+  // May seem weird that we do layout first and then limit the nodes shown but the problem is we want to keep the node
+  // position stable which means we need the full layout first and then just visually hide the nodes. As hiding/showing
+  // nodes should not have effect on layout it should not be recalculated.
+  const { nodes, edges, markers, bounds, hiddenNodesCount, loading } = useLayout(
+    processed.nodes,
+    processed.edges,
+    config,
+    nodeCountLimit,
+    focusedNodeId
   );
-  const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
-  const styles = getStyles(theme);
+
+  // If we move from grid to graph layout and we have focused node lets get it's position to center there. We want do
+  // do it specifically only in that case.
+  const focusPosition = useFocusPositionOnLayout(config, nodes, focusedNodeId);
+  const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
+    bounds,
+    focusPosition
+  );
+
+  const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(
+    getLinks,
+    firstNodesDataFrame,
+    firstEdgesDataFrame,
+    config,
+    setConfig,
+    setFocusedNodeId
+  );
+  const styles = useStyles2(getStyles);
 
   // This cannot be inline func or it will create infinite render cycle.
   const topLevelRef = useCallback(
@@ -116,8 +164,17 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     [measureRef, zoomRef]
   );
 
+  const highlightId = useHighlight(focusedNodeId);
+
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
+      {loading ? (
+        <div className={styles.loadingWrapper}>
+          Computing layout&nbsp;
+          <Spinner />
+        </div>
+      ) : null}
+
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
@@ -128,30 +185,55 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
           style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
         >
           <EdgeArrowMarker />
-          <Edges
-            edges={edges}
-            nodeHoveringId={nodeHover}
-            edgeHoveringId={edgeHover}
-            onClick={onEdgeOpen}
-            onMouseEnter={setEdgeHover}
-            onMouseLeave={clearEdgeHover}
-          />
+          {!config.gridLayout && (
+            <Edges
+              edges={edges}
+              nodeHoveringId={nodeHover}
+              edgeHoveringId={edgeHover}
+              onClick={onEdgeOpen}
+              onMouseEnter={setEdgeHover}
+              onMouseLeave={clearEdgeHover}
+            />
+          )}
           <Nodes
             nodes={nodes}
             onMouseEnter={setNodeHover}
             onMouseLeave={clearNodeHover}
             onClick={onNodeOpen}
-            hoveringId={nodeHover}
+            hoveringId={nodeHover || highlightId}
           />
+
+          <Markers markers={markers || []} onClick={setFocused} />
           {/*We split the labels from edges so that they are shown on top of everything else*/}
-          <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />
+          {!config.gridLayout && <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />}
         </g>
       </svg>
 
       <div className={styles.viewControls}>
+        {nodes.length && (
+          <div className={styles.legend}>
+            <Legend
+              sortable={config.gridLayout}
+              nodes={nodes}
+              sort={config.sort}
+              onSort={(sort) => {
+                setConfig({
+                  ...config,
+                  sort: sort,
+                });
+              }}
+            />
+          </div>
+        )}
+
         <ViewControls<Config>
           config={config}
-          onConfigChange={setConfig}
+          onConfigChange={(cfg) => {
+            if (cfg.gridLayout !== config.gridLayout) {
+              setFocusedNodeId(undefined);
+            }
+            setConfig(cfg);
+          }}
           onMinus={onStepDown}
           onPlus={onStepUp}
           scale={scale}
@@ -171,7 +253,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   );
 }
 
-// These 3 components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
+// These components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
 
 interface NodesProps {
   nodes: NodeDatum[];
@@ -192,6 +274,20 @@ const Nodes = memo(function Nodes(props: NodesProps) {
           onClick={props.onClick}
           hovering={props.hoveringId === n.id}
         />
+      ))}
+    </>
+  );
+});
+
+interface MarkersProps {
+  markers: NodesMarker[];
+  onClick: (event: MouseEvent<SVGElement>, marker: NodesMarker) => void;
+}
+const Markers = memo(function Nodes(props: MarkersProps) {
+  return (
+    <>
+      {props.markers.map((m) => (
+        <Marker key={'marker-' + m.node.id} marker={m} onClick={props.onClick} />
       ))}
     </>
   );
@@ -246,12 +342,22 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   );
 });
 
-function usePanAndZoom(bounds: Bounds) {
+function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }) {
   const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom();
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
     bounds,
+    focus,
   });
   const { position, isPanning } = panningState;
   return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp, isMaxZoom: isMax, isMinZoom: isMin };
+}
+
+function useHover() {
+  const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
+  const clearNodeHover = useCallback(() => setNodeHover(undefined), [setNodeHover]);
+  const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
+  const clearEdgeHover = useCallback(() => setEdgeHover(undefined), [setEdgeHover]);
+
+  return { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover };
 }

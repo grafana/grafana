@@ -1,10 +1,11 @@
 import React from 'react';
-import { Badge, NodeGraph, Collapse } from '@grafana/ui';
+import { Badge, Collapse } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLinks } from './utils/links';
+import { NodeGraph } from '../../plugins/panel/nodeGraph';
 
 interface Props {
   // Edges and Nodes are separate frames

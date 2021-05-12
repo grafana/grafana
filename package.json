@@ -208,6 +208,7 @@
     "webpack-cli": "3.3.10",
     "webpack-dev-server": "3.11.1",
     "webpack-merge": "4.2.2",
+    "worker-loader": "^3.0.8",
     "zone.js": "0.7.8"
   },
   "dependencies": {

@@ -10,7 +10,7 @@ import { mapMouseEventToMode } from './utils';
 /**
  * @public
  */
-export const VizLegend: React.FunctionComponent<LegendProps> = ({
+export function VizLegend<T>({
   items,
   displayMode,
   sortBy: sortKey,
@@ -20,7 +20,8 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   onToggleSort,
   placement,
   className,
-}) => {
+  itemRenderer,
+}: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility } = usePanelContext();
 
   const onMouseEnter = useCallback(
@@ -73,7 +74,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   switch (displayMode) {
     case LegendDisplayMode.Table:
       return (
-        <VizLegendTable
+        <VizLegendTable<T>
           className={className}
           items={items}
           placement={placement}
@@ -83,22 +84,24 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
           onToggleSort={onToggleSort}
           onLabelMouseEnter={onMouseEnter}
           onLabelMouseOut={onMouseOut}
+          itemRenderer={itemRenderer}
         />
       );
     case LegendDisplayMode.List:
       return (
-        <VizLegendList
+        <VizLegendList<T>
           className={className}
           items={items}
           placement={placement}
           onLabelMouseEnter={onMouseEnter}
           onLabelMouseOut={onMouseOut}
           onLabelClick={onLegendLabelClick}
+          itemRenderer={itemRenderer}
         />
       );
     default:
       return null;
   }
-};
+}
 
 VizLegend.displayName = 'Legend';

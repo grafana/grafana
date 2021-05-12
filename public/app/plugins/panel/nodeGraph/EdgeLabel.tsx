@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
 import { EdgeDatum, NodeDatum } from './types';
 import { css } from '@emotion/css';
-import { useStyles2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { shortenLine } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {

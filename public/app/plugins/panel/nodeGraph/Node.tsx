@@ -1,31 +1,32 @@
 import React, { MouseEvent, memo } from 'react';
-import { css } from '@emotion/css';
-import tinycolor from 'tinycolor2';
 import cx from 'classnames';
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, useTheme } from '@grafana/ui';
 import { NodeDatum } from './types';
-import { stylesFactory, useTheme } from '../../themes';
+import { css } from 'emotion';
+import tinycolor from 'tinycolor2';
+import { statToString } from './utils';
 
 const nodeR = 40;
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   mainGroup: css`
     cursor: pointer;
     font-size: 10px;
   `,
 
   mainCircle: css`
-    fill: ${theme.colors.panelBg};
+    fill: ${theme.components.panel.background};
   `,
 
   hoverCircle: css`
     opacity: 0.5;
     fill: transparent;
-    stroke: ${theme.colors.textBlue};
+    stroke: ${theme.colors.primary.text};
   `,
 
   text: css`
-    fill: ${theme.colors.text};
+    fill: ${theme.colors.text.primary};
   `,
 
   titleText: css`
@@ -33,7 +34,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    background-color: ${tinycolor(theme.colors.bodyBg).setAlpha(0.6).toHex8String()};
+    background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.6).toHex8String()};
     width: 100px;
   `,
 
@@ -48,10 +49,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   textHovering: css`
     width: 200px;
     & span {
-      background-color: ${tinycolor(theme.colors.bodyBg).setAlpha(0.8).toHex8String()};
+      background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.8).toHex8String()};
     }
   `,
-}));
+});
 
 export const Node = memo(function Node(props: {
   node: NodeDatum;
@@ -61,7 +62,7 @@ export const Node = memo(function Node(props: {
   hovering: boolean;
 }) {
   const { node, onMouseEnter, onMouseLeave, onClick, hovering } = props;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
 
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;
@@ -69,6 +70,7 @@ export const Node = memo(function Node(props: {
 
   return (
     <g
+      data-node-id={node.id}
       className={styles.mainGroup}
       onMouseEnter={() => {
         onMouseEnter(node.id);
@@ -87,9 +89,9 @@ export const Node = memo(function Node(props: {
       <g className={styles.text}>
         <foreignObject x={node.x - (hovering ? 100 : 35)} y={node.y - 15} width={hovering ? '200' : '70'} height="30">
           <div className={cx(styles.statsText, hovering && styles.textHovering)}>
-            <span>{node.mainStat}</span>
+            <span>{node.mainStat && statToString(node.mainStat, node.dataFrameRowIndex)}</span>
             <br />
-            <span>{node.secondaryStat}</span>
+            <span>{node.secondaryStat && statToString(node.secondaryStat, node.dataFrameRowIndex)}</span>
           </div>
         </foreignObject>
         <foreignObject
@@ -114,7 +116,7 @@ export const Node = memo(function Node(props: {
  */
 function ColorCircle(props: { node: NodeDatum }) {
   const { node } = props;
-  const fullStat = node.arcSections.find((s) => s.value === 1);
+  const fullStat = node.arcSections.find((s) => s.values.get(node.dataFrameRowIndex) === 1);
   const theme = useTheme();
 
   if (fullStat) {
@@ -122,7 +124,7 @@ function ColorCircle(props: { node: NodeDatum }) {
     return (
       <circle
         fill="none"
-        stroke={getColorForTheme(fullStat.color, theme)}
+        stroke={getColorForTheme(fullStat.config.color?.fixedColor || '', theme)}
         strokeWidth={2}
         r={nodeR}
         cx={node.x}
@@ -131,7 +133,7 @@ function ColorCircle(props: { node: NodeDatum }) {
     );
   }
 
-  const nonZero = node.arcSections.filter((s) => s.value !== 0);
+  const nonZero = node.arcSections.filter((s) => s.values.get(node.dataFrameRowIndex) !== 0);
   if (nonZero.length === 0) {
     // Fallback if no arc is defined
     return <circle fill="none" stroke={node.color} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />;
@@ -139,20 +141,22 @@ function ColorCircle(props: { node: NodeDatum }) {
 
   const { elements } = nonZero.reduce(
     (acc, section) => {
+      const color = section.config.color?.fixedColor || '';
+      const value = section.values.get(node.dataFrameRowIndex);
       const el = (
         <ArcSection
-          key={section.color}
+          key={color}
           r={nodeR}
           x={node.x!}
           y={node.y!}
           startPercent={acc.percent}
-          percent={section.value}
-          color={getColorForTheme(section.color, theme)}
+          percent={value}
+          color={getColorForTheme(color, theme)}
           strokeWidth={2}
         />
       );
       acc.elements.push(el);
-      acc.percent = acc.percent + section.value;
+      acc.percent = acc.percent + value;
       return acc;
     },
     { elements: [] as React.ReactNode[], percent: 0 }

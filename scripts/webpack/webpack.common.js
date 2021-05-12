@@ -158,6 +158,10 @@ module.exports = {
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
       },
+      {
+        test: /\.worker\.js$/,
+        use: { loader: 'worker-loader' },
+      },
     ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3

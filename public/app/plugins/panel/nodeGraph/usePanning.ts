@@ -1,5 +1,7 @@
-import { useEffect, useRef, RefObject, useState } from 'react';
+import { useEffect, useRef, RefObject, useState, useMemo } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
+import { Bounds } from './utils';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export interface State {
   isPanning: boolean;
@@ -11,34 +13,53 @@ export interface State {
 
 interface Options {
   scale?: number;
-  bounds?: { top: number; bottom: number; right: number; left: number };
+  bounds?: Bounds;
+  focus?: {
+    x: number;
+    y: number;
+  };
 }
 
 /**
  * Based on https://github.com/streamich/react-use/blob/master/src/useSlider.ts
  * Returns position x/y coordinates which can be directly used in transform: translate().
- * @param scale Can be used when we want to scale the movement if we are moving a scaled element. We need to do it
+ * @param scale - Can be used when we want to scale the movement if we are moving a scaled element. We need to do it
  *   here because we don't want to change the pos when scale changes.
- * @param bounds If set the panning cannot go outside of those bounds.
+ * @param bounds - If set the panning cannot go outside of those bounds.
+ * @param focus - Position to focus on.
  */
-export function usePanning<T extends Element>(
-  { scale = 1, bounds }: Options = { scale: 1 }
-): { state: State; ref: RefObject<T> } {
+export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Options = {}): {
+  state: State;
+  ref: RefObject<T>;
+} {
   const isMounted = useMountedState();
   const isPanning = useRef(false);
   const frame = useRef(0);
   const panRef = useRef<T>(null);
 
+  const initial = { x: 0, y: 0 };
+  // As we return a diff of the view port to be applied we need as translate coordinates we have to invert the
+  // bounds of the content to get the bounds of the view port diff.
+  const viewBounds = useMemo(
+    () => ({
+      right: bounds ? -bounds.left : Infinity,
+      left: bounds ? -bounds.right : -Infinity,
+      bottom: bounds ? -bounds.top : -Infinity,
+      top: bounds ? -bounds.bottom : Infinity,
+    }),
+    [bounds]
+  );
+
   // We need to keep some state so we can compute the position diff and add that to the previous position.
-  const startMousePosition = useRef({ x: 0, y: 0 });
-  const prevPosition = useRef({ x: 0, y: 0 });
+  const startMousePosition = useRef(initial);
+  const prevPosition = useRef(initial);
   // We cannot use the state as that would rerun the effect on each state change which we don't want so we have to keep
   // separate variable for the state that won't cause useEffect eval
-  const currentPosition = useRef({ x: 0, y: 0 });
+  const currentPosition = useRef(initial);
 
   const [state, setState] = useState<State>({
     isPanning: false,
-    position: { x: 0, y: 0 },
+    position: initial,
   });
 
   useEffect(() => {
@@ -92,8 +113,8 @@ export function usePanning<T extends Element>(
 
           // Add the diff to the position from the moment we started panning.
           currentPosition.current = {
-            x: inBounds(prevPosition.current.x + xDiff / scale, bounds?.left, bounds?.right),
-            y: inBounds(prevPosition.current.y + yDiff / scale, bounds?.top, bounds?.bottom),
+            x: inBounds(prevPosition.current.x + xDiff / scale, viewBounds.left, viewBounds.right),
+            y: inBounds(prevPosition.current.y + yDiff / scale, viewBounds.top, viewBounds.bottom),
           };
           setState((state) => ({
             ...state,
@@ -116,9 +137,45 @@ export function usePanning<T extends Element>(
         ref.removeEventListener('touchstart', onPanStart);
       }
     };
-  }, [scale, bounds?.left, bounds?.right, bounds?.top, bounds?.bottom, isMounted]);
+  }, [scale, viewBounds, isMounted]);
 
-  return { state, ref: panRef };
+  const previousFocus = usePrevious(focus);
+
+  // We need to update the state in case need to focus on something but we want to do it only once when the focus
+  // changes to something new.
+  useEffect(() => {
+    if (focus && previousFocus?.x !== focus.x && previousFocus?.y !== focus.y) {
+      const position = {
+        x: inBounds(focus.x, viewBounds.left, viewBounds.right),
+        y: inBounds(focus.y, viewBounds.top, viewBounds.bottom),
+      };
+      setState({
+        position,
+        isPanning: false,
+      });
+
+      currentPosition.current = position;
+      prevPosition.current = position;
+    }
+  }, [focus, previousFocus, viewBounds, currentPosition, prevPosition]);
+
+  let position = state.position;
+  // This part prevents an ugly jump from initial position to the focused one as the set state in the effects is after
+  // initial render.
+  if (focus && previousFocus?.x !== focus.x && previousFocus?.y !== focus.y) {
+    position = focus;
+  }
+
+  return {
+    state: {
+      ...state,
+      position: {
+        x: inBounds(position.x, viewBounds.left, viewBounds.right),
+        y: inBounds(position.y, viewBounds.top, viewBounds.bottom),
+      },
+    },
+    ref: panRef,
+  };
 }
 
 function inBounds(value: number, min: number | undefined, max: number | undefined) {

@@ -101,6 +101,7 @@ export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps
 export { VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
 export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
+export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
@@ -238,5 +239,4 @@ export { useGraphNGContext } from './GraphNG/hooks';
 export { preparePlotFrame } from './GraphNG/utils';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
-export * from './NodeGraph';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

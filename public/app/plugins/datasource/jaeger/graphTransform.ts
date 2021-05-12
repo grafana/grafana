@@ -1,5 +1,4 @@
-import { DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
+import { DataFrame, FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
 import { Span, TraceResponse } from './types';
 
 interface Node {

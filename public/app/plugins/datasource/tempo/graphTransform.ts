@@ -1,5 +1,10 @@
-import { DataFrame, DataFrameView, FieldType, MutableDataFrame } from '@grafana/data';
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
+import {
+  DataFrame,
+  DataFrameView,
+  FieldType,
+  MutableDataFrame,
+  NodeGraphDataFrameFieldNames as Fields,
+} from '@grafana/data';
 
 interface Row {
   traceID: string;
