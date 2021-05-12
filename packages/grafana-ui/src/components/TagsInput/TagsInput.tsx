@@ -35,7 +35,9 @@ export const TagsInput: FC<Props> = ({
 
   const onAdd = (event: React.MouseEvent) => {
     event.preventDefault();
-    onChange(tags.concat(newTagName));
+    if (!tags.includes(newTagName)) {
+      onChange(tags.concat(newTagName));
+    }
     setNewName('');
   };
 
