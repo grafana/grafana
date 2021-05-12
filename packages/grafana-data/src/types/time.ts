@@ -40,7 +40,6 @@ export interface TimeOption {
   from: string;
   to: string;
   display: string;
-  section: number;
 }
 
 export interface TimeOptions {

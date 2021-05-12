@@ -33,7 +33,8 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	}
 
 	db := setupTestEnvironment(t)
-	createDashboards(t, db, 0, 1, user.OrgId)
+	dashIds := createDashboards(t, db, 0, 1, user.OrgId)
+	require.Len(t, dashIds, 1)
 
 	// create one dashboard in another organization that shouldn't
 	// be listed in the results.
@@ -58,7 +59,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	res[0].UID = ""
 	assert.EqualValues(t, []sqlstore.DashboardSearchProjection{
 		{
-			ID:    1,
+			ID:    dashIds[0],
 			Title: "A",
 			Slug:  "a",
 			Term:  "templated",
@@ -156,11 +157,12 @@ func setupTestEnvironment(t *testing.T) *sqlstore.SQLStore {
 	return store
 }
 
-func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, orgID int64) {
+func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, orgID int64) []int64 {
 	t.Helper()
 
 	require.GreaterOrEqual(t, endID, startID)
 
+	createdIds := []int64{}
 	for i := startID; i < endID; i++ {
 		dashboard, err := simplejson.NewJson([]byte(`{
 			"id": null,
@@ -172,14 +174,18 @@ func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, o
 			"version": 0
 		}`))
 		require.NoError(t, err)
-		_, err = db.SaveDashboard(models.SaveDashboardCommand{
+		dash, err := db.SaveDashboard(models.SaveDashboardCommand{
 			Dashboard: dashboard,
 			UserId:    1,
 			OrgId:     orgID,
 			UpdatedAt: time.Now(),
 		})
 		require.NoError(t, err)
+
+		createdIds = append(createdIds, dash.Id)
 	}
+
+	return createdIds
 }
 
 // lexiCounter counts in a lexicographically sortable order.

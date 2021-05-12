@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelContextProvider, PanelContext } from '@grafana/ui';
+import { ErrorBoundary, PanelContextProvider, PanelContext, SeriesVisibilityChangeMode } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  DashboardCursorSync,
   EventBusSrv,
   EventFilterOptions,
   FieldConfigSource,
@@ -30,6 +31,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
+import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -75,8 +77,10 @@ export class PanelChrome extends Component<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
+        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
+        onToggleSeriesVisibility: this.onSeriesVisibilityChange,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -84,6 +88,12 @@ export class PanelChrome extends Component<Props, State> {
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
+  };
+
+  onSeriesVisibilityChange = (label: string, mode: SeriesVisibilityChangeMode) => {
+    this.onFieldConfigChange(
+      seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
+    );
   };
 
   getInitialPanelDataState(): PanelData {
@@ -131,7 +141,23 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView } = this.props;
+    const { isInView, isEditing } = this.props;
+
+    if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
+      this.setState((s) => {
+        return {
+          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
+        };
+      });
+    }
+
+    if (isEditing !== prevProps.isEditing) {
+      this.setState((s) => {
+        return {
+          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
+        };
+      });
+    }
 
     // View state has changed
     if (isInView !== prevProps.isInView) {

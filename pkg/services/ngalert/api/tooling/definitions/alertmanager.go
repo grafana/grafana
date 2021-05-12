@@ -1,11 +1,15 @@
 package definitions
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
 
@@ -242,6 +246,26 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
+func (c *PostableUserConfig) EncryptSecureSettings() error {
+	// encrypt secure settings for storing them in DB
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+		default:
+		}
+	}
+	return nil
+}
+
 // MarshalYAML implements yaml.Marshaller.
 func (c *PostableUserConfig) MarshalYAML() (interface{}, error) {
 	yml, err := yaml.Marshal(c.amSimple)
@@ -358,6 +382,8 @@ func (c *GettableApiAlertingConfig) validate() error {
 			hasGrafReceivers = true
 		case AlertmanagerReceiverType:
 			hasAMReceivers = true
+		default:
+			continue
 		}
 	}
 
@@ -373,19 +399,6 @@ func (c *GettableApiAlertingConfig) validate() error {
 	}
 
 	return nil
-}
-
-// Type requires validate has been called and just checks the first receiver type
-func (c *GettableApiAlertingConfig) Type() (backend Backend) {
-	for _, r := range c.Receivers {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			return GrafanaBackend
-		case AlertmanagerReceiverType:
-			return AlertmanagerBackend
-		}
-	}
-	return
 }
 
 // Config is the top-level configuration for Alertmanager's config files.
@@ -425,6 +438,8 @@ func (c *PostableApiAlertingConfig) validate() error {
 			hasGrafReceivers = true
 		case AlertmanagerReceiverType:
 			hasAMReceivers = true
+		default:
+			continue
 		}
 	}
 
@@ -443,22 +458,26 @@ func (c *PostableApiAlertingConfig) validate() error {
 }
 
 // Type requires validate has been called and just checks the first receiver type
-func (c *PostableApiAlertingConfig) Type() (backend Backend) {
+func (c *PostableApiAlertingConfig) ReceiverType() ReceiverType {
 	for _, r := range c.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			return GrafanaBackend
+			return GrafanaReceiverType
 		case AlertmanagerReceiverType:
-			return AlertmanagerBackend
+			return AlertmanagerReceiverType
+		default:
+			continue
 		}
 	}
-	return
+	return EmptyReceiverType
 }
 
 // AllReceivers will recursively walk a routing tree and return a list of all the
 // referenced receiver names.
 func AllReceivers(route *config.Route) (res []string) {
-	res = append(res, route.Receiver)
+	if route.Receiver != "" {
+		res = append(res, route.Receiver)
+	}
 	for _, subRoute := range route.Routes {
 		res = append(res, AllReceivers(subRoute)...)
 	}
@@ -471,9 +490,51 @@ type PostableGrafanaReceiver models.CreateAlertNotificationCommand
 type ReceiverType int
 
 const (
-	GrafanaReceiverType ReceiverType = iota
+	GrafanaReceiverType ReceiverType = 1 << iota
 	AlertmanagerReceiverType
+	EmptyReceiverType = GrafanaReceiverType | AlertmanagerReceiverType
 )
+
+func (r ReceiverType) String() string {
+	switch r {
+	case GrafanaReceiverType:
+		return "grafana"
+	case AlertmanagerReceiverType:
+		return "alertmanager"
+	case EmptyReceiverType:
+		return "empty"
+	default:
+		return "unknown"
+	}
+}
+
+// Can determines whether a receiver type can implement another receiver type.
+// This is useful as receivers with just names but no contact points
+// are valid in all backends.
+func (r ReceiverType) Can(other ReceiverType) bool { return r&other != 0 }
+
+// MatchesBackend determines if a config payload can be sent to a particular backend type
+func (r ReceiverType) MatchesBackend(backend Backend) error {
+	msg := func(backend Backend, receiver ReceiverType) error {
+		return fmt.Errorf(
+			"unexpected backend type (%s) for receiver type (%s)",
+			backend.String(),
+			receiver.String(),
+		)
+	}
+	var ok bool
+	switch backend {
+	case GrafanaBackend:
+		ok = r.Can(GrafanaReceiverType)
+	case AlertmanagerBackend:
+		ok = r.Can(AlertmanagerReceiverType)
+	default:
+	}
+	if !ok {
+		return msg(backend, r)
+	}
+	return nil
+}
 
 type GettableApiReceiver struct {
 	config.Receiver          `yaml:",inline"`
@@ -531,25 +592,14 @@ type PostableApiReceiver struct {
 }
 
 func (r *PostableApiReceiver) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var grafanaReceivers PostableGrafanaReceivers
-	if err := unmarshal(&grafanaReceivers); err != nil {
+	if err := unmarshal(&r.PostableGrafanaReceivers); err != nil {
 		return err
 	}
-	r.PostableGrafanaReceivers = grafanaReceivers
 
-	var cfg config.Receiver
-	if err := unmarshal(&cfg); err != nil {
+	if err := unmarshal(&r.Receiver); err != nil {
 		return err
 	}
-	r.Name = cfg.Name
-	r.EmailConfigs = cfg.EmailConfigs
-	r.PagerdutyConfigs = cfg.PagerdutyConfigs
-	r.SlackConfigs = cfg.SlackConfigs
-	r.WebhookConfigs = cfg.WebhookConfigs
-	r.OpsGenieConfigs = cfg.OpsGenieConfigs
-	r.WechatConfigs = cfg.WechatConfigs
-	r.PushoverConfigs = cfg.PushoverConfigs
-	r.VictorOpsConfigs = cfg.VictorOpsConfigs
+
 	return nil
 }
 
@@ -594,6 +644,13 @@ func (r *PostableApiReceiver) Type() ReceiverType {
 	if len(r.PostableGrafanaReceivers.GrafanaManagedReceivers) > 0 {
 		return GrafanaReceiverType
 	}
+
+	cpy := r.Receiver
+	cpy.Name = ""
+	if reflect.ValueOf(cpy).IsZero() {
+		return EmptyReceiverType
+	}
+
 	return AlertmanagerReceiverType
 }
 
