@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Plugin, Metadata } from '../types';
-import API from '../api';
+import { api } from '../api';
 
 type PluginsState = {
   status: 'DONE' | 'LOADING';
@@ -14,7 +14,6 @@ export const usePlugins = (includeEnterprise = false) => {
 
   useEffect(() => {
     const fetchPluginData = async () => {
-      const api = new API();
       const items = await api.getRemotePlugins();
       const filteredItems = items
         .filter((plugin) => Boolean(plugin.versionSignatureType))
@@ -45,7 +44,6 @@ export const usePlugin = (slug: string): PluginState => {
 
   useEffect(() => {
     const fetchPluginData = async () => {
-      const api = new API();
       const plugin = await api.getPlugin(slug);
       setState({ ...plugin, status: 'DONE' });
     };

@@ -8,7 +8,7 @@ import { AppEvents, GrafanaTheme2, OrgRole } from '@grafana/data';
 
 import { Metadata, Plugin } from '../types';
 import { hasRole } from '../helpers';
-import API from '../api';
+import { api } from '../api';
 
 // This isn't exported in the sdk yet
 // @ts-ignore
@@ -29,7 +29,6 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
   );
 
   const styles = useStyles2(getStyles);
-  const api = new API();
 
   const onInstall = (slug: string, version: string) => {
     setLoading(true);
