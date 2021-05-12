@@ -46,7 +46,7 @@ export const Browse = ({ query, meta }: AppRootProps) => {
       <SearchField value={q} onSearch={onSearch} />
       <HorizontalGroup>
         <div>
-          {plugins.status === 'LOADING' ? (
+          {plugins.isLoading ? (
             <LoadingPlaceholder
               className={css`
                 margin-bottom: 0;
@@ -86,7 +86,7 @@ export const Browse = ({ query, meta }: AppRootProps) => {
         </Field>
       </HorizontalGroup>
 
-      {plugins.status === 'DONE' && <PluginList plugins={filteredPlugins} />}
+      {!plugins.isLoading && <PluginList plugins={filteredPlugins} />}
     </Page>
   );
 };

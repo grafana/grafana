@@ -9,12 +9,12 @@ import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Library = () => {
-  const { status, items, installedPlugins } = usePlugins(true);
+  const { isLoading, items, installedPlugins } = usePlugins(true);
   const styles = useStyles2(getStyles);
 
   const filteredPlugins = items.filter((plugin) => !!installedPlugins.find((_) => _.id === plugin.slug));
 
-  if (status === 'LOADING') {
+  if (isLoading) {
     return <Loader />;
   }
 

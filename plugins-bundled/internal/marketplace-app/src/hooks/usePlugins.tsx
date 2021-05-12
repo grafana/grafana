@@ -4,13 +4,13 @@ import { Plugin, Metadata } from '../types';
 import { api } from '../api';
 
 type PluginsState = {
-  status: 'DONE' | 'LOADING';
+  isLoading: boolean;
   items: Plugin[];
   installedPlugins: any[];
 };
 
 export const usePlugins = (includeEnterprise = false) => {
-  const [state, setState] = useState<PluginsState>({ status: 'LOADING', items: [], installedPlugins: [] });
+  const [state, setState] = useState<PluginsState>({ isLoading: true, items: [], installedPlugins: [] });
 
   useEffect(() => {
     const fetchPluginData = async () => {
@@ -21,7 +21,7 @@ export const usePlugins = (includeEnterprise = false) => {
         .filter((plugin) => !status || plugin.status === status);
       const installedPlugins = await api.getInstalledPlugins();
 
-      setState((state) => ({ ...state, items: filteredItems, installedPlugins, status: 'DONE' }));
+      setState((state) => ({ ...state, items: filteredItems, installedPlugins, isLoading: false }));
     };
 
     fetchPluginData();
@@ -31,7 +31,7 @@ export const usePlugins = (includeEnterprise = false) => {
 };
 
 type PluginState = {
-  status: 'DONE' | 'LOADING';
+  isLoading: boolean;
   remote?: Plugin;
   remoteVersions?: Array<{ version: string; createdAt: string }>;
   local?: Metadata;
@@ -39,13 +39,13 @@ type PluginState = {
 
 export const usePlugin = (slug: string): PluginState => {
   const [state, setState] = useState<PluginState>({
-    status: 'LOADING',
+    isLoading: true,
   });
 
   useEffect(() => {
     const fetchPluginData = async () => {
       const plugin = await api.getPlugin(slug);
-      setState({ ...plugin, status: 'DONE' });
+      setState({ ...plugin, isLoading: false });
     };
     fetchPluginData();
   }, [slug]);

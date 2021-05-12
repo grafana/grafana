@@ -9,15 +9,20 @@ import { useOrg } from '../hooks/useOrg';
 
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'components/Page';
+import { Loader } from 'components/Loader';
 
 export const OrgDetails = ({ query }: AppRootProps) => {
   const { orgSlug } = query;
 
   const orgData = useOrg(orgSlug);
-  const pluginsData = usePlugins();
+  const { isLoading, items } = usePlugins();
   const styles = useStyles2(getStyles);
 
-  const plugins = pluginsData.items.filter((plugin) => plugin.orgSlug === orgSlug);
+  const plugins = items.filter((plugin) => plugin.orgSlug === orgSlug);
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <Page>

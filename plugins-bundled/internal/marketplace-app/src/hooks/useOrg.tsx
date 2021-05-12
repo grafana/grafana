@@ -3,22 +3,21 @@ import { Org } from '../types';
 import { api } from '../api';
 
 interface State {
-  status: 'LOADING' | 'DONE';
+  isLoading: boolean;
   org?: Org;
 }
 
 export const useOrg = (slug: string): State => {
   const [state, setState] = useState<State>({
-    status: 'LOADING',
+    isLoading: true,
   });
 
   useEffect(() => {
-    setState((state) => ({ ...state, status: 'LOADING' }));
-
-    (async () => {
+    const fetchOrgData = async () => {
       const org = await api.getOrg(slug);
-      setState({ org, status: 'DONE' });
-    })();
+      setState({ org, isLoading: false });
+    };
+    fetchOrgData();
   }, [slug]);
 
   return state;

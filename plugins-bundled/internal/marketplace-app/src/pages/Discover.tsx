@@ -19,7 +19,7 @@ import { Loader } from 'components/Loader';
 export const Discover = ({ meta }: AppRootProps) => {
   const { includeEnterprise } = meta.jsonData as MarketplaceAppSettings;
 
-  const { items, status } = usePlugins(includeEnterprise);
+  const { items, isLoading } = usePlugins(includeEnterprise);
   const history = useHistory();
   const styles = useStyles2(getStyles);
 
@@ -44,7 +44,7 @@ export const Discover = ({ meta }: AppRootProps) => {
     return b.popularity - a.popularity;
   });
 
-  if (status === 'LOADING') {
+  if (isLoading) {
     return <Loader />;
   }
 

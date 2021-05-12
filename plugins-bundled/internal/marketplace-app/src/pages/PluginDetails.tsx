@@ -17,7 +17,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
-  const { status, local, remote, remoteVersions } = usePlugin(slug);
+  const { isLoading, local, remote, remoteVersions } = usePlugin(slug);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description;
@@ -26,7 +26,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
   const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
   const downloads = remote?.downloads;
 
-  if (status === 'LOADING') {
+  if (isLoading) {
     return <Loader />;
   }
 
