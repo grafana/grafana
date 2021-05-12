@@ -47,27 +47,28 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
           return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
         })}
       </div>
-
-      <Input
-        placeholder={placeholder}
-        onChange={onNameChange}
-        value={newTagName}
-        onKeyUp={onKeyboardAdd}
-        suffix={
-          newTagName.length > 0 && (
-            <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
-              Add
-            </Button>
-          )
-        }
-      />
+      <div>
+        <Input
+          placeholder={placeholder}
+          onChange={onNameChange}
+          value={newTagName}
+          onKeyUp={onKeyboardAdd}
+          suffix={
+            newTagName.length > 0 && (
+              <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
+                Add
+              </Button>
+            )
+          }
+        />
+      </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
-    height: ${theme.spacing.formInputHeight}px;
+    min-height: ${theme.spacing.formInputHeight}px;
     align-items: center;
     display: flex;
     flex-wrap: wrap;

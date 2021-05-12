@@ -62,6 +62,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           streams.push(this.nodesQuery(target, options));
           break;
         default:
+          if (target.alias) {
+            target.alias = this.templateSrv.replace(target.alias, options.scopedVars);
+          }
+
           backendQueries.push(target);
       }
     }

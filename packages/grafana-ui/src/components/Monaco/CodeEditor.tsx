@@ -1,15 +1,16 @@
 import React from 'react';
+import { css } from '@emotion/css';
+import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import { selectors } from '@grafana/e2e-selectors';
+import { GrafanaTheme2, monacoLanguageRegistry } from '@grafana/data';
+
 import { withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types';
-import { selectors } from '@grafana/e2e-selectors';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Monaco, MonacoEditor as MonacoEditorType, CodeEditorProps, MonacoOptions } from './types';
-import { registerSuggestions } from './suggestions';
-import MonacoEditor, { loader as monacoEditorLoader } from '@monaco-editor/react';
 
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOptions } from './types';
+import { registerSuggestions } from './suggestions';
 import defineThemes from './theme';
-import { css } from '@emotion/css';
 
 type Props = CodeEditorProps & Themeable2;
 
@@ -58,8 +59,22 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       if (getSuggestions) {
         this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
       }
+
+      this.loadCustomLanguage();
     }
   }
+
+  loadCustomLanguage = () => {
+    const { language } = this.props;
+
+    const customLanguage = monacoLanguageRegistry.getIfExists(language);
+
+    if (customLanguage) {
+      return customLanguage.init();
+    }
+
+    return Promise.resolve();
+  };
 
   // This is replaced with a real function when the actual editor mounts
   getEditorValue = () => '';
@@ -83,7 +98,6 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
     const { onSave, onEditorDidMount } = this.props;
-
     this.getEditorValue = () => editor.getValue();
 
     if (onSave) {
@@ -92,8 +106,10 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       });
     }
 
+    const languagePromise = this.loadCustomLanguage();
+
     if (onEditorDidMount) {
-      onEditorDidMount(editor);
+      languagePromise.then(() => onEditorDidMount(editor, monaco));
     }
   };
 
