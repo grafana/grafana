@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { boolean } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
 import mdx from './Switch.mdx';
@@ -14,41 +14,54 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+  },
+  args: {
+    disabled: false,
   },
 };
 
-export const Controlled = () => {
-  const [checked, setChecked] = useState(false);
+export const Controlled: Story = (args) => {
+  const [checked, setChecked] = useState(args.value);
   const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
-  const BEHAVIOUR_GROUP = 'Behaviour props';
-  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
 
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
         <Field label="Normal switch" description="For horizontal forms">
-          <Switch value={checked} disabled={disabled} onChange={onChange} />
+          <Switch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />
         </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
           <InlineField label="My switch">
-            <InlineSwitch value={checked} disabled={disabled} onChange={onChange} />
+            <InlineSwitch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />
           </InlineField>
         </InlineFieldRow>
       </div>
       <div style={{ marginBottom: '32px' }}>
         <div>just inline switch with show label</div>
         <span>
-          <InlineSwitch label="Raw data" showLabel={true} value={checked} disabled={disabled} onChange={onChange} />
+          <InlineSwitch
+            label="Raw data"
+            showLabel={true}
+            value={checked}
+            disabled={args.disabled}
+            transparent={args.transparent}
+            onChange={onChange}
+          />
         </span>
       </div>
     </div>
   );
 };
+Controlled.args = {
+  value: false,
+  transparent: false,
+};
 
-export const Uncontrolled = () => {
-  const BEHAVIOUR_GROUP = 'Behaviour props';
-  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
-  return <Switch disabled={disabled} />;
+export const Uncontrolled: Story = (args) => {
+  return <Switch disabled={args.disabled} />;
 };
