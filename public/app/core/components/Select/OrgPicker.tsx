@@ -36,7 +36,7 @@ export class OrgPicker extends PureComponent<Props, State> {
   }
 
   getOrgOptions = async (query: string): Promise<Array<SelectableValue<number>>> => {
-    if (!this.orgs || !this.orgs.length) {
+    if (!this.orgs?.length) {
       await this.loadOrgs();
     }
     return this.orgs.map(
