@@ -1,26 +1,37 @@
 import { e2e } from '@grafana/e2e';
 
 const dataSourceName = 'PromExemplar';
+const addDataSource = () => {
+  e2e.flows.addDataSource({
+    type: 'Prometheus',
+    expectedAlertMessage: 'HTTP error Bad Gateway',
+    name: dataSourceName,
+    form: () => {
+      e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
+      e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
+      e2e.components.DataSourcePicker.container()
+        .should('be.visible')
+        .within(() => {
+          e2e.components.Select.input().should('be.visible').click({ force: true });
+
+          e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
+        });
+    },
+  });
+};
 
 describe('Exemplars', () => {
-  before(() => {
+  beforeEach(() => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.addDataSource({
-      type: 'Prometheus',
-      expectedAlertMessage: 'HTTP error Bad Gateway',
-      name: dataSourceName,
-      form: () => {
-        e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
-        e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
-        e2e.components.DataSourcePicker.container()
-          .should('be.visible')
-          .within(() => {
-            e2e.components.Select.input().should('be.visible').click({ force: true });
 
-            e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
-          });
-      },
-    });
+    e2e()
+      .request({ url: `/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
+      .then((response) => {
+        if (response.isOkStatusCode) {
+          return;
+        }
+        addDataSource();
+      });
   });
 
   it('should be able to navigate to configured data source', () => {
