@@ -10,7 +10,7 @@ import { SearchFunctionType } from '@grafana/ui';
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = ({
     metadataRequest: () => ({ data: { data: [] as any[] } }),
-    getTimeRange: () => ({ start: 0, end: 1 }),
+    getTimeRangeParams: () => ({ start: '0', end: '1' }),
   } as any) as PrometheusDatasource;
 
   describe('cleanText', () => {
@@ -249,7 +249,7 @@ describe('Language completion provider', () => {
     it('returns label suggestions on label context and metric', async () => {
       const datasources: PrometheusDatasource = ({
         metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
-        getTimeRange: () => ({ start: 0, end: 1 }),
+        getTimeRangeParams: () => ({ start: '0', end: '1' }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
       const value = Plain.deserialize('metric{}');
@@ -282,7 +282,7 @@ describe('Language completion provider', () => {
             ],
           },
         }),
-        getTimeRange: () => ({ start: 0, end: 1 }),
+        getTimeRangeParams: () => ({ start: '0', end: '1' }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
@@ -519,7 +519,7 @@ describe('Language completion provider', () => {
     it('does not re-fetch default labels', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
       } as any) as PrometheusDatasource;
 
       const instance = new LanguageProvider(datasource);
@@ -545,7 +545,7 @@ describe('Language completion provider', () => {
     it('does not issue any metadata requests when lookup is disabled', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: true,
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
@@ -568,7 +568,7 @@ describe('Language completion provider', () => {
     it('issues metadata requests when lookup is not disabled', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: false,
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
