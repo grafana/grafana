@@ -138,6 +138,9 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(400, models.ErrFolderNotFound.Error(), err)
+			}
 			return response.Error(500, "Dashboard folder could not be read", err)
 		}
 		meta.FolderUid = query.Result.Uid
