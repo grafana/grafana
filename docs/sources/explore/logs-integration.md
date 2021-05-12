@@ -5,7 +5,7 @@ keywords = ["explore", "logs",]
 weight = 15
 +++
 
-# Logs in Explore 
+# Logs in Explore
 
 Along with metrics, Explore allows you to investigate your logs in the following data sources:
 
@@ -29,26 +29,29 @@ For logs where a **level** label is specified, we use the value of the label to 
 
 **Supported log levels and mapping of log level abbreviation and expressions:**
 
+| Supported expressions | Log level |      Color |
+| --------------------- | :-------: | ---------: |
+| emerg                 | critical  |     purple |
+| fatal                 | critical  |     purple |
+| alert                 | critical  |     purple |
+| crit                  | critical  |     purple |
+| critical              | critical  |     purple |
+| err                   |   error   |        red |
+| eror                  |   error   |        red |
+| error                 |   error   |        red |
+| warn                  |  warning  |     yellow |
+| warning               |  warning  |     yellow |
+| info                  |   info    |      green |
+| information           |   info    |      green |
+| notice                |   info    |      green |
+| dbug                  |   debug   |       blue |
+| debug                 |   debug   |       blue |
+| trace                 |   trace   | light blue |
+| \*                    |  unknown  |       grey |
 
-|  Supported expressions      | Log level     | Color       |
-| --------------------------- |:-------------:| -----------:|
-| emerg                       | critical      | purple      |
-| fatal                       | critical      | purple      |
-| alert                       | critical      | purple      |
-| crit                        | critical      | purple      |
-| critical                    | critical      | purple      |
-| err                         | error         | red         |
-| eror                        | error         | red         |
-| error                       | error         | red         |
-| warn                        | warning       | yellow      |
-| warning                     | warning       | yellow      |
-| info                        | info          | green       |
-| information                 | info          | green       |
-| notice                      | info          | green       |
-| dbug                        | debug         | blue        |
-| debug                       | debug         | blue        |
-| trace                       | trace         | light blue  |
-| *                           | unknown       | grey        |
+### Logs navigation
+
+Logs navigation next to the log lines can be used to request more logs. You can do this by clicking on Older logs button on the bottom of navigation. This is especially useful when you hit the line limit and you want to see more logs. Each request that is run from the navigation is then displayed in the navigation as separate page. Every page is showing from and to timestamp of the incoming log lines. You can re-rerun the same request by clicking on the page.
 
 ### Visualization options
 
