@@ -25,8 +25,8 @@ export function useNodeLimit(
     }
 
     const edgesMap = edges.reduce<EdgesMap>((acc, e) => {
-      acc[e.source.id] = [...(acc[e.source.id] || []), e];
-      acc[e.target.id] = [...(acc[e.target.id] || []), e];
+      acc[e.source.id] = [...(acc[e.source.id] ?? []), e];
+      acc[e.target.id] = [...(acc[e.target.id] ?? []), e];
       return acc;
     }, {});
 

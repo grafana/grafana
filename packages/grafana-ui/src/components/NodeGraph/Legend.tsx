@@ -26,7 +26,7 @@ interface Props {
   sortable: boolean;
 }
 
-export const Legend = React.memo(function Legend(props: Props) {
+export const Legend = function Legend(props: Props) {
   const { nodes, onSort, sort, sortable } = props;
 
   const theme = useTheme();
@@ -59,7 +59,7 @@ export const Legend = React.memo(function Legend(props: Props) {
       }}
     />
   );
-});
+};
 
 interface ItemData {
   field: Field;

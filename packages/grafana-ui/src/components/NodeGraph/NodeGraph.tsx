@@ -125,6 +125,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   // This is used for navigation from grid to graph view. This node will be centered and briefly highlighted.
   const [focusedNodeId, setFocusedNodeId] = useState<string>();
+  const setFocused = useCallback((e: MouseEvent, m: NodesMarker) => setFocusedNodeId(m.node.id), [setFocusedNodeId]);
 
   // May seem weird that we do layout first and then limit the nodes shown but the problem is we want to keep the node
   // position stable which means we need the full layout first and then just visually hide the nodes. As hiding/showing
@@ -203,7 +204,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
             hoveringId={nodeHover || highlightId}
           />
 
-          <Markers markers={markers || []} onClick={(e, m) => setFocusedNodeId(m.node.id)} />
+          <Markers markers={markers || []} onClick={setFocused} />
           {/*We split the labels from edges so that they are shown on top of everything else*/}
           {!config.gridLayout && <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />}
         </g>

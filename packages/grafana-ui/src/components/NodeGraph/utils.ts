@@ -148,7 +148,7 @@ export function processNodes(
     edges: edgesMapped || [],
     legend: nodeFields.arc.map((f) => {
       return {
-        color: f.config.color?.fixedColor || '',
+        color: f.config.color?.fixedColor ?? '',
         name: f.config.displayName || f.name,
       };
     }),
