@@ -47,6 +47,7 @@ interface Props {
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
+  logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
   width: number;
   theme: GrafanaTheme;
@@ -56,7 +57,6 @@ interface Props {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  queries: DataQuery[];
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -243,7 +243,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       onChangeTime,
       getFieldLinks,
       theme,
-      queries,
+      logsQueries,
     } = this.props;
 
     const {
@@ -353,12 +353,12 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={visibleRange}
+            visibleRange={visibleRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}
             loading={loading}
-            queries={queries}
+            queries={logsQueries ?? []}
             scrollToTopLogs={this.scrollToTopLogs}
           />
         </div>
