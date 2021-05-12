@@ -19,7 +19,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
-		entities.Get("/byName/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
+		entities.Get("/name/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
 	})
 }
@@ -94,14 +94,14 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 	return response.JSON(200, util.DynMap{"result": connections})
 }
 
-// getByNameHandler handles GET /api/library-panels/byName/:name/.
+// getByNameHandler handles GET /api/library-elements/name/:name/.
 func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.Response {
-	element, err := l.getLibraryElementByName(c)
+	elements, err := l.getLibraryElementsByName(c)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(200, util.DynMap{"result": elements})
 }
 
 func toLibraryElementError(err error, message string) response.Response {

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { PanelModel } from '../../../dashboard/state';
 import { usePanelSave } from '../../utils/usePanelSave';
 import { useAsync, useDebounce } from 'react-use';
 import { getLibraryPanelByName } from '../../state/api';
+
 interface AddLibraryPanelContentsProps {
   onDismiss: () => void;
   panel: PanelModel;
@@ -15,26 +16,32 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
   const [folderId, setFolderId] = useState(initialFolderId);
   const [panelTitle, setPanelTitle] = useState(panel.title);
   const [debouncedPanelTitle, setDebouncedPanelTitle] = useState(panel.title);
+  const [waiting, setWaiting] = useState(false);
 
+  useEffect(() => setWaiting(true), [panelTitle]);
   useDebounce(() => setDebouncedPanelTitle(panelTitle), 350, [panelTitle]);
   const isValidTitle = useAsync(async () => {
     try {
-      await getLibraryPanelByName(panelTitle);
-      return false;
+      const libraryPanels = (await getLibraryPanelByName(panelTitle)).filter((lp) => lp.folderId === folderId);
+      return libraryPanels.length === 0;
     } catch (err) {
       err.isHandled = true;
       return true;
+    } finally {
+      setWaiting(false);
     }
   }, [debouncedPanelTitle]);
-  const disableSubmit = !isValidTitle?.value && isValidTitle.value !== undefined;
+
+  const invalidInput =
+    !isValidTitle?.value && isValidTitle.value !== undefined && panelTitle === debouncedPanelTitle && !waiting;
   const { saveLibraryPanel } = usePanelSave();
 
   return (
     <>
       <Field
         label="Library panel name"
-        invalid={!isValidTitle.loading && !isValidTitle?.value}
-        error={!isValidTitle.loading && !isValidTitle?.value ? 'Library panel with this name already exists' : ''}
+        invalid={invalidInput}
+        error={invalidInput ? 'Library panel with this name already exists' : ''}
       >
         <Input name="name" value={panelTitle} onChange={(e) => setPanelTitle(e.currentTarget.value)} />
       </Field>
@@ -54,7 +61,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
               () => {}
             );
           }}
-          disabled={disableSubmit}
+          disabled={invalidInput}
         >
           Create library panel
         </Button>

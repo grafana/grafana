@@ -48,8 +48,8 @@ export async function getLibraryPanel(uid: string): Promise<LibraryElementDTO> {
   return result;
 }
 
-export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO> {
-  const { result } = await getBackendSrv().get(`/api/library-elements/byName/${name}`);
+export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
+  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(`/api/library-elements/name/${name}`);
   return result;
 }
 

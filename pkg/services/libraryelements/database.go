@@ -187,35 +187,23 @@ func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid s
 	})
 }
 
-func selectLibraryElementByParam(params map[string]interface{}) (string, []interface{}) {
-	conditions := make([]string, 0, len(params))
-	values := make([]interface{}, 0, len(params))
-	for param, value := range params {
-		conditions = append(conditions, "le."+param+"=?")
-		values = append(values, value)
-	}
-	return ` WHERE ` + strings.Join(conditions, " AND "), values
-}
-
 // getLibraryElement gets a Library Element where param == value
-func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, params map[string]interface{}) (LibraryElementDTO, error) {
-	var libraryElement LibraryElementWithMeta
+func (l *LibraryElementService) getLibraryElements(c *models.ReqContext, params []Pair) ([]LibraryElementDTO, error) {
+	libraryElements := make([]LibraryElementWithMeta, 0)
 	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		libraryElements := make([]LibraryElementWithMeta, 0)
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", 'General' as folder_name ")
 		builder.Write(", '' as folder_uid ")
 		builder.Write(fromLibraryElementDTOWithMeta)
-		conditionString, paramValues := selectLibraryElementByParam(params)
-		builder.Write(conditionString+` AND le.folder_id=0`, paramValues...)
+		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", 0})...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
 		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(fromLibraryElementDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
-		builder.Write(conditionString, paramValues...)
+		writeParamSelectorSQL(&builder, params...)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
 		}
@@ -226,59 +214,65 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, params m
 		if len(libraryElements) == 0 {
 			return errLibraryElementNotFound
 		}
-		if len(libraryElements) > 1 {
-			return fmt.Errorf("found %d elements, while expecting at most one", len(libraryElements))
-		}
-
-		libraryElement = libraryElements[0]
 
 		return nil
 	})
 	if err != nil {
-		return LibraryElementDTO{}, err
+		return []LibraryElementDTO{}, err
 	}
 
-	dto := LibraryElementDTO{
-		ID:          libraryElement.ID,
-		OrgID:       libraryElement.OrgID,
-		FolderID:    libraryElement.FolderID,
-		UID:         libraryElement.UID,
-		Name:        libraryElement.Name,
-		Kind:        libraryElement.Kind,
-		Type:        libraryElement.Type,
-		Description: libraryElement.Description,
-		Model:       libraryElement.Model,
-		Version:     libraryElement.Version,
-		Meta: LibraryElementDTOMeta{
-			FolderName:          libraryElement.FolderName,
-			FolderUID:           libraryElement.FolderUID,
-			ConnectedDashboards: libraryElement.ConnectedDashboards,
-			Created:             libraryElement.Created,
-			Updated:             libraryElement.Updated,
-			CreatedBy: LibraryElementDTOMetaUser{
-				ID:        libraryElement.CreatedBy,
-				Name:      libraryElement.CreatedByName,
-				AvatarURL: dtos.GetGravatarUrl(libraryElement.CreatedByEmail),
+	leDtos := make([]LibraryElementDTO, len(libraryElements))
+	for i, libraryElement := range libraryElements {
+		leDtos[i] = LibraryElementDTO{
+			ID:          libraryElement.ID,
+			OrgID:       libraryElement.OrgID,
+			FolderID:    libraryElement.FolderID,
+			UID:         libraryElement.UID,
+			Name:        libraryElement.Name,
+			Kind:        libraryElement.Kind,
+			Type:        libraryElement.Type,
+			Description: libraryElement.Description,
+			Model:       libraryElement.Model,
+			Version:     libraryElement.Version,
+			Meta: LibraryElementDTOMeta{
+				FolderName:          libraryElement.FolderName,
+				FolderUID:           libraryElement.FolderUID,
+				ConnectedDashboards: libraryElement.ConnectedDashboards,
+				Created:             libraryElement.Created,
+				Updated:             libraryElement.Updated,
+				CreatedBy: LibraryElementDTOMetaUser{
+					ID:        libraryElement.CreatedBy,
+					Name:      libraryElement.CreatedByName,
+					AvatarURL: dtos.GetGravatarUrl(libraryElement.CreatedByEmail),
+				},
+				UpdatedBy: LibraryElementDTOMetaUser{
+					ID:        libraryElement.UpdatedBy,
+					Name:      libraryElement.UpdatedByName,
+					AvatarURL: dtos.GetGravatarUrl(libraryElement.UpdatedByEmail),
+				},
 			},
-			UpdatedBy: LibraryElementDTOMetaUser{
-				ID:        libraryElement.UpdatedBy,
-				Name:      libraryElement.UpdatedByName,
-				AvatarURL: dtos.GetGravatarUrl(libraryElement.UpdatedByEmail),
-			},
-		},
+		}
 	}
 
-	return dto, nil
+	return leDtos, nil
 }
 
 // getLibraryElementByUid gets a Library Element by uid.
 func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext) (LibraryElementDTO, error) {
-	return l.getLibraryElement(c, map[string]interface{}{"org_id": c.SignedInUser.OrgId, "uid": c.Params(":uid")})
+	libraryElements, err := l.getLibraryElements(c, []Pair{{key: "org_id", value: c.SignedInUser.OrgId}, {key: "uid", value: c.Params(":uid")}})
+	if err != nil {
+		return LibraryElementDTO{}, err
+	}
+	if len(libraryElements) > 1 {
+		return LibraryElementDTO{}, fmt.Errorf("found %d elements, while expecting at most one", len(libraryElements))
+	}
+
+	return libraryElements[0], nil
 }
 
 // getLibraryElementByName gets a Library Element by name.
-func (l *LibraryElementService) getLibraryElementByName(c *models.ReqContext) (LibraryElementDTO, error) {
-	return l.getLibraryElement(c, map[string]interface{}{"name": c.Params(":name")})
+func (l *LibraryElementService) getLibraryElementsByName(c *models.ReqContext) ([]LibraryElementDTO, error) {
+	return l.getLibraryElements(c, []Pair{{"org_id", c.SignedInUser.OrgId}, {"name", c.Params(":name")}})
 }
 
 // getAllLibraryElements gets all Library Elements.
