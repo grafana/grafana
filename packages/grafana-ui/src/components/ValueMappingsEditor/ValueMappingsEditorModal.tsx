@@ -47,9 +47,9 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
   };
 
   const mappingTypes: Array<SelectableValue<MappingType>> = [
-    { label: 'Value', value: MappingType.ValueToText, description: 'Map a specific value' },
-    { label: 'Range', value: MappingType.RangeToText, description: 'Map a range of values' },
-    { label: 'Special', value: MappingType.SpecialValue, description: 'Map null, NaN, boolean and empty values' },
+    { label: 'Value', value: MappingType.ValueToText, description: 'Match on a specific text value' },
+    { label: 'Range', value: MappingType.RangeToText, description: 'Match a numerical range of values' },
+    { label: 'Special', value: MappingType.SpecialValue, description: 'Match on null, NaN, boolean and empty values' },
   ];
 
   const onAddValueMapping = (value: SelectableValue<MappingType>) => {
@@ -74,8 +74,9 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
         <thead>
           <tr>
             <th style={{ width: '1%' }}></th>
-            <th style={{ width: '1%' }}>Type</th>
-            <th style={{ width: '40%', textAlign: 'left' }}>Condition</th>
+            <th style={{ width: '40%', textAlign: 'left' }} colSpan={2}>
+              Condition
+            </th>
             <th style={{ textAlign: 'left' }}>Display text</th>
             <th style={{ width: '10%' }}>Color</th>
             <th style={{ width: '1%' }}></th>
