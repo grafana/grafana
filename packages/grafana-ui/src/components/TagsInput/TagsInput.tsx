@@ -12,6 +12,7 @@ export interface Props {
   onChange: (tags: string[]) => void;
   width?: number;
   className?: string;
+  disabled?: boolean;
 }
 
 export const TagsInput: FC<Props> = ({
@@ -20,6 +21,7 @@ export const TagsInput: FC<Props> = ({
   onChange,
   width,
   className,
+  disabled,
 }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
@@ -58,6 +60,7 @@ export const TagsInput: FC<Props> = ({
       </div>
       <div>
         <Input
+          disabled={disabled}
           placeholder={placeholder}
           onChange={onNameChange}
           value={newTagName}
