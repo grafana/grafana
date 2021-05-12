@@ -61,10 +61,10 @@
   }
 }
 
-@include media-breakpoint-up(sm) {
+@include media-breakpoint-down(md) {
   .login-page {
     .footer {
-      padding: 70px 0 $space-md 0;
+      display: none;
     }
   }
 }

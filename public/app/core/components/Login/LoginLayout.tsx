@@ -62,10 +62,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-
-      [theme.breakpoints.up('md')]: {
-        justifyContent: 'center',
-      },
+      justifyContent: 'center',
     }),
     loginAnim: css`
       &:before {
