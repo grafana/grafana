@@ -127,7 +127,7 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 }
 
 func (rs *RenderingService) doRequest(ctx context.Context, url *url.URL, headers map[string][]string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -137,14 +137,12 @@ func (rs *RenderingService) doRequest(ctx context.Context, url *url.URL, headers
 		req.Header[k] = v
 	}
 
-	req = req.WithContext(ctx)
-
 	rs.log.Debug("calling remote rendering service", "url", url)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)
 	if err != nil {
-		rs.log.Error("Failed to send request to remote rendering service.", "error", err)
+		rs.log.Error("Failed to send request to remote rendering service", "error", err)
 		return nil, fmt.Errorf("failed to send request to remote rendering service: %w", err)
 	}
 
