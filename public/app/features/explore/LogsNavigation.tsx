@@ -28,8 +28,8 @@ function LogsNavigation({
   loading,
   onChangeTime,
   scrollToTopLogs,
-  visibleRange = absoluteRange,
-  queries = [],
+  visibleRange,
+  queries,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
