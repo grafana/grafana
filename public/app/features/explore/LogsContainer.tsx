@@ -64,6 +64,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       logRows,
       logsMeta,
       logsSeries,
+      logsQueries,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -76,7 +77,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       width,
       isLive,
       exploreId,
-      queries,
     } = this.props;
 
     if (!logRows) {
@@ -117,6 +117,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
+              logsQueries={logsQueries}
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
@@ -133,7 +134,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
-              queries={queries}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -156,7 +156,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    queries,
   } = item;
   const timeZone = getTimeZone(state.user);
 
@@ -166,6 +165,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
     logsSeries: logsResult?.series,
+    logsQueries: logsResult?.queries,
     visibleRange: logsResult?.visibleRange,
     scanning,
     timeZone,
@@ -174,7 +174,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    queries,
   };
 }
 
