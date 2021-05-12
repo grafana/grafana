@@ -10,12 +10,7 @@ describe('colors', () => {
     });
 
     it('returns dark hex variant for known color if theme not specified', () => {
-      expect(getColorForTheme('semi-dark-blue', theme.v1)).toBe('#5D8FEF');
+      expect(getColorForTheme('semi-dark-blue', theme.v1)).toBe('#3274D9');
     });
-
-    // Why?
-    /* it('returns hex for named color that is not a part of named colors palette', () => {
-      expect(getColorForTheme('lime')).toBe('#00ff00');
-    }); */
   });
 });
