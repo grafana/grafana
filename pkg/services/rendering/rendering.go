@@ -148,7 +148,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	result, err := rs.render(ctx, opts)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
-	saveMetrics(elapsedTime, err)
+	saveMetrics(elapsedTime, err, RenderPNG)
 
 	return result, err
 }
@@ -193,7 +193,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	result, err := rs.renderCSV(ctx, opts)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
-	saveMetrics(elapsedTime, err)
+	saveMetrics(elapsedTime, err, RenderCSV)
 
 	return result, err
 }
@@ -321,19 +321,18 @@ func isoTimeOffsetToPosixTz(isoOffset string) string {
 	return isoOffset
 }
 
-func saveMetrics(elapsedTime int64, err error) {
+func saveMetrics(elapsedTime int64, err error, renderType RenderType) {
 	if err == nil {
-		metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
-		metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
-
+		metrics.MRenderingRequestTotal.WithLabelValues("success", string(renderType)).Inc()
+		metrics.MRenderingSummary.WithLabelValues("success", string(renderType)).Observe(float64(elapsedTime))
 		return
 	}
 
 	if errors.Is(err, ErrTimeout) {
-		metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
-		metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
+		metrics.MRenderingRequestTotal.WithLabelValues("timeout", string(renderType)).Inc()
+		metrics.MRenderingSummary.WithLabelValues("timeout", string(renderType)).Observe(float64(elapsedTime))
 	} else {
-		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
-		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
+		metrics.MRenderingRequestTotal.WithLabelValues("failure", string(renderType)).Inc()
+		metrics.MRenderingSummary.WithLabelValues("failure", string(renderType)).Observe(float64(elapsedTime))
 	}
 }
