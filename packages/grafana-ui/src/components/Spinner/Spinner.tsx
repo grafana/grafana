@@ -16,7 +16,7 @@ const getStyles = stylesFactory((size: number, inline: boolean) => {
   };
 });
 
-type Props = {
+export type Props = {
   className?: string;
   style?: React.CSSProperties;
   iconClassName?: string;
