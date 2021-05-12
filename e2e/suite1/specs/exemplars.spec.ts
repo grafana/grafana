@@ -58,12 +58,10 @@ describe('Exemplars', () => {
         e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
       });
     e2e.components.TimePicker.openButton().click();
-    e2e.components.TimePicker.fromField().clear().type('2021-05-11 21:30:00');
+    e2e.components.TimePicker.fromField().clear().type('2021-05-11 19:30:00');
     e2e.components.TimePicker.toField().clear().type('2021-05-11 21:40:00');
     e2e.components.TimePicker.applyTimeRange().click();
     e2e.components.QueryField.container().should('be.visible').type('exemplar-query{shift}{enter}');
-
-    e2e().wait(5000);
 
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
     e2e().contains('Query with gdev-tempo').click();
