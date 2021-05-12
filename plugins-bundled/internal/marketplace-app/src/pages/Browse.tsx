@@ -15,7 +15,7 @@ export const Browse = ({ query, meta }: AppRootProps) => {
   const { q, filterBy, sortBy } = query;
   const { includeEnterprise } = meta.jsonData as MarketplaceAppSettings;
 
-  const plugins = usePlugins({ includeEnterprise });
+  const plugins = usePlugins(includeEnterprise);
   const history = useHistory();
 
   const onSortByChange = (value: SelectableValue<string>) => {

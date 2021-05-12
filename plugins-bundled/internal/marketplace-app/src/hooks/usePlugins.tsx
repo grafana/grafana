@@ -9,13 +9,7 @@ type PluginsState = {
   installedPlugins: any[];
 };
 
-export const usePlugins = ({
-  includeUnsigned,
-  includeEnterprise,
-}: {
-  includeUnsigned?: boolean;
-  includeEnterprise?: boolean;
-}) => {
+export const usePlugins = (includeEnterprise = false) => {
   const [state, setState] = useState<PluginsState>({ status: 'LOADING', items: [], installedPlugins: [] });
 
   useEffect(() => {
@@ -23,7 +17,7 @@ export const usePlugins = ({
       const api = new API();
       const items = await api.getRemotePlugins();
       const filteredItems = items
-        .filter((plugin) => plugin.versionSignatureType || includeUnsigned)
+        .filter((plugin) => Boolean(plugin.versionSignatureType))
         .filter((plugin) => includeEnterprise || plugin.status !== 'enterprise')
         .filter((plugin) => !status || plugin.status === status);
       const installedPlugins = await api.getInstalledPlugins();
@@ -32,7 +26,7 @@ export const usePlugins = ({
     };
 
     fetchPluginData();
-  }, [includeEnterprise, includeUnsigned]);
+  }, [includeEnterprise]);
 
   return state;
 };
@@ -44,7 +38,7 @@ type PluginState = {
   local?: Metadata;
 };
 
-export const usePlugin = ({ slug }: { slug: string }): PluginState => {
+export const usePlugin = (slug: string): PluginState => {
   const [state, setState] = useState<PluginState>({
     status: 'LOADING',
   });

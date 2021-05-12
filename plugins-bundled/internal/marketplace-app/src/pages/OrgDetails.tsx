@@ -6,17 +6,15 @@ import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
 import { PluginList } from '../components/PluginList';
 import { usePlugins } from '../hooks/usePlugins';
 import { useOrg } from '../hooks/useOrg';
-import { MarketplaceAppSettings } from '../types';
 
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'components/Page';
 
-export const OrgDetails = ({ query, meta }: AppRootProps) => {
+export const OrgDetails = ({ query }: AppRootProps) => {
   const { orgSlug } = query;
-  const { includeUnsigned } = meta.jsonData as MarketplaceAppSettings;
 
   const orgData = useOrg(orgSlug);
-  const pluginsData = usePlugins({ includeUnsigned });
+  const pluginsData = usePlugins();
   const styles = useStyles2(getStyles);
 
   const plugins = pluginsData.items.filter((plugin) => plugin.orgSlug === orgSlug);

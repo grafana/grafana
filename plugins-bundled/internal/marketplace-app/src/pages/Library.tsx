@@ -6,14 +6,11 @@ import { useStyles2 } from '@grafana/ui';
 
 import { PluginList } from '../components/PluginList';
 import { usePlugins } from '../hooks/usePlugins';
-import { MarketplaceAppSettings } from '../types';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Library = ({ meta }: AppRootProps) => {
-  const { includeUnsigned } = meta.jsonData as MarketplaceAppSettings;
-
-  const { status, items, installedPlugins } = usePlugins({ includeUnsigned, includeEnterprise: true });
+  const { status, items, installedPlugins } = usePlugins(true);
   const styles = useStyles2(getStyles);
 
   const filteredPlugins = items.filter((plugin) => !!installedPlugins.find((_) => _.id === plugin.slug));

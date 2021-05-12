@@ -17,7 +17,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
-  const { status, local, remote, remoteVersions } = usePlugin({ slug });
+  const { status, local, remote, remoteVersions } = usePlugin(slug);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description;

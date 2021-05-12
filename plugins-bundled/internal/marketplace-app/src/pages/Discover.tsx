@@ -17,9 +17,9 @@ import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Discover = ({ meta }: AppRootProps) => {
-  const { includeUnsigned, includeEnterprise } = meta.jsonData as MarketplaceAppSettings;
+  const { includeEnterprise } = meta.jsonData as MarketplaceAppSettings;
 
-  const { items, status } = usePlugins({ includeEnterprise, includeUnsigned });
+  const { items, status } = usePlugins(includeEnterprise);
   const history = useHistory();
   const styles = useStyles2(getStyles);
 
