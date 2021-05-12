@@ -1,6 +1,10 @@
 import { toNumber } from 'lodash';
 
-/** Will return any value as a number or NaN */
+/**
+ * Will return any value as a number or NaN
+ *
+ * @internal
+ * */
 export function anyToNumber(value: any): number {
   if (typeof value === 'number') {
     return value;

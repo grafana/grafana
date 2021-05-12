@@ -1,39 +1,63 @@
+/**
+ * @alpha
+ */
 export enum MappingType {
   ValueToText = 'value', // was 1
   RangeToText = 'range', // was 2
   SpecialValue = 'special',
 }
 
+/**
+ * @alpha
+ */
 export interface ValueMappingResult {
   text?: string;
   color?: string;
   index?: number;
 }
 
+/**
+ * @alpha
+ */
 interface BaseValueMap<T> {
   type: MappingType;
   options: T;
 }
 
+/**
+ * @alpha
+ */
 export interface ValueMap extends BaseValueMap<Record<string, ValueMappingResult>> {
   type: MappingType.ValueToText;
 }
 
+/**
+ * @alpha
+ */
 export interface RangeMapOptions {
   from: number | null; // changed from string
   to: number | null;
   result: ValueMappingResult;
 }
 
+/**
+ * @alpha
+ */
 export interface RangeMap extends BaseValueMap<RangeMapOptions> {
   type: MappingType.RangeToText;
 }
 
+/**
+ * @alpha
+ */
 export interface SpecialValueOptions {
   match: SpecialValueMatch;
   result: ValueMappingResult;
 }
 
+/**
+ * @alpha
+ */
 export enum SpecialValueMatch {
   True = 'true',
   False = 'false',
@@ -43,8 +67,14 @@ export enum SpecialValueMatch {
   Empty = 'empty',
 }
 
+/**
+ * @alpha
+ */
 export interface SpecialValueMap extends BaseValueMap<SpecialValueOptions> {
   type: MappingType.SpecialValue;
 }
 
+/**
+ * @alpha
+ */
 export type ValueMapping = ValueMap | RangeMap | SpecialValueMap;

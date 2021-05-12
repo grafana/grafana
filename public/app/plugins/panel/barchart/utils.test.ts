@@ -1,8 +1,22 @@
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { createTheme, FieldConfig, FieldType, MutableDataFrame, VizOrientation } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions, BarValueVisibility } from './types';
-import { GraphGradientMode, StackingMode } from '../uPlot/config';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
+import {
+  createTheme,
+  DefaultTimeZone,
+  EventBusSrv,
+  FieldConfig,
+  FieldType,
+  getDefaultTimeRange,
+  MutableDataFrame,
+  VizOrientation,
+} from '@grafana/data';
+import { BarChartFieldConfig, BarChartOptions } from './types';
+import {
+  BarValueVisibility,
+  GraphGradientMode,
+  LegendDisplayMode,
+  StackingMode,
+  TooltipDisplayMode,
+} from '@grafana/ui';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -59,7 +73,7 @@ jest.mock('@grafana/data', () => ({
   DefaultTimeZone: 'utc',
 }));
 
-describe('GraphNG utils', () => {
+describe('BarChart utils', () => {
   describe('preparePlotConfigBuilder', () => {
     const frame = mockDataFrame();
 
@@ -74,30 +88,48 @@ describe('GraphNG utils', () => {
         calcs: [],
       },
       stacking: StackingMode.None,
+      tooltip: {
+        mode: TooltipDisplayMode.None,
+      },
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
-      const result = preparePlotConfigBuilder(frame!, createTheme(), {
+      const result = preparePlotConfigBuilder({
         ...config,
         orientation: v,
+        frame: frame!,
+        theme: createTheme(),
+        timeZone: DefaultTimeZone,
+        getTimeRange: getDefaultTimeRange,
+        eventBus: new EventBusSrv(),
       }).getConfig();
       expect(result).toMatchSnapshot();
     });
 
     it.each([BarValueVisibility.Always, BarValueVisibility.Auto])('value visibility', (v) => {
       expect(
-        preparePlotConfigBuilder(frame!, createTheme(), {
+        preparePlotConfigBuilder({
           ...config,
           showValue: v,
+          frame: frame!,
+          theme: createTheme(),
+          timeZone: DefaultTimeZone,
+          getTimeRange: getDefaultTimeRange,
+          eventBus: new EventBusSrv(),
         }).getConfig()
       ).toMatchSnapshot();
     });
 
     it.each([StackingMode.None, StackingMode.Percent, StackingMode.Normal])('stacking', (v) => {
       expect(
-        preparePlotConfigBuilder(frame!, createTheme(), {
+        preparePlotConfigBuilder({
           ...config,
           stacking: v,
+          frame: frame!,
+          theme: createTheme(),
+          timeZone: DefaultTimeZone,
+          getTimeRange: getDefaultTimeRange,
+          eventBus: new EventBusSrv(),
         }).getConfig()
       ).toMatchSnapshot();
     });
