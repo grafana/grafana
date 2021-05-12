@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateScuemataBasics(t *testing.T) {
-	defaultBaseLoadPaths := load.GetDefaultLoadPaths()
+var defaultBaseLoadPaths = load.GetDefaultLoadPaths()
 
+func TestValidateScuemataBasics(t *testing.T) {
 	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
 		tempDir := os.DirFS(filepath.Join("testdata", "valid_scuemata"))
 		mergedFS := load.Merge(tempDir, defaultBaseLoadPaths.BaseCueFS)
