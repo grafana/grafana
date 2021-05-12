@@ -1,5 +1,7 @@
 import { RelativeTimeRange, TimeOption } from '@grafana/data';
 
+const regex = /^now$|^now\-(\d{1,10})([wdhms])$/;
+
 export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRange | undefined => {
   return {
     from: relativeToSeconds(option.from),
@@ -14,8 +16,25 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
   return { from, to, display: `${from} to ${to}` };
 };
 
+export const isRangeValid = (relative: string, now = Date.now()): boolean => {
+  if (!isRelativeFormat(relative)) {
+    return false;
+  }
+
+  const seconds = relativeToSeconds(relative);
+
+  if (seconds > Math.ceil(now / 1000)) {
+    return false;
+  }
+  return true;
+};
+
+export const isRelativeFormat = (format: string): boolean => {
+  return regex.test(format);
+};
+
 const relativeToSeconds = (relative: string): number => {
-  const match = /^now\-(\d{1,16})([wdhms])$/g.exec(relative);
+  const match = regex.exec(relative);
 
   if (!match || match.length !== 3) {
     return 0;

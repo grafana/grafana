@@ -9,12 +9,11 @@ import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../rangeOptions';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
-import { mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from './mapper';
+import { isRangeValid, isRelativeFormat, mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from './utils';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { InputState } from '../TimeRangePicker/TimeRangeForm';
 import { Icon } from '../../Icon/Icon';
-import { isRelativeFormat } from './validator';
 
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
@@ -29,10 +28,10 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange);
-  const [from, setFrom] = useState<InputState>(setValue(timeOption.from));
-  const [to, setTo] = useState<InputState>(setValue(timeOption.to));
+  const [from, setFrom] = useState<InputState>({ value: timeOption.from, invalid: !isRangeValid(timeOption.from) });
+  const [to, setTo] = useState<InputState>({ value: timeOption.to, invalid: !isRangeValid(timeOption.to) });
 
-  const styles = useStyles2(getStyles(from, to));
+  const styles = useStyles2(getStyles(from.invalid, to.invalid));
 
   const onChangeTimeOption = (option: TimeOption) => {
     const relativeTimeRange = mapOptionToRelativeTimeRange(option);
@@ -40,8 +39,8 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
       return;
     }
     onClose();
-    setFrom(setValue(option.from));
-    setTo(setValue(option.to));
+    setFrom({ ...from, value: option.from });
+    setTo({ ...to, value: option.to });
     onChange(relativeTimeRange);
   };
 
@@ -56,10 +55,21 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
 
   const onApply = (event: FormEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    const timeRange = mapOptionToRelativeTimeRange({ from: from.value, to: to.value, display: '' });
-    if (to.invalid || from.invalid || !timeRange) {
+
+    if (to.invalid || from.invalid) {
       return;
     }
+
+    const timeRange = mapOptionToRelativeTimeRange({
+      from: from.value,
+      to: to.value,
+      display: '',
+    });
+
+    if (!timeRange) {
+      return;
+    }
+
     onChange(timeRange);
     setIsOpen(false);
   };
@@ -69,7 +79,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
       <Tooltip content="Choose time range" placement="bottom">
         <ToolbarButton aria-label="TimePicker Open Button" onClick={onOpen} icon="clock-nine" isOpen={isOpen}>
           <span data-testid="picker-button-label" className={styles.container}>
-            {from.value} to {to.value}
+            {timeOption.from} to {timeOption.to}
           </span>
         </ToolbarButton>
       </Tooltip>
@@ -99,14 +109,16 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
                 <Field label="From" invalid={from.invalid} error={errorMessage}>
                   <Input
                     onClick={(event) => event.stopPropagation()}
-                    onChange={(event) => setFrom(setValue(event.currentTarget.value))}
+                    onBlur={() => setFrom({ ...from, invalid: !isRangeValid(from.value) })}
+                    onChange={(event) => setFrom({ ...from, value: event.currentTarget.value })}
                     value={from.value}
                   />
                 </Field>
                 <Field label="To" invalid={to.invalid} error={errorMessage}>
                   <Input
                     onClick={(event) => event.stopPropagation()}
-                    onChange={(event) => setTo(setValue(event.currentTarget.value))}
+                    onBlur={() => setTo({ ...to, invalid: !isRangeValid(to.value) })}
+                    onChange={(event) => setTo({ ...to, value: event.currentTarget.value })}
                     value={to.value}
                   />
                 </Field>
@@ -122,20 +134,13 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   );
 }
 
-const setValue = (value: string): InputState => {
-  return {
-    value,
-    invalid: !isRelativeFormat(value),
-  };
-};
-
-const getStyles = (from: InputState, to: InputState) => (theme: GrafanaTheme2) => {
+const getStyles = (fromInvalid: boolean, toInvalid: boolean) => (theme: GrafanaTheme2) => {
   let bodyHeight = 250;
   const errorHeight = theme.spacing.gridSize * 4;
 
-  if (from.invalid && to.invalid) {
+  if (fromInvalid && toInvalid) {
     bodyHeight += errorHeight * 2;
-  } else if (from.invalid || to.invalid) {
+  } else if (fromInvalid || toInvalid) {
     bodyHeight += errorHeight;
   }
 
