@@ -1,5 +1,6 @@
 import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
@@ -27,6 +28,7 @@ export const defaultFormValues: RuleFormValues = Object.freeze({
   labels: [{ key: '', value: '' }],
   annotations: [{ key: '', value: '' }],
   dataSourceName: null,
+  type: !contextSrv.isEditor ? RuleFormType.threshold : undefined, // viewers can't create prom alerts
 
   // threshold
   folder: null,

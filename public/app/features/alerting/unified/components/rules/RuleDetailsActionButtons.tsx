@@ -5,6 +5,7 @@ import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { deleteRuleAction } from '../../state/actions';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
@@ -25,6 +26,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
+
+  const { isEditable } = useIsRuleEditable(rulerRule);
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
@@ -108,8 +111,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   }
 
-  // @TODO check roles
-  if (!!rulerRule) {
+  if (isEditable && rulerRule) {
     const editURL = urlUtil.renderUrl(
       `/alerting/${encodeURIComponent(
         stringifyRuleIdentifier(
