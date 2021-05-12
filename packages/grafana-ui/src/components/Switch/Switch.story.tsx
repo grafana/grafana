@@ -20,24 +20,23 @@ export default {
   },
   args: {
     disabled: false,
+    value: false,
+    transparent: false,
   },
 };
 
 export const Controlled: Story = (args) => {
-  const [checked, setChecked] = useState(args.value);
-  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
-
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
         <Field label="Normal switch" description="For horizontal forms">
-          <Switch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />
+          <Switch value={args.value} disabled={args.disabled} transparent={args.transparent} />
         </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
           <InlineField label="My switch">
-            <InlineSwitch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />
+            <InlineSwitch value={args.value} disabled={args.disabled} transparent={args.transparent} />
           </InlineField>
         </InlineFieldRow>
       </div>
@@ -47,21 +46,18 @@ export const Controlled: Story = (args) => {
           <InlineSwitch
             label="Raw data"
             showLabel={true}
-            value={checked}
+            value={args.value}
             disabled={args.disabled}
             transparent={args.transparent}
-            onChange={onChange}
           />
         </span>
       </div>
     </div>
   );
 };
-Controlled.args = {
-  value: false,
-  transparent: false,
-};
 
 export const Uncontrolled: Story = (args) => {
-  return <Switch disabled={args.disabled} />;
+  const [checked, setChecked] = useState(args.value);
+  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
+  return <Switch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />;
 };
