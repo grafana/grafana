@@ -18,10 +18,9 @@ type Quota struct {
 }
 
 type QuotaScope struct {
-	Name             string
-	Target           string
-	TargetConditions string
-	DefaultLimit     int64
+	Name         string
+	Target       string
+	DefaultLimit int64
 }
 
 type OrgQuotaDTO struct {
@@ -46,7 +45,6 @@ type GlobalQuotaDTO struct {
 
 type GetOrgQuotaByTargetQuery struct {
 	Target           string
-	TargetConditions string
 	OrgId            int64
 	Default          int64
 	IsNgAlertEnabled bool
@@ -75,7 +73,6 @@ type GetUserQuotasQuery struct {
 
 type GetGlobalQuotaByTargetQuery struct {
 	Target           string
-	TargetConditions string
 	Default          int64
 	IsNgAlertEnabled bool
 	Result           *GlobalQuotaDTO

@@ -64,7 +64,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				}
 				continue
 			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, TargetConditions: scope.TargetConditions, IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled()}
+			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled()}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
 			}
@@ -78,7 +78,6 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			query := models.GetOrgQuotaByTargetQuery{
 				OrgId:            c.OrgId,
 				Target:           scope.Target,
-				TargetConditions: scope.TargetConditions,
 				Default:          scope.DefaultLimit,
 				IsNgAlertEnabled: qs.Cfg.IsNgAlertEnabled(),
 			}
@@ -137,16 +136,14 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 	case "dashboard":
 		scopes = append(scopes,
 			models.QuotaScope{
-				Name:             "global",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Global.Dashboard,
+				Name:         "global",
+				Target:       target,
+				DefaultLimit: qs.Cfg.Quota.Global.Dashboard,
 			},
 			models.QuotaScope{
-				Name:             "org",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Org.Dashboard,
+				Name:         "org",
+				Target:       target,
+				DefaultLimit: qs.Cfg.Quota.Org.Dashboard,
 			},
 		)
 		return scopes, nil
@@ -175,17 +172,5 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 		return scopes, nil
 	default:
 		return scopes, ErrInvalidQuotaTarget
-	}
-}
-
-// Get any extra conditions that are required to properly determine the quota for a given target.
-// The string must be raw SQL compatible.
-func (qs *QuotaService) getQuotaScopeConditions(target string) string {
-	switch target {
-	case "dashboard":
-		// do not count folders towards dashboard quota
-		return "AND is_folder = 0"
-	default:
-		return ""
 	}
 }
