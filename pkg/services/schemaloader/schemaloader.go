@@ -1,8 +1,12 @@
 package schemaloader
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
+	"time"
 
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -23,9 +27,12 @@ func init() {
 
 const ServiceName = "SchemaLoader"
 
+var instanceCueFS = NewInstanceFS()
+
 var baseLoadPath load.BaseLoadPaths = load.BaseLoadPaths{
 	BaseCueFS:       grafana.CoreSchema,
 	DistPluginCueFS: grafana.PluginSchema,
+	InstanceCueFS:   NewInstanceFS(),
 }
 
 type RenderUser struct {
@@ -33,10 +40,6 @@ type RenderUser struct {
 	UserID  int64
 	OrgRole string
 }
-
-type InstanceFS struct {
-}
-
 type SchemaLoaderService struct {
 	log        log.Logger
 	DashFamily schema.VersionedCueSchema
@@ -44,6 +47,10 @@ type SchemaLoaderService struct {
 }
 
 func (rs *SchemaLoaderService) LoadNewPanelPluginSchema(name, content string) error {
+	if err := instanceCueFS.WriteFile(name, content); err != nil {
+		return err
+	}
+	baseLoadPath.InstanceCueFS = instanceCueFS
 	return nil
 }
 
@@ -69,7 +76,7 @@ func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*
 	val = removeNils(val)
 	data, _ := json.Marshal(val)
 	dsSchema := schema.Find(rs.DashFamily, schema.Latest())
-	result, err := dsSchema.ApplyDefaults(schema.Resource{Value: data})
+	result, err := schema.ApplyDefaults(schema.Resource{Value: data}, dsSchema.CUE())
 	if err != nil {
 		return input, err
 	}
@@ -90,7 +97,7 @@ func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (sim
 		return input, err
 	}
 	// spew.Dump(dsSchema)
-	result, err := dsSchema.TrimDefaults(schema.Resource{Value: data})
+	result, err := schema.TrimDefaults(schema.Resource{Value: data}, dsSchema.CUE())
 	if err != nil {
 		return input, err
 	}
@@ -153,4 +160,102 @@ func removeNilArray(initialArray []interface{}) []interface{} {
 		}
 	}
 	return withoutNils
+}
+
+type file struct {
+	name    string
+	content *bytes.Buffer
+	modTime time.Time
+	closed  bool
+}
+
+func (f *file) Read(p []byte) (int, error) {
+	if f.closed {
+		return 0, errors.New("file closed")
+	}
+	return f.content.Read(p)
+}
+
+func (f *file) Stat() (fs.FileInfo, error) {
+	if f.closed {
+		return nil, errors.New("file closed")
+	}
+	return f, nil
+}
+
+func (f *file) Close() error {
+	f.closed = true
+	return nil
+}
+
+func (f *file) Name() string {
+	return f.name
+}
+
+func (f *file) Size() int64 {
+	return int64(f.content.Len())
+}
+
+func (f *file) Mode() fs.FileMode {
+	return 0444
+}
+
+func (f *file) ModTime() time.Time {
+	return f.modTime
+}
+
+func (f *file) IsDir() bool {
+	return false
+}
+
+func (f *file) Sys() interface{} {
+	return nil
+}
+
+type InstanceFS struct {
+	files map[string]*file
+}
+
+func NewInstanceFS() *InstanceFS {
+	return &InstanceFS{
+		files: make(map[string]*file),
+	}
+}
+
+func (fsys InstanceFS) Open(name string) (fs.File, error) {
+	if !fs.ValidPath(name) {
+		return nil, &fs.PathError{
+			Op:   "open",
+			Path: name,
+			Err:  fs.ErrInvalid,
+		}
+	}
+
+	if f, ok := fsys.files[name]; !ok {
+		return nil, &fs.PathError{
+			Op:   "open",
+			Path: name,
+			Err:  fs.ErrNotExist,
+		}
+	} else {
+		return f, nil
+	}
+}
+
+func (fsys *InstanceFS) WriteFile(name, content string) error {
+	if !fs.ValidPath(name) {
+		return &fs.PathError{
+			Op:   "write",
+			Path: name,
+			Err:  fs.ErrInvalid,
+		}
+	}
+
+	f := &file{
+		name:    name,
+		content: bytes.NewBufferString(content),
+		modTime: time.Now(),
+	}
+	fsys.files[name] = f
+	return nil
 }
