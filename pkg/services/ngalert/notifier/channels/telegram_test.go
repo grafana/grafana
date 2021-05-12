@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -18,8 +17,7 @@ import (
 )
 
 func TestTelegramNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
