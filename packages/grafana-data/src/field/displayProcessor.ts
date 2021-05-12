@@ -137,6 +137,10 @@ export function getRawDisplayProcessor(): DisplayProcessor {
 function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: GrafanaTheme2) {
   if (field.type === FieldType.string) {
     return (value: any) => {
+      if (!value) {
+        return { color: theme.colors.background.primary, percent: 0 };
+      }
+
       const hc = strHashCode(value as string);
       return {
         color: classicColors[Math.floor(hc % classicColors.length)],
