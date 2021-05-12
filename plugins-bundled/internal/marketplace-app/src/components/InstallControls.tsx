@@ -23,7 +23,7 @@ interface Props {
 export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
   const [arch, setArch] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(!!localPlugin);
+  const [isInstalled, setIsInstalled] = useState(Boolean(localPlugin));
   const [shouldUpdate, setShouldUpdate] = useState(
     remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!)
   );
@@ -65,7 +65,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
       })
     : false;
 
-  const isDevelopmentBuild = !!localPlugin?.dev;
+  const isDevelopmentBuild = Boolean(localPlugin?.dev);
   const isEnterprise = remotePlugin?.status === 'enterprise';
   const hasPackages = Object.keys(remotePlugin?.packages ?? {}).length > 1;
   const hasPermission = hasRole(OrgRole.Admin);
