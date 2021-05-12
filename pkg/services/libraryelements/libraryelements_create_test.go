@@ -36,9 +36,9 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
-						Connections: 0,
-						Created:     sc.initialResult.Result.Meta.Created,
-						Updated:     sc.initialResult.Result.Meta.Updated,
+						ConnectedDashboards: 0,
+						Created:             sc.initialResult.Result.Meta.Created,
+						Updated:             sc.initialResult.Result.Meta.Updated,
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",
@@ -81,9 +81,9 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
-						Connections: 0,
-						Created:     result.Result.Meta.Created,
-						Updated:     result.Result.Meta.Updated,
+						ConnectedDashboards: 0,
+						Created:             result.Result.Meta.Created,
+						Updated:             result.Result.Meta.Updated,
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      "signed_in_user",

@@ -57,9 +57,9 @@ func TestPatchLibraryElement(t *testing.T) {
 					},
 					Version: 2,
 					Meta: LibraryElementDTOMeta{
-						Connections: 0,
-						Created:     sc.initialResult.Result.Meta.Created,
-						Updated:     result.Result.Meta.Updated,
+						ConnectedDashboards: 0,
+						Created:             sc.initialResult.Result.Meta.Created,
+						Updated:             result.Result.Meta.Updated,
 						CreatedBy: LibraryElementDTOMetaUser{
 							ID:        1,
 							Name:      userInDbName,
