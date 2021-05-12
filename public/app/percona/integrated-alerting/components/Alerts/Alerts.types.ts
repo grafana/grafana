@@ -22,6 +22,11 @@ export interface Alert {
   summary: string;
 }
 
+interface AlertsTotals {
+  total_items: number;
+  total_pages: number;
+}
+
 export interface AlertsListResponseAlert {
   created_at?: string;
   alert_id: string;
@@ -34,6 +39,7 @@ export interface AlertsListResponseAlert {
 }
 
 export interface AlertsListResponse {
+  totals: AlertsTotals;
   alerts: AlertsListResponseAlert[];
 }
 
