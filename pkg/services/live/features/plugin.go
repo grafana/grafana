@@ -81,21 +81,19 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		return models.SubscribeReply{}, resp.Status, nil
 	}
 
-	if resp.UseRunStream {
-		submitResult, err := r.runStreamManager.SubmitStream(ctx, user.OrgId, e.Channel, r.path, pCtx, r.handler)
-		if err != nil {
-			logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
-			return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
-		}
-		if submitResult.StreamExists {
-			logger.Debug("Skip running new stream (already exists)", "path", r.path)
-		} else {
-			logger.Debug("Running a new keepalive stream", "path", r.path)
-		}
+	submitResult, err := r.runStreamManager.SubmitStream(ctx, user.OrgId, e.Channel, r.path, pCtx, r.handler)
+	if err != nil {
+		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
+		return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
+	}
+	if submitResult.StreamExists {
+		logger.Debug("Skip running new stream (already exists)", "path", r.path)
+	} else {
+		logger.Debug("Running a new keepalive stream", "path", r.path)
 	}
 
 	reply := models.SubscribeReply{
-		Presence: resp.UseRunStream, // only enable presence for streams with UseRunStream on at the moment.
+		Presence: true,
 		Data:     resp.Data,
 	}
 	return reply, backend.SubscribeStreamStatusOK, nil
