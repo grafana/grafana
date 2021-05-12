@@ -29,7 +29,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           <Button
             icon={'plus-circle'}
             onClick={onPlus}
-            size={'sm'}
+            size={'md'}
             title={'Zoom in'}
             variant="secondary"
             disabled={disableZoomIn}
@@ -37,7 +37,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           <Button
             icon={'minus-circle'}
             onClick={onMinus}
-            size={'sm'}
+            size={'md'}
             title={'Zoom out'}
             variant="secondary"
             disabled={disableZoomOut}
@@ -47,7 +47,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           <Button
             icon={'code-branch'}
             onClick={() => onConfigChange({ ...config, gridLayout: false })}
-            size={'sm'}
+            size={'md'}
             title={'Default layout'}
             variant="secondary"
             disabled={!config.gridLayout}
@@ -55,7 +55,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           <Button
             icon={'apps'}
             onClick={() => onConfigChange({ ...config, gridLayout: true })}
-            size={'sm'}
+            size={'md'}
             title={'Grid layout'}
             variant="secondary"
             disabled={config.gridLayout}
