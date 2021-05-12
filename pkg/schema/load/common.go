@@ -147,9 +147,6 @@ func (mfs MergedFS) ReadDir(name string) ([]fs.DirEntry, error) {
 		if !ok {
 			return nil, &fs.PathError{Op: "readdir", Path: name, Err: errors.New("not implemented")}
 		}
-		if err := file.Close(); err != nil {
-			logger.Error("failed to close file", "err", err)
-		}
 
 		fsDirs, err := dir.ReadDir(-1)
 		if err != nil {
@@ -157,6 +154,9 @@ func (mfs MergedFS) ReadDir(name string) ([]fs.DirEntry, error) {
 		}
 		sort.Slice(fsDirs, func(i, j int) bool { return fsDirs[i].Name() < fsDirs[j].Name() })
 		dirs = append(dirs, fsDirs...)
+		if err := file.Close(); err != nil {
+			logger.Error("failed to close file", "err", err)
+		}
 	}
 	return dirs, nil
 }
