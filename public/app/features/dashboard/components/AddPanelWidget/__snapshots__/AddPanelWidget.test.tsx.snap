@@ -45,6 +45,19 @@ exports[`Render should render component 1`] = `
         Add a new row
       </div>
     </div>
+    <div
+      className="css-l02n0m"
+    >
+      <div
+        onClick={[Function]}
+      >
+        <Icon
+          name="book-open"
+          size="xl"
+        />
+        Add a panel from the panel library
+      </div>
+    </div>
   </div>
 </div>
 `;

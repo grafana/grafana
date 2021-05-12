@@ -13,10 +13,6 @@ import (
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
-	if !l.IsEnabled() {
-		return
-	}
-
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, binding.Bind(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))

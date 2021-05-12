@@ -44,8 +44,6 @@ import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
-import { SafeDynamicImport } from './core/components/DynamicImports/SafeDynamicImport';
-import { featureToggledRoutes } from './routes/routes';
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 // add move to lodash for backward compatabilty with plugins
@@ -70,21 +68,6 @@ export class GrafanaApp {
   }
 
   init() {
-    if (config.featureToggles.panelLibrary) {
-      featureToggledRoutes.push({
-        path: '/dashboards/f/:uid/:slug/library-panels',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
-        ),
-      });
-      featureToggledRoutes.push({
-        path: '/library-panels',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
-        ),
-      });
-    }
-
     initEchoSrv();
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);

@@ -121,27 +121,6 @@ type libraryElementsSearchResult struct {
 	PerPage    int              `json:"perPage"`
 }
 
-func overrideLibraryElementServiceInRegistry(cfg *setting.Cfg) LibraryElementService {
-	l := LibraryElementService{
-		SQLStore: nil,
-		Cfg:      cfg,
-	}
-
-	overrideServiceFunc := func(d registry.Descriptor) (*registry.Descriptor, bool) {
-		descriptor := registry.Descriptor{
-			Name:         "LibraryElementService",
-			Instance:     &l,
-			InitPriority: 0,
-		}
-
-		return &descriptor, true
-	}
-
-	registry.RegisterOverride(overrideServiceFunc)
-
-	return l
-}
-
 func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementCommand {
 	command := getCreateCommandWithModel(folderID, name, Panel, []byte(`
 			{
@@ -294,17 +273,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
-
-		cfg := setting.NewCfg()
-		// Everything in this service is behind the feature toggle "panelLibrary"
-		cfg.FeatureToggles = map[string]bool{"panelLibrary": true}
-		// Because the LibraryElementService is behind a feature toggle, we need to override the service in the registry
-		// with a Cfg that contains the feature toggle so migrations are run properly
-		service := overrideLibraryElementServiceInRegistry(cfg)
-
-		// We need to assign SQLStore after the override and migrations are done
 		sqlStore := sqlstore.InitTestDB(t)
-		service.SQLStore = sqlStore
+		service := LibraryElementService{
+			Cfg:      setting.NewCfg(),
+			SQLStore: sqlStore,
+		}
 
 		user := models.SignedInUser{
 			UserId:     1,
