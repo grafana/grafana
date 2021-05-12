@@ -8,3 +8,4 @@ export * from './ArrayDataFrame';
 export * from './DataFrameJSON';
 export * from './StreamingDataFrame';
 export * from './frameComparisons';
+export { anySeriesWithTimeField } from './utils';
