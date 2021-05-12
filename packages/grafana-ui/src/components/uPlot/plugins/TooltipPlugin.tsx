@@ -55,6 +55,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   );
 
   useEffect(() => {
+    console.log('running');
     if (plotCtx && plotCtx.plot) {
       plotCtx.plot.root.querySelector('.u-over')!.addEventListener('mouseleave', plotMouseLeave);
     }
@@ -63,7 +64,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         plotCtx.plot.root.querySelector('.u-over')!.removeEventListener('mouseleave', plotMouseLeave);
       }
     };
-  });
+  }, [plotCtx.plot?.root]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
