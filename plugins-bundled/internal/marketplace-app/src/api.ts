@@ -49,6 +49,16 @@ async function uninstallPlugin(id: string) {
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
+async function updatePlugin(pluginId: string, data: Partial<PluginMeta>) {
+  const response = await getBackendSrv().datasourceRequest({
+    url: `/api/plugins/${pluginId}/settings`,
+    method: 'POST',
+    data,
+  });
+
+  return response?.data;
+}
+
 export const api = {
   getRemotePlugins,
   getPlugin,
@@ -56,4 +66,5 @@ export const api = {
   getOrg,
   installPlugin,
   uninstallPlugin,
+  updatePlugin,
 };

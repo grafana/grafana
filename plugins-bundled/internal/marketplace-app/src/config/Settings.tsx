@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PluginConfigPageProps, AppPluginMeta, PluginMeta } from '@grafana/data';
 import { MarketplaceAppSettings } from 'types';
 import { Button, Field, Legend, Switch } from '@grafana/ui';
-import { getBackendSrv } from '@grafana/runtime';
+import { api } from '../api';
 
 interface Props extends PluginConfigPageProps<AppPluginMeta<MarketplaceAppSettings>> {}
 
@@ -59,7 +59,7 @@ export const Settings = ({ plugin }: Props) => {
 
 const updateAndReload = async (pluginId: string, data: Partial<PluginMeta>) => {
   try {
-    await updatePlugin(pluginId, data);
+    await api.updatePlugin(pluginId, data);
 
     // Reloading the page as the changes made here wouldn't be propagated to the actual plugin otherwise.
     // This is not ideal, however unfortunately currently there is no supported way for updating the plugin state.
@@ -67,14 +67,4 @@ const updateAndReload = async (pluginId: string, data: Partial<PluginMeta>) => {
   } catch (e) {
     console.error('Error while updating the plugin', e);
   }
-};
-
-export const updatePlugin = async (pluginId: string, data: Partial<PluginMeta>) => {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${pluginId}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
 };
