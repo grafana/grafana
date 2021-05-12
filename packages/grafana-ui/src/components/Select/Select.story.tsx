@@ -9,7 +9,6 @@ import { kebabCase } from 'lodash';
 import { generateOptions } from './mockOptions';
 import mdx from './Select.mdx';
 import { auto } from '@popperjs/core';
-import { FixedSizeGrid } from 'react-window';
 
 export default {
   title: 'Forms/Select',
