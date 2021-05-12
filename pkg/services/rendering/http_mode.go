@@ -76,7 +76,7 @@ func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string,
 }
 
 func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey string, opts CSVOpts) (*RenderCSVResult, error) {
-	filePath, err := rs.getNewFilePath(RenderPNG)
+	filePath, err := rs.getNewFilePath(RenderCSV)
 	if err != nil {
 		return nil, err
 	}
