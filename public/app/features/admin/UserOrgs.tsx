@@ -1,16 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
-import {
-  Button,
-  ConfirmButton,
-  Container,
-  Field,
-  HorizontalGroup,
-  Modal,
-  stylesFactory,
-  Themeable,
-  withTheme,
-} from '@grafana/ui';
+import { Button, ConfirmButton, Field, HorizontalGroup, Modal, stylesFactory, Themeable, withTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { AccessControlAction, Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
@@ -251,16 +241,16 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         <Field label="Role">
           <OrgRolePicker value={role} onChange={this.onOrgRoleChange} />
         </Field>
-        <Container padding="md">
+        <Modal.ButtonRow>
           <HorizontalGroup spacing="md" justify="center">
+            <Button variant="secondary" fill="outline" onClick={this.onCancel}>
+              Cancel
+            </Button>
             <Button variant="primary" onClick={this.onAddUserToOrg}>
               Add to organization
             </Button>
-            <Button variant="secondary" onClick={this.onCancel}>
-              Cancel
-            </Button>
           </HorizontalGroup>
-        </Container>
+        </Modal.ButtonRow>
       </Modal>
     );
   }
