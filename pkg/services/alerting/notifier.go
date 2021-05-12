@@ -201,7 +201,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		Width:           1000,
 		Height:          500,
 		Timeout:         timeout,
-		OrgId:           evalCtx.Rule.OrgID,
+		OrgID:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}

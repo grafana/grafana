@@ -2,6 +2,7 @@ import { isNumber } from 'lodash';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { Field, FieldConfig, FieldType, NumericRange, Threshold } from '../types';
+import { getColorForTheme } from '../utils';
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
@@ -14,6 +15,10 @@ export interface ColorScaleValue {
 export type ScaleCalculator = (value: number) => ColorScaleValue;
 
 export function getScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCalculator {
+  if (field.type === FieldType.boolean) {
+    return getBooleanScaleCalculator(field, theme);
+  }
+
   const mode = getFieldColorModeForField(field);
   const getColor = mode.getCalculator(field, theme);
   const info = field.state?.range ?? getMinMaxAndDelta(field);
@@ -32,6 +37,30 @@ export function getScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
       threshold,
       color: getColor(value, percent, threshold),
     };
+  };
+}
+
+function getBooleanScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCalculator {
+  const trueValue: ColorScaleValue = {
+    color: getColorForTheme('green', theme.v1),
+    percent: 1,
+    threshold: (undefined as unknown) as Threshold,
+  };
+
+  const falseValue: ColorScaleValue = {
+    color: getColorForTheme('red', theme.v1),
+    percent: 0,
+    threshold: (undefined as unknown) as Threshold,
+  };
+
+  const mode = getFieldColorModeForField(field);
+  if (mode.isContinuous && mode.colors) {
+    trueValue.color = getColorForTheme(mode.colors[mode.colors.length - 1], theme.v1);
+    falseValue.color = getColorForTheme(mode.colors[0], theme.v1);
+  }
+
+  return (value: number) => {
+    return Boolean(value) ? trueValue : falseValue;
   };
 }
 

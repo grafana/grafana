@@ -49,7 +49,7 @@ function fromGraphite(graphiteQuery: GraphiteQueryModel, config: GraphiteToLokiQ
     });
   } else {
     const targetNodes = graphiteQuery.segments.map((segment) => segment.value);
-    let mappings = config.mappings.filter((mapping) => mapping.matchers.length === targetNodes.length);
+    let mappings = config.mappings.filter((mapping) => mapping.matchers.length <= targetNodes.length);
 
     for (let mapping of mappings) {
       const matchers = mapping.matchers.concat();
