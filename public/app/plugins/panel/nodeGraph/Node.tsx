@@ -1,8 +1,8 @@
 import React, { MouseEvent, memo } from 'react';
 import cx from 'classnames';
 import { getColorForTheme, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, useTheme } from '@grafana/ui';
 import { NodeDatum } from './types';
-import { useStyles2, useTheme } from '../../themes';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { statToString } from './utils';

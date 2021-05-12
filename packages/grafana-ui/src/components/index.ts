@@ -241,5 +241,4 @@ export { BarChart } from './BarChart/BarChart';
 export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
-export * from './NodeGraph';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

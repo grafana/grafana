@@ -7,9 +7,9 @@ import {
   getFieldColorModeForField,
   GrafanaTheme2,
   MutableDataFrame,
+  NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 import { EdgeDatum, NodeDatum } from './types';
-import { NodeGraphDataFrameFieldNames } from './index';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -38,44 +38,31 @@ export function shortenLine(line: Line, length: number): Line {
 export function getNodeFields(nodes: DataFrame) {
   const fieldsCache = new FieldCache(nodes);
   return {
-    id: fieldsCache.getFieldByName(DataFrameFieldNames.id),
-    title: fieldsCache.getFieldByName(DataFrameFieldNames.title),
-    subTitle: fieldsCache.getFieldByName(DataFrameFieldNames.subTitle),
-    mainStat: fieldsCache.getFieldByName(DataFrameFieldNames.mainStat),
-    secondaryStat: fieldsCache.getFieldByName(DataFrameFieldNames.secondaryStat),
-    arc: findFieldsByPrefix(nodes, DataFrameFieldNames.arc),
-    details: findFieldsByPrefix(nodes, DataFrameFieldNames.detail),
-    color: fieldsCache.getFieldByName(DataFrameFieldNames.color),
+    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
+    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title),
+    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle),
+    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
+    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
+    arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
+    details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
+    color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
   };
 }
 
 export function getEdgeFields(edges: DataFrame) {
   const fieldsCache = new FieldCache(edges);
   return {
-    id: fieldsCache.getFieldByName(DataFrameFieldNames.id),
-    source: fieldsCache.getFieldByName(DataFrameFieldNames.source),
-    target: fieldsCache.getFieldByName(DataFrameFieldNames.target),
-    mainStat: fieldsCache.getFieldByName(DataFrameFieldNames.mainStat),
-    secondaryStat: fieldsCache.getFieldByName(DataFrameFieldNames.secondaryStat),
-    details: findFieldsByPrefix(edges, DataFrameFieldNames.detail),
+    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
+    source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source),
+    target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target),
+    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
+    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
+    details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail),
   };
 }
 
 function findFieldsByPrefix(frame: DataFrame, prefix: string) {
   return frame.fields.filter((f) => f.name.match(new RegExp('^' + prefix)));
-}
-
-export enum DataFrameFieldNames {
-  id = 'id',
-  title = 'title',
-  subTitle = 'subTitle',
-  mainStat = 'mainStat',
-  secondaryStat = 'secondaryStat',
-  source = 'source',
-  target = 'target',
-  detail = 'detail__',
-  arc = 'arc__',
-  color = 'color',
 }
 
 /**

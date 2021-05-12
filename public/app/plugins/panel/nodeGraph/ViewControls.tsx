@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '../Button';
-import { HorizontalGroup, VerticalGroup } from '..';
+import { Button, HorizontalGroup, VerticalGroup } from '@grafana/ui';
 
 interface Props<Config> {
   config: Config;

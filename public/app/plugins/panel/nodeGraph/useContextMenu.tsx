@@ -1,14 +1,10 @@
 import React, { MouseEvent, useCallback, useState } from 'react';
 import { EdgeDatum, NodeDatum } from './types';
 import { DataFrame, Field, GrafanaTheme, LinkModel } from '@grafana/data';
-import { ContextMenu } from '../ContextMenu/ContextMenu';
-import { useTheme } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes/stylesFactory';
 import { getEdgeFields, getNodeFields } from './utils';
 import { css } from '@emotion/css';
-import { MenuGroup } from '../Menu/MenuGroup';
-import { MenuItem } from '../Menu/MenuItem';
 import { Config } from './layout';
+import { ContextMenu, MenuGroup, MenuItem, stylesFactory, useTheme } from '@grafana/ui';
 
 /**
  * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when

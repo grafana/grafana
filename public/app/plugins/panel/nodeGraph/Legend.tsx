@@ -1,14 +1,10 @@
 import React, { useCallback } from 'react';
-import { VizLegend } from '../VizLegend/VizLegend';
-import { VizLegendItem } from '../VizLegend/types';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { NodeDatum } from './types';
 import { Field, FieldColorModeId, getColorForTheme, GrafanaTheme } from '@grafana/data';
-import { useStyles, useTheme } from '../../themes';
 import { identity } from 'lodash';
-import { Icon, VizLegendListItem } from '..';
 import { Config } from './layout';
 import { css } from '@emotion/css';
+import { Icon, LegendDisplayMode, useStyles, useTheme, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
 
 function getStyles() {
   return {
