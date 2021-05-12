@@ -1,7 +1,7 @@
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 export function getColorForTheme(color: string, theme: GrafanaTheme): string {
-  return theme.vizColors.byName(color);
+  return theme.vizColors.getByName(color);
 }
 
 /**
