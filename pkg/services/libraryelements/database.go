@@ -187,8 +187,18 @@ func (l *LibraryElementService) deleteLibraryElement(c *models.ReqContext, uid s
 	})
 }
 
-// getLibraryElement gets a Library Element.
-func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid string) (LibraryElementDTO, error) {
+func selectLibraryElementByParam(params map[string]interface{}) (string, []interface{}) {
+	conditions := make([]string, 0, len(params))
+	values := make([]interface{}, 0, len(params))
+	for param, value := range params {
+		conditions = append(conditions, "le."+param+"=?")
+		values = append(values, value)
+	}
+	return ` WHERE ` + strings.Join(conditions, " AND "), values
+}
+
+// getLibraryElement gets a Library Element where param == value
+func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, params map[string]interface{}) (LibraryElementDTO, error) {
 	var libraryElement LibraryElementWithMeta
 	err := l.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		libraryElements := make([]LibraryElementWithMeta, 0)
@@ -197,14 +207,15 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid stri
 		builder.Write(", 'General' as folder_name ")
 		builder.Write(", '' as folder_uid ")
 		builder.Write(fromLibraryElementDTOWithMeta)
-		builder.Write(` WHERE le.uid=? AND le.org_id=? AND le.folder_id=0`, uid, c.SignedInUser.OrgId)
+		conditionString, paramValues := selectLibraryElementByParam(params)
+		builder.Write(conditionString+` AND le.folder_id=0`, paramValues...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
 		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(fromLibraryElementDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
-		builder.Write(` WHERE le.uid=? AND le.org_id=?`, uid, c.SignedInUser.OrgId)
+		builder.Write(conditionString, paramValues...)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
 		}
@@ -258,6 +269,16 @@ func (l *LibraryElementService) getLibraryElement(c *models.ReqContext, uid stri
 	}
 
 	return dto, nil
+}
+
+// getLibraryElementByUid gets a Library Element by uid.
+func (l *LibraryElementService) getLibraryElementByUid(c *models.ReqContext) (LibraryElementDTO, error) {
+	return l.getLibraryElement(c, map[string]interface{}{"org_id": c.SignedInUser.OrgId, "uid": c.Params(":uid")})
+}
+
+// getLibraryElementByName gets a Library Element by name.
+func (l *LibraryElementService) getLibraryElementByName(c *models.ReqContext) (LibraryElementDTO, error) {
+	return l.getLibraryElement(c, map[string]interface{}{"name": c.Params(":name")})
 }
 
 // getAllLibraryElements gets all Library Elements.
