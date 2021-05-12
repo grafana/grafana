@@ -8,6 +8,8 @@ import { Meta, Story } from '@storybook/react';
 import { kebabCase } from 'lodash';
 import { generateOptions } from './mockOptions';
 import mdx from './Select.mdx';
+import { auto } from '@popperjs/core';
+import { FixedSizeGrid } from 'react-window';
 
 export default {
   title: 'Forms/Select',
@@ -44,6 +46,10 @@ export default {
         'options',
         'isOptionDisabled',
         'maxVisibleValues',
+        'aria-label',
+        'noOptionsMessage',
+        'menuPosition',
+        'value',
       ],
     },
   },
@@ -272,6 +278,9 @@ export const AutoMenuPlacement: Story = (args) => {
     </>
   );
 };
+AutoMenuPlacement.args = {
+  menuPlacement: auto,
+};
 
 export const CustomValueCreation: Story = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
@@ -298,5 +307,5 @@ export const CustomValueCreation: Story = (args) => {
   );
 };
 CustomValueCreation.args = {
-  allowCustomValue: false,
+  allowCustomValue: true,
 };
