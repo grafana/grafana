@@ -29,36 +29,45 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
 
   const styles = useStyles2(getStyles);
 
-  const onInstall = (slug: string, version: string) => {
+  const onInstall = async () => {
     setLoading(true);
-    api.installPlugin(slug, version).finally(() => {
+    try {
+      await api.installPlugin(slug, remotePlugin.version);
+      appEvents.emit(AppEvents.alertSuccess, [`Installed ${remotePlugin?.name}`]);
       setLoading(false);
       setIsInstalled(true);
-      appEvents.emit(AppEvents.alertSuccess, [`Installed ${remotePlugin?.name}`]);
-    });
-  };
-
-  const onUninstall = () => {
-    setLoading(true);
-    api.uninstallPlugin(slug).finally(() => {
+    } catch (error) {
       setLoading(false);
-      setIsInstalled(false);
-      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${remotePlugin?.name}`]);
-    });
+    }
   };
 
-  const onUpdate = () => {
+  const onUninstall = async () => {
     setLoading(true);
-    api.installPlugin(slug, remotePlugin.version).finally(() => {
+    try {
+      await api.uninstallPlugin(slug);
+      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${remotePlugin?.name}`]);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+    }
+  };
+
+  const onUpdate = async () => {
+    setLoading(true);
+    try {
+      await api.installPlugin(slug, remotePlugin.version);
+      appEvents.emit(AppEvents.alertSuccess, [`Updated ${remotePlugin?.name}`]);
       setLoading(false);
       setShouldUpdate(false);
-      appEvents.emit(AppEvents.alertSuccess, [`Updated ${remotePlugin?.name}`]);
-    });
+    } catch (error) {
+      setLoading(false);
+    }
   };
 
   const grafanaDependency = remotePlugin?.json?.dependencies?.grafanaDependency;
   const unsupportedGrafanaVersion = grafanaDependency
     ? !satisfies(config.buildInfo.version, grafanaDependency, {
+        // needed for when running against master
         includePrerelease: true,
       })
     : false;
@@ -108,7 +117,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
 
   return (
     <HorizontalGroup height="auto">
-      <Button disabled={loading || !hasPermission} onClick={() => onInstall(slug, remotePlugin.version)}>
+      <Button disabled={loading || !hasPermission} onClick={onInstall}>
         {loading ? 'Installing' : 'Install'}
       </Button>
       {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
