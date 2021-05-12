@@ -268,7 +268,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(1 * time.Minute).Add(time.Duration(20) * time.Second),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:00 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -341,7 +341,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "alerting_at": "2021-03-25 00:01:20 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -463,7 +463,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -524,7 +524,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -585,7 +585,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(20 * time.Second),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -647,7 +647,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -709,7 +709,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -771,7 +771,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "no_data": "2021-03-25 00:00:10 +0000 UTC"},
+					Annotations:        map[string]string{"annotation": "test"},
 				},
 			},
 		},
@@ -783,8 +783,8 @@ func TestProcessEvalResults(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(tc.alertRule, res)
 			}
-			for id, s := range tc.expectedStates {
-				cachedState, err := st.Get(id)
+			for _, s := range tc.expectedStates {
+				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
 				require.NoError(t, err)
 				assert.Equal(t, s, cachedState)
 			}

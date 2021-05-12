@@ -5,6 +5,7 @@ import { TypeaheadInput } from '@grafana/ui';
 
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
+import { DataQuery, DataSourceApi } from '@grafana/data';
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -220,7 +221,7 @@ describe('Request URL', () => {
     const datasourceSpy = jest.spyOn(datasourceWithLabels as any, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels);
-    instance.fetchLogLabels();
+    instance.fetchLabels();
     const expectedUrl = '/loki/api/v1/label';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
   });
@@ -231,7 +232,9 @@ describe('Query imports', () => {
 
   it('returns empty queries for unknown origin datasource', async () => {
     const instance = new LanguageProvider(datasource);
-    const result = await instance.importQueries([{ refId: 'bar', expr: 'foo' }], 'unknown');
+    const result = await instance.importQueries([{ refId: 'bar', expr: 'foo' } as DataQuery], {
+      meta: { id: 'unknown' },
+    } as DataSourceApi);
     expect(result).toEqual([{ refId: 'bar', expr: '' }]);
   });
 

@@ -21,6 +21,9 @@ type AlertmanagerSrv struct {
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return response.Error(http.StatusForbidden, "Permission denied", nil)
+	}
 	silenceID, err := srv.am.CreateSilence(&postableSilence)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
@@ -42,6 +45,9 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return response.Error(http.StatusForbidden, "Permission denied", nil)
+	}
 	silenceID := c.Params(":SilenceId")
 	if err := srv.am.DeleteSilence(silenceID); err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
@@ -168,6 +174,14 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return response.Error(http.StatusForbidden, "Permission denied", nil)
+	}
+	err := body.EncryptSecureSettings()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to encrypt receiver secrets", err)
+	}
+
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to save and apply Alertmanager configuration", err)
 	}

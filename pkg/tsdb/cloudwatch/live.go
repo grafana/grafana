@@ -66,7 +66,7 @@ func (r *logQueryRunner) OnSubscribe(ctx context.Context, user *models.SignedInU
 
 	r.running[e.Channel] = true
 	go func() {
-		if err := r.publishResults(e.Channel); err != nil {
+		if err := r.publishResults(user.OrgId, e.Channel); err != nil {
 			plog.Error(err.Error())
 		}
 	}()
@@ -79,7 +79,7 @@ func (r *logQueryRunner) OnPublish(ctx context.Context, user *models.SignedInUse
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }
 
-func (r *logQueryRunner) publishResults(channelName string) error {
+func (r *logQueryRunner) publishResults(orgID int64, channelName string) error {
 	defer func() {
 		r.service.DeleteResponseChannel(channelName)
 		r.runningMu.Lock()
@@ -98,7 +98,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 			return err
 		}
 
-		if err := r.publish(channelName, responseBytes); err != nil {
+		if err := r.publish(orgID, channelName, responseBytes); err != nil {
 			return err
 		}
 	}

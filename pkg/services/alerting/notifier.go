@@ -53,7 +53,7 @@ type InputType string
 const (
 	// InputTypeText will render a text field in the frontend
 	InputTypeText = "text"
-	// InputTypePassword will render a text field in the frontend
+	// InputTypePassword will render a password field in the frontend
 	InputTypePassword = "password"
 )
 
@@ -201,7 +201,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		Width:           1000,
 		Height:          500,
 		Timeout:         timeout,
-		OrgId:           evalCtx.Rule.OrgID,
+		OrgID:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}

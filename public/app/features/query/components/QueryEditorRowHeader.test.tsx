@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
@@ -55,41 +55,6 @@ describe('QueryEditorRowHeader', () => {
 
   it('should not show data source picker when no callback is passed', async () => {
     renderScenario({ onChangeDataSource: undefined });
-
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
-  });
-
-  it('should show time range picker when callback and value is passed', async () => {
-    renderScenario({
-      onChangeTimeRange: () => {},
-      timeRange: {
-        from: dateTime(),
-        to: dateTime(),
-        raw: { from: 'now', to: 'now' },
-      },
-    });
-
-    expect(screen.queryByLabelText(selectors.components.TimePicker.openButton)).not.toBeNull();
-  });
-
-  it('should not show time range picker when no value is passed', async () => {
-    renderScenario({
-      onChangeTimeRange: () => {},
-      timeRange: undefined,
-    });
-
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
-  });
-
-  it('should not show time range picker when no callback is passed', async () => {
-    renderScenario({
-      onChangeTimeRange: undefined,
-      timeRange: {
-        from: dateTime(),
-        to: dateTime(),
-        raw: { from: 'now', to: 'now' },
-      },
-    });
 
     expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
   });

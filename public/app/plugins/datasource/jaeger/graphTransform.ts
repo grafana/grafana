@@ -1,5 +1,4 @@
-import { DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
+import { DataFrame, FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
 import { Span, TraceResponse } from './types';
 
 interface Node {
@@ -82,7 +81,8 @@ function convertTraceToGraph(data: TraceResponse): { nodes: Node[]; edges: Edge[
     });
 
     const parentSpanID = span.references?.find((r) => r.refType === 'CHILD_OF')?.spanID;
-    if (parentSpanID) {
+    // Sometimes some span can be missing. Don't add edges for those.
+    if (parentSpanID && spanMap[parentSpanID].span) {
       edges.push({
         [Fields.id]: parentSpanID + '--' + span.spanID,
         [Fields.target]: span.spanID,
@@ -120,7 +120,8 @@ function findTraceDuration(spans: Span[]): number {
 }
 
 /**
- * Returns a map of the spans with children array for easier processing.
+ * Returns a map of the spans with children array for easier processing. It will also contain empty spans in case
+ * span is missing but other spans are it's children.
  */
 function makeSpanMap(spans: Span[]): { [id: string]: { span: Span; children: string[] } } {
   const spanMap: { [id: string]: { span?: Span; children: string[] } } = {};

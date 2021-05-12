@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
@@ -18,6 +18,7 @@ import {
   LinkModel,
   Field,
   GrafanaTheme,
+  DataQuery,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -33,6 +34,7 @@ import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { LogsMetaRow } from './LogsMetaRow';
+import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
 const SETTINGS_KEYS = {
@@ -45,6 +47,7 @@ interface Props {
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
+  logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
   width: number;
   theme: GrafanaTheme;
@@ -79,6 +82,7 @@ interface State {
 export class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
+  topLogsRef = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -218,6 +222,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
+  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
+
   render() {
     const {
       logRows,
@@ -237,6 +243,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       onChangeTime,
       getFieldLinks,
       theme,
+      logsQueries,
     } = this.props;
 
     const {
@@ -275,7 +282,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           showLines={false}
           onUpdateTimeRange={onChangeTime}
         />
-        <div className={styles.logOptions}>
+        <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
               <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
@@ -310,7 +317,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             {isFlipping ? 'Flipping...' : 'Flip results order'}
           </Button>
         </div>
-
         <LogsMetaRow
           logRows={logRows}
           meta={logsMeta || []}
@@ -322,28 +328,40 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           onEscapeNewlines={this.onEscapeNewlines}
           clearDetectedFields={this.clearDetectedFields}
         />
-
-        <LogRows
-          logRows={logRows}
-          deduplicatedRows={dedupedRows}
-          dedupStrategy={dedupStrategy}
-          getRowContext={this.props.getRowContext}
-          highlighterExpressions={highlighterExpressions}
-          onClickFilterLabel={onClickFilterLabel}
-          onClickFilterOutLabel={onClickFilterOutLabel}
-          showContextToggle={showContextToggle}
-          showLabels={showLabels}
-          showTime={showTime}
-          forceEscape={forceEscape}
-          wrapLogMessage={wrapLogMessage}
-          timeZone={timeZone}
-          getFieldLinks={getFieldLinks}
-          logsSortOrder={logsSortOrder}
-          showDetectedFields={showDetectedFields}
-          onClickShowDetectedField={this.showDetectedField}
-          onClickHideDetectedField={this.hideDetectedField}
-        />
-
+        <div className={styles.logsSection}>
+          <div className={styles.logRows}>
+            <LogRows
+              logRows={logRows}
+              deduplicatedRows={dedupedRows}
+              dedupStrategy={dedupStrategy}
+              getRowContext={this.props.getRowContext}
+              highlighterExpressions={highlighterExpressions}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              showContextToggle={showContextToggle}
+              showLabels={showLabels}
+              showTime={showTime}
+              forceEscape={forceEscape}
+              wrapLogMessage={wrapLogMessage}
+              timeZone={timeZone}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={logsSortOrder}
+              showDetectedFields={showDetectedFields}
+              onClickShowDetectedField={this.showDetectedField}
+              onClickHideDetectedField={this.hideDetectedField}
+            />
+          </div>
+          <LogsNavigation
+            logsSortOrder={logsSortOrder}
+            visibleRange={visibleRange ?? absoluteRange}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={onChangeTime}
+            loading={loading}
+            queries={logsQueries ?? []}
+            scrollToTopLogs={this.scrollToTopLogs}
+          />
+        </div>
         {!loading && !hasData && !scanning && (
           <div className={styles.noData}>
             No logs found.
@@ -391,6 +409,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     radioButtons: css`
       margin: 0 ${theme.spacing.sm};
+    `,
+    logsSection: css`
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    `,
+    logRows: css`
+      overflow-x: scroll;
     `,
   };
 });

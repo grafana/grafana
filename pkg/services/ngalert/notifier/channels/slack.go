@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -41,7 +42,6 @@ type SlackNotifier struct {
 	Recipient      string
 	Text           string
 	Title          string
-	Fallback       string
 	MentionUsers   []string
 	MentionGroups  []string
 	MentionChannel string
@@ -121,9 +121,8 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 		IconEmoji:      model.Settings.Get("icon_emoji").MustString(),
 		IconURL:        model.Settings.Get("icon_url").MustString(),
 		Token:          token,
-		Text:           model.Settings.Get("text").MustString(`{{ template "slack.default.text" . }}`),
-		Title:          model.Settings.Get("title").MustString(`{{ template "slack.default.title" . }}`),
-		Fallback:       model.Settings.Get("fallback").MustString(`{{ template "slack.default.title" . }}`),
+		Text:           model.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
+		Title:          model.Settings.Get("title").MustString(`{{ template "default.title" . }}`),
 		log:            log.New("alerting.notifier.slack"),
 		tmpl:           t,
 	}, nil
@@ -254,11 +253,11 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			{
 				Color:      getAlertStatusColor(alerts.Status()),
 				Title:      tmpl(sn.Title),
-				Fallback:   tmpl(sn.Fallback),
+				Fallback:   tmpl(sn.Title),
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  "TODO: rule URL",
+				TitleLink:  path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list"),
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},
