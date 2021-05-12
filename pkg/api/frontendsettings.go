@@ -246,6 +246,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
 		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
+		"azure": map[string]interface{}{
+			"cloud":                  hs.Cfg.Azure.Cloud,
+			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+		},
 	}
 
 	return jsonObj, nil
