@@ -9,9 +9,6 @@ import (
 // AddMigration defines database migrations.
 // If Alerting NG is not enabled does nothing.
 func AddTablesMigrations(mg *migrator.Migrator) {
-	if !mg.Cfg.IsNgAlertEnabled() {
-		return
-	}
 	AddAlertDefinitionMigrations(mg, 60)
 	AddAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
