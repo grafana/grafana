@@ -70,7 +70,8 @@ func deny(c *models.ReqContext, permission string, scopes []string, err error) {
 	// same information from the system regardless of if it's an
 	// internal server error or access denied.
 	c.JSON(http.StatusForbidden, map[string]string{
-		"message":       fmt.Sprintf("Access denied. [Access error ID: %s]", id),
+		"title":         "Access denied", // the component needs to pick this up
+		"message":       fmt.Sprintf("Your user account does not have permissions to do the action. We recorded your attempt with log message %s. Contact your administrator for help.", id),
 		"accessErrorId": id,
 	})
 }
