@@ -19,14 +19,6 @@ type LibraryElementService interface {
 	DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error
 }
 
-// NewService is a factory for creating a new library element service.
-var NewService = func(store *sqlstore.SQLStore) LibraryElementService {
-	return &libraryElementServiceImpl{
-		SQLStore: store,
-		log:      log.New("library-elements"),
-	}
-}
-
 // libraryElementServiceImpl is the service for the Library Element feature.
 type libraryElementServiceImpl struct {
 	Cfg           *setting.Cfg          `inject:""`

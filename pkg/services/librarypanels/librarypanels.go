@@ -20,21 +20,12 @@ type LibraryPanelService interface {
 	ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
 }
 
-// NewService is a factory for creating a new library panel service.
-var NewService = func(store *sqlstore.SQLStore, service libraryelements.LibraryElementService) LibraryPanelService {
-	return &libraryPanelServiceImpl{
-		SQLStore:              store,
-		libraryElementService: service,
-		log:                   log.New("library-panels"),
-	}
-}
-
 // libraryPanelServiceImpl is the service for the Panel Library feature.
 type libraryPanelServiceImpl struct {
-	Cfg                   *setting.Cfg          `inject:""`
-	SQLStore              *sqlstore.SQLStore    `inject:""`
-	RouteRegister         routing.RouteRegister `inject:""`
-	libraryElementService libraryelements.LibraryElementService
+	Cfg                   *setting.Cfg                          `inject:""`
+	SQLStore              *sqlstore.SQLStore                    `inject:""`
+	RouteRegister         routing.RouteRegister                 `inject:""`
+	LibraryElementService libraryelements.LibraryElementService `inject:""`
 	log                   log.Logger
 }
 
@@ -44,7 +35,6 @@ func init() {
 
 // Init initializes the LibraryPanel service
 func (lps *libraryPanelServiceImpl) Init() error {
-	lps.libraryElementService = libraryelements.NewService(lps.SQLStore)
 	lps.log = log.New("library-panels")
 	return nil
 }
@@ -52,7 +42,7 @@ func (lps *libraryPanelServiceImpl) Init() error {
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
 func (lps *libraryPanelServiceImpl) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
-	elements, err := lps.libraryElementService.GetElementsForDashboard(c, dash.Id)
+	elements, err := lps.LibraryElementService.GetElementsForDashboard(c, dash.Id)
 	if err != nil {
 		return err
 	}
@@ -192,5 +182,5 @@ func (lps *libraryPanelServiceImpl) ConnectLibraryPanelsForDashboard(c *models.R
 		libraryPanels = append(libraryPanels, uid)
 	}
 
-	return lps.libraryElementService.ConnectElementsToDashboard(c, libraryPanels, dash.Id)
+	return lps.LibraryElementService.ConnectElementsToDashboard(c, libraryPanels, dash.Id)
 }

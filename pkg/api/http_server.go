@@ -103,8 +103,8 @@ type HTTPServer struct {
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
 	LoadSchemaService      *schemaloader.SchemaLoaderService       `inject:""`
 	Alertmanager           *notifier.Alertmanager                  `inject:""`
-	LibraryPanelService    librarypanels.LibraryPanelService
-	LibraryElementService  libraryelements.LibraryElementService
+	LibraryPanelService    librarypanels.LibraryPanelService       `inject:""`
+	LibraryElementService  libraryelements.LibraryElementService   `inject:""`
 	Listener               net.Listener
 }
 
@@ -113,8 +113,6 @@ func (hs *HTTPServer) Init() error {
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
-	hs.LibraryElementService = libraryelements.NewService(hs.SQLStore)
-	hs.LibraryPanelService = librarypanels.NewService(hs.SQLStore, hs.LibraryElementService)
 
 	return nil
 }
