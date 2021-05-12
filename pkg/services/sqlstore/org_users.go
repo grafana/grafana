@@ -150,8 +150,8 @@ func (ss *SQLStore) SearchOrgUsers(query *models.SearchOrgUsersQuery) error {
 	sess := x.Table("org_user")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 
-	whereConditions := []string{"org_user.org_id = ?"}
-	whereParams := []interface{query.OrgID}
+	whereConditions := make([]string, 0)
+	whereParams := make([]interface{}, 0)
 
 	whereConditions = append(whereConditions, "org_user.org_id = ?")
 	whereParams = append(whereParams, query.OrgID)
