@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import {
@@ -47,13 +47,26 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
   }, [focusedPointIdx, focusedSeriesIdx]);
 
+  const plotMouseLeave = useCallback(
+    (e) => {
+      setCoords(null);
+    },
+    [setCoords]
+  );
+
+  useEffect(() => {
+    if (plotCtx && plotCtx.plot) {
+      plotCtx.plot.root.addEventListener('mouseleave', plotMouseLeave);
+    }
+    return () => {
+      if (plotCtx && plotCtx.plot) {
+        plotCtx.plot.root.removeEventListener('mouseleave', plotMouseLeave);
+      }
+    };
+  });
+
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    if (plotCtx && plotCtx.plot) {
-      plotCtx.plot.root.onmouseleave = (event) => {
-        setCoords(null);
-      };
-    }
     if (config.tooltipInterpolator) {
       // Custom toolitp positioning
       config.addHook('setCursor', (u) => {
