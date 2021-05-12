@@ -1471,6 +1471,14 @@ Enter a comma-separated list of plugin identifiers to identify plugins that are 
 
 Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
+### marketplace_app_enabled
+
+> **Note:** Available in Grafana 8.0 and later versions.
+
+Available to Grafana administrators only, the plugin marketplace app is set to `false` by default. Set it to `true` to enable the app.
+
+For more information, refer to [Plugin marketplace]({{< relref "../plugins/marketplace.md" >}}).
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
