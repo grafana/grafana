@@ -123,6 +123,9 @@ var (
 
 	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessPermissionsSummary prometheus.Histogram
+
+	// MAccessEvaluationsSummary is a metric summary for loading permissions request duration when evaluating access
+	MAccessEvaluationsSummary prometheus.Histogram
 )
 
 // StatTotals
@@ -524,6 +527,12 @@ func init() {
 		Buckets: prometheus.ExponentialBuckets(0.00001, 4, 10),
 	})
 
+	MAccessEvaluationsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_evaluation_duration",
+		Help:    "Histogram for the runtime of evaluation function.",
+		Buckets: prometheus.ExponentialBuckets(0.00001, 4, 10),
+	})
+
 	MAccessEvaluationCount = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "access_evaluation_count",
 		Help:      "number of evaluation calls",
@@ -603,6 +612,7 @@ func initMetricVars() {
 		MRenderingSummary,
 		MRenderingQueue,
 		MAccessPermissionsSummary,
+		MAccessEvaluationsSummary,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,
