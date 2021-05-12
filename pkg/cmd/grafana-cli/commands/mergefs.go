@@ -2,10 +2,11 @@ package commands
 
 import (
 	"errors"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"io/fs"
 	"os"
 	"sort"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 )
 
 // MergedFS contains a slice of different filesystems that can be merged together
