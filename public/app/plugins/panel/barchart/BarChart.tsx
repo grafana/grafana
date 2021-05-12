@@ -1,6 +1,14 @@
 import React from 'react';
 import { DataFrame, TimeRange } from '@grafana/data';
-import { GraphNG, GraphNGProps, LegendDisplayMode, PlotLegend, UPlotConfigBuilder, withTheme2 } from '@grafana/ui';
+import {
+  GraphNG,
+  GraphNGProps,
+  LegendDisplayMode,
+  PlotLegend,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useTheme2,
+} from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 
@@ -9,14 +17,24 @@ import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
  */
 export interface BarChartProps
   extends BarChartOptions,
-    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {}
+    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
 const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showValue'];
 
-class UnthemedBarChart extends React.Component<BarChartProps> {
-  prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
-    const { eventBus } = this.context;
-    const { theme, timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip } = this.props;
+export const BarChart: React.FC<BarChartProps> = (props) => {
+  const theme = useTheme2();
+  const { eventBus } = usePanelContext();
+
+  const renderLegend = (config: UPlotConfigBuilder) => {
+    if (!config || props.legend.displayMode === LegendDisplayMode.Hidden) {
+      return null;
+    }
+
+    return <PlotLegend data={props.frames} config={config} maxHeight="35%" maxWidth="60%" {...props.legend} />;
+  };
+
+  const prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
+    const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip } = props;
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
@@ -33,38 +51,16 @@ class UnthemedBarChart extends React.Component<BarChartProps> {
     });
   };
 
-  renderLegend = (config: UPlotConfigBuilder) => {
-    const { legend, onLegendClick, frames } = this.props;
-
-    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
-      return;
-    }
-
-    return (
-      <PlotLegend
-        data={frames}
-        config={config}
-        onLegendClick={onLegendClick}
-        maxHeight="35%"
-        maxWidth="60%"
-        {...legend}
-      />
-    );
-  };
-
-  render() {
-    return (
-      <GraphNG
-        {...this.props}
-        frames={this.props.frames}
-        prepConfig={this.prepConfig}
-        propsToDiff={propsToDiff}
-        preparePlotFrame={preparePlotFrame}
-        renderLegend={this.renderLegend as any}
-      />
-    );
-  }
-}
-
-export const BarChart = withTheme2(UnthemedBarChart);
+  return (
+    <GraphNG
+      {...props}
+      theme={theme}
+      frames={props.frames}
+      prepConfig={prepConfig}
+      propsToDiff={propsToDiff}
+      preparePlotFrame={preparePlotFrame}
+      renderLegend={renderLegend}
+    />
+  );
+};
 BarChart.displayName = 'BarChart';

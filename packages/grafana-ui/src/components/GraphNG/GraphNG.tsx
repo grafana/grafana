@@ -41,7 +41,7 @@ export interface GraphNGProps extends Themeable2 {
   prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: string[];
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
 }
 
 function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {

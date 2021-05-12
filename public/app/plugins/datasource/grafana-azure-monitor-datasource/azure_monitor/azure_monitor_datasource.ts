@@ -25,6 +25,8 @@ import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getAzureCloud } from '../credentials';
+import { getManagementApiRoute } from '../api/routes';
 
 const defaultDropdownValue = 'select';
 
@@ -46,7 +48,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   resourceGroup: string;
   resourceName: string;
   url: string;
-  cloudName: string;
   supportedMetricNamespaces: string[] = [];
   timeSrv: TimeSrv;
 
@@ -55,10 +56,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     this.timeSrv = getTimeSrv();
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
-    this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
-    this.baseUrl = `/${this.cloudName}/subscriptions`;
+
+    const cloud = getAzureCloud(instanceSettings);
+    const route = getManagementApiRoute(cloud);
+    this.baseUrl = `/${route}/subscriptions`;
+
     this.url = instanceSettings.url!;
-    this.supportedMetricNamespaces = new SupportedNamespaces(this.cloudName).get();
+    this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
   }
 
   isConfigured(): boolean {
@@ -313,8 +317,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return getTemplateSrv().replace((metric || '').trim());
   }
 
-  getSubscriptions(route?: string) {
-    const url = `/${route || this.cloudName}/subscriptions?api-version=2019-03-01`;
+  getSubscriptions() {
+    const url = `${this.baseUrl}?api-version=2019-03-01`;
     return this.doRequest(url).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
@@ -469,7 +473,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
     }
 
-    const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
+    const url = `${this.baseUrl}?api-version=2019-03-01`;
     return this.doRequest(url)
       .then((response: any) => {
         if (response.status === 200) {
