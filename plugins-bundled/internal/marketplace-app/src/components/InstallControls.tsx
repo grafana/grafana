@@ -60,7 +60,7 @@ export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
   const grafanaDependency = remotePlugin?.json?.dependencies?.grafanaDependency;
   const unsupportedGrafanaVersion = grafanaDependency
     ? !satisfies(config.buildInfo.version, grafanaDependency, {
-        includePrerelease: process.env.NODE_ENV === 'development',
+        includePrerelease: true,
       })
     : false;
 
