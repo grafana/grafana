@@ -38,14 +38,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 		assert.Empty(t, pm.scanningErrors)
 		verifyCorePluginCatalogue(t, pm)
-
-		// verify bundled plugins
-		assert.NotNil(t, pm.plugins["input"])
-		assert.NotNil(t, pm.dataSources["input"])
-
-		assert.Len(t, pm.StaticRoutes(), 1)
-		assert.Equal(t, "input", pm.StaticRoutes()[0].PluginId)
-		assert.True(t, strings.HasPrefix(pm.StaticRoutes()[0].Directory, bundledPluginsPath+"/input-datasource/"))
+		verifyBundledPluginCatalogue(t, pm)
 	})
 
 	t.Run("Base case with single external plugin", func(t *testing.T) {
@@ -476,6 +469,27 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		assert.NotNil(t, pm.plugins[ds])
 		assert.NotNil(t, pm.dataSources[ds])
 	}
+}
+
+func verifyBundledPluginCatalogue(t *testing.T, pm *PluginManager) {
+	t.Helper()
+
+	bundledPlugins := map[string]string{
+		"input":                   "input-datasource",
+		"grafana-marketplace-app": "marketplace-app",
+	}
+
+	for pluginID, pluginDir := range bundledPlugins {
+		assert.NotNil(t, pm.plugins[pluginID])
+		for _, route := range pm.staticRoutes {
+			if pluginID == route.PluginId {
+				assert.True(t, strings.HasPrefix(route.Directory, pm.Cfg.BundledPluginsPath+"/"+pluginDir))
+			}
+		}
+	}
+
+	assert.NotNil(t, pm.dataSources["input"])
+	assert.NotNil(t, pm.apps["grafana-marketplace-app"])
 }
 
 type fakeBackendPluginManager struct {
