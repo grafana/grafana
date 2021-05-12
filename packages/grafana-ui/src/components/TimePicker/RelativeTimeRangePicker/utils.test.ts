@@ -1,4 +1,4 @@
-import { isRelativeFormat, mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from './utils';
+import { isRangeValid, isRelativeFormat, mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from './utils';
 
 describe('utils', () => {
   describe('mapRelativeTimeRangeToOption', () => {
@@ -85,6 +85,24 @@ describe('utils', () => {
 
     it('should consider 123123123 as a relative format', () => {
       expect(isRelativeFormat('123123123')).toBe(false);
+    });
+  });
+
+  describe('isRangeValid', () => {
+    it('should consider now as a valid relative format', () => {
+      expect(isRangeValid('now')).toBe(true);
+    });
+
+    it('should consider now-90d as a valid relative format', () => {
+      expect(isRangeValid('now-90d')).toBe(true);
+    });
+
+    it('should consider now-90000000d as an invalid relative format', () => {
+      expect(isRangeValid('now-90000000d')).toBe(false);
+    });
+
+    it('should consider now-11111111111s as an invalid relative format', () => {
+      expect(isRangeValid('now-11111111111s')).toBe(false);
     });
   });
 });

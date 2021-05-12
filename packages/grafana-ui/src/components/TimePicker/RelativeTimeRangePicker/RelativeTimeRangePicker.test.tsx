@@ -32,4 +32,16 @@ describe('RelativeTimePicker', () => {
     expect(queryByText('Specify time range')).toBeNull();
     expect(queryByText('Example time ranges')).toBeNull();
   });
+
+  it('should not be able to apply range via quick options', () => {
+    const { getByText, queryByText } = setup({ from: 900, to: 0 });
+
+    fireEvent.click(getByText('now-15m to now')); // open the picker
+    fireEvent.click(getByText('Last 30 minutes')); // select the quick range, should close picker.
+
+    expect(queryByText('Specify time range')).toBeNull();
+    expect(queryByText('Example time ranges')).toBeNull();
+
+    expect(getByText('now-30m to now')).toBeInTheDocument(); // new text on picker button
+  });
 });

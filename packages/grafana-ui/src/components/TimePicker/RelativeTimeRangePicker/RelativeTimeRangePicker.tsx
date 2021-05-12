@@ -15,6 +15,9 @@ import { Input } from '../../Input/Input';
 import { InputState } from '../TimeRangePicker/TimeRangeForm';
 import { Icon } from '../../Icon/Icon';
 
+/**
+ * @internal
+ */
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
@@ -23,6 +26,9 @@ export interface RelativeTimeRangePickerProps {
 const errorMessage = 'Value not in relative time format.';
 const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
 
+/**
+ * @internal
+ */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
   const { timeRange, onChange } = props;
   const [isOpen, setIsOpen] = useState(false);
