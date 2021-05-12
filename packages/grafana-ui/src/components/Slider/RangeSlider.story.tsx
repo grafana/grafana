@@ -13,6 +13,7 @@ export default {
   },
   argTypes: {
     isStep: { name: 'step' },
+    orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },
   },
 } as Meta;
 
