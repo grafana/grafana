@@ -171,6 +171,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
+/**
+ * TODO #33976: Remove duplicated code. The component is very similar to LokiLabelBrowser.tsx. Check if it's possible
+ *              to create a single, generic component.
+ */
 export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserProps, BrowserState> {
   state = {
     labels: [] as SelectableLabel[],

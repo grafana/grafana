@@ -20,6 +20,9 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   onClick?: OnLabelClick;
 }
 
+/**
+ * TODO #33976: Create a common, shared component with public/app/plugins/datasource/loki/components/LokiLabel.tsx
+ */
 export const Label = forwardRef<HTMLElement, Props>(
   ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
     const theme = useTheme2();

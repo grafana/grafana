@@ -117,7 +117,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return [];
     }
 
-    // TODO make those requests parallel
+    // TODO #33976: make those requests parallel
     await this.fetchLabels();
     this.metrics = await this.fetchLabelValues('__name__');
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));

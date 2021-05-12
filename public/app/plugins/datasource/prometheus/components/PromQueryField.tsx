@@ -199,8 +199,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     return false;
   }
 
-  // TODO remove this, and add histogram group
-  //         query = `histogram_quantile(0.95, sum(rate(${metric}[5m])) by (le))`;
+  /**
+   * TODO #33976: Remove this, add histogram group (query = `histogram_quantile(0.95, sum(rate(${metric}[5m])) by (le))`;)
+   */
   onChangeLabelBrowser = (selector: string) => {
     this.onChangeQuery(selector, true);
     this.setState({ labelBrowserVisible: false });
