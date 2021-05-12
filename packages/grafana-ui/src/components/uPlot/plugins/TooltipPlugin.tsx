@@ -56,11 +56,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
   useEffect(() => {
     if (plotCtx && plotCtx.plot) {
-      plotCtx.plot.root.addEventListener('mouseleave', plotMouseLeave);
+      plotCtx.plot.root.querySelector('.u-over')!.addEventListener('mouseleave', plotMouseLeave);
     }
     return () => {
       if (plotCtx && plotCtx.plot) {
-        plotCtx.plot.root.removeEventListener('mouseleave', plotMouseLeave);
+        plotCtx.plot.root.querySelector('.u-over')!.removeEventListener('mouseleave', plotMouseLeave);
       }
     };
   });
