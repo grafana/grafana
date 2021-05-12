@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -8,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,9 +26,23 @@ func setUpGetOrgUsersHandler() {
 	})
 }
 
+func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
+	setting.AutoAssignOrg = true
+	setting.AutoAssignOrgId = 1
+
+	_, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "testUser@grafana.com", Login: "testUserLogin"})
+	require.NoError(t, err)
+	_, err = sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
+	require.NoError(t, err)
+	_, err = sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "user2@grafana.com", Login: "user2"})
+	require.NoError(t, err)
+}
+
 func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	hs := &HTTPServer{Cfg: settings}
+
+	sqlStore := sqlstore.InitTestDB(t)
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersHandler()
@@ -40,6 +56,42 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.Len(t, resp, 3)
+	})
+
+	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", func(sc *scenarioContext) {
+		setUpGetOrgUsersDB(t, sqlStore)
+
+		sc.handlerFunc = hs.SearchOrgUsersWithPaging
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+
+		var resp models.SearchOrgUsersQueryResult
+		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.OrgUsers, 3)
+		assert.Equal(t, int64(3), resp.TotalCount)
+		assert.Equal(t, 1000, resp.PerPage)
+		assert.Equal(t, 1, resp.Page)
+	})
+
+	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", func(sc *scenarioContext) {
+		setUpGetOrgUsersDB(t, sqlStore)
+
+		sc.handlerFunc = hs.SearchOrgUsersWithPaging
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "2", "page": "2"}).exec()
+
+		require.Equal(t, http.StatusOK, sc.resp.Code)
+
+		var resp models.SearchOrgUsersQueryResult
+		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.OrgUsers, 1)
+		assert.Equal(t, int64(3), resp.TotalCount)
+		assert.Equal(t, 2, resp.PerPage)
+		assert.Equal(t, 2, resp.Page)
 	})
 
 	loggedInUserScenario(t, "When calling GET as an editor with no team / folder permissions on",

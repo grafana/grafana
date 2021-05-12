@@ -95,6 +95,43 @@ func TestAccountDataAccess(t *testing.T) {
 			})
 		})
 
+		Convey("Given single org and 2 users inserted", func() {
+			setting.AutoAssignOrg = true
+			setting.AutoAssignOrgId = 1
+			setting.AutoAssignOrgRole = "Viewer"
+
+			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
+			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
+
+			ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
+			So(err, ShouldBeNil)
+			_, err = sqlStore.CreateUser(context.Background(), ac2cmd)
+			So(err, ShouldBeNil)
+
+			Convey("Can get organization users paginated with query", func() {
+				query := models.SearchOrgUsersQuery{
+					OrgID: ac1.OrgId,
+					Page:  1,
+				}
+				err = sqlStore.SearchOrgUsers(&query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result.OrgUsers), ShouldEqual, 2)
+			})
+
+			Convey("Can get organization users paginated and limited", func() {
+				query := models.SearchOrgUsersQuery{
+					OrgID: ac1.OrgId,
+					Limit: 1,
+					Page:  1,
+				}
+				err = sqlStore.SearchOrgUsers(&query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result.OrgUsers), ShouldEqual, 1)
+			})
+		})
+
 		Convey("Given two saved users", func() {
 			setting.AutoAssignOrg = false
 
