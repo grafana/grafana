@@ -31,10 +31,9 @@ export class StreamingDataFrame implements DataFrame {
   meta?: QueryResultMeta;
 
   fields: Array<Field<any, ArrayVector<any>>> = [];
+  length = 0;
 
   options: StreamingFrameOptions;
-
-  length = 0;
 
   private schemaFields: FieldSchema[] = [];
   private timeFieldIndex = -1;
@@ -42,41 +41,6 @@ export class StreamingDataFrame implements DataFrame {
 
   // current labels
   private labels: Set<string> = new Set();
-
-  // adds a set of fields for a new label
-  private addLabel(label: string) {
-    let labelCount = this.labels.size;
-
-    // parse labels
-    const parsedLabels: Labels = {};
-
-    label.split(',').forEach((kv) => {
-      const [key, val] = kv.trim().split('=');
-      parsedLabels[key] = val;
-    });
-
-    if (labelCount === 0) {
-      // mutate existing fields and add labels
-      this.fields.forEach((f, i) => {
-        if (i > 0) {
-          f.labels = parsedLabels;
-        }
-      });
-    } else {
-      for (let i = 1; i < this.schemaFields.length; i++) {
-        let proto = this.schemaFields[i] as Field;
-
-        this.fields.push({
-          ...proto,
-          config: proto.config ?? {},
-          labels: parsedLabels,
-          values: new ArrayVector(Array(this.length).fill(undefined)),
-        });
-      }
-    }
-
-    this.labels.add(label);
-  }
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -144,15 +108,15 @@ export class StreamingDataFrame implements DataFrame {
       }
 
       if (this.pushMode === PushMode.labels) {
-        // get unique labels & init new fields
-        [...new Set(values[0])].forEach((label) => {
+        // augment and transform data to match current schema for standard circPush() path
+        const labeledTables = transpose(values);
+
+        // make sure fields are initalized for each label
+        for (const label of labeledTables.keys()) {
           if (!this.labels.has(label)) {
             this.addLabel(label);
           }
-        });
-
-        // augment and transform data to match current schema for standard circPush() path
-        const labeledTables = transpose(values);
+        }
 
         // TODO: cache higher up
         let dummyTable = Array(this.schemaFields.length).fill([]);
@@ -203,6 +167,41 @@ export class StreamingDataFrame implements DataFrame {
       // Update the frame length
       this.length = appended[0].length;
     }
+  }
+
+  // adds a set of fields for a new label
+  private addLabel(label: string) {
+    let labelCount = this.labels.size;
+
+    // parse labels
+    const parsedLabels: Labels = {};
+
+    label.split(',').forEach((kv) => {
+      const [key, val] = kv.trim().split('=');
+      parsedLabels[key] = val;
+    });
+
+    if (labelCount === 0) {
+      // mutate existing fields and add labels
+      this.fields.forEach((f, i) => {
+        if (i > 0) {
+          f.labels = parsedLabels;
+        }
+      });
+    } else {
+      for (let i = 1; i < this.schemaFields.length; i++) {
+        let proto = this.schemaFields[i] as Field;
+
+        this.fields.push({
+          ...proto,
+          config: proto.config ?? {},
+          labels: parsedLabels,
+          values: new ArrayVector(Array(this.length).fill(undefined)),
+        });
+      }
+    }
+
+    this.labels.add(label);
   }
 }
 
