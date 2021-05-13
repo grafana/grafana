@@ -25,19 +25,19 @@ func mockTimeNow() {
 }
 
 func TestAlertInstanceOperations(t *testing.T) {
-	dbstore := setupTestEnv(t, baseIntervalSeconds)
+	dbstore := SetupTestEnv(t, baseIntervalSeconds)
 	t.Cleanup(registry.ClearOverrides)
 
-	alertRule1 := createTestAlertRule(t, dbstore, 60)
+	alertRule1 := CreateTestAlertRule(t, dbstore, 60)
 	orgID := alertRule1.OrgID
 
-	alertRule2 := createTestAlertRule(t, dbstore, 60)
+	alertRule2 := CreateTestAlertRule(t, dbstore, 60)
 	require.Equal(t, orgID, alertRule2.OrgID)
 
-	alertRule3 := createTestAlertRule(t, dbstore, 60)
+	alertRule3 := CreateTestAlertRule(t, dbstore, 60)
 	require.Equal(t, orgID, alertRule3.OrgID)
 
-	alertRule4 := createTestAlertRule(t, dbstore, 60)
+	alertRule4 := CreateTestAlertRule(t, dbstore, 60)
 	require.Equal(t, orgID, alertRule4.OrgID)
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {
