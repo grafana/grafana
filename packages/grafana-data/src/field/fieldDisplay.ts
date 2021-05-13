@@ -122,8 +122,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           ...config,
           ...field.state?.range,
         };
-      } else {
-        // Add somethning here?
       }
 
       // const displayName = getFieldDisplayName(field, dataFrame, data);
