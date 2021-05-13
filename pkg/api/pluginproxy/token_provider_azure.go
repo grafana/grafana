@@ -81,12 +81,28 @@ func (provider *azureAccessTokenProvider) getManagedIdentityCredential() TokenCr
 }
 
 func (provider *azureAccessTokenProvider) getClientSecretCredential() TokenCredential {
+	authority := provider.resolveAuthorityHost(provider.authParams.Params["azure_cloud"])
 	tenantId := provider.authParams.Params["tenant_id"]
 	clientId := provider.authParams.Params["client_id"]
 	clientSecret := provider.authParams.Params["client_secret"]
 
-	// TODO: Set proper authority from the route
-	return &clientSecretCredential{authority: "", tenantId: tenantId, clientId: clientId, clientSecret: clientSecret}
+	return &clientSecretCredential{authority: authority, tenantId: tenantId, clientId: clientId, clientSecret: clientSecret}
+}
+
+func (provider *azureAccessTokenProvider) resolveAuthorityHost(cloudName string) string {
+	// Known Azure clouds
+	switch cloudName {
+	case setting.AzurePublic:
+		return azidentity.AzurePublicCloud
+	case setting.AzureChina:
+		return azidentity.AzureChina
+	case setting.AzureUSGovernment:
+		return azidentity.AzureGovernment
+	case setting.AzureGermany:
+		return azidentity.AzureGermany
+	}
+	// Fallback to direct URL
+	return provider.authParams.Url
 }
 
 type managedIdentityCredential struct {

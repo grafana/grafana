@@ -35,10 +35,10 @@
       "url": "https://management.azure.com",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
         "scopes": ["https://management.azure.com/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureCloud",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
           "client_secret": "{{.SecureJsonData.clientSecret}}"
@@ -52,10 +52,10 @@
       "url": "https://management.usgovcloudapi.net",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.us/{{.JsonData.tenantId}}/oauth2/token",
         "scopes": ["https://management.usgovcloudapi.net/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureUSGovernment",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
           "client_secret": "{{.SecureJsonData.clientSecret}}"
@@ -69,10 +69,10 @@
       "url": "https://management.microsoftazure.de",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.de/{{.JsonData.tenantId}}/oauth2/token",
         "scopes": ["https://management.microsoftazure.de/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureGermanCloud",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
           "client_secret": "{{.SecureJsonData.clientSecret}}"
@@ -86,10 +86,10 @@
       "url": "https://management.chinacloudapi.cn",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.chinacloudapi.cn/{{.JsonData.tenantId}}/oauth2/token",
         "scopes": ["https://management.chinacloudapi.cn/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureChinaCloud",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
           "client_secret": "{{.SecureJsonData.clientSecret}}"
@@ -121,10 +121,10 @@
       "url": "https://management.azure.com",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "scopes": ["https://management.azure.com/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureCloud",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
           "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
@@ -138,10 +138,10 @@
       "url": "https://management.chinacloudapi.cn",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.chinacloudapi.cn/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "scopes": ["https://management.chinacloudapi.cn/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureChinaCloud",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
           "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
@@ -155,10 +155,10 @@
       "url": "https://management.usgovcloudapi.net",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "scopes": ["https://management.usgovcloudapi.net/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureUSGovernment",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
           "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
@@ -172,10 +172,10 @@
       "url": "https://api.loganalytics.io/v1/workspaces",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "scopes": ["https://api.loganalytics.io/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureCloud",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
           "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
@@ -192,10 +192,10 @@
       "url": "https://api.loganalytics.azure.cn/v1/workspaces",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.chinacloudapi.cn/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "scopes": ["https://api.loganalytics.azure.cn/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureChinaCloud",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
           "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
@@ -212,10 +212,10 @@
       "url": "https://api.loganalytics.us/v1/workspaces",
       "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
         "scopes": ["https://api.loganalytics.us/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureUSGovernment",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
           "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
