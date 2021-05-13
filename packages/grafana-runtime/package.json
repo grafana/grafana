@@ -25,8 +25,8 @@
     "@grafana/data": "7.5.0-pre.0",
     "@grafana/ui": "7.5.0-pre.0",
     "@grafana/e2e-selectors": "7.5.0-pre.0",
-    "systemjs": "0.20.19",
-    "systemjs-plugin-css": "0.1.37",
+    "systemjs": "6.8.3",
+    "systemjs-css-extra": "github:grafana/systemjs-css-extra",
     "history": "4.10.1"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
     "@rollup/plugin-node-resolve": "10.0.0",
     "@types/jest": "26.0.15",
     "@types/rollup-plugin-visualizer": "2.6.0",
-    "@types/systemjs": "^0.20.6",
+    "@types/systemjs": "6.1.0",
     "@types/history": "^4.7.8",
     "lodash": "4.17.21",
     "pretty-format": "25.1.0",
