@@ -16,6 +16,7 @@ import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from '.
 import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
+import { withErrorBoundary } from 'app/core/hoc/withErrorBoundary';
 
 const AmRoutes: FC = () => {
   const dispatch = useDispatch();
@@ -132,7 +133,7 @@ const AmRoutes: FC = () => {
   );
 };
 
-export default AmRoutes;
+export default withErrorBoundary('page', AmRoutes);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   break: css`

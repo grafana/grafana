@@ -46,7 +46,7 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   }
 }
 
-interface WithAlertBoxProps {
+export interface WithAlertBoxProps {
   title?: string;
   children: ReactNode;
   style?: 'page' | 'alertbox';

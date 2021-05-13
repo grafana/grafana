@@ -13,6 +13,7 @@ import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 import SilencesEditor from './components/silences/SilencesEditor';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
+import { withErrorBoundary } from 'app/core/hoc/withErrorBoundary';
 
 const Silences: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
@@ -93,4 +94,4 @@ const Silences: FC = () => {
   );
 };
 
-export default Silences;
+export default withErrorBoundary('page', Silences);
