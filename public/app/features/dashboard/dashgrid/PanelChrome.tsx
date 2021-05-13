@@ -16,7 +16,6 @@ import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
   DashboardCursorSync,
-  DefaultTimeZone,
   EventBusSrv,
   EventFilterOptions,
   FieldConfigSource,

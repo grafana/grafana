@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBus, DashboardCursorSync, TimeZone, DefaultTimeZone, getTimeZone } from '@grafana/data';
+import { EventBusSrv, EventBus, DashboardCursorSync, TimeZone, getTimeZone } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
 
