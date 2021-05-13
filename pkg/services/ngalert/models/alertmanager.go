@@ -18,13 +18,6 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 	Result *AlertConfiguration
 }
 
-// GetAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
-type GetAlertmanagerConfigurationQuery struct {
-	ID int64
-
-	Result *AlertConfiguration
-}
-
 // SaveAlertmanagerConfigurationCmd is the command to save an alertmanager configuration.
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
