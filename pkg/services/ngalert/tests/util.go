@@ -8,6 +8,8 @@ import (
 	"time"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -44,6 +46,7 @@ func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
 		Log:           log.New("ngalert-test"),
+		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
 
 	// hook for initialising the service after the Cfg is populated

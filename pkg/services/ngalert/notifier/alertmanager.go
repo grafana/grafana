@@ -28,14 +28,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -106,41 +104,28 @@ type Alertmanager struct {
 	config          []byte
 }
 
-func init() {
-	registry.RegisterService(&Alertmanager{})
-}
-
-func (am *Alertmanager) IsDisabled() bool {
-	if am.Settings == nil {
-		return true
+func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Alertmanager, error) {
+	am := &Alertmanager{
+		Settings:          cfg,
+		stopc:             make(chan struct{}),
+		logger:            log.New("alertmanager"),
+		marker:            types.NewMarker(m.Registerer),
+		stageMetrics:      notify.NewMetrics(m.Registerer),
+		dispatcherMetrics: dispatch.NewDispatcherMetrics(m.Registerer),
+		Store:             store,
+		Metrics:           m,
 	}
-	return !am.Settings.IsNgAlertEnabled()
-}
-
-func (am *Alertmanager) Init() error {
-	return am.InitWithMetrics(am.Metrics)
-}
-
-// InitWithMetrics uses the supplied metrics for instantiation and
-// allows testware to circumvent duplicate registration errors.
-func (am *Alertmanager) InitWithMetrics(m *metrics.Metrics) (err error) {
-	am.stopc = make(chan struct{})
-	am.logger = log.New("alertmanager")
-	am.marker = types.NewMarker(m.Registerer)
-	am.stageMetrics = notify.NewMetrics(m.Registerer)
-	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(m.Registerer)
-	am.Metrics = m
-	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	// Initialize the notification log
 	am.wg.Add(1)
+	var err error
 	am.notificationLog, err = nflog.New(
 		nflog.WithRetention(retentionNotificationsAndSilences),
 		nflog.WithSnapshot(filepath.Join(am.WorkingDirPath(), "notifications")),
 		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done),
 	)
 	if err != nil {
-		return fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
+		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
@@ -149,7 +134,7 @@ func (am *Alertmanager) InitWithMetrics(m *metrics.Metrics) (err error) {
 		Retention:    retentionNotificationsAndSilences,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
+		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
 	am.wg.Add(1)
@@ -161,10 +146,10 @@ func (am *Alertmanager) InitWithMetrics(m *metrics.Metrics) (err error) {
 	// Initialize in-memory alerts
 	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, gokit_log.NewNopLogger())
 	if err != nil {
-		return fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
+		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
 
-	return nil
+	return am, nil
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
@@ -183,11 +168,6 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 			}
 		}
 	}
-}
-
-// AddMigration runs the database migrations as the service starts.
-func (am *Alertmanager) AddMigration(mg *migrator.Migrator) {
-	alertmanagerConfigurationMigration(mg)
 }
 
 func (am *Alertmanager) StopAndWait() error {
