@@ -690,7 +690,7 @@ export const grafanaNotifiersMock: NotifierDTO[] = [
         element: 'input',
         inputType: 'text',
         label: 'Check name',
-        description: 'If empty, rule id will be used',
+        description: 'If empty, rule UID will be used',
         placeholder: '',
         propertyName: 'check',
         selectOptions: null,
