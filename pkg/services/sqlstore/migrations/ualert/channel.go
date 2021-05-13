@@ -1,19 +1,20 @@
 package ualert
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type notificationChannel struct {
 	Uid                   string                        `xorm:"uid"`
-	OrgId                 int64                         `xorm:"org_id"`
 	Name                  string                        `xorm:"name"`
 	Type                  string                        `xorm:"type"`
 	DisableResolveMessage bool                          `xorm:"disable_resolve_message"`
@@ -25,7 +26,6 @@ type notificationChannel struct {
 func (m *migration) getNotificationChannelMap() (map[string]*notificationChannel, *notificationChannel, error) {
 	q := `
 	SELECT uid,
-		org_id,
 		name,
 		type,
 		disable_resolve_message,
@@ -63,14 +63,12 @@ func (m *migration) getNotificationChannelMap() (map[string]*notificationChannel
 	return allChannelsMap, defaultChannel, nil
 }
 
-func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, allChannels map[string]*notificationChannel) (*apimodels.PostableApiReceiver, *config.Route, error) {
+func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, allChannels map[string]*notificationChannel) (*PostableApiReceiver, *Route, error) {
 	receiverName := getMigratedReceiverNameFromRuleUID(ruleUid)
 
-	portedChannels := []*apimodels.PostableGrafanaReceiver{}
-	receiver := &apimodels.PostableApiReceiver{
-		Receiver: config.Receiver{
-			Name: receiverName,
-		},
+	portedChannels := []*PostableGrafanaReceiver{}
+	receiver := &PostableApiReceiver{
+		Name: receiverName,
 	}
 
 	for _, n := range channelUids {
@@ -79,25 +77,24 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, a
 			// TODO: should we error out here?
 			continue
 		}
-		portedChannels = append(portedChannels, &apimodels.PostableGrafanaReceiver{
+		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
 			Name:                  m.Name,
 			Type:                  m.Type,
 			DisableResolveMessage: m.DisableResolveMessage,
 			Settings:              m.Settings,
 			SecureSettings:        m.SecureSettings.Decrypt(),
-			OrgId:                 m.OrgId,
 		})
 	}
-	receiver.PostableGrafanaReceivers.GrafanaManagedReceivers = portedChannels
+	receiver.GrafanaManagedReceivers = portedChannels
 
 	n, v := getLabelForRouteMatching(ruleUid)
 	mat, err := labels.NewMatcher(labels.MatchEqual, n, v)
 	if err != nil {
 		return nil, nil, err
 	}
-	route := &config.Route{
+	route := &Route{
 		Receiver: receiverName,
-		Matchers: config.Matchers{mat},
+		Matchers: Matchers{mat},
 	}
 
 	return receiver, route, nil
@@ -149,4 +146,67 @@ func getChannelUidsFromDashboard(d oldDash, panelId int64) ([]string, error) {
 	}
 
 	return channelUids, nil
+}
+
+// Below is a snapshot of all the config and supporting functions imported
+// to avoid vendoring those packages.
+
+type PostableUserConfig struct {
+	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+}
+
+func (c *PostableUserConfig) EncryptSecureSettings() error {
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		for _, gr := range r.GrafanaManagedReceivers {
+			for k, v := range gr.SecureSettings {
+				encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+				if err != nil {
+					return fmt.Errorf("failed to encrypt secure settings: %w", err)
+				}
+				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+			}
+		}
+	}
+	return nil
+}
+
+type PostableApiAlertingConfig struct {
+	Route     *Route                 `yaml:"route,omitempty" json:"route,omitempty"`
+	Templates []string               `yaml:"templates" json:"templates"`
+	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+type Route struct {
+	Receiver string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	Matchers Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	Routes   []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
+}
+
+type Matchers labels.Matchers
+
+func (m Matchers) MarshalJSON() ([]byte, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+	result := make([]string, len(m))
+	for i, matcher := range m {
+		result[i] = matcher.String()
+	}
+	return json.Marshal(result)
+}
+
+type PostableApiReceiver struct {
+	Name                    string                     `yaml:"name" json:"name"`
+	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+}
+
+type PostableGrafanaReceiver CreateAlertNotificationCommand
+
+type CreateAlertNotificationCommand struct {
+	Name                  string            `json:"name"  binding:"Required"`
+	Type                  string            `json:"type"  binding:"Required"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string]string `json:"secureSettings"`
 }

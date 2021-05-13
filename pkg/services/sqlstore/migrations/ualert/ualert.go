@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 	"xorm.io/xorm"
 
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -103,7 +101,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	amConfig := apimodels.PostableUserConfig{}
+	amConfig := PostableUserConfig{}
 
 	if defaultChannel != nil {
 		// Migration for the default route.
@@ -113,7 +111,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
-		amConfig.AlertmanagerConfig.Config.Route = route
+		amConfig.AlertmanagerConfig.Route = route
 	}
 
 	for _, da := range dashAlerts {
@@ -233,7 +231,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				return err
 			}
 			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
-			amConfig.AlertmanagerConfig.Config.Route.Routes = append(amConfig.AlertmanagerConfig.Config.Route.Routes, route)
+			amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
 		}
 
 		_, err = m.sess.Insert(rule)
@@ -264,12 +262,22 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	// TODO: should we apply the config here? Because Alertmanager can take upto 1 min to pick it up.
-	_, err = m.sess.Insert(models.AlertConfiguration{
+	_, err = m.sess.Insert(AlertConfiguration{
 		AlertmanagerConfiguration: string(rawAmConfig),
-		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		// Since we are migration for a snapshot of the code, it is always going to migrate to
+		// the v1 config.
+		ConfigurationVersion: "v1",
 	})
 
 	return err
+}
+
+type AlertConfiguration struct {
+	ID int64 `xorm:"pk autoincr 'id'"`
+
+	AlertmanagerConfiguration string
+	ConfigurationVersion      string
+	CreatedAt                 time.Time `xorm:"created"`
 }
 
 type rmMigration struct {
