@@ -44,6 +44,10 @@ New visualization that allows categorical data display. Following the new panel 
 - You can now search panel options.
 - Value mapping has been completely redesigned.
 
+### Look and feel update
+
+Grafana 8 comes with a refreshed look and feel, including themes changed to be more accessible. Improved Grafana UI brings a number of adjustments and tweaks that will make the app even more fun to use. Under the hood, the new theme architecture enables us to bring more sophisticated themes control in the future.
+
 ### Download logs
 
 You can now download log results as a text (.txt) file. You can access this feature through the Data tab in the Panel inspector and Inspector in Explore.
