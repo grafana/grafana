@@ -367,25 +367,25 @@ func init() {
 	MRenderingRequestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name:      "rendering_request_total",
-			Help:      "counter for image rendering requests",
+			Help:      "counter for rendering requests",
 			Namespace: ExporterName,
 		},
-		[]string{"status"},
+		[]string{"status", "type"},
 	)
 
 	MRenderingSummary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       "rendering_request_duration_milliseconds",
-			Help:       "summary of image rendering request duration",
+			Help:       "summary of rendering request duration",
 			Objectives: objectiveMap,
 			Namespace:  ExporterName,
 		},
-		[]string{"status"},
+		[]string{"status", "type"},
 	)
 
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
-		Help:      "size of image rendering queue",
+		Help:      "size of rendering queue",
 		Namespace: ExporterName,
 	})
 

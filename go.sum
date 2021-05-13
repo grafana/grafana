@@ -918,8 +918,8 @@ github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SP
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4/go.mod h1:nc0XxBzjeGcrMltCDw269LoWF9S8ibhgxolCdA1R8To=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
 github.com/grafana/grafana-plugin-sdk-go v0.91.0/go.mod h1:Ot3k7nY7P6DXmUsDgKvNB7oG1v7PRyTdmnYVoS554bU=
-github.com/grafana/grafana-plugin-sdk-go v0.94.0 h1:S5Jk3QFzH2XXbVze9RDStwf/AjwpeDRUayVgC4LuczY=
-github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
+github.com/grafana/grafana-plugin-sdk-go v0.97.0 h1:V9307Grs2QLvzcldC4hwe3Q1jh6vEMIwONq+l0iy+mk=
+github.com/grafana/grafana-plugin-sdk-go v0.97.0/go.mod h1:kgJSx8txPM+3lxLdSp+E9mdnB0xbXkM7VWr7FSHJY0k=
 github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426 h1:fVUMdXAjiHsx71Twl/oie1OLDH+dxL7+mBdQK/H2Wgs=
 github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426/go.mod h1:IfQ9BWq2sVAk3iKB4Pahz6QNTs5D4WpfJj/AY8xzmNw=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -1330,8 +1330,9 @@ github.com/mitchellh/mapstructure v1.4.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RR
 github.com/mitchellh/mapstructure v1.4.1 h1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=
 github.com/mitchellh/mapstructure v1.4.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/reflectwalk v1.0.0/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
-github.com/mitchellh/reflectwalk v1.0.1 h1:FVzMWA5RllMAKIdUSC8mdWo3XtwoecrH79BY70sEEpE=
 github.com/mitchellh/reflectwalk v1.0.1/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
+github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zxSIeXaQ=
+github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/mjibson/esc v0.2.0/go.mod h1:9Hw9gxxfHulMF5OJKCyhYD7PzlSdhzXyaGEBRPH1OPs=
 github.com/mna/redisc v1.1.7 h1:FdmtJsfTjoIjNXiQf4ozgNjuE+zxWH+fJSe+I/dD4vc=
 github.com/mna/redisc v1.1.7/go.mod h1:GXeOb7zyYKiT+K8MKdIiJvuv7MfhDoQGcuzfiJQmqQI=
@@ -1489,8 +1490,8 @@ github.com/prometheus/alertmanager v0.21.1-0.20200911160112-1fdff6b3f939/go.mod 
 github.com/prometheus/alertmanager v0.21.1-0.20201106142418-c39b78780054/go.mod h1:imXRHOP6QTsE0fFsIsAV/cXimS32m7gVZOiUj11m6Ig=
 github.com/prometheus/alertmanager v0.21.1-0.20210310093010-0f9cab6991e6/go.mod h1:MTqVn+vIupE0dzdgo+sMcNCp37SCAi8vPrvKTTnTz9g=
 github.com/prometheus/alertmanager v0.21.1-0.20210422101724-8176f78a70e1/go.mod h1:gsEqwD5BHHW9RNKvCuPOrrTMiP5I+faJUyLXvnivHik=
-github.com/prometheus/alertmanager v0.21.1-0.20210429113154-f4b176fa5e51 h1:tUFvVHdvvHEbMsYlwST1wDVvaqQ4q+Th/NLj7XodQ7I=
-github.com/prometheus/alertmanager v0.21.1-0.20210429113154-f4b176fa5e51/go.mod h1:rYinOWxFuCnNssc3iOjn2oMTlhLaPcUuqV5yk5JKUAE=
+github.com/prometheus/alertmanager v0.21.1-0.20210511232218-7301451eb94d h1:4b0yyecYCQ7Q64vtcq0Kmny7fiomEVEkC6x57zlzy3w=
+github.com/prometheus/alertmanager v0.21.1-0.20210511232218-7301451eb94d/go.mod h1:VTGfCWWNKkw9ENSnUYhFcdtr3AwDsxBgB4rlB3kRJ4s=
 github.com/prometheus/client_golang v0.8.0/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.2/go.mod h1:OsXs2jCmiKlQ1lTBmv21f2mNfw4xf/QclQDMrYNZzcM=
@@ -1536,8 +1537,9 @@ github.com/prometheus/common v0.15.0/go.mod h1:U+gB1OBLb1lF3O42bTCL+FK18tX9Oar16
 github.com/prometheus/common v0.18.0/go.mod h1:U+gB1OBLb1lF3O42bTCL+FK18tX9Oar16Clt/msog/s=
 github.com/prometheus/common v0.20.0/go.mod h1:U+gB1OBLb1lF3O42bTCL+FK18tX9Oar16Clt/msog/s=
 github.com/prometheus/common v0.21.0/go.mod h1:U+gB1OBLb1lF3O42bTCL+FK18tX9Oar16Clt/msog/s=
-github.com/prometheus/common v0.23.0 h1:GXWvPYuTUenIa+BhOq/x+L/QZzCqASkVRny5KTlPDGM=
 github.com/prometheus/common v0.23.0/go.mod h1:H6QK/N6XVT42whUeIdI3dp36w49c+/iMDk7UAI2qm7Q=
+github.com/prometheus/common v0.24.0 h1:aIycr3wRFxPUq8XlLQlGQ9aNXV3dFi5y62pe/SB262k=
+github.com/prometheus/common v0.24.0/go.mod h1:H6QK/N6XVT42whUeIdI3dp36w49c+/iMDk7UAI2qm7Q=
 github.com/prometheus/exporter-toolkit v0.5.0/go.mod h1:OCkM4805mmisBhLmVFw858QYi3v0wKdY6/UxrT0pZVg=
 github.com/prometheus/exporter-toolkit v0.5.1/go.mod h1:OCkM4805mmisBhLmVFw858QYi3v0wKdY6/UxrT0pZVg=
 github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 h1:dTUS1vaLWq+Y6XKOTnrFpoVsQKLCbCp1OLj24TDi7oM=

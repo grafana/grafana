@@ -64,7 +64,7 @@ func ProvideService(cfg *setting.Cfg, logsService *LogsService, backendPM backen
 		QueryDataHandler: newExecutor(logsService, im, cfg, awsds.NewSessionCache()),
 	})
 
-	if err := backendPM.Register("cloudwatch", factory); err != nil {
+	if err := backendPM.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 	}
 
