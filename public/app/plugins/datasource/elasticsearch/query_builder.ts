@@ -346,7 +346,13 @@ export class ElasticQueryBuilder {
         Object.entries(metric.settings || {})
           .filter(([_, v]) => v !== null)
           .forEach(([k, v]) => {
-            metricAgg[k] = k === 'script' ? getScriptValue(metric as MetricAggregationWithInlineScript) : v;
+            let value = v;
+            if (k === 'script') {
+              const scriptValue = getScriptValue(metric as MetricAggregationWithInlineScript);
+              value = lt(this.esVersion, '5.2.0') ? { inline: scriptValue } : scriptValue;
+            }
+
+            metricAgg[k] = value;
           });
 
         // Elasticsearch isn't generally too picky about the data types in the request body,
