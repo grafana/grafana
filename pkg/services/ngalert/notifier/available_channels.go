@@ -271,7 +271,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Label:        "Check name",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
-					Description:  "If empty, rule id will be used",
+					Description:  "If empty, rule UID will be used",
 					PropertyName: "check",
 				},
 				{
