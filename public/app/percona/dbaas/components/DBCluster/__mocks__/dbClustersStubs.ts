@@ -49,7 +49,7 @@ export const dbClustersStub: DBCluster[] = [
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 2',
-    clusterName: 'dbcluster2',
+    clusterName: 'dbcluster3',
     databaseType: Databases.mysql,
     clusterSize: 7,
     memory: 2048,
@@ -62,7 +62,7 @@ export const dbClustersStub: DBCluster[] = [
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 1',
-    clusterName: 'dbcluster1',
+    clusterName: 'dbcluster4',
     databaseType: Databases.mysql,
     clusterSize: 3,
     memory: 1024,
