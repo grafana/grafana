@@ -1,7 +1,7 @@
 import { reduceField, ReducerID } from '..';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
-import { StreamingDataFrame, transpose } from './StreamingDataFrame';
+import { StreamingDataFrame, transpose } from './StreamingDataFrame2';
 import { join } from '../transformations/transformers/joinDataFrames';
 
 describe('Streaming JSON', () => {
@@ -224,6 +224,7 @@ describe('Streaming JSON', () => {
             { name: 'time', type: FieldType.time },
             { name: 'labels', type: FieldType.string },
             { name: 'speed', type: FieldType.number },
+            //{ name: 'light', type: FieldType.number },
           ],
         },
       },
@@ -238,6 +239,7 @@ describe('Streaming JSON', () => {
           [100, 100],
           ['sensor=A', 'sensor=B'],
           [10, 15],
+          //[1, 2],
         ],
       },
     });
@@ -248,6 +250,7 @@ describe('Streaming JSON', () => {
           [200, 200],
           ['sensor=B', 'sensor=C'],
           [20, 25],
+          //[3, 4],
         ],
       },
     });
@@ -258,6 +261,7 @@ describe('Streaming JSON', () => {
           [300, 400],
           ['sensor=A', 'sensor=C'],
           [30, 40],
+          //[5, 6],
         ],
       },
     });
@@ -315,6 +319,7 @@ describe('Streaming JSON', () => {
     `);
   });
 
+  /*
   describe('transpose vertical records', () => {
     let vrecsA = [
       ['sensor=A', 'sensor=B'],
@@ -382,4 +387,5 @@ describe('Streaming JSON', () => {
       ]
     `);
   });
+*/
 });
