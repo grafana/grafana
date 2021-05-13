@@ -31,7 +31,7 @@ var (
 )
 
 func init() {
-	registry.RegisterServiceWithPriority(&GRPCAPIServer{}, registry.Low)
+	registry.RegisterServiceWithPriority(&GRPCAPIServer{}, registry.High)
 }
 
 // GRPCAPIServer ...
@@ -200,7 +200,7 @@ func (s *GRPCAPIServer) PublishStream(ctx context.Context, request *server.Publi
 
 	// Permission checks passed, let message be published.
 
-	err := s.GrafanaLive.Publish(request.Channel, request.Data)
+	err := s.GrafanaLive.Publish(pluginIdentity.OrgID, request.Channel, request.Data)
 	if err != nil {
 		logger.Error("Error publishing into channel", "error", err, "channel", request.Channel, "data", string(request.Data))
 		return nil, status.Error(codes.Internal, `internal error`)
