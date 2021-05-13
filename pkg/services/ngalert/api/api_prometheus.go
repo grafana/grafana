@@ -37,7 +37,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
 		valString := ""
-		if len(alertState.Results) > 0 {
+		if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
 			valString = alertState.Results[0].EvaluationString
 		}
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
@@ -120,7 +120,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 				activeAt := alertState.StartsAt
 				valString := ""
-				if len(alertState.Results) > 0 {
+				if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
 					valString = alertState.Results[0].EvaluationString
 				}
 				alert := &apimodels.Alert{
