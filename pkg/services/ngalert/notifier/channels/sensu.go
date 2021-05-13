@@ -71,22 +71,18 @@ func (sn *SensuNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	case model.AlertFiring:
 		status = 2
 	case model.AlertResolved:
-		status = 1
+		status = 0
 	default:
 		panic(fmt.Sprintf("Unhandled status code: %q\n", st))
 	}
 
-	/*
-		var imageURL string
-		if sn.NeedsImage() && evalContext.ImagePublicURL != "" {
-			imageURL = evalContext.ImagePublicURL
-		}
-	*/
-
 	ruleURL := path.Join(sn.tmpl.ExternalURL.String(), "alerting/list")
-	// ruleId and name are no longer passed to Sensu
 	msg := sensuMessage{
-		Output:    "Grafana Metric Condition Met",
+		// TODO: Should we have something more specific?
+		Name: "Grafana",
+		// TODO: Should we have something more specific?
+		Source:    "Grafana",
+		Output:    "Grafana metric condition met",
 		Handler:   sn.handler,
 		TitleLink: ruleURL,
 		RuleURL:   ruleURL,
@@ -116,6 +112,8 @@ func (sn *SensuNotifier) SendResolved() bool {
 }
 
 type sensuMessage struct {
+	Name      string `json:"name"`
+	Source    string `json:"name"`
 	Output    string `json:"output"`
 	Handler   string `json:"handler"`
 	TitleLink string `json:"titleLink"`
