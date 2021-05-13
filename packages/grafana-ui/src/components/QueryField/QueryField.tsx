@@ -148,9 +148,11 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
   runOnChange = () => {
     const { onChange } = this.props;
-
+    const value = Plain.serialize(this.state.value);
+    console.log(value);
+    console.log(this.cleanText(value));
     if (onChange) {
-      onChange(Plain.serialize(this.state.value));
+      onChange(this.cleanText(value));
     }
   };
 
@@ -189,6 +191,12 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
     return next();
   };
+
+  cleanText(text: string) {
+    // RegExp with characters we want to remove - currently only carriage return
+    const regExp = /\\r/g;
+    return text.replace(regExp, '');
+  }
 
   render() {
     const { disabled } = this.props;
