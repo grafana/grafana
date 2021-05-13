@@ -8,6 +8,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -70,8 +71,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					Data:      alertRule.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
+				sch.metrics.EvalTotal.WithLabelValues(fmt.Sprint(condition.OrgID), alertRule.RuleGroup).Inc()
+
 				end = timeNow()
 				if err != nil {
+					sch.metrics.EvalFailures.WithLabelValues(fmt.Sprint(condition.OrgID), alertRule.RuleGroup).Inc()
 					// consider saving alert instance on error
 					sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
 						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
@@ -153,6 +157,8 @@ type schedule struct {
 	dataService *tsdb.Service
 
 	notifier Notifier
+
+	metrics *metrics.Metrics
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -167,6 +173,7 @@ type SchedulerCfg struct {
 	RuleStore       store.RuleStore
 	InstanceStore   store.InstanceStore
 	Notifier        Notifier
+	Metrics         *metrics.Metrics
 }
 
 // NewScheduler returns a new schedule.
@@ -186,6 +193,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 		instanceStore:   cfg.InstanceStore,
 		dataService:     dataService,
 		notifier:        cfg.Notifier,
+		metrics:         cfg.Metrics,
 	}
 	return &sch
 }

@@ -32,6 +32,8 @@ type Metrics struct {
 	Registerer           prometheus.Registerer
 	RequestDuration      *prometheus.HistogramVec
 	ActiveConfigurations prometheus.Gauge
+	EvalTotal            *prometheus.CounterVec
+	EvalFailures         *prometheus.CounterVec
 }
 
 func init() {
@@ -75,6 +77,24 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			Name:      "active_configurations",
 			Help:      "Active non default alertmanager configurations for grafana managed alerts",
 		}),
+		EvalTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: "grafana",
+				Subsystem: "alerting",
+				Name:      "rule_evaluations_total",
+				Help:      "The total number of rule evaluations.",
+			},
+			[]string{"user", "rule_group"},
+		),
+		EvalFailures: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: "grafana",
+				Subsystem: "alerting",
+				Name:      "rule_evaluation_failures_total",
+				Help:      "The total number of rule evaluation failures.",
+			},
+			[]string{"user", "rule_group"},
+		),
 	}
 }
 

@@ -87,6 +87,7 @@ func (ng *AlertNG) Init() error {
 		InstanceStore: store,
 		RuleStore:     store,
 		Notifier:      ng.Alertmanager,
+		Metrics:       ng.Metrics,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
