@@ -38,7 +38,7 @@ func (p *DatasourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	ds, err := p.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DatasourceCache.GetDatasource(dsID, c.SignedInUser.OrgId, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)

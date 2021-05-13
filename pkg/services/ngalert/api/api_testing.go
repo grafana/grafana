@@ -45,7 +45,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 
 	var path string
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		ds, err := srv.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+		ds, err := srv.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser.OrgId, c.SkipCache)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "failed to get datasource", err)
 		}

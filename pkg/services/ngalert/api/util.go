@@ -41,7 +41,7 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 		return apimodels.GrafanaBackend, nil
 	}
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+		if ds, err := cache.GetDatasource(datasourceID, ctx.SignedInUser.OrgId, ctx.SkipCache); err == nil {
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
@@ -198,7 +198,7 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 			continue
 		}
 
-		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user.OrgId, skipCache)
 		if err != nil {
 			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
 		}

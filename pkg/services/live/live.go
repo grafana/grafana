@@ -509,12 +509,12 @@ func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user, false)
+	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user.OrgId, false)
 	if err != nil {
 		// the namespace may be an ID
 		id, _ := strconv.ParseInt(namespace, 10, 64)
 		if id > 0 {
-			ds, err = g.DatasourceCache.GetDatasource(id, user, false)
+			ds, err = g.DatasourceCache.GetDatasource(id, user.OrgId, false)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("error getting datasource: %w", err)

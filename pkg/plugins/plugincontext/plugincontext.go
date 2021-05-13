@@ -81,7 +81,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 	}
 
 	if datasourceUID != "" {
-		ds, err := p.DatasourceCache.GetDatasourceByUID(datasourceUID, user, false)
+		ds, err := p.DatasourceCache.GetDatasourceByUID(datasourceUID, user.OrgId, false)
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}

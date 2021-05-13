@@ -11,8 +11,8 @@ import (
 )
 
 type CacheService interface {
-	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
-	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasource(datasourceID int64, orgID int64, skipCache bool) (*models.DataSource, error)
+	GetDatasourceByUID(datasourceUID string, orgID int64, skipCache bool) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
@@ -34,7 +34,7 @@ func (dc *CacheServiceImpl) Init() error {
 
 func (dc *CacheServiceImpl) GetDatasource(
 	datasourceID int64,
-	user *models.SignedInUser,
+	orgID int64,
 	skipCache bool,
 ) (*models.DataSource, error) {
 	cacheKey := idKey(datasourceID)
@@ -42,14 +42,14 @@ func (dc *CacheServiceImpl) GetDatasource(
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
 			ds := cached.(*models.DataSource)
-			if ds.OrgId == user.OrgId {
+			if ds.OrgId == orgID {
 				return ds, nil
 			}
 		}
 	}
 
-	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
-	ds, err := dc.SQLStore.GetDataSource("", datasourceID, "", user.OrgId)
+	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", orgID)
+	ds, err := dc.SQLStore.GetDataSource("", datasourceID, "", orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,28 +63,28 @@ func (dc *CacheServiceImpl) GetDatasource(
 
 func (dc *CacheServiceImpl) GetDatasourceByUID(
 	datasourceUID string,
-	user *models.SignedInUser,
+	orgID int64,
 	skipCache bool,
 ) (*models.DataSource, error) {
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
 	}
-	if user.OrgId == 0 {
+	if orgID == 0 {
 		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
 	}
-	uidCacheKey := uidKey(user.OrgId, datasourceUID)
+	uidCacheKey := uidKey(orgID, datasourceUID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
 			ds := cached.(*models.DataSource)
-			if ds.OrgId == user.OrgId {
+			if ds.OrgId == orgID {
 				return ds, nil
 			}
 		}
 	}
 
-	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
-	ds, err := dc.SQLStore.GetDataSource(datasourceUID, 0, "", user.OrgId)
+	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", orgID)
+	ds, err := dc.SQLStore.GetDataSource(datasourceUID, 0, "", orgID)
 	if err != nil {
 		return nil, err
 	}
