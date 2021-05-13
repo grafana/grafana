@@ -1,4 +1,4 @@
-package tests
+package schedule_test
 
 import (
 	"context"
@@ -12,6 +12,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
@@ -27,6 +29,8 @@ import (
 	"github.com/benbjohnson/clock"
 )
 
+var nilMetrics = metrics.NewMetrics(nil)
+
 type evalAppliedInfo struct {
 	alertDefKey models.AlertRuleKey
 	now         time.Time
@@ -34,9 +38,9 @@ type evalAppliedInfo struct {
 
 func TestWarmStateCache(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
-	dbstore := setupTestEnv(t, 1)
+	dbstore := tests.SetupTestEnv(t, 1)
 
-	rule := createTestAlertRule(t, dbstore, 600)
+	rule := tests.CreateTestAlertRule(t, dbstore, 600)
 
 	expectedEntries := []*state.State{
 		{
@@ -119,15 +123,15 @@ func TestWarmStateCache(t *testing.T) {
 }
 
 func TestAlertingTicker(t *testing.T) {
-	dbstore := setupTestEnv(t, 1)
+	dbstore := tests.SetupTestEnv(t, 1)
 	t.Cleanup(registry.ClearOverrides)
 
 	alerts := make([]*models.AlertRule, 0)
 	// create alert rule with zero interval (should never run)
-	alerts = append(alerts, createTestAlertRule(t, dbstore, 0))
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 0))
 
 	// create alert rule with one second interval
-	alerts = append(alerts, createTestAlertRule(t, dbstore, 1))
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1))
 
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
 	stopAppliedCh := make(chan models.AlertRuleKey, len(alerts))
@@ -167,7 +171,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	// change alert rule interval to three seconds
 	var threeSecInterval int64 = 3
-	alerts[0] = updateTestAlertRuleIntervalSeconds(t, dbstore, alerts[0], threeSecInterval)
+	alerts[0] = tests.UpdateTestAlertRuleIntervalSeconds(t, dbstore, alerts[0], threeSecInterval)
 	t.Logf("alert rule: %v interval reset to: %d", alerts[0].GetKey(), threeSecInterval)
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey()}
@@ -209,7 +213,7 @@ func TestAlertingTicker(t *testing.T) {
 	})
 
 	// create alert rule with one second interval
-	alerts = append(alerts, createTestAlertRule(t, dbstore, 1))
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1))
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
