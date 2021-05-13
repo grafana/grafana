@@ -141,7 +141,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
+		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
 		Payload: &pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
