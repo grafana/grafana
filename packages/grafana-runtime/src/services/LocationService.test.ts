@@ -7,7 +7,7 @@ describe('LocationService', () => {
 
       expect(locationService.getSearchObject()).toEqual({
         query1: false,
-        query2: 123,
+        query2: '123',
         query3: 'text',
       });
     });

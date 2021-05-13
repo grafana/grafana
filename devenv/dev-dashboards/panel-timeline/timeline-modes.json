@@ -55,7 +55,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "spans",
+        "mode": "changes",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -187,7 +187,7 @@
           "scenarioId": "manual_entry"
         }
       ],
-      "title": "Spans Mode",
+      "title": "\"State changes\" Mode",
       "type": "timeline"
     },
     {
@@ -228,7 +228,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "spans",
+        "mode": "changes",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -252,7 +252,7 @@
           "stringInput": "true,null,false,null,true,false"
         }
       ],
-      "title": "Spans Mode (strings & booleans)",
+      "title": "\"State changes\" Mode (strings & booleans)",
       "type": "timeline"
     },
     {
@@ -296,7 +296,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "grid",
+        "mode": "samples",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -331,7 +331,7 @@
           "stringInput": ""
         }
       ],
-      "title": "Grid Mode",
+      "title": "\"Periodic samples\" Mode",
       "type": "timeline"
     }
   ],

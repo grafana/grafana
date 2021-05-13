@@ -5,11 +5,12 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
-import { getMappedValue } from '../utils/valueMappings';
+import { getValueMappingResult } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
-import { getScaleCalculator } from './scale';
+import { getScaleCalculator, ScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
+import { anyToNumber } from '../utils/anyToNumber';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -39,7 +40,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     return toStringProcessor;
   }
 
-  const { field } = options;
+  const field = options.field as Field;
   const config = field.config ?? {};
 
   let unit = config.unit;
@@ -51,7 +52,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field as Field, options.theme);
+  const scaleFunc = getScaleCalculator(field, options.theme);
+  const defaultColor = getDefaultColorFunc(field, scaleFunc, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
@@ -62,20 +64,24 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     let text = toString(value);
-    let numeric = isStringUnit ? NaN : toNumber(value);
+    let numeric = isStringUnit ? NaN : anyToNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
+    let color: string | undefined = undefined;
+    let percent: number | undefined = undefined;
+
     let shouldFormat = true;
 
     if (mappings && mappings.length > 0) {
-      const mappedValue = getMappedValue(mappings, value);
+      const mappingResult = getValueMappingResult(mappings, value);
 
-      if (mappedValue) {
-        text = mappedValue.text;
-        const v = isStringUnit ? NaN : toNumber(text);
+      if (mappingResult) {
+        if (mappingResult.text != null) {
+          text = mappingResult.text;
+        }
 
-        if (!isNaN(v)) {
-          numeric = v;
+        if (mappingResult.color != null) {
+          color = options.theme.visualization.getColorByName(mappingResult.color);
         }
 
         shouldFormat = false;
@@ -91,8 +97,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
 
       // Return the value along with scale info
-      if (text) {
-        return { text, numeric, prefix, suffix, ...scaleFunc(numeric) };
+      if (color === undefined) {
+        const scaleResult = scaleFunc(numeric);
+        color = scaleResult.color;
+        percent = scaleResult.percent;
       }
     }
 
@@ -104,26 +112,18 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    return { text, numeric, prefix, suffix, ...scaleFunc(-Infinity) };
+    if (!color) {
+      const scaleResult = defaultColor(value);
+      color = scaleResult.color;
+      percent = scaleResult.percent;
+    }
+
+    return { text, numeric, prefix, suffix, color, percent };
   };
 }
 
-/** Will return any value as a number or NaN */
-function toNumber(value: any): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-  if (value === '' || value === null || value === undefined || Array.isArray(value)) {
-    return NaN; // lodash calls them 0
-  }
-  if (typeof value === 'boolean') {
-    return value ? 1 : 0;
-  }
-  return _toNumber(value);
-}
-
 function toStringProcessor(value: any): DisplayValue {
-  return { text: toString(value), numeric: toNumber(value) };
+  return { text: toString(value), numeric: anyToNumber(value) };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {
@@ -131,4 +131,29 @@ export function getRawDisplayProcessor(): DisplayProcessor {
     text: `${value}`,
     numeric: (null as unknown) as number,
   });
+}
+
+function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: GrafanaTheme2) {
+  if (field.type === FieldType.string) {
+    return (value: any) => {
+      if (!value) {
+        return { color: theme.colors.background.primary, percent: 0 };
+      }
+
+      const hc = strHashCode(value as string);
+      return {
+        color: theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)],
+        percent: 0,
+      };
+    };
+  }
+  return (value: any) => scaleFunc(-Infinity);
+}
+
+/**
+ * Converts a string into a numeric value -- we just need it to be different
+ * enough so that it has a reasonable distribution across a color pallet
+ */
+function strHashCode(str: string) {
+  return str.split('').reduce((prevHash, currVal) => ((prevHash << 5) - prevHash + currVal.charCodeAt(0)) | 0, 0);
 }

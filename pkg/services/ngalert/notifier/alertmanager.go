@@ -260,8 +260,6 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-const defaultTemplate = "templates/default.tmpl"
-
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
@@ -279,6 +277,12 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	if md5.Sum(am.config) != md5.Sum(rawConfig) {
 		configChanged = true
 	}
+
+	if cfg.TemplateFiles == nil {
+		cfg.TemplateFiles = map[string]string{}
+	}
+	cfg.TemplateFiles["__default__.tmpl"] = channels.DefaultTemplateString
+
 	// next, we need to make sure we persist the templates to disk.
 	paths, templatesChanged, err := PersistTemplates(cfg, am.WorkingDirPath())
 	if err != nil {
@@ -290,8 +294,6 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
 		return nil
 	}
-
-	paths = append([]string{defaultTemplate}, paths...)
 
 	// With the templates persisted, create the template list using the paths.
 	tmpl, err := template.FromGlobs(paths...)
