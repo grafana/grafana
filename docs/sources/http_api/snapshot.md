@@ -2,7 +2,7 @@
 title = "HTTP Snapshot API "
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "snapshot"]
-aliases = ["/docs/grafana/next/http_api/snapshot/"]
+aliases = ["/docs/grafana/latest/http_api/snapshot/"]
 +++
 
 # Snapshot API
@@ -58,6 +58,8 @@ JSON Body schema:
 - **external** - Optional. Save the snapshot on an external server rather than locally. Default is `false`.
 - **key** - Optional. Define the unique key. Required if **external** is `true`.
 - **deleteKey** - Optional. Unique key used to delete the snapshot. It is different from the **key** so that only the creator can delete the snapshot. Required if **external** is `true`.
+
+> **Note:** When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.
 
 **Example Response**:
 

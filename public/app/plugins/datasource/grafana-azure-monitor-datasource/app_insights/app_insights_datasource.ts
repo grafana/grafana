@@ -1,15 +1,18 @@
 import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import _, { isString } from 'lodash';
+import { isString } from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from '../types';
 import ResponseParser from './response_parser';
+import { getAzureCloud } from '../credentials';
+import { getAppInsightsApiRoute } from '../api/routes';
 
 export interface LogAnalyticsColumn {
   text: string;
   value: string;
 }
+
 export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   url: string;
   baseUrl: string;
@@ -21,21 +24,9 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     super(instanceSettings);
     this.applicationId = instanceSettings.jsonData.appInsightsAppId || '';
 
-    switch (instanceSettings.jsonData?.cloudName) {
-      // Azure US Government
-      case 'govazuremonitor':
-        break;
-      // Azure Germany
-      case 'germanyazuremonitor':
-        break;
-      // Azue China
-      case 'chinaazuremonitor':
-        this.baseUrl = `/chinaappinsights/${this.version}/apps/${this.applicationId}`;
-        break;
-      // Azure Global
-      default:
-        this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;
-    }
+    const cloud = getAzureCloud(instanceSettings);
+    const route = getAppInsightsApiRoute(cloud);
+    this.baseUrl = `/${route}/${this.version}/apps/${this.applicationId}`;
 
     this.url = instanceSettings.url || '';
   }
@@ -110,7 +101,6 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
       queryType: AzureQueryType.ApplicationInsights,
       appInsights: {
         timeGrain: templateSrv.replace((item.timeGrain || '').toString(), scopedVars),
-        allowedTimeGrainsMs: item.allowedTimeGrainsMs,
         metricName: templateSrv.replace(item.metricName, scopedVars),
         aggregation: templateSrv.replace(item.aggregation, scopedVars),
         dimension: item.dimension.map((d) => templateSrv.replace(d, scopedVars)),

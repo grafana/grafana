@@ -259,7 +259,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             </InlineFormLabel>
             <InlineFormLabel width={6}>{realInterval}</InlineFormLabel>
             <div className="gf-form-label query-segment-operator">=</div>
-            <div className="gf-form-label">Max data points / time range</div>
+            <div className="gf-form-label">Time range / max data points</div>
           </div>
         </div>
       </>

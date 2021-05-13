@@ -84,7 +84,8 @@ func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 		#Panel: obj
 	}
 	`)
-	filled := dummy.Value().Fill(dj, "obj")
+
+	filled := dummy.Value().FillPath(cue.MakePath(cue.Str("obj")), dj)
 	ddj := filled.LookupPath(cue.MakePath(cue.Str("dummy")))
 
 	var first, prev *compositeDashboardSchema
@@ -126,20 +127,6 @@ func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
 		return err
 	}
 	return cds.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
-}
-
-// ApplyDefaults returns a new, concrete copy of the Resource with all paths
-// that are 1) missing in the Resource AND 2) specified by the schema,
-// filled with default values specified by the schema.
-func (cds *compositeDashboardSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// TrimDefaults returns a new, concrete copy of the Resource where all paths
-// in the  where the values at those paths are the same as the default value
-// given in the schema.
-func (cds *compositeDashboardSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
 }
 
 // CUE returns the cue.Value representing the actual schema.

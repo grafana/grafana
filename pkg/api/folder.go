@@ -4,13 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/librarypanels"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -19,7 +18,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	folders, err := s.GetFolders(c.QueryInt64("limit"))
 
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	result := make([]dtos.FolderSearchHit, 0)
@@ -39,7 +38,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
@@ -50,7 +49,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
@@ -61,7 +60,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.CreateFolder(cmd.Title, cmd.Uid)
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin {
@@ -79,7 +78,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolder
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	err := s.UpdateFolder(c.Params(":uid"), &cmd)
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
@@ -88,19 +87,17 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolder
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		err := hs.LibraryPanelService.DeleteLibraryPanelsInFolder(c, c.Params(":uid"))
-		if err != nil {
-			if errors.Is(err, librarypanels.ErrFolderHasConnectedLibraryPanels) {
-				return response.Error(403, "Folder could not be deleted because it contains linked library panels", err)
-			}
-			return toFolderError(err)
+	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c, c.Params(":uid"))
+	if err != nil {
+		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
+			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
 		}
+		return ToFolderErrorResponse(err)
 	}
 
 	f, err := s.DeleteFolder(c.Params(":uid"))
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	return response.JSON(200, util.DynMap{
@@ -141,7 +138,8 @@ func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folde
 	}
 }
 
-func toFolderError(err error) response.Response {
+// ToFolderErrorResponse returns a different response status according to the folder error type
+func ToFolderErrorResponse(err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, err.Error(), err)

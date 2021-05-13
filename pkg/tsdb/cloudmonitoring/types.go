@@ -10,13 +10,15 @@ import (
 
 type (
 	cloudMonitoringQueryExecutor interface {
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		run(ctx context.Context, tsdbQuery plugins.DataQuery, e *Executor) (
 			plugins.DataQueryResult, cloudMonitoringResponse, string, error)
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		parseResponse(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, executedQueryString string) error
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		parseToAnnotations(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
 		buildDeepLink() string
 		getRefID() string
-		getUnit() string
 	}
 
 	// Used to build time series filters
@@ -30,7 +32,6 @@ type (
 		Selector    string
 		Service     string
 		Slo         string
-		Unit        string
 	}
 
 	// Used to build MQL queries
@@ -41,7 +42,6 @@ type (
 		IntervalMS  int64
 		AliasBy     string
 		timeRange   plugins.DataTimeRange
-		Unit        string
 	}
 
 	metricQuery struct {
@@ -56,7 +56,6 @@ type (
 		View               string
 		EditorMode         string
 		Query              string
-		Unit               string
 	}
 
 	sloQuery struct {
@@ -97,6 +96,7 @@ type (
 		TimeSeries           []timeSeries         `json:"timeSeries"`
 		TimeSeriesDescriptor timeSeriesDescriptor `json:"timeSeriesDescriptor"`
 		TimeSeriesData       timeSeriesData       `json:"timeSeriesData"`
+		Unit                 string               `json:"unit"`
 	}
 )
 

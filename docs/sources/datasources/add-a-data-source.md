@@ -1,6 +1,6 @@
 +++
 title = "Add data source"
-aliases = ["/docs/grafana/next/features/datasources/add-a-data-source/"]
+aliases = ["/docs/grafana/latest/features/datasources/add-a-data-source/"]
 weight = 100
 +++
 
@@ -16,7 +16,7 @@ To add a data source:
    
     {{< docs-imagebox img="/img/docs/v75/sidemenu-datasource-7-5.png" max-width="150px" class="docs-image--no-shadow">}}
 
-1. Click on **Data Sources**. The data sources page opens showing a list of previously configured data sources for the Grafana instance.
+1. Click on **Data sources**. The data sources page opens showing a list of previously configured data sources for the Grafana instance.
 
 1. Click **Add data source** to see a list of all supported data sources.
    
@@ -31,6 +31,3 @@ To add a data source:
 1. Click **Select**. The data source configuration page opens.
 
 1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "_index.md" >}}) for links to configuration instructions for all supported data sources.
-
-
-

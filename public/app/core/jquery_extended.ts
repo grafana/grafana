@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import angular from 'angular';
-import _ from 'lodash';
+import { extend } from 'lodash';
 
 const $win = $(window);
 
@@ -30,7 +30,7 @@ $.fn.place_tt = (() => {
             '$rootScope',
             ($compile, $rootScope) => {
               const tmpScope = $rootScope.$new(true);
-              _.extend(tmpScope, opts.scopeData);
+              extend(tmpScope, opts.scopeData);
 
               $compile($tooltip)(tmpScope);
               tmpScope.$digest();

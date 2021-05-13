@@ -54,6 +54,7 @@ export class BackendSrv implements BackendService {
       };
     }
 
+    this.noBackendCache = false;
     this.internalFetch = this.internalFetch.bind(this);
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);

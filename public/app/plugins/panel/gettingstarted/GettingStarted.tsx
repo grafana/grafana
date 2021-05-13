@@ -65,9 +65,9 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   dismiss = () => {
     const { id } = this.props;
     const dashboard = getDashboardSrv().getCurrent();
-    const panel = dashboard.getPanelById(id);
+    const panel = dashboard?.getPanelById(id);
 
-    dashboard.removePanel(panel!);
+    dashboard?.removePanel(panel!);
 
     backendSrv
       .request({
@@ -124,7 +124,7 @@ const getStyles = stylesFactory(() => {
       display: flex;
       flex-direction: column;
       height: 100%;
-      background: url(public/img/getting_started_bg_${theme.type}.svg) no-repeat;
+      // background: url(public/img/getting_started_bg_${theme.type}.svg) no-repeat;
       background-size: cover;
       padding: ${theme.spacing.xl} ${theme.spacing.md} 0;
     `,

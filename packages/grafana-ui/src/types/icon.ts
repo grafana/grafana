@@ -76,8 +76,11 @@ export type IconName =
   | 'gf-interpolation-step-after'
   | 'gf-interpolation-step-before'
   | 'gf-logs'
+  | 'github'
+  | 'gitlab'
   | 'grafana'
   | 'graph-bar'
+  | 'google'
   | 'heart-break'
   | 'heart'
   | 'history'
@@ -90,10 +93,12 @@ export type IconName =
   | 'link'
   | 'list-ul'
   | 'lock'
+  | 'microsoft'
   | 'minus-circle'
   | 'minus'
   | 'mobile-android'
   | 'monitor'
+  | 'okta'
   | 'palette'
   | 'panel-add'
   | 'pause'
@@ -107,7 +112,7 @@ export type IconName =
   | 'power'
   | 'question-circle'
   | 'repeat'
-  | 'reusable-panel'
+  | 'library-panel'
   | 'rocket'
   | 'save'
   | 'search-minus'
@@ -115,6 +120,7 @@ export type IconName =
   | 'search'
   | 'share-alt'
   | 'shield'
+  | 'shield-exclamation'
   | 'sign-in-alt'
   | 'signal'
   | 'signin'
@@ -135,6 +141,7 @@ export type IconName =
   | 'user'
   | 'users-alt'
   | 'wrap-text'
+  | 'heart-rate'
   | 'x';
 
 export const getAvailableIcons = (): IconName[] => [
@@ -241,7 +248,7 @@ export const getAvailableIcons = (): IconName[] => [
   'power',
   'question-circle',
   'repeat',
-  'reusable-panel',
+  'library-panel',
   'rocket',
   'save',
   'search-minus',
@@ -249,6 +256,7 @@ export const getAvailableIcons = (): IconName[] => [
   'search',
   'share-alt',
   'shield',
+  'shield-exclamation',
   'sign-in-alt',
   'signal',
   'signin',

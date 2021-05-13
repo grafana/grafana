@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { ScaleDistribution } from './models.gen';
 
 /**
  * @alpha
@@ -52,10 +53,10 @@ export enum BarAlignment {
 /**
  * @alpha
  */
-export enum ScaleDistribution {
-  Linear = 'linear',
-  Logarithmic = 'log',
-  Ordinal = 'ordinal',
+export enum BarValueVisibility {
+  Auto = 'auto',
+  Never = 'never',
+  Always = 'always',
 }
 
 /**
@@ -165,7 +166,7 @@ export interface AxisConfig {
 export interface HideSeriesConfig {
   tooltip: boolean;
   legend: boolean;
-  graph: boolean;
+  viz: boolean;
 }
 
 /**
@@ -173,6 +174,41 @@ export interface HideSeriesConfig {
  */
 export interface HideableFieldConfig {
   hideFrom?: HideSeriesConfig;
+}
+
+/**
+ * @alpha
+ */
+export enum StackingMode {
+  None = 'none',
+  Normal = 'normal',
+  Percent = 'percent',
+}
+
+/**
+ * @alpha
+ */
+export interface StackingConfig {
+  mode?: StackingMode;
+  group?: string;
+}
+
+/**
+ * @alpha
+ */
+export enum GraphTresholdsStyleMode {
+  Off = 'off',
+  Line = 'line',
+  Area = 'area',
+  LineAndArea = 'line+area',
+  Series = 'series',
+}
+
+/**
+ * @alpha
+ */
+export interface GraphThresholdsStyleConfig {
+  mode: GraphTresholdsStyleMode;
 }
 
 /**
@@ -187,6 +223,8 @@ export interface GraphFieldConfig
     HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
+  stacking?: StackingConfig;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
 }
 
 /**
@@ -231,4 +269,16 @@ export const graphFieldOptions = {
     { label: 'Hue', value: GraphGradientMode.Hue },
     //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
   ] as Array<SelectableValue<GraphGradientMode>>,
+
+  stacking: [
+    { label: 'Off', value: StackingMode.None },
+    { label: 'Normal', value: StackingMode.Normal },
+  ] as Array<SelectableValue<StackingMode>>,
+
+  thresholdsDisplayModes: [
+    { label: 'Off', value: GraphTresholdsStyleMode.Off },
+    { label: 'As lines', value: GraphTresholdsStyleMode.Line },
+    { label: 'As filled regions', value: GraphTresholdsStyleMode.Area },
+    { label: 'As filled regions and lines', value: GraphTresholdsStyleMode.LineAndArea },
+  ] as Array<SelectableValue<GraphTresholdsStyleMode>>,
 };

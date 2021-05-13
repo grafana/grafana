@@ -7,10 +7,7 @@ import {
   FieldConfig,
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
-import omitBy from 'lodash/omitBy';
-import isNil from 'lodash/isNil';
-import isNumber from 'lodash/isNumber';
-import defaultTo from 'lodash/defaultTo';
+import { omitBy, isNil, isNumber, defaultTo } from 'lodash';
 import { PanelOptions } from './models.gen';
 
 /**

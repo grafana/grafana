@@ -6,8 +6,8 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
-import '@grafana/ui/src/components/Icon/iconBundle';
 
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import ReactDOM from 'react-dom';
 import React from 'react';
@@ -15,6 +15,7 @@ import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
   locationUtil,
+  monacoLanguageRegistry,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -43,6 +44,7 @@ import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
+import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -79,6 +81,7 @@ export class GrafanaApp {
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
+    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
     setQueryRunnerFactory(() => new QueryRunner());
     setVariableQueryRunner(new VariableQueryRunner());

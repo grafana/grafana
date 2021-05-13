@@ -1,6 +1,7 @@
 import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
-import { ScaleDistribution, ScaleOrientation, ScaleDirection } from '../config';
+import { ScaleOrientation, ScaleDirection } from '../config';
+import { ScaleDistribution } from '../models.gen';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -37,12 +38,12 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     const distribution = !isTime
       ? {
           distr:
-            this.props.distribution === ScaleDistribution.Logarithmic
+            this.props.distribution === ScaleDistribution.Log
               ? 3
               : this.props.distribution === ScaleDistribution.Ordinal
               ? 2
               : 1,
-          log: this.props.distribution === ScaleDistribution.Logarithmic ? this.props.log || 2 : undefined,
+          log: this.props.distribution === ScaleDistribution.Log ? this.props.log || 2 : undefined,
         }
       : {};
 
@@ -65,14 +66,14 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       },
     };
 
+    let hardMinOnly = softMin == null && hardMin != null;
+    let hardMaxOnly = softMax == null && hardMax != null;
+
     // uPlot range function
     const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
       const scale = u.scales[scaleKey];
 
       let minMax = [dataMin, dataMax];
-
-      let hardMinOnly = softMin == null && hardMin != null;
-      let hardMaxOnly = softMax == null && hardMax != null;
 
       if (scale.distr === 1 || scale.distr === 2) {
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
@@ -96,7 +97,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     return {
       [scaleKey]: {
         time: isTime,
-        auto: !isTime,
+        auto: !isTime && !(hardMinOnly && hardMaxOnly),
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,

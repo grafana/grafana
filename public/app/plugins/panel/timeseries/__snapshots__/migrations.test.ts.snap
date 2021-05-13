@@ -35,7 +35,6 @@ Object {
     ],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -47,7 +46,7 @@ Object {
       "displayMode": "table",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -68,13 +67,156 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stacking groups 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+        "stacking": Object {
+          "group": "A",
+          "mode": "normal",
+        },
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "custom.stacking",
+            "value": Object {
+              "group": "A",
+              "mode": "normal",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "custom.stacking",
+            "value": Object {
+              "group": "A",
+              "mode": "normal",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stacking simple 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+        "stacking": Object {
+          "group": "A",
+          "mode": "normal",
+        },
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -102,7 +244,6 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -114,7 +255,7 @@ Object {
       "displayMode": "table",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -156,13 +297,12 @@ Object {
     ],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },
@@ -237,13 +377,12 @@ Object {
     ],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
     },
-    "tooltipOptions": Object {
+    "tooltip": Object {
       "mode": "single",
     },
   },

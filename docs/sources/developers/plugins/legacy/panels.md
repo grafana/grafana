@@ -1,7 +1,7 @@
 +++
 title = "Legacy panel plugins"
 keywords = ["grafana", "plugins", "panel", "documentation"]
-aliases = ["/docs/grafana/next/plugins/developing/panels/"]
+aliases = ["/docs/grafana/latest/plugins/developing/panels/"]
 +++
 
 # Legacy panel plugins
@@ -24,4 +24,4 @@ In this case, make sure the template has a single `<div>...</div>` root.  The pl
 ### Examples
 
 - [clock-panel](https://github.com/grafana/clock-panel)
-- [singlestat-panel](https://github.com/grafana/grafana/tree/master/public/app/plugins/panel/singlestat)
+- [singlestat-panel](https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/singlestat)

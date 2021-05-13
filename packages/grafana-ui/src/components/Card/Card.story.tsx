@@ -21,13 +21,9 @@ export default {
     knobs: {
       disable: true,
     },
-  },
-  argTypes: {
-    heading: { control: { disable: true } },
-    description: { control: { disable: true } },
-    href: { control: { disable: true } },
-    tooltip: { control: { disable: true } },
-    onClick: { control: { disable: true } },
+    controls: {
+      exclude: ['onClick', 'href', 'heading', 'description', 'className'],
+    },
   },
 };
 
@@ -60,17 +56,6 @@ export const AsLink: Story<Props> = ({ disabled }) => {
         <Card.Meta>Meta tags</Card.Meta>
       </Card>
     </VerticalGroup>
-  );
-};
-
-export const WithTooltip: Story<Props> = ({ disabled }) => {
-  return (
-    <Card
-      heading="Reduce"
-      description="Reduce all rows or data points to a single value using a function like max, min, mean or last."
-      tooltip="Click to apply this transformation."
-      disabled={disabled}
-    />
   );
 };
 

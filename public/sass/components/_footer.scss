@@ -49,23 +49,22 @@
     bottom: 0;
     position: absolute;
     padding: $space-md 0 $space-md 0;
-    z-index: 1;
+    color: $text-color;
 
-    li {
-      line-height: 1.8rem;
+    a {
+      color: $text-color;
+
+      &:hover {
+        color: $text-color-strong;
+      }
     }
   }
 }
 
-@include media-breakpoint-up(sm) {
+@include media-breakpoint-down(md) {
   .login-page {
     .footer {
-      bottom: $spacer;
-      padding: 70px 0 $space-md 0;
-
-      li {
-        line-height: $line-height-base;
-      }
+      display: none;
     }
   }
 }
