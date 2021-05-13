@@ -90,6 +90,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
           ],
         },
         defaultValue: 'center',
+        showIf: ({ mode }) => mode === TimelineMode.Changes,
       })
       .addSliderInput({
         path: 'rowHeight',

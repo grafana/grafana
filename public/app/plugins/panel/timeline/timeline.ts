@@ -80,6 +80,15 @@ export function getConfig(opts: TimelineCoreOptions) {
       return mark;
     });
 
+  // alignement-aware text position cache filled by drawPaths->putBox for use in drawPoints
+  let textXPos: number[][];
+
+  const resetTextXPos = (count: number) => {
+    textXPos = Array(numSeries)
+      .fill(null)
+      .map((v) => Array(count).fill(null));
+  };
+
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
 
@@ -89,6 +98,9 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const fillPaths: Map<CanvasRenderingContext2D['fillStyle'], Path2D> = new Map();
   const strokePaths: Map<CanvasRenderingContext2D['strokeStyle'], Path2D> = new Map();
+
+  // left or right aligned values shift 2 pixels inside edge
+  const textPadding = alignValue === 'left' ? 2 : alignValue === 'right' ? -2 : 0;
 
   function drawBoxes(ctx: CanvasRenderingContext2D) {
     fillPaths.forEach((fillPath, fillStyle) => {
@@ -153,6 +165,12 @@ export function getConfig(opts: TimelineCoreOptions) {
         ctx.stroke();
       }
     }
+
+    textXPos[seriesIdx][valueIdx] =
+      lft +
+      strokeWidth / 2 +
+      (alignValue === 'center' ? wid / 2 - strokeWidth / 2 : alignValue === 'right' ? wid - strokeWidth / 2 : 0) +
+      textPadding;
 
     qt.add({
       x: round(lft - xOff),
@@ -287,12 +305,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null) {
-                  let x = valToPosX(dataX[ix], scaleX, xDim, xOff);
-
-                  // For the left aligned values shift them 2 pixels of edge
-                  if (mode === TimelineMode.Changes) {
-                    x += 2;
-                  }
+                  let x = textXPos[sidx - 1][ix];
 
                   const valueColor = colorLookup(sidx, dataY[ix]);
 
@@ -320,6 +333,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
+    resetTextXPos(u.data[0].length);
 
     // force-clear the path cache to cause drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
