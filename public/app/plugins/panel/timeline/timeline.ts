@@ -79,7 +79,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
 
-  const size = [colWidth, 100];
+  const size = [colWidth, Infinity];
   const gapFactor = 1 - size[0];
   const maxWidth = (size[1] ?? Infinity) * pxRatio;
 
@@ -174,7 +174,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         u.ctx.clip();
 
         walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, hgt) => {
-          if (mode === TimelineMode.Spans) {
+          if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
               if (dataY[ix] != null) {
                 let lft = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
@@ -207,7 +207,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                 ix = nextIx - 1;
               }
             }
-          } else if (mode === TimelineMode.Grid) {
+          } else if (mode === TimelineMode.Samples) {
             let colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
             let gapWid = colWid * gapFactor;
             let barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
@@ -258,7 +258,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
           u.ctx.font = font;
           u.ctx.fillStyle = 'black';
-          u.ctx.textAlign = mode === TimelineMode.Spans ? 'left' : 'center';
+          u.ctx.textAlign = mode === TimelineMode.Changes ? 'left' : 'center';
           u.ctx.textBaseline = 'middle';
 
           uPlot.orient(
@@ -364,7 +364,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     cursor,
 
     xSplits:
-      mode === TimelineMode.Grid
+      mode === TimelineMode.Samples
         ? (u: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, foundIncr: number, foundSpace: number) => {
             let splits = [];
 
@@ -389,7 +389,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       let min = r.from.valueOf();
       let max = r.to.valueOf();
 
-      if (mode === TimelineMode.Grid) {
+      if (mode === TimelineMode.Samples) {
         let colWid = u.data[0][1] - u.data[0][0];
         let scalePad = colWid / 2;
 
