@@ -63,7 +63,6 @@ func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) 
 
 // Notify send an alert notification to Telegram.
 func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	as = RemoveSystemLabels(as)
 	msg, err := tn.buildTelegramMessage(ctx, as)
 	if err != nil {
 		return false, err

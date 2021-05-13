@@ -22,6 +22,8 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -31,13 +33,12 @@ func TestNotificationChannels(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
-	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+	s := testinfra.SetUpDatabase(t, dir)
+	s.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, s)
 
 	mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
-	rulesConfig := getRulesConfig(t)
 
 	// Overriding some URLs to send to the mock channel.
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
@@ -45,7 +46,7 @@ func TestNotificationChannels(t *testing.T) {
 	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s", mockChannel.server.Addr)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	require.NoError(t, createUser(t, s, models.ROLE_EDITOR, "grafana", "password"))
 
 	{
 		// There are no notification channel config initially.
@@ -55,7 +56,7 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create the namespace we'll save our alerts to.
-		require.NoError(t, createFolder(t, store, 0, "default"))
+		require.NoError(t, createFolder(t, s, 0, "default"))
 
 		// Post the alertmanager config.
 		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
@@ -70,6 +71,16 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create rules that will fire as quickly as possible
+
+		originalFunction := store.GenerateNewAlertRuleUID
+		t.Cleanup(func() {
+			store.GenerateNewAlertRuleUID = originalFunction
+		})
+		store.GenerateNewAlertRuleUID = func(_ *sqlstore.DBSession, _ int64, ruleTitle string) (string, error) {
+			return "UID_" + ruleTitle, nil
+		}
+
+		rulesConfig := getRulesConfig(t)
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
 		postRequest(t, u, rulesConfig, http.StatusAccepted)
 	}
@@ -813,10 +824,10 @@ var expNotifications = map[string][]string{
 		  "icon_url": "https://awesomeemoji.com/rocket",
 		  "attachments": [
 			{
-			  "title": "Integration Test [FIRING:1]  (SlackAlert1)",
+			  "title": "Integration Test [FIRING:1]  (SlackAlert1 UID_SlackAlert1)",
 			  "title_link": "http:/localhost:3000/alerting/list",
 			  "text": "Integration Test ",
-			  "fallback": "Integration Test [FIRING:1]  (SlackAlert1)",
+			  "fallback": "Integration Test [FIRING:1]  (SlackAlert1 UID_SlackAlert1)",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -840,10 +851,10 @@ var expNotifications = map[string][]string{
 		  "username": "Integration Test",
 		  "attachments": [
 			{
-			  "title": "[FIRING:1]  (SlackAlert2)",
+			  "title": "[FIRING:1]  (SlackAlert2 UID_SlackAlert2)",
 			  "title_link": "http:/localhost:3000/alerting/list",
-			  "text": "\n**Firing**\nLabels:\n - alertname = SlackAlert2\nAnnotations:\nSource: \n\n\n\n\n",
-			  "fallback": "[FIRING:1]  (SlackAlert2)",
+			  "text": "\n**Firing**\nLabels:\n - alertname = SlackAlert2\n - __alert_rule_uid__ = UID_SlackAlert2\nAnnotations:\nSource: \n\n\n\n\n",
+			  "fallback": "[FIRING:1]  (SlackAlert2 UID_SlackAlert2)",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -865,17 +876,17 @@ var expNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "718643b9694d44f7f2b21458afd1b079cb403cf264e51894ff3c9745238bcced",
-		  "description": "[firing:1]  (PagerdutyAlert)",
+		  "description": "[firing:1]  (PagerdutyAlert UID_PagerdutyAlert)",
 		  "event_action": "trigger",
 		  "payload": {
-			"summary": "Integration Test [FIRING:1]  (PagerdutyAlert)",
+			"summary": "Integration Test [FIRING:1]  (PagerdutyAlert UID_PagerdutyAlert)",
 			"source": "%s",
 			"severity": "warning",
 			"class": "testclass",
 			"component": "Integration Test",
 			"group": "testgroup",
 			"custom_details": {
-			  "firing": "Labels:\n - alertname = PagerdutyAlert\nAnnotations:\nSource: \n",
+			  "firing": "Labels:\n - alertname = PagerdutyAlert\n - __alert_rule_uid__ = UID_PagerdutyAlert\nAnnotations:\nSource: \n",
 			  "num_firing": "1",
 			  "num_resolved": "0",
 			  "resolved": ""
@@ -895,8 +906,8 @@ var expNotifications = map[string][]string{
 		`{
 		  "link": {
 			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%3A3000%2Falerting%2Flist",
-			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\nAnnotations:\nSource: \n\n\n\n\n",
-			"title": "[firing:1]  (DingDingAlert)"
+			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\n - __alert_rule_uid__ = UID_DingDingAlert\nAnnotations:\nSource: \n\n\n\n\n",
+			"title": "[firing:1]  (DingDingAlert UID_DingDingAlert)"
 		  },
 		  "msgtype": "link"
 		}`,
@@ -920,13 +931,13 @@ var expNotifications = map[string][]string{
 		  ],
 		  "sections": [
 			{
-			  "text": "\n**Firing**\nLabels:\n - alertname = TeamsAlert\nAnnotations:\nSource: \n\n\n\n\n",
+			  "text": "\n**Firing**\nLabels:\n - alertname = TeamsAlert\n - __alert_rule_uid__ = UID_TeamsAlert\nAnnotations:\nSource: \n\n\n\n\n",
 			  "title": "Details"
 			}
 		  ],
-		  "summary": "[firing:1]  (TeamsAlert)",
+		  "summary": "[firing:1]  (TeamsAlert UID_TeamsAlert)",
 		  "themeColor": "#D63232",
-		  "title": "[firing:1]  (TeamsAlert)"
+		  "title": "[firing:1]  (TeamsAlert UID_TeamsAlert)"
 		}`,
 	},
 	"webhook_recv/webhook_test": {
@@ -937,17 +948,19 @@ var expNotifications = map[string][]string{
 			{
 			  "status": "firing",
 			  "labels": {
+				"__alert_rule_uid__": "UID_WebhookAlert",
 				"alertname": "WebhookAlert"
 			  },
 			  "annotations": {},
 			  "startsAt": "%s",
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "",
-			  "fingerprint": "a0e2a99fc56fce63"
+			  "fingerprint": "929467973978d053"
 			}
 		  ],
 		  "groupLabels": {},
 		  "commonLabels": {
+			"__alert_rule_uid__": "UID_WebhookAlert",
 			"alertname": "WebhookAlert"
 		  },
 		  "commonAnnotations": {},
@@ -955,9 +968,9 @@ var expNotifications = map[string][]string{
 		  "version": "1",
 		  "groupKey": "{}/{alertname=\"WebhookAlert\"}:{}",
 		  "truncatedAlerts": 0,
-		  "title": "[FIRING:1]  (WebhookAlert)",
+		  "title": "[FIRING:1]  (WebhookAlert UID_WebhookAlert)",
 		  "state": "alerting",
-		  "message": "\n**Firing**\nLabels:\n - alertname = WebhookAlert\nAnnotations:\nSource: \n\n\n\n\n"
+		  "message": "\n**Firing**\nLabels:\n - alertname = WebhookAlert\n - __alert_rule_uid__ = UID_WebhookAlert\nAnnotations:\nSource: \n\n\n\n\n"
 		}`,
 	},
 }

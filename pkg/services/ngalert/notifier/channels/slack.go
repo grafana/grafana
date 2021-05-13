@@ -153,7 +153,6 @@ type attachment struct {
 
 // Notify sends an alert notification to Slack.
 func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	as = RemoveSystemLabels(as)
 	msg, err := sn.buildSlackMessage(ctx, as)
 	if err != nil {
 		return false, fmt.Errorf("build slack message: %w", err)

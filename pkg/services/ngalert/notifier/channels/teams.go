@@ -50,7 +50,6 @@ func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*T
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	as = RemoveSystemLabels(as)
 	data := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
