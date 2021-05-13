@@ -83,6 +83,8 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
     [addModalVisible]
   );
 
+  const getRowKey = useCallback(({ original }) => `${original.kubernetesClusterName}${original.clusterName}`, []);
+
   useEffect(() => {
     const getSettings = async () => {
       try {
@@ -134,7 +136,13 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
       {logsModalVisible && (
         <DBClusterLogsModal isVisible={logsModalVisible} setVisible={setLogsModalVisible} dbCluster={selectedCluster} />
       )}
-      <Table columns={columns} data={dbClusters} loading={loading} noData={<AddNewClusterButton />} />
+      <Table
+        columns={columns}
+        data={dbClusters}
+        loading={loading}
+        noData={<AddNewClusterButton />}
+        rowKey={getRowKey}
+      />
     </div>
   );
 };
