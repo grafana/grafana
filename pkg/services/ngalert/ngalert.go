@@ -117,7 +117,6 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.Alertmanager.Run(subCtx)
 	})
 	return children.Wait()
-
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
