@@ -238,6 +238,48 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
+			Type:        "sensu",
+			Name:        "Sensu",
+			Description: "Sends HTTP POST request to Sensu",
+			Heading:     "Sensu Settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "http://sensu-api.local:4567/results",
+					PropertyName: "url",
+					Required:     true,
+				},
+				{
+					Label:        "Handler",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "default",
+					PropertyName: "handler",
+				},
+				{
+					Label:        "Username",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "username",
+				},
+				{
+					Label:        "Password",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypePassword,
+					PropertyName: "password",
+					Secure:       true,
+				},
+				{ // New in 8.0.
+					Label:        "Message",
+					Element:      alerting.ElementTypeTextArea,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
+				},
+			},
+		},
+		{
 			Type:        "teams",
 			Name:        "Microsoft Teams",
 			Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",

@@ -51,7 +51,7 @@ func init() {
 				Label:        "Password",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
-				PropertyName: "passsword ",
+				PropertyName: "password",
 				Secure:       true,
 			},
 		},
