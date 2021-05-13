@@ -37,12 +37,12 @@ describe('fieldColorModeRegistry', () => {
 
   it('Palette classic with series index 0', () => {
     const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 0 });
-    expect(calcFn(70, 0, undefined)).toEqual('#7EB26D');
+    expect(calcFn(70, 0, undefined)).toEqual('#73BF69');
   });
 
   it('Palette classic with series index 1', () => {
     const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 1 });
-    expect(calcFn(70, 0, undefined)).toEqual('#EAB839');
+    expect(calcFn(70, 0, undefined)).toEqual('#F2CC0C');
   });
 
   it('When color.seriesBy is set to last use that instead of v', () => {

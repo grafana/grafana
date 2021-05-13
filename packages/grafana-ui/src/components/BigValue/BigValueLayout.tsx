@@ -3,7 +3,7 @@ import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { formattedValueToString, DisplayValue, getColorForTheme, FieldConfig } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
@@ -30,9 +30,9 @@ export abstract class BigValueLayout {
   textValues: BigValueTextValues;
 
   constructor(private props: Props) {
-    const { width, height, value, theme, text } = props;
+    const { width, height, value, text } = props;
 
-    this.valueColor = getColorForTheme(value.color || 'green', theme.v1);
+    this.valueColor = value.color ?? 'gray';
     this.panelPadding = height > 100 ? 12 : 8;
     this.textValues = getTextValues(props);
     this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);

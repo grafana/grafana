@@ -1,13 +1,12 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { flatten } from 'lodash';
-import { getNamedColorPalette, getColorFromHexRgbOrName } from '@grafana/data';
 import { ColorSwatch } from './ColorSwatch';
-
-const allColors = flatten(Array.from(getNamedColorPalette().values()));
+import { createTheme, getColorForTheme } from '@grafana/data';
 
 describe('ColorPickerPopover', () => {
+  const theme = createTheme();
+
   describe('rendering', () => {
     it('should render provided color as selected if color provided by name', () => {
       const wrapper = mount(<ColorPickerPopover color={'green'} onChange={() => {}} />);
@@ -15,18 +14,7 @@ describe('ColorPickerPopover', () => {
       const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere((node) => node.prop('isSelected') === false);
 
       expect(selectedSwatch.length).toBe(1);
-      expect(notSelectedSwatches.length).toBe(allColors.length + 1);
-      expect(selectedSwatch.prop('isSelected')).toBe(true);
-    });
-
-    it('should render provided color as selected if color provided by hex', () => {
-      const wrapper = mount(<ColorPickerPopover color={'green'} onChange={() => {}} />);
-
-      const selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === 'green');
-      const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere((node) => node.prop('isSelected') === false);
-
-      expect(selectedSwatch.length).toBe(1);
-      expect(notSelectedSwatches.length).toBe(allColors.length + 1);
+      expect(notSelectedSwatches.length).toBe(31);
       expect(selectedSwatch.prop('isSelected')).toBe(true);
     });
   });
@@ -47,7 +35,7 @@ describe('ColorPickerPopover', () => {
       basicBlueSwatch.simulate('click');
 
       expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith(getColorFromHexRgbOrName('green'));
+      expect(onChangeSpy).toBeCalledWith(getColorForTheme('green', theme.v1));
     });
 
     it('should pass color name to onChange prop when named colors enabled', () => {

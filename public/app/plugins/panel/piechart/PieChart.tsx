@@ -289,6 +289,7 @@ function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color, 
         y={labelY}
         dy=".33em"
         fontSize={labelFontSize}
+        fontWeight={500}
         textAnchor="middle"
         pointerEvents="none"
       >

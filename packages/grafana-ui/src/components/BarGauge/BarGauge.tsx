@@ -12,7 +12,6 @@ import {
   FieldConfig,
   FieldColorModeId,
   getFieldColorMode,
-  getColorForTheme,
   FALLBACK_COLOR,
   TextDisplayOptions,
   VizOrientation,
@@ -536,7 +535,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
-      const color = getColorForTheme(threshold.color, props.theme.v1);
+      const color = props.theme.visualization.getColorByName(threshold.color);
       const valuePercent =
         thresholds.mode === ThresholdsMode.Percentage
           ? threshold.value / 100
@@ -560,8 +559,9 @@ export function getBarGradient(props: Props, maxSize: number): string {
     return gradient + ')';
   }
 
-  if (mode.isContinuous && mode.colors) {
-    const scheme = mode.colors.map((item) => getColorForTheme(item, theme.v1));
+  if (mode.isContinuous && mode.getColors) {
+    const scheme = mode.getColors(theme);
+
     for (let i = 0; i < scheme.length; i++) {
       const color = scheme[i];
 

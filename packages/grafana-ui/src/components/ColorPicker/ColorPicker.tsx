@@ -2,7 +2,7 @@ import React, { Component, createRef } from 'react';
 import { PopoverController } from '../Tooltip/PopoverController';
 import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { getColorForTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { css } from '@emotion/css';
@@ -75,7 +75,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    color={getColorForTheme(this.props.color || '#000000', theme.v1)}
+                    color={theme.visualization.getColorByName(this.props.color || '#000000')}
                   />
                 )}
               </>

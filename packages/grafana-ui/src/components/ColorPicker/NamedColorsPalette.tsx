@@ -1,5 +1,4 @@
 import React from 'react';
-import { getNamedColorPalette } from '@grafana/data';
 import NamedColorsGroup from './NamedColorsGroup';
 import { VerticalGroup } from '../Layout/Layout';
 import { ColorSwatch } from './ColorSwatch';
@@ -14,18 +13,9 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
   const theme = useTheme2();
 
   const swatches: JSX.Element[] = [];
-  getNamedColorPalette().forEach((colors, hue) => {
-    swatches.push(
-      <NamedColorsGroup
-        key={hue}
-        selectedColor={color}
-        colors={colors}
-        onColorSelect={(color) => {
-          onChange(color.name);
-        }}
-      />
-    );
-  });
+  for (const hue of theme.visualization.hues) {
+    swatches.push(<NamedColorsGroup key={hue.name} selectedColor={color} hue={hue} onColorSelect={onChange} />);
+  }
 
   return (
     <VerticalGroup spacing="md">
@@ -39,6 +29,7 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
         }}
       >
         {swatches}
+        <div />
         <ColorSwatch
           isSelected={color === 'transparent'}
           color={'rgba(0,0,0,0)'}
