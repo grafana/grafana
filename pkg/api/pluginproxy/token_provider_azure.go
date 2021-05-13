@@ -2,7 +2,7 @@ package pluginproxy
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"strings"
@@ -41,11 +41,11 @@ func newAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *mode
 
 func (provider *azureAccessTokenProvider) getAccessToken() (string, error) {
 	var credential TokenCredential
-	var err error
 
 	if provider.isManagedIdentityCredential() {
 		if !provider.cfg.Azure.ManagedIdentityEnabled {
-			err = fmt.Errorf("managed identity authentication not enabled in Grafana config")
+			err := fmt.Errorf("managed identity authentication not enabled in Grafana config")
+			return "", err
 		} else {
 			credential = provider.getManagedIdentityCredential()
 		}
@@ -115,7 +115,7 @@ func (c *managedIdentityCredential) GetCacheKey() string {
 	if clientId == "" {
 		clientId = "system"
 	}
-	return fmt.Sprintf("azure|msi|%s", c.clientId)
+	return fmt.Sprintf("azure|msi|%s", clientId)
 }
 
 func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes []string) (*azcore.AccessToken, error) {
@@ -129,7 +129,7 @@ func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes [
 	}
 
 	// Implementation of ManagedIdentityCredential doesn't support scopes, converting to resource
-	if scopes == nil || len(scopes) == 0 {
+	if len(scopes) == 0 {
 		return nil, errors.New("scopes not provided")
 	}
 	resource := strings.TrimSuffix(scopes[0], "/.default")
@@ -164,7 +164,7 @@ func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []st
 }
 
 func hashSecret(secret string) string {
-	hash := sha1.New()
-	hash.Write([]byte(secret))
+	hash := sha256.New()
+	_, _ = hash.Write([]byte(secret))
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
