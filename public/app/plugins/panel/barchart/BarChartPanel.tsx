@@ -45,7 +45,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   return (
     <BarChart
       frames={data.series}
-      timeZone={timeZone}
       timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
       structureRev={data.structureRev}
       width={width}
@@ -54,7 +53,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       orientation={orientation}
     >
       {(config, alignedFrame) => {
-        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} />;
       }}
     </BarChart>
   );

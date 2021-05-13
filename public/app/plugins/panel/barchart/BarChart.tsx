@@ -23,7 +23,7 @@ const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showVal
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
-  const { eventBus } = usePanelContext();
+  const { eventBus, timeZone } = usePanelContext();
 
   const renderLegend = (config: UPlotConfigBuilder) => {
     if (!config || props.legend.displayMode === LegendDisplayMode.Hidden) {
@@ -34,7 +34,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   };
 
   const prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
-    const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip } = props;
+    const { orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip } = props;
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
