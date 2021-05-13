@@ -10,7 +10,7 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { RuleFolderPicker } from './RuleFolderPicker';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const alertTypeOptions: SelectableValue[] = [
   {

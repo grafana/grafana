@@ -12,7 +12,7 @@ import { useDispatch } from 'react-redux';
 import { Matchers } from './Matchers';
 import { SilenceStateTag } from './SilenceStateTag';
 import { makeAMLink } from '../../utils/misc';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 interface Props {
   className?: string;
   silence: Silence;

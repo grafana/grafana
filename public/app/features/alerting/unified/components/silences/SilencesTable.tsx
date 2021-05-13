@@ -7,7 +7,7 @@ import SilenceTableRow from './SilenceTableRow';
 import { getAlertTableStyles } from '../../styles/table';
 import { NoSilencesSplash } from './NoSilencesCTA';
 import { makeAMLink } from '../../utils/misc';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 interface Props {
   silences: Silence[];
   alertManagerAlerts: AlertmanagerAlert[];

@@ -1,5 +1,5 @@
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import React, { FC } from 'react';
 import { CallToActionCard } from '@grafana/ui';
 

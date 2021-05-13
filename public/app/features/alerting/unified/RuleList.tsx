@@ -18,7 +18,7 @@ import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useLocation } from 'react-router-dom';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const VIEWS = {
   groups: RuleListGroupView,

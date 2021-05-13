@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
