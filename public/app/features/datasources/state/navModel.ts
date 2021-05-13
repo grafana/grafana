@@ -62,8 +62,6 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       url: `datasources/edit/${dataSource.id}/insights`,
     });
 
-    console.log('is cacheable?', pluginMeta.backend);
-
     navModel.children!.push({
       active: false,
       icon: 'database',
@@ -74,7 +72,6 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  console.log('built navmodel', navModel);
   return navModel;
 }
 
