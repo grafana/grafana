@@ -38,7 +38,7 @@ func SetupTestEnv(t *testing.T, baseIntervalSeconds int64) *store.DBstore {
 
 	err := ng.Init()
 	require.NoError(t, err)
-	return &store.DBstore{SQLStore: ng.SQLStore, BaseInterval: time.Duration(baseIntervalSeconds) * time.Second}
+	return &store.DBstore{SQLStore: ng.SQLStore, BaseInterval: time.Duration(baseIntervalSeconds) * time.Second, Metrics: metrics.NewMetrics(prometheus.NewRegistry())}
 }
 
 func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {

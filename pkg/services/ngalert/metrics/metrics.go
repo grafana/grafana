@@ -29,8 +29,9 @@ type Metrics struct {
 	*metrics.Alerts
 	AlertState *prometheus.GaugeVec
 	// Registerer is for use by subcomponents which register their own metrics.
-	Registerer      prometheus.Registerer
-	RequestDuration *prometheus.HistogramVec
+	Registerer           prometheus.Registerer
+	RequestDuration      *prometheus.HistogramVec
+	ActiveConfigurations prometheus.Gauge
 }
 
 func init() {
@@ -68,6 +69,12 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			},
 			[]string{"method", "route", "status_code", "backend"},
 		),
+		ActiveConfigurations: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: "grafana",
+			Subsystem: "alerting",
+			Name:      "active_configurations",
+			Help:      "Active non default alertmanager configurations for grafana managed alerts",
+		}),
 	}
 }
 

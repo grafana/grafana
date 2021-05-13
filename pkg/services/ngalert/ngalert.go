@@ -65,7 +65,12 @@ func (ng *AlertNG) Init() error {
 	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
-	store := &store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
+	store := &store.DBstore{
+		BaseInterval:           baseInterval,
+		DefaultIntervalSeconds: defaultIntervalSeconds,
+		SQLStore:               ng.SQLStore,
+		Metrics:                ng.Metrics,
+	}
 
 	var err error
 	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
