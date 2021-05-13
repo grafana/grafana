@@ -12,17 +12,6 @@ const durationMap: { [key in Required<keyof Duration>]: string[] } = {
   seconds: ['s', 'S', 'seconds'],
 };
 
-/**
- * Limits to specified precision and removes trailing 0s.
- * Examples:
- * (4.0001, 1) => 4
- * (4.1234, 1) => 4.1
- * (4.6789, 1) => 4.6
- */
-function limitFloatingPrecision(x: number, precision: number): string {
-  return parseFloat(x.toFixed(precision)).toString();
-}
-
 export function intervalToAbbreviatedDurationString(interval: Interval): string {
   const duration = intervalToDuration(interval);
   return (Object.entries(duration) as Array<[keyof Duration, number | undefined]>).reduce((str, [unit, value]) => {
@@ -33,19 +22,6 @@ export function intervalToAbbreviatedDurationString(interval: Interval): string 
 
     return str;
   }, '');
-}
-
-/**
- * Formats a duration provided in seconds. If smaller than 0, the most suitable
- * unit will be picked. Truncated at precision, not rounded.
- * (Ex.: (0.043678, 2) => '43.67 ms')
- */
-export function formatDuration(duration: number, precision = 1): string {
-  return duration > 1
-    ? limitFloatingPrecision(duration, precision) + ' s'
-    : duration * 1000 > 1
-    ? limitFloatingPrecision(duration * 1000, precision) + ' ms'
-    : limitFloatingPrecision(duration * 1000 * 1000, precision) + ' μs';
 }
 
 export function parseDuration(duration: string): Duration {
