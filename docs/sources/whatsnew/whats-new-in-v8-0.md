@@ -34,7 +34,7 @@ New visualization that allows categorical data display. Following the new panel 
 
 - The Time series is out of beta!  We are removing the `Beta`tag and graduating the Time series panel to a stable state.
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
-- The Time series panel now supports stacking. For more information, refer to [Graph time series stacking]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
+- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
 - We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
 - Various performance improvements.
 
