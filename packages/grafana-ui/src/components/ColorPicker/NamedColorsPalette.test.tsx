@@ -1,12 +1,13 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { createTheme, getColorDefinitionByName } from '@grafana/data';
+import { createTheme } from '@grafana/data';
 import { ColorSwatch } from './ColorSwatch';
-import { ThemeContext } from '../../themes';
 
 describe('NamedColorsPalette', () => {
-  const BasicGreen = getColorDefinitionByName('green');
+  const theme = createTheme();
+  const greenHue = theme.visualization.hues.find((x) => x.name === 'green')!;
+  const selectedShade = greenHue.shades[2];
 
   describe('theme support for named colors', () => {
     let wrapper: ReactWrapper, selectedSwatch;
@@ -16,21 +17,9 @@ describe('NamedColorsPalette', () => {
     });
 
     it('should render provided color variant specific for theme', () => {
-      wrapper = mount(<NamedColorsPalette color={BasicGreen.name} onChange={() => {}} />);
-      selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === BasicGreen.name);
-      expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.dark);
-
-      wrapper.unmount();
-
-      const withLightTheme = (
-        <ThemeContext.Provider value={createTheme({ colors: { mode: 'light' } })}>
-          <NamedColorsPalette color={BasicGreen.name} onChange={() => {}} />
-        </ThemeContext.Provider>
-      );
-
-      wrapper = mount(withLightTheme);
-      selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === BasicGreen.name);
-      expect(selectedSwatch.prop('color')).toBe(BasicGreen.variants.light);
+      wrapper = mount(<NamedColorsPalette color={selectedShade.name} onChange={() => {}} />);
+      selectedSwatch = wrapper.find(ColorSwatch).findWhere((node) => node.key() === selectedShade.name);
+      expect(selectedSwatch.prop('color')).toBe(selectedShade.color);
     });
   });
 });

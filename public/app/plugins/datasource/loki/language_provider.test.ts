@@ -221,7 +221,7 @@ describe('Request URL', () => {
     const datasourceSpy = jest.spyOn(datasourceWithLabels as any, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels);
-    instance.fetchLogLabels();
+    instance.fetchLabels();
     const expectedUrl = '/loki/api/v1/label';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
   });

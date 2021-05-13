@@ -51,7 +51,7 @@ func TestDashboardValidity(t *testing.T) {
 	// TODO FIXME remove this once we actually have dashboard schema filled in
 	// enough that the tests pass, lol
 	t.Skip()
-	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards", "basic"))
+	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards"))
 
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
