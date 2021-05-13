@@ -39,6 +39,7 @@ Only organization admins can create reports by default. You can customize who ca
    - **Recipients -** Enter the emails of the people or teams that you want to receive the report.
    - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
    - **Message -** (optional) Message body in the email with the report.
+   - **Link back to the source dashboard -** Include a link to the dashboard from within the report email. 
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
 1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
@@ -47,7 +48,7 @@ Only organization admins can create reports by default. You can customize who ca
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/img/docs/enterprise/reports-create-new-8.0.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Layout and orientation
 

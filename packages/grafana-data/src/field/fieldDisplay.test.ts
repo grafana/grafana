@@ -72,6 +72,34 @@ describe('FieldDisplay', () => {
     expect(display.map((v) => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
   });
 
+  it('should not calculate min max if ensureGlobalRange is false', () => {
+    const options = createDisplayOptions({
+      ensureGlobalRange: false,
+      reduceOptions: {
+        values: true, //
+        limit: 1000,
+        calcs: [],
+      },
+    });
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toBeUndefined();
+    expect(display[0].field.max).toBeUndefined();
+  });
+
+  it('should ensure global min / max on numerical fields', () => {
+    const options = createDisplayOptions({
+      ensureGlobalRange: true,
+      reduceOptions: {
+        values: true, //
+        limit: 1000,
+        calcs: [],
+      },
+    });
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toEqual(1);
+    expect(display[0].field.max).toEqual(6);
+  });
+
   it('Should return field thresholds when there is no data', () => {
     const options = createEmptyDisplayOptions({
       fieldConfig: {

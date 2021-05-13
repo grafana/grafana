@@ -33,6 +33,6 @@ export const defaultTimelineFieldConfig: TimelineFieldConfig = {
  * @alpha
  */
 export enum TimelineMode {
-  Spans = 'spans',
-  Grid = 'grid',
+  Changes = 'changes',
+  Samples = 'samples',
 }

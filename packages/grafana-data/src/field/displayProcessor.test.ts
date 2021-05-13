@@ -346,6 +346,11 @@ describe('Date display options', () => {
         theme: createTheme(),
       });
       expect(processor('22.1122334455').text).toEqual('22.11');
+
+      // Support empty/missing strings
+      expect(processor(undefined).text).toEqual('');
+      expect(processor(null).text).toEqual('');
+      expect(processor('').text).toEqual('');
     });
   });
 });
