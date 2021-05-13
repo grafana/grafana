@@ -50,7 +50,7 @@ type SlackNotifier struct {
 
 var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
 
-const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
+var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*SlackNotifier, error) {
@@ -60,7 +60,7 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 
 	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if slackURL == "" {
-		slackURL = slackAPIEndpoint
+		slackURL = SlackAPIEndpoint
 	}
 	apiURL, err := url.Parse(slackURL)
 	if err != nil {
@@ -72,7 +72,7 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 		if !reRecipient.MatchString(recipient) {
 			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
 		}
-	} else if apiURL.String() == slackAPIEndpoint {
+	} else if apiURL.String() == SlackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
@@ -104,7 +104,7 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 	}
 
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
-	if token == "" && apiURL.String() == slackAPIEndpoint {
+	if token == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "token must be specified when using the Slack chat API",
 		}
@@ -172,7 +172,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("User-Agent", "Grafana")
 	if sn.Token == "" {
-		if sn.URL.String() == slackAPIEndpoint {
+		if sn.URL.String() == SlackAPIEndpoint {
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
