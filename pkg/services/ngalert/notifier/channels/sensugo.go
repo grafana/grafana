@@ -167,7 +167,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"status":   status,
 			"handlers": handlers,
 		},
-		"ruleURL": ruleURL,
+		"ruleUrl": ruleURL,
 	}
 
 	if tmplErr != nil {

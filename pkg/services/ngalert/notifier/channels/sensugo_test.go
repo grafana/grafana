@@ -58,8 +58,7 @@ func TestSensuGoNotifier(t *testing.T) {
 						"labels": map[string]string{
 							"ruleName": "alert1",
 							"ruleUId":  "rule uid",
-							// TODO imageUrl
-							"ruleURL": "http:/localhost/alerting/list",
+							"ruleURL":  "http:/localhost/alerting/list",
 						},
 					},
 					"output":   "\n**Firing**\nLabels:\n - alertname = alert1\n - __alert_rule_uid__ = rule uid\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
@@ -68,7 +67,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					"status":   2,
 					"handlers": nil,
 				},
-				"ruleURL": "http:/localhost/alerting/list",
+				"ruleUrl": "http:/localhost/alerting/list",
 			},
 			expInitError: nil,
 			expMsgError:  nil,
@@ -109,8 +108,7 @@ func TestSensuGoNotifier(t *testing.T) {
 						"labels": map[string]string{
 							"ruleName": "alert1",
 							"ruleUId":  "rule uid",
-							// TODO imageUrl
-							"ruleURL": "http:/localhost/alerting/list",
+							"ruleURL":  "http:/localhost/alerting/list",
 						},
 					},
 					"output":   "2 alerts are firing, 0 are resolved",
@@ -119,7 +117,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					"status":   2,
 					"handlers": []string{"myhandler"},
 				},
-				"ruleURL": "http:/localhost/alerting/list",
+				"ruleUrl": "http:/localhost/alerting/list",
 			},
 			expInitError: nil,
 			expMsgError:  nil,
