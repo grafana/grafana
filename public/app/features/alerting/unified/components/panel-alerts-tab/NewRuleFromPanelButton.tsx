@@ -1,9 +1,9 @@
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import React, { FC } from 'react';
-import { LinkButton } from '@grafana/ui';
+import { Alert, LinkButton } from '@grafana/ui';
 import { panelToRuleFormValues } from '../../utils/rule-form';
-import { urlUtil } from '@grafana/data';
 import { useLocation } from 'react-router-dom';
+import { urlUtil } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -16,7 +16,11 @@ export const NewRuleFromPanelButton: FC<Props> = ({ dashboard, panel, className 
   const location = useLocation();
 
   if (!formValues) {
-    return null;
+    return (
+      <Alert severity="info" title="No alerting capable query found">
+        Cannot create alerts from this panel because no query to an alerting capable datasource is found.
+      </Alert>
+    );
   }
 
   const ruleFormUrl = urlUtil.renderUrl('alerting/new', {

@@ -4,6 +4,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
@@ -186,8 +187,8 @@ const getDefaultExpression = (refId: string): GrafanaQuery => {
 
 const dataQueriesToGrafanaQueries = (
   queries: DataQuery[],
-  datasourceName: string | null,
-  relativeTimeRange: RelativeTimeRange
+  relativeTimeRange: RelativeTimeRange,
+  datasourceName?: string
 ): GrafanaQuery[] => {
   return queries.reduce<GrafanaQuery[]>((queries, target) => {
     const dsName = target.datasource || datasourceName;
@@ -225,18 +226,21 @@ export const panelToRuleFormValues = (
   panel: PanelModel,
   dashboard: DashboardModel
 ): Partial<RuleFormValues> | undefined => {
-  const { targets, datasource: dashboardDatasource } = panel;
+  const { targets } = panel;
 
-  //@TODO figure out what do if datasource=null ... seems default is implied? what's going on?
+  // it seems if default datasource is selected, datasource=null, hah
+  const datasourceName =
+    panel.datasource === null ? getDatasourceSrv().getInstanceSettings('default')?.name : panel.datasource;
 
-  if (!panel.editSourceId) {
+  if (!panel.editSourceId || !dashboard.uid) {
     return undefined;
   }
 
   const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
-  const queries = dataQueriesToGrafanaQueries(targets, dashboardDatasource, relativeTimeRange);
+  const queries = dataQueriesToGrafanaQueries(targets, relativeTimeRange, datasourceName);
 
-  if (!queries.length) {
+  // if no alerting capable queries are found, can't create a rule
+  if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
     return undefined;
   }
 

@@ -54,8 +54,17 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
   return (
     <div className={styles.noRulesWrapper}>
       {alert}
-      <p>There are no alert rules linked to this panel.</p>
-      <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />
+      {!!dashboard.uid && (
+        <>
+          <p>There are no alert rules linked to this panel.</p>
+          <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />
+        </>
+      )}
+      {!dashboard.uid && (
+        <Alert severity="info" title="Dashboard not saved">
+          Dashboard must be saved before alerts can be added.
+        </Alert>
+      )}
     </div>
   );
 };
