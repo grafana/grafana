@@ -1,6 +1,7 @@
 package channels
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -73,29 +74,44 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
 
-	ruleUID := ""
-	ruleName := ""
+	ruleUIDs := make(map[string]struct{})
+	ruleNames := make(map[string]struct{})
 	for _, a := range as {
 		v, ok := a.Labels[ngmodels.UIDLabel]
 		if ok {
-			ruleUID = string(v)
+			_, exists := ruleUIDs[string(v)]
+			if !exists {
+				ruleUIDs[string(v)] = struct{}{}
+			}
 		}
 		v, ok = a.Labels[model.AlertNameLabel]
 		if ok {
-			ruleName = string(v)
-		}
-		if ruleUID != "" && ruleName != "" {
-			break
+			_, exists := ruleNames[string(v)]
+			if !exists {
+				ruleNames[string(v)] = struct{}{}
+			}
 		}
 	}
+
+	var buffer bytes.Buffer
+	for k := range ruleUIDs {
+		buffer.WriteString(fmt.Sprintf("%s,", k))
+	}
+	strRuleUIDs := strings.TrimRight(buffer.String(), ",")
+
+	buffer.Reset()
+	for k := range ruleNames {
+		buffer.WriteString(fmt.Sprintf("%s,", k))
+	}
+	strRuleNames := strings.TrimRight(buffer.String(), ",")
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
 	entity := sn.Entity
 	if entity == "" {
-		if ruleName != "" {
+		if ruleNames != nil {
 			// Sensu Go alerts cannot have spaces in them
-			entity = strings.ReplaceAll(ruleName, " ", "_")
+			entity = strings.ReplaceAll(strRuleNames, " ", "_")
 		} else {
 			entity = "default"
 		}
@@ -103,8 +119,8 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	check := sn.Check
 	if check == "" {
-		if ruleUID != "" {
-			check = ruleUID
+		if strRuleUIDs != "" {
+			check = strRuleUIDs
 		} else {
 			check = "default"
 		}
@@ -139,8 +155,8 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"metadata": map[string]interface{}{
 				"name": check,
 				"labels": map[string]string{
-					"ruleName": ruleName,
-					"ruleUId":  ruleUID,
+					"ruleName": strRuleNames,
+					"ruleUId":  strRuleUIDs,
 					// TODO imageUrl
 					"ruleURL": ruleURL,
 				},
