@@ -149,8 +149,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   runOnChange = () => {
     const { onChange } = this.props;
     const value = Plain.serialize(this.state.value);
-    console.log(value);
-    console.log(this.cleanText(value));
     if (onChange) {
       onChange(this.cleanText(value));
     }
@@ -193,9 +191,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   };
 
   cleanText(text: string) {
-    // RegExp with characters we want to remove - currently only carriage return
-    const regExp = /\\r/g;
-    return text.replace(regExp, '');
+    // RegExp with invisible characters we want to remove - currently only carriage return (newlines are visible)
+    const newText = text.trim().replace(/[\r]/g, '');
+    return newText;
   }
 
   render() {

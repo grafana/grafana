@@ -33,7 +33,7 @@ describe('<QueryField />', () => {
   it('should run onChange with clean text', () => {
     const onChange = jest.fn();
     const wrapper = shallow(
-      <QueryField query="my\r clean query" onTypeahead={jest.fn()} onChange={onChange} portalOrigin="mock-origin" />
+      <QueryField query={`my\r clean query`} onTypeahead={jest.fn()} onChange={onChange} portalOrigin="mock-origin" />
     );
     const field = wrapper.instance() as QueryField;
     field.runOnChange();
