@@ -119,7 +119,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     discrete: boolean
   ) {
     if (discrete) {
-      let fillStyle = colorLookup(seriesIdx + 1, value);
+      let fillStyle = fill(seriesIdx + 1, value);
       let fillPath = fillPaths.get(fillStyle);
 
       if (fillPath == null) {
@@ -129,7 +129,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       rect(fillPath, lft, top, wid, hgt);
 
       if (strokeWidth) {
-        let strokeStyle = colorLookup(seriesIdx + 1, value);
+        let strokeStyle = stroke(seriesIdx + 1, value);
         let strokePath = strokePaths.get(strokeStyle);
 
         if (strokePath == null) {
