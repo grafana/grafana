@@ -197,6 +197,14 @@ Never show the points.
 
 ![Show points point never example](/img/docs/time-series-panel/line-graph-show-points-never-7-4.png)
 
+### Stack series
+
+For full instructions, refer to [Graph stacked time series]({{< relref "graph-time-series-stacking.md" >}}).
+
+## Axis
+
+For full instructions, refer to [Change axis display]({{< relref "change-axis-display.md" >}})
+
 ## Fill below to
 
 This option is only available as in the Overrides tab.
