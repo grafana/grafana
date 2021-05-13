@@ -30,17 +30,22 @@ interface Props {
 }
 
 const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
+  const now = new Date();
   if (silence) {
+    const isExpired = Date.parse(silence.endsAt) < Date.now();
+    const interval = isExpired
+      ? {
+          start: now,
+          end: addDurationToDate(now, { hours: 2 }),
+        }
+      : { start: new Date(silence.startsAt), end: new Date(silence.endsAt) };
     return {
       id: silence.id,
-      startsAt: silence.startsAt,
-      endsAt: silence.endsAt,
+      startsAt: interval.start.toISOString(),
+      endsAt: interval.end.toISOString(),
       comment: silence.comment,
       createdBy: silence.createdBy,
-      duration: intervalToAbbreviatedDurationString({
-        start: new Date(silence.startsAt),
-        end: new Date(silence.endsAt),
-      }),
+      duration: intervalToAbbreviatedDurationString(interval),
       isRegex: false,
       matchers: silence.matchers || [],
       matcherName: '',
@@ -48,11 +53,10 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       timeZone: DefaultTimeZone,
     };
   } else {
-    const startsAt = new Date();
-    const endsAt = addDurationToDate(startsAt, { hours: 2 }); // Default time period is now + 2h
+    const endsAt = addDurationToDate(now, { hours: 2 }); // Default time period is now + 2h
     return {
       id: '',
-      startsAt: startsAt.toISOString(),
+      startsAt: now.toISOString(),
       endsAt: endsAt.toISOString(),
       comment: '',
       createdBy: config.bootData.user.name,
