@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/quota"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -107,7 +108,16 @@ func (ng *AlertNG) Init() error {
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
 	ng.schedule.WarmStateCache(ng.stateManager)
-	return ng.schedule.Ticker(ctx, ng.stateManager)
+
+	children, subCtx := errgroup.WithContext(ctx)
+	children.Go(func() error {
+		return ng.schedule.Ticker(subCtx, ng.stateManager)
+	})
+	children.Go(func() error {
+		return ng.Alertmanager.Run(subCtx)
+	})
+	return children.Wait()
+
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
