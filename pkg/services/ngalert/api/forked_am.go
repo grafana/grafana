@@ -117,22 +117,16 @@ func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apim
 		return response.Error(400, err.Error(), nil)
 	}
 
-	backendType, err := backendType(ctx, am.DatasourceCache)
+	b, err := backendType(ctx, am.DatasourceCache)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
 
-	payloadType := body.AlertmanagerConfig.Type()
-
-	if backendType != payloadType {
+	if err := body.AlertmanagerConfig.ReceiverType().MatchesBackend(b); err != nil {
 		return response.Error(
 			400,
-			fmt.Sprintf(
-				"unexpected backend type (%v) vs payload type (%v)",
-				backendType,
-				payloadType,
-			),
-			nil,
+			"bad match",
+			err,
 		)
 	}
 
