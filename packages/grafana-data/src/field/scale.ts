@@ -136,11 +136,11 @@ export function ensureGlobalRangeOnState(frames?: DataFrame[]) {
         if (field.state?.range) {
           continue; // already set
         }
-        if (!globalRange) {
+        const { config } = field;
+        if (!globalRange && (config.min == null || config.max == null)) {
           globalRange = findNumericFieldMinMax(frames);
         }
 
-        const { config } = field;
         const min = config.min ?? globalRange!.min;
         const max = config.max ?? globalRange!.max;
         if (!field.state) {
