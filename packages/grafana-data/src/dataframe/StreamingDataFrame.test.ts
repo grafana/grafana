@@ -1,8 +1,8 @@
 import { reduceField, ReducerID } from '..';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
-import { StreamingDataFrame, transpose } from './StreamingDataFrame2';
-import { join } from '../transformations/transformers/joinDataFrames';
+import { StreamingDataFrame } from './StreamingDataFrame';
+//import { join } from '../transformations/transformers/joinDataFrames';
 
 describe('Streaming JSON', () => {
   describe('when called with a DataFrame', () => {
@@ -221,10 +221,10 @@ describe('Streaming JSON', () => {
       {
         schema: {
           fields: [
-            { name: 'time', type: FieldType.time },
             { name: 'labels', type: FieldType.string },
+            { name: 'time', type: FieldType.time },
             { name: 'speed', type: FieldType.number },
-            //{ name: 'light', type: FieldType.number },
+            { name: 'light', type: FieldType.number },
           ],
         },
       },
@@ -236,10 +236,10 @@ describe('Streaming JSON', () => {
     stream.push({
       data: {
         values: [
-          [100, 100],
           ['sensor=A', 'sensor=B'],
+          [100, 100],
           [10, 15],
-          //[1, 2],
+          [1, 2],
         ],
       },
     });
@@ -247,10 +247,10 @@ describe('Streaming JSON', () => {
     stream.push({
       data: {
         values: [
-          [200, 200],
           ['sensor=B', 'sensor=C'],
+          [200, 200],
           [20, 25],
-          //[3, 4],
+          [3, 4],
         ],
       },
     });
@@ -258,10 +258,10 @@ describe('Streaming JSON', () => {
     stream.push({
       data: {
         values: [
-          [300, 400],
           ['sensor=A', 'sensor=C'],
+          [300, 400],
           [30, 40],
-          //[5, 6],
+          [5, 6],
         ],
       },
     });
@@ -293,12 +293,36 @@ describe('Streaming JSON', () => {
         },
         Object {
           "labels": Object {
+            "sensor": "A",
+          },
+          "name": "light",
+          "values": Array [
+            1,
+            undefined,
+            5,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
             "sensor": "B",
           },
           "name": "speed",
           "values": Array [
             15,
             20,
+            undefined,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "B",
+          },
+          "name": "light",
+          "values": Array [
+            2,
+            3,
             undefined,
             undefined,
           ],
@@ -313,6 +337,18 @@ describe('Streaming JSON', () => {
             25,
             undefined,
             40,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "C",
+          },
+          "name": "light",
+          "values": Array [
+            undefined,
+            4,
+            undefined,
+            6,
           ],
         },
       ]

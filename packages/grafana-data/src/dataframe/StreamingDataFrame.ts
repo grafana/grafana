@@ -1,9 +1,10 @@
 import { Field, DataFrame, FieldType } from '../types/dataFrame';
 import { Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
-import { DataFrameJSON, DataFrameSchema, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
+import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './processDataFrame';
-import { join, AlignedData } from '../transformations/transformers/joinDataFrames';
+import { join } from '../transformations/transformers/joinDataFrames';
+import { AlignedData } from 'uplot';
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]
 // to join()-able tables with column arrays
@@ -26,7 +27,7 @@ export function transpose(vrecs: any[][]) {
     }
   }
 
-  return [[...tables.keys()], [...tables.values()]];
+  return tables;
 }
 
 // binary search for index of closest value
@@ -95,6 +96,12 @@ export interface StreamingFrameOptions {
   maxDelta?: number; // how long to keep things
 }
 
+enum PushMode {
+  wide,
+  labels,
+  // long
+}
+
 /**
  * Unlike a circular buffer, this will append and periodically slice the front
  *
@@ -105,13 +112,53 @@ export class StreamingDataFrame implements DataFrame {
   refId?: string;
   meta?: QueryResultMeta;
 
-  // raw field buffers
   fields: Array<Field<any, ArrayVector<any>>> = [];
-  labels?: LabelFrameInfo;
-  timeFieldIndex = -1;
 
   options: StreamingFrameOptions;
+
   length = 0;
+
+  private schemaFields: FieldSchema[] = [];
+  private timeFieldIndex = -1;
+  private pushMode = PushMode.wide;
+
+  // current labels
+  private labels: Set<string> = new Set();
+
+  // adds a set of fields for a new label
+  private addLabel(label: string) {
+    let labelCount = this.labels.size;
+
+    // parse labels
+    const parsedLabels: Labels = {};
+
+    label.split(',').forEach((kv) => {
+      const [key, val] = kv.trim().split('=');
+      parsedLabels[key] = val;
+    });
+
+    if (labelCount === 0) {
+      // mutate existing fields and add labels
+      this.fields.forEach((f, i) => {
+        if (i > 0) {
+          f.labels = parsedLabels;
+        }
+      });
+    } else {
+      for (let i = 1; i < this.schemaFields.length; i++) {
+        let proto = this.schemaFields[i] as Field;
+
+        this.fields.push({
+          ...proto,
+          config: proto.config ?? {},
+          labels: parsedLabels,
+          values: new ArrayVector(Array(this.length).fill(undefined)),
+        });
+      }
+    }
+
+    this.labels.add(label);
+  }
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -119,6 +166,7 @@ export class StreamingDataFrame implements DataFrame {
       maxDelta: Infinity,
       ...opts,
     };
+
     this.push(frame);
   }
 
@@ -128,58 +176,78 @@ export class StreamingDataFrame implements DataFrame {
    */
   push(msg: DataFrameJSON) {
     const { schema, data } = msg;
+
     if (schema) {
-      // Keep old values if they are the same shape
-      let oldValues: ArrayVector[] | undefined;
-      if (schema.fields.length === this.fields.length) {
-        let same = true;
-        oldValues = this.fields.map((f, idx) => {
-          const oldField = this.fields[idx];
-          if (f.name !== oldField.name || f.type !== oldField.type) {
-            same = false;
-          }
-          return f.values;
-        });
-        if (!same) {
-          oldValues = undefined;
-        }
+      this.pushMode = PushMode.wide;
+      this.timeFieldIndex = schema.fields.findIndex((f) => f.type === FieldType.time);
+      if (
+        this.timeFieldIndex === 1 &&
+        schema.fields[0].name === 'labels' &&
+        schema.fields[0].type === FieldType.string
+      ) {
+        this.pushMode = PushMode.labels;
+        this.timeFieldIndex = 0; // after labels are removed!
       }
 
-      this.name = schema.name;
-      this.refId = schema.refId;
-      this.meta = schema.meta;
+      const niceSchemaFields = this.pushMode === PushMode.labels ? schema.fields.slice(1) : schema.fields;
 
-      // Create new fields from the schema
-      this.fields = schema.fields.map((f, idx) => {
-        const field = {
+      // create new fields from the schema
+      const newFields = niceSchemaFields.map((f, idx) => {
+        return {
           config: f.config ?? {},
           name: f.name,
           labels: f.labels,
           type: f.type ?? FieldType.other,
-          values: oldValues ? oldValues[idx] : new ArrayVector(),
+          // transfer old values by type & name, unless we relied on labels to match fields
+          values:
+            this.pushMode === PushMode.wide
+              ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ?? new ArrayVector()
+              : new ArrayVector(),
         };
-        return field;
       });
 
-      this.labels = undefined;
-      this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
-      let labelIndex = this.fields.findIndex((f) => f.name === 'labels' && f.type === FieldType.string);
-      if (labelIndex > 0) {
-        this.labels = new LabelFrameInfo(schema, labelIndex, this.timeFieldIndex);
-      }
+      this.name = schema.name;
+      this.refId = schema.refId;
+      this.meta = schema.meta;
+      this.schemaFields = niceSchemaFields;
+      this.fields = newFields;
     }
 
     if (data && data.values.length && data.values[0].length) {
-      const { values, entities } = data;
+      let { values, entities } = data;
 
-      // Field length changed
-      if (this.labels) {
-        if (values.length !== this.labels.schemaFields.length) {
-          throw new Error(
-            `push message mismatch.  Expected: ${this.labels.schemaFields.length}, recieved: ${values.length}`
-          );
-        }
-      } else if (values.length !== this.fields.length) {
+      if (entities) {
+        entities.forEach((ents, i) => {
+          if (ents) {
+            decodeFieldValueEntities(ents, values[i]);
+            // TODO: append replacements to field
+          }
+        });
+      }
+
+      if (this.pushMode === PushMode.labels) {
+        // get unique labels & init new fields
+        [...new Set(values[0])].forEach((label) => {
+          if (!this.labels.has(label)) {
+            this.addLabel(label);
+          }
+        });
+
+        // augment and transform data to match current schema for standard circPush() path
+        const labeledTables = transpose(values);
+
+        // TODO: cache higher up
+        let dummyTable = Array(this.schemaFields.length).fill([]);
+
+        let tables: AlignedData[] = [];
+        this.labels.forEach((label) => {
+          tables.push(labeledTables.get(label) ?? dummyTable);
+        });
+
+        values = join(tables);
+      }
+
+      if (values.length !== this.fields.length) {
         if (this.fields.length) {
           throw new Error(`push message mismatch.  Expected: ${this.fields.length}, recieved: ${values.length}`);
         }
@@ -193,137 +261,29 @@ export class StreamingDataFrame implements DataFrame {
             name = 'Time';
           }
 
-          const field = {
+          return {
             name,
             type,
             config: {},
             values: new ArrayVector([]),
           };
-          return field;
         });
       }
 
-      if (entities) {
-        entities.forEach((ents, i) => {
-          if (ents) {
-            decodeFieldValueEntities(ents, values[i]);
-            // append replacements to field?
-          }
-        });
-      }
+      let curValues = this.fields.map((f) => f.values.buffer);
 
-      this.appendValues(values);
-    }
-  }
+      let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
 
-  /**
-   * When the input values is a simple table we can assume
-   */
-  private appendValues(values: any[][]) {
-    if (this.labels) {
-      values = this.labels.prepare(values);
-      this.fields = this.labels.fields;
-    }
-
-    let curValues = this.fields.map((f) => f.values.buffer);
-
-    let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
-
-    appended.forEach((v, i) => {
-      const { state, values } = this.fields[i];
-      values.buffer = v;
-      if (state) {
-        state.calcs = undefined;
-      }
-    });
-
-    // Update the frame length
-    this.length = appended[0].length;
-  }
-}
-
-class LabelFrameInfo {
-  // The original schema
-  schemaFields: FieldSchema[]; // eveyrthing except values
-  fields: Array<Field<any, ArrayVector<any>>> = [];
-
-  timeFieldIndex = -1;
-  labelsFieldIndex = -1;
-  valuesIndex: number[] = [];
-
-  knownLabels: string[] = [];
-
-  constructor(schema: DataFrameSchema, labelIndex: number, timeIndex: number) {
-    this.schemaFields = schema.fields;
-
-    this.labelsFieldIndex = labelIndex;
-    this.timeFieldIndex = timeIndex;
-    for (let i = 0; i < schema.fields.length; i++) {
-      if (i === this.labelsFieldIndex || i === this.timeFieldIndex) {
-        continue;
-      }
-      this.valuesIndex.push(i);
-    }
-    this.fields = [
-      {
-        ...(this.schemaFields[this.timeFieldIndex] as Field),
-        config: this.schemaFields[this.timeFieldIndex].config ?? {},
-        values: new ArrayVector(),
-        type: FieldType.time,
-      },
-    ];
-  }
-
-  prepare(data: any[][]): any[][] {
-    const frames = new Map<string, AlignedData>();
-
-    // Split each row into its own frame
-    const labels = data[this.labelsFieldIndex];
-    for (let i = 0; i < labels.length; i++) {
-      const label = labels[i] as string;
-      let frame = frames.get(label);
-      if (!frame) {
-        let offset = this.knownLabels.indexOf(label);
-        if (offset < 0) {
-          offset = this.knownLabels.length;
-          this.knownLabels.push(label);
-
-          const parsed: Labels = {};
-          label.split(',').forEach((s) => {
-            const [key, val] = s.trim().split('=');
-            parsed[key] = val;
-          });
-
-          const empty = new Array(this.fields[0].values.length).fill(undefined);
-          for (const idx of this.valuesIndex) {
-            this.fields.push({
-              ...(this.schemaFields[idx] as Field),
-              config: this.schemaFields[idx].config ?? {},
-              labels: parsed,
-              values: new ArrayVector(empty),
-            });
-          }
+      appended.forEach((v, i) => {
+        const { state, values } = this.fields[i];
+        values.buffer = v;
+        if (state) {
+          state.calcs = undefined;
         }
-        frame = [[], ...this.valuesIndex.map((v) => [])]; // empty frame values
-        frames.set(label, frame);
-      }
-      let j = 0;
-      frame[j++].push(data[this.timeFieldIndex][i]);
-      for (const idx of this.valuesIndex) {
-        frame[j++].push(data[idx][i]);
-      }
+      });
+
+      // Update the frame length
+      this.length = appended[0].length;
     }
-
-    // Make a frame for each label set
-    const input = this.knownLabels.map((v) => {
-      let frame = frames.get(v);
-      if (!frame) {
-        frame = [[], ...this.valuesIndex.map((v) => [])]; // empty array
-      }
-      return frame;
-    });
-
-    // join the results into a single wide value
-    return join(input);
   }
 }
