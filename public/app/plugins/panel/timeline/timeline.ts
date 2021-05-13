@@ -3,7 +3,7 @@ import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { TimelineMode } from './types';
-import { TimeRange } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
 
 const { round, min, ceil } = Math;
@@ -11,8 +11,6 @@ const { round, min, ceil } = Math;
 const pxRatio = devicePixelRatio;
 
 const laneDistr = SPACE_BETWEEN;
-
-const font = Math.round(10 * pxRatio) + 'px Roboto';
 
 type WalkCb = (idx: number, offPx: number, dimPx: number) => void;
 
@@ -33,12 +31,13 @@ export interface TimelineCoreOptions {
   numSeries: number;
   rowHeight: number;
   colWidth?: number;
+  theme: GrafanaTheme2;
   showValue: BarValueVisibility;
   isDiscrete: (seriesIdx: number) => boolean;
-
+  colorLookup: (seriesIdx: number, value: any) => string;
   label: (seriesIdx: number) => string;
-  fill: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
-  stroke: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['strokeStyle'];
+  fill: (seriesIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
+  stroke: (seriesIdx: number, value: any) => CanvasRenderingContext2D['strokeStyle'];
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -56,11 +55,13 @@ export function getConfig(opts: TimelineCoreOptions) {
     rowHeight = 0,
     colWidth = 0,
     showValue,
+    theme,
     label,
     fill,
     stroke,
     formatValue,
     getTimeRange,
+    colorLookup,
     // onHover,
     // onLeave,
   } = opts;
@@ -73,10 +74,11 @@ export function getConfig(opts: TimelineCoreOptions) {
       let mark = document.createElement('div');
       mark.classList.add('bar-mark');
       mark.style.position = 'absolute';
-      mark.style.background = 'rgba(255,255,255,0.4)';
+      mark.style.background = 'rgba(255,255,255,0.2)';
       return mark;
     });
 
+  const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
 
   const size = [colWidth, Infinity];
@@ -117,7 +119,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     discrete: boolean
   ) {
     if (discrete) {
-      let fillStyle = fill(seriesIdx + 1, valueIdx, value);
+      let fillStyle = fill(seriesIdx + 1, value);
       let fillPath = fillPaths.get(fillStyle);
 
       if (fillPath == null) {
@@ -127,7 +129,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       rect(fillPath, lft, top, wid, hgt);
 
       if (strokeWidth) {
-        let strokeStyle = stroke(seriesIdx + 1, valueIdx, value);
+        let strokeStyle = stroke(seriesIdx + 1, value);
         let strokePath = strokePaths.get(strokeStyle);
 
         if (strokePath == null) {
@@ -139,13 +141,13 @@ export function getConfig(opts: TimelineCoreOptions) {
     } else {
       ctx.beginPath();
       rect(ctx, lft, top, wid, hgt);
-      ctx.fillStyle = fill(seriesIdx, valueIdx, value);
+      ctx.fillStyle = fill(seriesIdx, value);
       ctx.fill();
 
       if (strokeWidth) {
         ctx.beginPath();
         rect(ctx, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
-        ctx.strokeStyle = stroke(seriesIdx, valueIdx, value);
+        ctx.strokeStyle = stroke(seriesIdx, value);
         ctx.stroke();
       }
     }
@@ -195,7 +197,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   yOff,
                   lft,
                   round(yOff + y0),
-                  rgt - lft,
+                  rgt - lft - 2,
                   round(hgt),
                   strokeWidth,
                   iy,
@@ -257,7 +259,6 @@ export function getConfig(opts: TimelineCoreOptions) {
           u.ctx.clip();
 
           u.ctx.font = font;
-          u.ctx.fillStyle = 'black';
           u.ctx.textAlign = mode === TimelineMode.Changes ? 'left' : 'center';
           u.ctx.textBaseline = 'middle';
 
@@ -285,6 +286,15 @@ export function getConfig(opts: TimelineCoreOptions) {
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null) {
                   let x = valToPosX(dataX[ix], scaleX, xDim, xOff);
+
+                  // For the left aligned values shift them 2 pixels of edge
+                  if (mode === TimelineMode.Changes) {
+                    x += 2;
+                  }
+
+                  const valueColor = colorLookup(sidx, dataY[ix]);
+
+                  u.ctx.fillStyle = theme.colors.getContrastText(valueColor, 3);
                   u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
                 }
               }
