@@ -66,6 +66,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
         }
+
         for (const item of justOverrides) {
           mainBoxElements.push(item.render());
         }
@@ -85,13 +86,16 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     }
   }
 
+  // only show radio buttons if we are searching or if the plugin has field config
+  const showSearchRadioButtons = !isSearching && !plugin.fieldConfigRegistry.isEmpty();
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>
-        {!isSearching && (
+        {showSearchRadioButtons && (
           <div className={styles.formRow}>
             <RadioButtonGroup options={optionRadioFilters} value={listMode} fullWidth onChange={setListMode} />
           </div>
@@ -109,7 +113,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
   return [
     { label: OptionFilter.All, value: OptionFilter.All },
-    { label: OptionFilter.Recent, value: OptionFilter.Recent },
     { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
   ];
 }
@@ -136,9 +139,9 @@ function renderSearchHits(
         key="Normal options"
         forceOpen={1}
       >
-        {optionHits.map((hit) => hit.render(true))}
+        {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => override.render(true))}
+      {overrideHits.map((override) => override.render(searchQuery))}
     </div>
   );
 }
@@ -149,6 +152,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
+
+    .search-fragment-highlight {
+      color: ${theme.colors.warning.text};
+      background: transparent;
+    }
   `,
   searchBox: css`
     display: flex;

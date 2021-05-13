@@ -2,15 +2,16 @@ import React, { FC, Fragment, useState } from 'react';
 import { dateMath, GrafanaTheme, toDuration } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { Silence, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
-import { AlertLabel } from '../AlertLabel';
-import { StateTag } from '../StateTag';
 import { CollapseToggle } from '../CollapseToggle';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
-import { useStyles } from '@grafana/ui';
+import { useStyles, Link } from '@grafana/ui';
 import SilencedAlertsTable from './SilencedAlertsTable';
 import { expireSilenceAction } from '../../state/actions';
 import { useDispatch } from 'react-redux';
+import { Matchers } from './Matchers';
+import { SilenceStateTag } from './SilenceStateTag';
+import { makeAMLink } from '../../utils/misc';
 interface Props {
   className?: string;
   silence: Silence;
@@ -23,7 +24,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
   const dispatch = useDispatch();
 
   const styles = useStyles(getStyles);
-  const { status, matchers, startsAt, endsAt, comment, createdBy } = silence;
+  const { status, matchers = [], startsAt, endsAt, comment, createdBy } = silence;
 
   const dateDisplayFormat = 'YYYY-MM-DD HH:mm';
   const startsAtDate = dateMath.parse(startsAt);
@@ -41,12 +42,10 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
           <CollapseToggle isCollapsed={isCollapsed} onToggle={(value) => setIsCollapsed(value)} />
         </td>
         <td>
-          <StateTag status={status.state}>{status.state}</StateTag>
+          <SilenceStateTag state={status.state} />
         </td>
         <td className={styles.matchersCell}>
-          {matchers?.map(({ name, value, isRegex }) => {
-            return <AlertLabel key={`${name}-${value}`} labelKey={name} value={value} isRegex={isRegex} />;
-          })}
+          <Matchers matchers={matchers} />
         </td>
         <td>{silencedAlerts.length}</td>
         <td>
@@ -56,13 +55,21 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
         </td>
         <td className={styles.actionsCell}>
           {status.state === 'expired' ? (
-            <ActionButton icon="sync">Recreate</ActionButton>
+            <Link href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}>
+              <ActionButton icon="sync">Recreate</ActionButton>
+            </Link>
           ) : (
             <ActionButton icon="bell" onClick={handleExpireSilenceClick}>
               Unsilence
             </ActionButton>
           )}
-          <ActionIcon icon="pen" tooltip="edit" />
+          {status.state !== 'expired' && (
+            <ActionIcon
+              to={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
+              icon="pen"
+              tooltip="edit"
+            />
+          )}
         </td>
       </tr>
       {!isCollapsed && (

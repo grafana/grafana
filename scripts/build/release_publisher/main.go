@@ -71,7 +71,7 @@ func main() {
 func createBaseURL(root string, bucketName string, product string, nightly bool) string {
 	var subPath string
 	if nightly {
-		subPath = "master"
+		subPath = "main"
 	} else {
 		subPath = "release"
 	}

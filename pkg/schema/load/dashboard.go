@@ -129,20 +129,6 @@ func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
 	return cds.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
 }
 
-// ApplyDefaults returns a new, concrete copy of the Resource with all paths
-// that are 1) missing in the Resource AND 2) specified by the schema,
-// filled with default values specified by the schema.
-func (cds *compositeDashboardSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// TrimDefaults returns a new, concrete copy of the Resource where all paths
-// in the  where the values at those paths are the same as the default value
-// given in the schema.
-func (cds *compositeDashboardSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
 // CUE returns the cue.Value representing the actual schema.
 func (cds *compositeDashboardSchema) CUE() cue.Value {
 	return cds.actual

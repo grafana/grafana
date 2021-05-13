@@ -145,6 +145,10 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     inputDisabled: css`
       background-color: ${theme.colors.action.disabledBackground};
       color: ${theme.colors.action.disabledText};
+      border: 1px solid ${theme.colors.action.disabledBackground};
+      &:focus {
+        box-shadow: none;
+      }
     `,
     addon: css`
       label: input-addon;
@@ -193,7 +197,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-suffix;
         padding-left: ${theme.spacing(1)};
-        padding-right: ${theme.spacing(0.5)};
+        padding-right: ${theme.spacing(1)};
         margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;

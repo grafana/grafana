@@ -305,10 +305,19 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 				sch.registry.del(key)
 			}
 		case <-grafanaCtx.Done():
-			err := dispatcherGroup.Wait()
-			sch.saveAlertStates(stateManager.GetAll())
+			waitErr := dispatcherGroup.Wait()
+
+			orgIds, err := sch.instanceStore.FetchOrgIds()
+			if err != nil {
+				sch.log.Error("unable to fetch orgIds", "msg", err.Error())
+			}
+
+			for _, v := range orgIds {
+				sch.saveAlertStates(stateManager.GetAll(v))
+			}
+
 			stateManager.Close()
-			return err
+			return waitErr
 		}
 	}
 }
@@ -340,16 +349,16 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 	sch.log.Info("warming cache for startup")
 	st.ResetCache()
 
-	orgIdsCmd := models.FetchUniqueOrgIdsQuery{}
-	if err := sch.instanceStore.FetchOrgIds(&orgIdsCmd); err != nil {
+	orgIds, err := sch.instanceStore.FetchOrgIds()
+	if err != nil {
 		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
 	var states []*state.State
-	for _, orgIdResult := range orgIdsCmd.Result {
+	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := models.ListAlertRulesQuery{
-			OrgID: orgIdResult.DefinitionOrgID,
+			OrgID: orgId,
 		}
 		if err := sch.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
@@ -362,16 +371,16 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 
 		// Get Instances
 		cmd := models.ListAlertInstancesQuery{
-			RuleOrgID: orgIdResult.DefinitionOrgID,
+			RuleOrgID: orgId,
 		}
 		if err := sch.instanceStore.ListAlertInstances(&cmd); err != nil {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
 		for _, entry := range cmd.Result {
-			ruleForEntry, ok := ruleByUID[entry.RuleDefinitionUID]
+			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
-				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleDefinitionUID)
+				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
 				continue
 			}
 
@@ -381,7 +390,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 				sch.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
 			stateForEntry := &state.State{
-				AlertRuleUID:       entry.RuleDefinitionUID,
+				AlertRuleUID:       entry.RuleUID,
 				OrgID:              entry.RuleOrgID,
 				CacheId:            cacheId,
 				Labels:             lbs,

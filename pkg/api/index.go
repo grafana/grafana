@@ -167,11 +167,12 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Url:  hs.Cfg.AppSubURL + "/dashboard/snapshots",
 			Icon: "camera",
 		})
+
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Global panels",
+			Text: "Library panels",
 			Id:   "library-panels",
 			Url:  hs.Cfg.AppSubURL + "/library-panels",
-			Icon: "reusable-panel",
+			Icon: "library-panel",
 		})
 	}
 
@@ -320,7 +321,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			HideFromTabs: true,
 			Id:           "admin",
 			Icon:         "shield",
-			Url:          hs.Cfg.AppSubURL + "/admin/users",
+			Url:          adminNavLinks[0].Url,
 			SortWeight:   dtos.WeightAdmin,
 			Children:     adminNavLinks,
 		})
