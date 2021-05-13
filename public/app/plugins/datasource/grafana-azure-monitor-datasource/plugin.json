@@ -41,7 +41,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -58,7 +58,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -75,7 +75,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -92,7 +92,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -127,7 +127,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -144,7 +144,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -161,7 +161,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -178,7 +178,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [
@@ -198,7 +198,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [
@@ -218,7 +218,7 @@
           "azure_auth_type": "{{.JsonData.azureAuthType}}",
           "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [
