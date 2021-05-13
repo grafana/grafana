@@ -42,7 +42,8 @@ func (mfs MergedFS) ReadDir(name string) ([]fs.DirEntry, error) {
 		if fsys, ok := filesystem.(fs.ReadDirFS); ok {
 			dir, err := fsys.ReadDir(name)
 			if err != nil {
-				return nil, err
+				logger.Debugf("directory in filepath %s was not found in filesystem", name)
+				continue
 			}
 			dirs = append(dirs, dir...)
 			continue
