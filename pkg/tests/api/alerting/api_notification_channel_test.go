@@ -99,6 +99,7 @@ func getExpAlertmanagerConfigFromAPI(channelAddr string) string {
 var alertNames = []string{"DingDingAlert", "SlackAlert1", "SlackAlert2", "PagerdutyAlert", "TeamsAlert", "WebhookAlert"}
 
 func getRulesConfig(t *testing.T) string {
+	t.Helper()
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
 	rules := apimodels.PostableRuleGroupConfig{
@@ -137,6 +138,7 @@ func getRulesConfig(t *testing.T) string {
 }
 
 func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
+	t.Helper()
 	// nolint:gosec
 	resp, err := http.Get(url)
 	t.Cleanup(func() {
@@ -148,6 +150,7 @@ func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 }
 
 func postRequest(t *testing.T, url string, body string, expStatusCode int) {
+	t.Helper()
 	buf := bytes.NewReader([]byte(body))
 	// nolint:gosec
 	resp, err := http.Post(url, "application/json", buf)
@@ -188,6 +191,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 }
 
 func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	nc.t.Helper()
 	nc.receivedNotificationsMtx.Lock()
 	defer nc.receivedNotificationsMtx.Unlock()
 
@@ -200,6 +204,7 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 }
 
 func getBody(t *testing.T, body io.ReadCloser) string {
+	t.Helper()
 	b, err := ioutil.ReadAll(body)
 	require.NoError(t, err)
 	return string(b)
@@ -216,6 +221,7 @@ func (nc *mockNotificationChannel) totalNotifications() int {
 }
 
 func (nc *mockNotificationChannel) matchesExpNotifications(exp map[string][]string) bool {
+	nc.t.Helper()
 	nc.receivedNotificationsMtx.Lock()
 	defer nc.receivedNotificationsMtx.Unlock()
 
@@ -269,6 +275,7 @@ func (nc *mockNotificationChannel) Close() error {
 // alertmanagerConfig has the config for all the notification channels
 // that we want to test. It is recommended to use different URL for each
 // channel and have 1 route per channel.
+// group_wait 0s means the notification is sent as soon as it is received.
 const alertmanagerConfig = `
 {
   "alertmanager_config": {
