@@ -59,21 +59,9 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
             { value: PieChartLabels.Value, label: 'Value' },
           ],
         },
-      })
-      .addRadio({
-        name: 'Tooltip mode',
-        path: 'tooltip.mode',
-        description: '',
-        defaultValue: 'single',
-        settings: {
-          options: [
-            { value: 'single', label: 'Single' },
-            { value: 'multi', label: 'All' },
-            { value: 'none', label: 'Hidden' },
-          ],
-        },
       });
 
+    commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder, false);
 
     builder.addMultiSelect({

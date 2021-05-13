@@ -53,7 +53,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       onLegendClick={onLegendClick}
     >
       {(config, alignedDataFrame) => {
-        return <TooltipPlugin config={config} data={alignedDataFrame} mode={options.tooltipOptions.mode as any} />;
+        return <TooltipPlugin config={config} data={alignedDataFrame} mode={options.tooltip.mode as any} />;
       }}
     </TimeSeries>
   );
