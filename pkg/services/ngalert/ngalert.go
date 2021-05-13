@@ -45,10 +45,10 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister                   `inject:""`
 	SQLStore        *sqlstore.SQLStore                      `inject:""`
 	DataService     *tsdb.Service                           `inject:""`
-	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	QuotaService    *quota.QuotaService                     `inject:""`
 	Metrics         *metrics.Metrics                        `inject:""`
+	Alertmanager    *notifier.Alertmanager
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
@@ -64,7 +64,13 @@ func (ng *AlertNG) Init() error {
 	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
-	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
+	store := &store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
+
+	var err error
+	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
+	if err != nil {
+		return err
+	}
 
 	schedCfg := schedule.SchedulerCfg{
 		C:             clock.New(),

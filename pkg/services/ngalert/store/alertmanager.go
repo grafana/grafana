@@ -44,7 +44,7 @@ func getLatestAlertmanagerConfiguration(sess *sqlstore.DBSession) (*models.Alert
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
 // It returns ErrNoAlertmanagerConfiguration if no configuration is found.
-func (st DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
+func (st *DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		c, err := getLatestAlertmanagerConfiguration(sess)
 		if err != nil {
@@ -57,7 +57,7 @@ func (st DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAler
 
 // GetAlertmanagerConfiguration returns the alertmanager configuration identified by the query.
 // It returns ErrNoAlertmanagerConfiguration if no such configuration is found.
-func (st DBstore) GetAlertmanagerConfiguration(query *models.GetAlertmanagerConfigurationQuery) error {
+func (st *DBstore) GetAlertmanagerConfiguration(query *models.GetAlertmanagerConfigurationQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		c, err := getAlertmanagerConfigurationByID(sess, query.ID)
 		if err != nil {
@@ -69,7 +69,7 @@ func (st DBstore) GetAlertmanagerConfiguration(query *models.GetAlertmanagerConf
 }
 
 // SaveAlertmanagerConfiguration creates an alertmanager configuration.
-func (st DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (st *DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
