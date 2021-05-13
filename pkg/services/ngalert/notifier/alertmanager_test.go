@@ -26,7 +26,14 @@ import (
 
 func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
 	am := &Alertmanager{}
-	am.Settings = &setting.Cfg{}
+	dir, err := ioutil.TempDir("", "")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll(dir))
+	})
+	am.Settings = &setting.Cfg{
+		DataPath: dir,
+	}
 	am.SQLStore = sqlstore.InitTestDB(t)
 	require.NoError(t, am.InitWithMetrics(metrics.NewMetrics(prometheus.NewRegistry())))
 	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
