@@ -24,6 +24,8 @@ You can also combine multiple scopes if necessary, by using `/` as a delimiter.
 
 ## Available permissions 
 
+Note that below list is not exhaustive yet and more permissions will be available with further releases of fine-grained access control.
+
 Action | Applicable scopes | Description
 --- | --- | ---
 roles:list | roles:* | Allows to list available roles without permissions. 
@@ -63,6 +65,8 @@ ldap.user:sync | n/a | Allows to sync LDAP users.
 ldap.status:read | n/a | Allows to check LDAP status.
 
 ## Scope definitions
+
+Note that below list is not exhaustive yet and more scopes will be available with further releases of fine-grained access control.
 
 Scope | Description
 --- | --- 

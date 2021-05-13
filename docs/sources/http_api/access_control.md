@@ -12,13 +12,56 @@ aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 The API can be used to create, update, get and list roles, and create or remove built-in role assignments. 
 To use the API, you would need to [enable fine-grained access control]({{< relref "../enterprise/access-control/_index.md#enable-fine-grained-access-control" >}}).
 
+The API does not currently work with an API Token. So in order to use these API endpoints you will have to use Basic Auth.
+
+## Check if enabled
+
+`GET /api/access-control/check`
+
+Checks if fine-grained access control is enabled or not.
+
+### Required permissions
+
+Action | Scope
+--- | --- | 
+check:accesscontrol | services:accesscontrol
+
+#### Example request
+
+```http
+GET /api/access-control/check
+Accept: application/json
+Content-Type: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+  "enabled": true
+}
+```
+
+#### Status codes
+
+Code | Description
+--- | --- | 
+200 | Returned a flag indicating if the fine-grained access control is enabled or no.
+403 | Access denied
+404 | Not found, an indication that fine-grained access control is not available at all.
+500 | Unexpected error. Refer to body and/or server logs for more details.
+
 ## Create and manage custom roles
 
 ### Get all roles
 
 `GET /api/access-control/roles`
 
-Gets all existing roles.
+Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in. 
+Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.  
 
 #### Required permissions
 
@@ -32,7 +75,6 @@ roles:list | roles:*
 GET /api/access-control/roles
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
 #### Example response
@@ -43,22 +85,22 @@ Content-Type: application/json; charset=UTF-8
 
 [
     {
-        "orgId": 1,
         "version": 1,
-        "uid": "PYnDO3rMk",
-        "name": "grafana:roles:ldap:admin:edit",
-        "description": "",
-        "updated": "2021-05-04T13:07:30+02:00",
-        "created": "0001-01-01T00:00:00Z"
+        "uid": "Kz9m_YjGz",
+        "name": "grafana:roles:reporting:admin:edit",
+        "description": "Gives access to edit any report or the organization's general reporting settings.",
+        "global": true,
+        "updated": "2021-05-13T16:24:26+02:00",
+        "created": "2021-05-13T16:24:26+02:00"
     },
     {
-        "orgId": 1,
-        "version": 1,
-        "uid": "PYnDO3rMk1",
-        "name": "grafana:roles:users:admin:read",
-        "description": "",
-        "updated": "2021-05-04T13:07:30+02:00",
-        "created": "0001-01-01T00:00:00Z"
+        "version": 5,
+        "uid": "vi9mlLjGz",
+        "name": "grafana:roles:permissions:admin:read",
+        "description": "Gives access to read and list roles and permissions, as well as built-in role assignments.",
+        "global": true,
+        "updated": "2021-05-13T22:41:49+02:00",
+        "created": "2021-05-13T16:24:26+02:00"
     }
 ]
 ```
@@ -67,7 +109,7 @@ Content-Type: application/json; charset=UTF-8
 
 Code | Description
 --- | --- | 
-200 | Roles are returned.
+200 | Global and organization local roles are returned.
 403 | Access denied
 500 | Unexpected error. Refer to body and/or server logs for more details.
 
@@ -89,7 +131,6 @@ roles:read | roles:*
 GET /api/access-control/roles/PYnDO3rMk
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
 #### Example response
@@ -99,21 +140,27 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "orgId": 1,
     "version": 2,
-    "uid": "PYnDO3rMk",
-    "name": "custom:role:new",
-    "description": "My new custom role",
+    "uid": "jZrmlLCGk",
+    "name": "grafana:roles:permissions:admin:edit",
+    "description": "Gives access to create, update and delete roles, as well as manage built-in role assignments.",
+    "global": true,
     "permissions": [
         {
-            "action": "users:create",
-            "scope": "",
-            "updated": "2021-05-04T13:25:43+02:00",
-            "created": "2021-05-04T13:25:43+02:00"
+            "action": "roles:delete",
+            "scope": "permissions:delegate",
+            "updated": "2021-05-13T16:24:26+02:00",
+            "created": "2021-05-13T16:24:26+02:00"
+        },
+        {
+            "action": "roles:list",
+            "scope": "roles:*",
+            "updated": "2021-05-13T16:24:26+02:00",
+            "created": "2021-05-13T16:24:26+02:00"
         }
     ],
-    "updated": "2021-05-04T13:36:11.141936+02:00",
-    "created": "0001-01-01T00:00:00Z"
+    "updated": "2021-05-13T16:24:26+02:00",
+    "created": "2021-05-13T16:24:26+02:00"
 }
 ```
 
@@ -133,7 +180,8 @@ Creates a new custom role and maps given permissions to that role. Note that rol
 
 #### Required permissions
 
-You can only create roles with a subset of your own permissions.
+`permission:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.
 
 Action | Scope
 --- | --- | 
@@ -145,24 +193,19 @@ roles:write | permissions:delegate
 POST /api/access-control/roles
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "uid": "",
-  "global": false,
-  "version": 1,
-  "name": "custom:role:new",
-  "description": "My new custom role",
-  "permissions": [
-    {
-      "action": "users:create",
-      "scope": ""
-    },
-    {
-      "action": "users:read",
-      "scope": "global:users:*"
-    }
-  ]
+    "version": 1,
+    "uid": "jZrmlLCGka",
+    "name": "custom:delete:roles",
+    "description": "My custom role which gives users permissions to delete roles",
+    "global": true,
+    "permissions": [
+        {
+            "action": "roles:delete",
+            "scope": "permissions:delegate"
+        }
+    ]
 }
 ```
 
@@ -170,10 +213,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 Field Name | Date Type | Required | Description
 --- | --- | --- | ---
-uid | string | No | UID of the role. If not present, the UID will be automatically created for you and returned in response.
-global | boolean | No | A flag indicating if the role is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
-version | number | No | Version of the role. If not present, version number 1 will be assigned to the role and returned in the response.
-name | string | Yes | Name of the role.
+uid | string | No | UID of the role. If not present, the UID will be automatically created for you and returned in response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.
+global | boolean | No | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request. Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#role-scopes" >}}) for more information.
+version | number | No | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.
+name | string | Yes | Name of the role. Refer to [Custom roles]({{< relref "../enterprise/access-control/roles.md#custom-roles" >}}) for more information.
 description | string | No | Description of the role.
 permissions | Permission | No | If not present, the role will be created without any permissions.
 
@@ -191,27 +234,21 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "orgId": 1,
-    "version": 1,
-    "uid": "PYnDO3rMk",
-    "name": "custom:role:new",
-    "description": "My new custom role",
+    "version": 2,
+    "uid": "jZrmlLCGka",
+    "name": "custom:delete:create:roles",
+    "description": "My custom role which gives users permissions to delete and create roles",
+    "global": true,
     "permissions": [
         {
-            "action": "users:create",
-            "scope": "",
-            "updated": "2021-05-04T13:25:43.994903+02:00",
-            "created": "2021-05-04T13:25:43.994903+02:00"
-        },
-        {
-            "action": "users:read",
-            "scope": "global:users:*",
-            "updated": "2021-05-04T13:25:43.996923+02:00",
-            "created": "2021-05-04T13:25:43.996923+02:00"
+            "action": "roles:delete",
+            "scope": "permissions:delegate",
+            "updated": "2021-05-13T23:19:46+02:00",
+            "created": "2021-05-13T23:19:46+02:00"
         }
     ],
-    "updated": "2021-05-04T13:25:43.99269+02:00",
-    "created": "2021-05-04T13:25:43.992689+02:00"
+    "updated": "2021-05-13T23:20:51.416518+02:00",
+    "created": "2021-05-13T23:19:46+02:00"
 }
 ```
 
@@ -232,7 +269,8 @@ Update the role with the given UID, and it's permissions with the given UID. The
 
 #### Required permissions
 
-User will be able to create a role only with permissions they themselves have.
+`permission:delegate` scope ensures that users can only update custom roles with the same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to update a custom role which allows to do that. This is done to prevent escalation of privileges.
 
 Action | Scope
 --- | --- | 
@@ -241,21 +279,24 @@ roles:write | permissions:delegate
 #### Example request
 
 ```http
-PUT /api/access-control/roles/PYnDO3rMk
+PUT /api/access-control/roles/jZrmlLCGka
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-    "version": 2,
-    "name": "custom:role:new",
-    "description": "My new custom role",
+    "version": 2,    
+    "name": "custom:delete:create:roles",
+    "description": "My custom role which gives users permissions to delete and create roles",    
     "permissions": [
         {
-            "action": "users:create",
-            "scope": "",
+            "action": "roles:delete",
+            "scope": "permissions:delegate"
+        },
+         {
+            "action": "roles:create",
+            "scope": "permissions:delegate"
         }
-    ],
+    ]
 }
 ```
 
@@ -282,21 +323,25 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "orgId": 1,
-    "version": 2,
-    "uid": "PYnDO3rMk",
-    "name": "custom:role:new",
-    "description": "My new custom role",
+    "version": 3,    
+    "name": "custom:delete:create:roles",
+    "description": "My custom role which gives users permissions to delete and create roles",    
     "permissions": [
         {
-            "action": "users:create",
-            "scope": "",
-            "updated": "2021-05-04T13:25:43+02:00",
-            "created": "2021-05-04T13:25:43+02:00"
+            "action": "roles:delete",
+            "scope": "permissions:delegate",
+            "updated": "2021-05-13T23:19:46.546146+02:00",
+            "created": "2021-05-13T23:19:46.546146+02:00"
+        },
+         {
+            "action": "roles:create",
+            "scope": "permissions:delegate",
+            "updated": "2021-05-13T23:19:46.546146+02:00",
+            "created": "2021-05-13T23:19:46.546146+02:00"
         }
     ],
-    "updated": "2021-05-04T13:36:11.141936+02:00",
-    "created": "2021-05-04T13:36:11.141936+02:00",
+    "updated": "2021-05-13T23:19:46.540987+02:00",
+    "created": "2021-05-13T23:19:46.540986+02:00"
 }
 ```
 
@@ -318,7 +363,8 @@ Delete a role with the given UID, and it's permissions. If the role is assigned 
 
 #### Required permissions
 
-User will be able to delete a role only with permissions they themselves have.
+`permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to delete a custom role which allows to do that.
 
 Action | Scope
 --- | --- | 
@@ -327,10 +373,9 @@ roles:delete | permissions:delegate
 #### Example request
 
 ```http
-DELETE /api/access-control/roles/PYnDO3rMk?force=true
+DELETE /api/access-control/roles/jZrmlLCGka?force=true
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk}
 ```
 
 Query params:
@@ -371,8 +416,6 @@ Gets all built-in role assignments.
 
 #### Required permissions
 
-User will be able to create a role only with permissions they themselves have.
-
 Action | Scope
 --- | --- | 
 roles.builtin:list | roles:*
@@ -383,7 +426,6 @@ roles.builtin:list | roles:*
 GET /api/access-control/builtin-roles
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
 #### Example response
@@ -396,23 +438,32 @@ Content-Type: application/json; charset=UTF-8
     "Admin": [
         {
             "version": 1,
-            "uid": "C7_SD3rGz",
-            "name": "grafana:roles:users:org:read",
-            "description": "Desc",
+            "uid": "qQui_LCMk",
+            "name": "grafana:roles:users:org:edit",
+            "description": "",
+            "global": true,
+            "updated": "2021-05-13T16:24:26+02:00",
+            "created": "2021-05-13T16:24:26+02:00"
         },
         {
             "version": 1,
-            "uid": "nS_SDq9Mz",
-            "name": "grafana:roles:users:org:edit",
-            "description": "Desc",
+            "uid": "PeXmlYjMk",
+            "name": "grafana:roles:users:org:read",
+            "description": "",
+            "global": true,
+            "updated": "2021-05-13T16:24:26+02:00",
+            "created": "2021-05-13T16:24:26+02:00"
         }
     ],
     "Grafana Admin": [
         {
             "version": 1,
-            "uid": "Og_SDqrMz",
-            "name": "grafana:roles:ldap:admin:edit",
-            "description": "Desc",
+            "uid": "qQui_LCMk",
+            "name": "grafana:roles:users:org:edit",
+            "description": "",
+            "global": true,
+            "updated": "2021-05-13T16:24:26+02:00",
+            "created": "2021-05-13T16:24:26+02:00"
         }
     ]
 }
@@ -434,7 +485,8 @@ Creates a new built-in role assignment.
 
 #### Required permissions
 
-User will be able to add a role only with permissions they themselves have.
+`permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. 
+For example, if a user does not have required permissions for creating users, they won't be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.
 
 Action | Scope
 --- | --- | 
@@ -446,7 +498,6 @@ roles.builtin:add | permissions:delegate
 POST /api/access-control/builtin-roles
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
     "roleUid": "LPMGN99Mk",
@@ -461,7 +512,7 @@ Field Name | Date Type | Required | Description
 --- | --- | --- | ---
 roleUid | string | Yes | UID of the role.
 builtinRole | boolean | Yes | Can be one of `Viewer`, `Editor`, `Admin` or `Grafana Admin`.
-global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
+global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the [Built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.
 
 #### Example response
 
@@ -492,7 +543,8 @@ Deletes a built-in role assignment.
 
 #### Required permissions
 
-User will be able to delete a role only with permissions they themselves have.
+`permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to remove a built-in role assignment which allows to do that.
 
 Action | Scope
 --- | --- | 
@@ -504,7 +556,6 @@ roles.builtin:remove | permissions:delegate
 DELETE /api/access-control/builtin-roles
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
     "roleUid": "LPMGN99Mk",
@@ -518,7 +569,7 @@ Field Name | Date Type | Required | Description
 --- | --- | --- | ---
 roleUid | string | Yes | UID of the role.
 builtinRole | boolean | Yes | Can be one of `Viewer`, `Editor`, `Admin` or `Grafana Admin`. 
-global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, [default org ID]({{< relref "../administration/configuration/#auto_assign_org_id" >}}) is used.
+global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. Refer to the [Built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.
 
 #### Example response
 
@@ -538,5 +589,5 @@ Code | Description
 200 | Role was unassigned from built-in role.
 400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 403 | Access denied
-404 | Role not found
+404 | Role not found.
 500 | Unexpected error. Refer to body and/or server logs for more details.

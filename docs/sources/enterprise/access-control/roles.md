@@ -13,7 +13,7 @@ There are two types of roles:
 - [Predefined roles]({{< relref "./roles.md#predefined-roles" >}}), which provide granular access for specific resources within Grafana and are managed by the Grafana itself.
 - [Custom roles]({{< relref "./roles.md#custom-roles.md" >}}), which provide granular access based on the user specified set of permissions.
 
-You can use [Access Control API]({{< relref "../../http_api/access_control.md" >}}) to list available roles and permissions.
+You can use [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) to list available roles and permissions.
 
 ## Role scopes
 
@@ -45,7 +45,7 @@ grafana:roles:ldap:admin:edit | All permissions from `grafana:roles:ldap:admin:r
 
 Custom roles allow you to manage access to your users the way you want, by mapping [fine-grained permissions]({{< relref "./permissions.md" >}}) to it and creating [built-in role assignments]({{< ref "#built-in-role-assignments.md" >}}).
 
-To create, update or delete a custom role, you can use the [Access Control API]({{< relref "../../http_api/access_control.md" >}}) or [Grafana Provisioning]({{< relref "./provisioning.md" >}}).
+To create, update or delete a custom role, you can use the [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) or [Grafana Provisioning]({{< relref "./provisioning.md" >}}).
 
 ##### Role name
 
@@ -69,6 +69,7 @@ Each custom role has a UID defined which is a unique identifier associated with 
 The same UID cannot be used for roles in different organizations within the same Grafana instance.
 
 ### Create, update and delete roles
+
 You can create, update and delete custom roles by using the [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by using [Grafana Provisioning]({{< relref "./provisioning.md" >}}).
 
 By default, Grafana Server Admin has a [built-in role assignment]({{< ref "#built-in-role-assignments" >}}) which allows a user to create, update or delete custom roles.
@@ -85,11 +86,12 @@ During startup, Grafana will create default assignments for you. When you make a
 
 ### Create and remove built-in role assignments
 
-You can create or remove built-in role assignments using [Access Control API]({{< relref "../../http_api/access_control.md" >}}) or using [Grafana Provisioning]({{< relref "./provisioning">}}).
+You can create or remove built-in role assignments using [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) or using [Grafana Provisioning]({{< relref "./provisioning">}}).
 
 ### Scope of assignments
 
 A built-in role assignment can be either _global_ or _organization local_. _Global_ assignments are not mapped to any specific organization and will be applied to all organizations, whereas _organization local_ assignments are only applied for that specific organization.
+You can only create _organization local_ assignments for _organization local_ roles.
 
 ### Default built-in role assignments
 

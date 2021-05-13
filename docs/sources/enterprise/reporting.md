@@ -26,7 +26,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Access control
 
-When [Access Control]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) to create and manage reports.
+When [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) to create and manage reports.
 
 ## Create or update a report
 
