@@ -6,8 +6,8 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   outerJoinDataFrames,
-  classicColors,
   Field,
+  FALLBACK_COLOR,
 } from '@grafana/data';
 import {
   UPlotConfigBuilder,
@@ -72,15 +72,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const colorLookup = (seriesIdx: number, valueIdx: number, value: any) => {
+  const colorLookup = (seriesIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
+
     if (field.display) {
       const disp = field.display(value); // will apply color modes
       if (disp.color) {
         return disp.color;
       }
     }
-    return classicColors[Math.floor(value % classicColors.length)];
+
+    return FALLBACK_COLOR;
   };
 
   const yAxisWidth =
@@ -99,9 +101,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
+    theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     fill: colorLookup,
     stroke: colorLookup,
+    colorLookup,
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
