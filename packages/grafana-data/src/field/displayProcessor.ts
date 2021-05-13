@@ -11,7 +11,6 @@ import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator, ScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
-import { classicColors, getColorForTheme } from '../utils/namedColorsPalette';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -82,7 +81,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         }
 
         if (mappingResult.color != null) {
-          color = getColorForTheme(mappingResult.color, options.theme.v1);
+          color = options.theme.visualization.getColorByName(mappingResult.color);
         }
 
         shouldFormat = false;
@@ -143,7 +142,7 @@ function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: Gr
 
       const hc = strHashCode(value as string);
       return {
-        color: classicColors[Math.floor(hc % classicColors.length)],
+        color: theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)],
         percent: 0,
       };
     };
