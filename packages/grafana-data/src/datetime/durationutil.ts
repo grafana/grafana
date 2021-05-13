@@ -1,5 +1,6 @@
 import { Duration, Interval } from 'date-fns';
 import intervalToDuration from 'date-fns/intervalToDuration';
+import add from 'date-fns/add';
 
 const durationMap: { [key in Required<keyof Duration>]: string[] } = {
   years: ['y', 'Y', 'years'],
@@ -22,7 +23,8 @@ function limitFloatingPrecision(x: number, precision: number): string {
   return parseFloat(x.toFixed(precision)).toString();
 }
 
-export function durationToAbbreviatedString(duration: Duration): string {
+export function intervalToAbbreviatedDurationString(interval: Interval): string {
+  const duration = intervalToDuration(interval);
   return (Object.entries(duration) as Array<[keyof Duration, number | undefined]>).reduce((str, [unit, value]) => {
     if (value && value !== 0) {
       const padding = str !== '' ? ' ' : '';
@@ -58,6 +60,10 @@ export function parseDuration(duration: string): Duration {
   }, {});
 }
 
-export function durationFromInterval(interval: Interval): Duration {
-  return intervalToDuration(interval);
+export function addDurationToDate(date: Date | number, duration: Duration): Date {
+  return add(date, duration);
+}
+
+export function isValidDate(dateString: string) {
+  return !isNaN(Date.parse(dateString));
 }
