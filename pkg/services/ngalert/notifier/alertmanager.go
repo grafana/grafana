@@ -446,7 +446,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			UpdatedAt: now,
 		}
 		for k, v := range a.Labels {
-			if len(v) == 0 { // Skip empty labels.
+			if len(v) == 0 || k == ngmodels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
 				continue
 			}
 			alert.Alert.Labels[model.LabelName(k)] = model.LabelValue(v)
