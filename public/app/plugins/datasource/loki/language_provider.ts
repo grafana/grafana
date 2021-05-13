@@ -70,7 +70,7 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
-  logLabelFetchTs: number;
+  labelFetchTs: number;
   started = false;
   datasource: LokiDatasource;
   lookupsDisabled = false; // Dynamically set to true for big/slow instances
@@ -88,7 +88,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.labelKeys = [];
-    this.logLabelFetchTs = 0;
+    this.labelFetchTs = 0;
 
     Object.assign(this, initialValues);
   }
@@ -116,7 +116,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = () => {
     if (!this.startTask) {
-      this.startTask = this.fetchLogLabels().then(() => {
+      this.startTask = this.fetchLabels().then(() => {
         this.started = true;
         return [];
       });
@@ -415,12 +415,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   /**
    * Fetches all label keys
-   * @param absoluteRange Fetches
    */
-  async fetchLogLabels(): Promise<any> {
+  async fetchLabels(): Promise<string[]> {
     const url = '/loki/api/v1/label';
     const timeRange = this.datasource.getTimeRangeParams();
-    this.logLabelFetchTs = Date.now().valueOf();
+    this.labelFetchTs = Date.now().valueOf();
 
     const res = await this.request(url, timeRange);
     if (Array.isArray(res)) {
@@ -431,8 +430,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async refreshLogLabels(forceRefresh?: boolean) {
-    if ((this.labelKeys && Date.now().valueOf() - this.logLabelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
-      await this.fetchLogLabels();
+    if ((this.labelKeys && Date.now().valueOf() - this.labelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
+      await this.fetchLabels();
     }
   }
 
@@ -495,17 +494,17 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };
 
-    let labelValue = this.labelsCache.get(cacheKey);
-    if (!labelValue) {
+    let labelValues = this.labelsCache.get(cacheKey);
+    if (!labelValues) {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.labelsCache.set(cacheKey, []);
       const res = await this.request(url, params);
       if (Array.isArray(res)) {
-        labelValue = res.slice().sort();
-        this.labelsCache.set(cacheKey, labelValue);
+        labelValues = res.slice().sort();
+        this.labelsCache.set(cacheKey, labelValues);
       }
     }
 
-    return labelValue ?? [];
+    return labelValues ?? [];
   }
 }
