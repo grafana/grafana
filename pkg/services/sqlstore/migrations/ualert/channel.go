@@ -47,11 +47,11 @@ func (m *migration) getNotificationChannelMap() (map[string]*notificationChannel
 
 	allChannelsMap := make(map[string]*notificationChannel)
 	var defaultChannel *notificationChannel
-	for _, c := range allChannels {
-		allChannelsMap[c.Uid] = &c
+	for i, c := range allChannels {
+		allChannelsMap[c.Uid] = &allChannels[i]
 		if c.IsDefault {
 			// TODO: verify that there will be only 1 default channel.
-			defaultChannel = &c
+			defaultChannel = &allChannels[i]
 		}
 	}
 

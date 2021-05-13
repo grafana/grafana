@@ -2,8 +2,9 @@ package ualert
 
 import (
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type dashAlert struct {

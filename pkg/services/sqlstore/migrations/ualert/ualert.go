@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
