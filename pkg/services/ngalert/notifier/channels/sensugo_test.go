@@ -76,6 +76,10 @@ func TestSensuGoNotifier(t *testing.T) {
 			name: "Custom config with multiple alerts",
 			settings: `{
 				"url": "http://sensu-api.local:8080",
+				"entity": "grafana_instance_01",
+				"check": "grafana_rule_0",
+				"namespace": "namespace",
+				"handler": "myhandler",
 				"apikey": "<apikey>",
 				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
 			}`,
@@ -95,13 +99,13 @@ func TestSensuGoNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"entity": map[string]interface{}{
 					"metadata": map[string]interface{}{
-						"name":      "alert1",
-						"namespace": "default",
+						"name":      "grafana_instance_01",
+						"namespace": "namespace",
 					},
 				},
 				"check": map[string]interface{}{
 					"metadata": map[string]interface{}{
-						"name": "rule uid",
+						"name": "grafana_rule_0",
 						"labels": map[string]string{
 							"ruleName": "alert1",
 							"ruleUId":  "rule uid",
@@ -113,7 +117,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					"issued":   time.Now().Unix(),
 					"interval": 86400,
 					"status":   2,
-					"handlers": nil,
+					"handlers": []string{"myhandler"},
 				},
 				"ruleURL": "http:/localhost/alerting/list",
 			},
