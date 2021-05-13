@@ -69,9 +69,11 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
+
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
+      ensureGlobalRange: true,
       replaceVariables,
       theme: config.theme2,
       data: data.series,
