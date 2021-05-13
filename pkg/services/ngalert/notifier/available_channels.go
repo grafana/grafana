@@ -287,6 +287,12 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "default",
 					PropertyName: "namespace",
 				},
+				{ // New in 8.0.
+					Label:        "Message",
+					Element:      alerting.ElementTypeTextArea,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
+				},
 			},
 		},
 		{
