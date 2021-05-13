@@ -56,10 +56,11 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         <Button
           onClick={() => {
             panel.title = panelTitle;
-            saveLibraryPanel(panel, folderId!).then(
-              () => onDismiss,
-              () => {}
-            );
+            saveLibraryPanel(panel, folderId!).then((res) => {
+              if (!(res instanceof Error)) {
+                onDismiss();
+              }
+            });
           }}
           disabled={invalidInput}
         >
