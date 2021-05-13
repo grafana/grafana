@@ -59,7 +59,6 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 			return err
 		}
 
-		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
 	}
 }
