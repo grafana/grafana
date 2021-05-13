@@ -48,13 +48,13 @@ func TestSensuGoNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"entity": map[string]interface{}{
 					"metadata": map[string]interface{}{
-						"name":      "alert1",
+						"name":      "default",
 						"namespace": "default",
 					},
 				},
 				"check": map[string]interface{}{
 					"metadata": map[string]interface{}{
-						"name": "rule uid",
+						"name": "default",
 						"labels": map[string]string{
 							"ruleName": "alert1",
 							"ruleUId":  "rule uid",
@@ -132,7 +132,7 @@ func TestSensuGoNotifier(t *testing.T) {
 			settings: `{
 				"url": "http://sensu-api.local:8080"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find the API Key property in settings"},
+			expInitError: alerting.ValidationError{Reason: "Could not find the API key property in settings"},
 		}, {
 			name: "Error in building message",
 			settings: `{

@@ -39,7 +39,7 @@ type SensuGoNotifier struct {
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSensuGoNotifier(model *models.AlertNotification, t *template.Template) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, alerting.ValidationError{Reason: "No settings supplied"}
 	}
 
 	url := model.Settings.Get("url").MustString()
@@ -49,7 +49,7 @@ func NewSensuGoNotifier(model *models.AlertNotification, t *template.Template) (
 
 	apikey := model.DecryptedValue("apikey", model.Settings.Get("apikey").MustString())
 	if apikey == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find the API Key property in settings"}
+		return nil, alerting.ValidationError{Reason: "Could not find the API key property in settings"}
 	}
 
 	return &SensuGoNotifier{
@@ -66,9 +66,9 @@ func NewSensuGoNotifier(model *models.AlertNotification, t *template.Template) (
 	}, nil
 }
 
-// Notify send alert notification to Sensu Go
+// Notify sends an alert notification to Sensu Go
 func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	sn.log.Info("Sending Sensu Go result")
+	sn.log.Debug("Sending Sensu Go result")
 
 	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
@@ -109,21 +109,12 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
 	entity := sn.Entity
 	if entity == "" {
-		if ruleNames != nil {
-			// Sensu Go alerts cannot have spaces in them
-			entity = strings.ReplaceAll(strRuleNames, " ", "_")
-		} else {
-			entity = "default"
-		}
+		entity = "default"
 	}
 
 	check := sn.Check
 	if check == "" {
-		if strRuleUIDs != "" {
-			check = strRuleUIDs
-		} else {
-			check = "default"
-		}
+		check = "default"
 	}
 
 	alerts := types.Alerts(as...)
@@ -157,8 +148,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 				"labels": map[string]string{
 					"ruleName": strRuleNames,
 					"ruleUId":  strRuleUIDs,
-					// TODO imageUrl
-					"ruleURL": ruleURL,
+					"ruleURL":  ruleURL,
 				},
 			},
 			"output":   tmpl(sn.Message),
