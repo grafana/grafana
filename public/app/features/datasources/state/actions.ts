@@ -120,15 +120,15 @@ export function loadDataSource(uid: string): ThunkResult<void> {
     const dataSource = await getDataSourceUsingUidOrId(uid);
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);
-
+    const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
+    const meta = {
+      ...pluginInfo,
+      backend: isBackend,
+    };
     dispatch(dataSourceLoaded(dataSource));
-    dispatch(
-      dataSourceMetaLoaded({
-        ...pluginInfo,
-        backend: plugin.DataSourceClass.prototype instanceof DataSourceWithBackend,
-      })
-    );
+    dispatch(dataSourceMetaLoaded(meta));
 
+    plugin.meta = meta;
     dispatch(updateNavIndex(buildNavModel(dataSource, plugin)));
   };
 }

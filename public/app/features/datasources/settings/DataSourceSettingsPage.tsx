@@ -40,16 +40,18 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const dataSource = getDataSource(state.dataSources, dataSourceId);
   const { plugin, loadError, testingStatus } = state.dataSourceSettings;
   const page = params.get('page');
+
   const nav = plugin
     ? getDataSourceNav(buildNavModel(dataSource, plugin), page || 'settings')
     : getDataSourceLoadingNav('settings');
 
+  const navModel = getNavModel(
+    state.navIndex,
+    page ? `datasource-page-${page}` : `datasource-settings-${dataSourceId}`,
+    nav
+  );
+
   return {
-    navModel: getNavModel(
-      state.navIndex,
-      page ? `datasource-page-${page}` : `datasource-settings-${dataSourceId}`,
-      nav
-    ),
     dataSource: getDataSource(state.dataSources, dataSourceId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     dataSourceId: dataSourceId,
@@ -57,6 +59,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     plugin,
     loadError,
     testingStatus,
+    navModel,
   };
 }
 
