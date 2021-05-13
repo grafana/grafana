@@ -1,6 +1,6 @@
 {
   "name": "@grafana-plugins/marketplace-app",
-  "version": "7.5.0-pre.0",
+  "version": "8.0.0-beta.1",
   "description": "Marketplace",
   "private": true,
   "repository": {
@@ -16,10 +16,10 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/data": "7.5.0-pre.0",
-    "@grafana/runtime": "7.5.0-pre.0",
-    "@grafana/toolkit": "7.5.0-pre.0",
-    "@grafana/ui": "7.5.0-pre.0",
+    "@grafana/data": "8.0.0-beta.1",
+    "@grafana/runtime": "8.0.0-beta.1",
+    "@grafana/toolkit": "8.0.0-beta.1",
+    "@grafana/ui": "8.0.0-beta.1",
     "@types/semver": "^7.3.4",
     "semver": "^7.3.4"
   },
