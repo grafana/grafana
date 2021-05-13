@@ -44,7 +44,11 @@ export function createGraphFrames(data: DataFrame): DataFrame[] {
       { name: Fields.subTitle, type: FieldType.string },
       { name: Fields.mainStat, type: FieldType.string },
       { name: Fields.secondaryStat, type: FieldType.string },
-      { name: Fields.color, type: FieldType.number, config: { color: { mode: 'continuous-GrYlRd' } } },
+      {
+        name: Fields.color,
+        type: FieldType.number,
+        config: { color: { mode: 'continuous-GrYlRd' }, displayName: 'Self time / Trace duration' },
+      },
     ],
     meta: {
       preferredVisualisationType: 'nodeGraph',

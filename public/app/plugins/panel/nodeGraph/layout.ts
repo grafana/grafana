@@ -141,6 +141,7 @@ function defaultLayout(
         mainStat: nodes[i].mainStat,
         secondaryStat: nodes[i].secondaryStat,
         arcSections: nodes[i].arcSections,
+        color: nodes[i].color,
       };
     }
     done(event.data);

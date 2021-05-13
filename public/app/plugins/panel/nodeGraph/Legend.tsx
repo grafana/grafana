@@ -71,18 +71,32 @@ function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme): Array<Viz
 
       // Lets collect and deduplicate as there isn't a requirement for 0 size arc section to be defined
       fields.push(...new Set(nodes.map((n) => n.arcSections).flat()));
-    } else {
-      // TODO: probably some sort of gradient which we will have to deal with later
-      return [];
     }
   }
 
+  if (nodes[0].color) {
+    fields.push(nodes[0].color);
+  }
+
   return fields.map((f) => {
-    return {
+    const item: VizLegendItem = {
       label: f.config.displayName || f.name,
-      color: getColorForTheme(f.config.color?.fixedColor || '', theme),
       yAxis: 0,
       data: { field: f },
     };
+    if (f.config.color?.fixedColor) {
+      item.color = getColorForTheme(f.config.color?.fixedColor || '', theme);
+    }
+
+    if (f.config.color?.mode) {
+      item.gradient = f.config.color?.mode;
+    }
+
+    if (!(item.color || item.gradient)) {
+      // Defaults to gray color
+      item.color = getColorForTheme('', theme);
+    }
+
+    return item;
   });
 }
