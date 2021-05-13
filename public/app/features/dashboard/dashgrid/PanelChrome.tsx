@@ -21,6 +21,7 @@ import {
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
+  getTimeZone,
   LoadingState,
   PanelData,
   PanelPlugin,
@@ -80,7 +81,7 @@ export class PanelChrome extends Component<Props, State> {
       context: {
         sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         eventBus,
-        timeZone: props.dashboard.timezone ?? DefaultTimeZone,
+        timeZone: props.dashboard.timezone ?? getTimeZone(),
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
       },

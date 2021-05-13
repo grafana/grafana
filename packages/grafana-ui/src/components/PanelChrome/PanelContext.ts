@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBus, DashboardCursorSync, TimeZone, DefaultTimeZone } from '@grafana/data';
+import { EventBusSrv, EventBus, DashboardCursorSync, TimeZone, DefaultTimeZone, getTimeZone } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
 
@@ -29,7 +29,7 @@ export interface PanelContext {
 
 export const PanelContextRoot = React.createContext<PanelContext>({
   eventBus: new EventBusSrv(),
-  timeZone: DefaultTimeZone,
+  timeZone: getTimeZone(),
 });
 
 /**
