@@ -2,7 +2,7 @@ import uPlot, { Series, Cursor } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { TimelineMode } from './types';
+import { TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
 
@@ -33,6 +33,7 @@ export interface TimelineCoreOptions {
   colWidth?: number;
   theme: GrafanaTheme2;
   showValue: BarValueVisibility;
+  alignValue: TimelineValueAlignment;
   isDiscrete: (seriesIdx: number) => boolean;
   colorLookup: (seriesIdx: number, value: any) => string;
   label: (seriesIdx: number) => string;
@@ -55,6 +56,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     rowHeight = 0,
     colWidth = 0,
     showValue,
+    alignValue,
     theme,
     label,
     fill,
@@ -259,7 +261,7 @@ export function getConfig(opts: TimelineCoreOptions) {
           u.ctx.clip();
 
           u.ctx.font = font;
-          u.ctx.textAlign = mode === TimelineMode.Changes ? 'left' : 'center';
+          u.ctx.textAlign = alignValue;
           u.ctx.textBaseline = 'middle';
 
           uPlot.orient(

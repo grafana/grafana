@@ -79,6 +79,18 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         },
         defaultValue: BarValueVisibility.Always,
       })
+      .addRadio({
+        path: 'alignValue',
+        name: 'Align value',
+        settings: {
+          options: [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' },
+          ],
+        },
+        defaultValue: 'center',
+      })
       .addSliderInput({
         path: 'rowHeight',
         name: 'Row height',
