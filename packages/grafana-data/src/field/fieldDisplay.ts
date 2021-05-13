@@ -15,13 +15,14 @@ import {
   TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
-import { GrafanaThemeV2 } from '../themes';
+import { GrafanaTheme2 } from '../themes';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import { getFieldDisplayName } from './fieldState';
+import { ensureGlobalRangeOnState } from './scale';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -71,8 +72,9 @@ export interface GetFieldDisplayValuesOptions {
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
   timeZone?: TimeZone;
+  ensureGlobalRange?: boolean;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
@@ -98,6 +100,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const scopedVars: ScopedVars = {};
 
   let hitLimit = false;
+
+  if (options.ensureGlobalRange) {
+    ensureGlobalRangeOnState(data);
+  }
 
   for (let s = 0; s < data.length && !hitLimit; s++) {
     const dataFrame = data[s]; // Name is already set

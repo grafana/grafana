@@ -246,6 +246,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
 		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
+		"azure": map[string]interface{}{
+			"cloud":                  hs.Cfg.Azure.Cloud,
+			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+		},
 	}
 
 	return jsonObj, nil
@@ -254,9 +258,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
-	case "graph":
-		sort = 1
 	case "timeseries":
+		sort = 1
+	case "barchart":
 		sort = 2
 	case "stat":
 		sort = 3
@@ -270,16 +274,20 @@ func getPanelSort(id string) int {
 		sort = 7
 	case "piechart":
 		sort = 8
-	case "text":
+	case "timeline":
 		sort = 9
 	case "heatmap":
 		sort = 10
-	case "alertlist":
+	case "graph":
 		sort = 11
-	case "dashlist":
+	case "text":
 		sort = 12
-	case "news":
+	case "alertlist":
 		sort = 13
+	case "dashlist":
+		sort = 14
+	case "news":
+		sort = 15
 	}
 	return sort
 }

@@ -62,6 +62,13 @@ export interface GrafanaLiveSrv {
    * Join and leave messages will be sent to the open stream
    */
   getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus>;
+
+  /**
+   * Publish into a channel
+   *
+   * @alpha -- experimental
+   */
+  publish(address: LiveChannelAddress, data: any): Promise<any>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

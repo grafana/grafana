@@ -71,7 +71,7 @@ func (pm *PluginManager) checkForUpdates() {
 		return
 	}
 
-	for _, plug := range pm.plugins {
+	for _, plug := range pm.Plugins() {
 		for _, gplug := range gNetPlugins {
 			if gplug.Slug == plug.Id {
 				plug.GrafanaNetVersion = gplug.Version
@@ -88,7 +88,7 @@ func (pm *PluginManager) checkForUpdates() {
 		}
 	}
 
-	resp2, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/master/latest.json")
+	resp2, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
 		log.Tracef("Failed to get latest.json repo from github.com: %v", err.Error())
 		return

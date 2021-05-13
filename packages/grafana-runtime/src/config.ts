@@ -6,12 +6,17 @@ import {
   FeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   LicenseInfo,
   PanelPluginMeta,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
+
+export interface AzureSettings {
+  cloud?: string;
+  managedIdentityEnabled: boolean;
+}
 
 export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
@@ -50,15 +55,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
   theme: GrafanaTheme;
-  theme2: GrafanaThemeV2;
+  theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
-    live: false,
     meta: false,
     ngalert: false,
-    panelLibrary: false,
     reportVariables: false,
     accesscontrol: false,
+    trimDefaults: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
@@ -75,6 +79,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
+  azure: AzureSettings = {
+    managedIdentityEnabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

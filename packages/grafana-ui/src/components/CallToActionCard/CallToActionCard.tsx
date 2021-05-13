@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '../../themes/ThemeContext';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export interface CallToActionCardProps {
   message?: string | JSX.Element;
@@ -27,7 +27,7 @@ export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = 
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     label: call-to-action-card;
     padding: ${theme.spacing(3)};

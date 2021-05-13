@@ -1,9 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TimelinePanel } from './TimelinePanel';
-import { TimelineOptions, TimelineFieldConfig, BarValueVisibility } from '@grafana/ui';
-//import { addHideFrom, addLegendOptions } from '../timeseries/config';
-//import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
-import { TimelineMode } from '@grafana/ui/src/components/Timeline/types';
+import { TimelineOptions, TimelineFieldConfig, TimelineMode } from './types';
+import { BarValueVisibility } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
   .useFieldConfig({
@@ -61,11 +59,11 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
       .addRadio({
         path: 'mode',
         name: 'Mode',
-        defaultValue: TimelineMode.Spans,
+        defaultValue: TimelineMode.Changes,
         settings: {
           options: [
-            { label: 'Spans', value: TimelineMode.Spans },
-            { label: 'Grid', value: TimelineMode.Grid },
+            { label: 'State changes', value: TimelineMode.Changes },
+            { label: 'Periodic samples', value: TimelineMode.Samples },
           ],
         },
       })
@@ -100,7 +98,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
           max: 1,
           step: 0.01,
         },
-        showIf: ({ mode }) => mode === TimelineMode.Grid,
+        showIf: ({ mode }) => mode === TimelineMode.Samples,
       });
 
     //addLegendOptions(builder);

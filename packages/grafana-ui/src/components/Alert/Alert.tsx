@@ -1,6 +1,6 @@
 import React, { HTMLAttributes, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -60,12 +60,12 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
-            <IconButton name="times" onClick={onRemove} size="lg" />
+            <IconButton name="times" onClick={onRemove} size="lg" type="button" />
           </div>
         )}
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
-            <Button variant="secondary" onClick={onRemove}>
+            <Button variant="secondary" onClick={onRemove} type="button">
               {buttonContent}
             </Button>
           </div>
@@ -77,7 +77,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaThemeV2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
+const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
   const color = theme.colors[severity];
   const borderRadius = theme.shape.borderRadius();
 

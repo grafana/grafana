@@ -29,6 +29,7 @@ enabled = true
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
+empty_scopes = false
 auth_url =
 token_url =
 api_url =
@@ -48,6 +49,8 @@ You can also specify the SSL/TLS configuration used by the client.
 - Set `tls_client_ca` to the path containing a trusted certificate authority list.
 
 `tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
+
+Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
 
 Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
 

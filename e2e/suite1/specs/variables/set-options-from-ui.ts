@@ -1,14 +1,12 @@
 import { e2e } from '@grafana/e2e';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
+const flakyTimeout = 5000;
 
 describe('Variables - Set options from ui', () => {
   it('clicking a value that is not part of dependents options should change these to All', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-server=AA&var-pod=AAA` });
-    e2e().intercept('/api/ds/query').as('query');
-
-    e2e().wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
@@ -16,19 +14,15 @@ describe('Variables - Set options from ui', () => {
 
     e2e.components.PageToolbar.container().click();
 
-    e2e().wait('@query');
-
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
 
-    e2e.components.LoadingIndicator.icon().should('have.length', 0);
+    e2e().wait(flakyTimeout);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
       .should('have.length', 2)
       .eq(0)
       .should('be.visible')
       .click();
-
-    e2e().wait(2000);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
@@ -41,9 +35,9 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
+    e2e().wait(flakyTimeout);
 
-    e2e().wait(2000);
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
