@@ -1,6 +1,6 @@
 // +build integration
 
-package tests
+package store_test
 
 import (
 	"testing"
@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
 	"github.com/stretchr/testify/require"
 )
@@ -25,19 +26,19 @@ func mockTimeNow() {
 }
 
 func TestAlertInstanceOperations(t *testing.T) {
-	dbstore := setupTestEnv(t, baseIntervalSeconds)
+	dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 	t.Cleanup(registry.ClearOverrides)
 
-	alertRule1 := createTestAlertRule(t, dbstore, 60)
+	alertRule1 := tests.CreateTestAlertRule(t, dbstore, 60)
 	orgID := alertRule1.OrgID
 
-	alertRule2 := createTestAlertRule(t, dbstore, 60)
+	alertRule2 := tests.CreateTestAlertRule(t, dbstore, 60)
 	require.Equal(t, orgID, alertRule2.OrgID)
 
-	alertRule3 := createTestAlertRule(t, dbstore, 60)
+	alertRule3 := tests.CreateTestAlertRule(t, dbstore, 60)
 	require.Equal(t, orgID, alertRule3.OrgID)
 
-	alertRule4 := createTestAlertRule(t, dbstore, 60)
+	alertRule4 := tests.CreateTestAlertRule(t, dbstore, 60)
 	require.Equal(t, orgID, alertRule4.OrgID)
 
 	t.Run("can save and read new alert instance", func(t *testing.T) {
