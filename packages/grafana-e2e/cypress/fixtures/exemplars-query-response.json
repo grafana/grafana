@@ -1,0 +1,689 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.005",
+        "method": "GET",
+        "route": "metrics",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "6623c7a94128bac8" }, "value": "0.00216539", "timestamp": 1620761554.019 },
+        { "labels": { "traceID": "4c52b2937c4bf7e9" }, "value": "0.003287295", "timestamp": 1620761569.019 },
+        { "labels": { "traceID": "25fd3243a657ca60" }, "value": "0.001866048", "timestamp": 1620761584.018 },
+        { "labels": { "traceID": "397a1c3c9c5787a1" }, "value": "0.003148269", "timestamp": 1620761599.02 },
+        { "labels": { "traceID": "25d3b7220c72fee9" }, "value": "0.002628446", "timestamp": 1620761614.02 },
+        { "labels": { "traceID": "4dee9e2e642ceb1b" }, "value": "0.002214287", "timestamp": 1620761629.019 },
+        { "labels": { "traceID": "2ff6691ace11d628" }, "value": "0.00249281", "timestamp": 1620761644.019 },
+        { "labels": { "traceID": "194ad24c9ba1bd07" }, "value": "0.001838908", "timestamp": 1620761659.019 },
+        { "labels": { "traceID": "4b8cc07804c47e5e" }, "value": "0.001588308", "timestamp": 1620761674.018 },
+        { "labels": { "traceID": "52e0b60eee403668" }, "value": "0.00358922", "timestamp": 1620761689.021 },
+        { "labels": { "traceID": "70d0ee4d123218bc" }, "value": "0.00331858", "timestamp": 1620761704.02 },
+        { "labels": { "traceID": "2dc43f64cff43bb2" }, "value": "0.002070016", "timestamp": 1620761734.02 },
+        { "labels": { "traceID": "21bca17f97b0272f" }, "value": "0.002824294", "timestamp": 1620761749.024 },
+        { "labels": { "traceID": "553d2935b363cdb7" }, "value": "0.00238151", "timestamp": 1620761764.021 },
+        { "labels": { "traceID": "594a6f8d9a876bbb" }, "value": "0.004186841", "timestamp": 1620761779.023 },
+        { "labels": { "traceID": "5d763419bccd426a" }, "value": "0.00338705", "timestamp": 1620761794.022 },
+        { "labels": { "traceID": "2a6844e440881c61" }, "value": "0.002208834", "timestamp": 1620761809.021 },
+        { "labels": { "traceID": "48831c3e3fdc6efa" }, "value": "0.002346334", "timestamp": 1620761824.023 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.005",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "1ea3daf127eb9d1c" }, "value": "0.003946934", "timestamp": 1620761553.987 },
+        { "labels": { "traceID": "51679d5d998786b2" }, "value": "0.004066077", "timestamp": 1620761568.267 },
+        { "labels": { "traceID": "382ef7c7443ac767" }, "value": "0.004315568", "timestamp": 1620761583.705 },
+        { "labels": { "traceID": "2293889080db0941" }, "value": "0.004329813", "timestamp": 1620761598.805 },
+        { "labels": { "traceID": "688d69666ea10ff8" }, "value": "0.004617165", "timestamp": 1620761613.998 },
+        { "labels": { "traceID": "1c773f1f95bb7d18" }, "value": "0.004484882", "timestamp": 1620761628.852 },
+        { "labels": { "traceID": "2bbceff02d9c1999" }, "value": "0.004462996", "timestamp": 1620761644.001 },
+        { "labels": { "traceID": "cc0948b0e2131ef" }, "value": "0.00373521", "timestamp": 1620761658.815 },
+        { "labels": { "traceID": "111963033b986bd2" }, "value": "0.004494162", "timestamp": 1620761673.858 },
+        { "labels": { "traceID": "3fc3884869e1ba9b" }, "value": "0.003502476", "timestamp": 1620761688.887 },
+        { "labels": { "traceID": "7bad9a5f3022ff02" }, "value": "0.004715123", "timestamp": 1620761701.94 },
+        { "labels": { "traceID": "64a27298fe5eb126" }, "value": "0.003864008", "timestamp": 1620761717.442 },
+        { "labels": { "traceID": "65899cbe575adf02" }, "value": "0.002920626", "timestamp": 1620761733.959 },
+        { "labels": { "traceID": "c726ece86d4a710" }, "value": "0.003622465", "timestamp": 1620761748.911 },
+        { "labels": { "traceID": "2d635e70ad017769" }, "value": "0.003963836", "timestamp": 1620761763.995 },
+        { "labels": { "traceID": "3278c3d318b22864" }, "value": "0.00434111", "timestamp": 1620761779.01 },
+        { "labels": { "traceID": "3f113e0178fdb0dd" }, "value": "0.004594791", "timestamp": 1620761793.751 },
+        { "labels": { "traceID": "3288fae3cdbe9f5f" }, "value": "0.004687213", "timestamp": 1620761808.546 },
+        { "labels": { "traceID": "20c93a191afa0d75" }, "value": "0.00297728", "timestamp": 1620761823.855 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.005",
+        "method": "POST",
+        "route": "post",
+        "status_code": "302",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "537dcbf082c2ba93" }, "value": "0.002259945", "timestamp": 1620761553.734 },
+        { "labels": { "traceID": "b7b1c0f3f087234" }, "value": "0.0031329", "timestamp": 1620761567.735 },
+        { "labels": { "traceID": "19d421ff7a9fbfd0" }, "value": "0.003298626", "timestamp": 1620761581.737 },
+        { "labels": { "traceID": "30f169e59cd744cf" }, "value": "0.004458387", "timestamp": 1620761597.739 },
+        { "labels": { "traceID": "1a113dac6e761788" }, "value": "0.003496792", "timestamp": 1620761613.737 },
+        { "labels": { "traceID": "3e29e5b6d6dd7722" }, "value": "0.002952011", "timestamp": 1620761628.737 },
+        { "labels": { "traceID": "48aeb901f90de9e6" }, "value": "0.004521775", "timestamp": 1620761643.738 },
+        { "labels": { "traceID": "75f2894c43af3bff" }, "value": "0.003759985", "timestamp": 1620761658.738 },
+        { "labels": { "traceID": "190a345256a93f09" }, "value": "0.004030832", "timestamp": 1620761673.738 },
+        { "labels": { "traceID": "6646a6cab2abf449" }, "value": "0.002915072", "timestamp": 1620761688.737 },
+        { "labels": { "traceID": "1a51480d3f15c93c" }, "value": "0.004487764", "timestamp": 1620761699.741 },
+        { "labels": { "traceID": "64f06303658e8ba5" }, "value": "0.002668202", "timestamp": 1620761718.738 },
+        { "labels": { "traceID": "6df9298b13e1484d" }, "value": "0.004423943", "timestamp": 1620761733.739 },
+        { "labels": { "traceID": "acb1e8e2a771d37" }, "value": "0.0038423", "timestamp": 1620761748.739 },
+        { "labels": { "traceID": "42a09adc7104c3d1" }, "value": "0.004819886", "timestamp": 1620761763.741 },
+        { "labels": { "traceID": "2335f4fdbcac032f" }, "value": "0.003573412", "timestamp": 1620761778.739 },
+        { "labels": { "traceID": "3f113e0178fdb0dd" }, "value": "0.004221459", "timestamp": 1620761793.742 },
+        { "labels": { "traceID": "44f2710ddd429f88" }, "value": "0.004184554", "timestamp": 1620761807.74 },
+        { "labels": { "traceID": "10cc4ee6f3a5fa3d" }, "value": "0.004187996", "timestamp": 1620761823.739 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.005",
+        "method": "POST",
+        "route": "post",
+        "status_code": "400",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "3f7fb970c1f294f2" }, "value": "0.000098694", "timestamp": 1620761542.735 },
+        { "labels": { "traceID": "115158569f7d707a" }, "value": "0.000132017", "timestamp": 1620761568.79 },
+        { "labels": { "traceID": "6b787cceb3a39d90" }, "value": "0.000090596", "timestamp": 1620761578.732 },
+        { "labels": { "traceID": "51794e367d93aab0" }, "value": "0.000175678", "timestamp": 1620761598.736 },
+        { "labels": { "traceID": "6b3294f54e87a19" }, "value": "0.000128528", "timestamp": 1620761622.734 },
+        { "labels": { "traceID": "536ace200802727d" }, "value": "0.000287827", "timestamp": 1620761634.733 },
+        { "labels": { "traceID": "664cf4e512fafb90" }, "value": "0.000077442", "timestamp": 1620761671.734 },
+        { "labels": { "traceID": "19ae8ff764b395e2" }, "value": "0.000067022", "timestamp": 1620761684.734 },
+        { "labels": { "traceID": "283d6dc94d6323fa" }, "value": "0.000069221", "timestamp": 1620761693.734 },
+        { "labels": { "traceID": "5376cc7042f63779" }, "value": "0.000271275", "timestamp": 1620761709.735 },
+        { "labels": { "traceID": "7ce1e108a390ff40" }, "value": "0.000120935", "timestamp": 1620761728.735 },
+        { "labels": { "traceID": "7ad9d75271ca1f23" }, "value": "0.000124766", "timestamp": 1620761790.736 },
+        { "labels": { "traceID": "463c54384a09e34d" }, "value": "0.000084398", "timestamp": 1620761808.736 },
+        { "labels": { "traceID": "13dd0f69896188c9" }, "value": "0.00026161", "timestamp": 1620761830.737 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.01",
+        "method": "GET",
+        "route": "metrics",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "6612571de3974238" }, "value": "0.007150668", "timestamp": 1620761719.025 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.01",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "3da8d4cf892051b2" }, "value": "0.006038014", "timestamp": 1620761553.851 },
+        { "labels": { "traceID": "279666d141ccc700" }, "value": "0.007033261", "timestamp": 1620761568.57 },
+        { "labels": { "traceID": "7bcd6efd1f7fa818" }, "value": "0.005969904", "timestamp": 1620761583.752 },
+        { "labels": { "traceID": "27a3c8926f1b9877" }, "value": "0.005367895", "timestamp": 1620761598.806 },
+        { "labels": { "traceID": "1ad0f0d3b79362cf" }, "value": "0.005424866", "timestamp": 1620761613.965 },
+        { "labels": { "traceID": "7ff0012d0145146e" }, "value": "0.006629428", "timestamp": 1620761628.76 },
+        { "labels": { "traceID": "117d0cc5f188caef" }, "value": "0.005852065", "timestamp": 1620761643.03 },
+        { "labels": { "traceID": "75f2894c43af3bff" }, "value": "0.005215921", "timestamp": 1620761658.748 },
+        { "labels": { "traceID": "740d7184dc4777e7" }, "value": "0.006845462", "timestamp": 1620761673.954 },
+        { "labels": { "traceID": "20a5058ab26523c0" }, "value": "0.006475851", "timestamp": 1620761688.691 },
+        { "labels": { "traceID": "1e7ce2508bbc0cbf" }, "value": "0.005238892", "timestamp": 1620761699.755 },
+        { "labels": { "traceID": "7a92e8b7da9d8b99" }, "value": "0.006169931", "timestamp": 1620761714.961 },
+        { "labels": { "traceID": "6df9298b13e1484d" }, "value": "0.005591603", "timestamp": 1620761733.747 },
+        { "labels": { "traceID": "55f5ad6c51c8765e" }, "value": "0.008291714", "timestamp": 1620761748.746 },
+        { "labels": { "traceID": "47feabeda632e388" }, "value": "0.006845111", "timestamp": 1620761763.953 },
+        { "labels": { "traceID": "117954c3e46885a1" }, "value": "0.009813466", "timestamp": 1620761778.148 },
+        { "labels": { "traceID": "cc5a60a45d0f5eb" }, "value": "0.006314917", "timestamp": 1620761793.906 },
+        { "labels": { "traceID": "4f5eb90df5bb7d45" }, "value": "0.005630173", "timestamp": 1620761808.838 },
+        { "labels": { "traceID": "42c09cb92589e902" }, "value": "0.005183919", "timestamp": 1620761823.389 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.01",
+        "method": "POST",
+        "route": "post",
+        "status_code": "302",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "20ccda59b5067bb5" }, "value": "0.009613555", "timestamp": 1620761566.742 },
+        { "labels": { "traceID": "7bcd6efd1f7fa818" }, "value": "0.008263243", "timestamp": 1620761583.743 },
+        { "labels": { "traceID": "4105caeb23bd8fc" }, "value": "0.005264553", "timestamp": 1620761607.74 },
+        { "labels": { "traceID": "3f2a2cafe421a6f2" }, "value": "0.005893955", "timestamp": 1620761640.741 },
+        { "labels": { "traceID": "413ca6c79c5a8213" }, "value": "0.005064354", "timestamp": 1620761656.742 },
+        { "labels": { "traceID": "334ed173e4452dbc" }, "value": "0.005211702", "timestamp": 1620761661.739 },
+        { "labels": { "traceID": "5f7e6c01bda53121" }, "value": "0.005207258", "timestamp": 1620761680.739 },
+        { "labels": { "traceID": "6034e997a0300d4b" }, "value": "0.007681097", "timestamp": 1620761690.76 },
+        { "labels": { "traceID": "1aa1d6cb1534f975" }, "value": "0.005098862", "timestamp": 1620761722.739 },
+        { "labels": { "traceID": "3cdf79cbf199a051" }, "value": "0.007718517", "timestamp": 1620761747.755 },
+        { "labels": { "traceID": "3e36c19d1a6358e4" }, "value": "0.005250576", "timestamp": 1620761761.74 },
+        { "labels": { "traceID": "9b5a8f99f120bef" }, "value": "0.00530067", "timestamp": 1620761771.742 },
+        { "labels": { "traceID": "7f084f1db1c70a40" }, "value": "0.005014128", "timestamp": 1620761797.741 },
+        { "labels": { "traceID": "4a4ee0b768e93f06" }, "value": "0.007840089", "timestamp": 1620761828.748 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.025",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "4304572cef5c5907" }, "value": "0.010913885", "timestamp": 1620761543.749 },
+        { "labels": { "traceID": "5f046e2160669cf1" }, "value": "0.012880048", "timestamp": 1620761568.799 },
+        { "labels": { "traceID": "75494996cf5243ce" }, "value": "0.01032585", "timestamp": 1620761573.913 },
+        { "labels": { "traceID": "927c922ea92c42e" }, "value": "0.010641447", "timestamp": 1620761641.816 },
+        { "labels": { "traceID": "4812ecb2aa4ef17e" }, "value": "0.010616964", "timestamp": 1620761686.77 },
+        { "labels": { "traceID": "40fc988a1cc2c68" }, "value": "0.012799888", "timestamp": 1620761697.676 },
+        { "labels": { "traceID": "4c7c47e2d70f2d20" }, "value": "0.016078653", "timestamp": 1620761712.519 },
+        { "labels": { "traceID": "53b30c0e9674735" }, "value": "0.010826261", "timestamp": 1620761733.248 },
+        { "labels": { "traceID": "7ebc684d0e44b243" }, "value": "0.015741096", "timestamp": 1620761778.158 },
+        { "labels": { "traceID": "2ee07f56d7484050" }, "value": "0.013013628", "timestamp": 1620761791.394 },
+        { "labels": { "traceID": "3ae63f610201196a" }, "value": "0.010428691", "timestamp": 1620761819.722 },
+        { "labels": { "traceID": "444872ee44bb36a8" }, "value": "0.014833215", "timestamp": 1620761828.663 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.025",
+        "method": "POST",
+        "route": "post",
+        "status_code": "302",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "528691a0d74de77d" }, "value": "0.014550855", "timestamp": 1620761641.766 },
+        { "labels": { "traceID": "1cedd0acd4f5894d" }, "value": "0.024945017", "timestamp": 1620761701.759 },
+        { "labels": { "traceID": "5a10a645c76ebe69" }, "value": "0.014772744", "timestamp": 1620761714.749 },
+        { "labels": { "traceID": "7410f3eddf32d65f" }, "value": "0.014439267", "timestamp": 1620761724.749 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.05",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "13e7690a08a6dd90" }, "value": "0.025678532", "timestamp": 1620761641.679 },
+        { "labels": { "traceID": "532bbc2195ebcc41" }, "value": "0.030629825", "timestamp": 1620761715.528 },
+        { "labels": { "traceID": "2beaf0638967ac70" }, "value": "0.038696514", "timestamp": 1620761724.389 },
+        { "labels": { "traceID": "42582435ad8220aa" }, "value": "0.035559249", "timestamp": 1620761779.21 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.05",
+        "method": "POST",
+        "route": "post",
+        "status_code": "302",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "5d5dbf0b9b26103a" }, "value": "0.043255969", "timestamp": 1620761716.778 },
+        { "labels": { "traceID": "5f00eb10c755117a" }, "value": "0.031064295", "timestamp": 1620761726.766 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.1",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "245748ce121873b7" }, "value": "0.069726599", "timestamp": 1620761717.097 },
+        { "labels": { "traceID": "180e9ae912bab1b3" }, "value": "0.051896104", "timestamp": 1620761728.297 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.1",
+        "method": "GET",
+        "route": "root",
+        "status_code": "500",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "5c87831717ac3fb2" }, "value": "0.094239093", "timestamp": 1620761704.008 },
+        { "labels": { "traceID": "47015a4eee6cc651" }, "value": "0.081058336", "timestamp": 1620761718.984 },
+        { "labels": { "traceID": "5ba6f40766a58966" }, "value": "0.05325593", "timestamp": 1620761729.949 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.1",
+        "method": "POST",
+        "route": "post",
+        "status_code": "302",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "44eb47a77e9a25c5" }, "value": "0.071755237", "timestamp": 1620761703.806 },
+        { "labels": { "traceID": "22020d1a5b5c47bc" }, "value": "0.053282107", "timestamp": 1620761723.789 },
+        { "labels": { "traceID": "c60780a9c221bbb" }, "value": "0.093136114", "timestamp": 1620761778.051 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.25",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "5740eed7b336e5c7" }, "value": "0.144092034", "timestamp": 1620761778.449 },
+        { "labels": { "traceID": "562666a57c9ff0c0" }, "value": "0.103903482", "timestamp": 1620761779.461 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "app:80",
+        "job": "tns/app",
+        "le": "0.25",
+        "method": "GET",
+        "route": "root",
+        "status_code": "500",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "44eb47a77e9a25c5" }, "value": "0.148749847", "timestamp": 1620761703.957 },
+        { "labels": { "traceID": "75459cfc1bd7446a" }, "value": "0.113843275", "timestamp": 1620761718.541 },
+        { "labels": { "traceID": "6fbcff3c0d0c8804" }, "value": "0.194787684", "timestamp": 1620761726.97 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.005",
+        "method": "GET",
+        "route": "metrics",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "5a32e8a21d07dc8a" }, "value": "0.002903503", "timestamp": 1620761570.28 },
+        { "labels": { "traceID": "5baddca63f5d90a7" }, "value": "0.003403121", "timestamp": 1620761585.28 },
+        { "labels": { "traceID": "13a8ca5b6ce8b4e5" }, "value": "0.002366419", "timestamp": 1620761600.28 },
+        { "labels": { "traceID": "7482236b6a4d70ef" }, "value": "0.002967911", "timestamp": 1620761615.28 },
+        { "labels": { "traceID": "2cba65eca40f34fd" }, "value": "0.001448914", "timestamp": 1620761630.279 },
+        { "labels": { "traceID": "2b46dd19c88a5efe" }, "value": "0.001533921", "timestamp": 1620761645.279 },
+        { "labels": { "traceID": "214a12bdeef3b8f1" }, "value": "0.001854422", "timestamp": 1620761660.279 },
+        { "labels": { "traceID": "1edb2187df3e9a84" }, "value": "0.001403631", "timestamp": 1620761675.279 },
+        { "labels": { "traceID": "279ba7399bf0a102" }, "value": "0.002374148", "timestamp": 1620761690.281 },
+        { "labels": { "traceID": "1d674f76346af5e1" }, "value": "0.001900167", "timestamp": 1620761705.279 },
+        { "labels": { "traceID": "5266d1dc63e87f64" }, "value": "0.001881317", "timestamp": 1620761720.28 },
+        { "labels": { "traceID": "1269ccd911e11972" }, "value": "0.002149382", "timestamp": 1620761735.281 },
+        { "labels": { "traceID": "4b4745973c7893f9" }, "value": "0.003628674", "timestamp": 1620761765.282 },
+        { "labels": { "traceID": "63065e988633d3a7" }, "value": "0.00259", "timestamp": 1620761780.282 },
+        { "labels": { "traceID": "1bcd65fbb5038537" }, "value": "0.002453527", "timestamp": 1620761795.282 },
+        { "labels": { "traceID": "5b5397d37915c7c2" }, "value": "0.002336174", "timestamp": 1620761810.282 },
+        { "labels": { "traceID": "35d44091ebe0570" }, "value": "0.002195594", "timestamp": 1620761825.282 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.005",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "710d22174356e0e1" }, "value": "0.000044867", "timestamp": 1620761555.278 },
+        { "labels": { "traceID": "42f1c15e54b5d128" }, "value": "0.000031916", "timestamp": 1620761570.226 },
+        { "labels": { "traceID": "5f74b83ffc17aca4" }, "value": "0.000043602", "timestamp": 1620761585.059 },
+        { "labels": { "traceID": "557f9f4e5fd43650" }, "value": "0.000041759", "timestamp": 1620761600.252 },
+        { "labels": { "traceID": "749437467b47a353" }, "value": "0.000052233", "timestamp": 1620761615.18 },
+        { "labels": { "traceID": "54fa5b6017463fec" }, "value": "0.00009653", "timestamp": 1620761630.161 },
+        { "labels": { "traceID": "40abde3a75b81d54" }, "value": "0.000050126", "timestamp": 1620761645.234 },
+        { "labels": { "traceID": "33d33dfb63e1b223" }, "value": "0.000026959", "timestamp": 1620761660.163 },
+        { "labels": { "traceID": "1ac2a04a2a01d519" }, "value": "0.0000612", "timestamp": 1620761675.168 },
+        { "labels": { "traceID": "41688684fd2f1f8" }, "value": "0.000026752", "timestamp": 1620761690.259 },
+        { "labels": { "traceID": "3582e11947c9371f" }, "value": "0.00003492", "timestamp": 1620761704.514 },
+        { "labels": { "traceID": "35782ca88006574c" }, "value": "0.000028053", "timestamp": 1620761720.26 },
+        { "labels": { "traceID": "4d4476ce6643efdc" }, "value": "0.000064223", "timestamp": 1620761735.204 },
+        { "labels": { "traceID": "36cb3bfa6db30032" }, "value": "0.000039705", "timestamp": 1620761750.269 },
+        { "labels": { "traceID": "4692e4933288c43a" }, "value": "0.000031269", "timestamp": 1620761765.206 },
+        { "labels": { "traceID": "1a0928a4986c108b" }, "value": "0.000032186", "timestamp": 1620761780 },
+        { "labels": { "traceID": "75cec8d96b173c03" }, "value": "0.000070891", "timestamp": 1620761795.211 },
+        { "labels": { "traceID": "6a130945282a41a6" }, "value": "0.000025227", "timestamp": 1620761810.221 },
+        { "labels": { "traceID": "7cb16deb4fde6913" }, "value": "0.000025961", "timestamp": 1620761825.225 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.005",
+        "method": "POST",
+        "route": "post",
+        "status_code": "204",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "537dcbf082c2ba93" }, "value": "0.000097575", "timestamp": 1620761553.734 },
+        { "labels": { "traceID": "39e6c907736a4c73" }, "value": "0.000081478", "timestamp": 1620761556.735 },
+        { "labels": { "traceID": "19d421ff7a9fbfd0" }, "value": "0.000034594", "timestamp": 1620761581.735 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.005",
+        "method": "POST",
+        "route": "post",
+        "status_code": "208",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "61b1e057d8686851" }, "value": "0.000108024", "timestamp": 1620761554.734 },
+        { "labels": { "traceID": "40818434e899043c" }, "value": "0.000040232", "timestamp": 1620761569.736 },
+        { "labels": { "traceID": "62a17debadc079dd" }, "value": "0.000086612", "timestamp": 1620761584.736 },
+        { "labels": { "traceID": "6bf0d79336718717" }, "value": "0.00013739", "timestamp": 1620761599.735 },
+        { "labels": { "traceID": "1a2f17474be51243" }, "value": "0.000182956", "timestamp": 1620761614.736 },
+        { "labels": { "traceID": "21e2d4bbef4d3308" }, "value": "0.00010539", "timestamp": 1620761629.736 },
+        { "labels": { "traceID": "70753ef384fd3dee" }, "value": "0.000082617", "timestamp": 1620761644.736 },
+        { "labels": { "traceID": "16b08b7985c8d771" }, "value": "0.000041379", "timestamp": 1620761659.736 },
+        { "labels": { "traceID": "4412b326f2fa36fe" }, "value": "0.000114389", "timestamp": 1620761674.735 },
+        { "labels": { "traceID": "bf705b43997000a" }, "value": "0.000179324", "timestamp": 1620761689.738 },
+        { "labels": { "traceID": "554d18f9bf880b46" }, "value": "0.000113352", "timestamp": 1620761704.738 },
+        { "labels": { "traceID": "64f06303658e8ba5" }, "value": "0.000107816", "timestamp": 1620761718.737 },
+        { "labels": { "traceID": "715f9af007d9670e" }, "value": "0.000136609", "timestamp": 1620761734.738 },
+        { "labels": { "traceID": "25eb144fda851c80" }, "value": "0.000064357", "timestamp": 1620761749.737 },
+        { "labels": { "traceID": "cc85c3e6bc6f1e2" }, "value": "0.000063742", "timestamp": 1620761764.737 },
+        { "labels": { "traceID": "1f5f4dd50f300b42" }, "value": "0.000251037", "timestamp": 1620761779.737 },
+        { "labels": { "traceID": "135a2cc82ada01d0" }, "value": "0.000049377", "timestamp": 1620761794.738 },
+        { "labels": { "traceID": "64683e7712f3d18a" }, "value": "0.000210094", "timestamp": 1620761809.739 },
+        { "labels": { "traceID": "169726d18ab98e71" }, "value": "0.00005974", "timestamp": 1620761824.74 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.01",
+        "method": "GET",
+        "route": "metrics",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "7e5433a9d13a18f5" }, "value": "0.007182854", "timestamp": 1620761555.285 },
+        { "labels": { "traceID": "457140593761aa64" }, "value": "0.005264001", "timestamp": 1620761750.284 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.01",
+        "method": "POST",
+        "route": "post",
+        "status_code": "208",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "7410f3eddf32d65f" }, "value": "0.008582991", "timestamp": 1620761724.746 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.025",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "4c7c47e2d70f2d20" }, "value": "0.011127322", "timestamp": 1620761712.517 },
+        { "labels": { "traceID": "5a33133cd9fc1f9c" }, "value": "0.018318268", "timestamp": 1620761721.172 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.025",
+        "method": "POST",
+        "route": "post",
+        "status_code": "208",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "1cedd0acd4f5894d" }, "value": "0.021432455", "timestamp": 1620761701.758 },
+        { "labels": { "traceID": "5a10a645c76ebe69" }, "value": "0.011026563", "timestamp": 1620761714.748 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.05",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "275e17a7c6a13eb9" }, "value": "0.038704", "timestamp": 1620761719.763 },
+        { "labels": { "traceID": "180e9ae912bab1b3" }, "value": "0.048015948", "timestamp": 1620761728.295 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.05",
+        "method": "POST",
+        "route": "post",
+        "status_code": "208",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "47d0ffd0c614d8c2" }, "value": "0.049099284", "timestamp": 1620761702.785 },
+        { "labels": { "traceID": "23b22c3a5804c310" }, "value": "0.02679777", "timestamp": 1620761719.763 },
+        { "labels": { "traceID": "5f00eb10c755117a" }, "value": "0.028521019", "timestamp": 1620761726.765 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.1",
+        "method": "GET",
+        "route": "root",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "245748ce121873b7" }, "value": "0.063573579", "timestamp": 1620761717.093 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.1",
+        "method": "GET",
+        "route": "root",
+        "status_code": "500",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "70014d17952a82ad" }, "value": "0.050241318", "timestamp": 1620761705.203 },
+        { "labels": { "traceID": "6246d76d84cd3844" }, "value": "0.050311235", "timestamp": 1620761720.202 },
+        { "labels": { "traceID": "5ba6f40766a58966" }, "value": "0.050379771", "timestamp": 1620761729.948 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.1",
+        "method": "POST",
+        "route": "post",
+        "status_code": "208",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "44eb47a77e9a25c5" }, "value": "0.068911073", "timestamp": 1620761703.805 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "db:80",
+        "job": "tns/db",
+        "le": "0.25",
+        "method": "GET",
+        "route": "root",
+        "status_code": "500",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "44eb47a77e9a25c5" }, "value": "0.145506317", "timestamp": 1620761703.956 },
+        { "labels": { "traceID": "7526cf1caba0e6bd" }, "value": "0.113571728", "timestamp": 1620761719.034 },
+        { "labels": { "traceID": "6fbcff3c0d0c8804" }, "value": "0.19024744", "timestamp": 1620761726.968 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "loadgen:80",
+        "job": "tns/loadgen",
+        "le": "0.005",
+        "method": "GET",
+        "route": "metrics",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "1fe6d9e5ab6be0a5" }, "value": "0.002076766", "timestamp": 1620761552.657 },
+        { "labels": { "traceID": "577f9f410678557a" }, "value": "0.004503368", "timestamp": 1620761567.659 },
+        { "labels": { "traceID": "1a8a132cb9896030" }, "value": "0.004139238", "timestamp": 1620761582.66 },
+        { "labels": { "traceID": "53e8c8cea1a589a1" }, "value": "0.001708737", "timestamp": 1620761597.657 },
+        { "labels": { "traceID": "50f63ab02a0f90de" }, "value": "0.001486912", "timestamp": 1620761612.656 },
+        { "labels": { "traceID": "5c68c265c183c119" }, "value": "0.002758754", "timestamp": 1620761627.657 },
+        { "labels": { "traceID": "404960d3dbf747ae" }, "value": "0.001970475", "timestamp": 1620761642.657 },
+        { "labels": { "traceID": "514aa89c2f8df024" }, "value": "0.001930028", "timestamp": 1620761657.658 },
+        { "labels": { "traceID": "4ceaad3f41d210c8" }, "value": "0.001324236", "timestamp": 1620761672.656 },
+        { "labels": { "traceID": "4f04efc40d099a8c" }, "value": "0.002648599", "timestamp": 1620761687.658 },
+        { "labels": { "traceID": "121f4f4e9c6795f0" }, "value": "0.001348972", "timestamp": 1620761702.657 },
+        { "labels": { "traceID": "16025d6f8129a665" }, "value": "0.00154316", "timestamp": 1620761717.658 },
+        { "labels": { "traceID": "798d921a274ecce5" }, "value": "0.003156098", "timestamp": 1620761732.66 },
+        { "labels": { "traceID": "106b88fa469e15b7" }, "value": "0.002607822", "timestamp": 1620761747.662 },
+        { "labels": { "traceID": "2179b1995c50273c" }, "value": "0.002376715", "timestamp": 1620761762.66 },
+        { "labels": { "traceID": "57f635beef50aa83" }, "value": "0.003579502", "timestamp": 1620761777.66 },
+        { "labels": { "traceID": "5235dbf17c79ed24" }, "value": "0.001724193", "timestamp": 1620761807.659 },
+        { "labels": { "traceID": "333114bad0a9079b" }, "value": "0.001371645", "timestamp": 1620761822.658 }
+      ]
+    },
+    {
+      "seriesLabels": {
+        "__name__": "tns_request_duration_seconds_bucket",
+        "instance": "loadgen:80",
+        "job": "tns/loadgen",
+        "le": "0.01",
+        "method": "GET",
+        "route": "metrics",
+        "status_code": "200",
+        "ws": "false"
+      },
+      "exemplars": [
+        { "labels": { "traceID": "7920f8a86e0e6b84" }, "value": "0.007650334", "timestamp": 1620761792.665 }
+      ]
+    }
+  ]
+}

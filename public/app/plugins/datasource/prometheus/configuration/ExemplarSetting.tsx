@@ -1,6 +1,7 @@
-import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
-import { DataSourcePicker } from '@grafana/runtime';
 import { css } from '@emotion/css';
+import { selectors } from '@grafana/e2e-selectors';
+import { DataSourcePicker } from '@grafana/runtime';
+import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
 import React, { useState } from 'react';
 import { ExemplarTraceIdDestination } from '../types';
 
@@ -17,7 +18,11 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
     <div className="gf-form-group">
       <InlineField label="Internal link" labelWidth={24}>
         <>
-          <InlineSwitch value={isInternalLink} onChange={(ev) => setIsInternalLink(ev.currentTarget.checked)} />
+          <InlineSwitch
+            value={isInternalLink}
+            aria-label={selectors.components.DataSource.Prometheus.configPage.internalLinkSwitch}
+            onChange={(ev) => setIsInternalLink(ev.currentTarget.checked)}
+          />
           <Button
             variant="destructive"
             title="Remove link"
