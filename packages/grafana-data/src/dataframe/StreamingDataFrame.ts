@@ -6,88 +6,6 @@ import { guessFieldTypeFromValue } from './processDataFrame';
 import { join } from '../transformations/transformers/joinDataFrames';
 import { AlignedData } from 'uplot';
 
-// converts vertical insertion records with table keys in [0] and column values in [1...N]
-// to join()-able tables with column arrays
-export function transpose(vrecs: any[][]) {
-  let tableKeys = new Set(vrecs[0]);
-  let tables = new Map();
-
-  tableKeys.forEach((key) => {
-    let cols = Array(vrecs.length - 1)
-      .fill(null)
-      .map(() => []);
-
-    tables.set(key, cols);
-  });
-
-  for (let r = 0; r < vrecs[0].length; r++) {
-    let table = tables.get(vrecs[0][r]);
-    for (let c = 1; c < vrecs.length; c++) {
-      table[c - 1].push(vrecs[c][r]);
-    }
-  }
-
-  return tables;
-}
-
-// binary search for index of closest value
-function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
-  let mid;
-  lo = lo || 0;
-  hi = hi || arr.length - 1;
-  let bitwise = hi <= 2147483647;
-
-  while (hi - lo > 1) {
-    mid = bitwise ? (lo + hi) >> 1 : Math.floor((lo + hi) / 2);
-
-    if (arr[mid] < num) {
-      lo = mid;
-    } else {
-      hi = mid;
-    }
-  }
-
-  if (num - arr[lo] <= arr[hi] - num) {
-    return lo;
-  }
-
-  return hi;
-}
-
-// mutable circular push
-function circPush(data: number[][], newData: number[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
-  for (let i = 0; i < data.length; i++) {
-    data[i] = data[i].concat(newData[i]);
-  }
-
-  const nlen = data[0].length;
-
-  let sliceIdx = 0;
-
-  if (nlen > maxLength) {
-    sliceIdx = nlen - maxLength;
-  }
-
-  if (maxDelta !== Infinity && deltaIdx >= 0) {
-    const deltaLookup = data[deltaIdx];
-
-    const low = deltaLookup[sliceIdx];
-    const high = deltaLookup[nlen - 1];
-
-    if (high - low > maxDelta) {
-      sliceIdx = closestIdx(high - maxDelta, deltaLookup, sliceIdx);
-    }
-  }
-
-  if (sliceIdx) {
-    for (let i = 0; i < data.length; i++) {
-      data[i] = data[i].slice(sliceIdx);
-    }
-  }
-
-  return data;
-}
-
 /**
  * @alpha
  */
@@ -286,4 +204,86 @@ export class StreamingDataFrame implements DataFrame {
       this.length = appended[0].length;
     }
   }
+}
+
+// converts vertical insertion records with table keys in [0] and column values in [1...N]
+// to join()-able tables with column arrays
+export function transpose(vrecs: any[][]) {
+  let tableKeys = new Set(vrecs[0]);
+  let tables = new Map();
+
+  tableKeys.forEach((key) => {
+    let cols = Array(vrecs.length - 1)
+      .fill(null)
+      .map(() => []);
+
+    tables.set(key, cols);
+  });
+
+  for (let r = 0; r < vrecs[0].length; r++) {
+    let table = tables.get(vrecs[0][r]);
+    for (let c = 1; c < vrecs.length; c++) {
+      table[c - 1].push(vrecs[c][r]);
+    }
+  }
+
+  return tables;
+}
+
+// binary search for index of closest value
+function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
+  let mid;
+  lo = lo || 0;
+  hi = hi || arr.length - 1;
+  let bitwise = hi <= 2147483647;
+
+  while (hi - lo > 1) {
+    mid = bitwise ? (lo + hi) >> 1 : Math.floor((lo + hi) / 2);
+
+    if (arr[mid] < num) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+
+  if (num - arr[lo] <= arr[hi] - num) {
+    return lo;
+  }
+
+  return hi;
+}
+
+// mutable circular push
+function circPush(data: number[][], newData: number[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
+  for (let i = 0; i < data.length; i++) {
+    data[i] = data[i].concat(newData[i]);
+  }
+
+  const nlen = data[0].length;
+
+  let sliceIdx = 0;
+
+  if (nlen > maxLength) {
+    sliceIdx = nlen - maxLength;
+  }
+
+  if (maxDelta !== Infinity && deltaIdx >= 0) {
+    const deltaLookup = data[deltaIdx];
+
+    const low = deltaLookup[sliceIdx];
+    const high = deltaLookup[nlen - 1];
+
+    if (high - low > maxDelta) {
+      sliceIdx = closestIdx(high - maxDelta, deltaLookup, sliceIdx);
+    }
+  }
+
+  if (sliceIdx) {
+    for (let i = 0; i < data.length; i++) {
+      data[i] = data[i].slice(sliceIdx);
+    }
+  }
+
+  return data;
 }
