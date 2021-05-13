@@ -15,7 +15,6 @@ import { config } from 'app/core/config';
 import { BarGaugeOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { isNumber } from 'lodash';
-import { ensureGlobalRangeOnState } from '@grafana/data/src/field/scale';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderComponent = (
@@ -70,11 +69,11 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
-    ensureGlobalRangeOnState(data.series);
 
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
+      ensureGlobalRange: true,
       replaceVariables,
       theme: config.theme2,
       data: data.series,
