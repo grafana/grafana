@@ -8,10 +8,9 @@ import { getValueFormat } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
-import { getScaleCalculator } from './scale';
+import { getScaleCalculator, ScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
-import { getColorForTheme } from '../utils/namedColorsPalette';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -41,7 +40,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     return toStringProcessor;
   }
 
-  const { field } = options;
+  const field = options.field as Field;
   const config = field.config ?? {};
 
   let unit = config.unit;
@@ -53,7 +52,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field as Field, options.theme);
+  const scaleFunc = getScaleCalculator(field, options.theme);
+  const defaultColor = getDefaultColorFunc(field, scaleFunc, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
@@ -81,7 +81,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         }
 
         if (mappingResult.color != null) {
-          color = getColorForTheme(mappingResult.color, options.theme.v1);
+          color = options.theme.visualization.getColorByName(mappingResult.color);
         }
 
         shouldFormat = false;
@@ -113,7 +113,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     if (!color) {
-      const scaleResult = scaleFunc(-Infinity);
+      const scaleResult = defaultColor(value);
       color = scaleResult.color;
       percent = scaleResult.percent;
     }
@@ -131,4 +131,29 @@ export function getRawDisplayProcessor(): DisplayProcessor {
     text: `${value}`,
     numeric: (null as unknown) as number,
   });
+}
+
+function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: GrafanaTheme2) {
+  if (field.type === FieldType.string) {
+    return (value: any) => {
+      if (!value) {
+        return { color: theme.colors.background.primary, percent: 0 };
+      }
+
+      const hc = strHashCode(value as string);
+      return {
+        color: theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)],
+        percent: 0,
+      };
+    };
+  }
+  return (value: any) => scaleFunc(-Infinity);
+}
+
+/**
+ * Converts a string into a numeric value -- we just need it to be different
+ * enough so that it has a reasonable distribution across a color pallet
+ */
+function strHashCode(str: string) {
+  return str.split('').reduce((prevHash, currVal) => ((prevHash << 5) - prevHash + currVal.charCodeAt(0)) | 0, 0);
 }
