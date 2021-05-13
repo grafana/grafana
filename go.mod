@@ -49,7 +49,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.5
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.92.1-0.20210512143309-93daead0e523
+	github.com/grafana/grafana-plugin-sdk-go v0.97.1-0.20210513132107-6aa48f7c94ed
 	github.com/grafana/loki v1.6.2-0.20210429132126-d88f3996eaa2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.15.0
