@@ -10,8 +10,9 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FieldLinkList, Portal, useStyles, VizTooltipContainer } from '@grafana/ui';
+import { FieldLinkList, Portal, useStyles } from '@grafana/ui';
 import React, { useCallback, useRef, useState } from 'react';
+import { usePopper } from 'react-popper';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
@@ -23,19 +24,10 @@ interface ExemplarMarkerProps {
 export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFrame, index, getFieldLinks }) => {
   const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
-  const markerRef = useRef<HTMLDivElement>(null);
-  const annotationPopoverRef = useRef<HTMLDivElement>(null);
+  const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
+  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
+  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement);
   const popoverRenderTimeout = useRef<NodeJS.Timer>();
-
-  const timeFormatter = useCallback(
-    (value: number) => {
-      return dateTimeFormat(value, {
-        format: systemDateFormats.fullDate,
-        timeZone,
-      });
-    },
-    [timeZone]
-  );
 
   const onMouseEnter = useCallback(() => {
     if (popoverRenderTimeout.current) {
@@ -51,22 +43,23 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
-    if (!markerRef?.current) {
-      return null;
-    }
-
-    const el = markerRef.current;
-    const elBBox = el.getBoundingClientRect();
+    const timeFormatter = (value: number) => {
+      return dateTimeFormat(value, {
+        format: systemDateFormats.fullDate,
+        timeZone,
+      });
+    };
 
     return (
-      <VizTooltipContainer
-        position={{ x: elBBox.left, y: elBBox.top + elBBox.height }}
-        offset={{ x: 0, y: 0 }}
+      <div
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={styles.tooltip}
+        ref={setPopperElement}
+        style={popperStyles.popper}
+        {...attributes.popper}
       >
-        <div ref={annotationPopoverRef} className={styles.wrapper}>
+        <div className={styles.wrapper}>
           <div className={styles.header}>
             <span className={styles.title}>Exemplar</span>
           </div>
@@ -94,14 +87,24 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
             </div>
           </div>
         </div>
-      </VizTooltipContainer>
+      </div>
     );
-  }, [dataFrame.fields, getFieldLinks, index, onMouseEnter, onMouseLeave, styles, timeFormatter]);
+  }, [
+    attributes.popper,
+    dataFrame.fields,
+    getFieldLinks,
+    index,
+    onMouseEnter,
+    onMouseLeave,
+    popperStyles.popper,
+    styles,
+    timeZone,
+  ]);
 
   return (
     <>
       <div
-        ref={markerRef}
+        ref={setMarkerElement}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={styles.markerWrapper}
