@@ -2,7 +2,6 @@ import { reduceField, ReducerID } from '..';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
-//import { join } from '../transformations/transformers/joinDataFrames';
 
 describe('Streaming JSON', () => {
   describe('when called with a DataFrame', () => {
