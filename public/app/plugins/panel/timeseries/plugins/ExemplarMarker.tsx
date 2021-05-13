@@ -9,6 +9,7 @@ import {
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, useStyles } from '@grafana/ui';
 import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
@@ -107,6 +108,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={styles.markerWrapper}
+        aria-label={selectors.components.DataSource.Prometheus.exemplarMarker}
       >
         <svg viewBox="0 0 599 599" width="8" height="8" className={cx(styles.marble, isOpen && styles.activeMarble)}>
           <path d="M 300,575 L 575,300 L 300,25 L 25,300 L 300,575 Z" />
