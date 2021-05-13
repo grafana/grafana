@@ -468,12 +468,14 @@ var expAvailableChannelJsonOutput = `
     "type": "sensugo",
     "name": "Sensu Go",
     "description": "Sends HTTP POST request to a Sensu Go API",
-		"heading:     "Sensu Go Settings",
+		"heading":     "Sensu Go Settings",
+    "info": "",
     "options": [
       {
         "element": "input",
         "inputType": "text",
         "label": "Backend URL",
+        "description": "",
         "placeholder": "http://sensu-api.local:8080",
         "propertyName": "url",
         "selectOptions": null,
@@ -481,9 +483,9 @@ var expAvailableChannelJsonOutput = `
           "field": "",
           "is": ""
         },
-        "required": false,
+        "required": true,
         "validationRule": "",
-        "secure": true
+        "secure": false
       },
       {
         "element": "input",
@@ -506,6 +508,7 @@ var expAvailableChannelJsonOutput = `
         "inputType": "text",
         "label": "Proxy entity name",
         "description": "If empty, rule name will be used",
+        "placeholder": "",
         "propertyName": "entity",
         "selectOptions": null,
         "showWhen": {
@@ -521,6 +524,7 @@ var expAvailableChannelJsonOutput = `
         "inputType": "text",
         "label": "Check name",
         "description": "If empty, rule UID will be used",
+        "placeholder": "",
         "propertyName": "check",
         "selectOptions": null,
         "showWhen": {
@@ -535,6 +539,8 @@ var expAvailableChannelJsonOutput = `
         "element": "input",
         "inputType": "text",
         "label": "Handler",
+        "description": "",
+        "placeholder": "",
         "propertyName": "handler",
         "selectOptions": null,
         "showWhen": {
@@ -549,6 +555,7 @@ var expAvailableChannelJsonOutput = `
         "element": "input",
         "inputType": "text",
         "label": "Namespace",
+        "description": "",
         "placeholder": "default",
         "propertyName": "namespace",
         "selectOptions": null,
@@ -561,10 +568,11 @@ var expAvailableChannelJsonOutput = `
         "secure": false
       },
       {
-        "element": "input",
-        "inputType": "text",
+        "element": "textarea",
+        "inputType": "",
         "label": "Message",
-        "placeholder": "{{ template "default.message" . }}",
+        "description": "",
+        "placeholder": "{{ template \"default.message\" . }}",
         "propertyName": "message",
         "selectOptions": null,
         "showWhen": {
