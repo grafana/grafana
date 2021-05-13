@@ -134,9 +134,9 @@ func TestCueErrorWrapper(t *testing.T) {
 		}
 
 		_, err := BaseDashboardFamily(baseLoadPaths)
-		require.EqualError(t, err, "errors: [\"missing ',' in struct literal\" \"expected '}', found 'EOF'\"], in file: /cue/data/gen.cue, on line: 13")
+		require.EqualError(t, err, "errors: [\"expected operand, found ';'\"], in file: /cue/data/gen.cue, on line: 1")
 
 		_, err = DistDashboardFamily(baseLoadPaths)
-		require.EqualError(t, err, "errors: [\"missing ',' in struct literal\" \"expected '}', found 'EOF'\"], in file: /cue/data/gen.cue, on line: 13")
+		require.EqualError(t, err, "errors: [\"expected operand, found ';'\"], in file: /cue/data/gen.cue, on line: 1")
 	})
 }
