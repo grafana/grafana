@@ -24,8 +24,8 @@ describe('createGraphFrames', () => {
         ['3fa414edcef6ad90'],
         ['tempo-querier'],
         ['HTTP GET - api_traces_traceid'],
-        ['total: 1049.14ms (100%)'],
-        ['self: 1049.14ms (100%)'],
+        ['1049.14ms (100%)'],
+        ['1049.14ms (100%)'],
         [1],
       ])
     );

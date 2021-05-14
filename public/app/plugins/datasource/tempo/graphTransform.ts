@@ -42,8 +42,8 @@ export function createGraphFrames(data: DataFrame): DataFrame[] {
       { name: Fields.id, type: FieldType.string },
       { name: Fields.title, type: FieldType.string },
       { name: Fields.subTitle, type: FieldType.string },
-      { name: Fields.mainStat, type: FieldType.string },
-      { name: Fields.secondaryStat, type: FieldType.string },
+      { name: Fields.mainStat, type: FieldType.string, config: { displayName: 'Total time (% of trace)' } },
+      { name: Fields.secondaryStat, type: FieldType.string, config: { displayName: 'Self time (% of total)' } },
       { name: Fields.color, type: FieldType.number, config: { color: { mode: 'continuous-GrYlRd' } } },
     ],
     meta: {
