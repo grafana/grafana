@@ -123,7 +123,9 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 				"settings": {
 					"recipient": "#unified-alerting-test-but-updated"
 				},
-				"secureSettings": {},
+				"secureFields": {
+					"url": true
+				},
 				"type": "slack",
 				"sendReminder": true,
 				"name": "slack.receiver",
