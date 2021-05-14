@@ -823,12 +823,14 @@ describe('exitViewPanel', () => {
 });
 
 describe('exitPanelEditor', () => {
-  function getTestContext() {
+  function getTestContext(setPreviousAutoRefresh = false) {
     const panel: any = { destroy: jest.fn() };
     const dashboard = new DashboardModel({});
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
-
+    if (setPreviousAutoRefresh) {
+      dashboard.previousAutoRefresh = '5s';
+    }
     return { dashboard, panel };
   }
 
@@ -858,10 +860,10 @@ describe('exitPanelEditor', () => {
     });
 
     it('then refresh property is set to previousAutoRefresh property', () => {
-      const { dashboard } = getTestContext();
+      const { dashboard } = getTestContext(true);
       dashboard.exitPanelEditor();
 
-      expect(timeSrvMock.setAutoRefresh).toHaveBeenCalled();
+      expect(timeSrvMock.setAutoRefresh).toHaveBeenCalledWith('5s');
     });
 
     describe('and there is a change that affects all panels', () => {
@@ -899,4 +901,35 @@ describe('setChangeAffectsAllPanels', () => {
       expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
     }
   );
+});
+
+describe('initEditPanel', () => {
+  function getTestContext() {
+    const dashboard = new DashboardModel({});
+    return { dashboard };
+  }
+
+  describe('when called', () => {
+    it('then panelInEdit is not undefined', () => {
+      const { dashboard } = getTestContext();
+      dashboard.addPanel({ type: 'timeseries' });
+      dashboard.initEditPanel(dashboard.panels[0]);
+      expect(dashboard.panelInEdit).not.toBeUndefined();
+    });
+
+    it('then previousAutoRefresh persist old refresh property', () => {
+      const { dashboard } = getTestContext();
+      dashboard.addPanel({ type: 'timeseries' });
+      dashboard.refresh = '5s';
+      dashboard.initEditPanel(dashboard.panels[0]);
+      expect(dashboard.previousAutoRefresh).toBe('5s');
+    });
+
+    it('then refresh property is set to empty string', () => {
+      const { dashboard } = getTestContext();
+      dashboard.addPanel({ type: 'timeseries' });
+      dashboard.initEditPanel(dashboard.panels[0]);
+      expect(timeSrvMock.setAutoRefresh).toHaveBeenCalledWith('');
+    });
+  });
 });

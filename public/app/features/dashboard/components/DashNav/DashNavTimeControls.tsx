@@ -91,7 +91,7 @@ export class DashNavTimeControls extends Component<Props> {
     const hideRefreshPicker = !dashboard.panelInEdit?.isEditing;
 
     return (
-      <div className={styles.container} data-testid="dashboard-nav-time-controls">
+      <div className={styles.container}>
         <TimePickerWithHistory
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
