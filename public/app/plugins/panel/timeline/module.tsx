@@ -59,11 +59,11 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
       .addRadio({
         path: 'mode',
         name: 'Mode',
-        defaultValue: TimelineMode.Spans,
+        defaultValue: TimelineMode.Changes,
         settings: {
           options: [
-            { label: 'Spans', value: TimelineMode.Spans },
-            { label: 'Grid', value: TimelineMode.Grid },
+            { label: 'State changes', value: TimelineMode.Changes },
+            { label: 'Periodic samples', value: TimelineMode.Samples },
           ],
         },
       })
@@ -78,6 +78,19 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
           ],
         },
         defaultValue: BarValueVisibility.Always,
+      })
+      .addRadio({
+        path: 'alignValue',
+        name: 'Align value',
+        settings: {
+          options: [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' },
+          ],
+        },
+        defaultValue: 'center',
+        showIf: ({ mode }) => mode === TimelineMode.Changes,
       })
       .addSliderInput({
         path: 'rowHeight',
@@ -98,7 +111,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
           max: 1,
           step: 0.01,
         },
-        showIf: ({ mode }) => mode === TimelineMode.Grid,
+        showIf: ({ mode }) => mode === TimelineMode.Samples,
       });
 
     //addLegendOptions(builder);

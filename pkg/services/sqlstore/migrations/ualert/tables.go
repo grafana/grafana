@@ -1,11 +1,26 @@
-package store
+package ualert
 
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
+
+// AddMigration defines database migrations.
+// If Alerting NG is not enabled does nothing.
+func AddTablesMigrations(mg *migrator.Migrator) {
+	AddAlertDefinitionMigrations(mg, 60)
+	AddAlertDefinitionVersionMigrations(mg)
+	// Create alert_instance table
+	AlertInstanceMigration(mg)
+
+	// Create alert_rule
+	AddAlertRuleMigrations(mg, 60)
+	AddAlertRuleVersionMigrations(mg)
+
+	// Create Alertmanager configurations
+	AddAlertmanagerConfigMigrations(mg)
+}
 
 // AddAlertDefinitionMigrations should not be modified.
 func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
@@ -151,8 +166,8 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			// the following fields will correspond to a dashboard (or folder) UIID
 			{Name: "namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.NoData.String())},
-			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.AlertingErrState.String())},
+			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'NoData'"},
+			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'Alerting'"},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex},
@@ -199,8 +214,8 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.NoData.String())},
-			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.AlertingErrState.String())},
+			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'NoData'"},
+			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'Alerting'"},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex},
@@ -222,4 +237,18 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 
 	// add labels column
 	mg.AddMigration("add column labels to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "labels", Type: migrator.DB_Text, Nullable: true}))
+}
+
+func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
+	alertConfiguration := migrator.Table{
+		Name: "alert_configuration",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "alertmanager_configuration", Type: migrator.DB_Text, Nullable: false},
+			{Name: "configuration_version", Type: migrator.DB_NVarchar, Length: 3}, // In a format of vXX e.g. v1, v2, v10, etc
+			{Name: "created_at", Type: migrator.DB_Int, Nullable: false},
+		},
+	}
+
+	mg.AddMigration("create_alert_configuration_table", migrator.NewAddTableMigration(alertConfiguration))
 }
