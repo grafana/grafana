@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -11,6 +13,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -177,10 +180,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return response.Error(http.StatusForbidden, "Permission denied", nil)
 	}
-	err := body.EncryptSecureSettings()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to encrypt receiver secrets", err)
-	}
+
 	// Get the last known working configuration
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
@@ -202,15 +202,35 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	for i, r := range body.AlertmanagerConfig.Receivers {
 		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			cr := currentConfig.AlertmanagerConfig.Receivers[i]
-			if cr != nil {
+			if cr != nil && len(cr.PostableGrafanaReceivers.GrafanaManagedReceivers) < j { //  if it's a newly introduced receiver it does not exist in the current configuration
 				cgmr := cr.PostableGrafanaReceivers.GrafanaManagedReceivers[j]
 				if cgmr != nil {
 					if cgmr.Name == gr.Name && cgmr.Type == gr.Type {
-						body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = cgmr.SecureSettings
+						// frontend sends only the secure settings that have to be updated
+						// therefore we have to copy from the last configuration only those secure settings not included in the request
+						// body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = cgmr.SecureSettings
+						for key, storedValue := range cgmr.SecureSettings {
+							_, ok := body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key]
+							if !ok {
+								decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
+								if err != nil {
+									return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to decode stored secure setting: %s", key), err)
+								}
+								decryptedValue, err := util.Decrypt([]byte(decodeValue), setting.SecretKey)
+								if err != nil {
+									return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to decrypt stored secure setting: %s", key), err)
+								}
+								body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key] = string(decryptedValue)
+							}
+						}
 					}
 				}
 			}
 		}
+	}
+
+	if err := body.EncryptSecureSettings(); err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to encrypt receiver secrets", err)
 	}
 
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
