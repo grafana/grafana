@@ -4,7 +4,7 @@ import { useStyles } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import React, { FC, useState } from 'react';
-import { promRuleStateToReadable } from '../../utils/rules';
+import { alertStateToReadable } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RulesTable } from './RulesTable';
 
@@ -26,7 +26,7 @@ export const RuleListStateSection: FC<Props> = ({ rules, state, defaultCollapsed
           isCollapsed={collapsed}
           onToggle={() => setCollapsed(!collapsed)}
         />
-        {promRuleStateToReadable(state)} ({rules.length})
+        {alertStateToReadable(state)} ({rules.length})
       </h4>
       {!collapsed && <RulesTable rules={rules} showGroupColumn={true} />}
     </>
