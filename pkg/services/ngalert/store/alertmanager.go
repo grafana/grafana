@@ -55,29 +55,30 @@ func (st DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAler
 	})
 }
 
-// GetAlertmanagerConfiguration returns the alertmanager configuration identified by the query.
-// It returns ErrNoAlertmanagerConfiguration if no such configuration is found.
-func (st DBstore) GetAlertmanagerConfiguration(query *models.GetAlertmanagerConfigurationQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		c, err := getAlertmanagerConfigurationByID(sess, query.ID)
-		if err != nil {
-			return err
-		}
-		query.Result = c
-		return nil
-	})
-}
-
 // SaveAlertmanagerConfiguration creates an alertmanager configuration.
 func (st DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return st.SaveAlertmanagerConfigurationWithCallback(cmd, func() error { return nil })
+}
+
+type SaveCallback func() error
+
+// SaveAlertmanagerConfigurationWithCallback creates an alertmanager configuration version and then executes a callback.
+// If the callback results in error in rollsback the transaction.
+func (st DBstore) SaveAlertmanagerConfigurationWithCallback(cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error {
+	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 			ConfigurationVersion:      cmd.ConfigurationVersion,
+			Default:                   cmd.Default,
 		}
 		if _, err := sess.Insert(config); err != nil {
 			return err
 		}
+
+		if err := callback(); err != nil {
+			return err
+		}
+
 		return nil
 	})
 }

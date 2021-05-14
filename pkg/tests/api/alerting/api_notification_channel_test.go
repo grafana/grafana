@@ -1,10 +1,8 @@
 package alerting
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -49,9 +47,12 @@ func TestNotificationChannels(t *testing.T) {
 	require.NoError(t, createUser(t, s, models.ROLE_EDITOR, "grafana", "password"))
 
 	{
-		// There are no notification channel config initially.
+		// There are no notification channel config initially - so it returns the default configuration.
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
-		_ = getRequest(t, alertsURL, http.StatusNotFound) // nolint
+		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.JSONEq(t, defaultAlertmanagerConfigJSON, string(b))
 	}
 
 	{
@@ -60,7 +61,7 @@ func TestNotificationChannels(t *testing.T) {
 
 		// Post the alertmanager config.
 		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
-		postRequest(t, u, amConfig, http.StatusAccepted)
+		_ = postRequest(t, u, amConfig, http.StatusAccepted) // nolint
 
 		// Verifying that all the receivers and routes have been registered.
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
@@ -82,7 +83,7 @@ func TestNotificationChannels(t *testing.T) {
 
 		rulesConfig := getRulesConfig(t)
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
-		postRequest(t, u, rulesConfig, http.StatusAccepted)
+		_ = postRequest(t, u, rulesConfig, http.StatusAccepted) // nolint
 	}
 
 	// Eventually, we'll get all the desired alerts.
@@ -148,30 +149,6 @@ func getRulesConfig(t *testing.T) string {
 	return string(b)
 }
 
-func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
-	t.Helper()
-	// nolint:gosec
-	resp, err := http.Get(url)
-	t.Cleanup(func() {
-		require.NoError(t, resp.Body.Close())
-	})
-	require.NoError(t, err)
-	require.Equal(t, expStatusCode, resp.StatusCode)
-	return resp
-}
-
-func postRequest(t *testing.T, url string, body string, expStatusCode int) {
-	t.Helper()
-	buf := bytes.NewReader([]byte(body))
-	// nolint:gosec
-	resp, err := http.Post(url, "application/json", buf)
-	t.Cleanup(func() {
-		require.NoError(t, resp.Body.Close())
-	})
-	require.NoError(t, err)
-	require.Equal(t, expStatusCode, resp.StatusCode)
-}
-
 type mockNotificationChannel struct {
 	t      *testing.T
 	server *http.Server
@@ -212,13 +189,6 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
 	res.WriteHeader(http.StatusOK)
-}
-
-func getBody(t *testing.T, body io.ReadCloser) string {
-	t.Helper()
-	b, err := ioutil.ReadAll(body)
-	require.NoError(t, err)
-	return string(b)
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {
