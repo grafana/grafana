@@ -37,15 +37,23 @@ func (mfs MergeFS) Open(name string) (fs.File, error) {
 // filesystem slice and it identifies overlapping directories that exist in different
 // filesystems
 func (mfs MergeFS) ReadDir(name string) ([]fs.DirEntry, error) {
+	dirsMap := make(map[string]fs.DirEntry)
 	dirs := make([]fs.DirEntry, 0)
 	for _, filesystem := range mfs.filesystems {
 		if fsys, ok := filesystem.(fs.ReadDirFS); ok {
 			dir, err := fsys.ReadDir(name)
 			if err != nil {
-				logger.Debugf("directory in filepath %s was not found in filesystem", name)
-				continue
+				if errors.Is(err, fs.ErrNotExist) {
+					logger.Debugf("directory in filepath %s was not found in filesystem", name)
+					continue
+				}
+				return nil, err
 			}
-			dirs = append(dirs, dir...)
+			for _, v := range dir {
+				if _, ok := dirsMap[v.Name()]; !ok {
+					dirsMap[v.Name()] = v
+				}
+			}
 			continue
 		}
 
@@ -65,10 +73,17 @@ func (mfs MergeFS) ReadDir(name string) ([]fs.DirEntry, error) {
 			return nil, err
 		}
 		sort.Slice(fsDirs, func(i, j int) bool { return fsDirs[i].Name() < fsDirs[j].Name() })
-		dirs = append(dirs, fsDirs...)
+		for _, v := range fsDirs {
+			if _, ok := dirsMap[v.Name()]; !ok {
+				dirsMap[v.Name()] = v
+			}
+		}
 		if err := file.Close(); err != nil {
 			logger.Error("failed to close file", "err", err)
 		}
+	}
+	for _, value := range dirsMap {
+		dirs = append(dirs, value)
 	}
 	return dirs, nil
 }
