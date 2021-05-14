@@ -22,6 +22,12 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
       description: '',
       defaultValue: false,
     })
+    .addBooleanSwitch({
+      path: 'hideLogDetails',
+      name: 'Hide log details',
+      description: '',
+      defaultValue: false,
+    })
     .addRadio({
       path: 'dedupStrategy',
       name: 'Deduplication',
