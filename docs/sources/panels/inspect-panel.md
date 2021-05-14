@@ -67,7 +67,7 @@ Grafana generates a CSV file in your default browser download location. You can 
 
 To download a CSV file specifically formatted for Excel, expand the **Data options** panel and enable the **Download for Excel** toggle before clicking **Download CSV**.
 
-### Download log results as text
+### Download log results
 
 Grafana generates a text (.txt) file in your default browser download location. You can open the log in the viewer of your choice.
 
