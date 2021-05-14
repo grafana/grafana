@@ -19,6 +19,7 @@ type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
 	GetAlertmanagerConfiguration(*models.GetAlertmanagerConfigurationQuery) error
 	SaveAlertmanagerConfiguration(*models.SaveAlertmanagerConfigurationCmd) error
+	SaveAlertmanagerConfigurationWithCallback(*models.SaveAlertmanagerConfigurationCmd, SaveCallback) error
 }
 
 // DBstore stores the alert definitions and instances in the database.
