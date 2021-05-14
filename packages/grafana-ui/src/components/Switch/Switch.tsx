@@ -150,6 +150,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
       cursor: pointer;
       padding-right: ${theme.spacing(1)};
       color: ${theme.colors.text.secondary};
+      white-space: nowrap;
     `,
     inlineLabelEnabled: css`
       color: ${theme.colors.text.primary};
