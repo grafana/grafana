@@ -21,20 +21,20 @@ The following cache backends are available: in-memory, Redis, and Memcached.
 - Reduced API costs.
 - Reduced likelihood that APIs will rate-limit or throttle requests.
 
-## Enable query caching
+## Enable and configure query caching
 
-> **Note:** The query caching feature is enabled by default. To start caching data source queries, visit the data source's configuration page.
+By default, data source queries are not cached. To enable query caching for a single data source, visit the data source settings page, open the Cache tab, and press the Enable button. Once enabled, you can choose a custom TTL for that data source or keep the default TTL.
 
-To enable and configure query caching, please refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
+> **Note:** Not all data sources work with query caching. If the Cache tab is not visible in a data source's settings, then the data source does not support query caching.
 
-Once caching is enabled in the Grafana instance, query caching can be enabled per data source in the data source settings.
+To configure global settings for query caching, refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
 
 ## Disable query caching
 
-To disable query caching for a single data source, visit the data source settings page.
+To disable query caching for a single data source, visit the data source settings page, open the Cache tab, and press the Disable button.
 
-To unilaterally disable query caching for all data sources, edit the `enabled` flag in the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
+To unilaterally disable query caching for all data sources, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
 
 ## Sending a request without cache
 
-If the data source query request contains an `X-Cache-Skip` header, then Grafana skips the caching middleware, and does not search the cache for a response. This can be particularly useful when debugging data source queries using cURL.
+If a data source query request contains an `X-Cache-Skip` header, then Grafana skips the caching middleware, and does not search the cache for a response. This can be particularly useful when debugging data source queries using cURL.
