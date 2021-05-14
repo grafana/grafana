@@ -182,3 +182,39 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 		})
 	})
 }
+
+func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
+	ctx := context.Background()
+
+	cfg := &setting.Cfg{}
+
+	ds := &models.DataSource{Id: 1, Version: 2}
+	route := &plugins.AppPluginRoute{}
+
+	authParams := &plugins.JwtTokenAuth{
+		Scopes: []string{
+			"https://management.azure.com/.default",
+		},
+		Params: map[string]string{
+			"azure_auth_type": "",
+			"azure_cloud":     "AzureCloud",
+			"tenant_id":       "7dcf1d1a-4ec0-41f2-ac29-c1538a698bc4",
+			"client_id":       "1af7c188-e5b6-4f96-81b8-911761bdd459",
+			"client_secret":   "0416d95e-8af8-472c-aaa3-15c93c46080a",
+		},
+	}
+
+	provider := newAzureAccessTokenProvider(ctx, cfg, ds, route, authParams)
+
+	t.Run("should return clientSecretCredential with values", func(t *testing.T) {
+		result := provider.getClientSecretCredential()
+		assert.IsType(t, &clientSecretCredential{}, result)
+
+		credential := (result).(*clientSecretCredential)
+
+		assert.Equal(t, "https://login.microsoftonline.com/", credential.authority)
+		assert.Equal(t, "7dcf1d1a-4ec0-41f2-ac29-c1538a698bc4", credential.tenantId)
+		assert.Equal(t, "1af7c188-e5b6-4f96-81b8-911761bdd459", credential.clientId)
+		assert.Equal(t, "0416d95e-8af8-472c-aaa3-15c93c46080a", credential.clientSecret)
+	})
+}
