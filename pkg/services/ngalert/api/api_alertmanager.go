@@ -190,9 +190,6 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		}
 	}
 
-	// dont do anything if its the default configuration or there no receivers
-	// copy over the secrets from the last known working configuration
-	// save it
 	currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to load lastest configuration", err)
@@ -201,6 +198,9 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	// Copy the previously known secure settings
 	for i, r := range body.AlertmanagerConfig.Receivers {
 		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			if len(currentConfig.AlertmanagerConfig.Receivers) <= i { // if we don't have a receiver for this position - skip it.
+				continue
+			}
 			cr := currentConfig.AlertmanagerConfig.Receivers[i]
 			if cr != nil && len(cr.PostableGrafanaReceivers.GrafanaManagedReceivers) < j { //  if it's a newly introduced receiver it does not exist in the current configuration
 				cgmr := cr.PostableGrafanaReceivers.GrafanaManagedReceivers[j]
