@@ -77,7 +77,7 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			Namespace: "grafana",
 			Subsystem: "alerting",
 			Name:      "active_configurations",
-			Help:      "Active non default alertmanager configurations for grafana managed alerts",
+			Help:      "The number of active, non default alertmanager configurations for grafana managed alerts",
 		}),
 		// TODO: once rule groups support multiple rules, consider partitioning
 		// on rule group as well as tenant, similar to loki|cortex.
