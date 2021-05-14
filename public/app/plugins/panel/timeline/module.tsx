@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TimelinePanel } from './TimelinePanel';
-import { TimelineOptions, TimelineFieldConfig, TimelineMode } from './types';
+import { TimelineOptions, TimelineFieldConfig, TimelineMode, defaultTimelineFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
@@ -15,15 +15,12 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         },
       },
     },
-    /*
     useCustomConfig: (builder) => {
-      const cfg = defaultBarChartFieldConfig;
-
       builder
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          defaultValue: cfg.lineWidth,
+          defaultValue: defaultTimelineFieldConfig.lineWidth,
           settings: {
             min: 0,
             max: 10,
@@ -33,26 +30,14 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
-          defaultValue: cfg.fillOpacity,
+          defaultValue: defaultTimelineFieldConfig.fillOpacity,
           settings: {
             min: 0,
             max: 100,
             step: 1,
           },
-        })
-        .addRadio({
-          path: 'gradientMode',
-          name: 'Gradient mode',
-          defaultValue: graphFieldOptions.fillGradient[0].value,
-          settings: {
-            options: graphFieldOptions.fillGradient,
-          },
         });
-
-      // addAxisConfig(builder, cfg, true);
-      addHideFrom(builder);
     },
-    */
   })
   .setPanelOptions((builder) => {
     builder
