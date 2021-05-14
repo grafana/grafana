@@ -66,11 +66,11 @@ func (provider *azureAccessTokenProvider) isManagedIdentityCredential() bool {
 	clientId := provider.authParams.Params["client_id"]
 
 	// Type of authentication being determined by the following logic:
-	// * If authType set to msi then user explicitly selected the managed identity authentication
-	// * If authType isn't set but other fields are configured then it means existing legacy configuration
-	//   of datasource before managed identities where introduced, i.e. use client secret
+	// * If authType is set to 'msi' then user explicitly selected the managed identity authentication
+	// * If authType isn't set but other fields are configured then it's a datasource which was configured
+	//   before managed identities where introduced, therefore use client secret authentication
 	// * If authType and other fields aren't set then it means the datasource never been configured
-	//   and managed identity is the default configuration choice as long as managed identities are enabled
+	//   and managed identity is the default authentication choice as long as managed identities are enabled
 	return authType == "msi" || (authType == "" && clientId == "" && provider.cfg.Azure.ManagedIdentityEnabled)
 }
 

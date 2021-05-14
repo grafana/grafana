@@ -79,7 +79,7 @@ func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
 	c.cond.L.Lock()
 	for {
 		if c.accessToken != nil && c.accessToken.ExpiresOn.After(time.Now().Add(2*time.Minute)) {
-			// Use cached token since it present and not expired yet
+			// Use the cached token since it's available and not expired yet
 			accessToken = c.accessToken
 			break
 		}
@@ -91,7 +91,7 @@ func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
 			break
 		}
 
-		// Wait for the token to refresh
+		// Wait for the token to be refreshed
 		c.cond.Wait()
 	}
 	c.cond.L.Unlock()
