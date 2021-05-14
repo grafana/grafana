@@ -8,6 +8,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { DataSourcePicker } from '@grafana/runtime';
+import { alertStateToReadable } from '../../utils/rules';
 
 const RulesFilter = () => {
   const [queryParams, setQueryParams] = useQueryParams();
@@ -19,7 +20,10 @@ const RulesFilter = () => {
   const { dataSource, alertState, queryString } = getFiltersFromUrlParams(queryParams);
 
   const styles = useStyles(getStyles);
-  const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({ label: key, value }));
+  const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
+    label: alertStateToReadable(value),
+    value,
+  }));
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
     setQueryParams({ dataSource: dataSourceValue.name });

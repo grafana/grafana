@@ -164,23 +164,42 @@ function rulerRuleToCombinedRule(
       };
 }
 
+// find existing rule in group that matches the given prom rule
 function getExistingRuleInGroup(
   rule: Rule,
   group: CombinedRuleGroup,
   rulesSource: RulesSource
 ): CombinedRule | undefined {
-  return isGrafanaRulesSource(rulesSource)
-    ? group!.rules.find((existingRule) => existingRule.name === rule.name) // assume grafana groups have only the one rule. check name anyway because paranoid
-    : group!.rules.find((existingRule) => {
-        return !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule);
-      });
+  if (isGrafanaRulesSource(rulesSource)) {
+    // assume grafana groups have only the one rule. check name anyway because paranoid
+    return group!.rules.find((existingRule) => existingRule.name === rule.name);
+  }
+  return (
+    // try finding a rule that matches name, labels, annotations and query
+    group!.rules.find(
+      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)
+    ) ??
+    // if that fails, try finding a rule that only matches name, labels and annotations.
+    // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
+    group!.rules.find(
+      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)
+    )
+  );
 }
 
-function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule): boolean {
+function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, checkQuery = true): boolean {
   if (combinedRule.name === rule.name) {
     return (
-      JSON.stringify([hashQuery(combinedRule.query), combinedRule.labels, combinedRule.annotations]) ===
-      JSON.stringify([hashQuery(rule.query), rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}])
+      JSON.stringify([
+        checkQuery ? hashQuery(combinedRule.query) : '',
+        combinedRule.labels,
+        combinedRule.annotations,
+      ]) ===
+      JSON.stringify([
+        checkQuery ? hashQuery(rule.query) : '',
+        rule.labels || {},
+        isAlertingRule(rule) ? rule.annotations || {} : {},
+      ])
     );
   }
   return false;
@@ -194,6 +213,6 @@ function hashQuery(query: string) {
   }
   // whitespace could be added or removed
   query = query.replace(/\s|\n/g, '');
-  // labels matchers can be reordered, so sort the enitre string, esentially comparing just hte character counts
+  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
   return query.split('').sort().join('');
 }
