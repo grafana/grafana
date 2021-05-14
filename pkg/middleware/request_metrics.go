@@ -60,7 +60,11 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
 			method := sanitizeMethod(req.Method)
 
 			// enable histogram and disable summaries + counters for http requests.
-			if cfg.IsHTTPRequestHistogramEnabled() {
+			if cfg.IsHTTPRequestHistogramDisabled() {
+				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
+				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
+				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
+			} else {
 				// avoiding the sanitize functions for in the new instrumentation
 				// since they dont make much sense. We should remove them later.
 				histogram := httpRequestDurationHistogram.
@@ -75,10 +79,6 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
 					return
 				}
 				histogram.Observe(time.Since(now).Seconds())
-			} else {
-				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
-				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
 			}
 
 			switch {
