@@ -8,6 +8,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,7 +40,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	sch.log.Debug("alert rule routine started", "key", key)
 
 	evalRunning := false
-	var start, end time.Time
 	var attempt int64
 	var alertRule *models.AlertRule
 	for {
@@ -50,7 +50,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			}
 
 			evaluate := func(attempt int64) error {
-				start = timeNow()
+				start := timeNow()
 
 				// fetch latest alert rule version
 				if alertRule == nil || alertRule.Version < ctx.version {
@@ -70,8 +70,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					Data:      alertRule.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
-				end = timeNow()
+				var (
+					end    = timeNow()
+					tenant = fmt.Sprint(alertRule.OrgID)
+					dur    = end.Sub(start).Seconds()
+				)
+
+				sch.metrics.EvalTotal.WithLabelValues(tenant).Inc()
+				sch.metrics.EvalDuration.WithLabelValues(tenant).Observe(dur)
 				if err != nil {
+					sch.metrics.EvalFailures.WithLabelValues(tenant).Inc()
 					// consider saving alert instance on error
 					sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
 						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
@@ -153,6 +161,7 @@ type schedule struct {
 	dataService *tsdb.Service
 
 	notifier Notifier
+	metrics  *metrics.Metrics
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -167,6 +176,7 @@ type SchedulerCfg struct {
 	RuleStore       store.RuleStore
 	InstanceStore   store.InstanceStore
 	Notifier        Notifier
+	Metrics         *metrics.Metrics
 }
 
 // NewScheduler returns a new schedule.
@@ -186,6 +196,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 		instanceStore:   cfg.InstanceStore,
 		dataService:     dataService,
 		notifier:        cfg.Notifier,
+		metrics:         cfg.Metrics,
 	}
 	return &sch
 }
