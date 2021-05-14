@@ -41,7 +41,6 @@ interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
-  allowDetails?: boolean;
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
   showDetectedFields?: string[];
@@ -102,9 +101,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleDetails = () => {
-    if (this.props.allowDetails) {
-      return;
-    }
     this.setState((state) => {
       return {
         showDetails: !state.showDetails,
@@ -131,7 +127,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickShowDetectedField,
       onClickHideDetectedField,
       highlighterExpressions,
-      allowDetails,
       row,
       showDuplicates,
       showContextToggle,
@@ -171,11 +166,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               </Tooltip>
             )}
           </td>
-          {!allowDetails && (
-            <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
-              <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
-            </td>
-          )}
+          <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
+            <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
+          </td>
           {showTime && <td className={style.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
             <td className={style.logsRowLabels}>

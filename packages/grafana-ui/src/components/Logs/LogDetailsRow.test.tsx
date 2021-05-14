@@ -14,6 +14,9 @@ const setup = (propOverrides?: Partial<Props>) => {
     getStats: () => null,
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
+    onClickShowDetectedField: () => {},
+    onClickHideDetectedField: () => {},
+    showDetectedFields: [],
   };
 
   Object.assign(props, propOverrides);
@@ -43,6 +46,28 @@ describe('LogDetailsRow', () => {
     it('should render filter out label button', () => {
       const wrapper = setup();
       expect(wrapper.find({ title: 'Filter out value' }).hostNodes()).toHaveLength(1);
+    });
+    it('should not render filtering buttons if no filtering functions provided', () => {
+      const wrapper = setup({ onClickFilterLabel: undefined, onClickFilterOutLabel: undefined });
+      expect(wrapper.find({ title: 'Filter out value' }).hostNodes()).toHaveLength(0);
+    });
+  });
+  describe('if props is not a label', () => {
+    it('should not render a filter label button', () => {
+      const wrapper = setup({ isLabel: false });
+      expect(wrapper.find({ title: 'Filter for value' }).hostNodes()).toHaveLength(0);
+    });
+    it('should render a show toggleFieldButton button', () => {
+      const wrapper = setup({ isLabel: false });
+      expect(wrapper.find({ title: 'Show this field instead of the message' }).hostNodes()).toHaveLength(1);
+    });
+    it('should not render a show toggleFieldButton button if no detected fields toggling functions provided', () => {
+      const wrapper = setup({
+        isLabel: false,
+        onClickShowDetectedField: undefined,
+        onClickHideDetectedField: undefined,
+      });
+      expect(wrapper.find({ title: 'Show this field instead of the message' }).hostNodes()).toHaveLength(0);
     });
   });
 
