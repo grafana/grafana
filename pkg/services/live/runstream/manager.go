@@ -195,6 +195,7 @@ func getDelay(numErrors int) time.Duration {
 
 // run stream until context canceled or stream finished without an error.
 func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamRequest) {
+	defer func() { s.stopStream(sr, cancelFn) }()
 	var numFastErrors int
 	var delay time.Duration
 	var isReconnect bool
@@ -246,7 +247,6 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 		}
 		if !ok {
 			logger.Info("No plugin context found, stopping stream", "path", sr.Path)
-			s.stopStream(sr, cancelFn)
 			return
 		}
 		pluginCtx = newPluginCtx
@@ -262,7 +262,6 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 		if err != nil {
 			if errors.Is(ctx.Err(), context.Canceled) {
 				logger.Debug("Stream cleanly finished", "path", sr.Path)
-				s.stopStream(sr, cancelFn)
 				return
 			}
 			logger.Error("Error running stream, re-establishing", "path", sr.Path, "error", err, "wait", delay)
@@ -270,7 +269,6 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			continue
 		}
 		logger.Debug("Stream finished without error, stopping it", "path", sr.Path)
-		s.stopStream(sr, cancelFn)
 		return
 	}
 }

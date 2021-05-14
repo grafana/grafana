@@ -351,7 +351,8 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 
 	isFirstCall := true
 
-	doneCh := make(chan struct{})
+	doneCh1 := make(chan struct{})
+	doneCh2 := make(chan struct{})
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
@@ -360,11 +361,12 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 		if isFirstCall {
 			// first RunStream will wait till context done.
 			isFirstCall = false
+			close(doneCh1)
 			<-ctx.Done()
 			return ctx.Err()
 		}
 		// second RunStream finishes immediately since we are waiting for it below.
-		close(doneCh)
+		close(doneCh2)
 		return nil
 	}).Times(2)
 
@@ -372,11 +374,13 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
+	waitWithTimeout(t, doneCh1, time.Second)
+
 	err = manager.HandleDatasourceUpdate(&events.DatasourceUpdated{
 		Uid: "xyz",
 	})
 	require.NoError(t, err)
 
 	waitWithTimeout(t, result.CloseNotify, time.Second)
-	waitWithTimeout(t, doneCh, time.Second)
+	waitWithTimeout(t, doneCh2, time.Second)
 }
