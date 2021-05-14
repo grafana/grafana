@@ -9,13 +9,7 @@ import {
   Field,
   FALLBACK_COLOR,
 } from '@grafana/data';
-import {
-  UPlotConfigBuilder,
-  FIXED_UNIT,
-  SeriesVisibilityChangeMode,
-  BarValueVisibility,
-  UPlotConfigPrepFn,
-} from '@grafana/ui';
+import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode, UPlotConfigPrepFn } from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import {
   AxisPlacement,
@@ -25,7 +19,7 @@ import {
 } from '@grafana/ui/src/components/uPlot/config';
 import { measureText } from '@grafana/ui/src/utils/measureText';
 
-import { TimelineFieldConfig, TimelineMode } from './types';
+import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -49,21 +43,16 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
-  mode: TimelineMode;
-  rowHeight: number;
-  colWidth?: number;
-  showValue: BarValueVisibility;
-}> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
   timeZone,
   getTimeRange,
-
   mode,
   rowHeight,
   colWidth,
   showValue,
+  alignValue,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -101,6 +90,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
+    alignValue,
     theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     fill: colorLookup,

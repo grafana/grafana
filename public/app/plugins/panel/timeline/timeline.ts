@@ -2,7 +2,7 @@ import uPlot, { Series, Cursor } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { TimelineMode } from './types';
+import { TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
 
@@ -23,6 +23,11 @@ function walk(rowHeight: number, yIdx: number | null, count: number, dim: number
   });
 }
 
+interface TimelineBoxRect extends Rect {
+  left: number;
+  strokeWidth: number;
+}
+
 /**
  * @internal
  */
@@ -33,6 +38,7 @@ export interface TimelineCoreOptions {
   colWidth?: number;
   theme: GrafanaTheme2;
   showValue: BarValueVisibility;
+  alignValue: TimelineValueAlignment;
   isDiscrete: (seriesIdx: number) => boolean;
   colorLookup: (seriesIdx: number, value: any) => string;
   label: (seriesIdx: number) => string;
@@ -55,6 +61,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     rowHeight = 0,
     colWidth = 0,
     showValue,
+    alignValue,
     theme,
     label,
     fill,
@@ -77,6 +84,15 @@ export function getConfig(opts: TimelineCoreOptions) {
       mark.style.background = 'rgba(255,255,255,0.2)';
       return mark;
     });
+
+  // alignement-aware text position cache filled by drawPaths->putBox for use in drawPoints
+  let boxRectsBySeries: TimelineBoxRect[][];
+
+  const resetBoxRectsBySeries = (count: number) => {
+    boxRectsBySeries = Array(numSeries)
+      .fill(null)
+      .map((v) => Array(count).fill(null));
+  };
 
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
@@ -108,10 +124,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     rect: uPlot.RectH,
     xOff: number,
     yOff: number,
-    lft: number,
+    left: number,
     top: number,
-    wid: number,
-    hgt: number,
+    boxWidth: number,
+    boxHeight: number,
     strokeWidth: number,
     seriesIdx: number,
     valueIdx: number,
@@ -126,7 +142,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         fillPaths.set(fillStyle, (fillPath = new Path2D()));
       }
 
-      rect(fillPath, lft, top, wid, hgt);
+      rect(fillPath, left, top, boxWidth, boxHeight);
 
       if (strokeWidth) {
         let strokeStyle = stroke(seriesIdx + 1, value);
@@ -136,30 +152,41 @@ export function getConfig(opts: TimelineCoreOptions) {
           strokePaths.set(strokeStyle, (strokePath = new Path2D()));
         }
 
-        rect(strokePath, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
+        rect(
+          strokePath,
+          left + strokeWidth / 2,
+          top + strokeWidth / 2,
+          boxWidth - strokeWidth,
+          boxHeight - strokeWidth
+        );
       }
     } else {
       ctx.beginPath();
-      rect(ctx, lft, top, wid, hgt);
+      rect(ctx, left, top, boxWidth, boxHeight);
       ctx.fillStyle = fill(seriesIdx, value);
       ctx.fill();
 
       if (strokeWidth) {
         ctx.beginPath();
-        rect(ctx, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
+        rect(ctx, left + strokeWidth / 2, top + strokeWidth / 2, boxWidth - strokeWidth, boxHeight - strokeWidth);
         ctx.strokeStyle = stroke(seriesIdx, value);
         ctx.stroke();
       }
     }
 
-    qt.add({
-      x: round(lft - xOff),
+    const boxRect = (boxRectsBySeries[seriesIdx][valueIdx] = {
+      x: round(left - xOff),
       y: round(top - yOff),
-      w: wid,
-      h: hgt,
+      w: boxWidth,
+      h: boxHeight,
       sidx: seriesIdx + 1,
       didx: valueIdx,
+      // These two are needed for later text positioning
+      left: left,
+      strokeWidth,
     });
+
+    qt.add(boxRect);
   }
 
   const drawPaths: Series.PathBuilder = (u, sidx, idx0, idx1) => {
@@ -259,7 +286,7 @@ export function getConfig(opts: TimelineCoreOptions) {
           u.ctx.clip();
 
           u.ctx.font = font;
-          u.ctx.textAlign = mode === TimelineMode.Changes ? 'left' : 'center';
+          u.ctx.textAlign = alignValue;
           u.ctx.textBaseline = 'middle';
 
           uPlot.orient(
@@ -285,13 +312,14 @@ export function getConfig(opts: TimelineCoreOptions) {
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null) {
-                  let x = valToPosX(dataX[ix], scaleX, xDim, xOff);
+                  const boxRect = boxRectsBySeries[sidx - 1][ix];
 
-                  // For the left aligned values shift them 2 pixels of edge
-                  if (mode === TimelineMode.Changes) {
-                    x += 2;
+                  // Todo refine this to better know when to not render text (when values do not fit)
+                  if (boxRect.w < 20) {
+                    continue;
                   }
 
+                  const x = getTextPositionOffet(boxRect, alignValue);
                   const valueColor = colorLookup(sidx, dataY[ix]);
 
                   u.ctx.fillStyle = theme.colors.getContrastText(valueColor, 3);
@@ -318,6 +346,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
+    resetBoxRectsBySeries(u.data[0].length);
 
     // force-clear the path cache to cause drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
@@ -439,4 +468,17 @@ export function getConfig(opts: TimelineCoreOptions) {
     drawClear,
     setCursor,
   };
+}
+
+function getTextPositionOffet(rect: TimelineBoxRect, alignValue: TimelineValueAlignment) {
+  // left or right aligned values shift 2 pixels inside edge
+  const textPadding = alignValue === 'left' ? 2 : alignValue === 'right' ? -2 : 0;
+  const { left, w, strokeWidth } = rect;
+
+  return (
+    left +
+    strokeWidth / 2 +
+    (alignValue === 'center' ? w / 2 - strokeWidth / 2 : alignValue === 'right' ? w - strokeWidth / 2 : 0) +
+    textPadding
+  );
 }

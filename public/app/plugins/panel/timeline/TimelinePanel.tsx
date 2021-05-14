@@ -39,7 +39,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
       height={height}
       {...options}
     >
-      {(config, alignedDataFrame) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
+      {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
     </TimelineChart>
   );
 };

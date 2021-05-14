@@ -9,7 +9,10 @@ export interface TimelineOptions {
   showValue: BarValueVisibility;
   rowHeight: number;
   colWidth?: number;
+  alignValue: TimelineValueAlignment;
 }
+
+export type TimelineValueAlignment = 'center' | 'left' | 'right';
 
 /**
  * @alpha
