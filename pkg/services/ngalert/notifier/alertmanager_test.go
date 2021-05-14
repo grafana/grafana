@@ -35,6 +35,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		DataPath: dir,
 	}
 
+	m := metrics.NewMetrics(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	store := &store.DBstore{
 		BaseInterval:           10 * time.Second,
@@ -42,7 +43,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		SQLStore:               sqlStore,
 	}
 
-	am, err := New(cfg, store, metrics.NewMetrics(prometheus.NewRegistry()))
+	am, err := New(cfg, store, m)
 	require.NoError(t, err)
 	return am
 }

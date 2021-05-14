@@ -212,6 +212,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	if err != nil {
 		return err
 	}
+	am.Metrics.ActiveConfigurations.Set(1)
 
 	return nil
 }
@@ -251,6 +252,12 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 	if err := am.applyConfig(cfg, nil); err != nil {
 		return fmt.Errorf("unable to reload configuration: %w", err)
+	}
+
+	if q.Result.Default {
+		am.Metrics.ActiveConfigurations.Set(0)
+	} else {
+		am.Metrics.ActiveConfigurations.Set(1)
 	}
 
 	return nil

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
@@ -104,6 +105,7 @@ func TestWarmStateCache(t *testing.T) {
 
 		RuleStore:     dbstore,
 		InstanceStore: dbstore,
+		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
 	st := state.NewManager(schedCfg.Logger, nilMetrics)
@@ -151,6 +153,7 @@ func TestAlertingTicker(t *testing.T) {
 		RuleStore:     dbstore,
 		InstanceStore: dbstore,
 		Logger:        log.New("ngalert schedule test"),
+		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
 	sched := schedule.NewScheduler(schedCfg, nil)
 

@@ -29,8 +29,13 @@ type Metrics struct {
 	*metrics.Alerts
 	AlertState *prometheus.GaugeVec
 	// Registerer is for use by subcomponents which register their own metrics.
-	Registerer      prometheus.Registerer
-	RequestDuration *prometheus.HistogramVec
+	Registerer           prometheus.Registerer
+	RequestDuration      *prometheus.HistogramVec
+	ActiveConfigurations prometheus.Gauge
+	EvalTotal            *prometheus.CounterVec
+	EvalFailures         *prometheus.CounterVec
+	EvalDuration         *prometheus.SummaryVec
+	GroupRules           *prometheus.GaugeVec
 }
 
 func init() {
@@ -67,6 +72,54 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 				Buckets:   prometheus.DefBuckets,
 			},
 			[]string{"method", "route", "status_code", "backend"},
+		),
+		ActiveConfigurations: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: "grafana",
+			Subsystem: "alerting",
+			Name:      "active_configurations",
+			Help:      "The number of active, non default alertmanager configurations for grafana managed alerts",
+		}),
+		// TODO: once rule groups support multiple rules, consider partitioning
+		// on rule group as well as tenant, similar to loki|cortex.
+		EvalTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: "grafana",
+				Subsystem: "alerting",
+				Name:      "rule_evaluations_total",
+				Help:      "The total number of rule evaluations.",
+			},
+			[]string{"user"},
+		),
+		// TODO: once rule groups support multiple rules, consider partitioning
+		// on rule group as well as tenant, similar to loki|cortex.
+		EvalFailures: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: "grafana",
+				Subsystem: "alerting",
+				Name:      "rule_evaluation_failures_total",
+				Help:      "The total number of rule evaluation failures.",
+			},
+			[]string{"user"},
+		),
+		EvalDuration: prometheus.NewSummaryVec(
+			prometheus.SummaryOpts{
+				Namespace:  "grafana",
+				Subsystem:  "alerting",
+				Help:       "The duration for a rule to execute.",
+				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+			},
+			[]string{"user"},
+		),
+		// TODO: once rule groups support multiple rules, consider partitioning
+		// on rule group as well as tenant, similar to loki|cortex.
+		GroupRules: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: "grafana",
+				Subsystem: "alerting",
+				Name:      "rule_group_rules",
+				Help:      "The number of rules.",
+			},
+			[]string{"user"},
 		),
 	}
 }

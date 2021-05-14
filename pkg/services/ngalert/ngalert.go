@@ -65,7 +65,11 @@ func (ng *AlertNG) Init() error {
 	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
-	store := &store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
+	store := &store.DBstore{
+		BaseInterval:           baseInterval,
+		DefaultIntervalSeconds: defaultIntervalSeconds,
+		SQLStore:               ng.SQLStore,
+	}
 
 	var err error
 	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
@@ -82,6 +86,7 @@ func (ng *AlertNG) Init() error {
 		InstanceStore: store,
 		RuleStore:     store,
 		Notifier:      ng.Alertmanager,
+		Metrics:       ng.Metrics,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
