@@ -4,7 +4,7 @@ import { Row, RowGroup } from './types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data'; // TODO: this is not loading for me
 import { useStyles2 } from '@grafana/ui';
-import ResourcePickerData from '../../resource_picker/resource_picker_data';
+import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
 interface ResourcePickerProps {
   resourcePickerData: Pick<ResourcePickerData, 'getResourcePickerData' | 'getResourcePickerDataWithNestedResourceData'>;
