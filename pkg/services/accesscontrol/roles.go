@@ -3,8 +3,9 @@ package accesscontrol
 import "github.com/grafana/grafana/pkg/models"
 
 var ldapAdminReadRole = RoleDTO{
-	Name:    ldapAdminRead,
-	Version: 1,
+	Name:        ldapAdminRead,
+	Version:     2,
+	Description: "Allows to read LDAP information and status.",
 	Permissions: []Permission{
 		{
 			Action: ActionLDAPUsersRead,
@@ -16,8 +17,9 @@ var ldapAdminReadRole = RoleDTO{
 }
 
 var ldapAdminEditRole = RoleDTO{
-	Name:    ldapAdminEdit,
-	Version: 1,
+	Name:        ldapAdminEdit,
+	Version:     2,
+	Description: "Allows every read action for LDAP and in addition allows to administer LDAP.",
 	Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionLDAPUsersSync,
@@ -26,8 +28,9 @@ var ldapAdminEditRole = RoleDTO{
 }
 
 var usersOrgReadRole = RoleDTO{
-	Name:    usersOrgRead,
-	Version: 1,
+	Name:        usersOrgRead,
+	Version:     2,
+	Description: "Allows to get user organizations.",
 	Permissions: []Permission{
 		{
 			Action: ActionOrgUsersRead,
@@ -37,8 +40,9 @@ var usersOrgReadRole = RoleDTO{
 }
 
 var usersOrgEditRole = RoleDTO{
-	Name:    usersOrgEdit,
-	Version: 1,
+	Name:        usersOrgEdit,
+	Version:     1,
+	Description: "Allows every read action for user organizations and in addition allows to administer user organizations.",
 	Permissions: ConcatPermissions(usersOrgReadRole.Permissions, []Permission{
 		{
 			Action: ActionOrgUsersAdd,
@@ -56,8 +60,9 @@ var usersOrgEditRole = RoleDTO{
 }
 
 var usersAdminReadRole = RoleDTO{
-	Name:    usersAdminRead,
-	Version: 1,
+	Name:        usersAdminRead,
+	Version:     2,
+	Description: "Allows to list and get users and related information.",
 	Permissions: []Permission{
 		{
 			Action: ActionUsersRead,
@@ -79,8 +84,9 @@ var usersAdminReadRole = RoleDTO{
 }
 
 var usersAdminEditRole = RoleDTO{
-	Name:    usersAdminEdit,
-	Version: 1,
+	Name:        usersAdminEdit,
+	Version:     2,
+	Description: "Allows every read action for users and in addition allows to administer users.",
 	Permissions: ConcatPermissions(usersAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionUsersPasswordUpdate,
@@ -125,8 +131,9 @@ var usersAdminEditRole = RoleDTO{
 }
 
 var provisioningAdminRole = RoleDTO{
-	Name:    provisioningAdmin,
-	Version: 1,
+	Name:        provisioningAdmin,
+	Version:     2,
+	Description: "Allows to reload provisioning configurations.",
 	Permissions: []Permission{
 		{
 			Action: ActionProvisioningReload,
