@@ -123,7 +123,7 @@ export function loadDataSource(uid: string): ThunkResult<void> {
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
     const meta = {
       ...pluginInfo,
-      backend: isBackend,
+      isBackend: isBackend,
     };
     dispatch(dataSourceLoaded(dataSource));
     dispatch(dataSourceMetaLoaded(meta));
