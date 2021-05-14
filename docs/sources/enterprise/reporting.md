@@ -29,7 +29,7 @@ Currently only Organization Admins can create reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    - **Name -** Name of the report as you want it to appear in the Reports list.
    - **Source dashboard -** Select the dashboard to generate the report from.
-   - **Recipients -** Enter the emails of the people or teams that you want to receive the report.
+   - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by semicolons.
    - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
    - **Message -** (optional) Message body in the email with the report.
    - **Link back to the source dashboard -** Include a link to the dashboard from within the report email. 
