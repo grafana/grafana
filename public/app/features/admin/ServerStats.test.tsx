@@ -6,7 +6,7 @@ import { createNavModel } from 'test/mocks/common';
 import { ServerStat } from './state/apis';
 
 describe('ServerStats', () => {
-  it('Should render table with stats', done => {
+  it('Should render table with stats', (done) => {
     const navModel = createNavModel('Admin', 'stats');
     const stats: ServerStat[] = [
       { name: 'Total dashboards', value: 10 },

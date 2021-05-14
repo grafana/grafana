@@ -126,7 +126,6 @@ func (db *MySQLDialect) CleanDB() error {
 
 	for _, table := range tables {
 		switch table.Name {
-		case "migration_log":
 		default:
 			if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
 				return errutil.Wrap("failed to disable foreign key checks", err)
@@ -198,4 +197,29 @@ func (db *MySQLDialect) ErrorMessage(err error) string {
 
 func (db *MySQLDialect) IsDeadlock(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
+}
+
+// UpsertSQL returns the upsert sql statement for PostgreSQL dialect
+func (db *MySQLDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
+	columnsStr := strings.Builder{}
+	colPlaceHoldersStr := strings.Builder{}
+	setStr := strings.Builder{}
+
+	separator := ", "
+	for i, c := range updateCols {
+		if i == len(updateCols)-1 {
+			separator = ""
+		}
+		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separator))
+		colPlaceHoldersStr.WriteString(fmt.Sprintf("?%s", separator))
+		setStr.WriteString(fmt.Sprintf("%s=VALUES(%s)%s", db.Quote(c), db.Quote(c), separator))
+	}
+
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s`,
+		tableName,
+		columnsStr.String(),
+		colPlaceHoldersStr.String(),
+		setStr.String(),
+	)
+	return s
 }

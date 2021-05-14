@@ -44,12 +44,22 @@ describe('Graph DataProcessor', () => {
           { name: 'time', values: [1001, 1002, 1003] }, // Time is last column
         ],
       },
+      {
+        name: 'series with time as strings',
+        fields: [
+          { name: 'v1', values: [0.1, 0.2, 0.3] }, // first
+          {
+            name: 'time',
+            values: ['2021-01-01T01:00:00.000Z', 'Fri, 01 Jan 2021 01:00:00 GMT', '2021-01-01T02:00:00.000Z'], // Time is last column
+          },
+        ],
+      },
     ]);
 
     it('Should return a new series for each field', () => {
       panel.xaxis.mode = 'series';
       const series = processor.getSeriesList({ dataList });
-      expect(series.length).toEqual(5);
+      expect(series.length).toEqual(6);
 
       expect(series).toMatchSnapshot();
     });

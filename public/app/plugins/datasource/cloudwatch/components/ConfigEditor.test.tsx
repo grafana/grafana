@@ -1,6 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import ConfigEditor, { Props } from './ConfigEditor';
+import { AwsAuthType } from '@grafana/aws-sdk';
+import { ConfigEditor, Props } from './ConfigEditor';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -21,6 +22,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     options: {
       id: 1,
+      uid: 'z',
       orgId: 1,
       typeLogoUrl: '',
       name: 'CloudWatch',
@@ -28,6 +30,7 @@ const setup = (propOverrides?: object) => {
       url: '',
       database: '',
       type: 'cloudwatch',
+      typeName: 'Cloudwatch',
       user: '',
       password: '',
       basicAuth: false,
@@ -45,7 +48,7 @@ const setup = (propOverrides?: object) => {
         externalId: '',
         database: '',
         customMetricsNamespaces: '',
-        authType: 'keys',
+        authType: AwsAuthType.Keys,
         defaultRegion: 'us-east-2',
         timeField: '@timestamp',
       },

@@ -33,7 +33,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -68,7 +68,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -111,7 +111,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -151,7 +151,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -189,7 +189,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -227,7 +227,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -249,7 +249,7 @@ const createField = (name: string, type: FieldType, values: any[], config = {}):
 };
 
 const unwrap = (fields: Field[]): Field[] => {
-  return fields.map(field =>
+  return fields.map((field) =>
     createField(
       field.name,
       field.type,

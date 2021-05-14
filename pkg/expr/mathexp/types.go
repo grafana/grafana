@@ -30,6 +30,8 @@ type Value interface {
 	Value() interface{}
 	GetLabels() data.Labels
 	SetLabels(data.Labels)
+	GetMeta() interface{}
+	SetMeta(interface{})
 	AsDataFrame() *data.Frame
 }
 
@@ -47,6 +49,14 @@ func (s Scalar) Value() interface{} { return s }
 func (s Scalar) GetLabels() data.Labels { return nil }
 
 func (s Scalar) SetLabels(ls data.Labels) {}
+
+func (s Scalar) GetMeta() interface{} {
+	return s.Frame.Meta.Custom
+}
+
+func (s Scalar) SetMeta(v interface{}) {
+	s.Frame.SetMeta(&data.FrameMeta{Custom: v})
+}
 
 // AsDataFrame returns the underlying *data.Frame.
 func (s Scalar) AsDataFrame() *data.Frame { return s.Frame }
@@ -104,4 +114,32 @@ func NewNumber(name string, labels data.Labels) Number {
 			data.NewField(name, labels, make([]*float64, 1)),
 		),
 	}
+}
+
+func (n Number) GetMeta() interface{} {
+	return n.Frame.Meta.Custom
+}
+
+func (n Number) SetMeta(v interface{}) {
+	n.Frame.SetMeta(&data.FrameMeta{Custom: v})
+}
+
+// FloatField is a *float64 or a float64 data.Field with methods to always
+// get a *float64.
+type Float64Field data.Field
+
+// GetValue returns the value at idx as *float64.
+func (ff *Float64Field) GetValue(idx int) *float64 {
+	field := data.Field(*ff)
+	if field.Type() == data.FieldTypeNullableFloat64 {
+		return field.At(idx).(*float64)
+	}
+	f := field.At(idx).(float64)
+	return &f
+}
+
+// Len returns the the length of the field.
+func (ff *Float64Field) Len() int {
+	df := data.Field(*ff)
+	return df.Len()
 }

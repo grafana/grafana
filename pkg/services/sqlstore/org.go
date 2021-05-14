@@ -39,7 +39,10 @@ func SearchOrgs(query *models.SearchOrgsQuery) error {
 		sess.In("id", query.Ids)
 	}
 
-	sess.Limit(query.Limit, query.Limit*query.Page)
+	if query.Limit > 0 {
+		sess.Limit(query.Limit, query.Limit*query.Page)
+	}
+
 	sess.Cols("id", "name")
 	err := sess.Find(&query.Result)
 	return err

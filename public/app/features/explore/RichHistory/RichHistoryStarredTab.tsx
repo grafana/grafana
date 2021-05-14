@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { css } from 'emotion';
-import { uniqBy, debounce } from 'lodash';
+import React, { useState, useEffect } from 'react';
+import { css } from '@emotion/css';
+import { uniqBy } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme, Select } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { filterAndSortQueries, createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Select } from '@grafana/ui';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { useDebounce } from 'react-use';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -83,38 +83,33 @@ export function RichHistoryStarredTab(props: Props) {
 
   const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
   const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
+  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
-  const starredQueries = queries.filter(q => q.starred === true);
 
-  const filterAndSortQueriesDebounced = useCallback(
-    debounce((searchValue: string) => {
-      setFilteredQueries(
-        filterAndSortQueries(
-          starredQueries,
-          sortOrder,
-          datasourceFilters?.map(d => d.value) as string[] | null,
-          searchValue
-        )
-      );
-    }, 300),
-    [queries, sortOrder, datasourceFilters]
+  useDebounce(
+    () => {
+      setDebouncedSearchInput(searchInput);
+    },
+    300,
+    [searchInput]
   );
 
   useEffect(() => {
+    const starredQueries = queries.filter((q) => q.starred === true);
     setFilteredQueries(
       filterAndSortQueries(
         starredQueries,
         sortOrder,
-        datasourceFilters?.map(d => d.value) as string[] | null,
-        searchInput
+        datasourceFilters?.map((d) => d.value) as string[] | null,
+        debouncedSearchInput
       )
     );
-  }, [queries, sortOrder, datasourceFilters]);
+  }, [queries, sortOrder, datasourceFilters, debouncedSearchInput]);
 
   return (
     <div className={styles.container}>
@@ -133,27 +128,24 @@ export function RichHistoryStarredTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
               placeholder="Search queries"
               value={searchInput}
               onChange={(value: string) => {
                 setSearchInput(value);
-                filterAndSortQueriesDebounced(value);
               }}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
               options={sortOrderOptions}
-              value={sortOrderOptions.filter(order => order.value === sortOrder)}
+              value={sortOrderOptions.filter((order) => order.value === sortOrder)}
               placeholder="Sort queries by"
-              onChange={e => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e) => onChangeSortOrder(e.value as SortOrder)}
             />
           </div>
         </div>
-        {filteredQueries.map(q => {
-          const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+        {filteredQueries.map((q) => {
+          const idx = listOfDatasources.findIndex((d) => d.label === q.datasourceName);
           return (
             <RichHistoryCard
               query={q}

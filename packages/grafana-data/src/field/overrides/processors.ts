@@ -131,6 +131,11 @@ export interface FieldColorConfigSettings {
    * to from thresholds if it was set to a by series palette
    */
   preferThresholdsMode?: boolean;
+  /**
+   * Set to true if the visualization supports both by value and by series
+   * This will enable the Color by series UI option that sets the `color.seriesBy` option.
+   */
+  bySeriesSupport?: boolean;
 }
 
 export interface StatsPickerConfigSettings {

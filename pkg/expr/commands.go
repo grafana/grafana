@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
@@ -139,12 +138,12 @@ type ResampleCommand struct {
 	VarToResample string
 	Downsampler   string
 	Upsampler     string
-	TimeRange     backend.TimeRange
+	TimeRange     TimeRange
 	refID         string
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr backend.TimeRange) (*ResampleCommand, error) {
+func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr TimeRange) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
 	window, err := gtime.ParseDuration(rawWindow)
 	if err != nil {
@@ -218,7 +217,7 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 		if !ok {
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange)
+		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange.From, gr.TimeRange.To)
 		if err != nil {
 			return newRes, err
 		}
@@ -239,6 +238,8 @@ const (
 	TypeReduce
 	// TypeResample is the CMDType for a resampling expression.
 	TypeResample
+	// TypeClassicConditions is the CMDType for the classic condition operation.
+	TypeClassicConditions
 )
 
 func (gt CommandType) String() string {
@@ -249,6 +250,8 @@ func (gt CommandType) String() string {
 		return "reduce"
 	case TypeResample:
 		return "resample"
+	case TypeClassicConditions:
+		return "classic_conditions"
 	default:
 		return "unknown"
 	}
@@ -263,6 +266,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeReduce, nil
 	case "resample":
 		return TypeResample, nil
+	case "classic_conditions":
+		return TypeClassicConditions, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

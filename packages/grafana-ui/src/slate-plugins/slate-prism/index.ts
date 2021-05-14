@@ -39,7 +39,7 @@ export function SlatePrism(optsParam: OptionsFormat = {}, prismLanguages = Prism
 
       // Tokenize the whole block text
       const texts = block.getTexts();
-      const blockText = texts.map(text => text && text.getText()).join('\n');
+      const blockText = texts.map((text) => text && text.getText()).join('\n');
       const tokens = Prism.tokenize(blockText, grammar);
       const flattened = flattenTokens(tokens);
 
@@ -71,7 +71,7 @@ function decorateNode(opts: Options, tokens: Array<string | Prism.Token>, block:
   let textStart = 0;
   let textEnd = 0;
 
-  texts.forEach(text => {
+  texts.forEach((text) => {
     textEnd = textStart + text!.getText().length;
 
     let offset = 0;
@@ -194,9 +194,9 @@ function flattenToken(token: string | Prism.Token | Array<string | Prism.Token>)
       },
     ];
   } else if (Array.isArray(token)) {
-    return token.flatMap(t => flattenToken(t));
+    return token.flatMap((t) => flattenToken(t));
   } else if (token instanceof Prism.Token) {
-    return flattenToken(token.content).flatMap(t => {
+    return flattenToken(token.content).flatMap((t) => {
       let aliases: string[] = [];
       if (typeof token.alias === 'string') {
         aliases = [token.alias];

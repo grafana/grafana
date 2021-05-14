@@ -111,7 +111,7 @@ export function localTimeFormat(
     timeZoneName: 'Z',
   };
 
-  return parts.map(part => mapping[part.type] || part.value).join('');
+  return parts.map((part) => mapping[part.type] || part.value).join('');
 }
 
 export const systemDateFormats = new SystemDateFormatsState();

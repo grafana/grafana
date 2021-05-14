@@ -4,4 +4,4 @@ import { setTimeRange, TimeRangeConfig } from './setTimeRange';
 export { TimeRangeConfig };
 
 export const setDashboardTimeRange = (config: TimeRangeConfig) =>
-  e2e.pages.Dashboard.Toolbar.navBar().within(() => setTimeRange(config));
+  e2e.components.PageToolbar.container().within(() => setTimeRange(config));

@@ -1,7 +1,7 @@
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, InlineSegmentGroup, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from 'emotion';
-import React, { FunctionComponent, useState } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { PropsWithChildren, useState } from 'react';
 import { segmentStyles } from './styles';
 
 const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
@@ -19,9 +19,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
     button: css`
       justify-content: start;
       ${hidden &&
-        css`
-          color: ${theme.colors.textFaint};
-        `}
+      css`
+        color: ${theme.colors.textFaint};
+      `}
     `,
   };
 });
@@ -30,7 +30,7 @@ interface Props {
   hidden?: boolean;
 }
 
-export const SettingsEditorContainer: FunctionComponent<Props> = ({ label, children, hidden = false }) => {
+export const SettingsEditorContainer = ({ label, children, hidden = false }: PropsWithChildren<Props>) => {
   const [open, setOpen] = useState(false);
   const styles = getStyles(useTheme(), hidden);
 

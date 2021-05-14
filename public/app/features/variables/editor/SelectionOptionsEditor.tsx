@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useCallback } from 'react';
+import React, { ChangeEvent, FormEvent, FunctionComponent, useCallback } from 'react';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -14,33 +14,38 @@ export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupp
   onMultiChanged: (identifier: VariableIdentifier, value: boolean) => void;
 }
 
-export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = props => {
+export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = ({
+  onMultiChanged: onMultiChangedProps,
+  onPropChange,
+  variable,
+}) => {
   const onMultiChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onMultiChanged(toVariableIdentifier(props.variable), event.target.checked);
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onMultiChangedProps(toVariableIdentifier(variable), event.target.checked);
     },
-    [props.onMultiChanged]
+    [onMultiChangedProps, variable]
   );
 
   const onIncludeAllChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange({ propName: 'includeAll', propValue: event.target.checked });
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onPropChange({ propName: 'includeAll', propValue: event.target.checked });
     },
-    [props.onPropChange]
+    [onPropChange]
   );
 
   const onAllValueChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      props.onPropChange({ propName: 'allValue', propValue: event.target.value });
+    (event: FormEvent<HTMLInputElement>) => {
+      onPropChange({ propName: 'allValue', propValue: event.currentTarget.value });
     },
-    [props.onPropChange]
+    [onPropChange]
   );
+
   return (
     <VerticalGroup spacing="none">
-      <VariableSectionHeader name="Selection Options" />
+      <VariableSectionHeader name="Selection options" />
       <InlineFieldRow>
         <VariableSwitchField
-          value={props.variable.multi}
+          value={variable.multi}
           name="Multi-value"
           tooltip="Enables multiple values to be selected at the same time"
           onChange={onMultiChanged}
@@ -49,17 +54,17 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
       </InlineFieldRow>
       <InlineFieldRow>
         <VariableSwitchField
-          value={props.variable.includeAll}
+          value={variable.includeAll}
           name="Include All option"
           tooltip="Enables an option to include all variables"
           onChange={onIncludeAllChanged}
           ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}
         />
       </InlineFieldRow>
-      {props.variable.includeAll && (
+      {variable.includeAll && (
         <InlineFieldRow>
           <VariableTextField
-            value={props.variable.allValue ?? ''}
+            value={variable.allValue ?? ''}
             onChange={onAllValueChanged}
             name="Custom all value"
             placeholder="blank = auto"

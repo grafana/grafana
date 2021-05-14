@@ -20,16 +20,16 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         const orderer = createFieldsOrderer(options.indexByName);
 
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
 
-        return data.map(frame => ({
+        return data.map((frame) => ({
           ...frame,
           fields: orderer(frame.fields, data, frame),
         }));

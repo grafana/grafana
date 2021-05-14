@@ -2,30 +2,61 @@
 
 exports[`Render should render component 1`] = `
 <div
-  className="panel-container css-1sl7nld"
+  className="panel-container css-e4b3m6"
 >
   <AddPanelWidgetHandle
     onCancel={[Function]}
-  />
-  <div
-    className="css-1wtsk46"
+    styles={
+      Object {
+        "actionsRow": "css-l02n0m",
+        "actionsWrapper": "css-gxxmom",
+        "backButton": "css-1cdxa9p",
+        "headerRow": "css-3sdqvi",
+        "noMargin": "css-u023fv",
+        "wrapper": "css-e4b3m6",
+      }
+    }
   >
-    <AddPanelWidgetCreate
-      onCreate={[Function]}
-      onPasteCopiedPanel={[Function]}
-    />
-    <div>
-      <HorizontalGroup
-        justify="center"
+    Add panel
+  </AddPanelWidgetHandle>
+  <div
+    className="css-gxxmom"
+  >
+    <div
+      className="css-l02n0m"
+    >
+      <div
+        aria-label="Add new panel"
+        onClick={[Function]}
       >
-        <Button
-          onClick={[Function]}
-          size="sm"
-          variant="secondary"
-        >
-          Convert to row
-        </Button>
-      </HorizontalGroup>
+        <Icon
+          name="file-blank"
+          size="xl"
+        />
+        Add an empty panel
+      </div>
+      <div
+        onClick={[Function]}
+      >
+        <Icon
+          name="wrap-text"
+          size="xl"
+        />
+        Add a new row
+      </div>
+    </div>
+    <div
+      className="css-l02n0m"
+    >
+      <div
+        onClick={[Function]}
+      >
+        <Icon
+          name="book-open"
+          size="xl"
+        />
+        Add a panel from the panel library
+      </div>
     </div>
   </div>
 </div>

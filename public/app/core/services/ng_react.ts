@@ -55,7 +55,7 @@ function applied(fn: any, scope: any) {
     return fn;
   }
   // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
-  const wrapped: any = function() {
+  const wrapped: any = function () {
     const args = arguments;
     const phase = scope.$root.$$phase;
     if (phase === '$apply' || phase === '$digest') {
@@ -169,7 +169,7 @@ function getPropExpression(prop: any) {
  * @param propName Name of the prop that react component expects.
  */
 function findAttribute(attrs: string, propName: string): string {
-  const index = Object.keys(attrs).find(attr => {
+  const index = Object.keys(attrs).find((attr) => {
     return attr.toLowerCase() === propName.toLowerCase() || attr.toLowerCase() === kebabCase(propName);
   });
   // @ts-ignore
@@ -204,7 +204,7 @@ const reactComponent = ($injector: any): any => {
   return {
     restrict: 'E',
     replace: true,
-    link: function(scope: any, elem: Element[], attrs: any) {
+    link: function (scope: any, elem: Element[], attrs: any) {
       const reactComponent = getReactComponent(attrs.name, $injector);
 
       const renderMyComponent = () => {
@@ -262,7 +262,7 @@ const reactDirective = ($injector: auto.IInjectorService) => {
     const directive = {
       restrict: 'E',
       replace: true,
-      link: function(scope: any, elem: Element[], attrs: any) {
+      link: function (scope: any, elem: Element[], attrs: any) {
         const reactComponent = getReactComponent(reactComponentName, $injector);
 
         // if props is not defined, fall back to use the React component's propTypes if present
@@ -273,7 +273,7 @@ const reactDirective = ($injector: auto.IInjectorService) => {
           let scopeProps: any = {};
           const config: any = {};
 
-          props.forEach(prop => {
+          props.forEach((prop) => {
             const propName = getPropName(prop);
             scopeProps[propName] = scope.$eval(findAttribute(attrs, propName));
             config[propName] = getPropConfig(prop);
@@ -286,7 +286,7 @@ const reactDirective = ($injector: auto.IInjectorService) => {
 
         // watch each property name and trigger an update whenever something changes,
         // to update scope.props with new values
-        const propExpressions = props.map(prop => {
+        const propExpressions = props.map((prop) => {
           return Array.isArray(prop)
             ? [findAttribute(attrs, prop[0]), getPropConfig(prop)]
             : findAttribute(attrs, prop);

@@ -1,4 +1,4 @@
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 import { alignmentPeriods, MetricKind, selectors, ValueTypes } from './constants';
 import CloudMonitoringDatasource from './datasource';
 import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from './types';
@@ -66,7 +66,7 @@ export default class CloudMonitoringMetricFindQuery {
   async handleServiceQuery({ projectName }: CloudMonitoringVariableQuery) {
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
-    return services.map(s => ({
+    return services.map((s) => ({
       text: s.serviceShortName,
       value: s.service,
       expandable: true,
@@ -112,7 +112,7 @@ export default class CloudMonitoringMetricFindQuery {
     }
     const refId = 'handleResourceTypeQueryQueryType';
     const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName);
-    return labels['resource.type'].map(this.toFindQueryResult);
+    return labels['resource.type']?.map(this.toFindQueryResult) ?? [];
   }
 
   async handleAlignersQuery({ selectedMetricType, projectName }: CloudMonitoringVariableQuery) {

@@ -34,10 +34,10 @@ describe('MixedDatasource', () => {
     });
     const results: any[] = [];
 
-    beforeEach(async done => {
+    beforeEach(async (done) => {
       const ds = await getDataSourceSrv().get('-- Mixed --');
 
-      from(ds.query(requestMixed)).subscribe(result => {
+      from(ds.query(requestMixed)).subscribe((result) => {
         results.push(result);
         if (result.state === LoadingState.Done) {
           done();
@@ -68,10 +68,10 @@ describe('MixedDatasource', () => {
     });
     const results: any[] = [];
 
-    beforeEach(async done => {
+    beforeEach(async (done) => {
       const ds = await getDataSourceSrv().get('-- Mixed --');
 
-      from(ds.query(requestMixed)).subscribe(result => {
+      from(ds.query(requestMixed)).subscribe((result) => {
         results.push(result);
         if (results.length === 5) {
           done();

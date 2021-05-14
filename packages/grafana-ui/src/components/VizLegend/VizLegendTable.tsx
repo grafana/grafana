@@ -1,14 +1,16 @@
-import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import React from 'react';
+import { css, cx } from '@emotion/css';
 import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
 import { useStyles } from '../../themes/ThemeContext';
-import union from 'lodash/union';
-import sortBy from 'lodash/sortBy';
+import { union, sortBy } from 'lodash';
 import { LegendTableItem } from './VizLegendTableItem';
 import { GrafanaTheme } from '@grafana/data';
 
-export const VizLegendTable: FC<VizLegendTableProps> = ({
+/**
+ * @internal
+ */
+export const VizLegendTable = <T extends unknown>({
   items,
   sortBy: sortKey,
   sortDesc,
@@ -16,14 +18,15 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   className,
   onToggleSort,
   onLabelClick,
-  onSeriesColorChange,
-}) => {
+  onLabelMouseEnter,
+  onLabelMouseOut,
+}: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles(getStyles);
 
   const columns = items
-    .map(item => {
+    .map((item) => {
       if (item.getDisplayValues) {
-        return item.getDisplayValues().map(i => i.title);
+        return item.getDisplayValues().map((i) => i.title);
       }
       return [];
     })
@@ -31,16 +34,16 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
       (acc, current) => {
         return union(
           acc,
-          current.filter(item => !!item)
+          current.filter((item) => !!item)
         );
       },
       ['']
     ) as string[];
 
   const sortedItems = sortKey
-    ? sortBy(items, item => {
+    ? sortBy(items, (item) => {
         if (item.getDisplayValues) {
-          const stat = item.getDisplayValues().filter(stat => stat.title === sortKey)[0];
+          const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
           return stat && stat.numeric;
         }
         return undefined;
@@ -53,8 +56,9 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
       <LegendTableItem
         key={`${item.label}-${index}`}
         item={item}
-        onSeriesColorChange={onSeriesColorChange}
         onLabelClick={onLabelClick}
+        onLabelMouseEnter={onLabelMouseEnter}
+        onLabelMouseOut={onLabelMouseOut}
       />
     );
   }
@@ -63,7 +67,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
     <table className={cx(styles.table, className)}>
       <thead>
         <tr>
-          {columns.map(columnHeader => {
+          {columns.map((columnHeader) => {
             return (
               <th
                 key={columnHeader}

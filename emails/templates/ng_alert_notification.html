@@ -1,0 +1,150 @@
+[[Subject .Subject "[[.Title]]"]]
+
+<style>
+  .alert-warning {
+    background-color: #E6522C;
+  }
+  .alert-good {
+    background-color: #68B90F;
+  }
+</style>
+
+<table class="row">
+  <tr>
+    <td class="wrapper last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center">
+            [[ if gt (len .Alerts.Firing) 0 ]]
+            <h3 style="color: #E6522C; font-weight: bold; font-style: italic;">[[.Title]]</h3>
+            [[ else ]]
+            <h3 style="font-weight: bold; font-style: italic;">[[.Title]]</h3>
+            [[ end ]]
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<table class="row">
+  <tr>
+    [[ if gt (len .Alerts.Firing) 0 ]]
+    <td class="alert-warning twelve column last">
+      [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
+      [[ range .GroupLabels.SortedPairs ]]
+      [[ .Name ]]=[[ .Value ]]
+      [[ end ]]
+    </td>
+    [[ else ]]
+    <td class="alert-good twelve column last">
+      [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
+      [[ range .GroupLabels.SortedPairs ]]
+      [[ .Name ]]=[[ .Value ]]
+      [[ end ]]
+    </td>
+    [[ end ]]
+    </td>
+  </tr>
+  <tr>
+    <td class="last">
+      <table class="twelve columns">
+        [[ if gt (len .Alerts.Firing) 0 ]]
+        <tr>
+          <td class="twelve last">
+            <h5 style="font-weight: bold;">([[ .Alerts.Firing | len ]]) Firing</h5>
+          </td>
+        </tr>
+        [[ end ]]
+        [[ range .Alerts.Firing ]]
+        <tr>
+          <td class="four">
+            <h5 style="font-weight: bold">Labels</h5>
+          </td>
+          <td class="eight last">
+            [[ if gt (len .Annotations) 0 ]]<h5 style="font-weight: bold">Annotations</h5>[[ end ]]
+          </td>
+        </tr>
+        <tr>
+          <td class="four">
+            [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+            <a href="[[ .GeneratorURL ]]">Source</a><br />
+          </td>
+          <td class="eight last">
+            [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+          </td>
+        </tr>
+        [[ end ]]
+
+        [[ if gt (len .Alerts.Resolved) 0 ]]
+        [[ if gt (len .Alerts.Firing) 0 ]]
+        <tr>
+          <td class="twelve">
+            <br />
+            <hr />
+            <br />
+          </td>
+        </tr>
+        [[ end ]]
+        <tr>
+          <td class="twelve last">
+            <h5 style="font-weight: bold;">([[ .Alerts.Resolved | len ]]) Resolved</h5>
+          </td>
+        </tr>
+        [[ end ]]
+        [[ range .Alerts.Resolved ]]
+        <tr>
+          <td class="six">
+            <h5 style="font-weight: bold">Labels</h5>
+          </td>
+          <td class="six last">
+            [[ if gt (len .Annotations) 0 ]]<h5 style="font-weight: bold">Annotations</h5>[[ end ]]
+          </td>
+        </tr>
+        <tr>
+          <td class="six">
+            [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+            <a href="[[ .GeneratorURL ]]">Source</a><br />
+          </td>
+          <td class="six last">
+            [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+          </td>
+        </tr>
+        [[ end ]]
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<table class="row">
+  <tr>
+    <td class="wrapper last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center six">
+            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center" class="better-button" bgcolor="#ff8f2b">
+                  <a href="[[.RuleUrl]]"  target="_blank">View your Alert rule</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+          <td class="center six">
+            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center" class="better-button-alt" bgcolor="#efefef">
+                  <a href="[[.AlertPageUrl]]"  target="_blank"> Go to the Alerts page</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+

@@ -19,16 +19,9 @@ export function getOpacityScale(
 ): any {
   let legendOpacityScale;
   if (options.colorScale === 'linear') {
-    legendOpacityScale = d3
-      .scaleLinear()
-      .domain([minValue, maxValue])
-      .range([0, 1]);
+    legendOpacityScale = d3.scaleLinear().domain([minValue, maxValue]).range([0, 1]);
   } else if (options.colorScale === 'sqrt') {
-    legendOpacityScale = d3
-      .scalePow()
-      .exponent(options.exponent)
-      .domain([minValue, maxValue])
-      .range([0, 1]);
+    legendOpacityScale = d3.scalePow().exponent(options.exponent).domain([minValue, maxValue]).range([0, 1]);
   }
   return legendOpacityScale;
 }

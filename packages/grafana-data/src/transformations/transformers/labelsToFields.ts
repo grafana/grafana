@@ -17,9 +17,9 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
   name: 'Labels to fields',
   description: 'Extract time series labels to fields (columns)',
   defaultOptions: {},
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         const result: DataFrame[] = [];
 
         for (const frame of data) {

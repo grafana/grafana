@@ -8,7 +8,7 @@ describe('Dimensions', () => {
     mount(
       <Dimensions
         dimensions={{}}
-        onChange={dimensions => console.log(dimensions)}
+        onChange={(dimensions) => console.log(dimensions)}
         loadKeys={() => Promise.resolve<SelectableStrings>([])}
         loadValues={() => Promise.resolve<SelectableStrings>([])}
       />

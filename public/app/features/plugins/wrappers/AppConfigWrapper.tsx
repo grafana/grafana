@@ -1,13 +1,12 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import cloneDeep from 'lodash/cloneDeep';
-import extend from 'lodash/extend';
+import { cloneDeep, extend } from 'lodash';
 
 import { Button } from '@grafana/ui';
 import { PluginMeta, AppPlugin, deprecationWarning } from '@grafana/data';
 import { AngularComponent, getAngularLoader, getBackendSrv } from '@grafana/runtime';
 
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props {
   app: AppPlugin;
@@ -20,6 +19,7 @@ interface State {
 
 export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
+  //@ts-ignore
   model: PluginMeta;
 
   // Needed for angular scope
@@ -68,7 +68,7 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
 
     return (
       <div>
-        <div ref={element => (this.element = element)} />
+        <div ref={(element) => (this.element = element)} />
         <br />
         <br />
         {model && (
@@ -115,7 +115,7 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
         return getBackendSrv().post(`/api/plugins/${pluginId}/settings`, updateCmd);
       })
       .then(this.postUpdateHook)
-      .then(res => {
+      .then((res) => {
         window.location.href = window.location.href;
       });
   };

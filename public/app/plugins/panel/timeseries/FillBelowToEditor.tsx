@@ -22,7 +22,7 @@ export const FillBellowToEditor: React.FC<FieldOverrideEditorProps<string, any>>
   }, [context]);
 
   const current = useMemo(() => {
-    const found = names.find(v => v.value === value);
+    const found = names.find((v) => v.value === value);
     if (found) {
       return found;
     }
@@ -33,13 +33,13 @@ export const FillBellowToEditor: React.FC<FieldOverrideEditorProps<string, any>>
       };
     }
     return undefined;
-  }, names);
+  }, [names, value]);
 
   return (
     <Select
       options={names}
       value={current}
-      onChange={v => {
+      onChange={(v) => {
         onChange(v.value);
       }}
     />

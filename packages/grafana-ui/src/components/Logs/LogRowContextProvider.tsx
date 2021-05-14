@@ -1,8 +1,14 @@
-import { LogRowModel, toDataFrame, Field, FieldCache, LogsSortOrder } from '@grafana/data';
+import {
+  LogRowModel,
+  toDataFrame,
+  Field,
+  FieldCache,
+  LogsSortOrder,
+  DataQueryResponse,
+  DataQueryError,
+} from '@grafana/data';
 import React, { useState, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
-
-import { DataQueryResponse, DataQueryError } from '@grafana/data';
 
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';
@@ -58,9 +64,9 @@ export const getRowContexts = async (
     }),
   ];
 
-  const results: Array<DataQueryResponse | DataQueryError> = await Promise.all(promises.map(p => p.catch(e => e)));
+  const results: Array<DataQueryResponse | DataQueryError> = await Promise.all(promises.map((p) => p.catch((e) => e)));
 
-  const data = results.map(result => {
+  const data = results.map((result) => {
     const dataResult: DataQueryResponse = result as DataQueryResponse;
     if (!dataResult.data) {
       return [];
@@ -98,7 +104,7 @@ export const getRowContexts = async (
           }
         }
 
-        const lineField: Field<string> = dataFrame.fields.filter(field => field.name === 'line')[0];
+        const lineField: Field<string> = dataFrame.fields.filter((field) => field.name === 'line')[0];
         const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
 
         data.push(line);
@@ -108,7 +114,7 @@ export const getRowContexts = async (
     return logsSortOrder === LogsSortOrder.Ascending ? data.reverse() : data;
   });
 
-  const errors = results.map(result => {
+  const errors = results.map((result) => {
     const errorResult: DataQueryError = result as DataQueryError;
     if (!errorResult.message) {
       return '';

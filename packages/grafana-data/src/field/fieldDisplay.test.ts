@@ -1,10 +1,10 @@
-import merge from 'lodash/merge';
+import { merge } from 'lodash';
 import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
-import { MappingType } from '../types';
+import { MappingType, SpecialValueMatch, ValueMapping } from '../types';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { getTestTheme } from '../utils/testdata/testTheme';
+import { createTheme } from '../themes';
 
 describe('FieldDisplay', () => {
   beforeAll(() => {
@@ -35,7 +35,7 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.text)).toEqual(['1', '2']);
+    expect(display.map((v) => v.display.text)).toEqual(['1', '2']);
   });
 
   it('show last numeric values', () => {
@@ -45,7 +45,7 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.numeric)).toEqual([5, 6]);
+    expect(display.map((v) => v.display.numeric)).toEqual([5, 6]);
   });
 
   it('show all numeric values', () => {
@@ -57,7 +57,7 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.numeric)).toEqual([1, 3, 5, 2, 4, 6]);
+    expect(display.map((v) => v.display.numeric)).toEqual([1, 3, 5, 2, 4, 6]);
   });
 
   it('show 2 numeric values (limit)', () => {
@@ -69,7 +69,35 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
+    expect(display.map((v) => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
+  });
+
+  it('should not calculate min max if ensureGlobalRange is false', () => {
+    const options = createDisplayOptions({
+      ensureGlobalRange: false,
+      reduceOptions: {
+        values: true, //
+        limit: 1000,
+        calcs: [],
+      },
+    });
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toBeUndefined();
+    expect(display[0].field.max).toBeUndefined();
+  });
+
+  it('should ensure global min / max on numerical fields', () => {
+    const options = createDisplayOptions({
+      ensureGlobalRange: true,
+      reduceOptions: {
+        values: true, //
+        limit: 1000,
+        calcs: [],
+      },
+    });
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.min).toEqual(1);
+    expect(display[0].field.max).toEqual(6);
   });
 
   it('Should return field thresholds when there is no data', () => {
@@ -100,11 +128,11 @@ describe('FieldDisplay', () => {
         defaults: {
           mappings: [
             {
-              id: 1,
-              operator: '',
-              text: mapEmptyToText,
-              type: MappingType.ValueToText,
-              value: 'null',
+              type: MappingType.SpecialValue,
+              options: {
+                match: SpecialValueMatch.Null,
+                result: { text: mapEmptyToText },
+              },
             },
           ],
         },
@@ -123,11 +151,11 @@ describe('FieldDisplay', () => {
         overrides: {
           mappings: [
             {
-              id: 1,
-              operator: '',
-              text: mapEmptyToText,
-              type: MappingType.ValueToText,
-              value: 'null',
+              type: MappingType.SpecialValue,
+              options: {
+                match: SpecialValueMatch.Null,
+                result: { text: mapEmptyToText },
+              },
             },
           ],
         },
@@ -152,13 +180,12 @@ describe('FieldDisplay', () => {
 
   describe('Value mapping', () => {
     it('should apply value mapping', () => {
-      const mappingConfig = [
+      const mappingConfig: ValueMapping[] = [
         {
-          id: 1,
-          operator: '',
-          text: 'Value mapped to text',
           type: MappingType.ValueToText,
-          value: '1',
+          options: {
+            '1': { text: 'Value mapped to text' },
+          },
         },
       ];
       const options = createDisplayOptions({
@@ -173,17 +200,17 @@ describe('FieldDisplay', () => {
       const result = getFieldDisplayValues(options);
       expect(result[0].display.text).toEqual('Value mapped to text');
     });
+
     it('should apply range value mapping', () => {
       const mappedValue = 'Range mapped to text';
-      const mappingConfig = [
+      const mappingConfig: ValueMapping[] = [
         {
-          id: 1,
-          operator: '',
-          text: mappedValue,
           type: MappingType.RangeToText,
-          value: 1,
-          from: '1',
-          to: '3',
+          options: {
+            from: 1,
+            to: 3,
+            result: { text: mappedValue },
+          },
         },
       ];
       const options = createDisplayOptions({
@@ -201,6 +228,100 @@ describe('FieldDisplay', () => {
       expect(result[0].display.text).toEqual(mappedValue);
       expect(result[2].display.text).toEqual('5');
       expect(result[3].display.text).toEqual(mappedValue);
+    });
+  });
+
+  describe('auto option', () => {
+    it('No string fields, single value', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            name: 'Series Name',
+            fields: [{ name: 'A', values: [10] }],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[0].display.text).toEqual('10');
+    });
+
+    it('Single other string field', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Name', values: ['A', 'B'] },
+              { name: 'Value', values: [10, 20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('B');
+      expect(result[1].display.text).toEqual('20');
+    });
+
+    it('Single string field multiple value fields', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Name', values: ['A', 'B'] },
+              { name: 'SensorA', values: [10, 20] },
+              { name: 'SensorB', values: [10, 20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A SensorA');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('B SensorA');
+      expect(result[1].display.text).toEqual('20');
+      expect(result[2].display.title).toEqual('A SensorB');
+      expect(result[3].display.title).toEqual('B SensorB');
+    });
+
+    it('Multiple other string fields', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Country', values: ['Sweden', 'Norway'] },
+              { name: 'City', values: ['Stockholm', 'Oslo'] },
+              { name: 'Value', values: [10, 20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('Sweden Stockholm');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('Norway Oslo');
+      expect(result[1].display.text).toEqual('20');
     });
   });
 });
@@ -241,7 +362,7 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
       overrides: [],
       defaults: {},
     },
-    theme: getTestTheme(),
+    theme: createTheme(),
   };
 
   return merge<GetFieldDisplayValuesOptions, any>(options, extend);

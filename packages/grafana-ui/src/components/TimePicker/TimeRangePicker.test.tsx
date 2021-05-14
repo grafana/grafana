@@ -1,7 +1,6 @@
-import { dateTime, TimeRange } from '@grafana/data';
+import { createTheme, dateTime, TimeRange } from '@grafana/data';
 import { render } from '@testing-library/react';
 import React from 'react';
-import dark from '../../themes/dark';
 import { UnthemedTimeRangePicker } from './TimeRangePicker';
 
 const from = dateTime('2019-12-17T07:48:27.433Z');
@@ -18,12 +17,12 @@ describe('TimePicker', () => {
     const container = render(
       <UnthemedTimeRangePicker
         onChangeTimeZone={() => {}}
-        onChange={value => {}}
+        onChange={(value) => {}}
         value={value}
         onMoveBackward={() => {}}
         onMoveForward={() => {}}
         onZoom={() => {}}
-        theme={dark}
+        theme={createTheme().v1}
       />
     );
 

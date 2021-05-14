@@ -20,9 +20,30 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-func (ns *NotificationService) send(msg *Message) (int, error) {
+var (
+	emailsSentTotal  prometheus.Counter
+	emailsSentFailed prometheus.Counter
+)
+
+func init() {
+	emailsSentTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_total",
+		Help:      "Number of emails sent by Grafana",
+		Namespace: "grafana",
+	})
+
+	emailsSentFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_failed",
+		Help:      "Number of emails Grafana failed to send",
+		Namespace: "grafana",
+	})
+}
+
+func (ns *NotificationService) Send(msg *Message) (int, error) {
 	messages := []*Message{}
 
 	if msg.SingleEmail {
@@ -38,10 +59,11 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 	return ns.dialAndSend(messages...)
 }
 
-func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err error) {
+func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
+	sentEmailsCount := 0
 	dialer, err := ns.createDialer()
 	if err != nil {
-		return
+		return sentEmailsCount, err
 	}
 
 	for _, msg := range messages {
@@ -58,15 +80,24 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err e
 
 		m.SetBody("text/html", msg.Body)
 
-		if e := dialer.DialAndSend(m); e != nil {
-			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
+		innerError := dialer.DialAndSend(m)
+		emailsSentTotal.Inc()
+		if innerError != nil {
+			// As gomail does not returned typed errors we have to parse the error
+			// to catch invalid error when the address is invalid.
+			// https://github.com/go-gomail/gomail/blob/81ebce5c23dfd25c6c67194b37d3dd3f338c98b1/send.go#L113
+			if !strings.HasPrefix(innerError.Error(), "gomail: invalid address") {
+				emailsSentFailed.Inc()
+			}
+
+			err = errutil.Wrapf(innerError, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
 			continue
 		}
 
-		num++
+		sentEmailsCount++
 	}
 
-	return
+	return sentEmailsCount, err
 }
 
 // setFiles attaches files in various forms

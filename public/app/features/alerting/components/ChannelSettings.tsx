@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { CollapsableSection, InfoBox } from '@grafana/ui';
+import { Alert, CollapsableSection } from '@grafana/ui';
 import { NotificationChannelOptions } from './NotificationChannelOptions';
 import { NotificationSettingsProps } from './NotificationChannelForm';
 import { NotificationChannelSecureFields, NotificationChannelType } from '../../../types';
@@ -21,9 +21,9 @@ export const ChannelSettings: FC<Props> = ({
 }) => {
   return (
     <CollapsableSection label={`Optional ${selectedChannel.heading}`} isOpen={false}>
-      {selectedChannel.info !== '' && <InfoBox>{selectedChannel.info}</InfoBox>}
+      {selectedChannel.info !== '' && <Alert severity="info" title={selectedChannel.info ?? ''} />}
       <NotificationChannelOptions
-        selectedChannelOptions={selectedChannel.options.filter(o => !o.required)}
+        selectedChannelOptions={selectedChannel.options.filter((o) => !o.required)}
         currentFormValues={currentFormValues}
         register={register}
         errors={errors}

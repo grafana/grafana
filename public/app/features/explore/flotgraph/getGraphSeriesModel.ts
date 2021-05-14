@@ -39,7 +39,7 @@ export const getGraphSeriesModel = (
         decimals: legendOptions.decimals,
       },
     },
-    theme: config.theme,
+    theme: config.theme2,
     timeZone,
   });
 
@@ -70,7 +70,7 @@ export const getGraphSeriesModel = (
         let statsDisplayValues: DisplayValue[] = [];
 
         if (legendOptions.stats) {
-          statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {
+          statsDisplayValues = legendOptions.stats.map<DisplayValue>((stat) => {
             const statDisplayValue = displayProcessor(seriesStats[stat]);
 
             return {
@@ -106,7 +106,7 @@ export const getGraphSeriesModel = (
             }
           : { ...field.config, color };
 
-        field.display = getDisplayProcessor({ field, timeZone, theme: config.theme });
+        field.display = getDisplayProcessor({ field, timeZone, theme: config.theme2 });
 
         // Time step is used to determine bars width when graph is rendered as bar chart
         const timeStep = getSeriesTimeStep(timeField);
@@ -121,7 +121,7 @@ export const getGraphSeriesModel = (
               unit: systemDateFormats.getTimeFieldUnit(useMsDateFormat),
             },
           },
-          theme: config.theme,
+          theme: config.theme2,
         });
 
         graphs.push({

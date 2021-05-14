@@ -1,4 +1,4 @@
-export const createTestOrgIfNotExists = client => {
+export const createTestOrgIfNotExists = (client) => {
   let orgId = 0;
 
   let res = client.orgs.getByName('k6');
@@ -20,8 +20,7 @@ export const createTestOrgIfNotExists = client => {
   return res.json().id;
 };
 
-
-export const createTestdataDatasourceIfNotExists = client => {
+export const createTestdataDatasourceIfNotExists = (client) => {
   const payload = {
     access: 'proxy',
     isDefault: false,

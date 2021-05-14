@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
@@ -16,7 +16,7 @@ const getStyles = stylesFactory((size: number, inline: boolean) => {
   };
 });
 
-type Props = {
+export type Props = {
   className?: string;
   style?: React.CSSProperties;
   iconClassName?: string;

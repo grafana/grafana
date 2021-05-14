@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find, isEmpty, isNil, isString, map, max, min, toNumber, isNaN } from 'lodash';
 import $ from 'jquery';
 import * as d3 from 'd3';
 import { contextSrv } from 'app/core/core';
@@ -33,20 +33,20 @@ export default function rendering(scope: any, elem: any, attrs: any, ctrl: any) 
   return new HeatmapRenderer(scope, elem, attrs, ctrl);
 }
 export class HeatmapRenderer {
-  width: number;
-  height: number;
+  width = 200;
+  height = 200;
   yScale: any;
   xScale: any;
-  chartWidth: number;
-  chartHeight: number;
-  chartTop: number;
-  chartBottom: number;
-  yAxisWidth: number;
-  xAxisHeight: number;
-  cardPadding: number;
-  cardRound: number;
-  cardWidth: number;
-  cardHeight: number;
+  chartWidth = 0;
+  chartHeight = 0;
+  chartTop = 0;
+  chartBottom = 0;
+  yAxisWidth = 0;
+  xAxisHeight = 0;
+  cardPadding = 0;
+  cardRound = 0;
+  cardWidth = 0;
+  cardHeight = 0;
   colorScale: any;
   opacityScale: any;
   mouseUpHandler: any;
@@ -61,6 +61,9 @@ export class HeatmapRenderer {
   padding: any;
   margin: any;
   dataRangeWidingFactor: number;
+
+  hoverEvent: LegacyGraphHoverEvent;
+
   constructor(private scope: any, private elem: any, attrs: any, private ctrl: any) {
     // $heatmap is JQuery object, but heatmap is D3
     this.$heatmap = this.elem.find('.heatmap-panel');
@@ -75,9 +78,7 @@ export class HeatmapRenderer {
     this.padding = { left: 0, right: 0, top: 0, bottom: 0 };
     this.margin = { left: 25, right: 15, top: 10, bottom: 20 };
     this.dataRangeWidingFactor = DATA_RANGE_WIDING_FACTOR;
-
     this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
-
     this.ctrl.tickValueFormatter = this.tickValueFormatter.bind(this);
 
     /////////////////////////////
@@ -92,6 +93,8 @@ export class HeatmapRenderer {
     this.$heatmap.on('mousedown', this.onMouseDown.bind(this));
     this.$heatmap.on('mousemove', this.onMouseMove.bind(this));
     this.$heatmap.on('mouseleave', this.onMouseLeave.bind(this));
+
+    this.hoverEvent = new LegacyGraphHoverEvent({ pos: {}, point: {}, panel: this.panel });
   }
 
   onGraphHoverClear() {
@@ -110,7 +113,7 @@ export class HeatmapRenderer {
   setElementHeight() {
     try {
       let height = this.ctrl.height || this.panel.height || this.ctrl.row.height;
-      if (_.isString(height)) {
+      if (isString(height)) {
         height = parseInt(height.replace('px', ''), 10);
       }
 
@@ -127,8 +130,8 @@ export class HeatmapRenderer {
 
   getYAxisWidth(elem: any) {
     const axisText = elem.selectAll('.axis-y text').nodes();
-    const maxTextWidth = _.max(
-      _.map(axisText, text => {
+    const maxTextWidth = max(
+      map(axisText, (text) => {
         // Use SVG getBBox method
         return text.getBBox().width;
       })
@@ -180,10 +183,7 @@ export class HeatmapRenderer {
       .call(xAxis);
 
     // Remove horizontal line in the top of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-x')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-x').select('.domain').remove();
   }
 
   addYAxis() {
@@ -208,7 +208,7 @@ export class HeatmapRenderer {
     this.ctrl.scaledDecimals = scaledDecimals;
 
     // Set default Y min and max if no data
-    if (_.isEmpty(this.data.buckets)) {
+    if (isEmpty(this.data.buckets)) {
       yMax = 1;
       yMin = -1;
       ticks = 3;
@@ -221,10 +221,7 @@ export class HeatmapRenderer {
       ticks: ticks,
     };
 
-    this.scope.yScale = this.yScale = d3
-      .scaleLinear()
-      .domain([yMin, yMax])
-      .range([this.chartHeight, 0]);
+    this.scope.yScale = this.yScale = d3.scaleLinear().domain([yMin, yMax]).range([this.chartHeight, 0]);
 
     const yAxis = d3
       .axisLeft(this.yScale)
@@ -234,10 +231,7 @@ export class HeatmapRenderer {
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
 
-    this.heatmap
-      .append('g')
-      .attr('class', 'axis axis-y')
-      .call(yAxis);
+    this.heatmap.append('g').attr('class', 'axis axis-y').call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     const posY = this.margin.top;
@@ -245,10 +239,7 @@ export class HeatmapRenderer {
     this.heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-y')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-y').select('.domain').remove();
   }
 
   // Wide Y values range and anjust to bucket size
@@ -281,7 +272,7 @@ export class HeatmapRenderer {
     yMax = this.panel.yAxis.max !== null ? this.adjustLogMax(this.panel.yAxis.max, logBase) : yMax;
 
     // Set default Y min and max if no data
-    if (_.isEmpty(this.data.buckets)) {
+    if (isEmpty(this.data.buckets)) {
       yMax = Math.pow(logBase, 2);
       yMin = 1;
     }
@@ -318,10 +309,7 @@ export class HeatmapRenderer {
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
 
-    this.heatmap
-      .append('g')
-      .attr('class', 'axis axis-y')
-      .call(yAxis);
+    this.heatmap.append('g').attr('class', 'axis axis-y').call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     const posY = this.margin.top;
@@ -330,17 +318,11 @@ export class HeatmapRenderer {
 
     // Set first tick as pseudo 0
     if (yMin < 1) {
-      this.heatmap
-        .select('.axis-y')
-        .select('.tick text')
-        .text('0');
+      this.heatmap.select('.axis-y').select('.tick text').text('0');
     }
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-y')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-y').select('.domain').remove();
   }
 
   addYAxisFromBuckets() {
@@ -352,22 +334,22 @@ export class HeatmapRenderer {
       .domain([0, tsBuckets.length - 1])
       .range([this.chartHeight, 0]);
 
-    const tickValues = _.map(tsBuckets, (b, i) => i);
-    const decimalsAuto = _.max(_.map(tsBuckets, ticksUtils.getStringPrecision));
+    const tickValues = map(tsBuckets, (b, i) => i);
+    const decimalsAuto = max(map(tsBuckets, ticksUtils.getStringPrecision));
     const decimals = this.panel.yAxis.decimals === null ? decimalsAuto : this.panel.yAxis.decimals;
     this.ctrl.decimals = decimals;
 
     const tickValueFormatter = this.tickValueFormatter.bind(this);
     function tickFormatter(valIndex: string) {
       let valueFormatted = tsBuckets[valIndex];
-      if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
+      if (!isNaN(toNumber(valueFormatted)) && valueFormatted !== '') {
         // Try to format numeric tick labels
-        valueFormatted = tickValueFormatter(decimals)(_.toNumber(valueFormatted));
+        valueFormatted = tickValueFormatter(decimals)(toNumber(valueFormatted));
       }
       return valueFormatted;
     }
 
-    const tsBucketsFormatted = _.map(tsBuckets, (v, i) => tickFormatter(i));
+    const tsBucketsFormatted = map(tsBuckets, (v, i) => tickFormatter(i));
     this.data.tsBucketsFormatted = tsBucketsFormatted;
 
     const yAxis = d3
@@ -382,10 +364,7 @@ export class HeatmapRenderer {
       yAxis.ticks(ticks);
     }
 
-    this.heatmap
-      .append('g')
-      .attr('class', 'axis axis-y')
-      .call(yAxis);
+    this.heatmap.append('g').attr('class', 'axis axis-y').call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     const posY = this.margin.top;
@@ -399,10 +378,7 @@ export class HeatmapRenderer {
     }
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    this.heatmap
-      .select('.axis-y')
-      .select('.domain')
-      .remove();
+    this.heatmap.select('.axis-y').select('.domain').remove();
   }
 
   // Adjust data range to log base
@@ -466,10 +442,7 @@ export class HeatmapRenderer {
   }
 
   fixYAxisTickSize() {
-    this.heatmap
-      .select('.axis-y')
-      .selectAll('.tick line')
-      .attr('x2', this.chartWidth);
+    this.heatmap.select('.axis-y').selectAll('.tick line').attr('x2', this.chartWidth);
   }
 
   addAxes() {
@@ -494,17 +467,11 @@ export class HeatmapRenderer {
     this.xAxisHeight = this.getXAxisHeight(this.heatmap);
 
     if (!this.panel.yAxis.show) {
-      this.heatmap
-        .select('.axis-y')
-        .selectAll('line')
-        .style('opacity', 0);
+      this.heatmap.select('.axis-y').selectAll('line').style('opacity', 0);
     }
 
     if (!this.panel.xAxis.show) {
-      this.heatmap
-        .select('.axis-x')
-        .selectAll('line')
-        .style('opacity', 0);
+      this.heatmap.select('.axis-x').selectAll('line').style('opacity', 0);
     }
   }
 
@@ -521,11 +488,7 @@ export class HeatmapRenderer {
       this.heatmap.remove();
     }
 
-    this.heatmap = d3
-      .select(heatmapElem)
-      .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height);
+    this.heatmap = d3.select(heatmapElem).append('svg').attr('width', this.width).attr('height', this.height);
   }
 
   addHeatmap() {
@@ -536,16 +499,16 @@ export class HeatmapRenderer {
       const logBase = this.panel.yAxis.logBase;
       const domain = this.yScale.domain();
       const tickValues = this.logScaleTickValues(domain, logBase);
-      this.data.buckets = mergeZeroBuckets(this.data.buckets, _.min(tickValues)!);
+      this.data.buckets = mergeZeroBuckets(this.data.buckets, min(tickValues)!);
     }
 
     const cardsData = this.data.cards;
     const cardStats = this.data.cardStats;
     const maxValueAuto = cardStats.max;
-    const minValueAuto = Math.min(cardStats.min, 0);
-    const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
-    const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
-    const colorScheme: any = _.find(this.ctrl.colorSchemes, {
+    const minValueAuto = Math.max(cardStats.min, 0);
+    const maxValue = isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
+    const minValue = isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
+    const colorScheme: any = find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
@@ -781,7 +744,10 @@ export class HeatmapRenderer {
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
-    this.ctrl.dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
+    this.hoverEvent.payload.pos = pos;
+    this.hoverEvent.payload.panel = this.panel;
+    this.hoverEvent.payload.point['time'] = (pos as any).x;
+    this.ctrl.dashboard.events.publish(this.hoverEvent);
   }
 
   limitSelection(x2: number) {
@@ -861,7 +827,7 @@ export class HeatmapRenderer {
     }
 
     // Draw default axes and return if no data
-    if (_.isEmpty(this.data.buckets)) {
+    if (isEmpty(this.data.buckets)) {
       this.addHeatmapCanvas();
       this.addAxes();
       return;

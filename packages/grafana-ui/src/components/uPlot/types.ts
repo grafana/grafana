@@ -1,28 +1,26 @@
 import React from 'react';
-import uPlot, { Options, Series, Hooks } from 'uplot';
-import { DataFrame, DataFrameFieldIndex, TimeRange, TimeZone } from '@grafana/data';
+import uPlot, { Options, AlignedData } from 'uplot';
+import { TimeRange } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
-export type PlotSeriesConfig = Pick<Options, 'series' | 'scales' | 'axes' | 'cursor' | 'bands'>;
-export type PlotPlugin = {
-  id: string;
-  /** can mutate provided opts as necessary */
-  opts?: (self: uPlot, opts: Options) => void;
-  hooks: Hooks.ArraysOrFuncs;
-};
+export type PlotConfig = Pick<
+  Options,
+  'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate'
+>;
 
 export interface PlotPluginProps {
   id: string;
 }
 
 export interface PlotProps {
-  data: AlignedFrameWithGapTest;
-  timeRange: TimeRange;
-  timeZone: TimeZone;
+  data: AlignedData;
   width: number;
   height: number;
   config: UPlotConfigBuilder;
-  children?: React.ReactElement[];
+  timeRange: TimeRange;
+  children?: React.ReactNode;
+  // Reference to uPlot instance
+  plotRef?: (u: uPlot) => void;
 }
 
 export abstract class PlotConfigBuilder<P, T> {
@@ -30,8 +28,8 @@ export abstract class PlotConfigBuilder<P, T> {
   abstract getConfig(): T;
 }
 
-export interface AlignedFrameWithGapTest {
-  frame: DataFrame;
-  isGap: Series.isGap;
-  getDataFrameFieldIndex: (alignedFieldIndex: number) => DataFrameFieldIndex | undefined;
-}
+export type TooltipInterpolator = (
+  updateActiveSeriesIdx: (sIdx: number | null) => void,
+  updateActiveDatapointIdx: (dIdx: number | null) => void,
+  updateTooltipPosition: (clear?: boolean) => void
+) => (u: uPlot) => void;

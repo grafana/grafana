@@ -90,8 +90,8 @@ const importDashboardSlice = createSlice({
     setInputs: (state, action: PayloadAction<any[]>): ImportDashboardState => ({
       ...state,
       inputs: {
-        dataSources: action.payload.filter(p => p.type === InputType.DataSource),
-        constants: action.payload.filter(p => p.type === InputType.Constant),
+        dataSources: action.payload.filter((p) => p.type === InputType.DataSource),
+        constants: action.payload.filter((p) => p.type === InputType.Constant),
       },
     }),
   },

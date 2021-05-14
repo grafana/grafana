@@ -1,6 +1,6 @@
 import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
 import SplitPane from 'react-split-pane';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -87,7 +87,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
           pane2Style={{ minHeight: 0 }}
           resizerClassName={styles.resizerH}
           onDragStarted={this.onDragStarted}
-          onDragFinished={size => this.onDragFinished(Pane.Top, size)}
+          onDragFinished={(size) => this.onDragFinished(Pane.Top, size)}
         >
           {leftPaneComponents}
         </SplitPane>
@@ -120,7 +120,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
         primary="second"
         resizerClassName={styles.resizerV}
         onDragStarted={() => (document.body.style.cursor = 'col-resize')}
-        onDragFinished={size => this.onDragFinished(Pane.Right, size)}
+        onDragFinished={(size) => this.onDragFinished(Pane.Right, size)}
       >
         {this.renderHorizontalSplit()}
         {rightPaneComponents}

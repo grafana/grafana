@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isNumber } from 'lodash';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from '../../state/DashboardModel';
 import { getBackendSrv } from '@grafana/runtime';
@@ -19,12 +19,6 @@ export interface RevisionsModel {
   message: string;
 }
 
-export interface CalculateDiffOptions {
-  new: DiffTarget;
-  base: DiffTarget;
-  diffType: string;
-}
-
 export interface DiffTarget {
   dashboardId: number;
   version: number;
@@ -37,16 +31,19 @@ export class HistorySrv {
     return id ? getBackendSrv().get(`api/dashboards/id/${id}/versions`, options) : Promise.resolve([]);
   }
 
-  calculateDiff(options: CalculateDiffOptions) {
-    return getBackendSrv().post('api/dashboards/calculate-diff', options);
+  getDashboardVersion(id: number, version: number) {
+    return getBackendSrv().get(`api/dashboards/id/${id}/versions/${version}`);
   }
 
   restoreDashboard(dashboard: DashboardModel, version: number) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
     const url = `api/dashboards/id/${id}/restore`;
 
-    return id && _.isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
+    return id && isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
   }
 }
+
+const historySrv = new HistorySrv();
+export { historySrv };
 
 coreModule.service('historySrv', HistorySrv);

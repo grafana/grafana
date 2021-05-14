@@ -34,7 +34,7 @@ describe('Rename By Regex Transformer', () => {
           renamePattern: '$1',
         },
       };
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const frame = data[0];
         expect(frame.fields).toMatchInlineSnapshot(`
@@ -84,7 +84,7 @@ describe('Rename By Regex Transformer', () => {
           renamePattern: '$1',
         },
       };
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const frame = data[0];
         expect(frame.fields).toMatchInlineSnapshot(`
@@ -134,7 +134,7 @@ describe('Rename By Regex Transformer', () => {
           renamePattern: '',
         },
       };
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const frame = data[0];
         expect(frame.fields).toMatchInlineSnapshot(`

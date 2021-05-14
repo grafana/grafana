@@ -88,7 +88,7 @@ export const getTimeZoneGroups = memoize((includeInternal = false): GroupedTimeZ
     return groups;
   }, {});
 
-  return Object.keys(groups).map(name => ({
+  return Object.keys(groups).map((name) => ({
     name,
     zones: groups[name],
   }));

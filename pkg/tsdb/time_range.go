@@ -2,7 +2,6 @@ package tsdb
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/timberio/go-datemath"
@@ -114,19 +113,4 @@ func parse(s string, now time.Time, withRoundUp bool, location *time.Location) (
 	}
 
 	return now.Add(diff), nil
-}
-
-// EpochPrecisionToMs converts epoch precision to millisecond, if needed.
-// Only seconds to milliseconds supported right now
-func EpochPrecisionToMs(value float64) float64 {
-	s := strconv.FormatFloat(value, 'e', -1, 64)
-	if strings.HasSuffix(s, "e+09") {
-		return value * float64(1e3)
-	}
-
-	if strings.HasSuffix(s, "e+18") {
-		return value / float64(time.Millisecond)
-	}
-
-	return value
 }

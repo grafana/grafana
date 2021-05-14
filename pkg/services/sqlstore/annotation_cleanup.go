@@ -47,8 +47,9 @@ func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *
 	if err != nil {
 		return totalCleanedAnnotations, 0, err
 	}
-
-	affected, err = acs.cleanOrphanedAnnotationTags(ctx)
+	if totalCleanedAnnotations > 0 {
+		affected, err = acs.cleanOrphanedAnnotationTags(ctx)
+	}
 	return totalCleanedAnnotations, affected, err
 }
 
@@ -91,7 +92,7 @@ func (acs *AnnotationCleanupService) executeUntilDoneOrCancelled(ctx context.Con
 			return totalAffected, ctx.Err()
 		default:
 			var affected int64
-			err := withDbSession(ctx, func(session *DBSession) error {
+			err := withDbSession(ctx, x, func(session *DBSession) error {
 				res, err := session.Exec(sql)
 				if err != nil {
 					return err

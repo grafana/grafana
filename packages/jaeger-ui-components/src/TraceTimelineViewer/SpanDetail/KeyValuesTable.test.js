@@ -89,13 +89,7 @@ describe('<KeyValuesTable>', () => {
     expect(anchor).toHaveLength(1);
     expect(anchor.prop('href')).toBe('http://example.com/?kind=client');
     expect(anchor.prop('title')).toBe('More info about client');
-    expect(
-      anchor
-        .closest('tr')
-        .find('td')
-        .first()
-        .text()
-    ).toBe('span.kind');
+    expect(anchor.closest('tr').find('td').first().text()).toBe('span.kind');
   });
 
   it('renders multiple links correctly', () => {
@@ -127,13 +121,7 @@ describe('<KeyValuesTable>', () => {
     const secondAnchor = anchors.last();
     expect(secondAnchor.prop('href')).toBe('http://example.com/2?kind=client');
     expect(secondAnchor.children().text()).toBe('Example 2');
-    expect(
-      dropdown
-        .closest('tr')
-        .find('td')
-        .first()
-        .text()
-    ).toBe('span.kind');
+    expect(dropdown.closest('tr').find('td').first().text()).toBe('span.kind');
   });
 
   it('renders a <CopyIcon /> with correct copyText for each data element', () => {

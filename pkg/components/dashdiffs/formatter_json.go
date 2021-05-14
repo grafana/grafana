@@ -310,7 +310,7 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.printRecursive(positionStr, matchedDelta.Value, ChangeDeleted)
 
 			default:
-				return errors.New("unknown Delta type detected")
+				return fmt.Errorf("unknown Delta type detected %#v", matchedDelta)
 			}
 		}
 	} else {

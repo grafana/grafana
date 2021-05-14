@@ -1783,11 +1783,6 @@ Licensed under the MIT license.
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
 
-            // grafana addition
-            if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
-              axis.scaledDecimals = axis.tickDecimals + dec;
-            }
-
             // Time mode was moved to a plug-in in 0.8, and since so many people use it
             // we'll add an especially friendly reminder to make sure they included it.
 

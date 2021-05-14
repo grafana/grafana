@@ -1,9 +1,8 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Components
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
+import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -20,12 +19,16 @@ import {
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import {
+  dataSource as expressionDatasource,
+  ExpressionDatasourceID,
+} from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
-import { QueryGroupOptions, QueryGroupOptionsEditor } from './QueryGroupOptions';
+import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { QueryGroupOptions } from 'app/types';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -45,12 +48,13 @@ interface State {
   scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
+  defaultDataSource?: DataSourceApi;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
-  querySubscription: Unsubscribable | null;
+  querySubscription: Unsubscribable | null = null;
 
   state: State = {
     isLoadingHelp: false,
@@ -76,7 +80,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
-      this.setState({ dataSource: ds, dsSettings });
+      const defaultDataSource = await this.dataSourceSrv.get();
+      this.setState({ dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -140,14 +145,22 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddQueryClick = () => {
-    if (this.state.dsSettings?.meta.mixed) {
-      this.setState({ isAddingMixed: true });
-      return;
-    }
-
-    this.onChange({ queries: addQuery(this.props.options.queries) });
+    const { options } = this.props;
+    this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
     this.onScrollBottom();
   };
+
+  newQuery(): Partial<DataQuery> {
+    const { dsSettings, defaultDataSource } = this.state;
+
+    if (!dsSettings?.meta.mixed) {
+      return {};
+    }
+
+    return {
+      datasource: defaultDataSource?.name,
+    };
+  }
 
   onChange(changedProps: Partial<QueryGroupOptions>) {
     this.props.onOptionsChange({
@@ -172,7 +185,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.props.onRunQueries();
   };
 
-  renderTopSection(styles: QueriesTabStyls) {
+  renderTopSection(styles: QueriesTabStyles) {
     const { onOpenQueryInspector, options } = this.props;
     const { dataSource, data } = this.state;
 
@@ -276,7 +289,14 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { data } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
-      return <DashboardQueryEditor queries={options.queries} panelData={data} onChange={this.onQueriesChange} />;
+      return (
+        <DashboardQueryEditor
+          queries={options.queries}
+          panelData={data}
+          onChange={this.onQueriesChange}
+          onRunQueries={onRunQueries}
+        />
+      );
     }
 
     return (
@@ -293,7 +313,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     );
   }
 
-  renderAddQueryRow(dsSettings: DataSourceInstanceSettings) {
+  isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
+    return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
+  }
+
+  renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
     const { isAddingMixed } = this.state;
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
 
@@ -309,11 +333,18 @@ export class QueryGroup extends PureComponent<Props, State> {
             Query
           </Button>
         )}
-        {isAddingMixed && this.renderMixedPicker()}
-        {config.featureToggles.expressions && (
-          <Button icon="plus" onClick={this.onAddExpressionClick} variant="secondary">
-            Expression
-          </Button>
+        {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
+          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+            <Button
+              icon="plus"
+              onClick={this.onAddExpressionClick}
+              variant="secondary"
+              className={styles.expressionButton}
+            >
+              <span>Expression&nbsp;</span>
+              <Icon name="exclamation-triangle" className="muted" size="sm" />
+            </Button>
+          </Tooltip>
         )}
       </HorizontalGroup>
     );
@@ -324,19 +355,13 @@ export class QueryGroup extends PureComponent<Props, State> {
     const styles = getStyles();
 
     return (
-      <CustomScrollbar
-        autoHeightMin="100%"
-        autoHide={true}
-        updateAfterMountMs={300}
-        scrollTop={scrollTop}
-        setScrollTop={this.setScrollTop}
-      >
+      <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (
             <>
               <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
-              {this.renderAddQueryRow(dsSettings)}
+              {this.renderAddQueryRow(dsSettings, styles)}
               {isHelpOpen && (
                 <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
                   <PluginHelp plugin={dsSettings.meta} type="query_help" />
@@ -374,7 +399,11 @@ const getStyles = stylesFactory(() => {
     queriesWrapper: css`
       padding-bottom: 16px;
     `,
+    expressionWrapper: css``,
+    expressionButton: css`
+      margin-right: ${theme.spacing.sm};
+    `,
   };
 });
 
-type QueriesTabStyls = ReturnType<typeof getStyles>;
+type QueriesTabStyles = ReturnType<typeof getStyles>;

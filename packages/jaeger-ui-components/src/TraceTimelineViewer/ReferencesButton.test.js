@@ -81,12 +81,8 @@ describe(ReferencesButton, () => {
     submenuItems.forEach((submenuItem, i) => {
       expect(submenuItem.find(ReferenceLink).prop('reference')).toBe(moreReferences[i]);
     });
-    expect(
-      submenuItems
-        .at(2)
-        .find(ReferenceLink)
-        .childAt(0)
-        .text()
-    ).toBe(`(another trace) - ${moreReferences[2].spanID}`);
+    expect(submenuItems.at(2).find(ReferenceLink).childAt(0).text()).toBe(
+      `(another trace) - ${moreReferences[2].spanID}`
+    );
   });
 });

@@ -1,8 +1,8 @@
 import React, { useState, useCallback, ChangeEvent, FunctionComponent } from 'react';
 import SliderComponent from 'rc-slider';
-import { cx } from 'emotion';
-import { Global } from '@emotion/core';
-import { useTheme } from '../../themes/ThemeContext';
+import { cx } from '@emotion/css';
+import { Global } from '@emotion/react';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getStyles } from './styles';
 import { SliderProps } from './types';
 import { Input } from '../Input/Input';
@@ -21,10 +21,10 @@ export const Slider: FunctionComponent<SliderProps> = ({
   value,
 }) => {
   const isHorizontal = orientation === 'horizontal';
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme, isHorizontal);
   const SliderWithTooltip = SliderComponent;
-  const [slidervalue, setSliderValue] = useState<number>(value || min);
+  const [sliderValue, setSliderValue] = useState<number>(value || min);
 
   const onSliderChange = useCallback(
     (v: number) => {
@@ -58,7 +58,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
         onAfterChange(v);
       }
     },
-    [setSliderValue, onAfterChange]
+    [max, min, onChange, onAfterChange]
   );
 
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
@@ -74,7 +74,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
           max={max}
           step={step}
           defaultValue={value}
-          value={slidervalue}
+          value={sliderValue}
           onChange={onSliderChange}
           onAfterChange={onAfterChange}
           vertical={!isHorizontal}
@@ -84,7 +84,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
         <Input
           type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          value={`${slidervalue}`} // to fix the react leading zero issue
+          value={`${sliderValue}`} // to fix the react leading zero issue
           onChange={onSliderInputChange}
           min={min}
           max={max}

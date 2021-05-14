@@ -1,25 +1,23 @@
 import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
-import { QueryGroupOptions } from 'app/features/query/components/QueryGroupOptions';
 import { PanelModel } from '../../state';
 import { getLocationSrv } from '@grafana/runtime';
+import { QueryGroupOptions } from 'app/types';
+import { DataQuery } from '@grafana/data';
 
 interface Props {
+  /** Current panel */
   panel: PanelModel;
+  /** Added here to make component re-render when queries change from outside */
+  queries: DataQuery[];
 }
 
-interface State {
-  options: QueryGroupOptions;
-}
-
-export class PanelEditorQueries extends PureComponent<Props, State> {
+export class PanelEditorQueries extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-
-    this.state = { options: this.buildQueryOptions(props) };
   }
 
-  buildQueryOptions({ panel }: Props): QueryGroupOptions {
+  buildQueryOptions(panel: PanelModel): QueryGroupOptions {
     return {
       dataSource: {
         name: panel.datasource,
@@ -49,20 +47,21 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
   onOptionsChange = (options: QueryGroupOptions) => {
     const { panel } = this.props;
 
-    panel.datasource = options.dataSource.default ? null : options.dataSource.name!;
-    panel.targets = options.queries;
-    panel.timeFrom = options.timeRange?.from;
-    panel.timeShift = options.timeRange?.shift;
-    panel.hideTimeOverride = options.timeRange?.hide;
-    panel.interval = options.minInterval;
-    panel.maxDataPoints = options.maxDataPoints;
+    const newDataSourceName = options.dataSource.default ? null : options.dataSource.name!;
+    const dataSourceChanged = newDataSourceName !== panel.datasource;
+    panel.updateQueries(options);
 
-    this.setState({ options: options });
+    if (dataSourceChanged) {
+      // trigger queries when changing data source
+      setTimeout(this.onRunQueries, 10);
+    }
+
+    this.forceUpdate();
   };
 
   render() {
     const { panel } = this.props;
-    const { options } = this.state;
+    const options = this.buildQueryOptions(panel);
 
     return (
       <QueryGroup

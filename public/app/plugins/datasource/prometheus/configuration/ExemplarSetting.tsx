@@ -1,6 +1,7 @@
+import { css } from '@emotion/css';
+import { selectors } from '@grafana/e2e-selectors';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { css } from 'emotion';
 import React, { useState } from 'react';
 import { ExemplarTraceIdDestination } from '../types';
 
@@ -17,12 +18,16 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
     <div className="gf-form-group">
       <InlineField label="Internal link" labelWidth={24}>
         <>
-          <InlineSwitch value={isInternalLink} onChange={ev => setIsInternalLink(ev.currentTarget.checked)} />
+          <InlineSwitch
+            value={isInternalLink}
+            aria-label={selectors.components.DataSource.Prometheus.configPage.internalLinkSwitch}
+            onChange={(ev) => setIsInternalLink(ev.currentTarget.checked)}
+          />
           <Button
             variant="destructive"
             title="Remove link"
             icon="times"
-            onClick={event => {
+            onClick={(event) => {
               event.preventDefault();
               onDelete();
             }}
@@ -43,7 +48,8 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             tracing={true}
             current={value.datasourceUid}
             noDefault={true}
-            onChange={ds =>
+            width={40}
+            onChange={(ds) =>
               onChange({
                 datasourceUid: ds.uid,
                 name: value.name,
@@ -63,7 +69,7 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
             spellCheck={false}
             width={40}
             value={value.url}
-            onChange={event =>
+            onChange={(event) =>
               onChange({
                 datasourceUid: undefined,
                 name: value.name,
@@ -84,7 +90,7 @@ export default function ExemplarSetting({ value, onChange, onDelete }: Props) {
           spellCheck={false}
           width={40}
           value={value.name}
-          onChange={event =>
+          onChange={(event) =>
             onChange({
               ...value,
               name: event.currentTarget.value,

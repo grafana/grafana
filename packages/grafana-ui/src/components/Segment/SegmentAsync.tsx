@@ -1,16 +1,20 @@
 import React, { HTMLProps } from 'react';
-import { cx } from 'emotion';
-import _ from 'lodash';
+import { cx } from '@emotion/css';
+import { isObject } from 'lodash';
 import { SegmentSelect } from './SegmentSelect';
 import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
 import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
+import { getSegmentStyles } from './styles';
+import { InlineLabel } from '../Forms/InlineLabel';
+import { useStyles } from '../../themes';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   onChange: (item: SelectableValue<T>) => void;
+  noOptionMessageHandler?: (state: AsyncState<Array<SelectableValue<T>>>) => string;
 }
 
 export function SegmentAsync<T>({
@@ -20,22 +24,36 @@ export function SegmentAsync<T>({
   Component,
   className,
   allowCustomValue,
+  disabled,
   placeholder,
+  noOptionMessageHandler = mapStateToNoOptionsMessage,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
+  const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
-    const label = _.isObject(value) ? value.label : value;
+    const label = isObject(value) ? value.label : value;
+
     return (
       <Label
         onClick={fetchOptions}
+        disabled={disabled}
         Component={
           Component || (
-            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+            <InlineLabel
+              className={cx(
+                styles.segment,
+                {
+                  [styles.queryPlaceholder]: placeholder !== undefined && !value,
+                  [styles.disabled]: disabled,
+                },
+                className
+              )}
+            >
               {label || placeholder}
-            </a>
+            </InlineLabel>
           )
         }
       />
@@ -45,15 +63,15 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !_.isObject(value) ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
       options={state.value ?? []}
       width={width}
-      noOptionsMessage={mapStateToNoOptionsMessage(state)}
+      noOptionsMessage={noOptionMessageHandler(state)}
       allowCustomValue={allowCustomValue}
       onClickOutside={() => {
         setExpanded(false);
       }}
-      onChange={item => {
+      onChange={(item) => {
         setExpanded(false);
         onChange(item);
       }}

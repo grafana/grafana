@@ -3,7 +3,7 @@ title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-weight = 300
+weight = 150
 +++
 
 # Configuration
@@ -12,7 +12,7 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 > **Note:** You must restart Grafana for any configuration changes to take effect.
 
-To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server-settings.md" >}}).
+To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server/view-server-settings.md" >}}).
 
 ## Config file locations
 
@@ -36,7 +36,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
 
@@ -168,7 +168,7 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any [plugins](https://grafana.com/docs/grafana/latest/plugins/installation/) here.
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../plugins/installation.md" >}}).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
@@ -259,6 +259,20 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 Path where the socket should be created when `protocol=socket`. Make sure that Grafana has appropriate permissions before you change this setting.
 
+### cdn_url
+
+> **Note**: Available in Grafana v7.4 and later versions.
+
+Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
+
+For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
+`http://cdn.myserver.com/grafana-oss/7.4.0/public/build/app.<hash>.js`.
+
+### read_timeout
+
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
+`0` means there is no timeout for reading the request.
+
 <hr />
 
 ## [database]
@@ -314,6 +328,10 @@ Set to `true` to log the sql calls and execution times.
 
 For Postgres, use either `disable`, `require` or `verify-full`.
 For MySQL, use either `true`, `false`, or `skip-verify`.
+
+### isolation_level
+
+Only the MySQL driver supports isolation levels in Grafana. In case the value is empty, the driver's default isolation level is applied. Available options are "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
 
 ### ca_cert_path
 
@@ -508,6 +526,14 @@ Set to `true` to enable the X-Content-Type-Options response header. The X-Conten
 
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
+### content_security_policy
+
+Set to `true` to add the Content-Security-Policy header to your requests. CSP allows to control resources that the user agent can load and helps prevent XSS attacks.
+
+### content_security_policy_template
+
+Set Content Security Policy template used when adding the Content-Security-Policy header to your requests. `$NONCE` in the template includes a random nonce.
+
 <hr />
 
 ## [snapshots]
@@ -604,6 +630,10 @@ Text used as placeholder text on login page for password input.
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
 
+### home_page
+
+Path to a custom home page. Users are only redirected to this if the default home dashboard is used. It should match a frontend route and contain a leading slash.
+
 ### External user management
 
 If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description.
@@ -623,6 +653,10 @@ The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
 
+### hidden_users
+
+This is a comma-separated list of usernames. Users specified here are hidden in the Grafana UI. They are still visible to Grafana administrators and to themselves.
+
 <hr>
 
 ## [auth]
@@ -633,13 +667,15 @@ Grafana provides many ways to authenticate users. Refer to the Grafana [Authenti
 
 The cookie name for storing the auth token. Default is `grafana_session`.
 
-### login_maximum_inactive_lifetime_days
+### login_maximum_inactive_lifetime_duration
 
-The lifetime (days) an authenticated user can be inactive before being required to log in at next visit. Default is 7 days.
+The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
 
-### login_maximum_lifetime_days
+### login_maximum_lifetime_duration
 
-The maximum lifetime (days) an authenticated user can be logged in before being required to login. Default is 30 days.
+The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d).
+This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### token_rotation_interval_minutes
 
@@ -748,6 +784,57 @@ Refer to [Auth proxy authentication]({{< relref "../auth/auth-proxy.md" >}}) for
 ## [auth.ldap]
 
 Refer to [LDAP authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
+
+## [aws]
+
+You can configure core and external AWS plugins.
+
+### allowed_auth_providers
+
+Specify what authentication providers the AWS plugins allow. For a list of allowed providers, refer to the data-source configuration page for a given plugin. If you configure a plugin by provisioning, only providers that are specified in `allowed_auth_providers` are allowed.
+
+Options: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_iam_role` (EC2 IAM role)
+
+### assume_role_enabled
+
+Set to `false` to disable AWS authentication from using an assumed role with temporary security credentials. For details about assume roles, refer to the AWS API reference documentation about the [AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) operation.
+
+If this option is disabled, the **Assume Role** and the **External Id** field are removed from the AWS data source configuration page. If the plugin is configured using provisioning, it is possible to use an assumed role as long as `assume_role_enabled` is set to `true`.
+
+### list_metrics_page_limit
+
+Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
+
+<hr />
+
+## [azure]
+
+Grafana supports additional integration with Azure services when hosted in the Azure Cloud.
+
+### cloud
+
+Azure cloud environment where Grafana is hosted:
+
+| Azure Cloud                                      | Value                  |
+| ------------------------------------------------ | ---------------------- |
+| Microsoft Azure public cloud                     | AzureCloud (*default*) |
+| Microsoft Chinese national cloud                 | AzureChinaCloud        |
+| US Government cloud                              | AzureUSGovernment      |
+| Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
+
+### managed_identity_enabled
+
+Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
+
+### managed_identity_client_id
+
+The client ID to use for user-assigned managed identity.
+
+Should be set for user-assigned identity and should be empty for system-assigned identity.
+
+## [auth.jwt]
+
+Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
 
 <hr />
 
@@ -963,6 +1050,10 @@ Limit the number of data sources allowed per organization. Default is 10.
 
 Limit the number of API keys that can be entered per organization. Default is 10.
 
+### org_alert_rule
+
+Limit the number of alert rules that can be entered per organization. Default is 100.
+
 ### user_org
 
 Limit the number of organizations a user can create. Default is 10.
@@ -986,6 +1077,10 @@ Sets global limit of API keys that can be entered. Default is -1 (unlimited).
 ### global_session
 
 Sets a global limit on number of users that can be logged in at one time. Default is -1 (unlimited).
+
+### global_alert_rule
+
+Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
 
 <hr>
 
@@ -1043,6 +1138,12 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
+## [annotations]
+
+### cleanupjob_batchsize
+
+Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
+
 ## [annotations.dashboard]
 
 Dashboard annotations means that annotations are associated with the dashboard they are created on.
@@ -1073,7 +1174,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ## [explore]
 
-For more information about this feature, refer to [Explore]({{< relref "../explore/index.md" >}}).
+For more information about this feature, refer to [Explore]({{< relref "../explore/_index.md" >}}).
 
 ### enabled
 
@@ -1081,7 +1182,7 @@ Enable or disable the Explore section. Default is `enabled`.
 
 ## [metrics]
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "metrics.md" >}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "view-server/internal-metrics.md" >}}).
 
 ### enabled
 
@@ -1370,6 +1471,14 @@ Enter a comma-separated list of plugin identifiers to identify plugins that are 
 
 Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
+### marketplace_app_enabled
+
+> **Note:** Available in Grafana 8.0 and later versions.
+
+Available to Grafana administrators only, the plugin marketplace app is set to `false` by default. Set it to `true` to enable the app.
+
+For more information, refer to [Plugin marketplace]({{< relref "../plugins/marketplace.md" >}}).
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -1468,7 +1577,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`,`ngalert`
+Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
 
 ## [date_formats]
 
@@ -1505,3 +1614,11 @@ Set this to `true` to have date formats automatically derived from your browser 
 ### default_timezone
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
+
+## [expressions]
+
+> **Note:** This feature is available in Grafana v7.4 and later versions.
+
+### enabled
+
+Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.

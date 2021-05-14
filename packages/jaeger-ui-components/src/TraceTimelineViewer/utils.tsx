@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 
 export type ViewedBoundsFunctionType = (start: number, end: number) => { start: number; end: number };
 /**
@@ -61,7 +61,7 @@ export function spanHasTag(key: string, value: any, span: TraceSpan) {
   if (!Array.isArray(span.tags) || !span.tags.length) {
     return false;
   }
-  return span.tags.some(tag => tag.key === key && tag.value === value);
+  return span.tags.some((tag) => tag.key === key && tag.value === value);
 }
 
 export const isClientSpan = spanHasTag.bind(null, 'span.kind', 'client');

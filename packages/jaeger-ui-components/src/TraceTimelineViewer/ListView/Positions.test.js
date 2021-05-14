@@ -16,7 +16,7 @@ import Positions from './Positions';
 
 describe('Positions', () => {
   const bufferLen = 1;
-  const getHeight = i => i * 2 + 2;
+  const getHeight = (i) => i * 2 + 2;
   let ps;
 
   beforeEach(() => {
@@ -236,7 +236,7 @@ describe('Positions', () => {
     it('cascades difference in observed height vs known height to known y-values', () => {
       const getLargerHeight = () => simpleGetHeight() + 2;
       const knownYs = ps.ys.slice();
-      const expectedYValues = knownYs.map(value => (value ? value + 2 : value));
+      const expectedYValues = knownYs.map((value) => (value ? value + 2 : value));
       ps.confirmHeight(0, getLargerHeight);
       expect(ps.ys).toEqual(expectedYValues);
     });

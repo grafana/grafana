@@ -20,7 +20,7 @@ const SORT_OPTIONS = [
 ];
 
 export function QueryVariableSortSelect({ onChange, sort }: PropsWithChildren<Props>) {
-  const value = useMemo(() => SORT_OPTIONS.find(o => o.value === sort) ?? SORT_OPTIONS[0], [sort]);
+  const value = useMemo(() => SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0], [sort]);
 
   return (
     <VariableSelectField

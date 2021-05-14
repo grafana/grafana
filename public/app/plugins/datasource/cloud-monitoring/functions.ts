@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chunk, flatten, initial, startCase, uniqBy } from 'lodash';
 import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from './constants';
 import { SelectableValue } from '@grafana/data';
 import CloudMonitoringDatasource from './datasource';
@@ -6,7 +6,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { MetricDescriptor, Filter, MetricQuery } from './types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
-  _.uniqBy(metricDescriptors, 'service');
+  uniqBy(metricDescriptors, 'service');
 
 export const getMetricTypesByService = (metricDescriptors: MetricDescriptor[], service: string) =>
   metricDescriptors.filter((m: MetricDescriptor) => m.service === service);
@@ -24,7 +24,8 @@ export const getMetricTypes = (
   const metricTypeExistInArray = metricTypes.some(
     (m: { value: string; name: string }) => m.value === interpolatedMetricType
   );
-  const selectedMetricType = metricTypeExistInArray ? metricType : metricTypes[0].value;
+  const metricTypeByService = metricTypes.length ? metricTypes[0].value : '';
+  const selectedMetricType = metricTypeExistInArray ? metricType : metricTypeByService;
   return {
     metricTypes,
     selectedMetricType,
@@ -34,7 +35,7 @@ export const getMetricTypes = (
 export const getAlignmentOptionsByMetric = (metricValueType: string, metricKind: string) => {
   return !metricValueType
     ? []
-    : alignOptions.filter(i => {
+    : alignOptions.filter((i) => {
         return (
           i.valueTypes.indexOf(metricValueType as ValueTypes) !== -1 &&
           i.metricKinds.indexOf(metricKind as MetricKind) !== -1
@@ -45,7 +46,7 @@ export const getAlignmentOptionsByMetric = (metricValueType: string, metricKind:
 export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind: MetricKind) => {
   return !metricKind
     ? []
-    : aggOptions.filter(i => {
+    : aggOptions.filter((i) => {
         return i.valueTypes.indexOf(valueType) !== -1 && i.metricKinds.indexOf(metricKind) !== -1;
       });
 };
@@ -64,7 +65,7 @@ export const getAlignmentPickerData = (
   { valueType, metricKind, perSeriesAligner }: Partial<MetricQuery>,
   templateSrv: TemplateSrv
 ) => {
-  const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!).map(option => ({
+  const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!).map((option) => ({
     ...option,
     label: option.text,
   }));
@@ -76,8 +77,8 @@ export const getAlignmentPickerData = (
 
 export const labelsToGroupedOptions = (groupBys: string[]) => {
   const groups = groupBys.reduce((acc: any, curr: string) => {
-    const arr = curr.split('.').map(_.startCase);
-    const group = (arr.length === 2 ? arr : _.initial(arr)).join(' ');
+    const arr = curr.split('.').map(startCase);
+    const group = (arr.length === 2 ? arr : initial(arr)).join(' ');
     const option = {
       value: curr,
       label: curr,
@@ -93,12 +94,12 @@ export const labelsToGroupedOptions = (groupBys: string[]) => {
 };
 
 export const filtersToStringArray = (filters: Filter[]) => {
-  const strArr = _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
+  const strArr = flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
   return strArr.filter((_, i) => i !== strArr.length - 1);
 };
 
 export const stringArrayToFilters = (filterArray: string[]) =>
-  _.chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
+  chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
     key,
     operator,
     value,

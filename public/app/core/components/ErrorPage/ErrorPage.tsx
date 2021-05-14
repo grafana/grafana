@@ -81,7 +81,7 @@ export class ErrorPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'not-found'),
   };

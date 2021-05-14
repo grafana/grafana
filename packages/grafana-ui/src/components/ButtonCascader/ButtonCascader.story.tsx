@@ -1,20 +1,25 @@
 import React from 'react';
-import { withKnobs, text, boolean, object, select } from '@storybook/addon-knobs';
+import { Story, Meta } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonCascader } from '@grafana/ui';
+import { ButtonCascaderProps } from './ButtonCascader';
 
 export default {
   title: 'Forms/Cascader/ButtonCascader',
   component: ButtonCascader,
-  decorators: [withKnobs, withCenteredStory],
-};
-
-const getKnobs = () => {
-  return {
-    disabled: boolean('Disabled', false),
-    text: text('Button Text', 'Click me!'),
-    icon: select('Icon', ['plus', 'minus', 'table'], 'plus'),
-    options: object('Options', [
+  decorators: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['className', 'value', 'fieldNames'],
+    },
+  },
+  args: {
+    disabled: false,
+    children: 'Click me!',
+    options: [
       {
         label: 'A',
         value: 'A',
@@ -24,24 +29,21 @@ const getKnobs = () => {
         ],
       },
       { label: 'D', value: 'D' },
-    ]),
-  };
+    ],
+  },
+  argTypes: {
+    icon: { control: { type: 'select', options: ['plus', 'minus', 'table'] } },
+    options: { control: 'object' },
+  },
+} as Meta;
+
+const Template: Story<ButtonCascaderProps> = ({ children, ...args }) => {
+  return <ButtonCascader {...args}>{children}</ButtonCascader>;
 };
 
-export const simple = () => {
-  const { disabled, text, options } = getKnobs();
-  return (
-    <ButtonCascader disabled={disabled} options={options} value={['A']}>
-      {text}
-    </ButtonCascader>
-  );
-};
+export const simple = Template.bind({});
 
-export const withIcon = () => {
-  const { disabled, text, options, icon } = getKnobs();
-  return (
-    <ButtonCascader disabled={disabled} options={options} value={['A']} icon={icon}>
-      {text}
-    </ButtonCascader>
-  );
+export const withIcon = Template.bind({});
+withIcon.args = {
+  icon: 'plus',
 };

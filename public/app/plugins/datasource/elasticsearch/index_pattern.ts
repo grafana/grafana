@@ -12,7 +12,7 @@ type IntervalMap = Record<
 const intervalMap: IntervalMap = {
   Hourly: { startOf: 'hour', amount: 'hours' },
   Daily: { startOf: 'day', amount: 'days' },
-  Weekly: { startOf: 'week', amount: 'weeks' },
+  Weekly: { startOf: 'isoWeek', amount: 'weeks' },
   Monthly: { startOf: 'month', amount: 'months' },
   Yearly: { startOf: 'year', amount: 'years' },
 };
@@ -24,9 +24,7 @@ export class IndexPattern {
 
   getIndexForToday() {
     if (this.interval) {
-      return toUtc()
-        .locale(this.dateLocale)
-        .format(this.pattern);
+      return toUtc().locale(this.dateLocale).format(this.pattern);
     } else {
       return this.pattern;
     }

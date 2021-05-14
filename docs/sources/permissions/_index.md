@@ -11,21 +11,21 @@ weight = 50
 What you can do in Grafana is defined by the _permissions_ associated with your user account.
 
 There are three types of permissions:
-- Permissions granted as a Grafana server admin
+- Permissions granted as a Grafana Server Admin
 - Permissions associated with your role in an organization
 - Permissions granted to a specific folder or dashboard
 
 You can be granted permissions based on:
-- Grafana server admin status.
+- Grafana Server Admin status.
 - Organization role (Admin, Editor, or Viewer).
 - Folder or dashboard permissions assigned to your team (Admin, Editor, or Viewer).
 - Folder or dashboard permissions assigned to your user account (Admin, Editor, or Viewer).
 - (Grafana Enterprise) Data source permissions. For more information, refer to [Data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
 - (Grafana Cloud) Grafana Cloud has additional roles. For more information, refer to [Grafana Cloud roles and permissions](/docs/grafana-cloud/cloud-portal/cloud-roles/).
 
-## Grafana server admin
+## Grafana Server Admin role
 
-Grafana server admins have the **Grafana Admin** flag enabled on their account. They can access the **Server Admin** menu and perform the following tasks:
+Grafana server administrators have the **Grafana Admin** flag enabled on their account. They can access the **Server Admin** menu and perform the following tasks:
 
 - Manage users and permissions.
 - Create, edit, and delete organizations.
@@ -33,13 +33,15 @@ Grafana server admins have the **Grafana Admin** flag enabled on their account. 
 - View Grafana server stats, including total users and active sessions.
 - Upgrade the server to Grafana Enterprise.
 
+> **Note:** This role does not exist in Grafana Cloud.
+
 ## Organization roles
 
 Users can belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do in that organization. For more information, refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}).
 
 ## Dashboard and folder permissions
 
-Dashboard and folder permissions allow you to remove the default role based permissions for Editors and Viewers and assign permissions to specific users and teams. Learn more about [Dashboard and folder permissions]({{< relref "dashboard_folder_permissions.md" >}}).
+Dashboard and folder permissions allow you to remove the default role based permissions for Editors and Viewers and assign permissions to specific users and teams. Learn more about [Dashboard and folder permissions]({{< relref "dashboard-folder-permissions.md" >}}).
 
 ## Data source permissions
 

@@ -9,7 +9,7 @@ const MANAGED_PLUGINS_SCOPES = ['internal', 'external'];
 
 const bundleManagedPluginsRunner: TaskRunner<BundeManagedOptions> = async () => {
   await Promise.all(
-    MANAGED_PLUGINS_SCOPES.map(async scope => {
+    MANAGED_PLUGINS_SCOPES.map(async (scope) => {
       try {
         const plugins = await fs.readdir(`${MANAGED_PLUGINS_PATH}/${scope}`);
         if (plugins.length > 0) {

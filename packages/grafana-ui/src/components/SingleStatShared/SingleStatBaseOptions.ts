@@ -1,5 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
-import omit from 'lodash/omit';
+import { cloneDeep, omit } from 'lodash';
 
 import {
   fieldReducers,
@@ -293,7 +292,7 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
   if (!thresholds || !thresholds.length) {
     return undefined;
   }
-  const copy = thresholds.map(t => {
+  const copy = thresholds.map((t) => {
     return {
       // Drops 'index'
       value: t.value === null ? -Infinity : t.value,

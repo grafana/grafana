@@ -25,7 +25,7 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
 
       main.children =
         main.children &&
-        main.children.map(item => {
+        main.children.map((item) => {
           return {
             ...item,
             active: item.url === node.url,

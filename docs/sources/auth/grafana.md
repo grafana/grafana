@@ -52,7 +52,7 @@ api_key_max_seconds_to_live = -1
 
 ### Anonymous authentication
 
-You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
+You can make Grafana accessible without any login required by enabling anonymous access in the configuration file. For more information, refer to [Implications of allowing anonymous access to dashboards]({{< relref "../administration/security.md" >}}).
 
 Example:
 
@@ -65,6 +65,9 @@ org_name = Main Org.
 
 # Role for unauthenticated users, other valid values are `Editor` and `Admin`
 org_role = Viewer
+
+# Hide the Grafana version text from the footer and help tooltip for unauthenticated users (default: false)
+hide_version = true
 ```
 
 If you change your organization name in the Grafana UI this setting needs to be updated to match the new name.
@@ -103,7 +106,7 @@ oauth_auto_login = true
 
 ### Hide sign-out menu
 
-Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy.
+Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy or JWT authentication.
 
 ```bash
 [auth]

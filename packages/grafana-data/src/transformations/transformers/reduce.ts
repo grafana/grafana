@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { DataTransformerID } from './ids';
-import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
+import { DataTransformerInfo, FieldMatcher, MatcherConfig } from '../../types/transformations';
 import { fieldReducers, reduceField, ReducerID } from '../fieldReducer';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
@@ -10,7 +10,6 @@ import { KeyValue } from '../../types/data';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldMatcher } from '../matchers';
 import { getFieldDisplayName } from '../../field';
-import { FieldMatcher } from '../../types/transformations';
 
 export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
@@ -35,9 +34,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         if (!options?.reducers?.length) {
           return data; // nothing selected
         }
@@ -69,7 +68,7 @@ export function reduceSeriesToRows(
   reducerId: ReducerID[]
 ): DataFrame | undefined {
   const calculators = fieldReducers.list(reducerId);
-  const reducers = calculators.map(c => c.id);
+  const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
 
   for (const series of data) {
@@ -150,15 +149,18 @@ export function mergeResults(data: DataFrame[]): DataFrame | undefined {
   for (let seriesIndex = 1; seriesIndex < data.length; seriesIndex++) {
     const series = data[seriesIndex];
 
-    for (const baseField of baseFrame.fields) {
-      for (const field of series.fields) {
-        if (baseField.type !== field.type || baseField.name !== field.name) {
-          continue;
-        }
+    for (let baseIndex = 0; baseIndex < baseFrame.fields.length; baseIndex++) {
+      const baseField = baseFrame.fields[baseIndex];
+      for (let fieldIndex = 0; fieldIndex < series.fields.length; fieldIndex++) {
+        const field = series.fields[fieldIndex];
+        const isFirstField = baseIndex === 0 && fieldIndex === 0;
+        const isSameField = baseField.type === field.type && baseField.name === field.name;
 
-        const baseValues: any[] = ((baseField.values as unknown) as ArrayVector).buffer;
-        const values: any[] = ((field.values as unknown) as ArrayVector).buffer;
-        ((baseField.values as unknown) as ArrayVector).buffer = baseValues.concat(values);
+        if (isFirstField || isSameField) {
+          const baseValues: any[] = baseField.values.toArray();
+          const values: any[] = field.values.toArray();
+          ((baseField.values as unknown) as ArrayVector).buffer = baseValues.concat(values);
+        }
       }
     }
   }
@@ -173,7 +175,7 @@ export function mergeResults(data: DataFrame[]): DataFrame | undefined {
  */
 export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId: ReducerID[]): DataFrame[] {
   const calculators = fieldReducers.list(reducerId);
-  const reducers = calculators.map(c => c.id);
+  const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
 
   for (const series of data) {

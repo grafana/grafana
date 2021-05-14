@@ -21,14 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
-
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 var (
@@ -42,25 +42,29 @@ const azureMonitorAPIVersion = "2018-01-01"
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
-func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
+	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{},
 	}
 
 	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	for _, query := range queries {
 		queryRes, resp, err := e.executeQuery(ctx, query, originalQueries, timeRange)
 		if err != nil {
-			return nil, err
+			return plugins.DataResponse{}, err
 		}
 
-		err = e.parseResponse(queryRes, resp, query)
+		frames, err := e.parseResponse(resp, query)
 		if err != nil {
 			queryRes.Error = err
+		} else {
+			queryRes.Dataframes = frames
 		}
 		result.Results[query.RefID] = queryRes
 	}
@@ -68,7 +72,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 	return result, nil
 }
 
-func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) ([]*AzureMonitorQuery, error) {
 	azureMonitorQueries := []*AzureMonitorQuery{}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
@@ -115,7 +119,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		timeGrain := azJSONModel.TimeGrain
 		timeGrains := azJSONModel.AllowedTimeGrainsMs
 		if timeGrain == "auto" {
-			timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
+			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
 			if err != nil {
 				return nil, err
 			}
@@ -162,7 +166,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 			UrlComponents: urlComponents,
 			Target:        target,
 			Params:        params,
-			RefID:         query.RefId,
+			RefID:         query.RefID,
 			Alias:         alias,
 		})
 	}
@@ -170,8 +174,10 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 	return azureMonitorQueries, nil
 }
 
-func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, AzureMonitorResponse, error) {
-	queryResult := &tsdb.QueryResult{RefId: query.RefID}
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []plugins.DataSubQuery,
+	timeRange plugins.DataTimeRange) (plugins.DataQueryResult, AzureMonitorResponse, error) {
+	queryResult := plugins.DataQueryResult{RefID: query.RefID}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -223,8 +229,8 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	// find plugin
-	plugin, ok := plugins.DataSources[dsInfo.Type]
-	if !ok {
+	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
@@ -254,7 +260,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo, e.cfg)
 
 	return req, nil
 }
@@ -280,9 +286,10 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr AzureMonitorResponse, query *AzureMonitorQuery) error {
+func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery) (
+	plugins.DataFrames, error) {
 	if len(amr.Value) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	frames := data.Frames{}
@@ -340,14 +347,13 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		frames = append(frames, frame)
 	}
 
-	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
-
-	return nil
+	return plugins.NewDecodedDataFrames(frames), nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name
 // Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string, labels data.Labels) string {
+func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string,
+	metadataValue string, namespace string, seriesID string, labels data.Labels) string {
 	startIndex := strings.Index(seriesID, "/resourceGroups/") + 16
 	endIndex := strings.Index(seriesID, "/providers")
 	resourceGroup := seriesID[startIndex:endIndex]
@@ -410,7 +416,7 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 // Map values from:
 //   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
 // to
-//   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
+//   https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
 	case "BitsPerSecond":

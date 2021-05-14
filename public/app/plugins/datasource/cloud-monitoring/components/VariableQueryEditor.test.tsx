@@ -23,7 +23,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 const props: Props = {
-  onChange: query => {},
+  onChange: (query) => {},
   query: ({} as unknown) as CloudMonitoringVariableQuery,
   datasource: ({
     getDefaultProject: () => '',
@@ -42,8 +42,8 @@ describe('VariableQueryEditor', () => {
   });
 
   describe('and a new variable is created', () => {
-    it('should trigger a query using the first query type in the array', done => {
-      props.onChange = query => {
+    it('should trigger a query using the first query type in the array', (done) => {
+      props.onChange = (query) => {
         expect(query.selectedQueryType).toBe('projects');
         done();
       };
@@ -52,9 +52,9 @@ describe('VariableQueryEditor', () => {
   });
 
   describe('and an existing variable is edited', () => {
-    it('should trigger new query using the saved query type', done => {
+    it('should trigger new query using the saved query type', (done) => {
       props.query = ({ selectedQueryType: MetricFindQueryTypes.LabelKeys } as unknown) as CloudMonitoringVariableQuery;
-      props.onChange = query => {
+      props.onChange = (query) => {
         expect(query.selectedQueryType).toBe('labelKeys');
         done();
       };

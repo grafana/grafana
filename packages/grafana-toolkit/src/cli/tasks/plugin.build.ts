@@ -32,7 +32,7 @@ const clean = () => useSpinner('Cleaning', () => rimraf(`${process.cwd()}/dist`)
 const copyIfNonExistent = (srcPath: string, destPath: string) =>
   copyFile(srcPath, destPath, COPYFILE_EXCL)
     .then(() => console.log(`Created: ${destPath}`))
-    .catch(error => {
+    .catch((error) => {
       if (error.code !== 'EEXIST') {
         throw error;
       }
@@ -59,11 +59,15 @@ export const prepare = () =>
   );
 
 export const versions = async () => {
-  const nodeVersion = await execa('node', ['--version']);
-  console.log(`Using Node.js ${nodeVersion}`);
+  try {
+    const nodeVersion = await execa('node', ['--version']);
+    console.log(`Using Node.js ${nodeVersion.stdout}`);
 
-  const toolkitVersion = await execa('grafana-toolkit', ['--version']);
-  console.log(`Using @grafana/toolkit ${toolkitVersion}`);
+    const toolkitVersion = await execa('grafana-toolkit', ['--version']);
+    console.log(`Using @grafana/toolkit ${toolkitVersion.stdout}`);
+  } catch (err) {
+    console.log(`Error reading versions`, err);
+  }
 };
 
 // @ts-ignore
@@ -90,7 +94,7 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
 
     // @todo should remove this because the config file could be in a parent dir or within package.json
     const configFile = await globby(resolvePath(process.cwd(), '.eslintrc?(.cjs|.js|.json|.yaml|.yml)')).then(
-      filePaths => {
+      (filePaths) => {
         if (filePaths.length > 0) {
           return filePaths[0];
         } else {

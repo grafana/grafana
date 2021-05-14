@@ -18,7 +18,7 @@ export function Project({ projectName, datasource, onChange, templateVariableOpt
         allowCustomValue
         onChange={({ value }) => onChange(value!)}
         loadOptions={() =>
-          datasource.getProjects().then(projects => [
+          datasource.getProjects().then((projects) => [
             {
               label: 'Template Variables',
               options: templateVariableOptions,

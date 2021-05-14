@@ -46,6 +46,7 @@ Improve an existing plugin with one of our guides:
 - [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
 - [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
 - [Add support for variables]({{< relref "add-support-for-variables.md" >}})
+- [Add a query editor help component]({{< relref "add-query-editor-help.md" >}})
 - [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
 - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
 - [Error handling]({{< relref "error-handling.md" >}})

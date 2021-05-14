@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useUpdateEffect } from 'react-use';
 import { Draggable } from 'react-beautiful-dnd';
 
@@ -94,7 +94,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   if (draggable) {
     return (
       <Draggable draggableId={id} index={index}>
-        {provided => {
+        {(provided) => {
           return (
             <>
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
@@ -129,6 +129,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      white-space: nowrap;
+
+      &:focus {
+        outline: none;
+      }
     `,
     dragIcon: css`
       cursor: drag;

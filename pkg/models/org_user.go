@@ -38,6 +38,17 @@ func (r RoleType) Includes(other RoleType) bool {
 	return r == other
 }
 
+func (r RoleType) Children() []RoleType {
+	switch r {
+	case ROLE_ADMIN:
+		return []RoleType{ROLE_EDITOR, ROLE_VIEWER}
+	case ROLE_EDITOR:
+		return []RoleType{ROLE_VIEWER}
+	default:
+		return nil
+	}
+}
+
 func (r *RoleType) UnmarshalJSON(data []byte) error {
 	var str string
 	err := json.Unmarshal(data, &str)
@@ -101,6 +112,22 @@ type GetOrgUsersQuery struct {
 	Limit int
 
 	Result []*OrgUserDTO
+}
+
+type SearchOrgUsersQuery struct {
+	OrgID int64
+	Query string
+	Page  int
+	Limit int
+
+	Result SearchOrgUsersQueryResult
+}
+
+type SearchOrgUsersQueryResult struct {
+	TotalCount int64         `json:"totalCount"`
+	OrgUsers   []*OrgUserDTO `json:"OrgUsers"`
+	Page       int           `json:"page"`
+	PerPage    int           `json:"perPage"`
 }
 
 // ----------------------

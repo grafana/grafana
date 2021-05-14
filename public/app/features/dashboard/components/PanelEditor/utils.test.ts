@@ -14,7 +14,7 @@ describe('standardFieldConfigEditorRegistry', () => {
   };
 
   it('make sure all fields have a valid name', () => {
-    standardFieldConfigEditorRegistry.list().forEach(v => {
+    standardFieldConfigEditorRegistry.list().forEach((v) => {
       if (!dummyConfig.hasOwnProperty(v.id)) {
         fail(`Registry uses unknown property: ${v.id}`);
       }

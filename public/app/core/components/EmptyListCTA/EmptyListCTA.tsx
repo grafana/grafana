@@ -1,6 +1,7 @@
-import React, { MouseEvent, useContext } from 'react';
-import { CallToActionCard, LinkButton, ThemeContext, Icon, IconName } from '@grafana/ui';
-import { css } from 'emotion';
+import React, { MouseEvent } from 'react';
+import { css } from '@emotion/css';
+import { CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   title: string;
@@ -38,8 +39,6 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
   infoBox,
   infoBoxTitle,
 }) => {
-  const theme = useContext(ThemeContext);
-
   const footer = () => {
     return (
       <>
@@ -79,21 +78,13 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       href={buttonLink}
       icon={buttonIcon}
       className={ctaElementClassName}
-      aria-label={`Call to action button ${buttonTitle}`}
+      aria-label={selectors.components.CallToActionCard.button(buttonTitle)}
     >
       {buttonTitle}
     </LinkButton>
   );
 
-  return (
-    <CallToActionCard
-      className={ctaStyle}
-      message={title}
-      footer={footer()}
-      callToActionElement={ctaElement}
-      theme={theme}
-    />
-  );
+  return <CallToActionCard className={ctaStyle} message={title} footer={footer()} callToActionElement={ctaElement} />;
 };
 
 export default EmptyListCTA;

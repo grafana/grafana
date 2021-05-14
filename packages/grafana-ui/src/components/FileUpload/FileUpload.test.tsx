@@ -5,7 +5,7 @@ import { FileUpload } from './FileUpload';
 describe('FileUpload', () => {
   it('should render upload button with default text and no file name', () => {
     const wrapper = shallow(<FileUpload onFileUpload={() => {}} />);
-    expect(wrapper.findWhere(comp => comp.text() === 'Upload file').exists()).toBeTruthy();
+    expect(wrapper.findWhere((comp) => comp.text() === 'Upload file').exists()).toBeTruthy();
     expect(wrapper.find({ 'aria-label': 'File name' }).exists()).toBeFalsy();
   });
 

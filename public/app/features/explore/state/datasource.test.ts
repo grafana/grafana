@@ -12,7 +12,7 @@ describe('Datasource reducer', () => {
         logs: true,
       },
       components: {
-        ExploreStartPage: StartPage,
+        QueryEditorHelp: StartPage,
       },
     } as DataSourceApi;
     const queries: DataQuery[] = [];

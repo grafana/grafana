@@ -7,7 +7,7 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> 
   id: ValueMatcherID.greater,
   name: 'Is greater',
   description: 'Match when field value is greater than option.',
-  get: options => {
+  get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
       if (isNaN(value)) {
@@ -16,10 +16,10 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> 
       return value > options.value;
     };
   },
-  getOptionsDisplayText: options => {
+  getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is greater than: ${options.value}.`;
   },
-  isApplicable: field => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number,
   getDefaultOptions: () => ({ value: 0 }),
 };
 
@@ -27,7 +27,7 @@ const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<nu
   id: ValueMatcherID.greaterOrEqual,
   name: 'Is greater or equal',
   description: 'Match when field value is lower or greater than option.',
-  get: options => {
+  get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
       if (isNaN(value)) {
@@ -36,10 +36,10 @@ const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<nu
       return value >= options.value;
     };
   },
-  getOptionsDisplayText: options => {
+  getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is lower or greater than: ${options.value}.`;
   },
-  isApplicable: field => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number,
   getDefaultOptions: () => ({ value: 0 }),
 };
 
@@ -47,7 +47,7 @@ const isLowerValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = 
   id: ValueMatcherID.lower,
   name: 'Is lower',
   description: 'Match when field value is lower than option.',
-  get: options => {
+  get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
       if (isNaN(value)) {
@@ -56,10 +56,10 @@ const isLowerValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = 
       return value < options.value;
     };
   },
-  getOptionsDisplayText: options => {
+  getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is lower than: ${options.value}.`;
   },
-  isApplicable: field => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number,
   getDefaultOptions: () => ({ value: 0 }),
 };
 
@@ -67,7 +67,7 @@ const isLowerOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<numb
   id: ValueMatcherID.lowerOrEqual,
   name: 'Is lower or equal',
   description: 'Match when field value is lower or equal than option.',
-  get: options => {
+  get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
       if (isNaN(value)) {
@@ -76,10 +76,10 @@ const isLowerOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<numb
       return value <= options.value;
     };
   },
-  getOptionsDisplayText: options => {
+  getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is lower or equal than: ${options.value}.`;
   },
-  isApplicable: field => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number,
   getDefaultOptions: () => ({ value: 0 }),
 };
 

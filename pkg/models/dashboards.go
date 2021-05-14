@@ -346,6 +346,12 @@ type SaveDashboardCommand struct {
 	Result *Dashboard
 }
 
+type TrimDashboardCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Meta      *simplejson.Json `json:"meta"`
+	Result    *Dashboard
+}
+
 type DashboardProvisioning struct {
 	Id          int64
 	DashboardId int64
@@ -355,23 +361,9 @@ type DashboardProvisioning struct {
 	Updated     int64
 }
 
-type SaveProvisionedDashboardCommand struct {
-	DashboardCmd          *SaveDashboardCommand
-	DashboardProvisioning *DashboardProvisioning
-
-	Result *Dashboard
-}
-
 type DeleteDashboardCommand struct {
 	Id    int64
 	OrgId int64
-}
-
-type ValidateDashboardBeforeSaveCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	Overwrite bool
-	Result    *ValidateDashboardBeforeSaveResult
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
@@ -423,16 +415,6 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
-}
-
-type GetProvisionedDashboardDataByIdQuery struct {
-	DashboardId int64
-	Result      *DashboardProvisioning
-}
-
-type GetProvisionedDashboardDataQuery struct {
-	Name   string
-	Result []*DashboardProvisioning
 }
 
 type GetDashboardsBySlugQuery struct {

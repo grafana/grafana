@@ -7,7 +7,7 @@ interface Props {
   onChange: (item: SelectableValue<string>) => void;
 }
 
-const options = ['=', '!=', '<', '>', '=~', '!~'].map<SelectableValue<string>>(value => ({
+const options = ['=', '!=', '<', '>', '=~', '!~'].map<SelectableValue<string>>((value) => ({
   label: value,
   value,
 }));

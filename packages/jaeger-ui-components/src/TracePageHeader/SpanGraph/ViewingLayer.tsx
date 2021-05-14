@@ -14,16 +14,13 @@
 
 import cx from 'classnames';
 import * as React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';
-import { TUpdateViewRangeTimeFunction, UIButton, ViewRange, ViewRangeTimeUpdate } from '../..';
-import { withTheme, Theme, autoColor } from '../../Theme';
-import { TNil } from '../..';
+import { TUpdateViewRangeTimeFunction, UIButton, ViewRange, ViewRangeTimeUpdate, TNil } from '../..';
+import { withTheme, Theme, autoColor, createStyle } from '../../Theme';
 import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
-
-import { createStyle } from '../../Theme';
 
 export const getStyles = createStyle((theme: Theme) => {
   // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion

@@ -22,7 +22,7 @@ async function getTestContext({ path = 'some-resource', options = {}, response =
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   fetchMock.mockImplementation((options: any) => {
-    const data = { [options.url.match(/([^\/]*)\/*$/)[1]]: response };
+    const data = { [options.url.match(/([^\/]*)\/*$/)![1].split('?')[0]]: response };
     return of(createFetchResponse(data));
   });
 
@@ -39,35 +39,41 @@ async function getTestContext({ path = 'some-resource', options = {}, response =
 
 describe('api', () => {
   describe('when resource was cached', () => {
-    it('should return cached value and not load from source', async () => {
-      const path = 'some-resource';
-      const { res, api, fetchMock } = await getTestContext({ path, cache: response });
+    test.each(['some-resource', 'some-resource?some=param', 'test/some-resource?param'])(
+      'should return cached value and not load from source',
+      async (path) => {
+        const { res, api, fetchMock } = await getTestContext({ path, cache: response });
 
-      expect(res).toEqual(response);
-      expect(api.cache[path]).toEqual(response);
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
+        expect(res).toEqual(response);
+        expect(api.cache[path]).toEqual(response);
+        expect(fetchMock).not.toHaveBeenCalled();
+      }
+    );
   });
 
   describe('when resource was not cached', () => {
-    it('should return from source and not from cache', async () => {
-      const path = 'some-resource';
-      const { res, api, fetchMock } = await getTestContext({ path, response });
+    test.each(['some-resource', 'some-resource?some=param', 'test/some-resource?param'])(
+      'should return from source and not from cache',
+      async (path) => {
+        const { res, api, fetchMock } = await getTestContext({ path, response });
 
-      expect(res).toEqual(response);
-      expect(api.cache[path]).toEqual(response);
-      expect(fetchMock).toHaveBeenCalled();
-    });
+        expect(res).toEqual(response);
+        expect(api.cache[path]).toEqual(response);
+        expect(fetchMock).toHaveBeenCalled();
+      }
+    );
   });
 
   describe('when cache should be bypassed', () => {
-    it('should return from source and not from cache', async () => {
-      const options = { useCache: false };
-      const path = 'some-resource';
-      const { res, fetchMock } = await getTestContext({ path, response, cache: response, options });
+    test.each(['some-resource', 'some-resource?some=param', 'test/some-resource?param'])(
+      'should return from source and not from cache',
+      async (path) => {
+        const options = { useCache: false };
+        const { res, fetchMock } = await getTestContext({ path, response, cache: response, options });
 
-      expect(res).toEqual(response);
-      expect(fetchMock).toHaveBeenCalled();
-    });
+        expect(res).toEqual(response);
+        expect(fetchMock).toHaveBeenCalled();
+      }
+    );
   });
 });

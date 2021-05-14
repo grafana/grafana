@@ -270,7 +270,7 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testMetricsResponse));
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
         const timeSeries = result.data[0] as TimeSeries;
 
@@ -288,7 +288,7 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testLogsResponse));
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
         const dataFrame = result.data[0] as DataFrame;
         const fieldCache = new FieldCache(dataFrame);
@@ -315,7 +315,7 @@ describe('LokiDatasource', () => {
         })
       );
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const err: any = received[0];
         expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
@@ -469,7 +469,9 @@ describe('LokiDatasource', () => {
               },
               {
                 stream: {
+                  label: '', // empty value gets filtered
                   label2: 'value2',
+                  label3: ' ', // whitespace value gets trimmed then filtered
                 },
                 values: [['1549024057498000000', 'hello 2']],
               },
@@ -531,16 +533,6 @@ describe('LokiDatasource', () => {
         expect(res).toEqual([]);
       });
     });
-
-    mocks.forEach((mock, index) => {
-      it(`should return label names according to provided rangefor Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
-
-        const res = await ds.metricFindQuery('label_names()', { range: { from: new Date(2), to: new Date(3) } });
-
-        expect(res).toEqual([{ text: 'label1' }]);
-      });
-    });
   });
 });
 
@@ -572,6 +564,7 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
       datasource: 'loki',
       enable: true,
       name: 'test-annotation',
+      iconColor: 'red',
     },
     dashboard: {
       id: 1,

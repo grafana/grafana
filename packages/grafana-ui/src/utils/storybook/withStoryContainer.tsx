@@ -1,6 +1,6 @@
 import React from 'react';
 import { boolean, number } from '@storybook/addon-knobs';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { RenderFunction } from '../../types';
 
 const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({

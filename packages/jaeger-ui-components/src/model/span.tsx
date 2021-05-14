@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 
 /**
  * Searches the span.references to find 'CHILD_OF' reference type or returns null.
@@ -20,6 +20,6 @@ import { TraceSpan } from '@grafana/data';
  * @returns {TraceSpan|null} The parent span if there is one, null otherwise.
  */
 export function getParent(span: TraceSpan) {
-  const parentRef = span.references ? span.references.find(ref => ref.refType === 'CHILD_OF') : null;
+  const parentRef = span.references ? span.references.find((ref) => ref.refType === 'CHILD_OF') : null;
   return parentRef ? parentRef.span : null;
 }

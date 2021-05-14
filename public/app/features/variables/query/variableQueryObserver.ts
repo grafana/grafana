@@ -9,7 +9,7 @@ export function variableQueryObserver(
   subscription: Subscription
 ): Observer<UpdateOptionsResults> {
   const observer: Observer<UpdateOptionsResults> = {
-    next: results => {
+    next: (results) => {
       if (results.state === LoadingState.Error) {
         subscription.unsubscribe();
         reject(results.error);
@@ -22,7 +22,7 @@ export function variableQueryObserver(
         return;
       }
     },
-    error: err => {
+    error: (err) => {
       subscription.unsubscribe();
       reject(err);
     },

@@ -14,6 +14,7 @@ export enum TableCellDisplayMode {
   Auto = 'auto',
   ColorText = 'color-text',
   ColorBackground = 'color-background',
+  ColorBackgroundSolid = 'color-background-solid',
   GradientGauge = 'gradient-gauge',
   LcdGauge = 'lcd-gauge',
   JSONView = 'json-view',
@@ -45,6 +46,7 @@ export interface TableCellProps extends CellProps<any> {
   cellProps: CSSProperties;
   field: Field;
   onCellFilterAdded: TableFilterActionCallback;
+  innerWidth: number;
 }
 
 export type CellComponent = FC<TableCellProps>;

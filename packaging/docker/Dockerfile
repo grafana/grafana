@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:3.12
+ARG BASE_IMAGE=alpine:3.13
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
@@ -37,7 +37,7 @@ RUN if [ `arch` = "x86_64" ]; then \
         -O /tmp/glibc-2.30-r0.apk && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-bin-2.30-r0.apk \
         -O /tmp/glibc-bin-2.30-r0.apk && \
-      apk add --allow-untrusted /tmp/glibc-2.30-r0.apk /tmp/glibc-bin-2.30-r0.apk && \
+      apk add --no-cache --allow-untrusted /tmp/glibc-2.30-r0.apk /tmp/glibc-bin-2.30-r0.apk && \
       rm -f /tmp/glibc-2.30-r0.apk && \
       rm -f /tmp/glibc-bin-2.30-r0.apk && \
       rm -f /lib/ld-linux-x86-64.so.2 && \

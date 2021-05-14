@@ -20,7 +20,7 @@ export default {
   },
 };
 
-export const Basic: Story<FilterPillProps> = args => {
+export const Basic: Story<FilterPillProps> = (args) => {
   return <FilterPill {...args} />;
 };
 

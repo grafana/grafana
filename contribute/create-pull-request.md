@@ -19,7 +19,7 @@ To increase the chance of having your pull request accepted, make sure your pull
 - Commits within the pull request follow the [Formatting guidelines](#Formatting-guidelines). 
 - The pull request closes one related issue.
 - The pull request contains necessary tests that verify the intended behavior.
-- If your pull request has conflicts, rebase your branch onto the master branch.
+- If your pull request has conflicts, rebase your branch onto the main branch.
 
 If the pull request fixes a bug:
 
@@ -42,6 +42,10 @@ Pull requests for Redux contributions must:
 - Use `reducerTester` to test reducers. Refer to [Redux framework](/contribute/style-guides/redux.md) for more details.
 - Not contain code that mutates state in reducers or thunks.
 - Not contain code that accesses the reducers state slice directly. Instead, the code should use state selectors to access state.
+
+### Backend-specific guidelines
+
+Please refer to the [backend style guidelines](/contribute/style-guides/backend.md).
 
 ## Code review
 
@@ -93,3 +97,11 @@ The Grafana team _squashes_ all commits into one when we accept a pull request. 
 We use the pull request title when we generate change logs for releases. As such, we strive to make the title as informative as possible.
 
 Make sure that the title for your pull request uses the same format as the subject line in the commit message.
+
+## Configuration changes
+
+If your PR includes configuration changes, all of the following files must be changed correspondingly:
+
+* conf/defaults.ini
+* conf/sample.ini
+* docs/sources/administration/configuration.md 

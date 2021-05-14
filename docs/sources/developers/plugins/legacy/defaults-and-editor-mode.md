@@ -79,7 +79,7 @@ onInitEditMode() {
 
 For editor tabs html, it is best to use Grafana css styles rather than custom styles. This is to preserve the look and feel of other tabs in Grafana.
 
-Most editor tabs should use the [gf-form css class](https://github.com/grafana/grafana/blob/master/public/sass/components/_gf-form.scss) from Grafana. The example below has one row with a couple of columns and each column is wrapped in a div like this:
+Most editor tabs should use the [gf-form css class](https://github.com/grafana/grafana/blob/main/public/sass/components/_gf-form.scss) from Grafana. The example below has one row with a couple of columns and each column is wrapped in a div like this:
 
 ```html
 <div class="section gf-form-group">

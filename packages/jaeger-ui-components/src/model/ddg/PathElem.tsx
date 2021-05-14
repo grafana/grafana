@@ -107,7 +107,7 @@ export default class PathElem {
       ...this.toJSONHelper(),
       memberOf: {
         focalIdx: this.memberOf.focalIdx,
-        members: this.memberOf.members.map(member => member.toJSONHelper()),
+        members: this.memberOf.members.map((member) => member.toJSONHelper()),
       },
     };
   }

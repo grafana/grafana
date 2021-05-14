@@ -4,16 +4,17 @@ import { Select } from '@grafana/ui';
 
 interface Props {
   value: OrgRole;
+  disabled?: boolean;
   onChange: (role: OrgRole) => void;
 }
 
-const options = Object.keys(OrgRole).map(key => ({ label: key, value: key }));
+const options = Object.keys(OrgRole).map((key) => ({ label: key, value: key }));
 
 export const OrgRolePicker: FC<Props> = ({ value, onChange, ...restProps }) => (
   <Select
     value={value}
     options={options}
-    onChange={val => onChange(val.value as OrgRole)}
+    onChange={(val) => onChange(val.value as OrgRole)}
     placeholder="Choose role..."
     {...restProps}
   />

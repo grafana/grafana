@@ -6,6 +6,7 @@ import { ImportDashboardForm } from './ImportDashboardForm';
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
 import { DashboardInputs, DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
+import { locationService } from '@grafana/runtime';
 
 interface OwnProps {}
 
@@ -55,7 +56,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
           <div style={{ marginBottom: '24px' }}>
             <div>
               <Legend>
-                Importing Dashboard from{' '}
+                Importing dashboard from{' '}
                 <a
                   href={`https://grafana.com/dashboards/${dashboard.gnetId}`}
                   className="external-link"
@@ -108,13 +109,17 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => ({
-  dashboard: state.importDashboard.dashboard,
-  meta: state.importDashboard.meta,
-  source: state.importDashboard.source,
-  inputs: state.importDashboard.inputs,
-  folder: state.location.routeParams.folderId ? { id: Number(state.location.routeParams.folderId) } : { id: 0 },
-});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => {
+  const searchObj = locationService.getSearchObject();
+
+  return {
+    dashboard: state.importDashboard.dashboard,
+    meta: state.importDashboard.meta,
+    source: state.importDashboard.source,
+    inputs: state.importDashboard.inputs,
+    folder: searchObj.folderId ? { id: Number(searchObj.folderId) } : { id: 0 },
+  };
+};
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   clearLoadedDashboard,

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find } from 'lodash';
 import {
   createChangeHandler,
   createResetHandler,
@@ -9,7 +9,9 @@ import DatasourceSrv from 'app/features/plugins/datasource_srv';
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
 
-  current: any;
+  // Set through angular bindings
+  declare current: any;
+
   datasourceSrv: any;
   showTimescaleDBHelp: boolean;
   onPasswordReset: ReturnType<typeof createResetHandler>;
@@ -17,13 +19,16 @@ export class PostgresConfigCtrl {
 
   /** @ngInject */
   constructor($scope: any, datasourceSrv: DatasourceSrv) {
+    this.current = $scope.ctrl.current;
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
+    this.current.jsonData.tlsConfigurationMethod = this.current.jsonData.tlsConfigurationMethod || 'file-path';
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
     this.showTimescaleDBHelp = false;
     this.autoDetectFeatures();
     this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
     this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
+    this.tlsModeMapping();
   }
 
   autoDetectFeatures() {
@@ -50,7 +55,7 @@ export class PostgresConfigCtrl {
         if (version < 1000) {
           name = String(major) + '.' + String(minor);
         }
-        if (!_.find(this.postgresVersions, (p: any) => p.value === version)) {
+        if (!find(this.postgresVersions, (p: any) => p.value === version)) {
           this.postgresVersions.push({ name: name, value: version });
         }
         this.current.jsonData.postgresVersion = version;
@@ -60,6 +65,18 @@ export class PostgresConfigCtrl {
 
   toggleTimescaleDBHelp() {
     this.showTimescaleDBHelp = !this.showTimescaleDBHelp;
+  }
+
+  tlsModeMapping() {
+    if (this.current.jsonData.sslmode === 'disable') {
+      this.current.jsonData.tlsAuth = false;
+      this.current.jsonData.tlsAuthWithCACert = false;
+      this.current.jsonData.tlsSkipVerify = true;
+    } else {
+      this.current.jsonData.tlsAuth = true;
+      this.current.jsonData.tlsAuthWithCACert = true;
+      this.current.jsonData.tlsSkipVerify = false;
+    }
   }
 
   // the value portion is derived from postgres server_version_num/100

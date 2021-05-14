@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, VerticalGroup } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { NavModel } from '@grafana/data';
 import { UserProvider, UserAPI, LoadingStates } from 'app/core/utils/UserProvider';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { User, Team, UserOrg, UserSession, StoreState } from 'app/types';
+import { UserDTO, Team, UserOrg, UserSession, StoreState } from 'app/types';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import Page from 'app/core/components/Page/Page';
 import { UserTeams } from './UserTeams';
@@ -21,37 +21,43 @@ export interface Props {
 export const UserProfileEdit: FC<Props> = ({ navModel }) => (
   <Page navModel={navModel}>
     <UserProvider userId={config.bootData.user.id}>
-      {(api: UserAPI, states: LoadingStates, teams: Team[], orgs: UserOrg[], sessions: UserSession[], user: User) => {
+      {(
+        api: UserAPI,
+        states: LoadingStates,
+        teams: Team[],
+        orgs: UserOrg[],
+        sessions: UserSession[],
+        user?: UserDTO
+      ) => {
         return (
           <Page.Contents>
             {states.loadUser ? (
               <LoadingPlaceholder text="Loading user profile..." />
             ) : (
-              <UserProfileEditForm
-                updateProfile={api.updateUserProfile}
-                isSavingUser={states.updateUserProfile}
-                user={user}
-              />
-            )}
-            <SharedPreferences resourceUri="user" />
-            <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
-            {!states.loadUser && (
-              <>
+              <VerticalGroup spacing="md">
+                <UserProfileEditForm
+                  updateProfile={api.updateUserProfile}
+                  isSavingUser={states.updateUserProfile}
+                  user={user!}
+                />
+
+                <SharedPreferences resourceUri="user" />
+                <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
                 <UserOrganizations
                   isLoading={states.loadOrgs}
                   setUserOrg={api.setUserOrg}
                   loadOrgs={api.loadOrgs}
                   orgs={orgs}
-                  user={user}
+                  user={user!}
                 />
                 <UserSessions
                   isLoading={states.loadSessions}
                   loadSessions={api.loadSessions}
                   revokeUserSession={api.revokeUserSession}
                   sessions={sessions}
-                  user={user}
+                  user={user!}
                 />
-              </>
+              </VerticalGroup>
             )}
           </Page.Contents>
         );

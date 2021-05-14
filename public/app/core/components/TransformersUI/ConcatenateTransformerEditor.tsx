@@ -3,7 +3,7 @@ import {
   DataTransformerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
@@ -59,7 +59,7 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
             <Select
               className="width-18"
               options={nameModes}
-              value={nameModes.find(v => v.value === frameNameMode)}
+              value={nameModes.find((v) => v.value === frameNameMode)}
               onChange={this.onModeChanged}
             />
           </div>
@@ -82,7 +82,7 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
   }
 }
 
-export const concatenateTransformRegistryItem: TransformerRegistyItem<ConcatenateTransformerOptions> = {
+export const concatenateTransformRegistryItem: TransformerRegistryItem<ConcatenateTransformerOptions> = {
   id: DataTransformerID.concatenate,
   editor: ConcatenateTransformerEditor,
   transformation: standardTransformers.concatenateTransformer,

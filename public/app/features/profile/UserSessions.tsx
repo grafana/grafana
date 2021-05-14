@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
-import { User, UserSession } from 'app/types';
+import { UserDTO, UserSession } from 'app/types';
 import { LoadingPlaceholder, Button, Icon } from '@grafana/ui';
 
 export interface Props {
-  user: User;
+  user: UserDTO;
   sessions: UserSession[];
   isLoading: boolean;
   loadSessions: () => void;
@@ -23,7 +23,7 @@ export class UserSessions extends PureComponent<Props> {
     }
 
     return (
-      <>
+      <div>
         {sessions.length > 0 && (
           <>
             <h3 className="page-sub-heading">Sessions</h3>
@@ -59,7 +59,7 @@ export class UserSessions extends PureComponent<Props> {
             </div>
           </>
         )}
-      </>
+      </div>
     );
   }
 }

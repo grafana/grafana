@@ -8,14 +8,13 @@ import {
   InputType,
   ImportDashboardDTO,
 } from './reducers';
-import { updateLocation } from 'app/core/actions';
 import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     try {
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       dispatch(setGcomDashboard(dashboard));
@@ -27,14 +26,14 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
 }
 
 export function importDashboardJson(dashboard: any): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
   };
 }
 
 function processInputs(dashboardJson: any): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     if (dashboardJson && dashboardJson.__inputs) {
       const inputs: any[] = [];
       dashboardJson.__inputs.forEach((input: any) => {
@@ -62,7 +61,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
 }
 
 export function clearLoadedDashboard(): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(clearDashboard());
   };
 }
@@ -99,8 +98,9 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       inputs: inputsToPersist,
       folderId: importDashboardForm.folder.id,
     });
+
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
-    dispatch(updateLocation({ path: dashboardUrl }));
+    locationService.push(dashboardUrl);
   };
 }
 

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isArray, reduce } from 'lodash';
 import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
 
 const alertQueryDef = new QueryPartDef({
@@ -25,12 +25,20 @@ const alertStateSortScore = {
   paused: 5,
 };
 
+export enum EvalFunction {
+  'IsAbove' = 'gt',
+  'IsBelow' = 'lt',
+  'IsOutsideRange' = 'outside_range',
+  'IsWithinRange' = 'within_range',
+  'HasNoValue' = 'no_value',
+}
+
 const evalFunctions = [
-  { text: 'IS ABOVE', value: 'gt' },
-  { text: 'IS BELOW', value: 'lt' },
-  { text: 'IS OUTSIDE RANGE', value: 'outside_range' },
-  { text: 'IS WITHIN RANGE', value: 'within_range' },
-  { text: 'HAS NO VALUE', value: 'no_value' },
+  { value: EvalFunction.IsAbove, text: 'IS ABOVE' },
+  { value: EvalFunction.IsBelow, text: 'IS BELOW' },
+  { value: EvalFunction.IsOutsideRange, text: 'IS OUTSIDE RANGE' },
+  { value: EvalFunction.IsWithinRange, text: 'IS WITHIN RANGE' },
+  { value: EvalFunction.HasNoValue, text: 'HAS NO VALUE' },
 ];
 
 const evalOperators = [
@@ -120,7 +128,7 @@ function getStateDisplayModel(state: string) {
 }
 
 function joinEvalMatches(matches: any, separator: string) {
-  return _.reduce(
+  return reduce(
     matches,
     (res, ev) => {
       if (ev.metric !== undefined && ev.value !== undefined) {
@@ -143,9 +151,9 @@ function getAlertAnnotationInfo(ah: any) {
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object
 
-  if (_.isArray(ah.data)) {
+  if (isArray(ah.data)) {
     return joinEvalMatches(ah.data, ', ');
-  } else if (_.isArray(ah.data.evalMatches)) {
+  } else if (isArray(ah.data.evalMatches)) {
     return joinEvalMatches(ah.data.evalMatches, ', ');
   }
 

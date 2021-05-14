@@ -1,13 +1,13 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
 
 export enum AuthType {
   JWT = 'jwt',
   GCE = 'gce',
 }
 
-export const authTypes = [
-  { value: 'Google JWT File', key: AuthType.JWT },
-  { value: 'GCE Default Service Account', key: AuthType.GCE },
+export const authTypes: Array<SelectableValue<string>> = [
+  { label: 'Google JWT File', value: AuthType.JWT },
+  { label: 'GCE Default Service Account', value: AuthType.GCE },
 ];
 
 export enum MetricFindQueryTypes {
@@ -32,8 +32,8 @@ export interface CloudMonitoringVariableQuery extends DataQuery {
   selectedMetricType: string;
   selectedSLOService: string;
   labelKey: string;
-  projects: Array<{ value: string; name: string }>;
-  sloServices: Array<{ value: string; name: string }>;
+  projects: SelectableValue[];
+  sloServices: SelectableValue[];
   projectName: string;
 }
 
@@ -46,9 +46,9 @@ export interface VariableQueryData {
   labels: string[];
   labelKey: string;
   metricTypes: Array<{ value: string; name: string }>;
-  services: Array<{ value: string; name: string }>;
-  projects: Array<{ value: string; name: string }>;
-  sloServices: Array<{ value: string; name: string }>;
+  services: SelectableValue[];
+  projects: SelectableValue[];
+  sloServices: SelectableValue[];
   projectName: string;
   loading: boolean;
 }
@@ -58,12 +58,18 @@ export enum QueryType {
   SLO = 'slo',
 }
 
+export enum EditorMode {
+  Visual = 'visual',
+  MQL = 'mql',
+}
+
 export const queryTypes = [
   { label: 'Metrics', value: QueryType.METRICS },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];
 
 export interface MetricQuery {
+  editorMode: EditorMode;
   projectName: string;
   unit?: string;
   metricType: string;
@@ -76,6 +82,7 @@ export interface MetricQuery {
   metricKind?: string;
   valueType?: string;
   view?: string;
+  query: string;
 }
 
 export interface SLOQuery {
@@ -85,7 +92,9 @@ export interface SLOQuery {
   aliasBy?: string;
   selectorName: string;
   serviceId: string;
+  serviceName: string;
   sloId: string;
+  sloName: string;
   goal?: number;
 }
 
@@ -102,6 +111,12 @@ export interface CloudMonitoringOptions extends DataSourceJsonData {
   defaultProject?: string;
   gceDefaultProject?: string;
   authenticationType?: string;
+  clientEmail?: string;
+  tokenUri?: string;
+}
+
+export interface CloudMonitoringSecureJsonData {
+  privateKey?: string;
 }
 
 export interface AnnotationTarget {

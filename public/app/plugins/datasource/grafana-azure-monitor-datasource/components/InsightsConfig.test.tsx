@@ -6,10 +6,12 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     options: {
       id: 21,
+      uid: 'x',
       orgId: 1,
       name: 'Azure Monitor-10-10',
       type: 'grafana-azure-monitor-datasource',
       typeLogoUrl: '',
+      typeName: 'Azure',
       access: 'proxy',
       url: '',
       password: '',

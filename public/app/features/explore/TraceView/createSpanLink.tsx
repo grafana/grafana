@@ -1,20 +1,19 @@
-import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange, TraceSpan } from '@grafana/data';
+import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
+import { SplitOpen } from 'app/types/explore';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
+import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
  * the trace view won't create any links and to capture the datasource and split function making it easier to memoize
  * with useMemo.
  */
-export function createSpanLinkFactory(
-  splitOpenFn: (options: { datasourceUid: string; query: any }) => void,
-  traceToLogsOptions?: TraceToLogsOptions
-) {
+export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?: TraceToLogsOptions) {
   // We should return if dataSourceUid is undefined otherwise getInstanceSettings would return testDataSource.
   if (!traceToLogsOptions?.datasourceUid) {
     return undefined;
@@ -26,7 +25,7 @@ export function createSpanLinkFactory(
     return undefined;
   }
 
-  return function(span: TraceSpan): { href: string; onClick?: (event: any) => void; content: React.ReactNode } {
+  return function (span: TraceSpan): { href: string; onClick?: (event: any) => void; content: React.ReactNode } {
     // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
@@ -58,7 +57,7 @@ export function createSpanLinkFactory(
     return {
       href: link.href,
       onClick: link.onClick,
-      content: <Icon name="file-alt" title="Show logs" />,
+      content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
     };
   };
 }

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { reduce } from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
 function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {
@@ -83,7 +83,7 @@ export class InfluxQueryBuilder {
     }
 
     if (this.target.tags && this.target.tags.length > 0) {
-      const whereConditions = _.reduce(
+      const whereConditions = reduce(
         this.target.tags,
         (memo, tag) => {
           // do not add a condition for the key we want to explore for

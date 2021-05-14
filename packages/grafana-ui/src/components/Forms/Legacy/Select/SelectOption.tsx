@@ -1,13 +1,9 @@
 import React from 'react';
 import { Icon } from '../../../Icon/Icon';
-
-// Ignoring because I couldn't get @types/react-select work with Torkel's fork
-// @ts-ignore
-import { components } from '@torkelo/react-select';
-import { OptionProps } from 'react-select';
+import { components, OptionProps } from 'react-select';
 
 // https://github.com/JedWatson/react-select/issues/3038
-export interface ExtendedOptionProps extends OptionProps<any> {
+export interface ExtendedOptionProps extends OptionProps<any, any> {
   data: {
     description?: string;
     imgUrl?: string;

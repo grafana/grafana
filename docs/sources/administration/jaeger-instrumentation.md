@@ -2,7 +2,7 @@
 title = "Jaeger instrumentation"
 description = "Jaeger traces emitted and propagation by Grafana"
 keywords = ["grafana", "jaeger", "tracing"]
-weight = 9
+weight = 900
 +++
 
 # Jaeger instrumentation

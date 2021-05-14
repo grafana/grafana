@@ -111,7 +111,7 @@ describe('Tween', () => {
   describe('_frameCallback', () => {
     it('freezes the callback argument', () => {
       let current;
-      const fn = jest.fn(_current => {
+      const fn = jest.fn((_current) => {
         current = _current;
       });
       const tween = new Tween({ ...baseOptions, onUpdate: fn });

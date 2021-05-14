@@ -20,7 +20,7 @@ describe('FieldCache', () => {
 
     const expectedFieldNames = ['time', 'string', 'number', 'boolean', 'other', 'undefined'];
 
-    expect(allFields.map(f => f.name)).toEqual(expectedFieldNames);
+    expect(allFields.map((f) => f.name)).toEqual(expectedFieldNames);
 
     expect(fieldCache.hasFieldOfType(FieldType.time)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.string)).toBeTruthy();
@@ -28,11 +28,11 @@ describe('FieldCache', () => {
     expect(fieldCache.hasFieldOfType(FieldType.boolean)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.other)).toBeTruthy();
 
-    expect(fieldCache.getFields(FieldType.time).map(f => f.name)).toEqual([expectedFieldNames[0]]);
-    expect(fieldCache.getFields(FieldType.string).map(f => f.name)).toEqual([expectedFieldNames[1]]);
-    expect(fieldCache.getFields(FieldType.number).map(f => f.name)).toEqual([expectedFieldNames[2]]);
-    expect(fieldCache.getFields(FieldType.boolean).map(f => f.name)).toEqual([expectedFieldNames[3]]);
-    expect(fieldCache.getFields(FieldType.other).map(f => f.name)).toEqual([
+    expect(fieldCache.getFields(FieldType.time).map((f) => f.name)).toEqual([expectedFieldNames[0]]);
+    expect(fieldCache.getFields(FieldType.string).map((f) => f.name)).toEqual([expectedFieldNames[1]]);
+    expect(fieldCache.getFields(FieldType.number).map((f) => f.name)).toEqual([expectedFieldNames[2]]);
+    expect(fieldCache.getFields(FieldType.boolean).map((f) => f.name)).toEqual([expectedFieldNames[3]]);
+    expect(fieldCache.getFields(FieldType.other).map((f) => f.name)).toEqual([
       expectedFieldNames[4],
       expectedFieldNames[5],
     ]);
