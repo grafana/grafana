@@ -1,5 +1,19 @@
-import { getCurrentText, getVariableRefresh, isAllVariable } from './utils';
+import { containsVariable, getCurrentText, getVariableRefresh, isAllVariable } from './utils';
 import { VariableRefresh } from './types';
+
+const explore = require('../../core/utils/explore');
+
+describe('containsVariable', () => {
+  it.each`
+    args      | expected
+    ${[null]} | ${false}
+  `("when called with params: 'variable': '$variable' then result should be '$expected'", ({ args, expected }) => {
+    const spy = jest.spyOn(explore, 'safeStringifyValue');
+    expect(containsVariable(args)).toEqual(expected);
+    expect(spy).toBeCalled();
+    expect(spy).toBeCalledTimes(1);
+  });
+});
 
 describe('isAllVariable', () => {
   it.each`
