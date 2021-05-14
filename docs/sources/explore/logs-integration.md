@@ -53,6 +53,8 @@ For logs where a **level** label is specified, we use the value of the label to 
 
 Logs navigation next to the log lines can be used to request more logs. You can do this by clicking on Older logs button on the bottom of navigation. This is especially useful when you hit the line limit and you want to see more logs. Each request that is run from the navigation is then displayed in the navigation as separate page. Every page is showing from and to timestamp of the incoming log lines. You can re-rerun the same request by clicking on the page.
 
+![Navigate logs in Explore](/img/docs/explore/navigate-logs-8-0.png)
+
 ### Visualization options
 
 You can customize how logs are displayed and select which columns are shown.
