@@ -38,7 +38,6 @@ func (mfs MergeFS) Open(name string) (fs.File, error) {
 // filesystems
 func (mfs MergeFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	dirsMap := make(map[string]fs.DirEntry)
-	dirs := make([]fs.DirEntry, 0)
 	for _, filesystem := range mfs.filesystems {
 		if fsys, ok := filesystem.(fs.ReadDirFS); ok {
 			dir, err := fsys.ReadDir(name)
@@ -82,8 +81,12 @@ func (mfs MergeFS) ReadDir(name string) ([]fs.DirEntry, error) {
 			logger.Error("failed to close file", "err", err)
 		}
 	}
+	dirs := make([]fs.DirEntry, 0, len(dirsMap))
+
 	for _, value := range dirsMap {
 		dirs = append(dirs, value)
 	}
+
+	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name() < dirs[j].Name() })
 	return dirs, nil
 }
