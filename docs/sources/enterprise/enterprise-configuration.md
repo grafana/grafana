@@ -337,13 +337,13 @@ When query caching is enabled, Grafana can temporarily store the results of data
 
 The caching backend to use when storing cached queries. Options: memory
 
-> **Note:** This setting enables the caching feature, but it does not enable query caching for any data source. To enable query caching for a data source, update the setting on the data source’s configuration page.
-
 ### enabled
 
-Setting 'enabled' to true enables query caching for data sources with configured caching.
+Setting 'enabled' to `true` allows users to configure query caching for data sources.
 
-This value is enabled by default.
+This value is `true` by default.
+
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source’s configuration page. See the [query caching docs]({{< relref "./query-caching.md#enable-and-configure-query-caching" >}}) for more information.
 
 ### ttl
 

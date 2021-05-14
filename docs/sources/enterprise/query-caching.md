@@ -23,17 +23,24 @@ The following cache backends are available: in-memory, Redis, and Memcached.
 
 ## Enable and configure query caching
 
-By default, data source queries are not cached. To enable query caching for a single data source, visit the data source settings page, open the Cache tab, and press the Enable button. Once enabled, you can choose a custom TTL for that data source or keep the default TTL.
+By default, data source queries are not cached. To enable query caching for a single data source:
+1. Visit the data source settings page.
+1. Open the Cache tab.
+1. Press the Enable button. 
+1. Once enabled, you can choose a custom TTL for that data source or keep the default TTL.
 
-> **Note:** Not all data sources work with query caching. If the Cache tab is not visible in a data source's settings, then the data source does not support query caching.
+> **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
 To configure global settings for query caching, refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
 
 ## Disable query caching
 
-To disable query caching for a single data source, visit the data source settings page, open the Cache tab, and press the Disable button.
+To disable query caching for a single data source: 
+1. Visit the data source settings page.
+1. Open the Cache tab.
+1. Press the Disable button.
 
-To unilaterally disable query caching for all data sources, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
+To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}). You will no longer see the Cache tab on any data sources and no data source queries will be cached.
 
 ## Sending a request without cache
 
