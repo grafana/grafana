@@ -134,9 +134,13 @@ func TestCueErrorWrapper(t *testing.T) {
 		}
 
 		_, err := BaseDashboardFamily(baseLoadPaths)
-		require.EqualError(t, err, "errors: [\"expected operand, found ';'\"], in file: /cue/data/gen.cue, on line: 1")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "on line")
 
 		_, err = DistDashboardFamily(baseLoadPaths)
-		require.EqualError(t, err, "errors: [\"expected operand, found ';'\"], in file: /cue/data/gen.cue, on line: 1")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "on line")
 	})
 }
