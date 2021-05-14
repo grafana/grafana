@@ -139,7 +139,7 @@ The process of alignment consists of collecting all data points received in a fi
 
 ##### Alignment function
 
-During alignment, all data points received in a fixed length of time, applies a function to combine those data points, and then assigns a timestamp to the result.
+During alignment, all data points are received in a fixed interval. Within each interval (determined by the alignment period) and for each time series, the data is aggregated into a single point. The value of that point is determined by the type of alignment function used. For more information on alignment functions, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
 
 ##### Alignment period
 
