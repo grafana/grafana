@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
@@ -12,13 +13,16 @@ import (
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	Cfg *setting.Cfg `inject:""`
-	Log log.Logger
+	Cfg        *setting.Cfg          `inject:""`
+	UsageStats usagestats.UsageStats `inject:""`
+	Log        log.Logger
 }
 
 // Init initializes the OSSAccessControlService.
 func (ac *OSSAccessControlService) Init() error {
 	ac.Log = log.New("accesscontrol")
+
+	ac.registerUsageMetrics()
 
 	return nil
 }
@@ -30,6 +34,17 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 
 	_, exists := ac.Cfg.FeatureToggles["accesscontrol"]
 	return !exists
+}
+
+func (ac *OSSAccessControlService) registerUsageMetrics() {
+	ac.UsageStats.RegisterMetric("stats.fine_grained_ac_enabled.oss.count", ac.getUsageMetrics)
+}
+
+func (ac *OSSAccessControlService) getUsageMetrics() (interface{}, error) {
+	if ac.IsDisabled() {
+		return 0, nil
+	}
+	return 1, nil
 }
 
 // Evaluate evaluates access to the given resource
