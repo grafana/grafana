@@ -23,6 +23,11 @@ function walk(rowHeight: number, yIdx: number | null, count: number, dim: number
   });
 }
 
+interface TimelineBoxRect extends Rect {
+  left: number;
+  strokeWidth: number;
+}
+
 /**
  * @internal
  */
@@ -81,10 +86,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
 
   // alignement-aware text position cache filled by drawPaths->putBox for use in drawPoints
-  let textXPos: number[][];
+  let boxRectsBySeries: TimelineBoxRect[][];
 
-  const resetTextXPos = (count: number) => {
-    textXPos = Array(numSeries)
+  const resetBoxRectsBySeries = (count: number) => {
+    boxRectsBySeries = Array(numSeries)
       .fill(null)
       .map((v) => Array(count).fill(null));
   };
@@ -98,9 +103,6 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const fillPaths: Map<CanvasRenderingContext2D['fillStyle'], Path2D> = new Map();
   const strokePaths: Map<CanvasRenderingContext2D['strokeStyle'], Path2D> = new Map();
-
-  // left or right aligned values shift 2 pixels inside edge
-  const textPadding = alignValue === 'left' ? 2 : alignValue === 'right' ? -2 : 0;
 
   function drawBoxes(ctx: CanvasRenderingContext2D) {
     fillPaths.forEach((fillPath, fillStyle) => {
@@ -122,10 +124,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     rect: uPlot.RectH,
     xOff: number,
     yOff: number,
-    lft: number,
+    left: number,
     top: number,
-    wid: number,
-    hgt: number,
+    boxWidth: number,
+    boxHeight: number,
     strokeWidth: number,
     seriesIdx: number,
     valueIdx: number,
@@ -140,7 +142,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         fillPaths.set(fillStyle, (fillPath = new Path2D()));
       }
 
-      rect(fillPath, lft, top, wid, hgt);
+      rect(fillPath, left, top, boxWidth, boxHeight);
 
       if (strokeWidth) {
         let strokeStyle = stroke(seriesIdx + 1, value);
@@ -150,36 +152,41 @@ export function getConfig(opts: TimelineCoreOptions) {
           strokePaths.set(strokeStyle, (strokePath = new Path2D()));
         }
 
-        rect(strokePath, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
+        rect(
+          strokePath,
+          left + strokeWidth / 2,
+          top + strokeWidth / 2,
+          boxWidth - strokeWidth,
+          boxHeight - strokeWidth
+        );
       }
     } else {
       ctx.beginPath();
-      rect(ctx, lft, top, wid, hgt);
+      rect(ctx, left, top, boxWidth, boxHeight);
       ctx.fillStyle = fill(seriesIdx, value);
       ctx.fill();
 
       if (strokeWidth) {
         ctx.beginPath();
-        rect(ctx, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
+        rect(ctx, left + strokeWidth / 2, top + strokeWidth / 2, boxWidth - strokeWidth, boxHeight - strokeWidth);
         ctx.strokeStyle = stroke(seriesIdx, value);
         ctx.stroke();
       }
     }
 
-    textXPos[seriesIdx][valueIdx] =
-      lft +
-      strokeWidth / 2 +
-      (alignValue === 'center' ? wid / 2 - strokeWidth / 2 : alignValue === 'right' ? wid - strokeWidth / 2 : 0) +
-      textPadding;
-
-    qt.add({
-      x: round(lft - xOff),
+    const boxRect = (boxRectsBySeries[seriesIdx][valueIdx] = {
+      x: round(left - xOff),
       y: round(top - yOff),
-      w: wid,
-      h: hgt,
+      w: boxWidth,
+      h: boxHeight,
       sidx: seriesIdx + 1,
       didx: valueIdx,
+      // These two are needed for later text positioning
+      left: left,
+      strokeWidth,
     });
+
+    qt.add(boxRect);
   }
 
   const drawPaths: Series.PathBuilder = (u, sidx, idx0, idx1) => {
@@ -305,8 +312,14 @@ export function getConfig(opts: TimelineCoreOptions) {
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null) {
-                  let x = textXPos[sidx - 1][ix];
+                  const boxRect = boxRectsBySeries[sidx - 1][ix];
 
+                  // Todo refine this to better know when to not render text (when values do not fit)
+                  if (boxRect.w < 20) {
+                    continue;
+                  }
+
+                  const x = getTextPositionOffet(boxRect, alignValue);
                   const valueColor = colorLookup(sidx, dataY[ix]);
 
                   u.ctx.fillStyle = theme.colors.getContrastText(valueColor, 3);
@@ -333,7 +346,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
-    resetTextXPos(u.data[0].length);
+    resetBoxRectsBySeries(u.data[0].length);
 
     // force-clear the path cache to cause drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
@@ -455,4 +468,17 @@ export function getConfig(opts: TimelineCoreOptions) {
     drawClear,
     setCursor,
   };
+}
+
+function getTextPositionOffet(rect: TimelineBoxRect, alignValue: TimelineValueAlignment) {
+  // left or right aligned values shift 2 pixels inside edge
+  const textPadding = alignValue === 'left' ? 2 : alignValue === 'right' ? -2 : 0;
+  const { left, w, strokeWidth } = rect;
+
+  return (
+    left +
+    strokeWidth / 2 +
+    (alignValue === 'center' ? w / 2 - strokeWidth / 2 : alignValue === 'right' ? w - strokeWidth / 2 : 0) +
+    textPadding
+  );
 }
