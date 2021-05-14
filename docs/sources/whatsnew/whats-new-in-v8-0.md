@@ -94,7 +94,7 @@ We changed how the configured Elasticsearch version is handled. You can now spec
 
 You can now use a different interpolation method to use template variables in a more extensive way. You can now use template variables in every query editor field that allows free input.
 
-![Elasticsearch template variables](/image/docs/elasticsearch/input-templates-8-0.png)
+![Elasticsearch template variables](/img/docs/elasticsearch/input-templates-8-0.png)
 
 ##### Allow omitting field for metrics that support inline scripts
 
@@ -102,13 +102,13 @@ Metric aggregations can be specified without a field if a script is provided. Yo
 
 Previously this was only possible when adding a new metric without selecting a field, because once selected, the field could not have been removed.
 
-![Elasticsearch omit fields](/image/docs/elasticsearch/omit-fields-8-0.png)
+![Elasticsearch omit fields](/img/docs/elasticsearch/omit-fields-8-0.png)
 
 ##### Allow setting a custom limit for log queries
 
 You can now set a custom line limit for logs queries instead of accepting the previously hard-coded 500. We also simplified the query editor to only show relevant fields when issuing logs queries.
 
-![Elasticsearch custom log limit](/image/docs/elasticsearch/custom-log-limit-8-0.png)
+![Elasticsearch custom log limit](/img/docs/elasticsearch/custom-log-limit-8-0.png)
 
 ##### Guess field type from first non-empty value
 
