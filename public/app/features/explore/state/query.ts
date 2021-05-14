@@ -650,6 +650,7 @@ export const processQueryResponse = (
   } = response;
 
   if (error) {
+    console.log('error', error);
     if (error.type === DataQueryErrorType.Timeout) {
       return {
         ...state,
@@ -660,8 +661,11 @@ export const processQueryResponse = (
       return state;
     }
 
-    // For Angular editors
-    state.eventBridge.emit(PanelEvents.dataError, error);
+    // Send error to Angular editors
+    if (state.datasourceInstance?.components?.QueryCtrl) {
+      console.log('error angular', error);
+      state.eventBridge.emit(PanelEvents.dataError, error);
+    }
   }
 
   if (!request) {
@@ -673,7 +677,6 @@ export const processQueryResponse = (
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
-
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
