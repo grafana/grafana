@@ -22,7 +22,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types/';
 import { DataSourceSettings } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
-import { getDataSourceLoadingNav } from '../state/navModel';
+import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
@@ -41,12 +41,17 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const { plugin, loadError, testingStatus } = state.dataSourceSettings;
   const page = params.get('page');
 
+  const nav = plugin
+    ? getDataSourceNav(buildNavModel(dataSource, plugin), page || 'settings')
+    : getDataSourceLoadingNav('settings');
+
+  const navModel = getNavModel(
+    state.navIndex,
+    page ? `datasource-page-${page}` : `datasource-settings-${dataSourceId}`,
+    nav
+  );
+
   return {
-    navModel: getNavModel(
-      state.navIndex,
-      page ? `datasource-page-${page}` : `datasource-settings-${dataSourceId}`,
-      getDataSourceLoadingNav('settings')
-    ),
     dataSource: getDataSource(state.dataSources, dataSourceId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     dataSourceId: dataSourceId,
@@ -54,6 +59,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     plugin,
     loadError,
     testingStatus,
+    navModel,
   };
 }
 
