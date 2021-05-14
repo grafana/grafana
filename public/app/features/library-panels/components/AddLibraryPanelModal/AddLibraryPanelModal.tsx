@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { PanelModel } from '../../../dashboard/state';
@@ -20,21 +20,29 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
 
   useEffect(() => setWaiting(true), [panelTitle]);
   useDebounce(() => setDebouncedPanelTitle(panelTitle), 350, [panelTitle]);
+
+  const { saveLibraryPanel } = usePanelSave();
+  const onCreate = useCallback(() => {
+    panel.title = panelTitle;
+    saveLibraryPanel(panel, folderId!).then((res) => {
+      if (!(res instanceof Error)) {
+        onDismiss();
+      }
+    });
+  }, [panel, panelTitle, folderId, onDismiss, saveLibraryPanel]);
   const isValidTitle = useAsync(async () => {
     try {
-      const libraryPanels = (await getLibraryPanelByName(panelTitle)).filter((lp) => lp.folderId === folderId);
-      return libraryPanels.length === 0;
+      return !(await getLibraryPanelByName(panelTitle)).some((lp) => lp.folderId === folderId);
     } catch (err) {
       err.isHandled = true;
       return true;
     } finally {
       setWaiting(false);
     }
-  }, [debouncedPanelTitle]);
+  }, [debouncedPanelTitle, folderId]);
 
   const invalidInput =
     !isValidTitle?.value && isValidTitle.value !== undefined && panelTitle === debouncedPanelTitle && !waiting;
-  const { saveLibraryPanel } = usePanelSave();
 
   return (
     <>
@@ -53,17 +61,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         <Button variant="secondary" onClick={onDismiss} fill="outline">
           Cancel
         </Button>
-        <Button
-          onClick={() => {
-            panel.title = panelTitle;
-            saveLibraryPanel(panel, folderId!).then((res) => {
-              if (!(res instanceof Error)) {
-                onDismiss();
-              }
-            });
-          }}
-          disabled={invalidInput}
-        >
+        <Button onClick={onCreate} disabled={invalidInput}>
           Create library panel
         </Button>
       </Modal.ButtonRow>
