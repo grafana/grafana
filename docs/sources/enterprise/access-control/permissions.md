@@ -7,11 +7,11 @@ weight = 115
 
 # Permissions 
 
-Each permission is defined by an action and a scope. When evaluating a fine-grained access decision, consider what specific action a user will be allowed to perform and on what resource.
+Each permission is defined by an action and a scope. When evaluating a fine-grained access decision, consider what specific action a user should be allowed to perform, and on what resources (its scope).
 
-To grant permissions to a user, create built-in role assignments. For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
+To grant permissions to a user, create built-in role assignments. A built-in role assignment is a *modification* to one of the existing built-in roles in Grafana (Viewer, Editor, Admin) For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
 
-To learn more about what permissions are used for what resources, refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}).
+To learn more about which permissions are used for which resources, refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}).
 
 ### Action
 
