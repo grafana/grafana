@@ -498,7 +498,6 @@ func AllReceivers(route *config.Route) (res []string) {
 		res = append(res, route.Receiver)
 	}
 
-	res = append(res, route.Receiver)
 	for _, subRoute := range route.Routes {
 		res = append(res, AllReceivers(subRoute)...)
 	}
