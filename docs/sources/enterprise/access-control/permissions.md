@@ -22,7 +22,7 @@ When evaluating a decision for access, a user is allowed to perform a specific _
 _scope_ describes where an action can be performed. For example, you can grant a user access to read a specific user profile, by associating a permission with scope `users:<userId>` to the relevant role.
 You can also combine multiple scopes if necessary, by using `/` as a delimiter. 
 
-## Available permissions 
+## Action definitions
 
 Note that below list is not exhaustive yet and more permissions will be available with further releases of fine-grained access control.
 

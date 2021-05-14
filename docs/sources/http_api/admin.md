@@ -538,7 +538,7 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 
 Action | Scope | Provision entity 
 --- | --- | --- 
-provisioning:reload | service:access-control | accesscontrol
+provisioning:reload | service:accesscontrol | accesscontrol
 
 **Example Request**:
 

@@ -7,7 +7,7 @@ weight = 120
 
 # Provisioning
  
-You can create, change or remove [Custom roles]({{< relref "./roles.md#custom-roles" >}}) and create [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}), by adding one or more YAML configuration files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
+You can create, change or remove [Custom roles]({{< relref "./roles.md#custom-roles" >}}) and create or remove [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}), by adding one or more YAML configuration files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
 Refer to [Grafana provisioning]({{< relref "../../administration/configuration/#provisioning" >}}) to learn more about provisioning.
 
 If you want to manage roles and built-in role assignments by API, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control/" >}}).
@@ -16,6 +16,10 @@ If you want to manage roles and built-in role assignments by API, refer to the [
 
 The configuration files must be located in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
 Grafana performs provisioning during the startup. Refer to the [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}) to understand how you can reload configuration at runtime.
+
+## Manage custom roles
+
+You can create, update and delete custom roles, as well as create and remove built-in role assignments for them.
 
 ### Create or update roles
 
@@ -29,11 +33,23 @@ It is only possibly to provision [organization local]({{< relref "./roles#role-s
 
 To delete a role, you can add a list of roles under `deleteRoles` section in the configuration file. Note that deletion is performed after role insertion/update.
 
-### Create built-in role assignments
+### Create and remove built-in role assignments
 
-To create a built-in role assignment, you can add list of assignments under `builtInRoles` section in the configuration file, as an element of `roles`. 
+To create a built-in role assignment, you can add list of assignments under `builtInRoles` section in the configuration file, as an element of `roles`. To remove a built-in role assignment, leave `builtInRoles` list empty. 
 
-Note that it is only possibly to provision [organization local]({{< relref "./roles#built-in-role-assignments" >}}) assignments and removing built-in role assignments is not supported. For creating or updating _global_ assignments, or removing an assignment, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
+Note that it is only possibly to provision [organization local]({{< relref "./roles#built-in-role-assignments" >}}) assignments. For creating or updating _global_ assignments, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
+
+## Manage default built-in role assignments
+
+During the startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [predefined roles]({{< relref "./roles#predefined-roles" >}}). You can remove and add back later those assignments by using provisioning.
+
+### Remove default assignment
+
+To remove default built-in role assignment, you can use `removeDefaultAssignments` element in the configuration file. You would need to provide built-in role name and predefined role name.
+
+### Add back default assignment
+
+To add back default built-in role assignment, you can use `addDefaultAssignments` element in the configuration file. You would need to provide built-in role name and predefined role name.
 
 ## Example of a role configuration file
 
@@ -41,9 +57,23 @@ Note that it is only possibly to provision [organization local]({{< relref "./ro
 # config file version
 apiVersion: 1
 
-# list of roles that should be deleted from the database
+# list of default built-in role assignments that should be removed
+removeDefaultAssignments:
+  # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
+  - builtInRole: "Grafana Admin"
+    # <string>, must be one of the existing predefined roles
+    predefinedRole: "grafana:roles:permissions:admin"
+
+# list of default built-in role assignments that should be added back
+addDefaultAssignments:
+  # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
+  - builtInRole: "Admin"
+    # <string>, must be one of the existing predefined roles
+    predefinedRole: "grafana:roles:reporting:admin:read"
+    
+# list of roles that should be deleted
 deleteRoles:
-  # <string> name of the role you want to create. Required if no uid
+  # <string> name of the role you want to create. Required if no uid is set
   - name: ReportEditor
     # <string> uid of the role. Required if no name
     uid: reporteditor1
@@ -86,7 +116,7 @@ roles:
 
 The following sections detail the supported settings for roles and built-in role assignments.
 
-- Refer to [Permissions]({{< relref "./permissions.md#available-permissions" >}}) for full list of valid permissions.
+- Refer to [Permissions]({{< relref "./permissions.md#action-definitions" >}}) for full list of valid permissions.
 - Check [Custom roles]({{< relref "./roles.md#custom-roles" >}}) to understand attributes for roles.
 - The [default org ID]({{< relref "../../administration/configuration#auto_assign_org_id" >}}) is used if `orgId` is not specified in any of the configuration blocks.
 

@@ -14,17 +14,17 @@ To use the API, you would need to [enable fine-grained access control]({{< relre
 
 The API does not currently work with an API Token. So in order to use these API endpoints you will have to use [Basic auth]({{< relref "./auth/#basic-auth" >}}).
 
-## Check if enabled
+## Get status
 
-`GET /api/access-control/check`
+`GET /api/access-control/status`
 
-Checks if fine-grained access control is enabled or not.
+Returns an indicator to check if fine-grained access control is enabled or not.
 
 ### Required permissions
 
 Action | Scope
 --- | --- | 
-check:accesscontrol | services:accesscontrol
+status:accesscontrol | services:accesscontrol
 
 #### Example request
 
