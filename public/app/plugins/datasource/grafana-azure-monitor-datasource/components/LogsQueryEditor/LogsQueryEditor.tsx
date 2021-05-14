@@ -23,6 +23,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
+
   return (
     <div data-testid="azure-monitor-logs-query-editor">
       <InlineFieldRow>

@@ -8,6 +8,8 @@ import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
 interface ResourcePickerProps {
   resourcePickerData: Pick<ResourcePickerData, 'getResourcePickerData' | 'getResourcePickerDataWithNestedResourceData'>;
+  selectedResource: RowGroup;
+  handleSelectResource: (row: Row, isSelected: boolean) => void;
 }
 
 const ResourcePicker = (props: ResourcePickerProps) => {
@@ -31,19 +33,15 @@ const ResourcePicker = (props: ResourcePickerProps) => {
     setRows(rowsWithNestedData);
   };
 
-  const [selectedRows, setSelectedRows] = useState<RowGroup>({});
-  const hasSelection = Object.keys(selectedRows).length > 0;
-  const handleRowSelectedChange = useCallback((row: Row, isSelected: boolean) => {
-    setSelectedRows(isSelected ? { [row.id]: row } : {});
-  }, []);
+  const hasSelection = Object.keys(props.selectedResource).length > 0;
 
   return (
     <div>
       <NestedResourceTable
         rows={rows}
         fetchNested={fetchNested}
-        onRowSelectedChange={handleRowSelectedChange}
-        selectedRows={selectedRows}
+        onRowSelectedChange={props.handleSelectResource}
+        selectedRows={props.selectedResource}
       />
 
       {hasSelection && (
@@ -51,10 +49,10 @@ const ResourcePicker = (props: ResourcePickerProps) => {
           <h5>Selection</h5>
           <NestedResourceTable
             noHeader={true}
-            rows={selectedRows}
+            rows={props.selectedResource}
             fetchNested={fetchNested}
-            onRowSelectedChange={handleRowSelectedChange}
-            selectedRows={selectedRows}
+            onRowSelectedChange={props.handleSelectResource}
+            selectedRows={props.selectedResource}
           />
         </div>
       )}

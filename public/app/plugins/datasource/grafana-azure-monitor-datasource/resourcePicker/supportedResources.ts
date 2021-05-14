@@ -1,3 +1,4 @@
+// TODO: should this list be different for logs vs metrics?
 export const SUPPORTED_RESOURCE_TYPES = [
   'microsoft.analysisservices/servers',
   'microsoft.apimanagement/service',
