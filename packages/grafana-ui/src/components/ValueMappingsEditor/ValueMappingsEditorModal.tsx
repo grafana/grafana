@@ -63,6 +63,18 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
     ]);
   };
 
+  const onDuplicateMapping = (index: number) => {
+    const sourceRow = rows[index];
+    const copy = [...rows];
+    copy.splice(index, 0, { ...sourceRow });
+
+    for (let i = index; i < rows.length; i++) {
+      copy[i].result.index = i;
+    }
+
+    updateRows(copy);
+  };
+
   const onUpdate = () => {
     onChange(editModelToSaveModel(rows));
     onClose();
@@ -93,6 +105,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                     index={index}
                     onChange={onChangeMapping}
                     onRemove={onRemoveRow}
+                    onDuplicate={onDuplicateMapping}
                   />
                 ))}
                 {provided.placeholder}

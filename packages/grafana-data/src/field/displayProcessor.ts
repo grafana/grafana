@@ -141,8 +141,12 @@ function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: Gr
       }
 
       const hc = strHashCode(value as string);
+      const color = theme.visualization.getColorByName(
+        theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)]
+      );
+
       return {
-        color: theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)],
+        color: color,
         percent: 0,
       };
     };
