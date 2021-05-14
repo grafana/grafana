@@ -3,6 +3,9 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -71,6 +74,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	for _, a := range as {
 		fields = append(fields, map[string]interface{}{
 			"name":   a.Labels.String(),
+			"value":  a.Annotations.String(),
 			"inline": true,
 		})
 	}
@@ -82,15 +86,17 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	embed := simplejson.New()
 	embed.Set("title", getTitleFromTemplateData(data))
-	embed.Set("color", getAlertStatusColor(alerts.Status()))
 	embed.Set("footer", footer)
 	embed.Set("fields", fields)
+
+	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
+	embed.Set("color", color)
 
 	if d.Description != "" {
 		embed.Set("description", d.Description)
 	}
 
-	ruleURL := d.tmpl.ExternalURL.String() + "/alerting/list"
+	ruleURL := d.tmpl.ExternalURL.String() + "alerting/list"
 	embed.Set("url", ruleURL)
 
 	bodyJSON.Set("embeds", []interface{}{embed})
@@ -105,6 +111,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		Body:        string(body),
 	}
 
+	fmt.Println(string(body))
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
 		d.log.Error("Failed to send notification to Discord", "error", err)
 		return false, err
