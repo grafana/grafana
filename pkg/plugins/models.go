@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -13,21 +14,28 @@ const (
 	PluginTypeDashboard = "dashboard"
 )
 
+var (
+	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
+	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
+	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
+	ErrPluginNotInstalled          = errors.New("plugin is not installed")
+)
+
 type PluginNotFoundError struct {
 	PluginID string
 }
 
 func (e PluginNotFoundError) Error() string {
-	return fmt.Sprintf("plugin with ID %q not found", e.PluginID)
+	return fmt.Sprintf("plugin with ID '%s' not found", e.PluginID)
 }
 
 type DuplicatePluginError struct {
-	Plugin         *PluginBase
-	ExistingPlugin *PluginBase
+	PluginID          string
+	ExistingPluginDir string
 }
 
 func (e DuplicatePluginError) Error() string {
-	return fmt.Sprintf("plugin with ID %q already loaded from %q", e.Plugin.Id, e.ExistingPlugin.PluginDir)
+	return fmt.Sprintf("plugin with ID '%s' already exists in '%s'", e.PluginID, e.ExistingPluginDir)
 }
 
 func (e DuplicatePluginError) Is(err error) bool {

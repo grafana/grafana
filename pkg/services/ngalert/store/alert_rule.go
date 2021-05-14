@@ -80,7 +80,7 @@ func (st DBstore) DeleteAlertRuleByUID(orgID int64, ruleUID string) error {
 			return err
 		}
 
-		_, err = sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", orgID, ruleUID)
+		_, err = sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
 		if err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([
 			return err
 		}
 
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid NOT IN (
+		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
 			SELECT uid FROM alert_rule where org_id = ?
 		)`, orgID, orgID); err != nil {
 			return err
@@ -146,7 +146,7 @@ func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ru
 			return err
 		}
 
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid NOT IN (
+		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
 			SELECT uid FROM alert_rule where org_id = ?
 		)`, orgID, orgID); err != nil {
 			return err
@@ -161,7 +161,7 @@ func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ru
 // DeleteAlertInstanceByRuleUID is a handler for deleting alert instances by alert rule UID when a rule has been updated
 func (st DBstore) DeleteAlertInstancesByRuleUID(orgID int64, ruleUID string) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", orgID, ruleUID)
+		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 			var parentVersion int64
 			switch r.Existing {
 			case nil: // new rule
-				uid, err := generateNewAlertRuleUID(sess, r.New.OrgID)
+				uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
 				if err != nil {
 					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
 				}
@@ -411,7 +411,10 @@ func (st DBstore) GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery
 	})
 }
 
-func generateNewAlertRuleUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
+// GenerateNewAlertRuleUID generates a unique UID for a rule.
+// This is set as a variable so that the tests can override it.
+// The ruleTitle is only used by the mocked functions.
+var GenerateNewAlertRuleUID = func(sess *sqlstore.DBSession, orgID int64, ruleTitle string) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 

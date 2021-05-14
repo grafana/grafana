@@ -1,7 +1,6 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { PanelProps } from '@grafana/data';
-import { GraphNGLegendEvent, useTheme2 } from '@grafana/ui';
-import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+import { useTheme2, ZoomPlugin } from '@grafana/ui';
 import { TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 
@@ -17,17 +16,9 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   options,
   width,
   height,
-  fieldConfig,
-  onFieldConfigChange,
+  onChangeTimeRange,
 }) => {
   const theme = useTheme2();
-
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
-    },
-    [fieldConfig, onFieldConfigChange, data.series]
-  );
 
   if (!data || !data.series?.length) {
     return (
@@ -46,8 +37,9 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
       timeZone={timeZone}
       width={width}
       height={height}
-      onLegendClick={onLegendClick}
       {...options}
-    />
+    >
+      {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
+    </TimelineChart>
   );
 };

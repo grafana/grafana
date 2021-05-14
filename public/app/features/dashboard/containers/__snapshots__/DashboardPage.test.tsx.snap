@@ -37,6 +37,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -65,7 +66,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -92,7 +95,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 29,
+          "schemaVersion": 30,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -173,6 +176,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "getVariablesFromState": [Function],
                 "gnetId": null,
                 "graphTooltip": 0,
+                "hasChangesThatAffectsAllPanels": false,
                 "id": null,
                 "links": Array [],
                 "meta": Object {
@@ -201,7 +205,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                       },
                     },
                     "fieldConfig": Object {
-                      "defaults": Object {},
+                      "defaults": Object {
+                        "mappings": undefined,
+                      },
                       "overrides": Array [],
                     },
                     "gridPos": Object {
@@ -228,7 +234,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 ],
                 "refresh": undefined,
                 "revision": undefined,
-                "schemaVersion": 29,
+                "schemaVersion": 30,
                 "snapshot": undefined,
                 "style": "dark",
                 "tags": Array [],
@@ -279,6 +285,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "getVariablesFromState": [Function],
               "gnetId": null,
               "graphTooltip": 0,
+              "hasChangesThatAffectsAllPanels": false,
               "id": null,
               "links": Array [],
               "meta": Object {
@@ -307,7 +314,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     },
                   },
                   "fieldConfig": Object {
-                    "defaults": Object {},
+                    "defaults": Object {
+                      "mappings": undefined,
+                    },
                     "overrides": Array [],
                   },
                   "gridPos": Object {
@@ -334,7 +343,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 29,
+              "schemaVersion": 30,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -407,6 +416,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -435,7 +445,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -462,7 +474,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 29,
+          "schemaVersion": 30,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -543,6 +555,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "getVariablesFromState": [Function],
                 "gnetId": null,
                 "graphTooltip": 0,
+                "hasChangesThatAffectsAllPanels": false,
                 "id": null,
                 "links": Array [],
                 "meta": Object {
@@ -571,7 +584,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                       },
                     },
                     "fieldConfig": Object {
-                      "defaults": Object {},
+                      "defaults": Object {
+                        "mappings": undefined,
+                      },
                       "overrides": Array [],
                     },
                     "gridPos": Object {
@@ -598,7 +613,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 ],
                 "refresh": undefined,
                 "revision": undefined,
-                "schemaVersion": 29,
+                "schemaVersion": 30,
                 "snapshot": undefined,
                 "style": "dark",
                 "tags": Array [],
@@ -649,6 +664,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "getVariablesFromState": [Function],
               "gnetId": null,
               "graphTooltip": 0,
+              "hasChangesThatAffectsAllPanels": false,
               "id": null,
               "links": Array [],
               "meta": Object {
@@ -677,7 +693,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     },
                   },
                   "fieldConfig": Object {
-                    "defaults": Object {},
+                    "defaults": Object {
+                      "mappings": undefined,
+                    },
                     "overrides": Array [],
                   },
                   "gridPos": Object {
@@ -704,7 +722,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 29,
+              "schemaVersion": 30,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -759,6 +777,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "getVariablesFromState": [Function],
         "gnetId": null,
         "graphTooltip": 0,
+        "hasChangesThatAffectsAllPanels": false,
         "id": null,
         "links": Array [],
         "meta": Object {
@@ -787,7 +806,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               },
             },
             "fieldConfig": Object {
-              "defaults": Object {},
+              "defaults": Object {
+                "mappings": undefined,
+              },
               "overrides": Array [],
             },
             "gridPos": Object {
@@ -814,7 +835,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 29,
+        "schemaVersion": 30,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],

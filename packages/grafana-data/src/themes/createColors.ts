@@ -73,7 +73,7 @@ export interface ThemeHoverStrengh {}
 /** @beta */
 export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
   /** Returns a text color for the background */
-  getContrastText(background: string): string;
+  getContrastText(background: string, threshold?: number): string;
   /* Brighten or darken a color by specified factor (0-1) */
   emphasize(color: string, amount?: number): string;
 }
@@ -255,11 +255,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     ...other
   } = colors;
 
-  function getContrastText(background: string) {
+  function getContrastText(background: string, threshold: number = contrastThreshold) {
     const contrastText =
-      getContrastRatio(background, dark.text.maxContrast) >= contrastThreshold
-        ? dark.text.maxContrast
-        : light.text.maxContrast;
+      getContrastRatio(dark.text.maxContrast, background) >= threshold ? dark.text.maxContrast : light.text.maxContrast;
     // todo, need color framework
     return contrastText;
   }

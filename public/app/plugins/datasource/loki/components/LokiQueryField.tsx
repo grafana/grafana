@@ -97,7 +97,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     this.setState({ labelsLoaded: true });
   }
 
-  onChangeLogLabels = (selector: string) => {
+  onChangeLabelBrowser = (selector: string) => {
     this.onChangeQuery(selector, true);
     this.setState({ labelBrowserVisible: false });
   };
@@ -174,7 +174,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
         </div>
         {labelBrowserVisible && (
           <div className="gf-form">
-            <LokiLabelBrowser languageProvider={lokiLanguageProvider} onChange={this.onChangeLogLabels} />
+            <LokiLabelBrowser languageProvider={lokiLanguageProvider} onChange={this.onChangeLabelBrowser} />
           </div>
         )}
 

@@ -1,7 +1,7 @@
 import { GrafanaTheme2 } from '@grafana/data';
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
-import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
+import { getRuleIdentifier, isAlertingRule, isRecordingRule, stringifyRuleIdentifier } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
 import { RuleDetails } from './RuleDetails';
@@ -126,7 +126,15 @@ export const RulesTable: FC<Props> = ({
                         data-testid="rule-collapse-toggle"
                       />
                     </td>
-                    <td>{promRule && isAlertingRule(promRule) ? <AlertStateTag state={promRule.state} /> : 'n/a'}</td>
+                    <td>
+                      {promRule && isAlertingRule(promRule) ? (
+                        <AlertStateTag state={promRule.state} />
+                      ) : promRule && isRecordingRule(promRule) ? (
+                        'Recording rule'
+                      ) : (
+                        'n/a'
+                      )}
+                    </td>
                     <td>{rule.name}</td>
                     {showGroupColumn && (
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>

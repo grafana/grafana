@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
+	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
 // PagerdutyNotifier is responsible for sending
@@ -58,8 +58,8 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 		NotifierBase: old_notifiers.NewNotifierBase(model),
 		Key:          key,
 		CustomDetails: map[string]string{
-			"firing":       `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
-			"resolved":     `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
+			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
+			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
 			"num_firing":   `{{ .Alerts.Firing | len }}`,
 			"num_resolved": `{{ .Alerts.Resolved | len }}`,
 		},
@@ -67,7 +67,7 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 		Class:     model.Settings.Get("class").MustString("default"),
 		Component: model.Settings.Get("component").MustString("Grafana"),
 		Group:     model.Settings.Get("group").MustString("default"),
-		Summary:   model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
+		Summary:   model.Settings.Get("summary").MustString(`{{ template "default.title" . }}`),
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + model.Name),
 	}, nil
@@ -93,7 +93,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
-		Url:        pagerdutyEventAPIURL,
+		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
