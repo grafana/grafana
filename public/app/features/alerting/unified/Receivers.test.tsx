@@ -193,7 +193,6 @@ describe('Receivers', () => {
                 disableResolveMessage: false,
                 name: 'my new receiver',
                 secureSettings: {},
-                sendReminder: true,
                 settings: {
                   apiKey: 'foobarbaz',
                   roomid: '',

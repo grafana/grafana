@@ -190,10 +190,8 @@ function grafanaChannelConfigToFormChannelValues(
   const values: GrafanaChannelValues = {
     __id: id,
     type: channel.type as NotifierType,
-    uid: channel.uid,
     secureSettings: {},
     settings: { ...channel.settings },
-    sendReminder: channel.sendReminder,
     secureFields: { ...channel.secureFields },
     disableResolveMessage: channel.disableResolveMessage,
   };
@@ -222,14 +220,10 @@ function formChannelValuesToGrafanaChannelConfig(
     },
     secureSettings: values.secureSettings ?? {},
     type: values.type,
-    sendReminder: values.sendReminder ?? existing?.sendReminder ?? defaults.sendReminder,
     name,
     disableResolveMessage:
       values.disableResolveMessage ?? existing?.disableResolveMessage ?? defaults.disableResolveMessage,
   };
-  if (existing) {
-    channel.uid = existing.uid;
-  }
   return channel;
 }
 
