@@ -493,7 +493,7 @@ export const variableUpdated = (
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         const dashboard = getState().dashboard.getModel();
-        dashboard?.changeAffectsAllPanels();
+        dashboard?.setChangeAffectsAllPanels();
         dashboard?.processRepeats();
         locationService.partial(getQueryWithVariables(getState));
         dashboard?.startRefresh();
@@ -527,7 +527,7 @@ export const onTimeRangeUpdated = (
   try {
     await Promise.all(promises);
     const dashboard = getState().dashboard.getModel();
-    dashboard?.changeAffectsAllPanels();
+    dashboard?.setChangeAffectsAllPanels();
     dashboard?.startRefresh();
   } catch (error) {
     console.error(error);

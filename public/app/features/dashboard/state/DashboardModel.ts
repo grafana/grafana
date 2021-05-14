@@ -116,8 +116,6 @@ export class DashboardModel {
     getVariablesFromState: true,
     formatDate: true,
     hasChangesThatAffectsAllPanels: true,
-    changeAffectsAllPanels: true,
-    refreshIfChangeAffectsAllPanels: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -379,12 +377,10 @@ export class DashboardModel {
     this.refreshIfChangeAffectsAllPanels();
   }
 
-  changeAffectsAllPanels() {
-    if (!this.panelInEdit && !this.panelInView) {
-      return;
+  setChangeAffectsAllPanels() {
+    if (this.panelInEdit || this.panelInView) {
+      this.hasChangesThatAffectsAllPanels = true;
     }
-
-    this.hasChangesThatAffectsAllPanels = true;
   }
 
   private refreshIfChangeAffectsAllPanels() {

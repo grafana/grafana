@@ -804,7 +804,7 @@ describe('exitViewPanel', () => {
     describe('and there is a change that affects all panels', () => {
       it('then startRefresh is not called', () => {
         const { dashboard, panel } = getTestContext();
-        dashboard.changeAffectsAllPanels();
+        dashboard.setChangeAffectsAllPanels();
 
         dashboard.exitViewPanel(panel);
 
@@ -852,7 +852,7 @@ describe('exitPanelEditor', () => {
     describe('and there is a change that affects all panels', () => {
       it('then startRefresh is not called', () => {
         const { dashboard } = getTestContext();
-        dashboard.changeAffectsAllPanels();
+        dashboard.setChangeAffectsAllPanels();
 
         dashboard.exitPanelEditor();
 
@@ -862,7 +862,7 @@ describe('exitPanelEditor', () => {
   });
 });
 
-describe('changeAffectsAllPanels', () => {
+describe('setChangeAffectsAllPanels', () => {
   it.each`
     panelInEdit  | panelInView  | expected
     ${null}      | ${null}      | ${false}
@@ -879,7 +879,7 @@ describe('changeAffectsAllPanels', () => {
       dashboard.panelInEdit = panelInEdit;
       dashboard.panelInView = panelInView;
 
-      dashboard.changeAffectsAllPanels();
+      dashboard.setChangeAffectsAllPanels();
 
       expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
     }
