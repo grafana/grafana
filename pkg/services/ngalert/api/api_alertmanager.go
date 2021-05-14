@@ -208,7 +208,6 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 					if cgmr.Name == gr.Name && cgmr.Type == gr.Type {
 						// frontend sends only the secure settings that have to be updated
 						// therefore we have to copy from the last configuration only those secure settings not included in the request
-						// body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = cgmr.SecureSettings
 						for key, storedValue := range cgmr.SecureSettings {
 							_, ok := body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key]
 							if !ok {
