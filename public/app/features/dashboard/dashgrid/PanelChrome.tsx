@@ -16,7 +16,6 @@ import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
   DashboardCursorSync,
-  EventBusSrv,
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
@@ -63,14 +62,8 @@ export class PanelChrome extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    // Can this eventBus be on PanelModel?
-    // when we have more complex event filtering, that may be a better option
-    const eventBus = props.dashboard.events
-      ? props.dashboard.events.newScopedBus(
-          `panel:${props.panel.id}`, // panelID
-          this.eventFilter
-        )
-      : new EventBusSrv();
+    // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
+    const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
 
     this.state = {
       isFirstLoad: true,
@@ -187,16 +180,7 @@ export class PanelChrome extends Component<Props, State> {
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
-    const { isInView, dashboard, panel, plugin } = this.props;
-
-    if (!isInView) {
-      if (data.state !== LoadingState.Streaming) {
-        // Ignore events when not visible.
-        // The call will be repeated when the panel comes into view
-        this.setState({ refreshWhenInView: true });
-      }
-      return;
-    }
+    const { dashboard, panel, plugin } = this.props;
 
     // Ignore this data update if we are now a non data panel
     if (plugin.meta.skipDataQuery) {
@@ -239,6 +223,7 @@ export class PanelChrome extends Component<Props, State> {
 
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
+
     if (!isInView) {
       this.setState({ refreshWhenInView: true });
       return;
@@ -250,6 +235,10 @@ export class PanelChrome extends Component<Props, State> {
     if (this.wantsQueryExecution) {
       if (width < 0) {
         return;
+      }
+
+      if (this.state.refreshWhenInView) {
+        this.setState({ refreshWhenInView: false });
       }
 
       panel.getQueryRunner().run({
