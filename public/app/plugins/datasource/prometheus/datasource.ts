@@ -198,8 +198,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
     const queries: PromQueryRequest[] = [];
     const activeTargets: PromQuery[] = [];
+    const clonedTargets = cloneDeep(options.targets);
 
-    for (const target of options.targets) {
+    for (const target of clonedTargets) {
       if (!target.expr || target.hide) {
         continue;
       }
