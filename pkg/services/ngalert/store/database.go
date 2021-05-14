@@ -27,5 +27,5 @@ type DBstore struct {
 	BaseInterval time.Duration
 	// default alert definiiton interval
 	DefaultIntervalSeconds int64
-	SQLStore               *sqlstore.SQLStore `inject:""`
+	SQLStore               *sqlstore.SQLStore
 }
