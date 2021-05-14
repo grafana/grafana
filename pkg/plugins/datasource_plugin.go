@@ -72,13 +72,6 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 	return endpoint.Query(ctx, dsInfo, query)
 }
 
-func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
-	p.legacyClient = client
-	p.logger = logger
-
-	return nil
-}
-
 func (p *DataSourcePlugin) CanHandleDataQueries() bool {
 	return p.client != nil || p.legacyClient != nil
 }
