@@ -338,7 +338,7 @@
   "refresh": false,
   "schemaVersion": 29,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },

@@ -2,9 +2,10 @@ import uPlot, { Series, Cursor } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { TimelineMode, TimelineValueAlignment } from './types';
+import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
+import tinycolor from 'tinycolor2';
 
 const { round, min, ceil } = Math;
 
@@ -26,6 +27,7 @@ function walk(rowHeight: number, yIdx: number | null, count: number, dim: number
 interface TimelineBoxRect extends Rect {
   left: number;
   strokeWidth: number;
+  fillColor: string;
 }
 
 /**
@@ -40,12 +42,11 @@ export interface TimelineCoreOptions {
   showValue: BarValueVisibility;
   alignValue: TimelineValueAlignment;
   isDiscrete: (seriesIdx: number) => boolean;
-  colorLookup: (seriesIdx: number, value: any) => string;
+  getValueColor: (seriesIdx: number, value: any) => string;
   label: (seriesIdx: number) => string;
-  fill: (seriesIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
-  stroke: (seriesIdx: number, value: any) => CanvasRenderingContext2D['strokeStyle'];
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
+  getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
 }
@@ -64,11 +65,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     alignValue,
     theme,
     label,
-    fill,
-    stroke,
     formatValue,
     getTimeRange,
-    colorLookup,
+    getValueColor,
+    getFieldConfig,
     // onHover,
     // onLeave,
   } = opts;
@@ -85,7 +85,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       return mark;
     });
 
-  // alignement-aware text position cache filled by drawPaths->putBox for use in drawPoints
+  // Needed for to calculate text positions
   let boxRectsBySeries: TimelineBoxRect[][];
 
   const resetBoxRectsBySeries = (count: number) => {
@@ -134,8 +134,32 @@ export function getConfig(opts: TimelineCoreOptions) {
     value: any,
     discrete: boolean
   ) {
+    // do not render super small boxes
+    if (boxWidth < 1) {
+      return;
+    }
+
+    const valueColor = getValueColor(seriesIdx + 1, value);
+    const fieldConfig = getFieldConfig(seriesIdx);
+    const fillColor = getFillColor(fieldConfig, valueColor);
+
+    const boxRect = (boxRectsBySeries[seriesIdx][valueIdx] = {
+      x: round(left - xOff),
+      y: round(top - yOff),
+      w: boxWidth,
+      h: boxHeight,
+      sidx: seriesIdx + 1,
+      didx: valueIdx,
+      // These two are needed for later text positioning
+      left: left,
+      strokeWidth,
+      fillColor,
+    });
+
+    qt.add(boxRect);
+
     if (discrete) {
-      let fillStyle = fill(seriesIdx + 1, value);
+      let fillStyle = fillColor;
       let fillPath = fillPaths.get(fillStyle);
 
       if (fillPath == null) {
@@ -145,7 +169,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       rect(fillPath, left, top, boxWidth, boxHeight);
 
       if (strokeWidth) {
-        let strokeStyle = stroke(seriesIdx + 1, value);
+        let strokeStyle = valueColor;
         let strokePath = strokePaths.get(strokeStyle);
 
         if (strokePath == null) {
@@ -163,30 +187,17 @@ export function getConfig(opts: TimelineCoreOptions) {
     } else {
       ctx.beginPath();
       rect(ctx, left, top, boxWidth, boxHeight);
-      ctx.fillStyle = fill(seriesIdx, value);
+      ctx.fillStyle = fillColor;
       ctx.fill();
 
       if (strokeWidth) {
         ctx.beginPath();
         rect(ctx, left + strokeWidth / 2, top + strokeWidth / 2, boxWidth - strokeWidth, boxHeight - strokeWidth);
-        ctx.strokeStyle = stroke(seriesIdx, value);
+        ctx.strokeStyle = valueColor;
+        ctx.lineWidth = strokeWidth;
         ctx.stroke();
       }
     }
-
-    const boxRect = (boxRectsBySeries[seriesIdx][valueIdx] = {
-      x: round(left - xOff),
-      y: round(top - yOff),
-      w: boxWidth,
-      h: boxHeight,
-      sidx: seriesIdx + 1,
-      didx: valueIdx,
-      // These two are needed for later text positioning
-      left: left,
-      strokeWidth,
-    });
-
-    qt.add(boxRect);
   }
 
   const drawPaths: Series.PathBuilder = (u, sidx, idx0, idx1) => {
@@ -202,17 +213,17 @@ export function getConfig(opts: TimelineCoreOptions) {
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
 
-        walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, hgt) => {
+        walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
               if (dataY[ix] != null) {
-                let lft = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
+                let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
                 let nextIx = ix;
                 while (dataY[++nextIx] === undefined && nextIx < dataY.length) {}
 
                 // to now (not to end of chart)
-                let rgt =
+                let right =
                   nextIx === dataY.length
                     ? xOff + xDim + strokeWidth
                     : Math.round(valToPosX(dataX[nextIx], scaleX, xDim, xOff));
@@ -222,10 +233,10 @@ export function getConfig(opts: TimelineCoreOptions) {
                   rect,
                   xOff,
                   yOff,
-                  lft,
+                  left,
                   round(yOff + y0),
-                  rgt - lft - 2,
-                  round(hgt),
+                  right - left - 2,
+                  round(height),
                   strokeWidth,
                   iy,
                   ix,
@@ -246,17 +257,17 @@ export function getConfig(opts: TimelineCoreOptions) {
             for (let ix = idx0; ix <= idx1; ix++) {
               if (dataY[ix] != null) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
-                let lft = valToPosX(dataX[ix], scaleX, xDim, xOff);
+                let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
                 putBox(
                   u.ctx,
                   rect,
                   xOff,
                   yOff,
-                  round(lft - xShift),
+                  round(left - xShift),
                   round(yOff + y0),
                   barWid,
-                  round(hgt),
+                  round(height),
                   strokeWidth,
                   iy,
                   ix,
@@ -315,14 +326,13 @@ export function getConfig(opts: TimelineCoreOptions) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   // Todo refine this to better know when to not render text (when values do not fit)
-                  if (boxRect.w < 20) {
+                  if (!boxRect || boxRect.w < 20) {
                     continue;
                   }
 
                   const x = getTextPositionOffet(boxRect, alignValue);
-                  const valueColor = colorLookup(sidx, dataY[ix]);
 
-                  u.ctx.fillStyle = theme.colors.getContrastText(valueColor, 3);
+                  u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
                   u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
                 }
               }
@@ -455,8 +465,8 @@ export function getConfig(opts: TimelineCoreOptions) {
 
       return ySplits;
     },
-    yValues: (u: uPlot, splits: number[]) => splits.map((v, i) => label(i + 1)),
 
+    yValues: (u: uPlot, splits: number[]) => splits.map((v, i) => label(i + 1)),
     yRange: [0, 1] as uPlot.Range.MinMax,
 
     // pathbuilders
@@ -481,4 +491,9 @@ function getTextPositionOffet(rect: TimelineBoxRect, alignValue: TimelineValueAl
     (alignValue === 'center' ? w / 2 - strokeWidth / 2 : alignValue === 'right' ? w - strokeWidth / 2 : 0) +
     textPadding
   );
+}
+
+function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
+  const opacityPercent = (fieldConfig.fillOpacity ?? 100) / 100;
+  return tinycolor(color).setAlpha(opacityPercent).toString();
 }
