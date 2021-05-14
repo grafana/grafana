@@ -41,7 +41,7 @@ var usersOrgReadRole = RoleDTO{
 
 var usersOrgEditRole = RoleDTO{
 	Name:        usersOrgEdit,
-	Version:     1,
+	Version:     2,
 	Description: "Allows every read action for user organizations and in addition allows to administer user organizations.",
 	Permissions: ConcatPermissions(usersOrgReadRole.Permissions, []Permission{
 		{
