@@ -6,13 +6,16 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 )
+
+type AccessToken struct {
+	Token     string
+	ExpiresOn time.Time
+}
 
 type TokenCredential interface {
 	GetCacheKey() string
-	GetAccessToken(ctx context.Context, scopes []string) (*azcore.AccessToken, error)
+	GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error)
 }
 
 type ConcurrentTokenCache interface {
@@ -37,7 +40,7 @@ type scopesCacheEntry struct {
 
 	cond        *sync.Cond
 	refreshing  bool
-	accessToken *azcore.AccessToken
+	accessToken *AccessToken
 }
 
 func (c *tokenCacheImpl) GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error) {
@@ -69,7 +72,7 @@ func (c *tokenCacheImpl) GetAccessToken(ctx context.Context, credential TokenCre
 }
 
 func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
-	var accessToken *azcore.AccessToken
+	var accessToken *AccessToken
 	var err error
 	shouldRefresh := false
 
@@ -115,7 +118,7 @@ func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
 func getKeyForScopes(scopes []string) string {
 	if len(scopes) > 1 {
 		arr := make([]string, len(scopes))
-		copy(scopes, arr)
+		copy(arr, scopes)
 		sort.Strings(arr)
 		scopes = arr
 	}

@@ -118,7 +118,7 @@ func (c *managedIdentityCredential) GetCacheKey() string {
 	return fmt.Sprintf("azure|msi|%s", clientId)
 }
 
-func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes []string) (*azcore.AccessToken, error) {
+func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
 	// No need to lock here because the caller is responsible for thread safety
 	if c.credential == nil {
 		var err error
@@ -135,7 +135,12 @@ func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes [
 	resource := strings.TrimSuffix(scopes[0], "/.default")
 	scopes = []string{resource}
 
-	return c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+	if err != nil {
+		return nil, err
+	}
+
+	return &AccessToken{Token: accessToken.Token, ExpiresOn: accessToken.ExpiresOn}, nil
 }
 
 type clientSecretCredential struct {
@@ -150,7 +155,7 @@ func (c *clientSecretCredential) GetCacheKey() string {
 	return fmt.Sprintf("azure|clientsecret|%s|%s|%s|%s", c.authority, c.tenantId, c.clientId, hashSecret(c.clientSecret))
 }
 
-func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []string) (*azcore.AccessToken, error) {
+func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
 	// No need to lock here because the caller is responsible for thread safety
 	if c.credential == nil {
 		var err error
@@ -160,7 +165,12 @@ func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []st
 		}
 	}
 
-	return c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+	if err != nil {
+		return nil, err
+	}
+
+	return &AccessToken{Token: accessToken.Token, ExpiresOn: accessToken.ExpiresOn}, nil
 }
 
 func hashSecret(secret string) string {
