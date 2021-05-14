@@ -46,7 +46,7 @@ The Time series is out of beta!  We are removing the `Beta`tag and graduating th
 
 ### Look and feel update
 
-Grafana 8 comes with a refreshed look and feel, including themes changed to be more accessible. Improved Grafana UI brings a number of adjustments and tweaks that will make the app even more fun to use. Under the hood, the new theme architecture enables us to bring more sophisticated themes control in the future.
+Grafana 8 comes with a refreshed look and feel, including themes changed to be more accessible. The improved Grafana UI brings a number of adjustments and tweaks that make the application even more fun to use. Under the hood, the new theme architecture enables us to bring more sophisticated themes control in the future.
 
 ### Download logs
 
