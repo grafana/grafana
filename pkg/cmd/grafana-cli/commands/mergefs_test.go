@@ -42,36 +42,3 @@ func TestMergeFS(t *testing.T) {
 	}),
 	)
 }
-
-func TestMerge_dummy(t *testing.T) {
-	tempDir := os.DirFS(filepath.Join("testdata", "mergefs"))
-	tempDir2 := os.DirFS(filepath.Join("testdata", "mergefs2"))
-
-	filesystem := Merge(tempDir2, tempDir)
-	require.NoError(t, fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		file, err := filesystem.Open(path)
-		require.NoError(t, err)
-		require.NotNil(t, file)
-
-		if !d.IsDir() {
-			data := make([]byte, 3)
-			_, err := file.Read(data)
-			require.NoError(t, err)
-
-			actual := string(data)
-
-			if path == "b/z/foo.cue" {
-				require.Equal(t, "foo", strings.TrimSuffix(actual, "\n"))
-			} else {
-				require.Equal(t, "bar", strings.TrimSuffix(actual, "\n"))
-			}
-		}
-
-		return nil
-	}),
-	)
-}
