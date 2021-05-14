@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -143,7 +144,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					}
 
 					aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
-						a.Settings = m.Settings.MustMap()
+						a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
 					})
 				} else {
 					continue
@@ -164,7 +165,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 						}
 
 						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
-							a.Settings = m.generateSettingsForDSL()
+							a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
 						})
 					}
 				} else {
@@ -173,7 +174,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			}
 		} else {
 			aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
-				a.Settings = m.Settings.MustMap()
+				a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
 			})
 		}
 	}
@@ -182,7 +183,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 }
 
 // Casts values to int when required by Elastic's query DSL
-func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface{} {
+func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Version) map[string]interface{} {
 	setFloatPath := func(path ...string) {
 		if stringValue, err := metricAggregation.Settings.GetPath(path...).String(); err == nil {
 			if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
@@ -201,6 +202,24 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 		setFloatPath("settings", "period")
 	case "serial_diff":
 		setFloatPath("lag")
+	}
+
+	if isMetricAggregationWithInlineScriptSupport(metricAggregation.Type) {
+		scriptValue, err := metricAggregation.Settings.GetPath("script").String()
+		if err != nil {
+			// the script is stored using the old format : `script:{inline: "value"}` or is not set
+			scriptValue, err = metricAggregation.Settings.GetPath("script", "inline").String()
+		}
+
+		constraint, _ := semver.NewConstraint(">=5.6.0")
+
+		if err == nil {
+			if constraint.Check(version) {
+				metricAggregation.Settings.SetPath([]string{"script"}, scriptValue)
+			} else {
+				metricAggregation.Settings.SetPath([]string{"script"}, map[string]interface{}{"inline": scriptValue})
+			}
+		}
 	}
 
 	return metricAggregation.Settings.MustMap()
