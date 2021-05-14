@@ -33,13 +33,15 @@
       "path": "azuremonitor",
       "method": "GET",
       "url": "https://management.azure.com",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "scopes": ["https://management.azure.com/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
-          "resource": "https://management.azure.com/"
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -48,13 +50,15 @@
       "path": "govazuremonitor",
       "method": "GET",
       "url": "https://management.usgovcloudapi.net",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.us/{{.JsonData.tenantId}}/oauth2/token",
+        "scopes": ["https://management.usgovcloudapi.net/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureUSGovernment",
+          "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
-          "resource": "https://management.usgovcloudapi.net/"
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -63,13 +67,15 @@
       "path": "germanyazuremonitor",
       "method": "GET",
       "url": "https://management.microsoftazure.de",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.de/{{.JsonData.tenantId}}/oauth2/token",
+        "scopes": ["https://management.microsoftazure.de/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureGermanCloud",
+          "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
-          "resource": "https://management.microsoftazure.de/"
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -78,13 +84,15 @@
       "path": "chinaazuremonitor",
       "method": "GET",
       "url": "https://management.chinacloudapi.cn",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.chinacloudapi.cn/{{.JsonData.tenantId}}/oauth2/token",
+        "scopes": ["https://management.chinacloudapi.cn/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureChinaCloud",
+          "tenant_id": "{{.JsonData.tenantId}}",
           "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}",
-          "resource": "https://management.chinacloudapi.cn/"
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -111,13 +119,15 @@
       "path": "workspacesloganalytics",
       "method": "GET",
       "url": "https://management.azure.com",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "scopes": ["https://management.azure.com/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
-          "resource": "https://management.azure.com/"
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -126,13 +136,15 @@
       "path": "chinaworkspacesloganalytics",
       "method": "GET",
       "url": "https://management.chinacloudapi.cn",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.chinacloudapi.cn/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "scopes": ["https://management.chinacloudapi.cn/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureChinaCloud",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
-          "resource": "https://management.chinacloudapi.cn/"
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -141,13 +153,15 @@
       "path": "govworkspacesloganalytics",
       "method": "GET",
       "url": "https://management.usgovcloudapi.net",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "scopes": ["https://management.usgovcloudapi.net/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureUSGovernment",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
-          "resource": "https://management.usgovcloudapi.net/"
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -156,13 +170,15 @@
       "path": "loganalyticsazure",
       "method": "GET",
       "url": "https://api.loganalytics.io/v1/workspaces",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "scopes": ["https://api.loganalytics.io/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
-          "resource": "https://api.loganalytics.io"
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [
@@ -174,13 +190,15 @@
       "path": "chinaloganalyticsazure",
       "method": "GET",
       "url": "https://api.loganalytics.azure.cn/v1/workspaces",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.chinacloudapi.cn/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "scopes": ["https://api.loganalytics.azure.cn/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureChinaCloud",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
-          "resource": "https://api.loganalytics.azure.cn"
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [
@@ -192,13 +210,15 @@
       "path": "govloganalyticsazure",
       "method": "GET",
       "url": "https://api.loganalytics.us/v1/workspaces",
+      "authType": "azure",
       "tokenAuth": {
-        "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "scopes": ["https://api.loganalytics.us/.default"],
         "params": {
-          "grant_type": "client_credentials",
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureUSGovernment",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId}}",
           "client_id": "{{.JsonData.logAnalyticsClientId}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
-          "resource": "https://api.loganalytics.us"
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}"
         }
       },
       "headers": [

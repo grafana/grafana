@@ -25,6 +25,7 @@ type InsightsAnalyticsDatasource struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 type InsightsAnalyticsQuery struct {
@@ -217,7 +218,7 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo, e.cfg)
 
 	return req, nil
 }

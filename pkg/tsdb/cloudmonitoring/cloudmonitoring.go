@@ -74,6 +74,7 @@ func init() {
 
 type Service struct {
 	PluginManager plugins.Manager `inject:""`
+	Cfg           *setting.Cfg    `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -85,6 +86,7 @@ type Executor struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // NewExecutor returns an Executor.
@@ -99,6 +101,7 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 		httpClient:    httpClient,
 		dsInfo:        dsInfo,
 		pluginManager: s.PluginManager,
+		cfg:           s.Cfg,
 	}, nil
 }
 
@@ -522,7 +525,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg)
 
 	return req, nil
 }

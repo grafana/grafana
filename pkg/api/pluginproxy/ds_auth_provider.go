@@ -9,12 +9,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute,
-	ds *models.DataSource) {
+	ds *models.DataSource, cfg *setting.Cfg) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
 	data := templateData{
@@ -53,7 +54,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		logger.Error("Failed to set plugin route body content", "error", err)
 	}
 
-	if tokenProvider, err := getTokenProvider(ctx, ds, route, data); err != nil {
+	if tokenProvider, err := getTokenProvider(ctx, cfg, ds, route, data); err != nil {
 		logger.Error("Failed to resolve auth token provider", "error", err)
 	} else if tokenProvider != nil {
 		if token, err := tokenProvider.getAccessToken(); err != nil {
@@ -66,7 +67,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	logger.Info("Requesting", "url", req.URL.String())
 }
 
-func getTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
 	data templateData) (accessTokenProvider, error) {
 	authType := pluginRoute.AuthType
 
@@ -85,6 +86,13 @@ func getTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *p
 	}
 
 	switch authType {
+	case "azure":
+		if tokenAuth == nil {
+			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
+		}
+		provider := newAzureAccessTokenProvider(ctx, cfg, ds, pluginRoute, tokenAuth)
+		return provider, nil
+
 	case "gce":
 		if jwtTokenAuth == nil {
 			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)

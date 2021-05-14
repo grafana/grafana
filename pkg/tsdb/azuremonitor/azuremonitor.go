@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -27,6 +28,7 @@ func init() {
 
 type Service struct {
 	PluginManager plugins.Manager `inject:""`
+	Cfg           *setting.Cfg    `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -38,6 +40,7 @@ type AzureMonitorExecutor struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // NewAzureMonitorExecutor initializes a http client
@@ -52,6 +55,7 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 		httpClient:    httpClient,
 		dsInfo:        dsInfo,
 		pluginManager: s.PluginManager,
+		cfg:           s.Cfg,
 	}, nil
 }
 
@@ -90,24 +94,28 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 		httpClient:    e.httpClient,
 		dsInfo:        e.dsInfo,
 		pluginManager: e.pluginManager,
+		cfg:           e.cfg,
 	}
 
 	aiDatasource := &ApplicationInsightsDatasource{
 		httpClient:    e.httpClient,
 		dsInfo:        e.dsInfo,
 		pluginManager: e.pluginManager,
+		cfg:           e.cfg,
 	}
 
 	alaDatasource := &AzureLogAnalyticsDatasource{
 		httpClient:    e.httpClient,
 		dsInfo:        e.dsInfo,
 		pluginManager: e.pluginManager,
+		cfg:           e.cfg,
 	}
 
 	iaDatasource := &InsightsAnalyticsDatasource{
 		httpClient:    e.httpClient,
 		dsInfo:        e.dsInfo,
 		pluginManager: e.pluginManager,
+		cfg:           e.cfg,
 	}
 
 	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, *tsdbQuery.TimeRange)
