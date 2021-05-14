@@ -69,7 +69,6 @@ func (ng *AlertNG) Init() error {
 		BaseInterval:           baseInterval,
 		DefaultIntervalSeconds: defaultIntervalSeconds,
 		SQLStore:               ng.SQLStore,
-		Metrics:                ng.Metrics,
 	}
 
 	var err error

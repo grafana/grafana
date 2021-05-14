@@ -3,7 +3,6 @@ package store
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -27,6 +26,5 @@ type DBstore struct {
 	BaseInterval time.Duration
 	// default alert definiiton interval
 	DefaultIntervalSeconds int64
-	Metrics                *metrics.Metrics
 	SQLStore               *sqlstore.SQLStore
 }

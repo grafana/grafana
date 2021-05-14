@@ -34,6 +34,8 @@ type Metrics struct {
 	ActiveConfigurations prometheus.Gauge
 	EvalTotal            *prometheus.CounterVec
 	EvalFailures         *prometheus.CounterVec
+	EvalDuration         *prometheus.SummaryVec
+	GroupRules           *prometheus.GaugeVec
 }
 
 func init() {
@@ -77,6 +79,8 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			Name:      "active_configurations",
 			Help:      "Active non default alertmanager configurations for grafana managed alerts",
 		}),
+		// TODO: once rule groups support multiple rules, consider partitioning
+		// on rule group as well as tenant, similar to loki|cortex.
 		EvalTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: "grafana",
@@ -84,8 +88,10 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 				Name:      "rule_evaluations_total",
 				Help:      "The total number of rule evaluations.",
 			},
-			[]string{"user", "rule_group"},
+			[]string{"user"},
 		),
+		// TODO: once rule groups support multiple rules, consider partitioning
+		// on rule group as well as tenant, similar to loki|cortex.
 		EvalFailures: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: "grafana",
@@ -93,7 +99,27 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 				Name:      "rule_evaluation_failures_total",
 				Help:      "The total number of rule evaluation failures.",
 			},
-			[]string{"user", "rule_group"},
+			[]string{"user"},
+		),
+		EvalDuration: prometheus.NewSummaryVec(
+			prometheus.SummaryOpts{
+				Namespace:  "grafana",
+				Subsystem:  "alerting",
+				Help:       "The duration for a rule to execute.",
+				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+			},
+			[]string{"user"},
+		),
+		// TODO: once rule groups support multiple rules, consider partitioning
+		// on rule group as well as tenant, similar to loki|cortex.
+		GroupRules: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: "grafana",
+				Subsystem: "alerting",
+				Name:      "rule_group_rules",
+				Help:      "The number of rules.",
+			},
+			[]string{"user"},
 		),
 	}
 }

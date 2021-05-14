@@ -40,7 +40,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	sch.log.Debug("alert rule routine started", "key", key)
 
 	evalRunning := false
-	var start, end time.Time
 	var attempt int64
 	var alertRule *models.AlertRule
 	for {
@@ -51,7 +50,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			}
 
 			evaluate := func(attempt int64) error {
-				start = timeNow()
+				start := timeNow()
 
 				// fetch latest alert rule version
 				if alertRule == nil || alertRule.Version < ctx.version {
@@ -71,11 +70,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					Data:      alertRule.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
-				sch.metrics.EvalTotal.WithLabelValues(fmt.Sprint(condition.OrgID), alertRule.RuleGroup).Inc()
+				var (
+					end    = timeNow()
+					tenant = fmt.Sprint(alertRule.OrgID)
+					dur    = end.Sub(start).Seconds()
+				)
 
-				end = timeNow()
+				sch.metrics.EvalTotal.WithLabelValues(tenant).Inc()
+				sch.metrics.EvalDuration.WithLabelValues(tenant).Observe(dur)
 				if err != nil {
-					sch.metrics.EvalFailures.WithLabelValues(fmt.Sprint(condition.OrgID), alertRule.RuleGroup).Inc()
+					sch.metrics.EvalFailures.WithLabelValues(tenant).Inc()
 					// consider saving alert instance on error
 					sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
 						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
@@ -157,8 +161,7 @@ type schedule struct {
 	dataService *tsdb.Service
 
 	notifier Notifier
-
-	metrics *metrics.Metrics
+	metrics  *metrics.Metrics
 }
 
 // SchedulerCfg is the scheduler configuration.

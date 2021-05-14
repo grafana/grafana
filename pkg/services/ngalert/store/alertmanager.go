@@ -25,11 +25,9 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAle
 		}
 
 		if !ok {
-			st.Metrics.ActiveConfigurations.Set(0)
 			return ErrNoAlertmanagerConfiguration
 		}
 
-		st.Metrics.ActiveConfigurations.Set(1)
 		query.Result = c
 		return nil
 	})
@@ -45,7 +43,6 @@ func (st *DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerCon
 		if _, err := sess.Insert(config); err != nil {
 			return err
 		}
-		st.Metrics.ActiveConfigurations.Set(1)
 		return nil
 	})
 }

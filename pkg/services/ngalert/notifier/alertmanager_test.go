@@ -41,7 +41,6 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		BaseInterval:           10 * time.Second,
 		DefaultIntervalSeconds: 60,
 		SQLStore:               sqlStore,
-		Metrics:                m,
 	}
 
 	am, err := New(cfg, store, m)

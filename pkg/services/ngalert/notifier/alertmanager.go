@@ -207,6 +207,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	if err := am.applyConfig(cfg, rawConfig); err != nil {
 		return fmt.Errorf("unable to reload configuration: %w", err)
 	}
+	am.Metrics.ActiveConfigurations.Set(1)
 
 	return nil
 }
@@ -222,6 +223,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
 		// If there's no configuration in the database, let's use the default configuration.
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			am.Metrics.ActiveConfigurations.Set(0)
 			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration}
 		} else {
 			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
@@ -236,6 +238,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	if err := am.applyConfig(cfg, nil); err != nil {
 		return fmt.Errorf("unable to reload configuration: %w", err)
 	}
+	am.Metrics.ActiveConfigurations.Set(1)
 
 	return nil
 }
