@@ -49,18 +49,18 @@ func TestDiscordNotifier(t *testing.T) {
 			},
 			expMsg: map[string]interface{}{
 				"embeds": []interface{}{map[string]interface{}{
-					"color": "#D63232",
+					"color": 1.4037554e+07,
 					"fields": []interface{}{map[string]interface{}{
 						"inline": true,
 						"name":   "{alertname=\"alert1\", lbl1=\"val1\"}",
-					}},
+						"value":  "{ann1=\"annv1\"}"}},
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
 						"text":     "Grafana v",
 					},
 					"title": "[firing:1]  (val1)",
-					"url":   "http://localhost/alerting/list",
-				}},
+					"url":   "http://localhostalerting/list"},
+				},
 				"username": "Grafana",
 			},
 			expInitError: nil,
@@ -88,22 +88,24 @@ func TestDiscordNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"content": "2 alerts are firing, 0 are resolved",
 				"embeds": []interface{}{map[string]interface{}{
-					"color": "#D63232",
-					"fields": []interface{}{map[string]interface{}{
-						"inline": true,
-						"name":   "{alertname=\"alert1\", lbl1=\"val1\"}",
-					},
+					"color": 1.4037554e+07,
+					"fields": []interface{}{
 						map[string]interface{}{
 							"inline": true,
-							"name":   "{alertname=\"alert1\", lbl1=\"val2\"}"},
+							"name":   "{alertname=\"alert1\", lbl1=\"val1\"}", "value": "{ann1=\"annv1\"}",
+						},
+						map[string]interface{}{
+							"inline": true,
+							"name":   "{alertname=\"alert1\", lbl1=\"val2\"}",
+							"value":  "{ann1=\"annv2\"}",
+						},
 					},
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
 						"text":     "Grafana v",
 					},
 					"title": "[firing:2]  ",
-					"url":   "http://localhost/alerting/list",
-				}},
+					"url":   "http://localhostalerting/list"}},
 				"username": "Grafana",
 			},
 			expInitError: nil,
