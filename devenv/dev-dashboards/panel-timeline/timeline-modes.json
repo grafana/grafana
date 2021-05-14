@@ -14,7 +14,7 @@
   },
   "editable": true,
   "gnetId": null,
-  "graphTooltip": 0,
+  "graphTooltip": 0,  
   "links": [],
   "panels": [
     {
@@ -24,7 +24,33 @@
           "color": {
             "mode": "palette-classic"
           },
-          "mappings": [],
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          },
+          "mappings": [
+            {
+              "options": {
+                "CRITICAL": {
+                  "color": "red",
+                  "index": 3
+                },
+                "HIGH": {
+                  "color": "orange",
+                  "index": 2
+                },
+                "LOW": {
+                  "color": "blue",
+                  "index": 0
+                },
+                "NORMAL": {
+                  "color": "green",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -42,13 +68,14 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 8,
+      "id": 9,
       "options": {
+        "alignValue": "center",
         "colWidth": 0.9,
         "legend": {
           "calcs": [],
@@ -56,138 +83,33 @@
           "placement": "bottom"
         },
         "mode": "changes",
-        "rowHeight": 0.9,
+        "rowHeight": 0.98,
         "showValue": "always"
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
         {
-          "alias": "",
-          "csvWave": {
-            "timeStep": 60,
-            "valuesCSV": "0,0,2,2,1,1"
-          },
-          "lines": 10,
-          "points": [
-            [
-              0,
-              1616551651000
-            ],
-            [
-              1,
-              1616556554000
-            ],
-            [
-              2,
-              1616559873000
-            ],
-            [
-              0,
-              1616561077000
-            ],
-            [
-              3,
-              1616563090000
-            ]
-          ],
-          "pulseWave": {
-            "offCount": 3,
-            "offValue": 1,
-            "onCount": 3,
-            "onValue": 2,
-            "timeStep": 60
-          },
+          "alias": "SensorA",
           "refId": "A",
-          "scenarioId": "manual_entry",
-          "stream": {
-            "bands": 1,
-            "noise": 2.2,
-            "speed": 250,
-            "spread": 3.5,
-            "type": "signal"
-          },
-          "stringInput": ""
+          "scenarioId": "csv_metric_values",
+          "stringInput": "LOW,HIGH,NORMAL,NORMAL,NORMAL,LOW,LOW,NORMAL,HIGH,CRITICAL"
         },
         {
-          "alias": "",
-          "csvWave": {
-            "timeStep": 60,
-            "valuesCSV": "0,0,2,2,1,1"
-          },
+          "alias": "SensorB",
           "hide": false,
-          "lines": 10,
-          "points": [
-            [
-              4,
-              1616555060000
-            ],
-            [
-              5,
-              1616560081000
-            ],
-            [
-              4,
-              1616562217000
-            ],
-            [
-              5,
-              1616565458000
-            ]
-          ],
-          "pulseWave": {
-            "offCount": 3,
-            "offValue": 1,
-            "onCount": 3,
-            "onValue": 2,
-            "timeStep": 60
-          },
           "refId": "B",
-          "scenarioId": "manual_entry",
-          "stream": {
-            "bands": 1,
-            "noise": 2.2,
-            "speed": 250,
-            "spread": 3.5,
-            "type": "signal"
-          },
-          "stringInput": ""
+          "scenarioId": "csv_metric_values",
+          "stringInput": "NORMAL,LOW,LOW,CRITICAL,CRITICAL,LOW,LOW,NORMAL,HIGH,CRITICAL"
         },
         {
-          "points": [
-            [
-              4,
-              1616557148000
-            ],
-            [
-              null,
-              1616558756000
-            ],
-            [
-              4,
-              1616561658000
-            ],
-            [
-              null,
-              1616562446000
-            ],
-            [
-              4,
-              1616564104000
-            ],
-            [
-              null,
-              1616564548000
-            ],
-            [
-              4,
-              1616564871000
-            ]
-          ],
+          "alias": "SensorA",
+          "hide": false,
           "refId": "C",
-          "scenarioId": "manual_entry"
+          "scenarioId": "csv_metric_values",
+          "stringInput": "NORMAL,NORMAL,NORMAL,NORMAL,CRITICAL,LOW,NORMAL,NORMAL,NORMAL,LOW"
         }
       ],
-      "title": "\"State changes\" Mode",
+      "title": "State changes strings",
       "type": "timeline"
     },
     {
@@ -195,9 +117,36 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
-          "mappings": [],
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "true",
+                "result": {
+                  "color": "semi-dark-green",
+                  "index": 0,
+                  "text": "ON"
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "match": "false",
+                "result": {
+                  "color": "semi-dark-red",
+                  "index": 1,
+                  "text": "OFF"
+                }
+              },
+              "type": "special"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -216,43 +165,139 @@
       },
       "gridPos": {
         "h": 11,
-        "w": 24,
+        "w": 13,
         "x": 0,
-        "y": 10
+        "y": 7
       },
-      "id": 9,
+      "id": 13,
       "options": {
-        "colWidth": 0.9,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
+        "alignValue": "center",
+        "colWidth": 1,
         "mode": "changes",
-        "rowHeight": 0.9,
+        "rowHeight": 0.98,
         "showValue": "always"
       },
-      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "alias": "",
           "refId": "A",
           "scenarioId": "csv_metric_values",
-          "stringInput": "a,a,b,b,b,b,c,a,a,d,d,d,d,d"
+          "stringInput": "true,false,true,true,true,true,false,false"
         },
         {
-          "alias": "",
+          "hide": false,
           "refId": "B",
           "scenarioId": "csv_metric_values",
-          "stringInput": "null,null,e,e,e,null,null,e,null,null,e,null,e,e,e,e"
+          "stringInput": "false,true,false,true,true,false,false,false,true,true"
         },
         {
+          "hide": false,
           "refId": "C",
           "scenarioId": "csv_metric_values",
-          "stringInput": "true,null,false,null,true,false"
+          "stringInput": "true,false,true,true"
+        },
+        {
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "false,true,false,true,true"
         }
       ],
-      "title": "\"State changes\" Mode (strings & booleans)",
+      "title": "State changes with boolean values",
+      "type": "timeline"
+    },
+    {
+      "datasource": null,
+      "description": "Should show gaps",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "true",
+                "result": {
+                  "color": "semi-dark-green",
+                  "index": 0,
+                  "text": "ON"
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "match": "false",
+                "result": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "OFF"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 11,
+        "x": 13,
+        "y": 7
+      },
+      "id": 12,
+      "options": {
+        "alignValue": "center",
+        "colWidth": 1,
+        "mode": "changes",
+        "rowHeight": 0.98,
+        "showValue": "always"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "true,false,true,true,true,true,false,false"
+        },
+        {
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "false,true,false,true,true,false,false,false,true,true"
+        },
+        {
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "true,false,null,true,true"
+        },
+        {
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "false,null,null,false,true,true"
+        }
+      ],
+      "title": "State changes with nulls",
       "type": "timeline"
     },
     {
@@ -260,9 +305,16 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-GrYlRd"
           },
+          "custom": {
+            "fillOpacity": 96,
+            "lineWidth": 0
+          },
+          "decimals": 0,
           "mappings": [],
+          "max": 30,
+          "min": -10,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -281,23 +333,24 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
+        "h": 12,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 18
       },
       "id": 4,
       "interval": null,
       "maxDataPoints": 20,
       "options": {
-        "colWidth": 0.9,
+        "alignValue": "center",
+        "colWidth": 0.96,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
         "mode": "samples",
-        "rowHeight": 0.9,
+        "rowHeight": 0.98,
         "showValue": "always"
       },
       "pluginVersion": "7.5.0-pre",
@@ -309,6 +362,9 @@
             "valuesCSV": "0,0,2,2,1,1"
           },
           "lines": 10,
+          "max": 30,
+          "min": -10,
+          "noise": 2,
           "points": [],
           "pulseWave": {
             "offCount": 3,
@@ -320,7 +376,8 @@
           "refId": "A",
           "scenarioId": "random_walk",
           "seriesCount": 4,
-          "spread": 14.9,
+          "spread": 15,
+          "startValue": 5,
           "stream": {
             "bands": 1,
             "noise": 2.2,
@@ -336,19 +393,19 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 29,
+  "schemaVersion": 30,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2021-03-24T03:00:00.000Z",
-    "to": "2021-03-24T07:00:00.000Z"
+    "from": "now-1h",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 7
+  "version": 14
 }
