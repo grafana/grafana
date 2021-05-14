@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
+
+	"github.com/grafana/grafana/pkg/events"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
@@ -254,16 +257,24 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(500, "Failed to query datasource", err)
 	}
 
-	dtos := convertModelToDtos(query.Result)
+	datasourceDTO := convertModelToDtos(query.Result)
+
+	if err = bus.Publish(&events.DatasourceUpdated{
+		Timestamp: time.Now(),
+		Id:        datasourceDTO.Id,
+		Uid:       datasourceDTO.UID,
+	}); err != nil {
+		return response.Error(500, "Failed to dispatch datasource updated event", err)
+	}
 
 	return response.JSON(200, util.DynMap{
 		"message":    "Datasource updated",
 		"id":         cmd.Id,
 		"name":       cmd.Name,
-		"datasource": dtos,
+		"datasource": datasourceDTO,
 	})
 }
 

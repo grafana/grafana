@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -156,7 +157,8 @@ func (g *GrafanaLive) Init() error {
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	packetSender := newPluginPacketSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter)
+	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter, g.contextGetter)
+	bus.AddEventListener(g.runStreamManager.HandleDatasourceUpdate)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
