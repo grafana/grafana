@@ -6,8 +6,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
+
+var getAccessTokenFunc func(credential TokenCredential, scopes []string)
+
+type tokenCacheFake struct{}
+
+func (c *tokenCacheFake) GetAccessToken(_ context.Context, credential TokenCredential, scopes []string) (string, error) {
+	getAccessTokenFunc(credential, scopes)
+	return "4cb83b87-0ffb-4abd-82f6-48a8c08afc53", nil
+}
 
 func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 	ctx := context.Background()
@@ -39,6 +49,7 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 			authParams.Params = map[string]string{
 				"azure_auth_type": "msi",
 			}
+
 			assert.True(t, provider.isManagedIdentityCredential())
 		})
 
@@ -46,6 +57,7 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 			authParams.Params = map[string]string{
 				"azure_auth_type": "clientsecret",
 			}
+
 			assert.False(t, provider.isManagedIdentityCredential())
 		})
 
@@ -79,6 +91,7 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 			authParams.Params = map[string]string{
 				"azure_auth_type": "msi",
 			}
+
 			assert.True(t, provider.isManagedIdentityCredential())
 		})
 
@@ -91,6 +104,81 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 			}
 
 			assert.False(t, provider.isManagedIdentityCredential())
+		})
+	})
+}
+
+func TestAzureTokenProvider_getAccessToken(t *testing.T) {
+	ctx := context.Background()
+
+	cfg := &setting.Cfg{}
+
+	ds := &models.DataSource{Id: 1, Version: 2}
+	route := &plugins.AppPluginRoute{}
+
+	authParams := &plugins.JwtTokenAuth{
+		Scopes: []string{
+			"https://management.azure.com/.default",
+		},
+		Params: map[string]string{
+			"azure_auth_type": "",
+			"azure_cloud":     "AzureCloud",
+			"tenant_id":       "",
+			"client_id":       "",
+			"client_secret":   "",
+		},
+	}
+
+	provider := newAzureAccessTokenProvider(ctx, cfg, ds, route, authParams)
+
+	original := azureTokenCache
+	azureTokenCache = &tokenCacheFake{}
+	t.Cleanup(func() { azureTokenCache = original })
+
+	t.Run("when managed identities enabled", func(t *testing.T) {
+		cfg.Azure.ManagedIdentityEnabled = true
+
+		t.Run("should resolve managed identity credential if auth type is managed identity", func(t *testing.T) {
+			authParams.Params = map[string]string{
+				"azure_auth_type": "msi",
+			}
+
+			getAccessTokenFunc = func(credential TokenCredential, scopes []string) {
+				assert.IsType(t, &managedIdentityCredential{}, credential)
+			}
+
+			_, err := provider.getAccessToken()
+			require.NoError(t, err)
+		})
+
+		t.Run("should resolve client secret credential if auth type is client secret", func(t *testing.T) {
+			authParams.Params = map[string]string{
+				"azure_auth_type": "clientsecret",
+			}
+
+			getAccessTokenFunc = func(credential TokenCredential, scopes []string) {
+				assert.IsType(t, &clientSecretCredential{}, credential)
+			}
+
+			_, err := provider.getAccessToken()
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("when managed identities disabled", func(t *testing.T) {
+		cfg.Azure.ManagedIdentityEnabled = false
+
+		t.Run("should return error if auth type is managed identity", func(t *testing.T) {
+			authParams.Params = map[string]string{
+				"azure_auth_type": "msi",
+			}
+
+			getAccessTokenFunc = func(credential TokenCredential, scopes []string) {
+				assert.Fail(t, "token cache not expected to be called")
+			}
+
+			_, err := provider.getAccessToken()
+			require.Error(t, err)
 		})
 	})
 }
