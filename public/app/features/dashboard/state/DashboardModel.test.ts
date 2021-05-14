@@ -7,8 +7,16 @@ import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
 import { expect } from '../../../../test/lib/common';
+import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 jest.mock('app/core/services/context_srv', () => ({}));
+
+const timeSrvMock = ({
+  setAutoRefresh: jest.fn(),
+} as unknown) as TimeSrv;
+
+setTimeSrv(timeSrvMock);
+
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
   createAdHocVariableAdapter(),
@@ -849,8 +857,15 @@ describe('exitPanelEditor', () => {
       expect(dashboard.startRefresh).not.toHaveBeenCalled();
     });
 
+    it('then refresh property is set to previousAutoRefresh property', () => {
+      const { dashboard } = getTestContext();
+      dashboard.exitPanelEditor();
+
+      expect(timeSrvMock.setAutoRefresh).toHaveBeenCalled();
+    });
+
     describe('and there is a change that affects all panels', () => {
-      it('then startRefresh is not called', () => {
+      it('then startRefresh is called', () => {
         const { dashboard } = getTestContext();
         dashboard.setChangeAffectsAllPanels();
 

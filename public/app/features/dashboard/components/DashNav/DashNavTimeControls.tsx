@@ -88,9 +88,10 @@ export class DashNavTimeControls extends Component<Props> {
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
     const styles = getStyles();
+    const hideRefreshPicker = !dashboard.panelInEdit?.isEditing;
 
     return (
-      <div className={styles.container}>
+      <div className={styles.container} data-testid="dashboard-nav-time-controls">
         <TimePickerWithHistory
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
@@ -100,13 +101,15 @@ export class DashNavTimeControls extends Component<Props> {
           onZoom={this.onZoom}
           onChangeTimeZone={this.onChangeTimeZone}
         />
-        <RefreshPicker
-          onIntervalChanged={this.onChangeRefreshInterval}
-          onRefresh={this.onRefresh}
-          value={dashboard.refresh}
-          intervals={intervals}
-          tooltip="Refresh dashboard"
-        />
+        {hideRefreshPicker && (
+          <RefreshPicker
+            onIntervalChanged={this.onChangeRefreshInterval}
+            onRefresh={this.onRefresh}
+            value={dashboard.refresh}
+            intervals={intervals}
+            tooltip="Refresh dashboard"
+          />
+        )}
       </div>
     );
   }

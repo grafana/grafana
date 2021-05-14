@@ -42,6 +42,7 @@ import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
+import { getTimeSrv } from '../services/TimeSrv';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -83,6 +84,7 @@ export class DashboardModel {
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
   refresh: any;
+  previousAutoRefresh: any;
   snapshot: any;
   schemaVersion: number;
   version: number;
@@ -116,6 +118,7 @@ export class DashboardModel {
     getVariablesFromState: true,
     formatDate: true,
     hasChangesThatAffectsAllPanels: true,
+    previousAutoRefresh: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -356,6 +359,8 @@ export class DashboardModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
+    this.previousAutoRefresh = this.refresh;
+    getTimeSrv().setAutoRefresh('');
     this.panelInEdit = sourcePanel.getEditClone();
     return this.panelInEdit;
   }
@@ -372,6 +377,7 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
+    getTimeSrv().setAutoRefresh(this.previousAutoRefresh);
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
     this.refreshIfChangeAffectsAllPanels();
