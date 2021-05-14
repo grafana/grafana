@@ -73,15 +73,13 @@ export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
         title="Value mappings"
         onDismiss={onCloseEditor}
         className={styles.modal}
-        onClickBackdrop={DoNothingBackdropClickFunction}
+        closeOnBackdropClick={false}
       >
         <ValueMappingsEditorModal value={value} onChange={onChange} onClose={onCloseEditor} />
       </Modal>
     </VerticalGroup>
   );
 });
-
-function DoNothingBackdropClickFunction() {}
 
 ValueMappingsEditor.displayName = 'ValueMappingsEditor';
 
