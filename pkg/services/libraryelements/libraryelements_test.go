@@ -110,6 +110,10 @@ type libraryElementResult struct {
 	Result libraryElement `json:"result"`
 }
 
+type libraryElementArrayResult struct {
+	Result []libraryElement `json:"result"`
+}
+
 type libraryElementsSearch struct {
 	Result libraryElementsSearchResult `json:"result"`
 }
@@ -242,6 +246,17 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryE
 	require.Equal(t, 200, resp.Status())
 
 	var result = libraryElementResult{}
+	err := json.Unmarshal(resp.Body(), &result)
+	require.NoError(t, err)
+
+	return result
+}
+
+func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) libraryElementArrayResult {
+	t.Helper()
+
+	require.Equal(t, 200, resp.Status())
+	var result = libraryElementArrayResult{}
 	err := json.Unmarshal(resp.Body(), &result)
 	require.NoError(t, err)
 
