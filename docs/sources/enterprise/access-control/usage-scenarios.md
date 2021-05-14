@@ -9,6 +9,8 @@ weight = 125
 
 This guide contains several examples and usage scenarios of using fine-grained roles and permissions for controlling access to Grafana resources.
 
+Before you get started, make sure to [enable fine-grained access control]({{< relref "./_index.md#enable-fine-grained-access-control" >}}).
+
 ## Check all built-in role assignments
 
 You can use the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available built-in role assignments. 
