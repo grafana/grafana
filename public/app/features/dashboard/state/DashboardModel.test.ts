@@ -6,6 +6,7 @@ import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
+import { expect } from '../../../../test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 variableAdapters.setInit(() => [
@@ -763,4 +764,124 @@ describe('DashboardModel', () => {
       }
     );
   });
+});
+
+describe('exitViewPanel', () => {
+  function getTestContext() {
+    const panel: any = { setIsViewing: jest.fn() };
+    const dashboard = new DashboardModel({});
+    dashboard.startRefresh = jest.fn();
+    dashboard.panelInView = panel;
+
+    return { dashboard, panel };
+  }
+
+  describe('when called', () => {
+    it('then panelInView is set to undefined', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(dashboard.panelInView).toBeUndefined();
+    });
+
+    it('then setIsViewing is called on panel', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(panel.setIsViewing).toHaveBeenCalledWith(false);
+    });
+
+    it('then startRefresh is not called', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(dashboard.startRefresh).not.toHaveBeenCalled();
+    });
+
+    describe('and there is a change that affects all panels', () => {
+      it('then startRefresh is not called', () => {
+        const { dashboard, panel } = getTestContext();
+        dashboard.setChangeAffectsAllPanels();
+
+        dashboard.exitViewPanel(panel);
+
+        expect(dashboard.startRefresh).toHaveBeenCalled();
+      });
+    });
+  });
+});
+
+describe('exitPanelEditor', () => {
+  function getTestContext() {
+    const panel: any = { destroy: jest.fn() };
+    const dashboard = new DashboardModel({});
+    dashboard.startRefresh = jest.fn();
+    dashboard.panelInEdit = panel;
+
+    return { dashboard, panel };
+  }
+
+  describe('when called', () => {
+    it('then panelInEdit is set to undefined', () => {
+      const { dashboard } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(dashboard.panelInEdit).toBeUndefined();
+    });
+
+    it('then destroy is called on panel', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(panel.destroy).toHaveBeenCalled();
+    });
+
+    it('then startRefresh is not called', () => {
+      const { dashboard } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(dashboard.startRefresh).not.toHaveBeenCalled();
+    });
+
+    describe('and there is a change that affects all panels', () => {
+      it('then startRefresh is not called', () => {
+        const { dashboard } = getTestContext();
+        dashboard.setChangeAffectsAllPanels();
+
+        dashboard.exitPanelEditor();
+
+        expect(dashboard.startRefresh).toHaveBeenCalled();
+      });
+    });
+  });
+});
+
+describe('setChangeAffectsAllPanels', () => {
+  it.each`
+    panelInEdit  | panelInView  | expected
+    ${null}      | ${null}      | ${false}
+    ${undefined} | ${undefined} | ${false}
+    ${null}      | ${{}}        | ${true}
+    ${undefined} | ${{}}        | ${true}
+    ${{}}        | ${null}      | ${true}
+    ${{}}        | ${undefined} | ${true}
+    ${{}}        | ${{}}        | ${true}
+  `(
+    'when called and panelInEdit:{$panelInEdit} and panelInView:{$panelInView}',
+    ({ panelInEdit, panelInView, expected }) => {
+      const dashboard = new DashboardModel({});
+      dashboard.panelInEdit = panelInEdit;
+      dashboard.panelInView = panelInView;
+
+      dashboard.setChangeAffectsAllPanels();
+
+      expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
+    }
+  );
 });

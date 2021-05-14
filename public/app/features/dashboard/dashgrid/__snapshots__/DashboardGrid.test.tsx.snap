@@ -84,6 +84,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -355,6 +356,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -626,6 +628,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -897,6 +900,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {

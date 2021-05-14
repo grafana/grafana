@@ -37,6 +37,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -175,6 +176,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "getVariablesFromState": [Function],
                 "gnetId": null,
                 "graphTooltip": 0,
+                "hasChangesThatAffectsAllPanels": false,
                 "id": null,
                 "links": Array [],
                 "meta": Object {
@@ -283,6 +285,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "getVariablesFromState": [Function],
               "gnetId": null,
               "graphTooltip": 0,
+              "hasChangesThatAffectsAllPanels": false,
               "id": null,
               "links": Array [],
               "meta": Object {
@@ -413,6 +416,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -551,6 +555,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "getVariablesFromState": [Function],
                 "gnetId": null,
                 "graphTooltip": 0,
+                "hasChangesThatAffectsAllPanels": false,
                 "id": null,
                 "links": Array [],
                 "meta": Object {
@@ -659,6 +664,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "getVariablesFromState": [Function],
               "gnetId": null,
               "graphTooltip": 0,
+              "hasChangesThatAffectsAllPanels": false,
               "id": null,
               "links": Array [],
               "meta": Object {
@@ -771,6 +777,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "getVariablesFromState": [Function],
         "gnetId": null,
         "graphTooltip": 0,
+        "hasChangesThatAffectsAllPanels": false,
         "id": null,
         "links": Array [],
         "meta": Object {
