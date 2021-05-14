@@ -2,8 +2,8 @@ package commands
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
+	"testing/fstest"
 
 	"github.com/grafana/grafana/pkg/schema/load"
 	"github.com/stretchr/testify/assert"
@@ -14,11 +14,8 @@ var defaultBaseLoadPaths = load.GetDefaultLoadPaths()
 
 func TestValidateScuemataBasics(t *testing.T) {
 	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
-		tempDir := os.DirFS(filepath.Join("testdata", "valid_scuemata"))
-		mergedFS := Merge(tempDir, defaultBaseLoadPaths.BaseCueFS)
-
 		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       mergedFS,
+			BaseCueFS:       defaultBaseLoadPaths.BaseCueFS,
 			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
@@ -30,28 +27,38 @@ func TestValidateScuemataBasics(t *testing.T) {
 	})
 
 	t.Run("Testing scuemata validity with invalid cue schemas - family missing", func(t *testing.T) {
-		tempDir := os.DirFS(filepath.Join("testdata", "invalid_scuemata_missing_family"))
-		mergedFS := Merge(tempDir, defaultBaseLoadPaths.BaseCueFS)
+		genCue, err := os.ReadFile("testdata/missing_family_gen.cue")
+		require.NoError(t, err)
+
+		fs := fstest.MapFS{
+			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
+		}
+		mergedFS := Merge(fs, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
 			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
-		err := validate(baseLoadPaths, load.BaseDashboardFamily)
+		err = validate(baseLoadPaths, load.BaseDashboardFamily)
 		assert.EqualError(t, err, "error while loading dashboard scuemata, err: dashboard schema family did not exist at expected path in expected file")
 	})
 
-	t.Run("Testing scuemata validity with invalid cue schemas - panel missing", func(t *testing.T) {
-		tempDir := os.DirFS(filepath.Join("testdata", "invalid_scuemata_missing_panel"))
-		mergedFS := Merge(tempDir, defaultBaseLoadPaths.BaseCueFS)
+	t.Run("Testing scuemata validity with invalid cue schemas - panel missing ", func(t *testing.T) {
+		genCue, err := os.ReadFile("testdata/missing_panel_gen.cue")
+		require.NoError(t, err)
+
+		fs := fstest.MapFS{
+			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
+		}
+		mergedFS := Merge(fs, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
 			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
-		err := validate(baseLoadPaths, load.BaseDashboardFamily)
+		err = validate(baseLoadPaths, load.BaseDashboardFamily)
 		require.NoError(t, err, "error while loading base dashboard scuemata")
 
 		err = validate(baseLoadPaths, load.DistDashboardFamily)

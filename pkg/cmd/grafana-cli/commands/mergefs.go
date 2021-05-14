@@ -9,18 +9,18 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 )
 
-// MergedFS contains a slice of different filesystems that can be merged together
-type MergedFS struct {
+// MergeFS contains a slice of different filesystems that can be merged together
+type MergeFS struct {
 	filesystems []fs.FS
 }
 
 // Merge filesystems
 func Merge(filesystems ...fs.FS) fs.FS {
-	return MergedFS{filesystems: filesystems}
+	return MergeFS{filesystems: filesystems}
 }
 
 // Open opens the named file.
-func (mfs MergedFS) Open(name string) (fs.File, error) {
+func (mfs MergeFS) Open(name string) (fs.File, error) {
 	for _, filesystem := range mfs.filesystems {
 		file, err := filesystem.Open(name)
 		if err == nil {
@@ -33,10 +33,10 @@ func (mfs MergedFS) Open(name string) (fs.File, error) {
 // ReadDir reads from the directory, and produces a DirEntry array of different
 // directories.
 //
-// It iterates through all different filesystems that exist in the mfs MergedFS
+// It iterates through all different filesystems that exist in the mfs MergeFS
 // filesystem slice and it identifies overlapping directories that exist in different
 // filesystems
-func (mfs MergedFS) ReadDir(name string) ([]fs.DirEntry, error) {
+func (mfs MergeFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	dirs := make([]fs.DirEntry, 0)
 	for _, filesystem := range mfs.filesystems {
 		if fsys, ok := filesystem.(fs.ReadDirFS); ok {
