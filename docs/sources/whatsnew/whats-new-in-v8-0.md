@@ -30,11 +30,23 @@ Shows discrete status or state transitions of something over time. For example d
 
 New visualization that allows categorical data display. Following the new panel architecture supports field config and overrides, common tooltip, and legend options.
 
+### Time series panel updates
+
+The Time series is out of beta!  We are removing the `Beta`tag and graduating the Time series panel to a stable state.
+- **Time series** is now the default visualization option, replacing the **Graph (old)**.
+- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
+- We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
+- Various performance improvements.
+
 ### Panel editor updates
 
 - All options are now shown in a single pane.
 - You can now search panel options.
 - Value mapping has been completely redesigned.
+
+### Look and feel update
+
+Grafana 8 comes with a refreshed look and feel, including themes changed to be more accessible. The improved Grafana UI brings a number of adjustments and tweaks that make the application even more fun to use. Under the hood, the new theme architecture enables us to bring more sophisticated themes control in the future.
 
 ### Download logs
 

@@ -197,6 +197,10 @@ Never show the points.
 
 ![Show points point never example](/img/docs/time-series-panel/line-graph-show-points-never-7-4.png)
 
+{{< docs/shared "visualizations/stack-series-link.md" >}}
+
+{{< docs/shared "visualizations/change-axis-link.md" >}}
+
 ## Fill below to
 
 This option is only available as in the Overrides tab.
