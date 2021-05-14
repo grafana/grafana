@@ -10,7 +10,8 @@ export enum Annotation {
   description = 'description',
   summary = 'summary',
   runbookURL = 'runbook_url',
-  dashboardUID = '__dashboardUId__',
+  alertId = '__alertId__',
+  dashboardUID = '__dashboardUid__',
   panelID = '__panelId__',
 }
 
@@ -20,4 +21,5 @@ export const annotationLabels: Record<Annotation, string> = {
   [Annotation.runbookURL]: 'Runbook URL',
   [Annotation.dashboardUID]: 'Dashboard UID',
   [Annotation.panelID]: 'Panel ID',
+  [Annotation.alertId]: 'Alert ID',
 };
