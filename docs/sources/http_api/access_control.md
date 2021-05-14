@@ -12,7 +12,7 @@ aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 The API can be used to create, update, get and list roles, and create or remove built-in role assignments. 
 To use the API, you would need to [enable fine-grained access control]({{< relref "../enterprise/access-control/_index.md#enable-fine-grained-access-control" >}}).
 
-The API does not currently work with an API Token. So in order to use these API endpoints you will have to use Basic Auth.
+The API does not currently work with an API Token. So in order to use these API endpoints you will have to use [Basic auth]({{< relref "./auth/#basic-auth" >}}).
 
 ## Check if enabled
 
