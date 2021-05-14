@@ -2,12 +2,13 @@ package pluginproxy
 
 import (
 	"context"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var getAccessTokenFunc func(credential TokenCredential, scopes []string)
