@@ -64,11 +64,6 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-	} else {
-		p.pluginClient, err = newClientV1(p.descriptor, p.logger, rpcClient)
-		if err != nil {
-			return err
-		}
 	}
 
 	if p.pluginClient == nil {

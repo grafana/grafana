@@ -48,8 +48,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 		cmd := ComposePluginStartCommand(p.Executable)
 		fullpath := filepath.Join(base.PluginDir, cmd)
 		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
-			OnLegacyStart: p.onLegacyPluginStart,
-			OnStart:       p.onPluginStart,
+			OnStart: p.onPluginStart,
 		})
 		if err := backendPluginManager.RegisterAndStart(context.Background(), p.Id, factory); err != nil {
 			return nil, errutil.Wrapf(err, "failed to register backend plugin")

@@ -55,8 +55,7 @@ type StartFunc func(pluginID string, client *Client, logger log.Logger) error
 
 // PluginStartFuncs functions called for plugin when started.
 type PluginStartFuncs struct {
-	OnLegacyStart LegacyStartFunc
-	OnStart       StartFunc
+	OnStart StartFunc
 }
 
 // PluginDescriptor is a descriptor used for registering backend plugins.

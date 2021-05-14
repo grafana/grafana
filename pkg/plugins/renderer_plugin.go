@@ -33,8 +33,7 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase,
 	cmd := ComposePluginStartCommand("plugin_start")
 	fullpath := filepath.Join(base.PluginDir, cmd)
 	factory := grpcplugin.NewRendererPlugin(r.Id, fullpath, grpcplugin.PluginStartFuncs{
-		OnLegacyStart: r.onLegacyPluginStart,
-		OnStart:       r.onPluginStart,
+		OnStart: r.onPluginStart,
 	})
 	if err := backendPluginManager.Register(r.Id, factory); err != nil {
 		return nil, errutil.Wrapf(err, "failed to register backend plugin")
