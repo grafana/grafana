@@ -187,6 +187,8 @@ func (am *Alertmanager) StopAndWait() error {
 	return nil
 }
 
+// SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
+// It rollbacks the save if we fail to apply the configuration.
 func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
@@ -201,11 +203,14 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 	}
 
-	if err := am.Store.SaveAlertmanagerConfiguration(cmd); err != nil {
-		return fmt.Errorf("failed to save Alertmanager configuration: %w", err)
-	}
-	if err := am.applyConfig(cfg, rawConfig); err != nil {
-		return fmt.Errorf("unable to reload configuration: %w", err)
+	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
+		if err := am.applyConfig(cfg, rawConfig); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -222,7 +227,18 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
 		// If there's no configuration in the database, let's use the default configuration.
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration}
+			// First, let's save it to the database. We don't need to use a transaction here as we'll always succeed.
+			am.logger.Info("no Alertmanager configuration found, saving and applying a default")
+			savecmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+				Default:                   true,
+				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+			}
+			if err := am.Store.SaveAlertmanagerConfiguration(savecmd); err != nil {
+				return err
+			}
+
+			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration, Default: true}
 		} else {
 			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
 		}

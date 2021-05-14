@@ -11,6 +11,7 @@ type AlertConfiguration struct {
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
 	CreatedAt                 time.Time `xorm:"created"`
+	Default                   bool
 }
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
@@ -22,6 +23,7 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
+	Default                   bool
 }
 
 type DeleteAlertmanagerConfigurationCmd struct {
