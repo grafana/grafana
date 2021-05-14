@@ -31,6 +31,16 @@ Cypress.on('window:before:load', (win) => {
   delete win.fetch;
 });
 
+// See https://github.com/quasarframework/quasar/issues/2233 for details
+const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/;
+Cypress.on('uncaught:exception', (err) => {
+  /* returning false here prevents Cypress from failing the test */
+  if (resizeObserverLoopErrRe.test(err.message)) {
+    return false;
+  }
+  return true;
+});
+
 // uncomment below to prevent Cypress from failing tests when unhandled errors are thrown
 // Cypress.on('uncaught:exception', (err, runnable) => {
 //   // returning false here prevents Cypress from

@@ -14,6 +14,8 @@ replace k8s.io/client-go => k8s.io/client-go v0.18.8
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.14.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.8.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
@@ -48,7 +50,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.4.0
-	github.com/grafana/grafana-live-sdk v0.0.5
+	github.com/grafana/grafana-live-sdk v0.0.6
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.97.0
 	github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426

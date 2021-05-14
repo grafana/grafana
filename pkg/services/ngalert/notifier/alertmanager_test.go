@@ -20,32 +20,42 @@ import (
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
-	am := &Alertmanager{}
-	am.Settings = &setting.Cfg{}
-	am.SQLStore = sqlstore.InitTestDB(t)
-	require.NoError(t, am.InitWithMetrics(metrics.NewMetrics(prometheus.NewRegistry())))
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
-	require.NotNil(t, am.config)
-}
-
-func TestPutAlert(t *testing.T) {
-	am := &Alertmanager{}
+func setupAMTest(t *testing.T) *Alertmanager {
 	dir, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, os.RemoveAll(dir))
 	})
-
-	am.Settings = &setting.Cfg{
+	cfg := &setting.Cfg{
 		DataPath: dir,
 	}
 
-	require.NoError(t, am.InitWithMetrics(metrics.NewMetrics(prometheus.NewRegistry())))
+	m := metrics.NewMetrics(prometheus.NewRegistry())
+	sqlStore := sqlstore.InitTestDB(t)
+	store := &store.DBstore{
+		BaseInterval:           10 * time.Second,
+		DefaultIntervalSeconds: 60,
+		SQLStore:               sqlStore,
+	}
+
+	am, err := New(cfg, store, m)
+	require.NoError(t, err)
+	return am
+}
+
+func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
+	am := setupAMTest(t)
+	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
+	require.NotNil(t, am.config)
+}
+
+func TestPutAlert(t *testing.T) {
+	am := setupAMTest(t)
 
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
@@ -262,6 +272,7 @@ func TestPutAlert(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		var err error
 		t.Run(c.title, func(t *testing.T) {
 			r := prometheus.NewRegistry()
 			am.marker = types.NewMarker(r)

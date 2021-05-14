@@ -18,8 +18,8 @@ import (
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
-const (
-	telegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
+var (
+	TelegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
 )
 
 // TelegramNotifier is responsible for sending
@@ -90,7 +90,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 	tn.log.Info("sending telegram notification", "chat_id", tn.ChatID)
 	cmd := &models.SendWebhookSync{
-		Url:        fmt.Sprintf(telegramAPIURL, tn.BotToken),
+		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken),
 		Body:       body.String(),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{

@@ -2,7 +2,7 @@ import React from 'react';
 import { PanelContext, PanelContextRoot, GraphNG, GraphNGProps, BarValueVisibility } from '@grafana/ui';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
-import { TimelineMode } from './types';
+import { TimelineMode, TimelineValueAlignment } from './types';
 
 /**
  * @alpha
@@ -11,10 +11,11 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   mode: TimelineMode;
   rowHeight: number;
   showValue: BarValueVisibility;
+  alignValue: TimelineValueAlignment;
   colWidth?: number;
 }
 
-const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue'];
+const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue', 'alignValue'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
   static contextType = PanelContextRoot;
