@@ -32,6 +32,9 @@ export const TagsInput: FC<Props> = ({
   };
 
   const onRemove = (tagToRemove: string) => {
+    if (disabled) {
+      return;
+    }
     onChange(tags?.filter((x) => x !== tagToRemove));
   };
 

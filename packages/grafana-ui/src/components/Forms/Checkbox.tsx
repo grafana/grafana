@@ -1,7 +1,7 @@
 import React, { HTMLProps, useCallback } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getLabelStyles } from './Label';
-import { useTheme2, stylesFactory } from '../../themes';
+import { stylesFactory, useStyles2 } from '../../themes';
 import { css, cx } from '@emotion/css';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
@@ -10,6 +10,37 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   description?: string;
   value?: boolean;
 }
+
+export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+  ({ label, description, value, onChange, disabled, className, ...inputProps }, ref) => {
+    const handleOnChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (onChange) {
+          onChange(e);
+        }
+      },
+      [onChange]
+    );
+    const styles = useStyles2(getCheckboxStyles);
+
+    return (
+      <label className={cx(styles.wrapper, className)}>
+        <input
+          type="checkbox"
+          className={styles.input}
+          checked={value}
+          disabled={disabled}
+          onChange={handleOnChange}
+          {...inputProps}
+          ref={ref}
+        />
+        <span className={styles.checkmark} />
+        {label && <span className={styles.label}>{label}</span>}
+        {description && <span className={styles.description}>{description}</span>}
+      </label>
+    );
+  }
+);
 
 export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
   const labelStyles = getLabelStyles(theme);
@@ -79,6 +110,18 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
           transform: rotate(45deg);
         }
       }
+
+      &:disabled + span {
+        background-color: ${theme.colors.action.disabledBackground};
+        cursor: not-allowed;
+        &:hover {
+          background-color: ${theme.colors.action.disabledBackground};
+        }
+
+        &:after {
+          border-color: ${theme.colors.action.disabledText};
+        }
+      }
     `,
     checkmark: css`
       display: inline-block;
@@ -99,37 +142,5 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
   };
 });
-
-export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, onChange, disabled, className, ...inputProps }, ref) => {
-    const theme = useTheme2();
-    const handleOnChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (onChange) {
-          onChange(e);
-        }
-      },
-      [onChange]
-    );
-    const styles = getCheckboxStyles(theme);
-
-    return (
-      <label className={cx(styles.wrapper, className)}>
-        <input
-          type="checkbox"
-          className={styles.input}
-          checked={value}
-          disabled={disabled}
-          onChange={handleOnChange}
-          {...inputProps}
-          ref={ref}
-        />
-        <span className={styles.checkmark} />
-        {label && <span className={styles.label}>{label}</span>}
-        {description && <span className={styles.description}>{description}</span>}
-      </label>
-    );
-  }
-);
 
 Checkbox.displayName = 'Checkbox';
