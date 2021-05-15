@@ -423,7 +423,6 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) response.Response {
 		"message": "Notification deleted",
 		"id":      cmd.DeletedAlertNotificationId,
 	})
-
 }
 
 // POST /api/alert-notifications/test
