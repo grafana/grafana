@@ -1,4 +1,4 @@
-import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { anySeriesWithTimeField, DashboardCursorSync, Field, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React from 'react';
@@ -19,16 +19,24 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   replaceVariables,
 }) => {
+  const { sync } = usePanelContext();
+
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
-
-  const { sync } = usePanelContext();
 
   if (!data || !data.series?.length) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
+      </div>
+    );
+  }
+
+  if (!anySeriesWithTimeField(data.series)) {
+    return (
+      <div className="panel-empty">
+        <p>Missing time field in the data</p>
       </div>
     );
   }

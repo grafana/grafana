@@ -228,6 +228,7 @@ type Cfg struct {
 
 	// Rendering
 	ImagesDir                      string
+	CSVsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
 	RendererConcurrentRequestLimit int
@@ -256,6 +257,7 @@ type Cfg struct {
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
 	MarketplaceURL           string
+	MarketplaceAppEnabled    bool
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -283,6 +285,9 @@ type Cfg struct {
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
+
+	// Azure Cloud settings
+	Azure AzureSettings
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -394,14 +399,11 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 	return cfg.FeatureToggles["database_metrics"]
 }
 
-// IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
-func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
-	return cfg.FeatureToggles["http_request_histogram"]
-}
-
-// IsPanelLibraryEnabled returns whether the panel library feature is enabled.
-func (cfg Cfg) IsPanelLibraryEnabled() bool {
-	return cfg.FeatureToggles["panelLibrary"]
+// IsHTTPRequestHistogramDisabled returns whether the request historgrams is disabled.
+// This feature toggle will be removed in Grafana 8.x but gives the operator
+// some graceperiod to update all the monitoring tools.
+func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
+	return cfg.FeatureToggles["disable_http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -889,6 +891,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.MarketplaceAppEnabled = pluginsSection.Key("marketplace_app_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
@@ -905,6 +908,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
+	cfg.readAzureSettings()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -1298,6 +1302,7 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
+	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
 	return nil
 }

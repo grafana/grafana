@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TimelinePanel } from './TimelinePanel';
-import { TimelineOptions, TimelineFieldConfig, TimelineMode } from './types';
+import { TimelineOptions, TimelineFieldConfig, TimelineMode, defaultTimelineFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
@@ -16,12 +16,33 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
       },
     },
     useCustomConfig: (builder) => {
-      builder.addBooleanSwitch({
-        path: 'mergeValues',
-        name: 'Merge equal consecutive values',
-        defaultValue: true,
-        //showIf: ({ mode }) => mode === TimelineMode.Spans,
-      });
+      builder
+        .addBooleanSwitch({
+          path: 'mergeValues',
+          name: 'Merge equal consecutive values',
+          defaultValue: true,
+          //showIf: ({ mode }) => mode === TimelineMode.Spans,
+        })
+        .addSliderInput({
+          path: 'lineWidth',
+          name: 'Line width',
+          defaultValue: defaultTimelineFieldConfig.lineWidth,
+          settings: {
+            min: 0,
+            max: 10,
+            step: 1,
+          },
+        })
+        .addSliderInput({
+          path: 'fillOpacity',
+          name: 'Fill opacity',
+          defaultValue: defaultTimelineFieldConfig.fillOpacity,
+          settings: {
+            min: 0,
+            max: 100,
+            step: 1,
+          },
+        });
     },
   })
   .setPanelOptions((builder) => {
@@ -29,11 +50,11 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
       .addRadio({
         path: 'mode',
         name: 'Mode',
-        defaultValue: TimelineMode.Spans,
+        defaultValue: TimelineMode.Changes,
         settings: {
           options: [
-            { label: 'Spans', value: TimelineMode.Spans },
-            { label: 'Grid', value: TimelineMode.Grid },
+            { label: 'State changes', value: TimelineMode.Changes },
+            { label: 'Periodic samples', value: TimelineMode.Samples },
           ],
         },
       })
@@ -48,6 +69,19 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
           ],
         },
         defaultValue: BarValueVisibility.Always,
+      })
+      .addRadio({
+        path: 'alignValue',
+        name: 'Align value',
+        settings: {
+          options: [
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' },
+          ],
+        },
+        defaultValue: 'center',
+        showIf: ({ mode }) => mode === TimelineMode.Changes,
       })
       .addSliderInput({
         path: 'rowHeight',
@@ -68,7 +102,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
           max: 1,
           step: 0.01,
         },
-        showIf: ({ mode }) => mode === TimelineMode.Grid,
+        showIf: ({ mode }) => mode === TimelineMode.Samples,
       });
 
     //addLegendOptions(builder);
