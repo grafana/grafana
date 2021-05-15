@@ -94,17 +94,15 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
       <h5>You have changed folder, please save to view permissions.</h5>
     ) : (
       <div>
-        <div className="dashboard-settings__header">
-          <div className="page-action-bar">
-            <h3 className="d-inline-block">Permissions</h3>
-            <Tooltip placement="auto" content={<PermissionsInfo />}>
-              <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
-            </Tooltip>
-            <div className="page-action-bar__spacer" />
-            <Button className="pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
-              Add Permission
-            </Button>
-          </div>
+        <div className="page-action-bar">
+          <h3 className="page-sub-heading">Permissions</h3>
+          <Tooltip placement="auto" content={<PermissionsInfo />}>
+            <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
+          </Tooltip>
+          <div className="page-action-bar__spacer" />
+          <Button className="pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+            Add Permission
+          </Button>
         </div>
         <SlideDown in={isAdding}>
           <AddPermission onAddPermission={this.onAddPermission} onCancel={this.onCancelAddPermission} />

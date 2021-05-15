@@ -1,17 +1,28 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { render } from '@testing-library/react';
+import { render, prettyDOM } from '@testing-library/react';
 import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
-import { TraceSpanData, TraceData } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { ExploreId } from 'app/types';
+import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
+import { MutableDataFrame } from '@grafana/data';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => undefined),
 }));
 
 function renderTraceView() {
-  const wrapper = shallow(<TraceView trace={response} splitOpenFn={() => {}} />);
+  const wrapper = shallow(<TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} />);
+  return {
+    timeline: wrapper.find(TraceTimelineViewer),
+    header: wrapper.find(TracePageHeader),
+    wrapper,
+  };
+}
+
+function renderTraceViewNew() {
+  const wrapper = shallow(<TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />);
   return {
     timeline: wrapper.find(TraceTimelineViewer),
     header: wrapper.find(TracePageHeader),
@@ -34,15 +45,30 @@ describe('TraceView', () => {
     expect(header).toHaveLength(1);
   });
 
+  it('renders TraceTimelineViewer with new format', () => {
+    const { timeline, header } = renderTraceViewNew();
+    expect(timeline).toHaveLength(1);
+    expect(header).toHaveLength(1);
+  });
+
+  it('renders renders the same for old and new format', () => {
+    const { baseElement } = render(
+      <TraceView exploreId={ExploreId.left} dataFrames={[frameNew]} splitOpenFn={() => {}} />
+    );
+    const { baseElement: baseElementOld } = render(
+      <TraceView exploreId={ExploreId.left} dataFrames={[frameOld]} splitOpenFn={() => {}} />
+    );
+    expect(prettyDOM(baseElement)).toEqual(prettyDOM(baseElementOld));
+  });
+
   it('does not render anything on missing trace', () => {
     // Simulating Explore's access to empty response data
-    const trace = [][0];
-    const { container } = render(<TraceView trace={trace} splitOpenFn={() => {}} />);
+    const { container } = render(<TraceView exploreId={ExploreId.left} dataFrames={[]} splitOpenFn={() => {}} />);
     expect(container.hasChildNodes()).toBeFalsy();
   });
 
   it('toggles detailState', () => {
-    let { timeline, wrapper } = renderTraceView();
+    let { timeline, wrapper } = renderTraceViewNew();
     expect(timeline.props().traceTimeline.detailStates.size).toBe(0);
 
     timeline.props().detailToggle('1');
@@ -56,7 +82,7 @@ describe('TraceView', () => {
   });
 
   it('toggles children visibility', () => {
-    let { timeline, wrapper } = renderTraceView();
+    let { timeline, wrapper } = renderTraceViewNew();
     expect(timeline.props().traceTimeline.childrenHiddenIDs.size).toBe(0);
 
     timeline.props().childrenToggle('1');
@@ -70,7 +96,7 @@ describe('TraceView', () => {
   });
 
   it('toggles adds and removes hover indent guides', () => {
-    let { timeline, wrapper } = renderTraceView();
+    let { timeline, wrapper } = renderTraceViewNew();
     expect(timeline.props().traceTimeline.hoverIndentGuideIds.size).toBe(0);
 
     timeline.props().addHoverIndentGuideId('1');
@@ -84,7 +110,7 @@ describe('TraceView', () => {
   });
 
   it('toggles collapses and expands one level of spans', () => {
-    let { timeline, wrapper } = renderTraceView();
+    let { timeline, wrapper } = renderTraceViewNew();
     expect(timeline.props().traceTimeline.childrenHiddenIDs.size).toBe(0);
     const spans = timeline.props().trace.spans;
 
@@ -99,7 +125,7 @@ describe('TraceView', () => {
   });
 
   it('toggles collapses and expands all levels', () => {
-    let { timeline, wrapper } = renderTraceView();
+    let { timeline, wrapper } = renderTraceViewNew();
     expect(timeline.props().traceTimeline.childrenHiddenIDs.size).toBe(0);
     const spans = timeline.props().trace.spans;
 
@@ -115,7 +141,7 @@ describe('TraceView', () => {
   });
 
   it('searches for spans', () => {
-    let { wrapper, header } = renderTraceView();
+    let { wrapper, header } = renderTraceViewNew();
     header.props().onSearchValueChange('HTTP POST - api_prom_push');
 
     const timeline = wrapper.find(TraceTimelineViewer);
@@ -123,7 +149,7 @@ describe('TraceView', () => {
   });
 
   it('change viewRange', () => {
-    let { header, timeline, wrapper } = renderTraceView();
+    let { header, timeline, wrapper } = renderTraceViewNew();
     const defaultRange = { time: { current: [0, 1] } };
     expect(timeline.props().viewRange).toEqual(defaultRange);
     expect(header.props().viewRange).toEqual(defaultRange);
@@ -236,3 +262,107 @@ const response: TraceData & { spans: TraceSpanData[] } = {
   },
   warnings: null as any,
 };
+
+const frameOld = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [response],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const frameNew = new MutableDataFrame({
+  fields: [
+    { name: 'traceID', values: ['1ed38015486087ca', '1ed38015486087ca', '1ed38015486087ca'] },
+    { name: 'spanID', values: ['1ed38015486087ca', '3fb050342773d333', '35118c298fc91f68'] },
+    { name: 'parentSpanID', values: [undefined, '1ed38015486087ca', '3fb050342773d333'] },
+    { name: 'operationName', values: ['HTTP POST - api_prom_push', '/logproto.Pusher/Push', '/logproto.Pusher/Push'] },
+    { name: 'serviceName', values: ['loki-all', 'loki-all', 'loki-all'] },
+    {
+      name: 'serviceTags',
+      values: [
+        [
+          { key: 'client-uuid', value: '2a59d08899ef6a8a' },
+          { key: 'hostname', value: '0080b530fae3' },
+          { key: 'ip', value: '172.18.0.6' },
+          { key: 'jaeger.version', value: 'Go-2.20.1' },
+        ],
+        [
+          { key: 'client-uuid', value: '2a59d08899ef6a8a' },
+          { key: 'hostname', value: '0080b530fae3' },
+          { key: 'ip', value: '172.18.0.6' },
+          { key: 'jaeger.version', value: 'Go-2.20.1' },
+        ],
+        [
+          { key: 'client-uuid', value: '2a59d08899ef6a8a' },
+          { key: 'hostname', value: '0080b530fae3' },
+          { key: 'ip', value: '172.18.0.6' },
+          { key: 'jaeger.version', value: 'Go-2.20.1' },
+        ],
+      ],
+    },
+    { name: 'startTime', values: [1585244579835.187, 1585244579835.341, 1585244579836.04] },
+    { name: 'duration', values: [1.098, 0.921, 0.036] },
+    {
+      name: 'logs',
+      values: [
+        [
+          {
+            timestamp: 1585244579835.229,
+            fields: [{ key: 'event', value: 'util.ParseProtoRequest[start reading]' }],
+          },
+          {
+            timestamp: 1585244579835.241,
+            fields: [
+              { key: 'event', value: 'util.ParseProtoRequest[decompress]' },
+              { key: 'size', value: 315 },
+            ],
+          },
+          {
+            timestamp: 1585244579835.245,
+            fields: [
+              { key: 'event', value: 'util.ParseProtoRequest[unmarshal]' },
+              { key: 'size', value: 446 },
+            ],
+          },
+        ],
+        [],
+        [],
+      ],
+    },
+    {
+      name: 'tags',
+      values: [
+        [
+          { key: 'sampler.type', value: 'const' },
+          { key: 'sampler.param', value: true },
+          { key: 'span.kind', value: 'server' },
+          { key: 'http.method', value: 'POST' },
+          { key: 'http.url', value: '/api/prom/push' },
+          { key: 'component', value: 'net/http' },
+          { key: 'http.status_code', value: 204 },
+          { key: 'internal.span.format', value: 'proto' },
+        ],
+        [
+          { key: 'span.kind', value: 'client' },
+          { key: 'component', value: 'gRPC' },
+          { key: 'internal.span.format', value: 'proto' },
+        ],
+        [
+          { key: 'span.kind', value: 'server' },
+          { key: 'component', value: 'gRPC' },
+          { key: 'internal.span.format', value: 'proto' },
+        ],
+      ],
+    },
+    { name: 'warnings', values: [undefined, undefined] },
+    { name: 'stackTraces', values: [undefined, undefined] },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});

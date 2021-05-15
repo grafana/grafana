@@ -1,18 +1,13 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
-import { PanelEvents } from '@grafana/data';
-import { getLocationSrv } from '@grafana/runtime';
+import { PanelEvents, QueryResultMeta } from '@grafana/data';
 
 export interface MssqlQuery {
   refId: string;
   format: string;
   alias: string;
   rawSql: string;
-}
-
-export interface QueryMeta {
-  sql: string;
 }
 
 const defaultQuery = `SELECT
@@ -31,7 +26,8 @@ export class MssqlQueryCtrl extends QueryCtrl {
 
   formats: any[];
   target: MssqlQuery;
-  lastQueryError: string | null;
+  lastQueryMeta?: QueryResultMeta;
+  lastQueryError?: string;
   showHelp: boolean;
 
   /** @ngInject */
@@ -59,15 +55,9 @@ export class MssqlQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
   }
 
-  showQueryInspector() {
-    getLocationSrv().update({
-      query: { inspect: this.panel.id, inspectTab: 'query' },
-      partial: true,
-    });
-  }
-
   onDataReceived(dataList: any) {
-    this.lastQueryError = null;
+    this.lastQueryError = undefined;
+    this.lastQueryMeta = dataList[0]?.meta;
   }
 
   onDataError(err: any) {

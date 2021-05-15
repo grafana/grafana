@@ -19,7 +19,7 @@ import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import { css } from 'emotion';
 import cx from 'classnames';
 
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';

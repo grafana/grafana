@@ -155,6 +155,7 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     logLevel: LogLevel.debug,
     entry,
     hasAnsi: false,
+    hasUnescapedContent: false,
     labels: {},
     raw: entry,
     timeFromNow: '',

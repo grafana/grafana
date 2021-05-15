@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import uniqueId from 'lodash/uniqueId';
+import { Placement } from '@popperjs/core';
 import { Tooltip } from '../../../Tooltip/Tooltip';
-import * as PopperJS from 'popper.js';
 import { Icon } from '../../..';
 
 export interface Props {
@@ -11,7 +11,7 @@ export interface Props {
   labelClass?: string;
   switchClass?: string;
   tooltip?: string;
-  tooltipPlacement?: PopperJS.Placement;
+  tooltipPlacement?: Placement;
   transparent?: boolean;
   onChange: (event: React.SyntheticEvent<HTMLInputElement>) => void;
 }

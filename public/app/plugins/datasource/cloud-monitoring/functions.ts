@@ -24,7 +24,8 @@ export const getMetricTypes = (
   const metricTypeExistInArray = metricTypes.some(
     (m: { value: string; name: string }) => m.value === interpolatedMetricType
   );
-  const selectedMetricType = metricTypeExistInArray ? metricType : metricTypes[0].value;
+  const metricTypeByService = metricTypes.length ? metricTypes[0].value : '';
+  const selectedMetricType = metricTypeExistInArray ? metricType : metricTypeByService;
   return {
     metricTypes,
     selectedMetricType,

@@ -11,8 +11,7 @@
   "overrides": [
     {
       "files": [
-        "packages/grafana-ui/**/*/!(*.story).{ts,tsx}",
-        "packages/jaeger-ui-components/**/*.{ts,tsx,js}",
+        "packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}",
         "public/app/**/*.{ts,tsx}"
       ],
       "rules": {

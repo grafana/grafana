@@ -8,7 +8,6 @@ import { TimeSrv } from '../../services/TimeSrv';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    renderCount: 0,
     refreshIntervals: ['1s', '5s', '10s'],
     onRefreshIntervalChange: jest.fn(),
     getIntervalsFunc: (intervals) => intervals,

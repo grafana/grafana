@@ -1,5 +1,4 @@
-import { ScopedVars, MetricFindValue } from '@grafana/data';
-import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import _, { isString } from 'lodash';
 

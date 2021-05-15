@@ -38,10 +38,12 @@ export interface InfluxQueryTag {
   value: string;
 }
 
+export type ResultFormat = 'time_series' | 'table' | 'logs';
+
 export interface InfluxQuery extends DataQuery {
   policy?: string;
   measurement?: string;
-  resultFormat?: 'time_series' | 'table';
+  resultFormat?: ResultFormat;
   orderByTime?: string;
   tags?: InfluxQueryTag[];
   groupBy?: InfluxQueryPart[];
@@ -52,4 +54,5 @@ export interface InfluxQuery extends DataQuery {
   fill?: string;
   rawQuery?: boolean;
   query?: string;
+  alias?: string;
 }

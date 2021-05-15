@@ -1,16 +1,15 @@
 import React from 'react';
 import { LogRows, CustomScrollbar } from '@grafana/ui';
-import { LogsDedupStrategy, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
-import { dataFrameToLogsModel } from 'app/core/logs_model';
+import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
 export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
-  options: { showLabels, showTime, wrapLogMessage, sortOrder },
-  width,
+  options: { showLabels, showTime, wrapLogMessage, sortOrder, dedupStrategy },
 }) => {
   if (!data) {
     return (
@@ -21,12 +20,15 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   }
 
   const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs, timeZone) : null;
+  const logRows = newResults?.rows || [];
+  const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
 
   return (
     <CustomScrollbar autoHide>
       <LogRows
-        logRows={newResults?.rows || []}
-        dedupStrategy={LogsDedupStrategy.none}
+        logRows={logRows}
+        deduplicatedRows={deduplicatedRows}
+        dedupStrategy={dedupStrategy}
         highlighterExpressions={[]}
         showLabels={showLabels}
         showTime={showTime}

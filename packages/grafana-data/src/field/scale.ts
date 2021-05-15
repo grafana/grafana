@@ -65,14 +65,20 @@ function getMinMaxAndDelta(field: Field): NumericRange {
   };
 }
 
+/**
+ * @internal
+ */
 export function getFieldConfigWithMinMax(field: Field, local?: boolean): FieldConfig {
   const { config } = field;
   let { min, max } = config;
-  if (isNumber(min) && !isNumber(max)) {
-    return config; // noop
+
+  if (isNumber(min) && isNumber(max)) {
+    return config;
   }
+
   if (local || !field.state?.range) {
     return { ...config, ...getMinMaxAndDelta(field) };
   }
+
   return { ...config, ...field.state.range };
 }

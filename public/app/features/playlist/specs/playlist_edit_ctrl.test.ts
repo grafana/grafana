@@ -1,4 +1,3 @@
-import '../playlist_edit_ctrl';
 import { PlaylistEditCtrl } from '../playlist_edit_ctrl';
 import { ILocationService, IScope } from 'angular';
 import { AppEventEmitter } from '../../../types';

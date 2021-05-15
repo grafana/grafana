@@ -8,7 +8,7 @@ aliases =["/docs/grafana/latest/manage-users/add-or-remove-user/","/docs/grafana
 
 This topic explains user management tasks performed by Grafana Server Admins.
 
-In order to perform any of these tasks, you must be logged in to Grafana on an account with Grafana Server Admin permissions. For more information about Grafana Admin permissions, refer to [Grafana Server Admin role]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}})
+In order to perform any of these tasks, you must be logged in to Grafana on an account with Grafana Server Admin permissions. For more information about Grafana Admin permissions, refer to [Grafana Server Admin role]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}).
 
 > **Note:** The Grafana Server Admin role does not exist in Grafana Cloud. Grafana Cloud users cannot perform tasks listed in this section.
 
@@ -27,7 +27,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Server Admin status -** If the user account has **Grafana Admin** option set, then a shield icon is displayed.
 - **Account status -** If the account is disabled, then the **Disabled** label is displayed.
 
-![Server Admin user list](/img/docs/manage-users/server-user-list-7-3.png "title")
+![Server Admin user list](/img/docs/manage-users/server-user-list-7-3.png)
 
 ## View user account details
 

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -19,12 +20,14 @@ import (
 var metricsLogger log.Logger = log.New("metrics")
 
 func init() {
-	registry.RegisterService(&UsageStatsService{})
+	registry.RegisterService(&UsageStatsService{
+		log:             log.New("infra.usagestats"),
+		externalMetrics: make(map[string]MetricFunc),
+	})
 }
 
 type UsageStats interface {
 	GetUsageReport(ctx context.Context) (UsageReport, error)
-
 	RegisterMetric(name string, fn MetricFunc)
 }
 
@@ -36,6 +39,7 @@ type UsageStatsService struct {
 	SQLStore           *sqlstore.SQLStore         `inject:""`
 	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
 	License            models.Licensing           `inject:""`
+	PluginManager      plugins.Manager            `inject:""`
 
 	log log.Logger
 
@@ -45,27 +49,25 @@ type UsageStatsService struct {
 }
 
 func (uss *UsageStatsService) Init() error {
-	uss.log = log.New("infra.usagestats")
 	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
-	uss.externalMetrics = make(map[string]MetricFunc)
 	return nil
 }
 
 func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
 
-	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	everyMinuteTicker := time.NewTicker(time.Minute)
-	defer onceEveryDayTick.Stop()
-	defer everyMinuteTicker.Stop()
+	sendReportTicker := time.NewTicker(time.Hour * 24)
+	updateStatsTicker := time.NewTicker(time.Minute * 30)
+	defer sendReportTicker.Stop()
+	defer updateStatsTicker.Stop()
 
 	for {
 		select {
-		case <-onceEveryDayTick.C:
+		case <-sendReportTicker.C:
 			if err := uss.sendUsageStats(ctx); err != nil {
 				metricsLogger.Warn("Failed to send usage stats", "err", err)
 			}
-		case <-everyMinuteTicker.C:
+		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
 		case <-ctx.Done():
 			return ctx.Err()

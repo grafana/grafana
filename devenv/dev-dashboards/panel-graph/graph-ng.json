@@ -19,7 +19,9 @@
     {
       "icon": "external link",
       "tags": ["gdev", "graph-ng"],
-      "type": "dashboards"
+      "type": "dashboards",
+      "asDropdown": true,
+      "title": "Graph Tests"
     }
   ],
   "panels": [

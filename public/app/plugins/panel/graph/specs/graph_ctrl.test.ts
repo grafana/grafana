@@ -30,6 +30,9 @@ describe('GraphCtrl', () => {
     gridPos: {
       w: 100,
     },
+    fieldConfig: {
+      defaults: {},
+    },
   };
 
   const ctx = {} as any;

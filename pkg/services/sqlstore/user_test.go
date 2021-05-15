@@ -20,17 +20,17 @@ func TestUserDataAccess(t *testing.T) {
 		ss := InitTestDB(t)
 
 		Convey("Creates a user", func() {
-			cmd := &models.CreateUserCommand{
+			cmd := models.CreateUserCommand{
 				Email: "usertest@test.com",
 				Name:  "user name",
 				Login: "user_test_login",
 			}
 
-			err := CreateUser(context.Background(), cmd)
+			user, err := ss.CreateUser(context.Background(), cmd)
 			So(err, ShouldBeNil)
 
 			Convey("Loading a user", func() {
-				query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+				query := models.GetUserByIdQuery{Id: user.Id}
 				err := GetUserById(&query)
 				So(err, ShouldBeNil)
 
@@ -43,18 +43,18 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		Convey("Creates disabled user", func() {
-			cmd := &models.CreateUserCommand{
+			cmd := models.CreateUserCommand{
 				Email:      "usertest@test.com",
 				Name:       "user name",
 				Login:      "user_test_login",
 				IsDisabled: true,
 			}
 
-			err := CreateUser(context.Background(), cmd)
+			user, err := ss.CreateUser(context.Background(), cmd)
 			So(err, ShouldBeNil)
 
 			Convey("Loading a user", func() {
-				query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+				query := models.GetUserByIdQuery{Id: user.Id}
 				err := GetUserById(&query)
 				So(err, ShouldBeNil)
 
@@ -78,18 +78,18 @@ func TestUserDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Creates user assigned to other organization", func() {
-				cmd := &models.CreateUserCommand{
+				cmd := models.CreateUserCommand{
 					Email: "usertest@test.com",
 					Name:  "user name",
 					Login: "user_test_login",
 					OrgId: orgCmd.Result.Id,
 				}
 
-				err := CreateUser(context.Background(), cmd)
+				user, err := ss.CreateUser(context.Background(), cmd)
 				So(err, ShouldBeNil)
 
 				Convey("Loading a user", func() {
-					query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+					query := models.GetUserByIdQuery{Id: user.Id}
 					err := GetUserById(&query)
 					So(err, ShouldBeNil)
 
@@ -104,20 +104,20 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Don't create user assigned to unknown organization", func() {
 				const nonExistingOrgID = 10000
-				cmd := &models.CreateUserCommand{
+				cmd := models.CreateUserCommand{
 					Email: "usertest@test.com",
 					Name:  "user name",
 					Login: "user_test_login",
 					OrgId: nonExistingOrgID,
 				}
 
-				err := CreateUser(context.Background(), cmd)
+				_, err := ss.CreateUser(context.Background(), cmd)
 				So(err, ShouldEqual, models.ErrOrgNotFound)
 			})
 		})
 
 		Convey("Given 5 users", func() {
-			users := createFiveTestUsers(func(i int) *models.CreateUserCommand {
+			users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 				return &models.CreateUserCommand{
 					Email:      fmt.Sprint("user", i, "@test.com"),
 					Name:       fmt.Sprint("user", i),
@@ -238,7 +238,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return list users based on their is_disabled flag", func() {
 				ss = InitTestDB(t)
-				createFiveTestUsers(func(i int) *models.CreateUserCommand {
+				createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 					return &models.CreateUserCommand{
 						Email:      fmt.Sprint("user", i, "@test.com"),
 						Name:       fmt.Sprint("user", i),
@@ -269,7 +269,7 @@ func TestUserDataAccess(t *testing.T) {
 				So(third, ShouldBeTrue)
 
 				ss = InitTestDB(t)
-				users = createFiveTestUsers(func(i int) *models.CreateUserCommand {
+				users = createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 					return &models.CreateUserCommand{
 						Email:      fmt.Sprint("user", i, "@test.com"),
 						Name:       fmt.Sprint("user", i),
@@ -286,7 +286,7 @@ func TestUserDataAccess(t *testing.T) {
 				})
 				So(err, ShouldBeNil)
 
-				err = testHelperUpdateDashboardAcl(1, models.DashboardAcl{
+				err = testHelperUpdateDashboardAcl(t, ss, 1, models.DashboardAcl{
 					DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
 					Permission: models.PERMISSION_EDIT,
 				})
@@ -365,7 +365,7 @@ func TestUserDataAccess(t *testing.T) {
 
 				Convey("Should enable all users", func() {
 					ss = InitTestDB(t)
-					createFiveTestUsers(func(i int) *models.CreateUserCommand {
+					createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 						return &models.CreateUserCommand{
 							Email:      fmt.Sprint("user", i, "@test.com"),
 							Name:       fmt.Sprint("user", i),
@@ -392,7 +392,7 @@ func TestUserDataAccess(t *testing.T) {
 
 				Convey("Should disable only specific users", func() {
 					ss = InitTestDB(t)
-					users = createFiveTestUsers(func(i int) *models.CreateUserCommand {
+					users = createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 						return &models.CreateUserCommand{
 							Email:      fmt.Sprint("user", i, "@test.com"),
 							Name:       fmt.Sprint("user", i),
@@ -438,7 +438,7 @@ func TestUserDataAccess(t *testing.T) {
 
 				// Since previous tests were destructive
 				ss = InitTestDB(t)
-				users = createFiveTestUsers(func(i int) *models.CreateUserCommand {
+				users = createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 					return &models.CreateUserCommand{
 						Email:      fmt.Sprint("user", i, "@test.com"),
 						Name:       fmt.Sprint("user", i),
@@ -546,25 +546,22 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		Convey("Given one grafana admin user", func() {
-			var err error
-			createUserCmd := &models.CreateUserCommand{
+			createUserCmd := models.CreateUserCommand{
 				Email:   fmt.Sprint("admin", "@test.com"),
 				Name:    "admin",
 				Login:   "admin",
 				IsAdmin: true,
 			}
-			err = CreateUser(context.Background(), createUserCmd)
+			user, err := ss.CreateUser(context.Background(), createUserCmd)
 			So(err, ShouldBeNil)
 
 			Convey("Cannot make themselves a non-admin", func() {
-				updateUserPermsCmd := models.UpdateUserPermissionsCommand{IsGrafanaAdmin: false, UserId: 1}
-				updatePermsError := UpdateUserPermissions(&updateUserPermsCmd)
+				updatePermsError := ss.UpdateUserPermissions(1, false)
 
 				So(updatePermsError, ShouldEqual, models.ErrLastGrafanaAdmin)
 
-				query := models.GetUserByIdQuery{Id: createUserCmd.Result.Id}
+				query := models.GetUserByIdQuery{Id: user.Id}
 				getUserError := GetUserById(&query)
-
 				So(getUserError, ShouldBeNil)
 
 				So(query.Result.IsAdmin, ShouldEqual, true)
@@ -574,33 +571,33 @@ func TestUserDataAccess(t *testing.T) {
 		Convey("Given one user", func() {
 			const email = "user@test.com"
 			const username = "user"
-			createUserCmd := &models.CreateUserCommand{
+			createUserCmd := models.CreateUserCommand{
 				Email: email,
 				Name:  "user",
 				Login: username,
 			}
-			err := CreateUser(context.Background(), createUserCmd)
+			_, err := ss.CreateUser(context.Background(), createUserCmd)
 			So(err, ShouldBeNil)
 
 			Convey("When trying to create a new user with the same email, an error is returned", func() {
-				createUserCmd := &models.CreateUserCommand{
+				createUserCmd := models.CreateUserCommand{
 					Email:        email,
 					Name:         "user2",
 					Login:        "user2",
 					SkipOrgSetup: true,
 				}
-				err := CreateUser(context.Background(), createUserCmd)
+				_, err := ss.CreateUser(context.Background(), createUserCmd)
 				So(err, ShouldEqual, models.ErrUserAlreadyExists)
 			})
 
 			Convey("When trying to create a new user with the same login, an error is returned", func() {
-				createUserCmd := &models.CreateUserCommand{
+				createUserCmd := models.CreateUserCommand{
 					Email:        "user2@test.com",
 					Name:         "user2",
 					Login:        username,
 					SkipOrgSetup: true,
 				}
-				err := CreateUser(context.Background(), createUserCmd)
+				_, err := ss.CreateUser(context.Background(), createUserCmd)
 				So(err, ShouldEqual, models.ErrUserAlreadyExists)
 			})
 		})
@@ -618,15 +615,15 @@ func GetOrgUsersForTest(query *models.GetOrgUsersQuery) error {
 	return err
 }
 
-func createFiveTestUsers(fn func(i int) *models.CreateUserCommand) []models.User {
-	var err error
-	var cmd *models.CreateUserCommand
+func createFiveTestUsers(t *testing.T, sqlStore *SQLStore, fn func(i int) *models.CreateUserCommand) []models.User {
+	t.Helper()
+
 	users := []models.User{}
 	for i := 0; i < 5; i++ {
-		cmd = fn(i)
+		cmd := fn(i)
 
-		err = CreateUser(context.Background(), cmd)
-		users = append(users, cmd.Result)
+		user, err := sqlStore.CreateUser(context.Background(), *cmd)
+		users = append(users, *user)
 
 		So(err, ShouldBeNil)
 	}

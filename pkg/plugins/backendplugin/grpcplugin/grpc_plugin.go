@@ -15,6 +15,7 @@ type pluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.StreamHandler
 }
 
 type grpcPlugin struct {
@@ -28,7 +29,7 @@ type grpcPlugin struct {
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
@@ -36,7 +37,11 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
 			},
 		}, nil
-	})
+	}
+}
+
+func (p *grpcPlugin) CanHandleDataQueries() bool {
+	return false
 }
 
 func (p *grpcPlugin) PluginID() string {
@@ -133,4 +138,28 @@ func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResource
 	p.mutex.RUnlock()
 
 	return pluginClient.CallResource(ctx, req, sender)
+}
+
+func (p *grpcPlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	p.mutex.RLock()
+	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
+		p.mutex.RUnlock()
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	pluginClient := p.pluginClient
+	p.mutex.RUnlock()
+
+	return pluginClient.CanSubscribeToStream(ctx, request)
+}
+
+func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	p.mutex.RLock()
+	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
+		p.mutex.RUnlock()
+		return backendplugin.ErrPluginUnavailable
+	}
+	pluginClient := p.pluginClient
+	p.mutex.RUnlock()
+
+	return pluginClient.RunStream(ctx, req, sender)
 }

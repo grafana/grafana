@@ -6,7 +6,6 @@ export const initialApiKeysState: ApiKeysState = {
   keys: [],
   searchQuery: '',
   hasFetched: false,
-  includeExpired: false,
 };
 
 const apiKeysSlice = createSlice({

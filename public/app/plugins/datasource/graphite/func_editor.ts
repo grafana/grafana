@@ -91,7 +91,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
 
         const $link = $input.prev();
         const $comma = $link.prev('.comma');
-        const newValue = $input.val();
+        const newValue = $input.val() as any;
 
         // remove optional empty params
         if (newValue !== '' || paramDef(paramIndex).optional) {

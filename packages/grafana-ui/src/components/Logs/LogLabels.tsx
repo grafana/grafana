@@ -1,10 +1,9 @@
 import React, { FunctionComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Labels } from '@grafana/data';
+import { GrafanaTheme, Labels } from '@grafana/data';
 
 import { stylesFactory } from '../../themes';
 import { Themeable } from '../../types/theme';
-import { GrafanaTheme } from '@grafana/data';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Levels are already encoded in color, filename is a Loki-ism

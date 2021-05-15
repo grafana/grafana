@@ -261,7 +261,7 @@ export function addAxisConfig(
   }
 }
 
-export function addLegendOptions(builder: PanelOptionsEditorBuilder<OptionsWithLegend>) {
+export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOptionsEditorBuilder<T>) {
   builder
     .addRadio({
       path: 'legend.displayMode',

@@ -60,8 +60,18 @@ func TestUserAuthToken(t *testing.T) {
 				So(userToken, ShouldBeNil)
 			})
 
-			Convey("revoking existing token should delete token", func() {
-				err = userAuthTokenService.RevokeToken(context.Background(), userToken)
+			Convey("soft revoking existing token should not delete it", func() {
+				err = userAuthTokenService.RevokeToken(context.Background(), userToken, true)
+				So(err, ShouldBeNil)
+
+				model, err := ctx.getAuthTokenByID(userToken.Id)
+				So(err, ShouldBeNil)
+				So(model, ShouldNotBeNil)
+				So(model.RevokedAt, ShouldBeGreaterThan, 0)
+			})
+
+			Convey("revoking existing token should delete it", func() {
+				err = userAuthTokenService.RevokeToken(context.Background(), userToken, false)
 				So(err, ShouldBeNil)
 
 				model, err := ctx.getAuthTokenByID(userToken.Id)
@@ -70,13 +80,13 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			Convey("revoking nil token should return error", func() {
-				err = userAuthTokenService.RevokeToken(context.Background(), nil)
+				err = userAuthTokenService.RevokeToken(context.Background(), nil, false)
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 
 			Convey("revoking non-existing token should return error", func() {
 				userToken.Id = 1000
-				err = userAuthTokenService.RevokeToken(context.Background(), userToken)
+				err = userAuthTokenService.RevokeToken(context.Background(), userToken, false)
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 

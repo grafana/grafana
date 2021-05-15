@@ -14,7 +14,7 @@ export function addRootReducer(reducers: any) {
   addReducer(reducers);
 }
 
-export function configureStore() {
+export function configureStore(initialState?: Partial<StoreState>) {
   const logger = createLogger({
     predicate: (getState) => {
       return getState().application.logActions;
@@ -35,6 +35,7 @@ export function configureStore() {
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
+      ...initialState,
     },
   });
 
@@ -42,7 +43,7 @@ export function configureStore() {
   return store;
 }
 
-/* 
+/*
 function getActionsToIgnoreSerializableCheckOn() {
   return [
     'dashboard/setPanelAngularComponent',
@@ -58,7 +59,7 @@ function getActionsToIgnoreSerializableCheckOn() {
 }
 
 function getPathsToIgnoreMutationAndSerializableCheckOn() {
-  return [    
+  return [
     'plugins.panels',
     'dashboard.panels',
     'dashboard.getModel',
@@ -75,7 +76,7 @@ function getPathsToIgnoreMutationAndSerializableCheckOn() {
     'explore.right.eventBridge',
     'explore.right.range',
     'explore.left.querySubscription',
-    'explore.right.querySubscription',    
+    'explore.right.querySubscription',
   ];
 }
 */

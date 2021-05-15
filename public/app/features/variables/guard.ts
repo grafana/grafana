@@ -176,7 +176,7 @@ export function isQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<QueryEditorProps<any>> {
+): component is ComponentType<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions, any>> {
   if (!component) {
     return false;
   }

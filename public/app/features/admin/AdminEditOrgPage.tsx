@@ -9,6 +9,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { UrlQueryValue } from '@grafana/data';
 import { Form, Field, Input, Button, Legend } from '@grafana/ui';
 import { css } from 'emotion';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface OrgNameDTO {
   orgName: string;
@@ -30,11 +31,12 @@ const removeOrgUser = async (orgUser: OrgUser, orgId: UrlQueryValue) => {
   return await getBackendSrv().delete('/api/orgs/' + orgId + '/users/' + orgUser.userId);
 };
 
-export const AdminEditOrgPage: FC = () => {
+interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
+
+export const AdminEditOrgPage: FC<Props> = ({ match }) => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
-
-  const orgId = useSelector((state: StoreState) => state.location.routeParams.id);
+  const orgId = parseInt(match.params.id, 10);
 
   const [users, setUsers] = useState<OrgUser[]>([]);
 

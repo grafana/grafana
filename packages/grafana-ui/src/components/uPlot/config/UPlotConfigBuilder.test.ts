@@ -40,6 +40,7 @@ describe('UPlotConfigBuilder', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
         }
       `);
     });
@@ -103,6 +104,7 @@ describe('UPlotConfigBuilder', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
         }
       `);
     });
@@ -171,6 +173,7 @@ describe('UPlotConfigBuilder', () => {
             "series": Array [
               Object {},
             ],
+            "tzDate": [Function],
           }
         `);
       });
@@ -219,6 +222,7 @@ describe('UPlotConfigBuilder', () => {
               "series": Array [
                 Object {},
               ],
+              "tzDate": [Function],
             }
           `);
         });
@@ -268,6 +272,7 @@ describe('UPlotConfigBuilder', () => {
               "series": Array [
                 Object {},
               ],
+              "tzDate": [Function],
             }
           `);
         });
@@ -341,6 +346,7 @@ describe('UPlotConfigBuilder', () => {
         "series": Array [
           Object {},
         ],
+        "tzDate": [Function],
       }
     `);
   });
@@ -477,6 +483,7 @@ describe('UPlotConfigBuilder', () => {
             "width": 1,
           },
         ],
+        "tzDate": [Function],
       }
     `);
   });

@@ -21,7 +21,7 @@ import cx from 'classnames';
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
 import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceKeyValuePair, TraceLink } from '../../types/trace';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 

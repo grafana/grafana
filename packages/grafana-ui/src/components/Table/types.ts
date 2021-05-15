@@ -45,6 +45,7 @@ export interface TableCellProps extends CellProps<any> {
   cellProps: CSSProperties;
   field: Field;
   onCellFilterAdded: TableFilterActionCallback;
+  innerWidth: number;
 }
 
 export type CellComponent = FC<TableCellProps>;

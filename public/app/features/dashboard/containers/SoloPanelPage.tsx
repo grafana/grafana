@@ -2,25 +2,23 @@
 import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-
 // Components
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
-
 // Redux
 import { initDashboard } from '../state/initDashboard';
-
 // Types
-import { StoreState, DashboardRouteInfo } from 'app/types';
+import { StoreState } from 'app/types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getLegacyAngularInjector } from '@grafana/runtime';
 
-export interface Props {
-  urlPanelId: string;
-  urlUid?: string;
-  urlSlug?: string;
-  urlType?: string;
-  $scope: any;
-  $injector: any;
-  routeInfo: DashboardRouteInfo;
+export interface DashboardPageRouteParams {
+  uid?: string;
+  type?: string;
+  slug?: string;
+}
+
+export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {
   initDashboard: typeof initDashboard;
   dashboard: DashboardModel | null;
 }
@@ -37,21 +35,24 @@ export class SoloPanelPage extends Component<Props, State> {
   };
 
   componentDidMount() {
-    const { $injector, $scope, urlUid, urlType, urlSlug, routeInfo } = this.props;
+    const { match, route } = this.props;
 
     this.props.initDashboard({
-      $injector: $injector,
-      $scope: $scope,
-      urlSlug: urlSlug,
-      urlUid: urlUid,
-      urlType: urlType,
-      routeInfo: routeInfo,
+      $injector: getLegacyAngularInjector(),
+      urlSlug: match.params.slug,
+      urlUid: match.params.uid,
+      urlType: match.params.type,
+      routeName: route.routeName,
       fixUrl: false,
     });
   }
 
+  getPanelId(): number {
+    return parseInt(this.props.queryParams.panelId ?? '0', 10);
+  }
+
   componentDidUpdate(prevProps: Props) {
-    const { urlPanelId, dashboard } = this.props;
+    const { dashboard } = this.props;
 
     if (!dashboard) {
       return;
@@ -59,7 +60,7 @@ export class SoloPanelPage extends Component<Props, State> {
 
     // we just got a new dashboard
     if (!prevProps.dashboard || prevProps.dashboard.uid !== dashboard.uid) {
-      const panelId = parseInt(urlPanelId, 10);
+      const panelId = this.getPanelId();
 
       // need to expand parent row if this panel is inside a row
       dashboard.expandParentRowFor(panelId);
@@ -76,11 +77,11 @@ export class SoloPanelPage extends Component<Props, State> {
   }
 
   render() {
-    const { urlPanelId, dashboard } = this.props;
+    const { dashboard } = this.props;
     const { notFound, panel } = this.state;
 
     if (notFound) {
-      return <div className="alert alert-error">Panel with id {urlPanelId} not found</div>;
+      return <div className="alert alert-error">Panel with id {this.getPanelId()} not found</div>;
     }
 
     if (!panel || !dashboard) {
@@ -96,11 +97,7 @@ export class SoloPanelPage extends Component<Props, State> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  urlUid: state.location.routeParams.uid,
-  urlSlug: state.location.routeParams.slug,
-  urlType: state.location.routeParams.type,
-  urlPanelId: state.location.query.panelId,
-  dashboard: state.dashboard.getModel() as DashboardModel,
+  dashboard: state.dashboard.getModel(),
 });
 
 const mapDispatchToProps = {

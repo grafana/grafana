@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
+import { getEditorVariables, getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -15,6 +15,8 @@ import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
 import { VariableModel } from '../types';
+import { initInspect } from '../inspect/reducer';
+import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
@@ -102,8 +104,17 @@ export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<vo
   dispatch(setIdInEditor({ id: identifier.id }));
 };
 
-export const switchToListMode = (): ThunkResult<void> => (dispatch) => {
+export const switchToListMode = (): ThunkResult<void> => (dispatch, getState) => {
   dispatch(clearIdInEditor());
+  const state = getState();
+  const variables = getEditorVariables(state);
+  const dashboard = state.dashboard.getModel();
+  const { unknown, usages } = createUsagesNetwork(variables, dashboard);
+  const unknownsNetwork = transformUsagesToNetwork(unknown);
+  const unknownExits = Object.keys(unknown).length > 0;
+  const usagesNetwork = transformUsagesToNetwork(usages);
+
+  dispatch(initInspect({ unknown, usages, usagesNetwork, unknownsNetwork, unknownExits }));
 };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {

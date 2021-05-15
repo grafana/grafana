@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { VerticalGroup } from '@grafana/ui';
 
@@ -10,17 +10,17 @@ import { VariableTextField } from '../editor/VariableTextField';
 export interface Props extends VariableEditorProps<ConstantVariableModel> {}
 
 export class ConstantVariableEditor extends PureComponent<Props> {
-  onChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onChange = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
     });
   };
 
-  onBlur = (event: FocusEvent<HTMLInputElement>) => {
+  onBlur = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };

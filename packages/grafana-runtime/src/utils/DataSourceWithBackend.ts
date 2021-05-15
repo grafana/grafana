@@ -10,7 +10,7 @@ import {
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv } from '../services';
-import { toDataQueryResponse } from './queryResponse';
+import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -104,14 +104,14 @@ export class DataSourceWithBackend<
     }
 
     return getBackendSrv()
-      .fetch({
+      .fetch<BackendDataSourceResponse>({
         url: '/api/ds/query',
         method: 'POST',
         data: body,
         requestId,
       })
       .pipe(
-        map((rsp: any) => {
+        map((rsp) => {
           return toDataQueryResponse(rsp, queries as DataQuery[]);
         }),
         catchError((err) => {

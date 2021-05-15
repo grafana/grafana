@@ -1,5 +1,4 @@
 import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
-import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
 import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
@@ -28,9 +27,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
 
   constructor() {
-    this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
+    // build live url replacing scheme in appUrl.
+    const liveUrl = `${config.appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+    this.centrifuge = new Centrifuge(liveUrl, {
       debug: true,
-      sockjs: SockJS,
     });
     this.centrifuge.setConnectData({
       sessionId,

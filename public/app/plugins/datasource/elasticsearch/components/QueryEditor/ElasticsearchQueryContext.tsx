@@ -48,7 +48,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({
 
   // This initializes the query by dispatching an init action to each reducer.
   // useStatelessReducer will then call `onChange` with the newly generated query
-  if (!query.metrics && !query.bucketAggs) {
+  if (!query.metrics || !query.bucketAggs || query.query === undefined) {
     dispatch(initQuery());
 
     return null;

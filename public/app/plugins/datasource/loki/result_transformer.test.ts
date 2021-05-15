@@ -8,7 +8,6 @@ import {
   LokiMatrixResult,
 } from './types';
 import * as ResultTransformer from './result_transformer';
-import { enhanceDataFrame, lokiPointsToTimeseriesPoints } from './result_transformer';
 import { setTemplateSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -243,7 +242,7 @@ describe('loki result transformer', () => {
 describe('enhanceDataFrame', () => {
   it('adds links to fields', () => {
     const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
-    enhanceDataFrame(df, {
+    ResultTransformer.enhanceDataFrame(df, {
       derivedFields: [
         {
           matcherRegex: 'trace1=(\\w+)',
@@ -302,7 +301,7 @@ describe('enhanceDataFrame', () => {
 
     it('returns data as is if step, start, and end align', () => {
       const options: Partial<TransformerOptions> = { start: 1 * 1e9, end: 4 * 1e9, step: 1 };
-      const result = lokiPointsToTimeseriesPoints(data, options as TransformerOptions);
+      const result = ResultTransformer.lokiPointsToTimeseriesPoints(data, options as TransformerOptions);
       expect(result).toEqual([
         [1, 1000],
         [0, 2000],

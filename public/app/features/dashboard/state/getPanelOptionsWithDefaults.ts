@@ -17,6 +17,7 @@ export interface Props {
   plugin: PanelPlugin;
   currentFieldConfig: FieldConfigSource;
   currentOptions: Record<string, any>;
+  isAfterPluginChange: boolean;
 }
 
 export interface OptionDefaults {
@@ -24,7 +25,12 @@ export interface OptionDefaults {
   fieldConfig: FieldConfigSource;
 }
 
-export function getPanelOptionsWithDefaults({ plugin, currentOptions, currentFieldConfig }: Props): OptionDefaults {
+export function getPanelOptionsWithDefaults({
+  plugin,
+  currentOptions,
+  currentFieldConfig,
+  isAfterPluginChange,
+}: Props): OptionDefaults {
   const optionsWithDefaults = mergeWith(
     {},
     plugin.defaults,
@@ -37,7 +43,7 @@ export function getPanelOptionsWithDefaults({ plugin, currentOptions, currentFie
   );
 
   const fieldConfigWithDefaults = applyFieldConfigDefaults(currentFieldConfig, plugin);
-  const fieldConfigWithOptimalColorMode = adaptFieldColorMode(plugin, fieldConfigWithDefaults);
+  const fieldConfigWithOptimalColorMode = adaptFieldColorMode(plugin, fieldConfigWithDefaults, isAfterPluginChange);
 
   return { options: optionsWithDefaults, fieldConfig: fieldConfigWithOptimalColorMode };
 }
@@ -99,6 +105,8 @@ export function filterFieldConfigOverrides(
 }
 
 function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
+  let found = false;
+
   for (const propName of Object.keys(obj)) {
     const value = obj[propName];
     const fullPath = `${parentPath}${propName}`;
@@ -106,6 +114,7 @@ function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: Fiel
 
     // need to check early here as some standard properties have nested properies
     if (existsInRegistry) {
+      found = true;
       continue;
     }
 
@@ -114,12 +123,26 @@ function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: Fiel
         unset(obj, propName);
       }
     } else {
-      cleanProperties(value, `${fullPath}.`, fieldConfigRegistry);
+      const childPropFound = cleanProperties(value, `${fullPath}.`, fieldConfigRegistry);
+      // If no child props found unset the main object
+      if (!childPropFound) {
+        unset(obj, propName);
+      }
     }
   }
+
+  return found;
 }
 
-function adaptFieldColorMode(plugin: PanelPlugin, fieldConfig: FieldConfigSource): FieldConfigSource {
+function adaptFieldColorMode(
+  plugin: PanelPlugin,
+  fieldConfig: FieldConfigSource,
+  isAfterPluginChange: boolean
+): FieldConfigSource {
+  if (!isAfterPluginChange) {
+    return fieldConfig;
+  }
+
   // adjust to prefered field color setting if needed
   const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
 

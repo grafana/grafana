@@ -15,7 +15,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import NewWindowIcon from '../common/NewWindowIcon';
-import { TraceSpanReference } from '@grafana/data';
+import { TraceSpanReference } from '../types/trace';
 import { UITooltip, UIDropdown, UIMenuItem, UIMenu, TooltipPlacement } from '../uiElementsContext';
 
 import ReferenceLink from '../url/ReferenceLink';

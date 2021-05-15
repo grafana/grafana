@@ -117,7 +117,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             )}
           </span>
           {showContextToggle?.(row) && (
-            <span onClick={this.onContextToggle} className={cx(style.context)}>
+            <span onClick={this.onContextToggle} className={cx('log-row-context', style.context)}>
               {contextIsOpen ? 'Hide' : 'Show'} context
             </span>
           )}

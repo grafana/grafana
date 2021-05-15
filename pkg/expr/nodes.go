@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
 	"gonum.org/v1/gonum/graph/simple"
@@ -81,7 +82,7 @@ func (gn *CMDNode) NodeType() NodeType {
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	return gn.Command.Execute(ctx, vars)
 }
 
@@ -105,6 +106,8 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
+	case TypeClassicConditions:
+		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
 	}
@@ -139,7 +142,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -200,7 +203,7 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	pc := backend.PluginContext{
 		OrgID: dn.orgID,
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
@@ -220,7 +223,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 		},
 	}
 
-	resp, err := QueryData(ctx, &backend.QueryDataRequest{
+	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
 	})
@@ -231,6 +234,10 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
+		if qr.Error != nil {
+			return mathexp.Results{}, fmt.Errorf("failed to execute query %v: %w", refID, qr.Error)
+		}
+
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {

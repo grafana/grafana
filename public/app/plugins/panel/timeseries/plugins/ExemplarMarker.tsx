@@ -8,7 +8,7 @@ import {
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
-import { FieldLink, Portal, TooltipContainer, useStyles } from '@grafana/ui';
+import { FieldLinkList, Portal, TooltipContainer, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { useCallback, useRef, useState } from 'react';
 
@@ -78,17 +78,12 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
                     const links = field.config.links?.length ? getFieldLinks(field, index) : undefined;
                     return (
                       <tr key={i}>
-                        <td>{field.name}</td>
-                        <td className={styles.valueWrapper}>
-                          {field.type === FieldType.time ? timeFormatter(value) : value}{' '}
-                          {links &&
-                            links.map((link, i) => {
-                              return (
-                                <div key={i} className={styles.link}>
-                                  <FieldLink link={link} />
-                                </div>
-                              );
-                            })}
+                        <td valign="top">{field.name}</td>
+                        <td>
+                          <div className={styles.valueWrapper}>
+                            <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
+                            {links && <FieldLinkList links={links} />}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -179,7 +174,17 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
     valueWrapper: css`
       display: flex;
       flex-direction: row;
-      align-items: center;
+      flex-wrap: wrap;
+      column-gap: ${theme.spacing.sm};
+
+      > span {
+        flex-grow: 0;
+      }
+
+      > * {
+        flex: 1 1;
+        align-self: center;
+      }
     `,
     tooltip: css`
       background: none;
@@ -202,9 +207,6 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
     body: css`
       padding: ${theme.spacing.sm};
       font-weight: ${theme.typography.weight.semibold};
-    `,
-    link: css`
-      margin: 0 ${theme.spacing.sm};
     `,
     marble,
     activeMarble,

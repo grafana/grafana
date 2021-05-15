@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import { Parser } from './parser';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
@@ -146,8 +147,7 @@ export default class GraphiteQuery {
 
   moveFunction(func: any, offset: number) {
     const index = this.functions.indexOf(func);
-    // @ts-ignore
-    _.move(this.functions, index, index + offset);
+    arrayMove(this.functions, index, index + offset);
   }
 
   updateModelTarget(targets: any) {

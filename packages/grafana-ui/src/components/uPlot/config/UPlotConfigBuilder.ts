@@ -3,8 +3,9 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import { Cursor, Band, Hooks, BBox } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
 import { defaultsDeep } from 'lodash';
+import { DefaultTimeZone, getTimeZoneInfo } from '@grafana/data';
 
 type valueof<T> = T[keyof T];
 
@@ -19,6 +20,11 @@ export class UPlotConfigBuilder {
   private hasLeftAxis = false;
   private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
+  private tz: string | undefined = undefined;
+
+  constructor(getTimeZone = () => DefaultTimeZone) {
+    this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
+  }
 
   addHook(type: keyof Hooks.Defs, hook: valueof<Hooks.Defs>) {
     if (!this.hooks[type]) {
@@ -110,6 +116,8 @@ export class UPlotConfigBuilder {
 
     config.cursor = this.cursor || {};
 
+    config.tzDate = this.tzDate;
+
     // When bands exist, only keep fill when defined
     if (this.bands?.length) {
       config.bands = this.bands;
@@ -159,4 +167,10 @@ export class UPlotConfigBuilder {
 
     return axes;
   }
+
+  private tzDate = (ts: number) => {
+    let date = new Date(ts);
+
+    return this.tz ? uPlot.tzDate(date, this.tz) : date;
+  };
 }

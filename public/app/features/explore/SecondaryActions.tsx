@@ -54,7 +54,7 @@ export function SecondaryActions(props: Props) {
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >
-          Query inspector
+          Inspector
         </Button>
       </HorizontalGroup>
     </div>

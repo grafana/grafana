@@ -4,10 +4,10 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { initialIntervalVariableModelState, intervalVariableReducer } from './reducer';
-import { OptionsPicker } from '../pickers';
 import { toVariableIdentifier } from '../state/types';
 import { IntervalVariableEditor } from './IntervalVariableEditor';
 import { updateAutoValue, updateIntervalVariableOptions } from './actions';
+import { optionPickerFactory } from '../pickers';
 
 export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariableModel> => {
   return {
@@ -16,7 +16,7 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
     name: 'Interval',
     initialState: initialIntervalVariableModelState,
     reducer: intervalVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<IntervalVariableModel>(),
     editor: IntervalVariableEditor,
     dependsOn: () => {
       return false;

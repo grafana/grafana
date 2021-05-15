@@ -112,10 +112,10 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
   fieldConfig: FieldConfigSource;
+  fieldConfigRegistry?: FieldConfigOptionsRegistry;
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
-  fieldConfigRegistry?: FieldConfigOptionsRegistry;
 }
 
 export enum FieldConfigProperty {

@@ -73,7 +73,14 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     if (this.isFlux) {
-      return super.query(request);
+      // for not-flux queries we call `this.classicQuery`, and that
+      // handles the is-hidden situation.
+      // for the flux-case, we do the filtering here
+      const filteredRequest = {
+        ...request,
+        targets: request.targets.filter((t) => t.hide !== true),
+      };
+      return super.query(filteredRequest);
     }
 
     // Fallback to classic query support

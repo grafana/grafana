@@ -1,14 +1,13 @@
 import React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
-import { HorizontalGroup, InfoBox, List, useTheme } from '@grafana/ui';
-import { mapPluginErrorCodeToSignatureStatus, PluginSignatureBadge } from './PluginSignatureBadge';
+import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useTheme } from '@grafana/ui';
 import { StoreState } from '../../types';
 import { getAllPluginsErrors } from './state/selectors';
 import { loadPlugins, loadPluginsErrors } from './state/actions';
 import useAsync from 'react-use/lib/useAsync';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { PluginError } from '@grafana/data';
+import { PluginError, PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { css } from 'emotion';
 
 interface ConnectedProps {
@@ -102,3 +101,16 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 export const PluginsErrorsInfo = hot(module)(
   connect(mapStateToProps, mapDispatchToProps)(PluginsErrorsInfoUnconnected)
 );
+
+function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
+  switch (code) {
+    case PluginErrorCode.invalidSignature:
+      return PluginSignatureStatus.invalid;
+    case PluginErrorCode.missingSignature:
+      return PluginSignatureStatus.missing;
+    case PluginErrorCode.modifiedSignature:
+      return PluginSignatureStatus.modified;
+    default:
+      return PluginSignatureStatus.missing;
+  }
+}

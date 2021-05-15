@@ -62,6 +62,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "flexGrow": 1,
           "left": "-3px",
           "position": "relative",
+          "width": "180px",
         }
       }
     />

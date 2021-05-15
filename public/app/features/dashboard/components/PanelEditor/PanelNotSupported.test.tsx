@@ -1,10 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-
 import { PanelNotSupported, Props } from './PanelNotSupported';
-import { updateLocation } from '../../../../core/actions';
 import { PanelEditorTabId } from './types';
+import { locationService } from '@grafana/runtime';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -28,21 +27,15 @@ describe('PanelNotSupported', () => {
 
     it('then the back to queries button should exist', () => {
       setupTestContext({ message: 'Expected message' });
-
       expect(screen.getByRole('button', { name: /go back to queries/i })).toBeInTheDocument();
     });
   });
 
   describe('when the back to queries button is clicked', () => {
     it('then correct action should be dispatched', () => {
-      const {
-        props: { dispatch },
-      } = setupTestContext({});
-
+      setupTestContext({});
       userEvent.click(screen.getByRole('button', { name: /go back to queries/i }));
-
-      expect(dispatch).toHaveBeenCalledTimes(1);
-      expect(dispatch).toHaveBeenCalledWith(updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true }));
+      expect(locationService.getSearchObject().tab).toBe(PanelEditorTabId.Query);
     });
   });
 });

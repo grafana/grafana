@@ -5,7 +5,7 @@ import { stylesFactory, useTheme } from '../../../themes';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 import { IconButton } from '../../IconButton/IconButton';
 
-interface DataLinksListItemProps {
+export interface DataLinksListItemProps {
   index: number;
   link: DataLink;
   data: DataFrame[];
@@ -19,24 +19,25 @@ interface DataLinksListItemProps {
 export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, onRemove }) => {
   const theme = useTheme();
   const styles = getDataLinkListItemStyles(theme);
+  const { title = '', url = '' } = link;
 
-  const hasTitle = link.title.trim() !== '';
-  const hasUrl = link.url.trim() !== '';
+  const hasTitle = title.trim() !== '';
+  const hasUrl = url.trim() !== '';
 
   return (
     <div className={styles.wrapper}>
       <VerticalGroup spacing="xs">
         <HorizontalGroup justify="space-between" align="flex-start" width="100%">
           <div className={cx(styles.title, !hasTitle && styles.notConfigured)}>
-            {hasTitle ? link.title : 'Data link title not provided'}
+            {hasTitle ? title : 'Data link title not provided'}
           </div>
           <HorizontalGroup>
             <IconButton name="pen" onClick={onEdit} />
             <IconButton name="times" onClick={onRemove} />
           </HorizontalGroup>
         </HorizontalGroup>
-        <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={link.url}>
-          {hasUrl ? link.url : 'Data link url not provided'}
+        <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
+          {hasUrl ? url : 'Data link url not provided'}
         </div>
       </VerticalGroup>
     </div>

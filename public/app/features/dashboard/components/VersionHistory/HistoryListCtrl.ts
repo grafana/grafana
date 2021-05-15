@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -6,8 +5,9 @@ import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 import { CalculateDiffOptions, HistorySrv } from './HistorySrv';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { CoreEvents } from 'app/types';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { ShowConfirmModalEvent } from '../../../../types/events';
+import { appEvents } from 'app/core/core';
 
 export class HistoryListCtrl {
   dashboard: DashboardModel;
@@ -66,14 +66,16 @@ export class HistoryListCtrl {
   }
 
   restore(version: number) {
-    this.$rootScope.appEvent(CoreEvents.showConfirmModal, {
-      title: 'Restore version',
-      text: '',
-      text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
-      icon: 'history',
-      yesText: `Yes, restore to version ${version}`,
-      onConfirm: this.restoreConfirm.bind(this, version),
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Restore version',
+        text: '',
+        text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
+        icon: 'history',
+        yesText: `Yes, restore to version ${version}`,
+        onConfirm: this.restoreConfirm.bind(this, version),
+      })
+    );
   }
 
   restoreConfirm(version: number) {

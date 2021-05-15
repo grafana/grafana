@@ -24,7 +24,7 @@ export default {
       page: mdx,
     },
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
 };

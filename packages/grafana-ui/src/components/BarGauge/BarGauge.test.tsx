@@ -10,6 +10,7 @@ import {
   getTitleStyles,
   getValuePercent,
   BarGaugeDisplayMode,
+  calculateBarAndValueDimensions,
 } from './BarGauge';
 import { getTheme } from '../../themes';
 
@@ -209,6 +210,20 @@ describe('BarGauge', () => {
     it('should render', () => {
       const { wrapper } = setup();
       expect(wrapper).toMatchSnapshot();
+    });
+  });
+
+  describe('calculateBarAndValueDimensions', () => {
+    it('valueWidth should including paddings in valueWidth', () => {
+      const result = calculateBarAndValueDimensions(
+        getProps({
+          height: 30,
+          width: 100,
+          value: getValue(1, 'AA'),
+          orientation: VizOrientation.Horizontal,
+        })
+      );
+      expect(result.valueWidth).toBe(21);
     });
   });
 });

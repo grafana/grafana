@@ -1,18 +1,9 @@
-import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, EventBusExtended, ExploreUrlState, LogsDedupStrategy, toUtc } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types';
-import { thunkTester } from 'test/core/thunk/thunkTester';
-import {
-  changeDedupStrategyAction,
-  initializeExploreAction,
-  InitializeExplorePayload,
-  paneReducer,
-  refreshExplore,
-} from './explorePane';
-import { setQueriesAction } from './query';
-import { makeExplorePaneState, makeInitialUpdateState } from './utils';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { DataQuery, DefaultTimeZone, EventBusExtended, serializeStateToUrlParam, toUtc } from '@grafana/data';
+import { ExploreId } from 'app/types';
+import { refreshExplore } from './explorePane';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { configureStore } from '../../../store/configureStore';
+import { of } from 'rxjs';
 
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -30,134 +21,125 @@ const testRange = {
   },
 };
 
-setDataSourceSrv({
-  getList() {
-    return [];
+const defaultInitialState = {
+  user: {
+    orgId: '1',
+    timeZone: DefaultTimeZone,
   },
-  getInstanceSettings(name: string) {
-    return { name: 'hello' };
-  },
-  get() {
-    return Promise.resolve({
-      testDatasource: jest.fn(),
-      init: jest.fn(),
-    });
-  },
-} as any);
-
-const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
-  const exploreId = ExploreId.left;
-  const containerWidth = 1920;
-  const eventBridge = {} as EventBusExtended;
-  const timeZone = DefaultTimeZone;
-  const range = testRange;
-  const urlState: ExploreUrlState = {
-    datasource: 'some-datasource',
-    queries: [],
-    range: range.raw,
-  };
-  const updateDefaults = makeInitialUpdateState();
-  const update = { ...updateDefaults, ...updateOverides };
-  const initialState = {
-    user: {
-      orgId: '1',
-      timeZone,
-    },
-    explore: {
-      [exploreId]: {
-        initialized: true,
-        urlState,
-        containerWidth,
-        eventBridge,
-        update,
-        datasourceInstance: { name: 'some-datasource' },
-        queries: [] as DataQuery[],
-        range,
-        refreshInterval: {
-          label: 'Off',
-          value: 0,
-        },
+  explore: {
+    [ExploreId.left]: {
+      initialized: true,
+      containerWidth: 1920,
+      eventBridge: {} as EventBusExtended,
+      queries: [] as DataQuery[],
+      range: testRange,
+      refreshInterval: {
+        label: 'Off',
+        value: 0,
       },
     },
-  };
-
-  return {
-    initialState,
-    exploreId,
-    range,
-    containerWidth,
-    eventBridge,
-  };
+  },
 };
 
+function setupStore(state?: any) {
+  return configureStore({
+    ...defaultInitialState,
+    explore: {
+      [ExploreId.left]: {
+        ...defaultInitialState.explore[ExploreId.left],
+        ...(state || {}),
+      },
+    },
+  } as any);
+}
+
+function setup(state?: any) {
+  const datasources: Record<string, any> = {
+    newDs: {
+      testDatasource: jest.fn(),
+      init: jest.fn(),
+      query: jest.fn(),
+      name: 'newDs',
+      meta: { id: 'newDs' },
+    },
+    someDs: {
+      testDatasource: jest.fn(),
+      init: jest.fn(),
+      query: jest.fn(),
+      name: 'someDs',
+      meta: { id: 'someDs' },
+    },
+  };
+
+  setDataSourceSrv({
+    getList() {
+      return Object.values(datasources).map((d) => ({ name: d.name }));
+    },
+    getInstanceSettings(name: string) {
+      return { name: 'hello' };
+    },
+    get(name?: string) {
+      return Promise.resolve(
+        name
+          ? datasources[name]
+          : {
+              testDatasource: jest.fn(),
+              init: jest.fn(),
+              name: 'default',
+            }
+      );
+    },
+  } as any);
+
+  const store = setupStore({
+    datasourceInstance: datasources.someDs,
+    ...(state || {}),
+  });
+
+  return {
+    store,
+    datasources,
+  };
+}
+
 describe('refreshExplore', () => {
-  describe('when explore is initialized', () => {
-    describe('and update datasource is set', () => {
-      it('then it should dispatch initializeExplore', async () => {
-        const { exploreId, initialState, containerWidth, eventBridge } = setup({ datasource: true });
-
-        const dispatchedActions = await thunkTester(initialState)
-          .givenThunk(refreshExplore)
-          .whenThunkIsDispatched(exploreId);
-
-        const initializeExplore = dispatchedActions.find((action) => action.type === initializeExploreAction.type);
-        const { type, payload } = initializeExplore as PayloadAction<InitializeExplorePayload>;
-
-        expect(type).toEqual(initializeExploreAction.type);
-        expect(payload.containerWidth).toEqual(containerWidth);
-        expect(payload.eventBridge).toEqual(eventBridge);
-        expect(payload.queries.length).toBe(1); // Queries have generated keys hard to expect on
-        expect(payload.range.from).toEqual(testRange.from);
-        expect(payload.range.to).toEqual(testRange.to);
-        expect(payload.range.raw.from).toEqual(testRange.raw.from);
-        expect(payload.range.raw.to).toEqual(testRange.raw.to);
-      });
-    });
-
-    describe('and update queries is set', () => {
-      it('then it should dispatch setQueriesAction', async () => {
-        const { exploreId, initialState } = setup({ queries: true });
-
-        const dispatchedActions = await thunkTester(initialState)
-          .givenThunk(refreshExplore)
-          .whenThunkIsDispatched(exploreId);
-
-        expect(dispatchedActions[0].type).toEqual(setQueriesAction.type);
-        expect(dispatchedActions[0].payload).toEqual({ exploreId, queries: [] });
-      });
-    });
+  it('should change data source when datasource in url changes', async () => {
+    const { store } = setup();
+    await store.dispatch(
+      refreshExplore(ExploreId.left, serializeStateToUrlParam({ datasource: 'newDs', queries: [], range: testRange }))
+    );
+    expect(store.getState().explore[ExploreId.left].datasourceInstance?.name).toBe('newDs');
   });
 
-  describe('when update is not initialized', () => {
-    it('then it should not dispatch any actions', async () => {
-      const exploreId = ExploreId.left;
-      const initialState = { explore: { [exploreId]: { initialized: false } } };
-
-      const dispatchedActions = await thunkTester(initialState)
-        .givenThunk(refreshExplore)
-        .whenThunkIsDispatched(exploreId);
-
-      expect(dispatchedActions).toEqual([]);
-    });
+  it('should change and run new queries from the URL', async () => {
+    const { store, datasources } = setup();
+    datasources.someDs.query.mockReturnValueOnce(of({}));
+    await store.dispatch(
+      refreshExplore(
+        ExploreId.left,
+        serializeStateToUrlParam({ datasource: 'someDs', queries: [{ expr: 'count()' }], range: testRange })
+      )
+    );
+    // same
+    const state = store.getState().explore[ExploreId.left];
+    expect(state.datasourceInstance?.name).toBe('someDs');
+    expect(state.queries.length).toBe(1);
+    expect(state.queries).toMatchObject([{ expr: 'count()' }]);
+    expect(datasources.someDs.query).toHaveBeenCalledTimes(1);
   });
-});
 
-describe('Explore pane reducer', () => {
-  describe('changing dedup strategy', () => {
-    describe('when changeDedupStrategyAction is dispatched', () => {
-      it('then it should set correct dedup strategy in state', () => {
-        const initialState = makeExplorePaneState();
-
-        reducerTester<ExploreItemState>()
-          .givenReducer(paneReducer, initialState)
-          .whenActionIsDispatched(
-            changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
-          )
-          .thenStateShouldEqual({
-            ...initialState,
-            dedupStrategy: LogsDedupStrategy.exact,
-          });
-      });
+  it('should not do anything if pane is not initialized', async () => {
+    const { store } = setup({
+      initialized: false,
     });
+    const state = store.getState();
+    await store.dispatch(
+      refreshExplore(
+        ExploreId.left,
+        serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()' }], range: testRange })
+      )
+    );
+
+    expect(state).toEqual(store.getState());
   });
 });

@@ -60,7 +60,6 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
           </a>
         )}
       </div>
-
       {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
     </div>
   );

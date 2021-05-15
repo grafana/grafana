@@ -1,7 +1,14 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
-import { AppEvent } from './types';
-import { EventBus, LegacyEmitter, BusEventHandler, BusEventType, LegacyEventHandler, BusEvent } from './types';
+import {
+  EventBus,
+  LegacyEmitter,
+  BusEventHandler,
+  BusEventType,
+  LegacyEventHandler,
+  BusEvent,
+  AppEvent,
+} from './types';
 
 /**
  * @alpha

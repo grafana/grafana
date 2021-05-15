@@ -91,8 +91,8 @@ func GetAlerts(c *models.ReqContext) response.Response {
 		}
 
 		for _, d := range searchQuery.Result {
-			if d.Type == search.DashHitDB && d.Id > 0 {
-				dashboardIDs = append(dashboardIDs, d.Id)
+			if d.Type == search.DashHitDB && d.ID > 0 {
+				dashboardIDs = append(dashboardIDs, d.ID)
 			}
 		}
 
@@ -128,19 +128,13 @@ func GetAlerts(c *models.ReqContext) response.Response {
 }
 
 // POST /api/alerts/test
-func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Response {
+func (hs *HTTPServer) AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Response {
 	if _, idErr := dto.Dashboard.Get("id").Int64(); idErr != nil {
 		return response.Error(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
 
-	backendCmd := alerting.AlertTestCommand{
-		OrgID:     c.OrgId,
-		Dashboard: dto.Dashboard,
-		PanelID:   dto.PanelId,
-		User:      c.SignedInUser,
-	}
-
-	if err := bus.Dispatch(&backendCmd); err != nil {
+	res, err := hs.AlertEngine.AlertTest(c.OrgId, dto.Dashboard, dto.PanelId, c.SignedInUser)
+	if err != nil {
 		var validationErr alerting.ValidationError
 		if errors.As(err, &validationErr) {
 			return response.Error(422, validationErr.Error(), nil)
@@ -151,7 +145,6 @@ func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Respons
 		return response.Error(500, "Failed to test rule", err)
 	}
 
-	res := backendCmd.Result
 	dtoRes := &dtos.AlertTestResult{
 		Firing:         res.Firing,
 		ConditionEvals: res.ConditionEvals,

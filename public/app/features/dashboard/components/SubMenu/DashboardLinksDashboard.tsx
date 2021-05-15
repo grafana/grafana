@@ -40,7 +40,8 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
                   <li key={`dashlinks-dropdown-item-${resolvedLink.id}-${index}`}>
                     <a
                       href={resolvedLink.url}
-                      target={link.targetBlank ? '_blank' : '_self'}
+                      target={link.targetBlank ? '_blank' : undefined}
+                      rel="noreferrer"
                       aria-label={selectors.components.DashboardLinks.link}
                     >
                       {resolvedLink.title}
@@ -67,7 +68,8 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
               <a
                 className="gf-form-label gf-form-label--dashlink"
                 href={resolvedLink.url}
-                target={link.targetBlank ? '_blank' : '_self'}
+                target={link.targetBlank ? '_blank' : undefined}
+                rel="noreferrer"
                 aria-label={selectors.components.DashboardLinks.link}
               >
                 <Icon name="apps" style={{ marginRight: '4px' }} />

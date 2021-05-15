@@ -40,6 +40,12 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         target,
         refresh: () => {
           setTimeout(() => {
+            // the "hide" attribute of the quries can be changed from the "outside",
+            // it will be applied to "this.props.initialQuery.hide", but not to "target.hide".
+            // so we have to apply it.
+            if (target.hide !== this.props.initialQuery.hide) {
+              target.hide = this.props.initialQuery.hide;
+            }
             this.props.onQueryChange?.(target);
             this.props.onExecuteQuery?.();
           }, 1);

@@ -61,5 +61,5 @@ export const Basic: React.FC = () => {
     groupWidth: 0.7,
   };
 
-  return <BarChart data={data[0]} width={600} height={400} theme={theme} {...options} />;
+  return <BarChart data={data} width={600} height={400} {...options} />;
 };

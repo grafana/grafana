@@ -71,7 +71,7 @@ List the link IDs to use here. Grafana will look for matching link configuration
 
 ## [usage_insights.export]
 
-By [exporting usage logs]({{< relref "export-logs.md" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
+By [exporting usage logs]({{< relref "usage-insights/export-logs.md" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
 ### enabled
 
@@ -304,3 +304,60 @@ Time until expiration for tokens which are renewed. Should have a value higher t
 ### lease_renewal_increment
 
 New duration for renewed tokens. Vault may be configured to ignore this value and impose a stricter limit.
+
+## [security.egress]
+
+> **Note:** Available in Grafana Enterprise v7.4 and later versions.
+
+Security egress makes it possible to control outgoing traffic from the Grafana server.
+
+### host_deny_list
+
+A list of hostnames or IP addresses separated by spaces for which requests are blocked.
+
+### host_allow_list
+
+A list of hostnames or IP addresses separated by spaces for which requests are allowed. All other requests are blocked.
+
+### header_drop_list
+
+A list of headers that are stripped from the outgoing data source and alerting requests.
+
+### cookie_drop_list
+
+A list of cookies that are stripped from the outgoing data source and alerting requests.
+
+## [caching]
+
+> **Note:** Available in Grafana Enterprise v7.5 and later versions.
+> **Note:** Redis and memcached sections are in the defaults.ini setting, but Redis and Memcached backends are unavailable in Grafana Enterprise v7.5
+
+When query caching is enabled, Grafana temporarily stores the results of data source queries and serves cached responses to similar requests.
+
+### backend
+
+The caching backend to use when storing cached queries. Options: memory
+
+### enabled
+
+Setting 'enabled' to true enables caching datasource queries for all data sources.
+
+### ttl
+
+The default TTL (time to live) if no other TTL is available.
+
+## [caching.memory]
+
+### gc_interval
+
+When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
+
+## [caching.redis]
+
+### url
+
+The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
+
+### prefix
+
+A string that prefixes all Redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.

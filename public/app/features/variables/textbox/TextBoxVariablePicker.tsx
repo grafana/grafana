@@ -10,7 +10,7 @@ import { useDispatch } from 'react-redux';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
-export function TextBoxVariablePicker({ variable }: Props): ReactElement {
+export function TextBoxVariablePicker({ variable, onVariableChange }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState(variable.current.value);
   useEffect(() => {
@@ -27,6 +27,15 @@ export function TextBoxVariablePicker({ variable }: Props): ReactElement {
         toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
       )
     );
+
+    if (onVariableChange) {
+      onVariableChange({
+        ...variable,
+        current: { ...variable.current, value: updatedValue },
+      });
+      return;
+    }
+
     variableAdapters.get(variable.type).updateOptions(variable);
   }, [dispatch, variable, updatedValue]);
 

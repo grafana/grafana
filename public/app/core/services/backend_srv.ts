@@ -1,4 +1,4 @@
-import { from, merge, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
+import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,6 +16,8 @@ import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
+import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
+import { ShowModalReactEvent } from '../../types/events';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -212,6 +214,19 @@ export class BackendSrv implements BackendService {
               const firstAttempt = i === 0 && options.retry === 0;
 
               if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
+                if (error.data?.error?.id === 'ERR_TOKEN_REVOKED') {
+                  this.dependencies.appEvents.publish(
+                    new ShowModalReactEvent({
+                      component: TokenRevokedModal,
+                      props: {
+                        maxConcurrentSessions: error.data?.error?.maxConcurrentSessions,
+                      },
+                    })
+                  );
+
+                  return of({});
+                }
+
                 return from(this.loginPing()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {

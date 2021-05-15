@@ -1,15 +1,15 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -32,47 +32,65 @@ type DataSourcePlugin struct {
 	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`
 	SDK        bool   `json:"sdk,omitempty"`
+
+	client       *grpcplugin.Client
+	legacyClient *grpcplugin.LegacyClient
+	logger       log.Logger
 }
 
-func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
+func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
+	interface{}, error) {
 	if err := decoder.Decode(p); err != nil {
-		return errutil.Wrapf(err, "Failed to decode datasource plugin")
-	}
-
-	if err := p.registerPlugin(base); err != nil {
-		return errutil.Wrapf(err, "Failed to register plugin")
+		return nil, errutil.Wrapf(err, "Failed to decode datasource plugin")
 	}
 
 	if p.Backend {
 		cmd := ComposePluginStartCommand(p.Executable)
-		fullpath := filepath.Join(p.PluginDir, cmd)
+		fullpath := filepath.Join(base.PluginDir, cmd)
 		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 			OnLegacyStart: p.onLegacyPluginStart,
 			OnStart:       p.onPluginStart,
 		})
 		if err := backendPluginManager.Register(p.Id, factory); err != nil {
-			return errutil.Wrapf(err, "Failed to register backend plugin")
+			return nil, errutil.Wrapf(err, "failed to register backend plugin")
 		}
 	}
 
-	DataSources[p.Id] = p
-	return nil
+	return p, nil
+}
+
+func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource, query DataQuery) (DataResponse, error) {
+	if !p.CanHandleDataQueries() {
+		return DataResponse{}, fmt.Errorf("plugin %q can't handle data queries", p.Id)
+	}
+
+	if p.client != nil {
+		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
+		return endpoint.Query(ctx, dsInfo, query)
+	}
+
+	endpoint := newDataSourcePluginWrapper(p.logger, p.legacyClient.DatasourcePlugin)
+	return endpoint.Query(ctx, dsInfo, query)
 }
 
 func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
-	tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
-	})
+	p.legacyClient = client
+	p.logger = logger
 
 	return nil
 }
 
+func (p *DataSourcePlugin) CanHandleDataQueries() bool {
+	return p.client != nil || p.legacyClient != nil
+}
+
 func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
-	if client.DataPlugin != nil {
-		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil
-		})
+	if client.DataPlugin == nil {
+		return nil
 	}
+
+	p.client = client
+	p.logger = logger
 
 	return nil
 }

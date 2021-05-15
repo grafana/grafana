@@ -1,8 +1,8 @@
 FROM debian:testing-20210111-slim
 
 # Use ARG so as not to persist environment variable in image
-ARG GOVERSION=1.15.7 \
-  GO_CHECKSUM=0d142143794721bb63ce6c8a6180c4062bcf8ef4715e7d6d6609f3a8282629b3 \
+ARG GOVERSION=1.16.1 \
+  GO_CHECKSUM=3edc22f8332231c3ba8be246f184b736b8d28f06ce24f08168d8ecf052549769 \
   DEBIAN_FRONTEND=noninteractive
 
 ENV PATH=/usr/local/go/bin:$PATH \
@@ -26,7 +26,8 @@ ARG DEBIAN_FRONTEND=noninteractive \
   GOOGLE_SDK_VERSION=325.0.0 \
   GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7
 
-RUN apt update && apt install -yq curl python3-pip && pip3 install -U awscli crcmod && \
+# Need procps for pkill utility, which is used by the build pipeline tool to restart the GPG agent
+RUN apt update && apt install -yq curl python3-pip procps && pip3 install -U awscli crcmod && \
     curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
     echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status && \
     tar xzf google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz -C /opt && \

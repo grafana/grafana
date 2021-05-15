@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
-import uPlot, { Options, PaddingSide } from 'uplot';
-import { getTimeZoneInfo, TimeZone } from '@grafana/data';
+import { Options, PaddingSide } from 'uplot';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
+import useMountedState from 'react-use/lib/useMountedState';
 
 export const usePlotPlugins = () => {
   /**
@@ -108,22 +108,11 @@ export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
   hooks: {},
 };
 
-export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
+export const usePlotConfig = (width: number, height: number, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
   const [isConfigReady, setIsConfigReady] = useState(false);
 
   const currentConfig = useRef<Options>();
-  const tzDate = useMemo(() => {
-    let fmt = undefined;
-
-    const tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
-
-    if (tz) {
-      fmt = (ts: number) => uPlot.tzDate(new Date(ts), tz);
-    }
-
-    return fmt;
-  }, [timeZone]);
 
   useLayoutEffect(() => {
     if (!arePluginsReady) {
@@ -137,12 +126,11 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
       plugins: Object.entries(plugins).map((p) => ({
         hooks: p[1].hooks,
       })),
-      tzDate,
       ...configBuilder.getConfig(),
     };
 
     setIsConfigReady(true);
-  }, [arePluginsReady, plugins, width, height, tzDate, configBuilder]);
+  }, [arePluginsReady, plugins, width, height, configBuilder]);
 
   return {
     isConfigReady,
@@ -158,6 +146,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
  */
 export const useRefreshAfterGraphRendered = (pluginId: string) => {
   const pluginsApi = usePlotPluginContext();
+  const isMounted = useMountedState();
   const [renderToken, setRenderToken] = useState(0);
 
   useEffect(() => {
@@ -166,7 +155,9 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
       hooks: {
         // refresh events when uPlot draws
         draw: () => {
-          setRenderToken((c) => c + 1);
+          if (isMounted()) {
+            setRenderToken((c) => c + 1);
+          }
           return;
         },
       },

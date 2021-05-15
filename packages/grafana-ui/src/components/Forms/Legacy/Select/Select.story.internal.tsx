@@ -1,41 +1,64 @@
 import React, { useState, useCallback } from 'react';
 import { action } from '@storybook/addon-actions';
-import { withKnobs, object } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
 import { UseState } from '../../../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
+import { NOOP_CONTROL } from '../../../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/Legacy/Select',
   component: Select,
-  decorators: [withCenteredStory, withKnobs],
+  decorators: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    width: { control: { type: 'range', min: 5, max: 30 } },
+    className: NOOP_CONTROL,
+    menuPlacement: NOOP_CONTROL,
+    menuPosition: NOOP_CONTROL,
+    maxMenuHeight: NOOP_CONTROL,
+    minMenuHeight: NOOP_CONTROL,
+    maxVisibleValues: NOOP_CONTROL,
+    prefix: NOOP_CONTROL,
+    renderControl: NOOP_CONTROL,
+    value: NOOP_CONTROL,
+    options: NOOP_CONTROL,
+    tooltipContent: NOOP_CONTROL,
+    components: NOOP_CONTROL,
+    inputValue: NOOP_CONTROL,
+    id: NOOP_CONTROL,
+    inputId: NOOP_CONTROL,
+    defaultValue: NOOP_CONTROL,
+    loading: NOOP_CONTROL,
+    'aria-label': NOOP_CONTROL,
+  },
 };
 
-const initialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
+const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
 
-const options = object<Array<SelectableValue<string>>>('Options:', [
-  initialState,
+const options = [
+  initialValue,
   { label: 'Another label', value: 'Another value 1' },
   { label: 'Another label', value: 'Another value 2' },
   { label: 'Another label', value: 'Another value 3' },
   { label: 'Another label', value: 'Another value 4' },
   { label: 'Another label', value: 'Another value 5' },
   { label: 'Another label', value: 'Another value ' },
-]);
+];
 
-export const basic = () => {
-  const value = object<SelectableValue<string>>('Selected Value:', initialState);
-
+export const Basic: Story = (args) => {
   return (
-    <UseState initialState={value}>
+    <UseState initialState={initialValue}>
       {(value, updateValue) => {
         return (
           <Select
-            placeholder="Choose..."
-            options={options}
-            width={20}
-            onChange={(value) => {
+            {...args}
+            onChange={(value: SelectableValue<string>) => {
               action('onChanged fired')(value);
               updateValue(value);
             }}
@@ -45,34 +68,15 @@ export const basic = () => {
     </UseState>
   );
 };
-
-export const withAllowCustomValue = () => {
-  // @ts-ignore
-  const value = object<SelectableValue<string>>('Selected Value:', null);
-
-  return (
-    <UseState initialState={value}>
-      {(value, updateValue) => {
-        return (
-          <Select
-            placeholder="Choose..."
-            options={options}
-            width={20}
-            allowCustomValue={true}
-            onChange={(value) => {
-              action('onChanged fired')(value);
-              updateValue(value);
-            }}
-          />
-        );
-      }}
-    </UseState>
-  );
+Basic.args = {
+  placeholder: 'Choose...',
+  options: options,
+  width: 20,
 };
 
-export const AsyncSelect = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [value, setValue] = useState<SelectableValue<any>>();
+export const AsyncSelect: Story = (args) => {
+  const [isLoading, setIsLoading] = useState<boolean>(args.loading);
+  const [asyncValue, setAsyncValue] = useState<SelectableValue<any>>();
   const loadAsyncOptions = useCallback((inputValue) => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(() => {
@@ -83,15 +87,19 @@ export const AsyncSelect = () => {
   }, []);
   return (
     <AsyncSelectComponent
-      value={value}
-      defaultOptions
-      width={20}
+      {...args}
+      value={asyncValue}
       isLoading={isLoading}
       loadOptions={loadAsyncOptions}
       onChange={(value) => {
         action('onChange')(value);
-        setValue(value);
+        setAsyncValue(value);
       }}
     />
   );
+};
+AsyncSelect.args = {
+  loading: true,
+  defaultOptions: true,
+  width: 20,
 };

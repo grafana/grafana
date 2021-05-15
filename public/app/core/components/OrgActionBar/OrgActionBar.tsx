@@ -4,7 +4,7 @@ import { LinkButton } from '@grafana/ui';
 
 export interface Props {
   searchQuery: string;
-  setSearchQuery: (value: string) => {};
+  setSearchQuery: (value: string) => void;
   linkButton: { href: string; title: string };
   target?: string;
 }

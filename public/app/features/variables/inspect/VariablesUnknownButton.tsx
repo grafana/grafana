@@ -1,31 +1,17 @@
 import React, { FC, useMemo } from 'react';
-import { Provider } from 'react-redux';
 import { IconButton } from '@grafana/ui';
-import { createUsagesNetwork, transformUsagesToNetwork } from './utils';
-import { store } from '../../../store/store';
-import { VariableModel } from '../types';
-import { DashboardModel } from '../../dashboard/state';
+import { UsagesToNetwork } from './utils';
 import { NetworkGraphModal } from './NetworkGraphModal';
 
-interface OwnProps {
-  variable: VariableModel;
-  variables: VariableModel[];
-  dashboard: DashboardModel | null;
+interface Props {
+  id: string;
+  usages: UsagesToNetwork[];
 }
 
-interface ConnectedProps {}
+export const VariablesUnknownButton: FC<Props> = ({ id, usages }) => {
+  const network = useMemo(() => usages.find((n) => n.variable.id === id), [id, usages]);
 
-interface DispatchProps {}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
-
-export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ variable, variables, dashboard }) => {
-  const { id } = variable;
-  const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
-  const network = useMemo(() => transformUsagesToNetwork(unknown).find((n) => n.variable.id === id), [id, unknown]);
-  const unknownExist = useMemo(() => Object.keys(unknown).length > 0, [unknown]);
-
-  if (!unknownExist || !network) {
+  if (!network) {
     return null;
   }
 
@@ -44,9 +30,3 @@ export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ variable, var
     </NetworkGraphModal>
   );
 };
-
-export const VariablesUnknownButton: FC<Props> = (props) => (
-  <Provider store={store}>
-    <UnProvidedVariablesUnknownGraphButton {...props} />
-  </Provider>
-);

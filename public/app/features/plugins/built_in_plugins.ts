@@ -59,6 +59,7 @@ import * as barChartPanel from 'app/plugins/panel/barchart/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 import * as livePanel from 'app/plugins/panel/live/module';
+import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 
@@ -96,6 +97,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/live/module': livePanel,
+  'app/plugins/panel/debug/module': debugPanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,

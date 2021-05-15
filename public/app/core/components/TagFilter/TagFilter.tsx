@@ -93,13 +93,13 @@ export const TagFilter: FC<Props> = ({
   };
 
   return (
-    <div className={styles.tagFilter} aria-label="Tag filter">
+    <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
         <span className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags
         </span>
       )}
-      <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
+      <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };

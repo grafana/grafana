@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 )
@@ -125,12 +125,12 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			for k, v := range commonAzureModelProps {
 				tt.azureMonitorVariedProperties[k] = v
 			}
-			tsdbQuery := &tsdb.TsdbQuery{
-				TimeRange: &tsdb.TimeRange{
+			tsdbQuery := plugins.DataQuery{
+				TimeRange: &plugins.DataTimeRange{
 					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 				},
-				Queries: []*tsdb.Query{
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{
 							JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -142,8 +142,8 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 							"azureMonitor": tt.azureMonitorVariedProperties,
 						},
 						),
-						RefId:      "A",
-						IntervalMs: tt.queryIntervalMS,
+						RefID:      "A",
+						IntervalMS: tt.queryIntervalMS,
 					},
 				},
 			}
@@ -161,7 +161,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				Alias:  "testalias",
 			}
 
-			queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+			queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
 			require.NoError(t, err)
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -430,15 +430,16 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	}
 
 	datasource := &AzureMonitorDatasource{}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			azData := loadTestFile(t, "azuremonitor/"+tt.responseFile)
-			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-			err := datasource.parseResponse(res, azData, tt.mockQuery)
+			res := plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
+			require.NotNil(t, res)
+			dframes, err := datasource.parseResponse(azData, tt.mockQuery)
 			require.NoError(t, err)
+			require.NotNil(t, dframes)
 
-			frames, err := res.Dataframes.Decoded()
+			frames, err := dframes.Decoded()
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expectedFrames, frames, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

@@ -1,8 +1,7 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem } from './types';
-import { SeriesColorChangeHandler } from './types';
+import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { useStyles } from '../../themes/ThemeContext';
 import { styleMixins } from '../../themes';
 import { GrafanaTheme, formattedValueToString } from '@grafana/data';

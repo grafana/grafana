@@ -1,6 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
-  getAllMatches,
+  metricNamesToVariableValues,
   queryVariableReducer,
   sortVariableValues,
   updateVariableOptions,
@@ -12,7 +12,7 @@ import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';
 import { toVariablePayload } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
-import { MetricFindValue, stringToJsRegex } from '@grafana/data';
+import { MetricFindValue } from '@grafana/data';
 
 describe('queryVariableReducer', () => {
   const adapter = createQueryVariableAdapter();
@@ -307,37 +307,79 @@ describe('sortVariableValues', () => {
   });
 });
 
-describe('getAllMatches', () => {
-  it.each`
-    str                                          | regex               | expected
-    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/unknown/gi'}    | ${{}}
-    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/unknown/i'}     | ${{}}
-    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/some(\\w+)/gi'} | ${{ 0: 'somevalue', 1: 'value', index: 20, input: 'A{somelabel="atext",somevalue="avalue"}' }}
-    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/some(\\w+)/i'}  | ${{ 0: 'somelabel', 1: 'label', index: 2, input: 'A{somelabel="atext",somevalue="avalue"}' }}
-    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi'} | ${{
-  0: 'somevalue="avalue',
-  1: 'avalue',
-  2: 'atext',
-  groups: {
-    text: 'atext',
-    value: 'avalue',
-  },
-  index: 20,
-  input: 'A{somelabel="atext",somevalue="avalue"}',
-}}
-    ${'A{somelabel="atext",somevalue="avalue"}'} | ${'/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/i'} | ${{
-  0: 'somelabel="atext',
-  1: undefined,
-  2: 'atext',
-  groups: {
-    text: 'atext',
-  },
-  index: 2,
-  input: 'A{somelabel="atext",somevalue="avalue"}',
-}}
-  `('when called with str:{$str}, regex:{$regex} then it should return correct matches', ({ str, regex, expected }) => {
-    const result = getAllMatches(str, stringToJsRegex(regex));
+describe('metricNamesToVariableValues', () => {
+  const item = (str: string) => ({ text: str, value: str, selected: false });
+  const metricsNames = [
+    item('go_info{instance="demo.robustperception.io:9090",job="prometheus",version="go1.15.6"} 1 1613047998000'),
+    item('go_info{instance="demo.robustperception.io:9091",job="pushgateway",version="go1.15.6"} 1 1613047998000'),
+    item('go_info{instance="demo.robustperception.io:9093",job="alertmanager",version="go1.14.4"} 1 1613047998000'),
+    item('go_info{instance="demo.robustperception.io:9100",job="node",version="go1.14.4"} 1 1613047998000'),
+  ];
 
+  const expected1 = [
+    { value: 'demo.robustperception.io:9090', text: 'demo.robustperception.io:9090', selected: false },
+    { value: 'demo.robustperception.io:9091', text: 'demo.robustperception.io:9091', selected: false },
+    { value: 'demo.robustperception.io:9093', text: 'demo.robustperception.io:9093', selected: false },
+    { value: 'demo.robustperception.io:9100', text: 'demo.robustperception.io:9100', selected: false },
+  ];
+
+  const expected2 = [
+    { value: 'prometheus', text: 'prometheus', selected: false },
+    { value: 'pushgateway', text: 'pushgateway', selected: false },
+    { value: 'alertmanager', text: 'alertmanager', selected: false },
+    { value: 'node', text: 'node', selected: false },
+  ];
+
+  const expected3 = [
+    { value: 'demo.robustperception.io:9090', text: 'prometheus', selected: false },
+    { value: 'demo.robustperception.io:9091', text: 'pushgateway', selected: false },
+    { value: 'demo.robustperception.io:9093', text: 'alertmanager', selected: false },
+    { value: 'demo.robustperception.io:9100', text: 'node', selected: false },
+  ];
+
+  const expected4 = [
+    { value: 'demo.robustperception.io:9090', text: 'demo.robustperception.io:9090', selected: false },
+    { value: undefined, text: undefined, selected: false },
+    { value: 'demo.robustperception.io:9091', text: 'demo.robustperception.io:9091', selected: false },
+    { value: 'demo.robustperception.io:9093', text: 'demo.robustperception.io:9093', selected: false },
+    { value: 'demo.robustperception.io:9100', text: 'demo.robustperception.io:9100', selected: false },
+  ];
+
+  it.each`
+    variableRegEx                                          | expected
+    ${''}                                                  | ${metricsNames}
+    ${'/unknown/'}                                         | ${[]}
+    ${'/unknown/g'}                                        | ${[]}
+    ${'/go/'}                                              | ${metricsNames}
+    ${'/go/g'}                                             | ${metricsNames}
+    ${'/(go)/'}                                            | ${[{ value: 'go', text: 'go', selected: false }]}
+    ${'/(go)/g'}                                           | ${[{ value: 'go', text: 'go', selected: false }]}
+    ${'/(go)?/'}                                           | ${[{ value: 'go', text: 'go', selected: false }]}
+    ${'/(go)?/g'}                                          | ${[{ value: 'go', text: 'go', selected: false }, { value: undefined, text: undefined, selected: false }]}
+    ${'/go(\\w+)/'}                                        | ${[{ value: '_info', text: '_info', selected: false }]}
+    ${'/go(\\w+)/g'}                                       | ${[{ value: '_info', text: '_info', selected: false }, { value: '1', text: '1', selected: false }]}
+    ${'/.*_(\\w+)\\{/'}                                    | ${[{ value: 'info', text: 'info', selected: false }]}
+    ${'/.*_(\\w+)\\{/g'}                                   | ${[{ value: 'info', text: 'info', selected: false }]}
+    ${'/instance="(?<value>[^"]+)/'}                       | ${expected1}
+    ${'/instance="(?<value>[^"]+)/g'}                      | ${expected1}
+    ${'/instance="(?<grp1>[^"]+)/'}                        | ${expected1}
+    ${'/instance="(?<grp1>[^"]+)/g'}                       | ${expected1}
+    ${'/instancee="(?<value>[^"]+)/'}                      | ${[]}
+    ${'/job="(?<text>[^"]+)/'}                             | ${expected2}
+    ${'/job="(?<text>[^"]+)/g'}                            | ${expected2}
+    ${'/job="(?<grp2>[^"]+)/'}                             | ${expected2}
+    ${'/job="(?<grp2>[^"]+)/g'}                            | ${expected2}
+    ${'/jobb="(?<text>[^"]+)/g'}                           | ${[]}
+    ${'/instance="(?<value>[^"]+)|job="(?<text>[^"]+)/'}   | ${expected1}
+    ${'/instance="(?<value>[^"]+)|job="(?<text>[^"]+)/g'}  | ${expected3}
+    ${'/instance="(?<grp1>[^"]+)|job="(?<grp2>[^"]+)/'}    | ${expected1}
+    ${'/instance="(?<grp1>[^"]+)|job="(?<grp2>[^"]+)/g'}   | ${expected4}
+    ${'/instance="(?<value>[^"]+).*job="(?<text>[^"]+)/'}  | ${expected3}
+    ${'/instance="(?<value>[^"]+).*job="(?<text>[^"]+)/g'} | ${expected3}
+    ${'/instance="(?<grp1>[^"]+).*job="(?<grp2>[^"]+)/'}   | ${expected1}
+    ${'/instance="(?<grp1>[^"]+).*job="(?<grp2>[^"]+)/g'}  | ${expected1}
+  `('when called with variableRegEx:$variableRegEx then it return correct options', ({ variableRegEx, expected }) => {
+    const result = metricNamesToVariableValues(variableRegEx, VariableSort.disabled, metricsNames);
     expect(result).toEqual(expected);
   });
 });

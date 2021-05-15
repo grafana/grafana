@@ -531,16 +531,6 @@ describe('LokiDatasource', () => {
         expect(res).toEqual([]);
       });
     });
-
-    mocks.forEach((mock, index) => {
-      it(`should return label names according to provided rangefor Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
-
-        const res = await ds.metricFindQuery('label_names()', { range: { from: new Date(2), to: new Date(3) } });
-
-        expect(res).toEqual([{ text: 'label1' }]);
-      });
-    });
   });
 });
 

@@ -17,11 +17,6 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
   const names = useFieldDisplayNames(data);
   const selectOptions = useSelectOptions(names);
 
-  if (readOnly) {
-    const displayNames = (options.names ?? []).join(', ');
-    return <Input value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
-  }
-
   const onChange = useCallback(
     (selections: Array<SelectableValue<string>>) => {
       if (!Array.isArray(selections)) {
@@ -39,8 +34,13 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
         }, []),
       });
     },
-    [names, onChangeFromProps]
+    [names, onChangeFromProps, options]
   );
+
+  if (readOnly) {
+    const displayNames = (options.names ?? []).join(', ');
+    return <Input value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
+  }
 
   return <MultiSelect value={options.names} options={selectOptions} onChange={onChange} />;
 });

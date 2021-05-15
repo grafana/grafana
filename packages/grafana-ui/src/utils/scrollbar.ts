@@ -29,5 +29,6 @@ export function getScrollbarWidth() {
   } else {
     scrollbarWidth = 0;
   }
+
   return scrollbarWidth || 0;
 }

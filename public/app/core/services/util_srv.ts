@@ -4,10 +4,11 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
+
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AngularModalProxy } from '../components/modals/AngularModalProxy';
 import { provideTheme } from '../utils/ConfigProvider';
+import { HideModalEvent, ShowConfirmModalEvent, ShowModalEvent, ShowModalReactEvent } from '../../types/events';
 
 export class UtilSrv {
   modalScope: any;
@@ -20,10 +21,10 @@ export class UtilSrv {
   }
 
   init() {
-    appEvents.on(CoreEvents.showModal, this.showModal.bind(this), this.$rootScope);
-    appEvents.on(CoreEvents.hideModal, this.hideModal.bind(this), this.$rootScope);
-    appEvents.on(CoreEvents.showConfirmModal, this.showConfirmModal.bind(this), this.$rootScope);
-    appEvents.on(CoreEvents.showModalReact, this.showModalReact.bind(this), this.$rootScope);
+    appEvents.subscribe(ShowModalEvent, (e) => this.showModal(e.payload));
+    appEvents.subscribe(HideModalEvent, this.hideModal.bind(this));
+    appEvents.subscribe(ShowConfirmModalEvent, (e) => this.showConfirmModal(e.payload));
+    appEvents.subscribe(ShowModalReactEvent, (e) => this.showModalReact(e.payload));
   }
 
   showModalReact(options: any) {
@@ -105,11 +106,13 @@ export class UtilSrv {
     scope.confirmTextValid = scope.confirmText ? false : true;
     scope.selectors = selectors.pages.ConfirmModal;
 
-    appEvents.emit(CoreEvents.showModal, {
-      src: 'public/app/partials/confirm_modal.html',
-      scope: scope,
-      modalClass: 'confirm-modal',
-    });
+    appEvents.publish(
+      new ShowModalEvent({
+        src: 'public/app/partials/confirm_modal.html',
+        scope: scope,
+        modalClass: 'confirm-modal',
+      })
+    );
   }
 }
 

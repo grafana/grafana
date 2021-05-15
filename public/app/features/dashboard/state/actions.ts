@@ -160,7 +160,14 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
   };
 }
 
-export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch) => {
+export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, getStore) => {
+  const store = getStore();
+  const dashboard = store.dashboard.getModel();
+
+  if (dashboard) {
+    dashboard.destroy();
+  }
+
   dispatch(cleanUpDashboard());
   dispatch(cancelVariables());
 };

@@ -1,11 +1,11 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { css } from 'emotion';
 import { VariableSuggestion } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
 const { FormField, Switch } = LegacyForms;
 import { DataLinkConfig } from '../types';
 import { usePrevious } from 'react-use';
-import { DataSourcePicker } from '../../../../core/components/Select/DataSourcePicker';
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`

@@ -93,6 +93,7 @@ export default class InfluxSeries {
     _.each(this.series, (series) => {
       let titleCol: any = null;
       let timeCol: any = null;
+      let timeEndCol: any = null;
       const tagsCol: any = [];
       let textCol: any = null;
 
@@ -116,6 +117,10 @@ export default class InfluxSeries {
           textCol = index;
           return;
         }
+        if (column === this.annotation.timeEndColumn) {
+          timeEndCol = index;
+          return;
+        }
         // legacy case
         if (!titleCol && textCol !== index) {
           titleCol = index;
@@ -127,6 +132,7 @@ export default class InfluxSeries {
           annotation: this.annotation,
           time: +new Date(value[timeCol]),
           title: value[titleCol],
+          timeEnd: value[timeEndCol],
           // Remove empty values, then split in different tags for comma separated values
           tags: _.flatten(
             tagsCol

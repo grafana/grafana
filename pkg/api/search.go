@@ -80,6 +80,7 @@ func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
 			"name":        o.Name,
 			"displayName": o.DisplayName,
 			"description": o.Description,
+			"meta":        o.MetaName,
 		})
 	}
 

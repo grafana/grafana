@@ -36,11 +36,13 @@ func TestCorePlugin(t *testing.T) {
 		checkHealthCalled := false
 		callResourceCalled := false
 		factory := coreplugin.New(backend.ServeOpts{
-			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(ctx context.Context,
+				req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 				checkHealthCalled = true
 				return nil, nil
 			}),
-			CallResourceHandler: backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+			CallResourceHandler: backend.CallResourceHandlerFunc(func(ctx context.Context,
+				req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 				callResourceCalled = true
 				return nil
 			}),

@@ -18,7 +18,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 | ------------ | --------------------------------------------------------------------------------------- |
 | `Name`       | The name using which you will refer to the data source in panels, queries, and Explore. |
 | `Default`    | The default data source will be pre-selected for new panels.                            |
-| `URL`        | The URL of the Tempo instance, e.g., `http://localhost:16686`                           |
+| `URL`        | The URL of the Tempo instance, e.g., `http://tempo`                                     |
 | `Basic Auth` | Enable basic authentication to the Tempo data source.                                   |
 | `User`       | User name for basic authentication.                                                     |
 | `Password`   | Password for basic authentication.                                                      |
@@ -32,7 +32,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
 
 ## Query traces
 

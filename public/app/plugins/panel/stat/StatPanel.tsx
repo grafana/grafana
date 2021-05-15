@@ -69,7 +69,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
+        <DataLinksContextMenu links={getLinks} config={value.field}>
           {(api) => {
             return this.renderComponent(valueProps, api);
           }}

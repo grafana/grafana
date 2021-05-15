@@ -74,6 +74,7 @@ func getV2PluginSet() goplugin.PluginSet {
 		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
 		"resource":    &grpcplugin.ResourceGRPCPlugin{},
 		"data":        &grpcplugin.DataGRPCPlugin{},
+		"stream":      &grpcplugin.StreamGRPCPlugin{},
 		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 	}
 }
@@ -120,4 +121,5 @@ type LegacyClient struct {
 type Client struct {
 	DataPlugin     grpcplugin.DataClient
 	RendererPlugin pluginextensionv2.RendererPlugin
+	StreamClient   grpcplugin.StreamClient
 }

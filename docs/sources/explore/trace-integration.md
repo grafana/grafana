@@ -66,3 +66,35 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 {{< docs-imagebox img="/img/docs/explore/trace-to-log-7-4.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
+
+## Data API
+
+This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
+
+Data source needs to return data frame and set `frame.meta.preferredVisualisationType = 'trace'`.
+
+### Data frame structure
+
+Required fields:
+
+| Field name | Type    | Description | 
+|------------|---------|-------------|
+| traceID    | string  | Identifier for the entire trace. There should be only one trace in the data frame. |
+| spanID     | string  | Identifier for the current span. SpanIDs should be unique per trace. |
+| parentSpanID | string  | SpanID of the parent span to create child parent relationship in the trace view. Can be `undefined` for root span without parent. |
+| serviceName | string  | Name of the service this span is part of. |
+| serviceTags | TraceKeyValuePair[] | List of tags relevant for the service. |
+| startTime  | number | Start time of the span in millisecond epoch time. |
+| duration   | number | Duration of the span in milliseconds. |
+
+Optional fields:
+
+| Field name | Type    | Description | 
+|------------|---------|-------------|
+| logs       | TraceLog[] | List of logs associated with the current span. |
+| tags       | TraceKeyValuePair[]  | List of tags associated with the current span. |
+| warnings   | string[]  | List of warnings associated with the current span. |
+| stackTraces | string[] | List of stack traces associated with the current span. |
+| errorIconColor | string | Color of the error icon in case span is tagged with `error: true`. |
+
+For details about the types see [TraceSpanRow](https://grafana.com/docs/grafana/latest/packages_api/data/tracespanrow/), [TraceKeyValuePair](https://grafana.com/docs/grafana/latest/packages_api/data/tracekeyvaluepair/) and [TraceLog](https://grafana.com/docs/grafana/latest/packages_api/data/tracelog/)

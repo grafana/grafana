@@ -112,7 +112,7 @@ export default class CloudMonitoringMetricFindQuery {
     }
     const refId = 'handleResourceTypeQueryQueryType';
     const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName);
-    return labels['resource.type'].map(this.toFindQueryResult);
+    return labels['resource.type']?.map(this.toFindQueryResult) ?? [];
   }
 
   async handleAlignersQuery({ selectedMetricType, projectName }: CloudMonitoringVariableQuery) {

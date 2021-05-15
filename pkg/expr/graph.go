@@ -28,7 +28,7 @@ type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
 	NodeType() NodeType
 	RefID() string
-	Execute(c context.Context, vars mathexp.Vars) (mathexp.Results, error)
+	Execute(c context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error)
 	String() string
 }
 
@@ -37,10 +37,10 @@ type DataPipeline []Node
 
 // execute runs all the command/datasource requests in the pipeline return a
 // map of the refId of the of each command
-func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
+func (dp *DataPipeline) execute(c context.Context, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 	for _, node := range *dp {
-		res, err := node.Execute(c, vars)
+		res, err := node.Execute(c, vars, s)
 		if err != nil {
 			return nil, err
 		}
@@ -52,8 +52,8 @@ func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
-func buildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
-	graph, err := buildDependencyGraph(req)
+func (s *Service) buildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
+	graph, err := s.buildDependencyGraph(req)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +67,8 @@ func buildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func buildDependencyGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
-	graph, err := buildGraph(req)
+func (s *Service) buildDependencyGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
+	graph, err := s.buildGraph(req)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 }
 
 // buildGraph creates a new graph populated with nodes for every query.
-func buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
+func (s *Service) buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for _, query := range req.Queries {
@@ -139,7 +139,7 @@ func buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
 		case DatasourceName:
 			node, err = buildCMDNode(dp, rn)
 		default: // If it's not an expression query, it's a data source query.
-			node, err = buildDSNode(dp, rn, req.PluginContext.OrgID)
+			node, err = s.buildDSNode(dp, rn, req.PluginContext.OrgID)
 		}
 		if err != nil {
 			return nil, err

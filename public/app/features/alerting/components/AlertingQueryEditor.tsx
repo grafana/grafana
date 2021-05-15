@@ -1,28 +1,33 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { RefreshPicker, stylesFactory } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 import { QueryGroup } from '../../query/components/QueryGroup';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { onRunQueries, queryOptionsChange } from '../state/actions';
 import { QueryGroupOptions, StoreState } from 'app/types';
 
+function mapStateToProps(state: StoreState) {
+  return {
+    queryOptions: state.alertDefinition.getQueryOptions(),
+    queryRunner: state.alertDefinition.queryRunner,
+  };
+}
+
+const mapDispatchToProps = {
+  queryOptionsChange,
+  onRunQueries,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 interface OwnProps {}
 
-interface ConnectedProps {
-  queryOptions: QueryGroupOptions;
-  queryRunner: PanelQueryRunner;
-}
-interface DispatchProps {
-  queryOptionsChange: typeof queryOptionsChange;
-  onRunQueries: typeof onRunQueries;
-}
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
-type Props = ConnectedProps & DispatchProps & OwnProps;
-
-export class AlertingQueryEditor extends PureComponent<Props> {
+class AlertingQueryEditorUnconnected extends PureComponent<Props> {
   onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {
     this.props.queryOptionsChange(queryOptions);
   };
@@ -51,7 +56,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
             />
           </div>
           <QueryGroup
-            queryRunner={queryRunner}
+            queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
             options={queryOptions}
             onRunQueries={this.onRunQueries}
             onOptionsChange={this.onQueryOptionsChange}
@@ -62,19 +67,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
-  return {
-    queryOptions: state.alertDefinition.queryOptions,
-    queryRunner: state.alertDefinition.queryRunner,
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  queryOptionsChange,
-  onRunQueries,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(AlertingQueryEditor);
+export const AlertingQueryEditor = connector(AlertingQueryEditorUnconnected);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

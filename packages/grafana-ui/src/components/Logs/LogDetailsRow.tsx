@@ -10,7 +10,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 //Components
 import { LogLabelStats } from './LogLabelStats';
 import { IconButton } from '../IconButton/IconButton';
-import { FieldLink } from './FieldLink';
+import { DataLinkButton } from '../DataLinks/DataLinkButton';
 
 export interface Props extends Themeable {
   parsedValue: string;
@@ -158,7 +158,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               return (
                 <>
                   &nbsp;
-                  <FieldLink link={link} />
+                  <DataLinkButton link={link} />
                 </>
               );
             })}

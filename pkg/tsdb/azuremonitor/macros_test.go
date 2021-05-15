@@ -9,77 +9,77 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAzureLogAnalyticsMacros(t *testing.T) {
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-	timeRange := &tsdb.TimeRange{
+	timeRange := plugins.DataTimeRange{
 		From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 		To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 	}
 
 	tests := []struct {
 		name      string
-		query     *tsdb.Query
-		timeRange *tsdb.TimeRange
+		query     plugins.DataSubQuery
+		timeRange plugins.DataTimeRange
 		kql       string
 		expected  string
 		Err       require.ErrorAssertionFunc
 	}{
 		{
 			name:     "invalid macro should be ignored",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      "$__invalid()",
 			expected: "$__invalid()",
 			Err:      require.NoError,
 		},
 		{
 			name:     "Kusto variables should be ignored",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      ") on $left.b == $right.y",
 			expected: ") on $left.b == $right.y",
 			Err:      require.NoError,
 		},
 		{
 			name:     "$__contains macro with a multi template variable that has multiple selected values as a parameter should build in clause",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      "$__contains(col, 'val1','val2')",
 			expected: "['col'] in ('val1','val2')",
 			Err:      require.NoError,
 		},
 		{
 			name:     "$__contains macro with a multi template variable that has a single selected value as a parameter should build in clause",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      "$__contains(col, 'val1' )",
 			expected: "['col'] in ('val1')",
 			Err:      require.NoError,
 		},
 		{
 			name:     "$__contains macro with multi template variable has custom All value as a parameter should return a true expression",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      "$__contains(col, all)",
 			expected: "1 == 1",
 			Err:      require.NoError,
 		},
 		{
 			name:     "$__timeFilter has no column parameter should use default time field",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      "$__timeFilter()",
 			expected: "['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z')",
 			Err:      require.NoError,
 		},
 		{
 			name:     "$__timeFilter has time field parameter",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      "$__timeFilter(myTimeField)",
 			expected: "['myTimeField'] >= datetime('2018-03-15T13:00:00Z') and ['myTimeField'] <= datetime('2018-03-15T13:34:00Z')",
 			Err:      require.NoError,
 		},
 		{
 			name:     "$__timeFrom and $__timeTo is in the query and range is a specific interval",
-			query:    &tsdb.Query{},
+			query:    plugins.DataSubQuery{},
 			kql:      "myTimeField >= $__timeFrom() and myTimeField <= $__timeTo()",
 			expected: "myTimeField >= datetime('2018-03-15T13:00:00Z') and myTimeField <= datetime('2018-03-15T13:34:00Z')",
 			Err:      require.NoError,
@@ -87,7 +87,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 		{
 			name:      "$__interval should use the defined interval from the query",
 			timeRange: timeRange,
-			query: &tsdb.Query{
+			query: plugins.DataSubQuery{
 				Model: simplejson.NewFromAny(map[string]interface{}{
 					"interval": "5m",
 				}),
@@ -98,7 +98,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 		},
 		{
 			name: "$__interval should use the default interval if none is specified",
-			query: &tsdb.Query{
+			query: plugins.DataSubQuery{
 				DataSource: &models.DataSource{},
 				Model:      simplejson.NewFromAny(map[string]interface{}{}),
 			},
@@ -108,7 +108,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 		},
 		{
 			name: "$__escapeMulti with multi template variable should replace values with KQL style escaped strings",
-			query: &tsdb.Query{
+			query: plugins.DataSubQuery{
 				DataSource: &models.DataSource{},
 				Model:      simplejson.NewFromAny(map[string]interface{}{}),
 			},
@@ -118,7 +118,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 		},
 		{
 			name: "$__escapeMulti with multi template variable and has one selected value that contains comma",
-			query: &tsdb.Query{
+			query: plugins.DataSubQuery{
 				DataSource: &models.DataSource{},
 				Model:      simplejson.NewFromAny(map[string]interface{}{}),
 			},
@@ -128,7 +128,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 		},
 		{
 			name: "$__escapeMulti with multi template variable and is not wrapped in single quotes should fail",
-			query: &tsdb.Query{
+			query: plugins.DataSubQuery{
 				DataSource: &models.DataSource{},
 				Model:      simplejson.NewFromAny(map[string]interface{}{}),
 			},

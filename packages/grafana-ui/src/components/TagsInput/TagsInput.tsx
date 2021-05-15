@@ -1,122 +1,87 @@
-import React, { ChangeEvent, KeyboardEvent, PureComponent } from 'react';
-import { css, cx } from 'emotion';
-import { stylesFactory } from '../../themes/stylesFactory';
+import React, { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
+import { css } from 'emotion';
 import { Button } from '../Button';
-import { Input } from '../Forms/Legacy/Input/Input';
 import { TagItem } from './TagItem';
+import { useStyles } from '../../themes/ThemeContext';
+import { GrafanaTheme } from '@grafana/data';
+import { Input } from '../Input/Input';
 
-interface Props {
+export interface Props {
   placeholder?: string;
   tags?: string[];
-
   onChange: (tags: string[]) => void;
 }
 
-interface State {
-  newTag: string;
-  tags: string[];
-}
+export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange }) => {
+  const [newTagName, setNewName] = useState('');
+  const styles = useStyles(getStyles);
 
-export class TagsInput extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      newTag: '',
-      tags: this.props.tags || [],
-    };
-  }
-
-  onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      newTag: event.target.value,
-    });
+  const onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setNewName(event.target.value);
   };
 
-  onRemove = (tagToRemove: string) => {
-    this.setState(
-      (prevState: State) => ({
-        ...prevState,
-        tags: prevState.tags.filter((tag) => tagToRemove !== tag),
-      }),
-      () => this.onChange()
-    );
+  const onRemove = (tagToRemove: string) => {
+    onChange(tags?.filter((x) => x !== tagToRemove));
   };
 
-  // Using React.MouseEvent to avoid tslint error
-  onAdd = (event: React.MouseEvent) => {
+  const onAdd = (event: React.MouseEvent) => {
     event.preventDefault();
-    if (this.state.newTag !== '') {
-      this.setNewTags();
-    }
+    onChange(tags.concat(newTagName));
+    setNewName('');
   };
 
-  onKeyboardAdd = (event: KeyboardEvent) => {
+  const onKeyboardAdd = (event: KeyboardEvent) => {
     event.preventDefault();
-    if (event.key === 'Enter' && this.state.newTag !== '') {
-      this.setNewTags();
+    if (event.key === 'Enter' && newTagName !== '') {
+      onChange(tags.concat(newTagName));
+      setNewName('');
     }
   };
 
-  setNewTags = () => {
-    // We don't want to duplicate tags, clearing the input if
-    // the user is trying to add the same tag.
-    if (!this.state.tags.includes(this.state.newTag)) {
-      this.setState(
-        (prevState: State) => ({
-          ...prevState,
-          tags: [...prevState.tags, prevState.newTag],
-          newTag: '',
-        }),
-        () => this.onChange()
-      );
-    } else {
-      this.setState({ newTag: '' });
-    }
-  };
-
-  onChange = () => {
-    this.props.onChange(this.state.tags);
-  };
-
-  render() {
-    const { placeholder = 'Add name' } = this.props;
-    const { tags, newTag } = this.state;
-
-    const getStyles = stylesFactory(() => ({
-      tagsCloudStyle: css`
-        display: flex;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-      `,
-
-      addButtonStyle: css`
-        margin-left: 8px;
-      `,
-    }));
-
-    return (
-      <div className="width-20">
-        <div
-          className={cx(
-            ['gf-form-inline'],
-            css`
-              margin-bottom: 4px;
-            `
-          )}
-        >
-          <Input placeholder={placeholder} onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
-          <Button className={getStyles().addButtonStyle} onClick={this.onAdd} variant="secondary" size="md">
-            Add
-          </Button>
-        </div>
-        <div className={getStyles().tagsCloudStyle}>
-          {tags &&
-            tags.map((tag: string, index: number) => {
-              return <TagItem key={`${tag}-${index}`} name={tag} onRemove={this.onRemove} />;
-            })}
-        </div>
+  return (
+    <div className={styles.wrapper}>
+      <div className={styles.tags}>
+        {tags?.map((tag: string, index: number) => {
+          return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
+        })}
       </div>
-    );
-  }
-}
+      <div>
+        <Input
+          placeholder={placeholder}
+          onChange={onNameChange}
+          value={newTagName}
+          onKeyUp={onKeyboardAdd}
+          suffix={
+            <Button
+              variant="link"
+              className={styles.addButtonStyle}
+              onClick={onAdd}
+              size="md"
+              disabled={newTagName.length === 0}
+            >
+              Add
+            </Button>
+          }
+        />
+      </div>
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme) => ({
+  wrapper: css`
+    height: ${theme.spacing.formInputHeight}px;
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+  `,
+  tags: css`
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-right: ${theme.spacing.xs};
+  `,
+  addButtonStyle: css`
+    margin: 0 -${theme.spacing.sm};
+  `,
+});

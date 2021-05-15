@@ -79,12 +79,14 @@ export const PIPE_OPERATORS: CompletionItem[] = [
   {
     label: 'label_format',
     insertText: 'label_format',
-    documentation: 'Only available in Loki 2.0+.',
+    documentation:
+      'Use to rename, modify or add labels. For example, | label_format foo=bar . Only available in Loki 2.0+.',
   },
   {
     label: 'line_format',
     insertText: 'line_format',
-    documentation: 'Only available in Loki 2.0+.',
+    documentation:
+      'Rewrites log line content. For example, | line_format "{{.query}} {{.duration}}" . Only available in Loki 2.0+.',
   },
 ];
 

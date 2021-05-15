@@ -11,6 +11,7 @@ as info on deprecations, breaking changes and plugin development read the [relea
 
 ## Grafana 7
 
+- [What's new in 7.5]({{< relref "whats-new-in-v7-5" >}})
 - [What's new in 7.4]({{< relref "whats-new-in-v7-4" >}})
 - [What's new in 7.3]({{< relref "whats-new-in-v7-3" >}})
 - [What's new in 7.2]({{< relref "whats-new-in-v7-2" >}})

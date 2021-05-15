@@ -6,6 +6,7 @@ import {
   addVariable,
   changeVariableOrder,
   changeVariableProp,
+  changeVariableType,
   duplicateVariable,
   removeVariable,
   setCurrentVariableValue,
@@ -16,7 +17,7 @@ import {
   variableStateNotStarted,
 } from './sharedReducer';
 import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from './types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload, VariableIdentifier } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
@@ -485,6 +486,38 @@ describe('sharedReducer', () => {
           '0': {
             ...initialState[0],
             name: 'A new name',
+          },
+        });
+    });
+  });
+
+  describe('when changeVariableType is dispatched', () => {
+    it('then state should be correct', () => {
+      const queryAdapter = createQueryVariableAdapter();
+      const { initialState: queryAdapterState } = getVariableTestContext(queryAdapter);
+      const constantAdapter = createConstantVariableAdapter();
+      const { initialState: constantAdapterState } = getVariableTestContext(constantAdapter);
+      const newType = 'constant' as VariableType;
+      const identifier: VariableIdentifier = { id: '0', type: 'query' };
+      const payload = toVariablePayload(identifier, { newType });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(queryAdapterState))
+        .whenActionIsDispatched(changeVariableNameSucceeded(toVariablePayload(identifier, { newName: 'test' })))
+        .whenActionIsDispatched(
+          changeVariableProp(toVariablePayload(identifier, { propName: 'description', propValue: 'new description' }))
+        )
+        .whenActionIsDispatched(
+          changeVariableProp(toVariablePayload(identifier, { propName: 'label', propValue: 'new label' }))
+        )
+        .whenActionIsDispatched(changeVariableType(payload))
+        .thenStateShouldEqual({
+          ...constantAdapterState,
+          '0': {
+            ...constantAdapterState[0],
+            name: 'test',
+            description: 'new description',
+            label: 'new label',
+            type: 'constant',
           },
         });
     });
