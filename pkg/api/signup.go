@@ -20,7 +20,6 @@ func GetSignUpOptions(c *models.ReqContext) response.Response {
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
 		"autoAssignOrg":      setting.AutoAssignOrg,
 	})
-
 }
 
 // POST /api/user/signup

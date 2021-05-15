@@ -187,7 +187,6 @@ func DeleteDataSourceByName(c *models.ReqContext) response.Response {
 		"message": "Data source deleted",
 		"id":      getCmd.Result.Id,
 	})
-
 }
 
 func validateURL(tp string, u string) response.Response {
@@ -224,7 +223,6 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) respon
 		"name":       cmd.Result.Name,
 		"datasource": ds,
 	})
-
 }
 
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
@@ -268,7 +266,6 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 		"name":       cmd.Name,
 		"datasource": dtos,
 	})
-
 }
 
 func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {

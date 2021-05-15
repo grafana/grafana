@@ -44,7 +44,6 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) response.Response {
 				"message": "User is already member of this organization",
 				"userId":  cmd.UserId,
 			})
-
 		}
 		return response.Error(http.StatusInternalServerError, "Could not add user to organization", err)
 	}
@@ -53,7 +52,6 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) response.Response {
 		"message": "User added to organization",
 		"userId":  cmd.UserId,
 	})
-
 }
 
 // GET /api/org/users

@@ -280,7 +280,6 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
 		"id":      dash.Id,
 	})
-
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
@@ -351,7 +350,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 				"status":  "pending",
 				"message": "changes were broadcast to the gitops listener",
 			})
-
 		}
 
 		if liveerr != nil {
@@ -386,7 +384,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		"uid":     dashboard.Uid,
 		"url":     dashboard.GetUrl(),
 	})
-
 }
 
 func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Response {

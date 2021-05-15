@@ -45,7 +45,6 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamComm
 		"teamId":  team.Id,
 		"message": "Team created",
 	})
-
 }
 
 // PUT /api/teams/:teamId

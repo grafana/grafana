@@ -66,7 +66,6 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext, cmd models.AddTeamMemb
 	return response.JSON(http.StatusOK, &util.DynMap{
 		"message": "Member added to Team",
 	})
-
 }
 
 // PUT /:teamId/members/:userId

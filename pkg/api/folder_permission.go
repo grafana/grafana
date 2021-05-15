@@ -131,5 +131,4 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		"id":      folder.Id,
 		"title":   folder.Title,
 	})
-
 }

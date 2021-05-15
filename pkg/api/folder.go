@@ -106,7 +106,6 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
 		"id":      f.Id,
 	})
-
 }
 
 func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {

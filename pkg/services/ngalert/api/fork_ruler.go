@@ -116,7 +116,6 @@ func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apim
 				payloadType,
 			),
 			nil)
-
 	}
 
 	switch backendType {

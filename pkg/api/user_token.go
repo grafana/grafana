@@ -42,7 +42,6 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User logged out",
 	})
-
 }
 
 func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int64) response.Response {
@@ -145,5 +144,4 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User auth token revoked",
 	})
-
 }

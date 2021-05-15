@@ -129,7 +129,6 @@ func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto 
 		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName),
 		"userId":  user.Id,
 	})
-
 }
 
 func RevokeInvite(c *models.ReqContext) response.Response {
@@ -163,7 +162,6 @@ func GetInviteInfoByCode(c *models.ReqContext) response.Response {
 		Username:  invite.Email,
 		InvitedBy: util.StringsFallback3(invite.InvitedByName, invite.InvitedByLogin, invite.InvitedByEmail),
 	})
-
 }
 
 func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.CompleteInviteForm) response.Response {
@@ -221,7 +219,6 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 		"message": "User created and logged in",
 		"id":      user.Id,
 	})
-
 }
 
 func updateTempUserStatus(code string, status models.TempUserStatus) (bool, response.Response) {

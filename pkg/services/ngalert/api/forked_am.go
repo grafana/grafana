@@ -124,11 +124,7 @@ func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apim
 	}
 
 	if err := body.AlertmanagerConfig.ReceiverType().MatchesBackend(b); err != nil {
-		return response.Error(http.StatusBadRequest,
-
-			"bad match",
-			err)
-
+		return response.Error(http.StatusBadRequest, "bad match", err)
 	}
 
 	return s.RoutePostAlertingConfig(ctx, body)

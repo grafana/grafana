@@ -237,7 +237,6 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response 
 		"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
 		"id":      query.Result.Id,
 	})
-
 }
 
 // DELETE /api/snapshots/:key
@@ -287,7 +286,6 @@ func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 		"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
 		"id":      query.Result.Id,
 	})
-
 }
 
 // GET /api/dashboard/snapshots

@@ -89,7 +89,6 @@ func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) response.
 		"message": "Annotation added",
 		"id":      startID,
 	})
-
 }
 
 func formatGraphiteAnnotation(what string, data string) string {
@@ -149,7 +148,6 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 		"message": "Graphite annotation added",
 		"id":      item.Id,
 	})
-
 }
 
 func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) response.Response {

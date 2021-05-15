@@ -97,7 +97,6 @@ func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Respo
 		"orgId":   cmd.Result.Id,
 		"message": "Organization created",
 	})
-
 }
 
 // PUT /api/org
