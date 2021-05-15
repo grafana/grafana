@@ -1264,6 +1264,31 @@ var expAvailableChannelJsonOutput = `
 		"secure": false
 	  }
 	]
+  },
+  {
+    "type": "googlechat",
+    "name": "Google Hangouts Chat",
+    "heading": "Google Hangouts Chat settings",
+    "description": "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Url",
+        "description": "",
+        "placeholder": "Google Hangouts Chat incoming webhook url",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
   }
 ]
 `
