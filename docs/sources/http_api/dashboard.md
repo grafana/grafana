@@ -44,6 +44,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "refresh": "25s"
   },
   "folderId": 0,
+  "message": "Made changes to xyz",
   "overwrite": false
 }
 ```

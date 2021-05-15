@@ -12,8 +12,8 @@ This section explains how to use Time series field options to visualize time ser
 
 ## Create the panel
 
-1. [Add a panel](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the [Panel editor](https://grafana.com/docs/grafana/latest/panels/panel-editor/), click the **Field** tab.
+1. [Add a panel]({{< relref "../../add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
+1. In the [Panel editor]({{< relref "../../panel-editor.md" >}}), click the **Field** tab..
 1. In Style, click **Points**.
 
 ## Style the points
@@ -42,3 +42,7 @@ Point size set to 20:
 Point size set to 35:
 
 ![Show points point size 35 example](/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
+
+{{< docs/shared "visualizations/stack-series-link.md" >}}
+
+{{< docs/shared "visualizations/change-axis-link.md" >}}

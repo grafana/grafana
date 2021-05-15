@@ -27,7 +27,7 @@ export function calculatePanelSize(mode: DisplayMode, width: number, height: num
   };
 }
 
-export function supportsDataQuery(plugin: PanelPlugin | undefined): boolean {
+export function supportsDataQuery(plugin: PanelPlugin | undefined | null): boolean {
   return plugin?.meta.skipDataQuery === false;
 }
 

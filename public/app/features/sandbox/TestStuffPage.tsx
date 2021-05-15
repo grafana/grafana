@@ -1,11 +1,20 @@
-import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
-import { GraphNG, LegendDisplayMode, Table } from '@grafana/ui';
+import {
+  ApplyFieldOverrideOptions,
+  DataTransformerConfig,
+  dateMath,
+  FieldColorModeId,
+  NavModelItem,
+  PanelData,
+} from '@grafana/data';
+import { LegendDisplayMode, Table, TimeSeries } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { QueryGroup } from '../query/components/QueryGroup';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 import { QueryGroupOptions } from 'app/types';
+import Page from '../../core/components/Page/Page';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 interface State {
   queryRunner: PanelQueryRunner;
@@ -37,36 +46,49 @@ export const TestStuffPage: FC = () => {
   /**
    * Subscribe to data
    */
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
+  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
   const data = useObservable(observable);
 
-  return (
-    <div style={{ padding: '30px 50px' }} className="page-scrollbar-wrapper">
-      <h3>New page</h3>
-      <div>
-        <QueryGroup
-          options={queryOptions}
-          queryRunner={queryRunner}
-          onRunQueries={onRunQueries}
-          onOptionsChange={onOptionsChange}
-        />
-      </div>
+  const node: NavModelItem = {
+    id: 'test-page',
+    text: 'Test page',
+    icon: 'dashboard',
+    subTitle: 'FOR TESTING!',
+    url: 'sandbox/test',
+  };
 
-      {data && (
-        <div style={{ padding: '16px' }}>
-          <GraphNG
-            width={1200}
-            height={300}
-            data={data.series}
-            legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
-            timeRange={data.timeRange}
-            timeZone="browser"
+  return (
+    <Page navModel={{ node: node, main: node }}>
+      <Page.Contents>
+        {data && (
+          <AutoSizer style={{ width: '100%', height: '600px' }}>
+            {({ width }) => {
+              return (
+                <div>
+                  <TimeSeries
+                    width={width}
+                    height={300}
+                    frames={data.series}
+                    legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
+                    timeRange={data.timeRange}
+                    timeZone="browser"
+                  />
+                  <Table data={data.series[0]} width={width} height={300} />
+                </div>
+              );
+            }}
+          </AutoSizer>
+        )}
+        <div style={{ marginTop: '16px', height: '45%' }}>
+          <QueryGroup
+            options={queryOptions}
+            queryRunner={queryRunner}
+            onRunQueries={onRunQueries}
+            onOptionsChange={onOptionsChange}
           />
-          <hr></hr>
-          <Table data={data.series[0]} width={1200} height={300} />
         </div>
-      )}
-    </div>
+      </Page.Contents>
+    </Page>
   );
 };
 
@@ -81,12 +103,13 @@ export function getDefaultState(): State {
       overrides: [],
     },
     replaceVariables: (v: string) => v,
-    theme: config.theme,
+    theme: config.theme2,
   };
 
   const dataConfig = {
     getTransformations: () => [] as DataTransformerConfig[],
     getFieldOverrideOptions: () => options,
+    getDataSupport: () => ({ annotations: false, alertStates: false }),
   };
 
   return {

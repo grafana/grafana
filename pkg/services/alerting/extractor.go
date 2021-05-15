@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -109,12 +108,10 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		}
 
 		rawFor := jsonAlert.Get("for").MustString()
-		var forValue time.Duration
-		if rawFor != "" {
-			forValue, err = time.ParseDuration(rawFor)
-			if err != nil {
-				return nil, ValidationError{Reason: "Could not parse for"}
-			}
+
+		forValue, err := getForValue(rawFor)
+		if err != nil {
+			return nil, err
 		}
 
 		alert := &models.Alert{

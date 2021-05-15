@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
-import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../../themes';
+import { css, cx } from '@emotion/css';
+import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../../themes';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 import { IconButton } from '../../IconButton/IconButton';
 
@@ -12,12 +12,11 @@ export interface DataLinksListItemProps {
   onChange: (index: number, link: DataLink) => void;
   onEdit: () => void;
   onRemove: () => void;
-  suggestions: VariableSuggestion[];
   isEditing?: boolean;
 }
 
 export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, onRemove }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getDataLinkListItemStyles(theme);
   const { title = '', url = '' } = link;
 
@@ -44,10 +43,10 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
   );
 };
 
-const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme) => {
+const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
       width: 100%;
       &:last-child {
         margin-bottom: 0;
@@ -57,12 +56,12 @@ const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme) => {
       font-style: italic;
     `,
     title: css`
-      color: ${theme.colors.formLabel};
+      color: ${theme.colors.text.primary};
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
     `,
     url: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.size.sm};
       white-space: nowrap;
       overflow: hidden;

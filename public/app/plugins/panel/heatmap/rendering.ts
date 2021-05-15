@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find, isEmpty, isNil, isString, map, max, min, toNumber, isNaN } from 'lodash';
 import $ from 'jquery';
 import * as d3 from 'd3';
 import { contextSrv } from 'app/core/core';
@@ -62,6 +62,8 @@ export class HeatmapRenderer {
   margin: any;
   dataRangeWidingFactor: number;
 
+  hoverEvent: LegacyGraphHoverEvent;
+
   constructor(private scope: any, private elem: any, attrs: any, private ctrl: any) {
     // $heatmap is JQuery object, but heatmap is D3
     this.$heatmap = this.elem.find('.heatmap-panel');
@@ -91,6 +93,8 @@ export class HeatmapRenderer {
     this.$heatmap.on('mousedown', this.onMouseDown.bind(this));
     this.$heatmap.on('mousemove', this.onMouseMove.bind(this));
     this.$heatmap.on('mouseleave', this.onMouseLeave.bind(this));
+
+    this.hoverEvent = new LegacyGraphHoverEvent({ pos: {}, point: {}, panel: this.panel });
   }
 
   onGraphHoverClear() {
@@ -109,7 +113,7 @@ export class HeatmapRenderer {
   setElementHeight() {
     try {
       let height = this.ctrl.height || this.panel.height || this.ctrl.row.height;
-      if (_.isString(height)) {
+      if (isString(height)) {
         height = parseInt(height.replace('px', ''), 10);
       }
 
@@ -126,8 +130,8 @@ export class HeatmapRenderer {
 
   getYAxisWidth(elem: any) {
     const axisText = elem.selectAll('.axis-y text').nodes();
-    const maxTextWidth = _.max(
-      _.map(axisText, (text) => {
+    const maxTextWidth = max(
+      map(axisText, (text) => {
         // Use SVG getBBox method
         return text.getBBox().width;
       })
@@ -204,7 +208,7 @@ export class HeatmapRenderer {
     this.ctrl.scaledDecimals = scaledDecimals;
 
     // Set default Y min and max if no data
-    if (_.isEmpty(this.data.buckets)) {
+    if (isEmpty(this.data.buckets)) {
       yMax = 1;
       yMin = -1;
       ticks = 3;
@@ -268,7 +272,7 @@ export class HeatmapRenderer {
     yMax = this.panel.yAxis.max !== null ? this.adjustLogMax(this.panel.yAxis.max, logBase) : yMax;
 
     // Set default Y min and max if no data
-    if (_.isEmpty(this.data.buckets)) {
+    if (isEmpty(this.data.buckets)) {
       yMax = Math.pow(logBase, 2);
       yMin = 1;
     }
@@ -330,22 +334,22 @@ export class HeatmapRenderer {
       .domain([0, tsBuckets.length - 1])
       .range([this.chartHeight, 0]);
 
-    const tickValues = _.map(tsBuckets, (b, i) => i);
-    const decimalsAuto = _.max(_.map(tsBuckets, ticksUtils.getStringPrecision));
+    const tickValues = map(tsBuckets, (b, i) => i);
+    const decimalsAuto = max(map(tsBuckets, ticksUtils.getStringPrecision));
     const decimals = this.panel.yAxis.decimals === null ? decimalsAuto : this.panel.yAxis.decimals;
     this.ctrl.decimals = decimals;
 
     const tickValueFormatter = this.tickValueFormatter.bind(this);
     function tickFormatter(valIndex: string) {
       let valueFormatted = tsBuckets[valIndex];
-      if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
+      if (!isNaN(toNumber(valueFormatted)) && valueFormatted !== '') {
         // Try to format numeric tick labels
-        valueFormatted = tickValueFormatter(decimals)(_.toNumber(valueFormatted));
+        valueFormatted = tickValueFormatter(decimals)(toNumber(valueFormatted));
       }
       return valueFormatted;
     }
 
-    const tsBucketsFormatted = _.map(tsBuckets, (v, i) => tickFormatter(i));
+    const tsBucketsFormatted = map(tsBuckets, (v, i) => tickFormatter(i));
     this.data.tsBucketsFormatted = tsBucketsFormatted;
 
     const yAxis = d3
@@ -495,16 +499,16 @@ export class HeatmapRenderer {
       const logBase = this.panel.yAxis.logBase;
       const domain = this.yScale.domain();
       const tickValues = this.logScaleTickValues(domain, logBase);
-      this.data.buckets = mergeZeroBuckets(this.data.buckets, _.min(tickValues)!);
+      this.data.buckets = mergeZeroBuckets(this.data.buckets, min(tickValues)!);
     }
 
     const cardsData = this.data.cards;
     const cardStats = this.data.cardStats;
     const maxValueAuto = cardStats.max;
     const minValueAuto = Math.max(cardStats.min, 0);
-    const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
-    const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
-    const colorScheme: any = _.find(this.ctrl.colorSchemes, {
+    const maxValue = isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
+    const minValue = isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
+    const colorScheme: any = find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
@@ -740,7 +744,10 @@ export class HeatmapRenderer {
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
-    this.ctrl.dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
+    this.hoverEvent.payload.pos = pos;
+    this.hoverEvent.payload.panel = this.panel;
+    this.hoverEvent.payload.point['time'] = (pos as any).x;
+    this.ctrl.dashboard.events.publish(this.hoverEvent);
   }
 
   limitSelection(x2: number) {
@@ -820,7 +827,7 @@ export class HeatmapRenderer {
     }
 
     // Draw default axes and return if no data
-    if (_.isEmpty(this.data.buckets)) {
+    if (isEmpty(this.data.buckets)) {
       this.addHeatmapCanvas();
       this.addAxes();
       return;

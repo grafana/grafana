@@ -1,5 +1,5 @@
 import { InlineField, Input, InlineSwitch } from '@grafana/ui';
-import React, { FunctionComponent, ComponentProps, useState } from 'react';
+import React, { ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
@@ -28,7 +28,7 @@ interface Props {
   previousMetrics: MetricAggregation[];
 }
 
-export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
+export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
   const query = useQuery();
@@ -37,14 +37,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
     <SettingsEditorContainer label={description} hidden={metric.hide}>
       {metric.type === 'derivative' && <SettingField label="Unit" metric={metric} settingName="unit" />}
 
-      {metric.type === 'serial_diff' && (
-        <InlineField label="Lag">
-          <Input
-            onBlur={(e) => dispatch(changeMetricSetting(metric, 'lag', parseInt(e.target.value, 10)))}
-            defaultValue={metric.settings?.lag}
-          />
-        </InlineField>
-      )}
+      {metric.type === 'serial_diff' && <SettingField label="Lag" metric={metric} settingName="lag" placeholder="1" />}
 
       {metric.type === 'cumulative_sum' && <SettingField label="Format" metric={metric} settingName="format" />}
 
@@ -71,6 +64,8 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
           />
         </InlineField>
       )}
+
+      {metric.type === 'logs' && <SettingField label="Limit" metric={metric} settingName="limit" placeholder="500" />}
 
       {metric.type === 'cardinality' && (
         <SettingField label="Precision Threshold" metric={metric} settingName="precision_threshold" />
@@ -129,7 +124,7 @@ interface ExtendedStatSettingProps {
   onChange: (checked: boolean) => void;
   value: boolean;
 }
-const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat, onChange, value }) => {
+const ExtendedStatSetting = ({ stat, onChange, value }: ExtendedStatSettingProps) => {
   // this is needed for the htmlFor prop in the label so that clicking the label will toggle the switch state.
   const [id] = useState(uniqueId(`es-field-id-`));
 

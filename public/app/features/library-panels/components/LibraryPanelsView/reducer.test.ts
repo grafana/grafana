@@ -3,14 +3,13 @@ import { LoadingState } from '@grafana/data';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import {
   changePage,
-  changeSearchString,
   initialLibraryPanelsViewState,
   initSearch,
   libraryPanelsViewReducer,
   LibraryPanelsViewState,
   searchCompleted,
 } from './reducer';
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO, LibraryElementKind } from '../../types';
 
 describe('libraryPanelsViewReducer', () => {
   describe('when initSearch is dispatched', () => {
@@ -73,18 +72,6 @@ describe('libraryPanelsViewReducer', () => {
     });
   });
 
-  describe('when changeSearchString is dispatched', () => {
-    it('then the state should be correct', () => {
-      reducerTester<LibraryPanelsViewState>()
-        .givenReducer(libraryPanelsViewReducer, { ...initialLibraryPanelsViewState })
-        .whenActionIsDispatched(changeSearchString({ searchString: 'a search string' }))
-        .thenStateShouldEqual({
-          ...initialLibraryPanelsViewState,
-          searchString: 'a search string',
-        });
-    });
-  });
-
   describe('when changePage is dispatched', () => {
     it('then the state should be correct', () => {
       reducerTester<LibraryPanelsViewState>()
@@ -98,8 +85,8 @@ describe('libraryPanelsViewReducer', () => {
   });
 });
 
-function getLibraryPanelMocks(count: number): LibraryPanelDTO[] {
-  const mocks: LibraryPanelDTO[] = [];
+function getLibraryPanelMocks(count: number): LibraryElementDTO[] {
+  const mocks: LibraryElementDTO[] = [];
 
   for (let i = 0; i < count; i++) {
     mocks.push(
@@ -122,7 +109,8 @@ function mockLibraryPanel({
   name = 'Test Panel',
   model = { type: 'text', title: 'Test Panel' },
   meta = {
-    canEdit: true,
+    folderName: 'General',
+    folderUid: '',
     connectedDashboards: 0,
     created: '2021-01-01T00:00:00',
     createdBy: { id: 1, name: 'User X', avatarUrl: '/avatar/abc' },
@@ -130,15 +118,20 @@ function mockLibraryPanel({
     updatedBy: { id: 2, name: 'User Y', avatarUrl: '/avatar/xyz' },
   },
   version = 1,
-}: Partial<LibraryPanelDTO> = {}): LibraryPanelDTO {
+  description = 'a description',
+  type = 'text',
+}: Partial<LibraryElementDTO> = {}): LibraryElementDTO {
   return {
     uid,
     id,
     orgId,
     folderId,
     name,
+    kind: LibraryElementKind.Panel,
     model,
     version,
     meta,
+    description,
+    type,
   };
 }

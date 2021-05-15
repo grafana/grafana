@@ -2,7 +2,6 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import _ from 'lodash';
 import { ExploreUrlState } from '../types/explore';
 
 /**
@@ -155,8 +154,8 @@ export function parseKeyValue(keyValue: string) {
         val = val !== undefined ? tryDecodeURIComponent(val as string) : true;
 
         let parsedVal: any;
-        if (typeof val === 'string') {
-          parsedVal = val === 'true' || val === 'false' ? val === 'true' : _.toNumber(val);
+        if (typeof val === 'string' && val !== '') {
+          parsedVal = val === 'true' || val === 'false' ? val === 'true' : val;
         } else {
           parsedVal = val;
         }

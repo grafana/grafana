@@ -28,6 +28,7 @@ type AzureLogAnalyticsDatasource struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
@@ -45,6 +46,7 @@ type AzureLogAnalyticsQuery struct {
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -111,6 +113,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 	return azureLogAnalyticsQueries, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery,
 	queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) plugins.DataQueryResult {
 	queryResult := plugins.DataQueryResult{RefID: query.RefID}
@@ -227,7 +230,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	if err != nil {
 		return nil, err
 	}
-	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo, e.cfg)
 
 	return req, nil
 }

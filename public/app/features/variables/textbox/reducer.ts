@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { initialVariableModelState, TextBoxVariableModel, VariableOption } from '../types';
-import { getInstanceState, VariablePayload } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   ...initialVariableModelState,

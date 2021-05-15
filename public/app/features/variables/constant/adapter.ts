@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { ConstantVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
@@ -12,7 +12,7 @@ import { optionPickerFactory } from '../pickers';
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
     id: 'constant',
-    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
+    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share.',
     name: 'Constant',
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,

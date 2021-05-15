@@ -48,6 +48,7 @@ var (
 		"us":      "µs",
 		"ms":      "ms",
 		"ns":      "ns",
+		"%":       "percent",
 		"percent": "percent",
 		"MiBy":    "mbytes",
 		"By/s":    "Bps",
@@ -73,6 +74,7 @@ func init() {
 
 type Service struct {
 	PluginManager plugins.Manager `inject:""`
+	Cfg           *setting.Cfg    `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -84,9 +86,11 @@ type Executor struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // NewExecutor returns an Executor.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -97,6 +101,7 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 		httpClient:    httpClient,
 		dsInfo:        dsInfo,
 		pluginManager: s.PluginManager,
+		cfg:           s.Cfg,
 	}, nil
 }
 
@@ -107,6 +112,7 @@ func init() {
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into
 // the time series or table format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	var result plugins.DataResponse
@@ -127,11 +133,14 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, err
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 	refID := tsdbQuery.Queries[0].RefID
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: refID}
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
@@ -146,9 +155,11 @@ func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.D
 	return result, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	result := plugins.DataResponse{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 
@@ -156,8 +167,6 @@ func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
-
-	unit := e.resolvePanelUnitFromQueries(queryExecutors)
 
 	for _, queryExecutor := range queryExecutors {
 		queryRes, resp, executedQueryString, err := queryExecutor.run(ctx, tsdbQuery, e)
@@ -170,41 +179,9 @@ func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins
 		}
 
 		result.Results[queryExecutor.getRefID()] = queryRes
-
-		if len(unit) > 0 {
-			frames, _ := queryRes.Dataframes.Decoded()
-			for i := range frames {
-				if frames[i].Fields[1].Config == nil {
-					frames[i].Fields[1].Config = &data.FieldConfig{}
-				}
-				frames[i].Fields[1].Config.Unit = unit
-			}
-			queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
-		}
-		result.Results[queryExecutor.getRefID()] = queryRes
 	}
 
 	return result, nil
-}
-
-func (e *Executor) resolvePanelUnitFromQueries(executors []cloudMonitoringQueryExecutor) string {
-	if len(executors) == 0 {
-		return ""
-	}
-	unit := executors[0].getUnit()
-	if len(executors) > 1 {
-		for _, query := range executors[1:] {
-			if query.getUnit() != unit {
-				return ""
-			}
-		}
-	}
-	if len(unit) > 0 {
-		if val, ok := cloudMonitoringUnitMappings[unit]; ok {
-			return val
-		}
-	}
-	return ""
 }
 
 func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMonitoringQueryExecutor, error) {
@@ -282,7 +259,6 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 		target = params.Encode()
 		cmtsf.Target = target
 		cmtsf.Params = params
-		cmtsf.Unit = q.MetricQuery.Unit
 
 		if setting.Env == setting.Dev {
 			slog.Debug("CloudMonitoring request", "params", params)
@@ -549,7 +525,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg)
 
 	return req, nil
 }
@@ -601,7 +577,7 @@ func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -612,6 +588,11 @@ func addConfigData(frames data.Frames, dl string) data.Frames {
 			URL:         dl,
 		}
 		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
+		if len(unit) > 0 {
+			if val, ok := cloudMonitoringUnitMappings[unit]; ok {
+				frames[i].Fields[1].Config.Unit = val
+			}
+		}
 	}
 	return frames
 }

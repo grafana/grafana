@@ -1,9 +1,10 @@
 import { ComponentType } from 'react';
-import { MatcherConfig, FieldConfig, Field, DataFrame, GrafanaTheme, TimeZone } from '../types';
+import { MatcherConfig, FieldConfig, Field, DataFrame, TimeZone } from '../types';
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
+import { GrafanaTheme2 } from '../themes';
 
 export interface DynamicConfigValue {
   id: string;
@@ -58,7 +59,6 @@ export interface FieldConfigSource<TOptions extends object = any> {
 export interface FieldOverrideContext extends StandardEditorContext<any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
-  data: DataFrame[]; // All results
 }
 export interface FieldConfigEditorProps<TValue, TSettings>
   extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
@@ -114,7 +114,7 @@ export interface ApplyFieldOverrideOptions {
   fieldConfig: FieldConfigSource;
   fieldConfigRegistry?: FieldConfigOptionsRegistry;
   replaceVariables: InterpolateFunction;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   timeZone?: TimeZone;
 }
 

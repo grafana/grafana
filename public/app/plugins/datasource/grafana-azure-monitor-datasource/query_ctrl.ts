@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaultsDeep, find, map, isString } from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
@@ -7,7 +7,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { auto } from 'angular';
 import { DataFrame, PanelEvents } from '@grafana/data';
 import { AzureQueryType, AzureMetricQuery, AzureMonitorQuery } from './types';
-import { convertTimeGrainsToMs } from './components/common';
+import { convertTimeGrainsToMs } from './utils/common';
 import Datasource from './datasource';
 
 export interface ResultFormat {
@@ -30,11 +30,16 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   ];
 
   // Query types that have been migrated to React
-  reactQueryEditors = [AzureQueryType.AzureMonitor];
+  reactQueryEditors = [
+    AzureQueryType.AzureMonitor,
+    AzureQueryType.LogAnalytics,
+    // AzureQueryType.ApplicationInsights,
+    // AzureQueryType.InsightsAnalytics,
+  ];
 
   // target: AzureMonitorQuery;
 
-  target: {
+  declare target: {
     // should be: AzureMonitorQuery
     refId: string;
     queryType: AzureQueryType;
@@ -112,10 +117,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   };
 
   resultFormats: ResultFormat[];
-  workspaces: any[];
-  showHelp: boolean;
-  showLastQuery: boolean;
-  lastQuery: string;
+  workspaces: any[] = [];
+  showHelp = false;
+  showLastQuery = false;
+  lastQuery = '';
   lastQueryError?: string;
   subscriptions: Array<{ text: string; value: string }>;
 
@@ -123,7 +128,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
     super($scope, $injector);
 
-    _.defaultsDeep(this.target, this.defaults);
+    defaultsDeep(this.target, this.defaults);
 
     this.migrateTimeGrains();
 
@@ -153,7 +158,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.lastQueryError = undefined;
     this.lastQuery = '';
 
-    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
+    const anySeriesFromQuery: any = find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery && anySeriesFromQuery.meta) {
       this.lastQuery = anySeriesFromQuery.meta.query;
     }
@@ -279,7 +284,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       appInsights.dimension = [];
     }
 
-    if (_.isString(appInsights.dimension)) {
+    if (isString(appInsights.dimension)) {
       appInsights.dimension = [appInsights.dimension as string];
     }
   }
@@ -315,7 +320,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       if (!this.target.subscription && this.target.queryType === 'Azure Monitor') {
         this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
       } else if (!this.target.subscription && this.target.queryType === 'Azure Log Analytics') {
-        this.target.subscription = this.datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId;
+        this.target.subscription = this.datasource.azureLogAnalyticsDatasource.subscriptionId;
       }
 
       if (!this.target.subscription && this.subscriptions.length > 0) {
@@ -336,7 +341,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (timeGrain === 'auto') {
       return TimegrainConverter.findClosestTimeGrain(
         '1m',
-        _.map(timeGrains, (o) => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
+        map(timeGrains, (o) => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
           '1m',
           '5m',
           '15m',
@@ -480,7 +485,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
 
     // Return the list of dimensions stored on the query object from the last request :(
-    return _.map(appInsights.dimensions, (option: string) => {
+    return map(appInsights.dimensions, (option: string) => {
       return { text: option, value: option };
     });
   }

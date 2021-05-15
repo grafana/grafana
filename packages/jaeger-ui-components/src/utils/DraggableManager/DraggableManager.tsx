@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _get from 'lodash/get';
+import { get as _get } from 'lodash';
 
 import EUpdateTypes from './EUpdateTypes';
 import { DraggableBounds, DraggingUpdate } from './types';

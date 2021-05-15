@@ -1,8 +1,8 @@
 import React, { useState, useCallback, ChangeEvent, FunctionComponent } from 'react';
 import SliderComponent from 'rc-slider';
-import { cx } from 'emotion';
-import { Global } from '@emotion/core';
-import { useTheme } from '../../themes/ThemeContext';
+import { cx } from '@emotion/css';
+import { Global } from '@emotion/react';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getStyles } from './styles';
 import { SliderProps } from './types';
 import { Input } from '../Input/Input';
@@ -21,7 +21,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
   value,
 }) => {
   const isHorizontal = orientation === 'horizontal';
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme, isHorizontal);
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value || min);

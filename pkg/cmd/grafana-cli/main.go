@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var version = "master"
+var version = "main"
 
 func main() {
 	setupLogging()
@@ -72,7 +72,7 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		services.Init(version, c.Bool("insecure"))
+		services.Init(version, c.Bool("insecure"), c.Bool("debug"))
 		return nil
 	}
 

@@ -1,10 +1,10 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
+import { PageToolbar, stylesFactory, ToolbarButton, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
@@ -16,19 +16,17 @@ import {
   evaluateAlertDefinition,
   evaluateNotSavedAlertDefinition,
   getAlertDefinition,
-  onRunQueries,
   updateAlertDefinition,
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
 } from './state/actions';
 import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaQuery } from '../../types/unified-alerting-dto';
 
 function mapStateToProps(state: StoreState, props: RouteProps) {
   return {
     uiState: state.alertDefinition.uiState,
-    getQueryOptions: state.alertDefinition.getQueryOptions,
-    queryRunner: state.alertDefinition.queryRunner,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
     pageId: props.match.params.id as string,
@@ -43,7 +41,6 @@ const mapDispatchToProps = {
   createAlertDefinition,
   getAlertDefinition,
   evaluateNotSavedAlertDefinition,
-  onRunQueries,
   cleanUpDefinitionState,
 };
 
@@ -51,13 +48,13 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface RouteProps extends GrafanaRouteComponentProps<{ id: string }> {}
 
-interface OwnProps {
+interface OwnProps extends Themeable2 {
   saveDefinition: typeof createAlertDefinition | typeof updateAlertDefinition;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-class NextGenAlertingPageUnconnected extends PureComponent<Props> {
+class UnthemedNextGenAlertingPage extends PureComponent<Props> {
   componentDidMount() {
     const { getAlertDefinition, pageId } = this.props;
 
@@ -98,7 +95,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   };
 
   onDiscard = () => {
-    locationService.replace(`${config.appSubUrl}/alerting/list`);
+    locationService.replace(`${config.appSubUrl}/alerting/ng/list`);
   };
 
   onTest = () => {
@@ -125,18 +122,9 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      alertDefinition,
-      uiState,
-      updateAlertDefinitionUiState,
-      getQueryOptions,
-      getInstances,
-      onRunQueries,
-      queryRunner,
-    } = this.props;
+    const { alertDefinition, uiState, updateAlertDefinitionUiState, getInstances, theme } = this.props;
 
-    const styles = getStyles(config.theme);
-    const queryOptions = getQueryOptions();
+    const styles = getStyles(theme);
 
     return (
       <div className={styles.wrapper}>
@@ -146,15 +134,8 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[
-              <AlertingQueryPreview
-                key="queryPreview"
-                onTest={this.onTest}
-                queries={queryOptions.queries}
-                getInstances={getInstances}
-                queryRunner={queryRunner!}
-                onRunQueries={onRunQueries}
-              />,
-              <AlertingQueryEditor key="queryEditor" />,
+              <AlertingQueryPreview key="queryPreview" getInstances={getInstances} queries={[]} onTest={this.onTest} />,
+              <AlertingQueryEditor key="queryEditor" value={[] as GrafanaQuery[]} onChange={() => {}} />,
             ]}
             uiState={uiState}
             updateUiState={updateAlertDefinitionUiState}
@@ -164,7 +145,6 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
                 onChange={this.onChangeAlertOption}
                 onIntervalChange={this.onChangeInterval}
                 onConditionChange={this.onConditionChange}
-                queryOptions={queryOptions}
               />
             }
           />
@@ -174,16 +154,18 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   }
 }
 
+const NextGenAlertingPageUnconnected = withTheme2(UnthemedNextGenAlertingPage);
+
 export default hot(module)(connector(NextGenAlertingPageUnconnected));
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrapper: css`
     width: calc(100% - 55px);
     height: 100%;
     position: fixed;
     top: 0;
     bottom: 0;
-    background: ${theme.colors.dashboardBg};
+    background: ${theme.colors.background.canvas};
     display: flex;
     flex-direction: column;
   `,

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import { formatDuration } from './utils';

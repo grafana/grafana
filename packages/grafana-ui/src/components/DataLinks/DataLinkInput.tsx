@@ -1,9 +1,9 @@
-import React, { memo, RefObject, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { DataLinkSuggestions } from './DataLinkSuggestions';
-import { makeValue, ThemeContext } from '../../index';
+import { makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
-import { getFormStyles, Portal } from '../index';
+import { Portal } from '../index';
 
 // @ts-ignore
 import Prism, { Grammar, LanguageMap } from 'prismjs';
@@ -11,12 +11,14 @@ import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
-import { stylesFactory } from '../../themes';
-import { DataLinkBuiltInVars, GrafanaTheme, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { useStyles2 } from '../../themes';
+import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { getInputStyles } from '../Input/Input';
+import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -43,14 +45,14 @@ const plugins = [
   ),
 ];
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  input: getFormStyles(theme, { variant: 'primary', size: 'md', invalid: false }).input.input,
+const getStyles = (theme: GrafanaTheme2) => ({
+  input: getInputStyles({ theme, invalid: false }).input,
   editor: css`
     .token.builtInVariable {
-      color: ${theme.palette.queryGreen};
+      color: ${theme.colors.success.text};
     }
     .token.variable {
-      color: ${theme.colors.textBlue};
+      color: ${theme.colors.primary.text};
     }
   `,
   // Wrapper with child selector needed.
@@ -63,15 +65,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
       border: none;
     }
   `,
-}));
+});
 
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
 export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
   ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
     const editorRef = useRef<Editor>() as RefObject<Editor>;
-    const theme = useContext(ThemeContext);
-    const styles = getStyles(theme);
+    const styles = useStyles2(getStyles);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
     const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
@@ -80,6 +81,12 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
     const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
+
+    // Used to get the height of the suggestion elements in order to scroll to them.
+    const activeRef = useRef<HTMLDivElement>(null);
+    const activeIndexPosition = useMemo(() => getElementPosition(activeRef.current, suggestionsIndex), [
+      suggestionsIndex,
+    ]);
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
@@ -172,12 +179,15 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                   {({ ref, style, placement }) => {
                     return (
                       <div ref={ref} style={style} data-placement={placement}>
-                        <DataLinkSuggestions
-                          suggestions={stateRef.current.suggestions}
-                          onSuggestionSelect={onVariableSelect}
-                          onClose={() => setShowingSuggestions(false)}
-                          activeIndex={suggestionsIndex}
-                        />
+                        <CustomScrollbar scrollTop={activeIndexPosition} autoHeightMax="300px">
+                          <DataLinkSuggestions
+                            activeRef={activeRef}
+                            suggestions={stateRef.current.suggestions}
+                            onSuggestionSelect={onVariableSelect}
+                            onClose={() => setShowingSuggestions(false)}
+                            activeIndex={suggestionsIndex}
+                          />
+                        </CustomScrollbar>
                       </div>
                     );
                   }}
@@ -208,3 +218,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
 );
 
 DataLinkInput.displayName = 'DataLinkInput';
+
+function getElementPosition(suggestionElement: HTMLElement | null, activeIndex: number) {
+  return (suggestionElement?.clientHeight ?? 0) * activeIndex;
+}

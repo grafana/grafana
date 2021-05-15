@@ -61,7 +61,7 @@ export class IntervalVariableEditor extends PureComponent<Props> {
 
     return (
       <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Interval Options" />
+        <VariableSectionHeader name="Interval options" />
         <VerticalGroup spacing="none">
           <VariableTextField
             value={this.props.variable.query}
@@ -76,8 +76,8 @@ export class IntervalVariableEditor extends PureComponent<Props> {
           <InlineFieldRow>
             <VariableSwitchField
               value={this.props.variable.auto}
-              name="Auto Option"
-              tooltip="Interval will be dynamically calculated by dividing time range by the count specified"
+              name="Auto option"
+              tooltip="Dynamically calculates interval by dividing time range by the count specified."
               onChange={this.onAutoChange}
             />
             {this.props.variable.auto ? (
@@ -87,7 +87,7 @@ export class IntervalVariableEditor extends PureComponent<Props> {
                   value={stepValue}
                   options={stepOptions}
                   onChange={this.onAutoCountChanged}
-                  tooltip="How many times should the current time range be divided to calculate the value"
+                  tooltip="How many times the current time range should be divided to calculate the value."
                   labelWidth={7}
                   width={9}
                 />
@@ -96,7 +96,7 @@ export class IntervalVariableEditor extends PureComponent<Props> {
                   name="Min interval"
                   placeholder="10s"
                   onChange={this.onAutoMinChanged}
-                  tooltip="The calculated value will not go below this threshold"
+                  tooltip="The calculated value will not go below this threshold."
                   labelWidth={13}
                   width={11}
                 />

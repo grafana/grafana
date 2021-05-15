@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	cw "github.com/weaveworks/common/middleware"
 	"gopkg.in/macaron.v1"
 )
 
@@ -44,6 +45,7 @@ func init() {
 type ContextHandler struct {
 	Cfg              *setting.Cfg             `inject:""`
 	AuthTokenService models.UserTokenService  `inject:""`
+	JWTAuthService   models.JWTService        `inject:""`
 	RemoteCache      *remotecache.RemoteCache `inject:""`
 	RenderService    rendering.Service        `inject:""`
 	SQLStore         *sqlstore.SQLStore       `inject:""`
@@ -69,6 +71,11 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 		Logger:         log.New("context"),
 	}
 
+	traceID, exists := cw.ExtractTraceID(c.Req.Request.Context())
+	if exists {
+		ctx.Logger = ctx.Logger.New("traceID", traceID)
+	}
+
 	const headerName = "X-Grafana-Org-Id"
 	orgID := int64(0)
 	orgIDHeader := ctx.Req.Header.Get(headerName)
@@ -92,6 +99,7 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 	case h.initContextWithBasicAuth(ctx, orgID):
 	case h.initContextWithAuthProxy(ctx, orgID):
 	case h.initContextWithToken(ctx, orgID):
+	case h.initContextWithJWT(ctx, orgID):
 	case h.initContextWithAnonymousUser(ctx):
 	}
 
@@ -257,12 +265,6 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 	token, err := h.AuthTokenService.LookupToken(ctx.Req.Context(), rawToken)
 	if err != nil {
 		ctx.Logger.Error("Failed to look up user based on cookie", "error", err)
-
-		var revokedErr *models.TokenRevokedError
-		if !errors.As(err, &revokedErr) || !ctx.IsApiRequest() {
-			cookies.WriteSessionCookie(ctx, h.Cfg, "", -1)
-		}
-
 		ctx.Data["lookupTokenErr"] = err
 		return false
 	}

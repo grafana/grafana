@@ -1,12 +1,15 @@
 package mssql
 
 import (
-	"database/sql"
 	"fmt"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -15,11 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"xorm.io/core"
 )
 
 var logger = log.New("tsdb.mssql")
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
@@ -65,33 +68,44 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(datasource *models.DataSource) (string, error) {
+func generateConnectionString(dataSource *models.DataSource) (string, error) {
+	const dfltPort = "0"
 	var addr util.NetworkAddress
-	if datasource.Url != "" {
-		u, err := ParseURL(datasource.Url)
+	if dataSource.Url != "" {
+		u, err := ParseURL(dataSource.Url)
 		if err != nil {
 			return "", err
 		}
-		addr, err = util.SplitHostPortDefault(u.Host, "localhost", "1433")
+		addr, err = util.SplitHostPortDefault(u.Host, "localhost", dfltPort)
 		if err != nil {
 			return "", err
 		}
 	} else {
 		addr = util.NetworkAddress{
 			Host: "localhost",
-			Port: "1433",
+			Port: dfltPort,
 		}
 	}
 
-	logger.Debug("Generating connection string", "url", datasource.Url, "host", addr.Host, "port", addr.Port)
-	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
-	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+	args := []interface{}{
+		"url", dataSource.Url, "host", addr.Host,
+	}
+	if addr.Port != "0" {
+		args = append(args, "port", addr.Port)
+	}
+
+	logger.Debug("Generating connection string", args...)
+	encrypt := dataSource.JsonData.Get("encrypt").MustString("false")
+	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
-		addr.Port,
-		datasource.Database,
-		datasource.User,
-		datasource.DecryptedPassword(),
+		dataSource.Database,
+		dataSource.User,
+		dataSource.DecryptedPassword(),
 	)
+	// Port number 0 means to determine the port automatically, so we can let the driver choose
+	if addr.Port != "0" {
+		connStr += fmt.Sprintf("port=%s;", addr.Port)
+	}
 	if encrypt != "false" {
 		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
 	}
@@ -102,49 +116,95 @@ type mssqlQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	plugins.DataRowValues, error) {
-	values := make([]interface{}, len(columnTypes))
-	valuePtrs := make([]interface{}, len(columnTypes))
-
-	for i := range columnTypes {
-		// debug output on large tables causes high memory utilization/leak
-		// t.log.Debug("type", "type", stype)
-		valuePtrs[i] = &values[i]
+func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+	// go-mssql overrides source error, so we currently match on string
+	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
+	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
+		t.log.Error("query error", "err", err)
+		return sqleng.ErrConnectionFailed
 	}
 
-	if err := rows.Scan(valuePtrs...); err != nil {
-		return nil, err
-	}
-
-	// convert types not handled by denisenkom/go-mssqldb
-	// unhandled types are returned as []byte
-	for i := 0; i < len(columnTypes); i++ {
-		if value, ok := values[i].([]byte); ok {
-			switch columnTypes[i].DatabaseTypeName() {
-			case "MONEY", "SMALLMONEY", "DECIMAL":
-				if v, err := strconv.ParseFloat(string(value), 64); err == nil {
-					values[i] = v
-				} else {
-					t.log.Debug("Rows", "Error converting numeric to float", value)
-				}
-			case "UNIQUEIDENTIFIER":
-				uuid := &mssql.UniqueIdentifier{}
-				if err := uuid.Scan(value); err == nil {
-					values[i] = uuid.String()
-				} else {
-					t.log.Debug("Rows", "Error converting uniqueidentifier to string", value)
-				}
-			default:
-				t.log.Debug("Rows", "Unknown database type", columnTypes[i].DatabaseTypeName(), "value", value)
-				values[i] = string(value)
-			}
-		}
-	}
-
-	return values, nil
+	return err
 }
 
-func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
-	return err
+func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
+	return []sqlutil.StringConverter{
+		{
+			Name:           "handle MONEY",
+			InputScanKind:  reflect.Slice,
+			InputTypeName:  "MONEY",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle SMALLMONEY",
+			InputScanKind:  reflect.Slice,
+			InputTypeName:  "SMALLMONEY",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle DECIMAL",
+			InputScanKind:  reflect.Slice,
+			InputTypeName:  "DECIMAL",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle UNIQUEIDENTIFIER",
+			InputScanKind:  reflect.Slice,
+			InputTypeName:  "UNIQUEIDENTIFIER",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableString,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					uuid := &mssql.UniqueIdentifier{}
+					if err := uuid.Scan([]byte(*in)); err != nil {
+						return nil, err
+					}
+					v := uuid.String()
+					return &v, nil
+				},
+			},
+		},
+	}
 }

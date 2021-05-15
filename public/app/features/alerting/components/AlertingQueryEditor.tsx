@@ -1,92 +1,220 @@
 import React, { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { RefreshPicker, stylesFactory } from '@grafana/ui';
+import { css } from '@emotion/css';
+import {
+  DataQuery,
+  getDefaultRelativeTimeRange,
+  GrafanaTheme2,
+  LoadingState,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { AlertingQueryRows } from './AlertingQueryRows';
+import { dataSource as expressionDatasource, ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
+import { getNextRefIdChar } from 'app/core/utils/query';
+import { defaultCondition } from '../../expressions/utils/expressionTypes';
+import { ExpressionQueryType } from '../../expressions/types';
+import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
-import { config } from 'app/core/config';
-import { QueryGroup } from '../../query/components/QueryGroup';
-import { onRunQueries, queryOptionsChange } from '../state/actions';
-import { QueryGroupOptions, StoreState } from 'app/types';
-
-function mapStateToProps(state: StoreState) {
-  return {
-    queryOptions: state.alertDefinition.getQueryOptions(),
-    queryRunner: state.alertDefinition.queryRunner,
-  };
+interface Props {
+  value?: GrafanaQuery[];
+  onChange: (queries: GrafanaQuery[]) => void;
 }
 
-const mapDispatchToProps = {
-  queryOptionsChange,
-  onRunQueries,
-};
+interface State {
+  panelDataByRefId: Record<string, PanelData>;
+}
+export class AlertingQueryEditor extends PureComponent<Props, State> {
+  private runner: AlertingQueryRunner;
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+  constructor(props: Props) {
+    super(props);
+    this.state = { panelDataByRefId: {} };
+    this.runner = new AlertingQueryRunner();
+  }
 
-interface OwnProps {}
+  componentDidMount() {
+    this.runner.get().subscribe((data) => {
+      this.setState({ panelDataByRefId: data });
+    });
+  }
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
-
-class AlertingQueryEditorUnconnected extends PureComponent<Props> {
-  onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {
-    this.props.queryOptionsChange(queryOptions);
-  };
+  componentWillUnmount() {
+    this.runner.destroy();
+  }
 
   onRunQueries = () => {
-    this.props.onRunQueries();
+    const { value = [] } = this.props;
+    this.runner.run(value);
   };
 
-  onIntervalChanged = (interval: string) => {
-    this.props.queryOptionsChange({ ...this.props.queryOptions, minInterval: interval });
+  onCancelQueries = () => {
+    this.runner.cancel();
   };
 
-  render() {
-    const { queryOptions, queryRunner } = this.props;
-    const styles = getStyles(config.theme);
+  onDuplicateQuery = (query: GrafanaQuery) => {
+    const { onChange, value = [] } = this.props;
+    onChange(addQuery(value, query));
+  };
+
+  onNewAlertingQuery = () => {
+    const { onChange, value = [] } = this.props;
+    const defaultDataSource = getDatasourceSrv().getInstanceSettings('default');
+
+    if (!defaultDataSource) {
+      return;
+    }
+
+    onChange(
+      addQuery(value, {
+        datasourceUid: defaultDataSource.uid,
+        model: {
+          refId: '',
+          datasource: defaultDataSource.name,
+        },
+      })
+    );
+  };
+
+  onNewExpressionQuery = () => {
+    const { onChange, value = [] } = this.props;
+
+    onChange(
+      addQuery(value, {
+        datasourceUid: ExpressionDatasourceUID,
+        model: expressionDatasource.newQuery({
+          type: ExpressionQueryType.classic,
+          conditions: [defaultCondition],
+        }),
+      })
+    );
+  };
+
+  renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
+    return (
+      <HorizontalGroup spacing="md" align="flex-start">
+        <Button
+          type="button"
+          icon="plus"
+          onClick={this.onNewAlertingQuery}
+          variant="secondary"
+          aria-label={selectors.components.QueryTab.addQuery}
+        >
+          Query
+        </Button>
+        {config.expressionsEnabled && (
+          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+            <Button
+              type="button"
+              icon="plus"
+              onClick={this.onNewExpressionQuery}
+              variant="secondary"
+              className={styles.expressionButton}
+            >
+              <span>Expression&nbsp;</span>
+              <Icon name="exclamation-triangle" className="muted" size="sm" />
+            </Button>
+          </Tooltip>
+        )}
+      </HorizontalGroup>
+    );
+  }
+
+  isRunning() {
+    const data = Object.values(this.state.panelDataByRefId).find((d) => Boolean(d));
+    return data?.state === LoadingState.Loading;
+  }
+
+  renderRunQueryButton() {
+    const isRunning = this.isRunning();
+    const styles = getStyles(config.theme2);
+
+    if (isRunning) {
+      return (
+        <div className={styles.runWrapper}>
+          <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={this.onCancelQueries}>
+            Cancel
+          </Button>
+        </div>
+      );
+    }
 
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.container}>
-          <h4>Queries</h4>
-          <div className={styles.refreshWrapper}>
-            <RefreshPicker
-              onIntervalChanged={this.onIntervalChanged}
-              onRefresh={this.onRunQueries}
-              intervals={['15s', '30s']}
-            />
-          </div>
-          <QueryGroup
-            queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
-            options={queryOptions}
-            onRunQueries={this.onRunQueries}
-            onOptionsChange={this.onQueryOptionsChange}
-          />
-        </div>
+      <div className={styles.runWrapper}>
+        <Button icon="sync" type="button" onClick={this.onRunQueries}>
+          Run queries
+        </Button>
+      </div>
+    );
+  }
+
+  render() {
+    const { value = [] } = this.props;
+    const styles = getStyles(config.theme2);
+
+    return (
+      <div className={styles.container}>
+        <AlertingQueryRows
+          queries={value}
+          onQueriesChange={this.props.onChange}
+          onDuplicateQuery={this.onDuplicateQuery}
+          onRunQueries={this.onRunQueries}
+        />
+        {this.renderAddQueryRow(styles)}
+        {this.renderRunQueryButton()}
       </div>
     );
   }
 }
 
-export const AlertingQueryEditor = connector(AlertingQueryEditorUnconnected);
+const addQuery = (
+  queries: GrafanaQuery[],
+  queryToAdd: Pick<GrafanaQuery, 'model' | 'datasourceUid'>
+): GrafanaQuery[] => {
+  const refId = getNextRefIdChar(queries);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const query: GrafanaQuery = {
+    ...queryToAdd,
+    refId,
+    queryType: '',
+    model: {
+      ...queryToAdd.model,
+      hide: false,
+      refId,
+    },
+    relativeTimeRange: defaultTimeRange(queryToAdd.model),
+  };
+
+  return [...queries, query];
+};
+
+const defaultTimeRange = (model: DataQuery): RelativeTimeRange | undefined => {
+  if (isExpressionQuery(model)) {
+    return;
+  }
+  return getDefaultRelativeTimeRange();
+};
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      padding-left: ${theme.spacing.md};
-      height: 100%;
-    `,
     container: css`
-      padding: ${theme.spacing.md};
-      background-color: ${theme.colors.panelBg};
+      background-color: ${theme.colors.background.primary};
       height: 100%;
     `,
-    refreshWrapper: css`
-      display: flex;
-      justify-content: flex-end;
+    runWrapper: css`
+      margin-top: ${theme.spacing(1)};
     `,
     editorWrapper: css`
-      border: 1px solid ${theme.colors.panelBorder};
-      border-radius: ${theme.border.radius.md};
+      border: 1px solid ${theme.colors.border.medium};
+      border-radius: ${theme.shape.borderRadius()};
+    `,
+    expressionButton: css`
+      margin-right: ${theme.spacing(0.5)};
     `,
   };
 });

@@ -1,7 +1,7 @@
 import React from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme, LinkTarget } from '@grafana/data';
-import { styleMixins, useStyles } from '../../themes';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
@@ -28,7 +28,7 @@ export interface MenuItemProps {
 /** @internal */
 export const MenuItem: React.FC<MenuItemProps> = React.memo(
   ({ url, icon, label, ariaLabel, target, onClick, className, active }) => {
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
     const itemStyle = cx(
       {
         [styles.item]: true,
@@ -55,40 +55,35 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
 MenuItem.displayName = 'MenuItem';
 
 /** @internal */
-const getStyles = (theme: GrafanaTheme) => {
-  const linkColor = theme.colors.text;
-  const linkColorHover = theme.colors.linkHover;
-  const itemBgHover = styleMixins.hoverColor(theme.colors.bg1, theme);
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     link: css`
-      color: ${linkColor};
+      color: ${theme.colors.text.primary};
       display: flex;
       cursor: pointer;
       padding: 5px 12px 5px 10px;
+
       &:hover {
-        color: ${linkColorHover};
+        color: ${theme.colors.text.primary};
         text-decoration: none;
       }
     `,
     item: css`
       background: none;
-      border-left: 2px solid transparent;
       cursor: pointer;
       white-space: nowrap;
+
       &:hover {
-        background: ${itemBgHover};
-        border-image: linear-gradient(#f05a28 30%, #fbca0a 99%);
-        border-image-slice: 1;
+        background: ${theme.colors.action.hover};
       }
     `,
     activeItem: css`
-      background: ${theme.colors.bg2};
+      background: ${theme.colors.action.selected};
     `,
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
-      color: ${theme.colors.linkDisabled};
+      color: ${theme.colors.text.secondary};
     `,
   };
 };

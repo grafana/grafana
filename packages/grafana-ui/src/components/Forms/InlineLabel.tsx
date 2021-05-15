@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 import { useTheme } from '../../themes';

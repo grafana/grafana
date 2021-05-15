@@ -1,12 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import { Button, HorizontalGroup, Icon, Input, Modal, stylesFactory, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { Button, Icon, Input, Modal, useStyles } from '@grafana/ui';
 import { useAsync, useDebounce } from 'react-use';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import { usePanelSave } from '../../utils/usePanelSave';
-import { getLibraryPanelConnectedDashboards } from '../../state/api';
+import { getConnectedDashboards } from '../../state/api';
 import { PanelModelWithLibraryPanel } from '../../types';
+import { getModalStyles } from '../../styles';
 
 interface Props {
   panel: PanelModelWithLibraryPanel;
@@ -26,20 +24,14 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   onDiscard,
 }) => {
   const [searchString, setSearchString] = useState('');
-  const connectedDashboardsState = useAsync(async () => {
-    const connectedDashboards = await getLibraryPanelConnectedDashboards(panel.libraryPanel.uid);
-    return connectedDashboards;
-  }, []);
-
   const dashState = useAsync(async () => {
-    const connectedDashboards = connectedDashboardsState.value;
-    if (connectedDashboards && connectedDashboards.length > 0) {
-      const dashboardDTOs = await getBackendSrv().search({ dashboardIds: connectedDashboards });
-      return dashboardDTOs.map((dash) => dash.title);
+    const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
+    if (searchHits.length > 0) {
+      return searchHits.map((dash) => dash.title);
     }
 
     return [];
-  }, [connectedDashboardsState.value]);
+  }, [panel.libraryPanel.uid]);
 
   const [filteredDashboards, setFilteredDashboards] = useState<string[]>([]);
   useDebounce(
@@ -61,7 +53,7 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   const discardAndClose = useCallback(() => {
     onDiscard();
     onDismiss();
-  }, []);
+  }, [onDiscard, onDismiss]);
 
   return (
     <Modal title="Update all panel instances" icon="save" onDismiss={onDismiss} isOpen={isOpen}>
@@ -99,7 +91,13 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
             </tbody>
           </table>
         )}
-        <HorizontalGroup>
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={discardAndClose}>
+            Discard
+          </Button>
           <Button
             onClick={() => {
               saveLibraryPanel(panel, folderId).then(() => {
@@ -110,56 +108,8 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
           >
             Update all
           </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={discardAndClose}>
-            Discard
-          </Button>
-        </HorizontalGroup>
+        </Modal.ButtonRow>
       </div>
     </Modal>
   );
 };
-
-const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    myTable: css`
-      max-height: 204px;
-      overflow-y: auto;
-      margin-top: 11px;
-      margin-bottom: 28px;
-      border-radius: ${theme.border.radius.sm};
-      border: 1px solid ${theme.colors.bg3};
-      background: ${theme.colors.bg1};
-      color: ${theme.colors.textSemiWeak};
-      font-size: ${theme.typography.size.md};
-      width: 100%;
-
-      thead {
-        color: #538ade;
-        font-size: ${theme.typography.size.sm};
-      }
-
-      th,
-      td {
-        padding: 6px 13px;
-        height: ${theme.spacing.xl};
-      }
-
-      tbody > tr:nth-child(odd) {
-        background: ${theme.colors.bg2};
-      }
-    `,
-    noteTextbox: css`
-      margin-bottom: ${theme.spacing.xl};
-    `,
-    textInfo: css`
-      color: ${theme.colors.textSemiWeak};
-      font-size: ${theme.typography.size.sm};
-    `,
-    dashboardSearch: css`
-      margin-top: ${theme.spacing.md};
-    `,
-  };
-});

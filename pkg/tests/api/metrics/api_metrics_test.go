@@ -14,9 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -69,7 +69,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 		}
 		result := makeCWRequest(t, req, addr)
 
-		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
+		dataFrames := data.Frames{
 			&data.Frame{
 				RefID: "A",
 				Fields: []*data.Field{
@@ -82,21 +82,13 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 					},
 				},
 			},
-		})
+		}
 
-		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
-		// In the future we should use gocmp instead and ignore this field
-		_, err := dataFrames.Encoded()
-		require.NoError(t, err)
-
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"A": {
-					RefID:      "A",
-					Dataframes: dataFrames,
-				},
-			},
-		}, result)
+		expect := backend.NewQueryDataResponse()
+		expect.Responses["A"] = backend.DataResponse{
+			Frames: dataFrames,
+		}
+		assert.Equal(t, *expect, result)
 	})
 }
 
@@ -130,7 +122,7 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		}
 		tr := makeCWRequest(t, req, addr)
 
-		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
+		dataFrames := data.Frames{
 			&data.Frame{
 				Name:  "logGroups",
 				RefID: "A",
@@ -141,23 +133,17 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 					PreferredVisualization: "logs",
 				},
 			},
-		})
-		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
-		// In the future we should use gocmp instead and ignore this field
-		_, err := dataFrames.Encoded()
-		require.NoError(t, err)
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"A": {
-					RefID:      "A",
-					Dataframes: dataFrames,
-				},
-			},
-		}, tr)
+		}
+
+		expect := backend.NewQueryDataResponse()
+		expect.Responses["A"] = backend.DataResponse{
+			Frames: dataFrames,
+		}
+		assert.Equal(t, *expect, tr)
 	})
 }
 
-func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) plugins.DataResponse {
+func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) backend.QueryDataResponse {
 	t.Helper()
 
 	buf := bytes.Buffer{}
@@ -180,7 +166,7 @@ func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) plugins.Da
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 
-	var tr plugins.DataResponse
+	var tr backend.QueryDataResponse
 	err = json.Unmarshal(buf.Bytes(), &tr)
 	require.NoError(t, err)
 

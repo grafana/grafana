@@ -6,11 +6,11 @@ weight = 60
 
 # Data sources
 
-Grafana supports many different storage backends for your time series data (data source). Each data source has a specific Query Editor that is customized for the features and capabilities that the particular data source exposes.
+Grafana supports many different storage backends for your time series data (data source). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Querying
 
-The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources onto a single Dashboard, but each Panel is tied to a specific data source that belongs to a particular Organization.
+Each data source has a specific Query Editor that is customized for the features and capabilities that the particular data source exposes. The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources onto a single Dashboard, but each Panel is tied to a specific data source that belongs to a particular Organization.
 
 ## Supported data sources
 
@@ -21,7 +21,7 @@ The following data sources are officially supported:
 - [Elasticsearch]({{< relref "elasticsearch.md" >}})
 - [Google Cloud Monitoring]({{< relref "google-cloud-monitoring/_index.md" >}})
 - [Graphite]({{< relref "graphite.md" >}})
-- [InfluxDB]({{< relref "influxdb.md" >}})
+- [InfluxDB]({{< relref "influxdb/_index.md" >}})
 - [Loki]({{< relref "loki.md" >}})
 - [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
 - [MySQL]({{< relref "mysql.md" >}})

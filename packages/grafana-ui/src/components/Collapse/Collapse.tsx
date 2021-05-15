@@ -1,19 +1,18 @@
-import React, { FunctionComponent, useContext, useState } from 'react';
-import { css, cx } from 'emotion';
+import React, { FunctionComponent, useState } from 'react';
+import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes/stylesFactory';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
+import { GrafanaTheme2 } from '@grafana/data';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   collapse: css`
     label: collapse;
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(1)};
   `,
   collapseBody: css`
     label: collapse__body;
-    padding: ${theme.panelPadding}px;
+    padding: ${theme.spacing(theme.components.panel.padding)};
     flex: 1;
     overflow: hidden;
     display: flex;
@@ -30,7 +29,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     position: relative;
     overflow: hidden;
     background: none;
-    margin: ${theme.spacing.xs};
+    margin: ${theme.spacing(0.5)};
   `,
   loaderActive: css`
     label: collapse__loader_active;
@@ -45,7 +44,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
       animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
       animation-iteration-count: 100;
       left: -25%;
-      background: ${theme.palette.blue85};
+      background: ${theme.colors.primary.main};
     }
     @keyframes loader {
       from {
@@ -60,7 +59,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   header: css`
     label: collapse__header;
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    padding: ${theme.spacing(1, 2)};
     display: flex;
     cursor: inherit;
     transition: all 0.1s linear;
@@ -69,14 +68,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   headerCollapsed: css`
     label: collapse__header--collapsed;
     cursor: pointer;
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    padding: ${theme.spacing(1, 2)};
   `,
   headerButtons: css`
     label: collapse__header-buttons;
-    margin-right: ${theme.spacing.sm};
-    margin-top: ${theme.spacing.xxs};
+    margin-right: ${theme.spacing(1)};
+    margin-top: ${theme.spacing(0.25)};
     font-size: ${theme.typography.size.lg};
-    line-height: ${theme.typography.heading.h6};
+    line-height: ${theme.typography.h6.lineHeight};
     display: inherit;
   `,
   headerButtonsCollapsed: css`
@@ -85,11 +84,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   headerLabel: css`
     label: collapse__header-label;
-    font-weight: ${theme.typography.weight.semibold};
-    margin-right: ${theme.spacing.sm};
-    font-size: ${theme.typography.heading.h6};
+    font-weight: ${theme.typography.fontWeightMedium};
+    margin-right: ${theme.spacing(1)};
+    font-size: ${theme.typography.size.md};
   `,
-}));
+});
 
 export interface Props {
   /** Expand or collapse te content */
@@ -102,6 +101,8 @@ export interface Props {
   collapsible?: boolean;
   /** Callback for the toggle functionality */
   onToggle?: (isOpen: boolean) => void;
+  /** Additional class name for the root element */
+  className?: string;
 }
 
 export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle, ...otherProps }) => {
@@ -120,16 +121,23 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   );
 };
 
-export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, collapsible, onToggle, children }) => {
-  const theme = useContext(ThemeContext);
-  const style = getStyles(theme);
+export const Collapse: FunctionComponent<Props> = ({
+  isOpen,
+  label,
+  loading,
+  collapsible,
+  onToggle,
+  className,
+  children,
+}) => {
+  const style = useStyles2(getStyles);
   const onClickToggle = () => {
     if (onToggle) {
       onToggle(!isOpen);
     }
   };
 
-  const panelClass = cx([style.collapse, 'panel-container']);
+  const panelClass = cx([style.collapse, 'panel-container', className]);
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
   const headerButtonsClass = collapsible ? cx([style.headerButtons]) : cx([style.headerButtonsCollapsed]);

@@ -138,7 +138,7 @@ export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSec
 
   return sections.reduce((uids, section) => {
     return section.items ? [...uids, ...section.items.filter((item) => item.checked)] : uids;
-  }, []);
+  }, [] as DashboardSectionItem[]);
 };
 
 /**
@@ -166,11 +166,11 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
 
   return sections.reduce((result, section) => {
     if (section?.id !== 0 && section.checked) {
-      return { ...result, folders: [...result.folders, section.uid] };
+      return { ...result, folders: [...result.folders, section.uid] } as UidsToDelete;
     } else {
-      return { ...result, dashboards: getCheckedDashboardsUids(sections) };
+      return { ...result, dashboards: getCheckedDashboardsUids(sections) } as UidsToDelete;
     }
-  }, emptyResults) as UidsToDelete;
+  }, emptyResults);
 };
 
 /**
@@ -189,9 +189,9 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
 
   if (parseQuery(query.query).folder === 'current') {
     try {
-      const { folderId } = getDashboardSrv().getCurrent()?.meta;
-      if (folderId) {
-        folderIds = [folderId];
+      const dash = getDashboardSrv().getCurrent();
+      if (dash?.meta.folderId) {
+        folderIds = [dash?.meta.folderId];
       }
     } catch (e) {
       console.error(e);

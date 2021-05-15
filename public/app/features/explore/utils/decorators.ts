@@ -6,6 +6,7 @@ import {
   PanelData,
   sortLogsResult,
   standardTransformers,
+  DataQuery,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { groupBy } from 'lodash';
@@ -118,7 +119,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
           field.display ??
           getDisplayProcessor({
             field,
-            theme: config.theme,
+            theme: config.theme2,
             timeZone: data.request?.timezone ?? 'browser',
           });
       }
@@ -129,7 +130,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
 };
 
 export const decorateWithLogsResult = (
-  options: { absoluteRange?: AbsoluteTimeRange; refreshInterval?: string } = {}
+  options: { absoluteRange?: AbsoluteTimeRange; refreshInterval?: string; queries?: DataQuery[] } = {}
 ) => (data: ExplorePanelData): ExplorePanelData => {
   if (data.logsFrames.length === 0) {
     return { ...data, logsResult: null };
@@ -137,7 +138,13 @@ export const decorateWithLogsResult = (
 
   const timeZone = data.request?.timezone ?? 'browser';
   const intervalMs = data.request?.intervalMs;
-  const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, timeZone, options.absoluteRange);
+  const newResults = dataFrameToLogsModel(
+    data.logsFrames,
+    intervalMs,
+    timeZone,
+    options.absoluteRange,
+    options.queries
+  );
   const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
   const rows = sortedNewResults.rows;

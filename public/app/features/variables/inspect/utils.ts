@@ -1,12 +1,9 @@
-// @ts-ignore
-import vis from 'visjs-network';
-
 import { variableAdapters } from '../adapters';
 import { DashboardModel } from '../../dashboard/state';
 import { isAdHoc } from '../guard';
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { VariableModel } from '../types';
-import { containsVariable, variableRegex } from '../utils';
+import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 
 export interface GraphNode {
   id: string;
@@ -52,22 +49,8 @@ export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] =
   return edges;
 };
 
-export const toVisNetworkNodes = (nodes: GraphNode[]): any[] => {
-  const nodesWithStyle: any[] = nodes.map((node) => ({
-    ...node,
-    shape: 'box',
-  }));
-  return new vis.DataSet(nodesWithStyle);
-};
-
-export const toVisNetworkEdges = (edges: GraphEdge[]): any[] => {
-  const edgesWithStyle: any[] = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
-  return new vis.DataSet(edgesWithStyle);
-};
-
 function getVariableName(expression: string) {
-  variableRegex.lastIndex = 0;
-  const match = variableRegex.exec(expression);
+  const match = variableRegexExec(expression);
   if (!match) {
     return null;
   }
@@ -76,6 +59,7 @@ function getVariableName(expression: string) {
 }
 
 export const getUnknownVariableStrings = (variables: VariableModel[], model: any) => {
+  variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
   const matches = modelAsString.match(variableRegex);
@@ -90,6 +74,11 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
     }
 
     if (match.indexOf('$__') !== -1) {
+      // ignore builtin variables
+      continue;
+    }
+
+    if (match.indexOf('${__') !== -1) {
       // ignore builtin variables
       continue;
     }

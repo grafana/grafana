@@ -1,5 +1,5 @@
 import React, { FC, useMemo, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { getFrameDisplayName, GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
 import { Button, Select, stylesFactory, Table, useTheme } from '@grafana/ui';
 import { EmptyState } from './EmptyState';
@@ -8,10 +8,9 @@ interface Props {
   data: PanelData;
   width: number;
   height: number;
-  onRunQueries: () => void;
 }
 
-export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }) => {
+export const PreviewQueryTab: FC<Props> = ({ data, height, width }) => {
   const [currentSeries, setSeries] = useState<number>(0);
   const theme = useTheme();
   const styles = getStyles(theme, height);
@@ -29,7 +28,7 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }
   if (!data) {
     return (
       <EmptyState title="Run queries to view data.">
-        <Button onClick={onRunQueries}>Run queries</Button>
+        <Button>Run queries</Button>
       </EmptyState>
     );
   }

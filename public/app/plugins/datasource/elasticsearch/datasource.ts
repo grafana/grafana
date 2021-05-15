@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep, find, isNumber, isObject, isString, first as _first, map as _map } from 'lodash';
 import {
   DataFrame,
   DataLink,
@@ -13,7 +13,6 @@ import {
   getDefaultTimeRange,
   LogRowModel,
   MetricFindValue,
-  PluginMeta,
   ScopedVars,
   TimeRange,
   toUtc,
@@ -23,7 +22,7 @@ import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -31,12 +30,17 @@ import { metricAggregationConfig } from './components/QueryEditor/MetricAggregat
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
+  Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
-import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import {
+  BucketAggregation,
+  isBucketAggregationWithField,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
-import { getScriptValue } from './utils';
+import { coerceESVersion, getScriptValue } from './utils';
+import { gte, lt, satisfies } from 'semver';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -59,7 +63,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   name: string;
   index: string;
   timeField: string;
-  esVersion: number;
+  esVersion: string;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
@@ -82,7 +86,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
     this.timeField = settingsData.timeField;
-    this.esVersion = settingsData.esVersion;
+    this.esVersion = coerceESVersion(settingsData.esVersion);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
@@ -104,11 +108,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.languageProvider = new LanguageProvider(this);
   }
 
-  private request(method: string, url: string, data?: undefined): Observable<any> {
-    const options: any = {
+  private request(
+    method: string,
+    url: string,
+    data?: undefined,
+    headers?: BackendSrvRequest['headers']
+  ): Observable<any> {
+    const options: BackendSrvRequest = {
       url: this.url + '/' + url,
-      method: method,
-      data: data,
+      method,
+      data,
+      headers,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -142,8 +152,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       );
   }
 
-  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
-    return this.languageProvider.importQueries(queries, originMeta.id);
+  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<ElasticsearchQuery[]> {
+    return this.languageProvider.importQueries(queries, originDataSource.meta.id);
   }
 
   /**
@@ -192,7 +202,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private post(url: string, data: any): Observable<any> {
-    return this.request('POST', url, data);
+    return this.request('POST', url, data, { 'Content-Type': 'application/x-ndjson' });
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -247,7 +257,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     };
 
     // fields field not supported on ES 5.x
-    if (this.esVersion < 5) {
+    if (lt(this.esVersion, '5.0.0')) {
       data['fields'] = [timeField, '_source'];
     }
 
@@ -295,7 +305,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
             let time = getFieldFromSource(source, timeField);
             if (typeof hits[i].fields !== 'undefined') {
               const fields = hits[i].fields;
-              if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+              if (isString(fields[timeField]) || isNumber(fields[timeField])) {
                 time = fields[timeField];
               }
             }
@@ -346,26 +356,39 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
-        const expandedQuery = {
-          ...query,
-          datasource: this.name,
-          query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+    // We need a separate interpolation format for lucene queries, therefore we first interpolate any
+    // lucene query string and then everything else
+    const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
+      if (bucketAgg.type === 'filters') {
+        return {
+          ...bucketAgg,
+          settings: {
+            ...bucketAgg.settings,
+            filters: bucketAgg.settings?.filters?.map((filter) => ({
+              ...filter,
+              query: this.interpolateLuceneQuery(filter.query || '', scopedVars),
+            })),
+          },
         };
+      }
 
-        for (let bucketAgg of query.bucketAggs || []) {
-          if (bucketAgg.type === 'filters') {
-            for (let filter of bucketAgg.settings?.filters || []) {
-              filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
-            }
-          }
-        }
-        return expandedQuery;
-      });
-    }
-    return expandedQueries;
+      return bucketAgg;
+    };
+
+    const expandedQueries = queries.map(
+      (query): ElasticsearchQuery => ({
+        ...query,
+        datasource: this.name,
+        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
+      })
+    );
+
+    const finalQueries: ElasticsearchQuery[] = JSON.parse(
+      this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
+    );
+
+    return finalQueries;
   }
 
   testDatasource() {
@@ -373,7 +396,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return this.getFields('date')
       .pipe(
         mergeMap((dateFields) => {
-          const timeField: any = _.find(dateFields, { text: this.timeField });
+          const timeField: any = find(dateFields, { text: this.timeField });
           if (!timeField) {
             return of({ status: 'error', message: 'No date field named ' + this.timeField + ' found' });
           }
@@ -398,7 +421,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
 
-    if (this.esVersion >= 56 && this.esVersion < 70) {
+    if (satisfies(this.esVersion, '>=5.6.0 <7.0.0')) {
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
 
@@ -462,7 +485,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
    * search_after feature.
    */
   showContextToggle(): boolean {
-    return this.esVersion > 5;
+    return gte(this.esVersion, '5.0.0');
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
@@ -501,7 +524,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
-    const dataFrame = _.first(logResponse.data);
+    const dataFrame = _first(logResponse.data);
     if (!dataFrame) {
       return { data: [] };
     }
@@ -529,7 +552,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     let payload = '';
-    const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
+    const targets = this.interpolateVariablesInQueries(cloneDeep(options.targets), options.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
@@ -543,10 +566,19 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
       let queryObj;
       if (hasMetricOfType(target, 'logs')) {
+        // FIXME: All this logic here should be in the query builder.
+        // When moving to the BE-only implementation we should remove this and let the BE
+        // Handle this.
+        // TODO: defaultBucketAgg creates a dete_histogram aggregation without a field, so it fallbacks to
+        // the configured timeField. we should allow people to use a different time field here.
         target.bucketAggs = [defaultBucketAgg()];
+
+        const log = target.metrics?.find((m) => m.type === 'logs') as Logs;
+        const limit = log.settings?.limit ? parseInt(log.settings?.limit, 10) : 500;
+
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
+        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters, target.query);
       } else {
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
@@ -557,7 +589,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
       const esQuery = JSON.stringify(queryObj);
 
-      const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
+      const searchType = queryObj.size === 0 && lt(this.esVersion, '5.0.0') ? 'count' : 'query_then_fetch';
       const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
       payload += header + '\n';
 
@@ -603,8 +635,9 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
+  // FIXME: This doesn't seem to return actual MetricFindValues, we should either change the return type
+  // or fix the implementation.
   getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
-    const configuredEsVersion = this.esVersion;
     return this.get('/_mapping', range).pipe(
       map((result) => {
         const typeMap: any = {
@@ -643,17 +676,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
             const subObj = obj[key];
 
             // Check mapping field for nested fields
-            if (_.isObject(subObj.properties)) {
+            if (isObject(subObj.properties)) {
               fieldNameParts.push(key);
               getFieldsRecursively(subObj.properties);
             }
 
-            if (_.isObject(subObj.fields)) {
+            if (isObject(subObj.fields)) {
               fieldNameParts.push(key);
               getFieldsRecursively(subObj.fields);
             }
 
-            if (_.isString(subObj.type)) {
+            if (isString(subObj.type)) {
               const fieldName = fieldNameParts.concat(key).join('.');
 
               // Hide meta-fields and check field type
@@ -673,7 +706,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           if (index && index.mappings) {
             const mappings = index.mappings;
 
-            if (configuredEsVersion < 70) {
+            if (lt(this.esVersion, '7.0.0')) {
               for (const typeName in mappings) {
                 const properties = mappings[typeName].properties;
                 getFieldsRecursively(properties);
@@ -686,7 +719,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
 
         // transform to array
-        return _.map(fields, (value) => {
+        return _map(fields, (value) => {
           return value;
         });
       })
@@ -694,7 +727,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getTerms(queryDef: any, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
-    const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
+    const searchType = gte(this.esVersion, '5.0.0') ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
 
@@ -711,7 +744,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
 
         const buckets = res.responses[0].aggregations['1'].buckets;
-        return _.map(buckets, (bucket) => {
+        return _map(buckets, (bucket) => {
           return {
             text: bucket.key_as_string || bucket.key,
             value: bucket.key,
@@ -722,7 +755,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getMultiSearchUrl() {
-    if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
+    if (gte(this.esVersion, '7.0.0') && this.maxConcurrentShardRequests) {
       return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
     }
 

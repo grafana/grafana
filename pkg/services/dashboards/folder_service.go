@@ -16,6 +16,7 @@ type FolderService interface {
 	GetFolders(limit int64) ([]*models.Folder, error)
 	GetFolderByID(id int64) (*models.Folder, error)
 	GetFolderByUID(uid string) (*models.Folder, error)
+	GetFolderByTitle(title string) (*models.Folder, error)
 	CreateFolder(title, uid string) (*models.Folder, error)
 	UpdateFolder(uid string, cmd *models.UpdateFolderCommand) error
 	DeleteFolder(uid string) (*models.Folder, error)
@@ -81,6 +82,23 @@ func (dr *dashboardServiceImpl) GetFolderByUID(uid string) (*models.Folder, erro
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: uid}
 	dashFolder, err := getFolder(query)
 
+	if err != nil {
+		return nil, toFolderError(err)
+	}
+
+	g := guardian.New(dashFolder.Id, dr.orgId, dr.user)
+	if canView, err := g.CanView(); err != nil || !canView {
+		if err != nil {
+			return nil, toFolderError(err)
+		}
+		return nil, models.ErrFolderAccessDenied
+	}
+
+	return dashToFolder(dashFolder), nil
+}
+
+func (dr *dashboardServiceImpl) GetFolderByTitle(title string) (*models.Folder, error) {
+	dashFolder, err := dr.dashboardStore.GetFolderByTitle(dr.orgId, title)
 	if err != nil {
 		return nil, toFolderError(err)
 	}

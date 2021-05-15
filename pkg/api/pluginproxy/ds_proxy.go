@@ -231,7 +231,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	req.Header.Del("Referer")
 
 	if proxy.route != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, proxy.cfg)
 	}
 
 	if oauthtoken.IsOAuthPassThruEnabled(proxy.ds) {
@@ -244,18 +244,6 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 func (proxy *DataSourceProxy) validateRequest() error {
 	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
 		return errors.New("target URL is not a valid target")
-	}
-
-	if proxy.ds.Type == models.DS_PROMETHEUS {
-		if proxy.ctx.Req.Request.Method == "DELETE" {
-			return errors.New("deletes not allowed on proxied Prometheus datasource")
-		}
-		if proxy.ctx.Req.Request.Method == "PUT" {
-			return errors.New("puts not allowed on proxied Prometheus datasource")
-		}
-		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range" || proxy.proxyPath == "api/v1/series" || proxy.proxyPath == "api/v1/labels") {
-			return errors.New("posts not allowed on proxied Prometheus datasource except on /query, /query_range, /series and /labels")
-		}
 	}
 
 	if proxy.ds.Type == models.DS_ES {
@@ -278,16 +266,32 @@ func (proxy *DataSourceProxy) validateRequest() error {
 				continue
 			}
 
+			// route match
+			if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+				continue
+			}
+
 			if route.ReqRole.IsValid() {
 				if !proxy.ctx.HasUserRole(route.ReqRole) {
 					return errors.New("plugin proxy route access denied")
 				}
 			}
 
-			if strings.HasPrefix(proxy.proxyPath, route.Path) {
-				proxy.route = route
-				break
-			}
+			proxy.route = route
+			return nil
+		}
+	}
+
+	// Trailing validation below this point for routes that were not matched
+	if proxy.ds.Type == models.DS_PROMETHEUS {
+		if proxy.ctx.Req.Request.Method == "DELETE" {
+			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "PUT" {
+			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "POST" {
+			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus datasource")
 		}
 	}
 

@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 
 import Datasource from '../datasource';
 import { AzureMonitorQuery } from '../types';
-import { convertTimeGrainsToMs } from './common';
+import { convertTimeGrainsToMs } from '../utils/common';
 
 export interface MetricMetadata {
   aggOptions: Array<{ label: string; value: string }>;
   timeGrains: Array<{ label: string; value: string }>;
   dimensions: Array<{ label: string; value: string }>;
+  isLoading: boolean;
 }
 
 export function useMetricsMetadata(
@@ -20,6 +21,7 @@ export function useMetricsMetadata(
     aggOptions: [],
     timeGrains: [],
     dimensions: [],
+    isLoading: false,
   });
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function useMetricsMetadata(
     ) {
       return;
     }
-
+    setMetricMetadata((prevState) => ({ ...prevState, isLoading: true }));
     datasource
       .getMetricMetadata(
         subscriptionId,
@@ -50,8 +52,11 @@ export function useMetricsMetadata(
           ...query,
           azureMonitor: {
             ...query.azureMonitor,
-            aggregation: metadata.primaryAggType,
-            timeGrain: 'auto',
+            aggregation:
+              query.azureMonitor.aggregation && metadata.supportedAggTypes.includes(query.azureMonitor.aggregation)
+                ? query.azureMonitor.aggregation
+                : metadata.primaryAggType,
+            timeGrain: query.azureMonitor.timeGrain || 'auto',
             allowedTimeGrainsMs: convertTimeGrainsToMs(metadata.supportedTimeGrains),
           },
         });
@@ -66,6 +71,7 @@ export function useMetricsMetadata(
           aggOptions: aggregations,
           timeGrains: metadata.supportedTimeGrains,
           dimensions: metadata.dimensions,
+          isLoading: false,
         });
       })
       .catch((err) => {
@@ -79,6 +85,9 @@ export function useMetricsMetadata(
     query.azureMonitor.resourceName,
     query.azureMonitor.metricNamespace,
     query.azureMonitor.metricName,
+    query,
+    datasource,
+    onQueryChange,
   ]);
 
   return metricMetadata;

@@ -19,12 +19,13 @@ type pluginClient interface {
 }
 
 type grpcPlugin struct {
-	descriptor    PluginDescriptor
-	clientFactory func() *plugin.Client
-	client        *plugin.Client
-	pluginClient  pluginClient
-	logger        log.Logger
-	mutex         sync.RWMutex
+	descriptor     PluginDescriptor
+	clientFactory  func() *plugin.Client
+	client         *plugin.Client
+	pluginClient   pluginClient
+	logger         log.Logger
+	mutex          sync.RWMutex
+	decommissioned bool
 }
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
@@ -38,10 +39,6 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 			},
 		}, nil
 	}
-}
-
-func (p *grpcPlugin) CanHandleDataQueries() bool {
-	return false
 }
 
 func (p *grpcPlugin) PluginID() string {
@@ -104,62 +101,74 @@ func (p *grpcPlugin) Exited() bool {
 	return true
 }
 
-func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *grpcPlugin) Decommission() error {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	p.decommissioned = true
+
+	return nil
+}
+
+func (p *grpcPlugin) IsDecommissioned() bool {
+	return p.decommissioned
+}
+
+func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, false
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
+	return pluginClient, true
+}
 
+func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
 	return pluginClient.CollectMetrics(ctx)
 }
 
 func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
-
 	return pluginClient.CheckHealth(ctx, req)
 }
 
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
-
 	return pluginClient.CallResource(ctx, req, sender)
 }
 
-func (p *grpcPlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+func (p *grpcPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
+	return pluginClient.SubscribeStream(ctx, request)
+}
 
-	return pluginClient.CanSubscribeToStream(ctx, request)
+func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.PublishStream(ctx, request)
 }
 
 func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
-
 	return pluginClient.RunStream(ctx, req, sender)
 }

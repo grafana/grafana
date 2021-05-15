@@ -12,7 +12,6 @@ import {
   FieldConfig,
   FieldColorModeId,
   getFieldColorMode,
-  getColorForTheme,
   FALLBACK_COLOR,
   TextDisplayOptions,
   VizOrientation,
@@ -20,7 +19,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 import { measureText, calculateFontSize } from '../../utils/measureText';
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
@@ -29,7 +28,7 @@ const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
 const VALUE_LEFT_PADDING = 10;
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   height: number;
   width: number;
   field: FieldConfig;
@@ -499,7 +498,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     // shift empty region back to fill gaps due to border radius
     emptyBar.left = '-3px';
-    emptyBar.width = `${maxBarWidth - barWidth}px`;
 
     if (isBasic) {
       // Basic styles
@@ -537,14 +535,20 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
-      const color = getColorForTheme(threshold.color, props.theme);
-      const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
+      const color = props.theme.visualization.getColorByName(threshold.color);
+      const valuePercent =
+        thresholds.mode === ThresholdsMode.Percentage
+          ? threshold.value / 100
+          : getValuePercent(threshold.value, minValue, maxValue);
       const pos = valuePercent * maxSize;
       const offset = Math.round(pos - (pos - lastpos) / 2);
-
+      const thresholdValue =
+        thresholds.mode === ThresholdsMode.Percentage
+          ? minValue + (maxValue - minValue) * valuePercent
+          : threshold.value;
       if (gradient === '') {
         gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else if (value.numeric < threshold.value) {
+      } else if (value.numeric < thresholdValue) {
         break;
       } else {
         lastpos = pos;
@@ -555,8 +559,9 @@ export function getBarGradient(props: Props, maxSize: number): string {
     return gradient + ')';
   }
 
-  if (mode.isContinuous && mode.colors) {
-    const scheme = mode.colors.map((item) => getColorForTheme(item, theme));
+  if (mode.isContinuous && mode.getColors) {
+    const scheme = mode.getColors(theme);
+
     for (let i = 0; i < scheme.length; i++) {
       const color = scheme[i];
 

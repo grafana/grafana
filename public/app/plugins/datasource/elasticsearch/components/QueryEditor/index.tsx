@@ -1,5 +1,5 @@
-import React, { FunctionComponent } from 'react';
-import { QueryEditorProps } from '@grafana/data';
+import React from 'react';
+import { getDefaultTimeRange, QueryEditorProps } from '@grafana/data';
 import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
@@ -12,13 +12,14 @@ import { useNextId } from '../../hooks/useNextId';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
-  query,
-  onChange,
-  onRunQuery,
-  datasource,
-}) => (
-  <ElasticsearchProvider datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} query={query}>
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => (
+  <ElasticsearchProvider
+    datasource={datasource}
+    onChange={onChange}
+    onRunQuery={onRunQuery}
+    query={query}
+    range={range || getDefaultTimeRange()}
+  >
     <QueryEditorForm value={query} />
   </ElasticsearchProvider>
 );
@@ -27,9 +28,12 @@ interface Props {
   value: ElasticsearchQuery;
 }
 
-const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
+const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
+
+  // To be considered a time series query, the last bucked aggregation must be a Date Histogram
+  const isTimeSeriesQuery = value.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
 
   return (
     <>
@@ -45,7 +49,12 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
             portalOrigin="elasticsearch"
           />
         </InlineField>
-        <InlineField label="Alias" labelWidth={15}>
+        <InlineField
+          label="Alias"
+          labelWidth={15}
+          disabled={!isTimeSeriesQuery}
+          tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
+        >
           <Input
             id={`ES-query-${value.refId}_alias`}
             placeholder="Alias Pattern"

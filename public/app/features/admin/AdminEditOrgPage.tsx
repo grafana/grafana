@@ -8,7 +8,7 @@ import { useAsyncFn } from 'react-use';
 import { getBackendSrv } from '@grafana/runtime';
 import { UrlQueryValue } from '@grafana/data';
 import { Form, Field, Input, Button, Legend } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface OrgNameDTO {
@@ -46,7 +46,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
   useEffect(() => {
     fetchOrg();
     fetchOrgUsers().then((res) => setUsers(res));
-  }, []);
+  }, [fetchOrg, fetchOrgUsers]);
 
   const updateOrgName = async (name: string) => {
     return await getBackendSrv().put('/api/orgs/' + orgId, { ...orgState.value, name });
@@ -56,7 +56,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
     <Page navModel={navModel}>
       <Page.Contents>
         <>
-          <Legend>Edit Organization</Legend>
+          <Legend>Edit organization</Legend>
 
           {orgState.value && (
             <Form
@@ -66,7 +66,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
               {({ register, errors }) => (
                 <>
                   <Field label="Name" invalid={!!errors.orgName} error="Name is required">
-                    <Input name="orgName" ref={register({ required: true })} />
+                    <Input {...register('orgName', { required: true })} />
                   </Field>
                   <Button>Update</Button>
                 </>
@@ -79,7 +79,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
               margin-top: 20px;
             `}
           >
-            <Legend>Organization Users</Legend>
+            <Legend>Organization users</Legend>
             {!!users.length && (
               <UsersTable
                 users={users}

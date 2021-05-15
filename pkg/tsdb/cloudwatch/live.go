@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/servicequotas"
 	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
-	"github.com/centrifugal/centrifuge"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -57,30 +56,30 @@ func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelH
 }
 
 // OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
-func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (r *logQueryRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	r.runningMu.Lock()
 	defer r.runningMu.Unlock()
 
 	if _, ok := r.running[e.Channel]; ok {
-		return centrifuge.SubscribeReply{}, nil
+		return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
 	}
 
 	r.running[e.Channel] = true
 	go func() {
-		if err := r.publishResults(e.Channel); err != nil {
+		if err := r.publishResults(user.OrgId, e.Channel); err != nil {
 			plog.Error(err.Error())
 		}
 	}()
 
-	return centrifuge.SubscribeReply{}, nil
+	return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
 }
 
 // OnPublish checks if a message from the websocket can be broadcast on this channel
-func (r *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{}, fmt.Errorf("can not publish")
+func (r *logQueryRunner) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }
 
-func (r *logQueryRunner) publishResults(channelName string) error {
+func (r *logQueryRunner) publishResults(orgID int64, channelName string) error {
 	defer func() {
 		r.service.DeleteResponseChannel(channelName)
 		r.runningMu.Lock()
@@ -99,7 +98,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 			return err
 		}
 
-		if err := r.publish(channelName, responseBytes); err != nil {
+		if err := r.publish(orgID, channelName, responseBytes); err != nil {
 			return err
 		}
 	}
@@ -109,6 +108,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responseChannelName := uuid.New().String()
 	responseChannel := make(chan plugins.DataResponse)
@@ -134,6 +134,7 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backe
 	return response, nil
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan plugins.DataResponse) {
 	defer close(responseChannel)
 
@@ -211,6 +212,7 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCt
 	return defaultConcurrentQueries
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan plugins.DataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {

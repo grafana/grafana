@@ -5,12 +5,14 @@ import 'angular-bindonce';
 import 'vendor/bootstrap/bootstrap';
 import 'vendor/angular-other/angular-strap';
 import { config } from 'app/core/config';
-import { angularModules } from 'app/core/core_module';
+import coreModule, { angularModules } from 'app/core/core_module';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { registerAngularDirectives } from 'app/core/core';
 import { initAngularRoutingBridge } from 'app/angular/bridgeReactAngularRouting';
 import { monkeyPatchInjectorWithPreAssignedBindings } from 'app/core/injectorMonkeyPatch';
 import { extend } from 'lodash';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export class AngularApp {
   ngModuleDependencies: any[];
@@ -82,6 +84,9 @@ export class AngularApp {
 
     // register react angular wrappers
     angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
+
+    coreModule.factory('timeSrv', () => getTimeSrv());
+    coreModule.factory('templateSrv', () => getTemplateSrv());
 
     registerAngularDirectives();
     initAngularRoutingBridge();

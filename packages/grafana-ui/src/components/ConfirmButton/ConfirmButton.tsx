@@ -1,55 +1,10 @@
 import React, { PureComponent, SyntheticEvent } from 'react';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 import { ComponentSize } from '../../types/size';
 import { Button, ButtonVariant } from '../Button';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    buttonContainer: css`
-      direction: rtl;
-      display: flex;
-      align-items: center;
-    `,
-    buttonDisabled: css`
-      text-decoration: none;
-      color: ${theme.colors.text};
-      opacity: 0.65;
-      cursor: not-allowed;
-      pointer-events: none;
-    `,
-    buttonShow: css`
-      opacity: 1;
-      transition: opacity 0.1s ease;
-      z-index: 2;
-    `,
-    buttonHide: css`
-      opacity: 0;
-      transition: opacity 0.1s ease;
-      z-index: 0;
-    `,
-    confirmButton: css`
-      align-items: flex-start;
-      background: ${theme.colors.bg1};
-      display: flex;
-      overflow: hidden;
-      position: absolute;
-    `,
-    confirmButtonShow: css`
-      z-index: 1;
-      opacity: 1;
-      transition: opacity 0.08s ease-out, transform 0.1s ease-out;
-      transform: translateX(0);
-    `,
-    confirmButtonHide: css`
-      opacity: 0;
-      transition: opacity 0.12s ease-in, transform 0.14s ease-in;
-      transform: translateX(100px);
-    `,
-  };
-});
 
 export interface Props extends Themeable {
   /** Confirm action callback */
@@ -107,7 +62,10 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       this.props.onCancel();
     }
   };
-  onConfirm = () => {
+  onConfirm = (event: SyntheticEvent) => {
+    if (event) {
+      event.preventDefault();
+    }
     this.props.onConfirm();
     if (this.props.closeOnConfirm) {
       this.setState({
@@ -143,7 +101,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       <span className={styles.buttonContainer}>
         {typeof children === 'string' ? (
           <span className={buttonClass}>
-            <Button size={size} variant="link" onClick={onClick}>
+            <Button size={size} fill="text" onClick={onClick}>
               {children}
             </Button>
           </span>
@@ -153,7 +111,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
           </span>
         )}
         <span className={confirmButtonClass}>
-          <Button size={size} variant="link" onClick={this.onClickCancel}>
+          <Button size={size} fill="text" onClick={this.onClickCancel}>
             Cancel
           </Button>
           <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm}>
@@ -166,6 +124,51 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
 }
 
 export const ConfirmButton = withTheme(UnThemedConfirmButton);
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    buttonContainer: css`
+      direction: rtl;
+      display: flex;
+      align-items: center;
+    `,
+    buttonDisabled: css`
+      text-decoration: none;
+      color: ${theme.colors.text};
+      opacity: 0.65;
+      cursor: not-allowed;
+      pointer-events: none;
+    `,
+    buttonShow: css`
+      opacity: 1;
+      transition: opacity 0.1s ease;
+      z-index: 2;
+    `,
+    buttonHide: css`
+      opacity: 0;
+      transition: opacity 0.1s ease;
+      z-index: 0;
+    `,
+    confirmButton: css`
+      align-items: flex-start;
+      background: ${theme.colors.bg1};
+      display: flex;
+      overflow: hidden;
+      position: absolute;
+    `,
+    confirmButtonShow: css`
+      z-index: 1;
+      opacity: 1;
+      transition: opacity 0.08s ease-out, transform 0.1s ease-out;
+      transform: translateX(0);
+    `,
+    confirmButtonHide: css`
+      opacity: 0;
+      transition: opacity 0.12s ease-in, transform 0.14s ease-in;
+      transform: translateX(100px);
+    `,
+  };
+});
 
 // Declare defaultProps directly on the themed component so they are displayed
 // in the props table
