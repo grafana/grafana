@@ -97,6 +97,8 @@ export function getConfig(opts: TimelineCoreOptions) {
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
 
+  const hzGap = 0;
+
   const size = [colWidth, Infinity];
   const gapFactor = 1 - size[0];
   const maxWidth = (size[1] ?? Infinity) * pxRatio;
@@ -235,7 +237,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   yOff,
                   left,
                   round(yOff + y0),
-                  right - left - 2,
+                  right - left - hzGap,
                   round(height),
                   strokeWidth,
                   iy,

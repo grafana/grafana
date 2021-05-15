@@ -65,6 +65,11 @@ function getJoinMatcher(options: JoinOptions): FieldMatcher {
   return options.joinBy ?? pickBestJoinField(options.frames);
 }
 
+// indicates if follow-up util functions may mutate field values
+function requiresValuesCopy(frame: DataFrame) {
+  return frame.fields.some(({ config }) => config.custom?.mergeValues || config.custom?.spanNulls);
+}
+
 /**
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
@@ -124,6 +129,16 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
     }
 
+    // TODO: pre-check if we already copied via sortDataFrame
+
+    const shouldCopyValues = requiresValuesCopy(frameCopy);
+
+    if (shouldCopyValues) {
+      frameCopy.fields.forEach((f) => {
+        f.values = new ArrayVector([...f.values.toArray()]);
+      });
+    }
+
     return frameCopy;
   }
 
@@ -155,7 +170,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }
 
         // Support the standard graph span nulls field config
-        nullModesFrame.push(field.config.custom?.spanNulls === true ? NULL_REMOVE : NULL_EXPAND);
+        let spanNulls = field.config.custom?.spanNulls;
+        nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
