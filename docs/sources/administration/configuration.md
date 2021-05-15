@@ -1474,7 +1474,7 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 ### catalog_app_enabled
 
 
-Available to Grafana administrators only, the plugin marketplace app is set to `false` by default. Set it to `true` to enable the app.
+Available to Grafana administrators only, the plugin catalog app is set to `false` by default. Set it to `true` to enable the app.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
