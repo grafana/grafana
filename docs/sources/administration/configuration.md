@@ -1469,7 +1469,7 @@ Enter a comma-separated list of plugin identifiers to identify plugins that are 
 
 ### catalog_url
 
-Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
 ### catalog_app_enabled
 
