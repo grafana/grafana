@@ -117,7 +117,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
 			hs.log.Debug("Can't process query since it's missing data source ID")
-			return response.Error(400, "Query missing data source ID", nil)
+			return response.Error(http.StatusBadRequest, "Query missing data source ID", nil)
 		}
 
 		if name != expr.DatasourceName {
@@ -143,7 +143,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 	}
 	qdr, err := exprService.WrapTransformData(c.Req.Context(), request)
 	if err != nil {
-		return response.Error(500, "expression request error", err)
+		return response.Error(http.StatusInternalServerError, "expression request error", err)
 	}
 	return toMacronResponse(qdr)
 }
@@ -151,12 +151,12 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {
 	hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
 	if errors.Is(err, models.ErrDataSourceAccessDenied) {
-		return response.Error(403, "Access denied to data source", err)
+		return response.Error(http.StatusForbidden, "Access denied to data source", err)
 	}
 	if errors.Is(err, models.ErrDataSourceNotFound) {
-		return response.Error(400, "Invalid data source ID", err)
+		return response.Error(http.StatusBadRequest, "Invalid data source ID", err)
 	}
-	return response.Error(500, "Unable to load data source metadata", err)
+	return response.Error(http.StatusInternalServerError, "Unable to load data source metadata", err)
 }
 
 // QueryMetrics returns query metrics
@@ -218,10 +218,10 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 // GET /api/tsdb/testdata/gensql
 func GenerateSQLTestData(c *models.ReqContext) response.Response {
 	if err := bus.Dispatch(&models.InsertSQLTestDataCommand{}); err != nil {
-		return response.Error(500, "Failed to insert test data", err)
+		return response.Error(http.StatusInternalServerError, "Failed to insert test data", err)
 	}
 
-	return response.JSON(200, &util.DynMap{"message": "OK"})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "OK"})
 }
 
 // GET /api/tsdb/testdata/random-walk
@@ -248,8 +248,8 @@ func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Respo
 
 	resp, err := hs.DataService.HandleRequest(context.Background(), dsInfo, request)
 	if err != nil {
-		return response.Error(500, "Metric request error", err)
+		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
-	return response.JSON(200, &resp)
+	return response.JSON(http.StatusOK, &resp)
 }

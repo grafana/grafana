@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -25,25 +26,25 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreat
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
-			return response.Error(400, "Validation error, need specify either username or email", nil)
+			return response.Error(http.StatusBadRequest, "Validation error, need specify either username or email", nil)
 		}
 	}
 
 	if len(cmd.Password) < 4 {
-		return response.Error(400, "Password is missing or too short", nil)
+		return response.Error(http.StatusBadRequest, "Password is missing or too short", nil)
 	}
 
 	user, err := hs.Login.CreateUser(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
-			return response.Error(400, err.Error(), nil)
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
 
 		if errors.Is(err, models.ErrUserAlreadyExists) {
-			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
-		return response.Error(500, "failed to create user", err)
+		return response.Error(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	metrics.MApiAdminUserCreate.Inc()
@@ -53,25 +54,25 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreat
 		Id:      user.Id,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPasswordForm) response.Response {
 	userID := c.ParamsInt64(":id")
 
 	if len(form.Password) < 4 {
-		return response.Error(400, "New password too short", nil)
+		return response.Error(http.StatusBadRequest, "New password too short", nil)
 	}
 
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		return response.Error(500, "Could not read user from database", err)
+		return response.Error(http.StatusInternalServerError, "Could not read user from database", err)
 	}
 
 	passwordHashed, err := util.EncodePassword(form.Password, userQuery.Result.Salt)
 	if err != nil {
-		return response.Error(500, "Could not encode password", err)
+		return response.Error(http.StatusInternalServerError, "Could not encode password", err)
 	}
 
 	cmd := models.ChangeUserPasswordCommand{
@@ -80,7 +81,7 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return response.Error(500, "Failed to update user password", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update user password", err)
 	}
 
 	return response.Success("User password updated")
@@ -93,10 +94,10 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext, form dtos
 	err := updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, models.ErrLastGrafanaAdmin) {
-			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
+			return response.Error(http.StatusBadRequest, models.ErrLastGrafanaAdmin.Error(), nil)
 		}
 
-		return response.Error(500, "Failed to update user permissions", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update user permissions", err)
 	}
 
 	return response.Success("User permissions updated")
@@ -109,9 +110,9 @@ func AdminDeleteUser(c *models.ReqContext) response.Response {
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, models.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to delete user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete user", err)
 	}
 
 	return response.Success("User deleted")
@@ -124,20 +125,20 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
 	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
-		return response.Error(500, "Could not disable external user", nil)
+		return response.Error(http.StatusInternalServerError, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := bus.Dispatch(&disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, models.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to disable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to disable user", err)
 	}
 
 	err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
-		return response.Error(500, "Failed to disable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to disable user", err)
 	}
 
 	return response.Success("User disabled")
@@ -150,15 +151,15 @@ func AdminEnableUser(c *models.ReqContext) response.Response {
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
 	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
-		return response.Error(500, "Could not enable external user", nil)
+		return response.Error(http.StatusInternalServerError, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := bus.Dispatch(&disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
-			return response.Error(404, models.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, models.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to enable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to enable user", err)
 	}
 
 	return response.Success("User enabled")
@@ -169,7 +170,7 @@ func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
 	userID := c.ParamsInt64(":id")
 
 	if c.UserId == userID {
-		return response.Error(400, "You cannot logout yourself", nil)
+		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)

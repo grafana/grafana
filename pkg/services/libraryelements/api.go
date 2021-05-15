@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/go-macaron/binding"
 
@@ -30,7 +31,7 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(http.StatusOK, util.DynMap{"result": element})
 }
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
@@ -50,7 +51,7 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(http.StatusOK, util.DynMap{"result": element})
 }
 
 // getAllHandler handles GET /api/library-elements/.
@@ -70,7 +71,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	return response.JSON(200, util.DynMap{"result": elementsResult})
+	return response.JSON(http.StatusOK, util.DynMap{"result": elementsResult})
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
@@ -80,7 +81,7 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibr
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(http.StatusOK, util.DynMap{"result": element})
 }
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
@@ -90,30 +91,30 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 		return toLibraryElementError(err, "Failed to get connections")
 	}
 
-	return response.JSON(200, util.DynMap{"result": connections})
+	return response.JSON(http.StatusOK, util.DynMap{"result": connections})
 }
 
 func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, errLibraryElementAlreadyExists) {
-		return response.Error(400, errLibraryElementAlreadyExists.Error(), err)
+		return response.Error(http.StatusBadRequest, errLibraryElementAlreadyExists.Error(), err)
 	}
 	if errors.Is(err, errLibraryElementNotFound) {
-		return response.Error(404, errLibraryElementNotFound.Error(), err)
+		return response.Error(http.StatusNotFound, errLibraryElementNotFound.Error(), err)
 	}
 	if errors.Is(err, errLibraryElementDashboardNotFound) {
-		return response.Error(404, errLibraryElementDashboardNotFound.Error(), err)
+		return response.Error(http.StatusNotFound, errLibraryElementDashboardNotFound.Error(), err)
 	}
 	if errors.Is(err, errLibraryElementVersionMismatch) {
-		return response.Error(412, errLibraryElementVersionMismatch.Error(), err)
+		return response.Error(http.StatusPreconditionFailed, errLibraryElementVersionMismatch.Error(), err)
 	}
 	if errors.Is(err, models.ErrFolderNotFound) {
-		return response.Error(404, models.ErrFolderNotFound.Error(), err)
+		return response.Error(http.StatusNotFound, models.ErrFolderNotFound.Error(), err)
 	}
 	if errors.Is(err, models.ErrFolderAccessDenied) {
-		return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+		return response.Error(http.StatusForbidden, models.ErrFolderAccessDenied.Error(), err)
 	}
 	if errors.Is(err, errLibraryElementHasConnections) {
-		return response.Error(403, errLibraryElementHasConnections.Error(), err)
+		return response.Error(http.StatusForbidden, errLibraryElementHasConnections.Error(), err)
 	}
-	return response.Error(500, message, err)
+	return response.Error(http.StatusInternalServerError, message, err)
 }

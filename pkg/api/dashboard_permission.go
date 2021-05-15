@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -26,7 +27,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 
 	acl, err := g.GetACLWithoutDuplicates()
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard permissions", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard permissions", err)
 	}
 
 	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
@@ -47,12 +48,12 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return response.JSON(200, filteredAcls)
+	return response.JSON(http.StatusOK, filteredAcls)
 }
 
 func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) response.Response {
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
-		return response.Error(400, err.Error(), err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 
 	dashID := c.ParamsInt64(":dashboardId")
@@ -83,28 +84,28 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 
 	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
 	if err != nil {
-		return response.Error(500, "Error while retrieving hidden permissions", err)
+		return response.Error(http.StatusInternalServerError, "Error while retrieving hidden permissions", err)
 	}
 	items = append(items, hiddenACL...)
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
-				return response.Error(400, err.Error(), err)
+				return response.Error(http.StatusBadRequest, err.Error(), err)
 			}
 
-			return response.Error(500, "Error while checking dashboard permissions", err)
+			return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 		}
 
-		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
+		return response.Error(http.StatusForbidden, "Cannot remove own admin permission for a folder", nil)
 	}
 
 	if err := updateDashboardACL(hs, dashID, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
-			return response.Error(409, err.Error(), err)
+			return response.Error(http.StatusConflict, err.Error(), err)
 		}
-		return response.Error(500, "Failed to create permission", err)
+		return response.Error(http.StatusInternalServerError, "Failed to create permission", err)
 	}
 
 	return response.Success("Dashboard permissions updated")

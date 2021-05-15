@@ -24,7 +24,7 @@ func Search(c *models.ReqContext) response.Response {
 	permission := models.PERMISSION_VIEW
 
 	if limit > 5000 {
-		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
+		return response.Error(http.StatusUnprocessableEntity, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
@@ -64,11 +64,11 @@ func Search(c *models.ReqContext) response.Response {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		return response.Error(500, "Search failed", err)
+		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSearch)
-	return response.JSON(200, searchQuery.Result)
+	return response.JSON(http.StatusOK, searchQuery.Result)
 }
 
 func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {

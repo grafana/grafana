@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -20,15 +22,15 @@ func AdminGetSettings(c *models.ReqContext) response.Response {
 		}
 	}
 
-	return response.JSON(200, settings)
+	return response.JSON(http.StatusOK, settings)
 }
 
 func AdminGetStats(c *models.ReqContext) response.Response {
 	statsQuery := models.GetAdminStatsQuery{}
 
 	if err := bus.Dispatch(&statsQuery); err != nil {
-		return response.Error(500, "Failed to get admin stats from database", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get admin stats from database", err)
 	}
 
-	return response.JSON(200, statsQuery.Result)
+	return response.JSON(http.StatusOK, statsQuery.Result)
 }

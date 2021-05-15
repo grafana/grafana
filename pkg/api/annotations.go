@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -31,7 +32,7 @@ func GetAnnotations(c *models.ReqContext) response.Response {
 
 	items, err := repo.Find(query)
 	if err != nil {
-		return response.Error(500, "Failed to get annotations", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
 
 	for _, item := range items {
@@ -40,7 +41,7 @@ func GetAnnotations(c *models.ReqContext) response.Response {
 		}
 	}
 
-	return response.JSON(200, items)
+	return response.JSON(http.StatusOK, items)
 }
 
 type CreateAnnotationError struct {
@@ -60,7 +61,7 @@ func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) response.
 
 	if cmd.Text == "" {
 		err := &CreateAnnotationError{"text field should not be empty"}
-		return response.Error(400, "Failed to save annotation", err)
+		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 	}
 
 	item := annotations.Item{
@@ -77,17 +78,18 @@ func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) response.
 
 	if err := repo.Save(&item); err != nil {
 		if errors.Is(err, annotations.ErrTimerangeMissing) {
-			return response.Error(400, "Failed to save annotation", err)
+			return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 		}
-		return response.Error(500, "Failed to save annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
 
 	startID := item.Id
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Annotation added",
 		"id":      startID,
 	})
+
 }
 
 func formatGraphiteAnnotation(what string, data string) string {
@@ -103,7 +105,7 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 
 	if cmd.What == "" {
 		err := &CreateAnnotationError{"what field should not be empty"}
-		return response.Error(400, "Failed to save Graphite annotation", err)
+		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
 	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
@@ -123,12 +125,12 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 				tagsArray = append(tagsArray, tagStr)
 			} else {
 				err := &CreateAnnotationError{"tag should be a string"}
-				return response.Error(400, "Failed to save Graphite annotation", err)
+				return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 			}
 		}
 	default:
 		err := &CreateAnnotationError{"unsupported tags format"}
-		return response.Error(400, "Failed to save Graphite annotation", err)
+		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
 	item := annotations.Item{
@@ -140,13 +142,14 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 	}
 
 	if err := repo.Save(&item); err != nil {
-		return response.Error(500, "Failed to save Graphite annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Graphite annotation added",
 		"id":      item.Id,
 	})
+
 }
 
 func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) response.Response {
@@ -169,7 +172,7 @@ func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) respo
 	}
 
 	if err := repo.Update(&item); err != nil {
-		return response.Error(500, "Failed to update annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
 
 	return response.Success("Annotation updated")
@@ -187,7 +190,7 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) respons
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
 
 	if err != nil || len(items) == 0 {
-		return response.Error(404, "Could not find annotation to update", err)
+		return response.Error(http.StatusNotFound, "Could not find annotation to update", err)
 	}
 
 	existing := annotations.Item{
@@ -217,7 +220,7 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) respons
 	}
 
 	if err := repo.Update(&existing); err != nil {
-		return response.Error(500, "Failed to update annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
 
 	return response.Success("Annotation patched")
@@ -234,7 +237,7 @@ func DeleteAnnotations(c *models.ReqContext, cmd dtos.DeleteAnnotationsCmd) resp
 	})
 
 	if err != nil {
-		return response.Error(500, "Failed to delete annotations", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete annotations", err)
 	}
 
 	return response.Success("Annotations deleted")
@@ -253,7 +256,7 @@ func DeleteAnnotationByID(c *models.ReqContext) response.Response {
 		Id:    annotationID,
 	})
 	if err != nil {
-		return response.Error(500, "Failed to delete annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete annotation", err)
 	}
 
 	return response.Success("Annotation deleted")
@@ -277,7 +280,7 @@ func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error)
 func canSave(c *models.ReqContext, repo annotations.Repository, annotationID int64) response.Response {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
 	if err != nil || len(items) == 0 {
-		return response.Error(500, "Could not find annotation to update", err)
+		return response.Error(http.StatusInternalServerError, "Could not find annotation to update", err)
 	}
 
 	dashboardID := items[0].DashboardId

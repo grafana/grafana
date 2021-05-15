@@ -163,10 +163,10 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 
 func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(200, "Logged in")
+		return response.JSON(http.StatusOK, "Logged in")
 	}
 
-	return response.Error(401, "Unauthorized", nil)
+	return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
 }
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) response.Response {
@@ -204,7 +204,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) res
 	err := bus.Dispatch(authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
-		resp = response.Error(401, "Invalid username or password", err)
+		resp = response.Error(http.StatusUnauthorized, "Invalid username or password", err)
 		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
 			models.ErrUserNotFound) {
 			return resp
@@ -217,7 +217,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) res
 			return resp
 		}
 
-		resp = response.Error(500, "Error while trying to authenticate user", err)
+		resp = response.Error(http.StatusInternalServerError, "Error while trying to authenticate user", err)
 		return resp
 	}
 

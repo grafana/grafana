@@ -609,18 +609,20 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 	})
 
 	info["channels"] = channels
-	return response.JSONStreaming(200, info)
+	return response.JSONStreaming(http.StatusOK, info)
 }
 
 // HandleInfoHTTP special http response for
 func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 	path := ctx.Params("*")
 	if path == "grafana/dashboards/gitops" {
-		return response.JSON(200, util.DynMap{
+		return response.JSON(http.StatusOK, util.DynMap{
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.OrgId),
 		})
+
 	}
-	return response.JSONStreaming(404, util.DynMap{
+	return response.JSONStreaming(http.StatusNotFound, util.DynMap{
 		"message": "Info is not supported for this channel",
 	})
+
 }

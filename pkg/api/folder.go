@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -31,7 +32,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 		})
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
@@ -42,7 +43,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(http.StatusOK, toFolderDto(g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
@@ -53,7 +54,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(http.StatusOK, toFolderDto(g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
@@ -71,7 +72,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(http.StatusOK, toFolderDto(g, folder))
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
@@ -82,7 +83,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolder
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, cmd.Result))
+	return response.JSON(http.StatusOK, toFolderDto(g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
@@ -90,7 +91,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c, c.Params(":uid"))
 	if err != nil {
 		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
-			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
+			return response.Error(http.StatusForbidden, "Folder could not be deleted because it contains library elements in use", err)
 		}
 		return ToFolderErrorResponse(err)
 	}
@@ -100,11 +101,12 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return ToFolderErrorResponse(err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
 		"id":      f.Id,
 	})
+
 }
 
 func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
@@ -151,20 +153,20 @@ func ToFolderErrorResponse(err error) response.Response {
 		errors.Is(err, models.ErrDashboardTypeMismatch) ||
 		errors.Is(err, models.ErrDashboardInvalidUid) ||
 		errors.Is(err, models.ErrDashboardUidTooLong) {
-		return response.Error(400, err.Error(), nil)
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
 	if errors.Is(err, models.ErrFolderAccessDenied) {
-		return response.Error(403, "Access denied", err)
+		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	if errors.Is(err, models.ErrFolderNotFound) {
-		return response.JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
+		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
 	}
 
 	if errors.Is(err, models.ErrFolderVersionMismatch) {
-		return response.JSON(412, util.DynMap{"status": "version-mismatch", "message": models.ErrFolderVersionMismatch.Error()})
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": models.ErrFolderVersionMismatch.Error()})
 	}
 
-	return response.Error(500, "Folder API error", err)
+	return response.Error(http.StatusInternalServerError, "Folder API error", err)
 }
