@@ -14,16 +14,7 @@
       "small": "img/logo.svg",
       "large": "img/logo.svg"
     },
-    "links": [
-      {
-        "name": "Website",
-        "url": "https://github.com/grafana/marketplace-app"
-      },
-      {
-        "name": "License",
-        "url": "https://github.com/grafana/marketplace-app/blob/master/LICENSE"
-      }
-    ],
+    "links": [],
     "screenshots": [
       {
         "name": "Discover",
