@@ -1,4 +1,4 @@
-import { preparePlotFrame } from './utils';
+import { preparePlotFrame, applySpanNullsThresholds, unsetSameFutureValues } from './utils';
 import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import {
   createTheme,
@@ -200,5 +200,40 @@ describe('GraphNG utils', () => {
       sync: DashboardCursorSync.Tooltip,
     }).getConfig();
     expect(result).toMatchSnapshot();
+  });
+
+  test('unsetSameFutureValues', () => {
+    const frame = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
+        {
+          name: 'states',
+          type: FieldType.number,
+          values: [1, 1, undefined, 1, 2, 2, null, 2, 3],
+          config: {
+            custom: {
+              mergeValues: true,
+            },
+          },
+        },
+      ],
+    });
+
+    unsetSameFutureValues(frame);
+
+    expect(frame.fields[1].values).toMatchInlineSnapshot(`
+      Array [
+        1,
+        undefined,
+        undefined,
+        undefined,
+        2,
+        undefined,
+        null,
+        2,
+        3,
+      ]
+    `);
   });
 });

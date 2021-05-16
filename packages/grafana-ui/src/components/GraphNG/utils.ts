@@ -2,7 +2,7 @@ import { XYFieldMatchers } from './types';
 import { ArrayVector, DataFrame, FieldType, outerJoinDataFrames } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 
-function applySpanNullsThresholds(frame: DataFrame) {
+export function applySpanNullsThresholds(frame: DataFrame) {
   let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
   let refValues = refField?.values.toArray() as any[];
 
@@ -26,7 +26,7 @@ function applySpanNullsThresholds(frame: DataFrame) {
 // sets to undefined all same future values not preceeded by explicit null
 // in:  1,        1,undefined,        1,2,        2,null,2,3
 // out: 1,undefined,undefined,undefined,2,undefined,null,2,3
-function unsetSameFutureValues(frame: DataFrame) {
+export function unsetSameFutureValues(frame: DataFrame) {
   for (const field of frame.fields) {
     if (field.type !== FieldType.time) {
       let mergeValues = field.config.custom?.mergeValues;
