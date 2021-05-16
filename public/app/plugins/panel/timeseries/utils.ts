@@ -1,4 +1,5 @@
 import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
+import { GraphFieldConfig, LineInterpolation } from '@grafana/ui';
 
 // This will return a set of frames with only graphable values included
 export function prepareGraphableFields(series?: DataFrame[]): { frames?: DataFrame[]; warn?: string } {
@@ -23,12 +24,22 @@ export function prepareGraphableFields(series?: DataFrame[]): { frames?: DataFra
           break; // ok
         case FieldType.boolean:
           changed = true;
+          const custom: GraphFieldConfig = field.config?.custom ?? {};
+          const config = {
+            ...field.config,
+            unit: 'boolean', // TODO -- make the axis only show true/false
+            max: 1,
+            min: 0,
+            custom,
+          };
+          // smooth and linear do not make sense
+          if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
+            custom.lineInterpolation = LineInterpolation.StepAfter;
+          }
+
           fields.push({
             ...field,
-            config: {
-              ...field.config,
-              unit: 'boolean', // TODO
-            },
+            config,
             type: FieldType.number,
             values: new ArrayVector(
               field.values.toArray().map((v) => {
