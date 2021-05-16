@@ -410,9 +410,9 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Boolean',
     formats: [
-      { name: 'True / False', id: 'boolean', fn: booleanValueFormatter('True', 'False') },
-      { name: 'Yes / No', id: 'yes_no', fn: booleanValueFormatter('Yes', 'No') },
-      { name: 'On / Off', id: 'on_off', fn: booleanValueFormatter('On', 'Off') },
+      { name: 'True / False', id: 'bool', fn: booleanValueFormatter('True', 'False') },
+      { name: 'Yes / No', id: 'bool_yes_no', fn: booleanValueFormatter('Yes', 'No') },
+      { name: 'On / Off', id: 'bool_on_off', fn: booleanValueFormatter('On', 'Off') },
     ],
   },
 ];

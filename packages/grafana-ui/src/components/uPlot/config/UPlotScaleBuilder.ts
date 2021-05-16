@@ -2,6 +2,7 @@ import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { ScaleOrientation, ScaleDirection } from '../config';
 import { ScaleDistribution } from '../models.gen';
+import { isBooleanUnit } from '@grafana/data';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -93,6 +94,10 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
       return minMax;
     };
+
+    if (isBooleanUnit(scaleKey)) {
+      console.log('only set ticks for true/false?  force range 0/1?');
+    }
 
     return {
       [scaleKey]: {

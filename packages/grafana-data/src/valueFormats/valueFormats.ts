@@ -113,6 +113,10 @@ export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
   };
 }
 
+export function isBooleanUnit(unit?: string) {
+  return unit && unit.startsWith('bool');
+}
+
 export function booleanValueFormatter(t: string, f: string): ValueFormatter {
   return (value: any) => {
     return { text: value ? t : f };

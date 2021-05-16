@@ -1,4 +1,4 @@
-import { FieldType, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, toDataFrame } from '@grafana/data';
 import { prepareGraphableFields } from './utils';
 
 describe('prepare timeseries graph', () => {
@@ -11,7 +11,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(frames);
+    const info = prepareGraphableFields(frames, createTheme());
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
@@ -24,7 +24,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(frames);
+    const info = prepareGraphableFields(frames, createTheme());
     expect(info.warn).toEqual('No graphable fields');
   });
 
@@ -39,8 +39,12 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const info = prepareGraphableFields(frames);
+    const info = prepareGraphableFields(frames, createTheme());
     expect(info.warn).toBeUndefined();
     expect(info.frames![0].fields.map((f) => f.name)).toEqual(['a', 'c', 'd']);
+
+    const field = frames[0].fields.find((f) => f.name === 'c');
+    expect(field?.display).toBeDefined();
+    expect(field!.display!(1)).toMatchInlineSnapshot();
   });
 });

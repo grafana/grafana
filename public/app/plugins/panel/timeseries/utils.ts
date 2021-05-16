@@ -1,8 +1,19 @@
-import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+  isBooleanUnit,
+} from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/ui';
 
 // This will return a set of frames with only graphable values included
-export function prepareGraphableFields(series?: DataFrame[]): { frames?: DataFrame[]; warn?: string } {
+export function prepareGraphableFields(
+  series: DataFrame[] | undefined,
+  theme: GrafanaTheme2
+): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
@@ -27,7 +38,6 @@ export function prepareGraphableFields(series?: DataFrame[]): { frames?: DataFra
           const custom: GraphFieldConfig = field.config?.custom ?? {};
           const config = {
             ...field.config,
-            unit: 'boolean', // TODO -- make the axis only show true/false
             max: 1,
             min: 0,
             custom,
@@ -36,8 +46,7 @@ export function prepareGraphableFields(series?: DataFrame[]): { frames?: DataFra
           if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
             custom.lineInterpolation = LineInterpolation.StepAfter;
           }
-
-          fields.push({
+          const copy = {
             ...field,
             config,
             type: FieldType.number,
@@ -49,7 +58,12 @@ export function prepareGraphableFields(series?: DataFrame[]): { frames?: DataFra
                 return Boolean(v) ? 1 : 0;
               })
             ),
-          });
+          };
+          if (!isBooleanUnit(config.unit)) {
+            config.unit = 'bool'; // mutates
+            copy.display = getDisplayProcessor({ field: copy, theme });
+          }
+          fields.push(copy);
           break;
         default:
           changed = true;

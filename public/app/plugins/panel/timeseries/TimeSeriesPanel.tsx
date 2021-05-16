@@ -1,4 +1,5 @@
 import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TooltipDisplayMode, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useMemo } from 'react';
@@ -26,7 +27,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series), [data]);
+  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
   if (!frames || warn) {
     return (
