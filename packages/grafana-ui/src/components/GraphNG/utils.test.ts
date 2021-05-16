@@ -1,4 +1,4 @@
-import { preparePlotFrame, applySpanNullsThresholds, unsetSameFutureValues } from './utils';
+import { preparePlotFrame, unsetSameFutureValues } from './utils';
 import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import {
   createTheme,
