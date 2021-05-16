@@ -30,23 +30,43 @@ Shows discrete status or state transitions of something over time. For example d
 
 New visualization that allows categorical data display. Following the new panel architecture supports field config and overrides, common tooltip, and legend options.
 
+### Time series panel updates
+
+The Time series is out of beta!  We are removing the `Beta`tag and graduating the Time series panel to a stable state.
+- **Time series** is now the default visualization option, replacing the **Graph (old)**.
+- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
+- We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
+- Various performance improvements.
+
 ### Panel editor updates
 
 - All options are now shown in a single pane.
 - You can now search panel options.
 - Value mapping has been completely redesigned.
 
+### Look and feel update
+
+Grafana 8 comes with a refreshed look and feel, including themes changed to be more accessible. The improved Grafana UI brings a number of adjustments and tweaks that make the application even more fun to use. Under the hood, the new theme architecture enables us to bring more sophisticated themes control in the future.
+
 ### Download logs
 
-You can now download log results as a text (.txt) file. You can access this feature through the Data tab in the Panel inspector and Inspector in Explore.
+When you inspect a panel, you can now download log results as a text (.txt) file.
+
+[Download log results]({{< relref "../panels/inspect-panel.md#download-log-results" >}}) in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}}) was added as a result of this feature.
 
 ### Inspector in Explore
 
 The new Explore inspector helps you understand and troubleshoot your queries. You can inspect the raw data, export that data to a comma-separated values (CSV) file, export log results in text format, and view query requests.
 
-### Log improvements
+[Inspector in Explore]({{< relref "../explore/explore-inspector.md" >}}) was added as a result of this feature.
 
-Logs navigation next to the log lines can be used to request more logs. You can do this by clicking on the Older logs button on the bottom of navigation. This is especially useful when you hit the line limit and you want to see more logs. Each request that is run from the navigation is then displayed in the navigation as a separate page. Every page is showing from and to timestamp of the incoming log lines. You can re-rerun the same request by clicking on the page.
+### Explore log improvements
+
+Log navigation in Explore has been significantly improved. We added pagination to logs, so you can click through older or newer logs as needed.
+
+[Logs in Explore]({{< relref "../explore/logs-integration.md" >}}) was updated as a result of these changes.
+
+![Navigate logs in Explore](/img/docs/explore/navigate-logs-8-0.png)
 
 ### Tracing improvements
 
