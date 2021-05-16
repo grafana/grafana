@@ -1,6 +1,5 @@
 import {
   FieldColorModeId,
-  FieldConfigEditorBuilder,
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
@@ -16,14 +15,12 @@ import {
   LineInterpolation,
   LineStyle,
   PointVisibility,
-  StackingConfig,
   StackingMode,
   commonOptionsBuilder,
 } from '@grafana/ui';
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
-import { StackingEditor } from './StackingEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
@@ -176,7 +173,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
         });
 
-      addStackingConfig(builder, cfg.stacking);
+      commonOptionsBuilder.addStackingConfig(builder, cfg.stacking, categoryStyles);
       commonOptionsBuilder.addAxisConfig(builder, cfg);
       commonOptionsBuilder.addHideFrom(builder);
 
@@ -191,24 +188,4 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       });
     },
   };
-}
-
-export function addStackingConfig(
-  builder: FieldConfigEditorBuilder<{ stacking: StackingConfig }>,
-  defaultConfig?: StackingConfig
-) {
-  builder.addCustomEditor({
-    id: 'stacking',
-    path: 'stacking',
-    name: 'Stack series',
-    category: categoryStyles,
-    defaultValue: defaultConfig,
-    editor: StackingEditor,
-    override: StackingEditor,
-    settings: {
-      options: graphFieldOptions.stacking,
-    },
-    process: identityOverrideProcessor,
-    shouldApply: (f) => f.type === FieldType.number,
-  });
 }

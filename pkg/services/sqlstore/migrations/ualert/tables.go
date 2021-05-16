@@ -17,6 +17,9 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	// Create alert_rule
 	AddAlertRuleMigrations(mg, 60)
 	AddAlertRuleVersionMigrations(mg)
+
+	// Create Alertmanager configurations
+	AddAlertmanagerConfigMigrations(mg)
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -234,4 +237,21 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 
 	// add labels column
 	mg.AddMigration("add column labels to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "labels", Type: migrator.DB_Text, Nullable: true}))
+}
+
+func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
+	alertConfiguration := migrator.Table{
+		Name: "alert_configuration",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "alertmanager_configuration", Type: migrator.DB_Text, Nullable: false},
+			{Name: "configuration_version", Type: migrator.DB_NVarchar, Length: 3}, // In a format of vXX e.g. v1, v2, v10, etc
+			{Name: "created_at", Type: migrator.DB_Int, Nullable: false},
+		},
+	}
+
+	mg.AddMigration("create_alert_configuration_table", migrator.NewAddTableMigration(alertConfiguration))
+	mg.AddMigration("Add column default in alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
+		Name: "default", Type: migrator.DB_Bool, Nullable: false, Default: "0",
+	}))
 }

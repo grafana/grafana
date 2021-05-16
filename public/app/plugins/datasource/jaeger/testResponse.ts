@@ -96,8 +96,8 @@ export const testResponseNodesFields = toNodesFrame([
   ['3fa414edcef6ad90', '0f5c1808567e4403'],
   ['tempo-querier', 'tempo-querier'],
   ['HTTP GET - api_traces_traceid', '/tempopb.Querier/FindTraceByID'],
-  ['total: 1049.14ms (100%)', 'total: 1.85ms (0.18%)'],
-  ['self: 1047.29ms (99.82%)', 'self: 1.85ms (100%)'],
+  ['1049.14ms (100%)', '1.85ms (0.18%)'],
+  ['1047.29ms (99.82%)', '1.85ms (100%)'],
   [0.9982395121342127, 0.0017604878657873442],
 ]);
 
