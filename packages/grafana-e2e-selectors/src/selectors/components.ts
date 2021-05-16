@@ -4,6 +4,8 @@ export const Components = {
     fromField: 'TimePicker from field',
     toField: 'TimePicker to field',
     applyTimeRange: 'TimePicker submit button',
+    saveToStorage: 'TimePicker save range to storage button',
+    restoreFromStorage: 'TimePicker restore range from storage button',
   },
   DataSource: {
     TestData: {

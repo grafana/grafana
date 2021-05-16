@@ -15,6 +15,19 @@ import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { TimePickerCalendar } from './TimePickerCalendar';
+import { css } from '@emotion/css';
+import { useStyles2 } from '../../../themes/ThemeContext';
+
+const getStyles = () => {
+  return {
+    saveRangeContainer: css`
+      margin-top: 15px;
+    `,
+    withRightMargin: css`
+      margin-right: 10px;
+    `,
+  };
+};
 
 interface Props {
   isFullscreen: boolean;
@@ -31,6 +44,7 @@ export interface InputState {
 }
 
 const errorMessage = 'Please enter a past date or "now"';
+const timeRangeStoreKey = 'timeRangeStoreKey';
 
 export const TimeRangeForm: React.FC<Props> = (props) => {
   const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed } = props;
@@ -78,6 +92,36 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value]
   );
 
+  const onSaveToStorage = useCallback(
+    (e: FormEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      if (to.invalid || from.invalid) {
+        return;
+      }
+
+      const raw: RawTimeRange = { from: from.value, to: to.value };
+      window.localStorage[timeRangeStoreKey] = JSON.stringify(raw);
+      alert('Saved!');
+    },
+    [from.invalid, from.value, to.invalid, to.value]
+  );
+
+  const onRestoreFromStorage = useCallback(
+    (e: FormEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+
+      const rawTimeRangeAsJson = window.localStorage[timeRangeStoreKey];
+      if (rawTimeRangeAsJson == null) {
+        return;
+      }
+      const raw: RawTimeRange = JSON.parse(rawTimeRangeAsJson);
+
+      setFrom(valueToState(raw.from, false, timeZone));
+      setTo(valueToState(raw.to, true, timeZone));
+    },
+    [timeZone]
+  );
+
   const onChange = useCallback(
     (from: DateTime, to: DateTime) => {
       setFrom(valueToState(from, false, timeZone));
@@ -87,6 +131,8 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   );
 
   const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -113,6 +159,25 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
       <Button aria-label={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
+      <div className={styles.saveRangeContainer}>
+        <Button
+          className={styles.withRightMargin}
+          variant="secondary"
+          aria-label={selectors.components.TimePicker.saveToStorage}
+          onClick={onSaveToStorage}
+          size="sm"
+        >
+          Save to storage
+        </Button>
+        <Button
+          variant="secondary"
+          aria-label={selectors.components.TimePicker.restoreFromStorage}
+          onClick={onRestoreFromStorage}
+          size="sm"
+        >
+          Restore from storage
+        </Button>
+      </div>
 
       <TimePickerCalendar
         isFullscreen={isFullscreen}
