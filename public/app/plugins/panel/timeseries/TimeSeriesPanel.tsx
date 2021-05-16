@@ -1,7 +1,7 @@
-import { anySeriesWithTimeField, DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { ArrayVector, DashboardCursorSync, DataFrame, Field, FieldType, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
@@ -25,25 +25,19 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
 
-  if (!data || !data.series?.length) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
-  }
+  const { frames, warn } = useMemo(() => filterGraphableFields(data?.series), [data]);
 
-  if (!anySeriesWithTimeField(data.series)) {
+  if (!frames || warn) {
     return (
       <div className="panel-empty">
-        <p>Missing time field in the data</p>
+        <p>{warn ?? 'No data found in response'}</p>
       </div>
     );
   }
 
   return (
     <TimeSeries
-      frames={data.series}
+      frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -85,3 +79,68 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     </TimeSeries>
   );
 };
+
+// This will return a set of frames with only graphable values included
+export function filterGraphableFields(series?: DataFrame[]): { frames?: DataFrame[]; warn?: string } {
+  if (!series?.length) {
+    return { warn: 'No data in response' };
+  }
+  let hasTimeseries = false;
+  const frames: DataFrame[] = [];
+  for (let frame of series) {
+    let isTimeseries = false;
+    let changed = false;
+    const fields: Field[] = [];
+    for (const field of frame.fields) {
+      switch (field.type) {
+        case FieldType.time:
+          isTimeseries = true;
+          fields.push(field);
+          break;
+        case FieldType.number:
+          fields.push(field);
+          break; // ok
+        case FieldType.boolean:
+          changed = true;
+          fields.push({
+            ...field,
+            config: {
+              ...field.config,
+              unit: 'boolean', // TODO
+            },
+            type: FieldType.number,
+            values: new ArrayVector(
+              field.values.toArray().map((v) => {
+                if (v == null) {
+                  return v;
+                }
+                return Boolean(v) ? 1 : 0;
+              })
+            ),
+          });
+          break;
+        default:
+          changed = true;
+      }
+    }
+    if (isTimeseries && fields.length > 1) {
+      hasTimeseries = true;
+      if (changed) {
+        frames.push({
+          ...frame,
+          fields,
+        });
+      } else {
+        frames.push(frame);
+      }
+    }
+  }
+
+  if (!hasTimeseries) {
+    return { warn: 'Data does not have a time field' };
+  }
+  if (!frames.length) {
+    return { warn: 'No graphable fields' };
+  }
+  return { frames };
+}
