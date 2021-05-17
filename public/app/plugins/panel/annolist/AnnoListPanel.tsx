@@ -2,8 +2,8 @@
 import React, { PureComponent } from 'react';
 // Types
 import { AnnoOptions } from './types';
-import { AnnotationEvent, AppEvents, dateTime, DurationUnit, PanelProps } from '@grafana/data';
-import { getBackendSrv, getLocationSrv } from '@grafana/runtime';
+import { AnnotationEvent, AppEvents, dateTime, DurationUnit, locationUtil, PanelProps } from '@grafana/data';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import appEvents from 'app/core/app_events';
@@ -121,10 +121,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     }
 
     if (current?.id === anno.dashboardId) {
-      getLocationSrv().update({
-        query: params,
-        partial: true,
-      });
+      locationService.partial(params);
       return;
     }
 
@@ -133,10 +130,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       .then((res: any[]) => {
         if (res && res.length && res[0].id === anno.dashboardId) {
           const dash = res[0];
-          getLocationSrv().update({
-            query: params,
-            path: dash.url,
-          });
+          const newUrl = locationUtil.stripBaseFromUrl(dash.url);
+          locationService.push(newUrl);
           return;
         }
         appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
