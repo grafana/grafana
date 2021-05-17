@@ -1,4 +1,4 @@
-import { VizLegendOptions, GraphGradientMode, HideableFieldConfig, BarValueVisibility } from '@grafana/ui';
+import { VizLegendOptions, HideableFieldConfig, BarValueVisibility } from '@grafana/ui';
 
 /**
  * @alpha
@@ -9,7 +9,10 @@ export interface TimelineOptions {
   showValue: BarValueVisibility;
   rowHeight: number;
   colWidth?: number;
+  alignValue: TimelineValueAlignment;
 }
+
+export type TimelineValueAlignment = 'center' | 'left' | 'right';
 
 /**
  * @alpha
@@ -17,7 +20,6 @@ export interface TimelineOptions {
 export interface TimelineFieldConfig extends HideableFieldConfig {
   lineWidth?: number; // 0
   fillOpacity?: number; // 100
-  gradientMode?: GraphGradientMode;
 }
 
 /**
@@ -25,8 +27,7 @@ export interface TimelineFieldConfig extends HideableFieldConfig {
  */
 export const defaultTimelineFieldConfig: TimelineFieldConfig = {
   lineWidth: 1,
-  fillOpacity: 80,
-  gradientMode: GraphGradientMode.None,
+  fillOpacity: 70,
 };
 
 /**
