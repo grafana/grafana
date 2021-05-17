@@ -39,28 +39,25 @@ export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
 
   if (rules.length) {
     return (
-      <>
-        <CustomScrollbar autoHeightMin="100%">
-          <div className={styles.innerWrapper}>
-            {alert}
-            <RulesTable rules={rules} />
-            <NewRuleFromPanelButton className={styles.newButton} panel={panel} dashboard={dashboard} />
-          </div>
-        </CustomScrollbar>
-      </>
+      <CustomScrollbar autoHeightMin="100%">
+        <div className={styles.innerWrapper}>
+          {alert}
+          <RulesTable rules={rules} />
+          <NewRuleFromPanelButton className={styles.newButton} panel={panel} dashboard={dashboard} />
+        </div>
+      </CustomScrollbar>
     );
   }
 
   return (
     <div className={styles.noRulesWrapper}>
       {alert}
-      {!!dashboard.uid && (
+      {!!dashboard.uid ? (
         <>
           <p>There are no alert rules linked to this panel.</p>
           <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />
         </>
-      )}
-      {!dashboard.uid && (
+      ) : (
         <Alert severity="info" title="Dashboard not saved">
           Dashboard must be saved before alerts can be added.
         </Alert>
