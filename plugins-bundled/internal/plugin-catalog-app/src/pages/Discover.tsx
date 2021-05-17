@@ -12,12 +12,12 @@ import { SearchField } from '../components/SearchField';
 import { PluginTypeIcon } from '../components/PluginTypeIcon';
 import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
-import { MarketplaceAppSettings, Plugin } from '../types';
+import { CatalogAppSettings, Plugin } from '../types';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Discover = ({ meta }: AppRootProps) => {
-  const { includeEnterprise } = meta.jsonData as MarketplaceAppSettings;
+  const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
 
   const { items, isLoading } = usePlugins(includeEnterprise);
   const history = useHistory();
