@@ -1,4 +1,4 @@
-import uPlot, { Scale, Range, Axis } from 'uplot';
+import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { ScaleOrientation, ScaleDirection } from '../config';
 import { ScaleDistribution } from '../models.gen';
