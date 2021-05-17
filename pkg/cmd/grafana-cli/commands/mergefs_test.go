@@ -14,19 +14,19 @@ func TestMergeFS(t *testing.T) {
 	var filePaths = []struct {
 		path           string
 		dirArrayLength int
-		dirs           []string
+		child          string
 	}{
 		// MapFS takes in account the current directory in addition to all included directories and produces a "" dir
-		{"a", 2, []string{"", "z"}},
-		{"a/z", 2, []string{"", "bar.cue"}},
-		{"b", 1, []string{"z"}},
-		{"b/z", 1, []string{"foo.cue"}},
+		{"a", 1, "z"},
+		{"a/z", 1, "bar.cue"},
+		{"b", 1, "z"},
+		{"b/z", 1, "foo.cue"},
 	}
 
 	tempDir := os.DirFS(filepath.Join("testdata", "mergefs"))
 	a := fstest.MapFS{
-		"a/":          &fstest.MapFile{},
-		"a/z/":        &fstest.MapFile{},
+		"a":           &fstest.MapFile{Mode: fs.ModeDir},
+		"a/z":         &fstest.MapFile{Mode: fs.ModeDir},
 		"a/z/bar.cue": &fstest.MapFile{Data: []byte("bar")},
 	}
 
@@ -40,7 +40,7 @@ func TestMergeFS(t *testing.T) {
 				require.Len(t, dirs, fp.dirArrayLength)
 
 				for i := 0; i < len(dirs); i++ {
-					require.Equal(t, dirs[i].Name(), fp.dirs[i])
+					require.Equal(t, dirs[i].Name(), fp.child)
 				}
 			})
 		}
