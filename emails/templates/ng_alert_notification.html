@@ -1,62 +1,5 @@
 [[Subject .Subject "[[.Title]]"]]
 
-<style>
-  .button {
-    background: #f1f5f9;
-    border: 1px solid #c7d0d9;
-    border-radius: 2px;
-    color: #464c54;
-    display: inline-block;
-    font-size: 12px;
-    font-weight: bold;
-    margin: 0 10px 0 0;
-    padding: 5px 9px;
-  }
-  .annotations {
-    font-size: 14px;
-    padding: 24px 0 12px 0;
-  }
-  .labels-heading {
-    font-size: 14px;
-    font-weight: bold;
-    vertical-align: top;
-  }
-  .labels-list {
-    font-size: 14px;
-    vertical-align: top;
-  }
-  .section-heading {
-    color: #2c3235;
-    font-size: 22px;
-    font-weight: bold;
-    padding: 0 0 32px 0;
-  }
-  .alert-label {
-    font-size: 16px;
-    font-weight: bold;
-    padding: 0 0 0 12px;
-    text-decoration: underline;
-  }
-  .status-tag {
-    color: #ffffff;
-    padding: 4px 8px;
-    text-align: center;
-    width: 68px
-  }
-  .status-firing {
-    background: #e02f44;
-  }
-  .status-resolved {
-    background: #464c54;
-  }
-  .button-img {
-    height: 14px;
-    margin: 0 5px 0 0;
-    vertical-align: sub;
-    width: 14px;
-  }
-</style>
-
 [[ define "alert" ]]
   [[ if gt (len .Annotations.SortedPairs) 0 ]]
       <tr>
@@ -149,6 +92,67 @@
   </tr>
 [[ end ]]
 
+[[ if gt (len .Message) 0 ]]
+ [[ .Message ]]
+[[ else ]]
+
+<style>
+  .button {
+    background: #f1f5f9;
+    border: 1px solid #c7d0d9;
+    border-radius: 2px;
+    color: #464c54;
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 0 10px 0 0;
+    padding: 5px 9px;
+  }
+  .annotations {
+    font-size: 14px;
+    padding: 24px 0 12px 0;
+  }
+  .labels-heading {
+    font-size: 14px;
+    font-weight: bold;
+    vertical-align: top;
+  }
+  .labels-list {
+    font-size: 14px;
+    vertical-align: top;
+  }
+  .section-heading {
+    color: #2c3235;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 0 0 32px 0;
+  }
+  .alert-label {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0 0 0 12px;
+    text-decoration: underline;
+  }
+  .status-tag {
+    color: #ffffff;
+    padding: 4px 8px;
+    text-align: center;
+    width: 68px
+  }
+  .status-firing {
+    background: #e02f44;
+  }
+  .status-resolved {
+    background: #464c54;
+  }
+  .button-img {
+    height: 14px;
+    margin: 0 5px 0 0;
+    vertical-align: sub;
+    width: 14px;
+  }
+</style>
+
 <table class="row">
   <tr>
     <td class="twelve">
@@ -211,3 +215,4 @@
     </td>
   </tr> 
 </table>
+[[ end ]]
