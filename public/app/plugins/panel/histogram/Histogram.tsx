@@ -16,6 +16,8 @@ import {
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
+  LegendDisplayMode,
+  PlotLegend,
 } from '@grafana/ui';
 
 import {
@@ -32,12 +34,7 @@ export interface HistogramProps extends Themeable2 {
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
-  //onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
-
-  //prepConfig: (frame: DataFrame) => UPlotConfigBuilder;
-  //propsToDiff?: string[];
-  //renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -138,15 +135,15 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       colorMode,
       pathBuilder,
       //pointsBuilder: config.drawPoints,
-      show: !customConfig.hideFrom?.graph,
+      show: !customConfig.hideFrom?.vis,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-      // dataFrameFieldIndex: {
-      //   fieldIndex: i,
-      //   frameIndex: 0,
-      // },
+      dataFrameFieldIndex: {
+        fieldIndex: i,
+        frameIndex: 0,
+      },
       fieldName: getFieldDisplayName(field, frame),
       hideInLegend: customConfig.hideFrom?.legend,
     });
@@ -178,10 +175,6 @@ const preparePlotData = (frame: DataFrame) => {
   return data;
 };
 
-const renderLegend = (config: UPlotConfigBuilder) => {
-  return null;
-};
-
 interface State {
   alignedData: AlignedData;
   config?: UPlotConfigBuilder;
@@ -208,6 +201,15 @@ export class Histogram extends React.Component<HistogramProps, State> {
     }
 
     return state;
+  }
+
+  renderLegend(config: UPlotConfigBuilder) {
+    const { legend } = this.props;
+    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+      return null;
+    }
+
+    return <PlotLegend data={[this.props.alignedFrame]} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
@@ -241,7 +243,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={renderLegend(config) as any}>
+      <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={this.state.config!}

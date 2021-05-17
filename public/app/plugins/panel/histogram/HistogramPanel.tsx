@@ -41,7 +41,7 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
     <Histogram
       options={options}
       theme={theme}
-      legend={null as any} // TODO!
+      legend={options.legend}
       structureRev={data.structureRev}
       width={width}
       height={height}

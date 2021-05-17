@@ -227,6 +227,8 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         ...counts[0],
         name: 'Count',
         values: new ArrayVector(vals),
+        type: FieldType.number,
+        state: undefined,
       },
     ];
   } else {
