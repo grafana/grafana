@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, GrafanaTheme, urlUtil } from '@grafana/data';
-import { useStyles, Button, ButtonGroup, ToolbarButton, Alert } from '@grafana/ui';
+import { useStyles, ButtonGroup, ToolbarButton, Alert, LinkButton } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
@@ -17,6 +17,7 @@ import RulesFilter from './components/rules/RulesFilter';
 import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useLocation } from 'react-router-dom';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -27,6 +28,7 @@ export const RuleList: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const location = useLocation();
 
   const [queryParams] = useQueryParams();
 
@@ -126,9 +128,12 @@ export const RuleList: FC = () => {
               </a>
             </ButtonGroup>
             <div />
-            <a href={'alerting/new'}>
-              <Button icon="plus">New alert rule</Button>
-            </a>
+            <LinkButton
+              href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
+              icon="plus"
+            >
+              New alert rule
+            </LinkButton>
           </div>
         </>
       )}

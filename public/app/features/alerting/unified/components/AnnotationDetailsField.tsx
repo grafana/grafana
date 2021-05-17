@@ -2,7 +2,9 @@ import React, { FC } from 'react';
 import { Well } from './Well';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
-import { useStyles } from '@grafana/ui';
+import { Tooltip, useStyles } from '@grafana/ui';
+import { DetailsField } from './DetailsField';
+import { Annotation, annotationLabels } from '../utils/constants';
 
 const wellableAnnotationKeys = ['message', 'description'];
 
@@ -11,7 +13,23 @@ interface Props {
   value: string;
 }
 
-export const Annotation: FC<Props> = ({ annotationKey, value }) => {
+export const AnnotationDetailsField: FC<Props> = ({ annotationKey, value }) => {
+  const label = annotationLabels[annotationKey as Annotation] ? (
+    <Tooltip content={annotationKey} placement="top" theme="info">
+      <span>{annotationLabels[annotationKey as Annotation]}</span>
+    </Tooltip>
+  ) : (
+    annotationKey
+  );
+
+  return (
+    <DetailsField label={label} horizontal={true}>
+      <AnnotationValue annotationKey={annotationKey} value={value} />
+    </DetailsField>
+  );
+};
+
+const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
   const styles = useStyles(getStyles);
   if (wellableAnnotationKeys.includes(annotationKey)) {
     return <Well>{value}</Well>;
