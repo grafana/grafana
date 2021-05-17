@@ -650,7 +650,6 @@ export const processQueryResponse = (
   } = response;
 
   if (error) {
-    console.log('error', error);
     if (error.type === DataQueryErrorType.Timeout) {
       return {
         ...state,
