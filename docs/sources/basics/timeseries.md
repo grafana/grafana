@@ -2,8 +2,7 @@
 title = "Time series"
 description = "Introduction to time series"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
-aliases = ["/docs/grafana/latest/guides/timeseries", "/docs/grafana/latest/getting-started/timeseries"]
-weight = 500
+weight = 400
 +++
 
 # Introduction to time series
@@ -121,3 +120,4 @@ A collector either _pushes_ data to a database or lets the database _pull_ the d
 | Pull | Better control of how much data that gets ingested, and its authenticity. | Firewalls, VPNs or load balancers can make it hard to access the agents. |
 
 Since it would be inefficient to write every measurement to the database, collectors pre-aggregate the data and write to the time series database at regular intervals.
+
