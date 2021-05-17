@@ -1,4 +1,4 @@
-import { dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
@@ -35,7 +35,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   }
 
   getConfig(): Axis {
-    const {
+    let {
       scaleKey,
       label,
       show = true,
@@ -54,6 +54,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     const font = `12px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+
+    if (isBooleanUnit(scaleKey)) {
+      splits = [0, 1];
+    }
 
     let config: Axis = {
       scale: scaleKey,
@@ -89,7 +93,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue(v));
+      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue!(v));
     }
 
     // store timezone
