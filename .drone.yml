@@ -27,6 +27,15 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
+
+- name: slack
+  image: plugins/slack
+  settings:
+    channel: slack-webhooks-test
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: @{{build.author}}"
+    webhook:
+      from_secret: slack_webhook_test
+
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
