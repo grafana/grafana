@@ -32,7 +32,16 @@ steps:
   image: plugins/slack-blame
   settings:
     channel: slack-webhooks-test
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: @{{slack.name}}"
+    success_template: |
+      {{#if ${DRONE_PULL_REQUEST} }}
+        ❌ <https://github.com/{{ repo.owner }}/{{ repo.name }}/pull/${DRONE_PULL_REQUEST}|Pull Request #${DRONE_PULL_REQUEST}>
+      {{else}}
+        ❌ {{ uppercasefirst build.status }}: Build #{{ build.number }} (type: `{{ build.event }}`)
+      {{/if}}
+      Commit: <${CI_REPO_LINK}/commit/{{ build.commit }}|{{ truncate build.commit 8 }}>
+      Branch: <${CI_REPO_LINK}/commits/${DRONE_SOURCE_BRANCH}|${DRONE_SOURCE_BRANCH}>
+      Author: ${DRONE_COMMIT_AUTHOR}
+      <${DRONE_BUILD_LINK}|Visit build page ↗>
     webhook:
       from_secret: slack_webhook_test
     token:
