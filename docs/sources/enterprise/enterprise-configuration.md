@@ -335,7 +335,7 @@ When query caching is enabled, Grafana can temporarily store the results of data
 
 ### backend
 
-The caching backend to use when storing cached queries. Options: memory
+The caching backend to use when storing cached queries. Options: `memory`, `redis`, and `memcached`.
 
 ### enabled
 
