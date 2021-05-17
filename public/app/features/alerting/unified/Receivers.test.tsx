@@ -195,7 +195,6 @@ describe('Receivers', () => {
                 secureSettings: {},
                 settings: {
                   apiKey: 'foobarbaz',
-                  roomid: '',
                   url: 'http://hipchat',
                 },
                 type: 'hipchat',

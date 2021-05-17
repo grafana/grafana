@@ -214,10 +214,10 @@ function formChannelValuesToGrafanaChannelConfig(
   existing?: GrafanaManagedReceiverConfig
 ): GrafanaManagedReceiverConfig {
   const channel: GrafanaManagedReceiverConfig = {
-    settings: {
+    settings: omitEmptyValues({
       ...(existing && existing.type === values.type ? existing.settings ?? {} : {}),
       ...(values.settings ?? {}),
-    },
+    }),
     secureSettings: values.secureSettings ?? {},
     type: values.type,
     name,
