@@ -21,8 +21,8 @@ export interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
+  enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
-  hideLogDetails?: boolean;
   previewLimit?: number;
   forceEscape?: boolean;
   showDetectedFields?: string[];
@@ -91,7 +91,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
       theme,
-      hideLogDetails,
+      enableLogDetails,
       previewLimit,
       getFieldLinks,
       logsSortOrder,
@@ -136,7 +136,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showDetectedFields={showDetectedFields}
                 wrapLogMessage={wrapLogMessage}
                 timeZone={timeZone}
-                hideLogDetails={hideLogDetails}
+                enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 onClickShowDetectedField={onClickShowDetectedField}
@@ -161,7 +161,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showDetectedFields={showDetectedFields}
                 wrapLogMessage={wrapLogMessage}
                 timeZone={timeZone}
-                hideLogDetails={hideLogDetails}
+                enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 onClickShowDetectedField={onClickShowDetectedField}
