@@ -65,10 +65,11 @@ type ErrVersionUnsupported struct {
 
 func (e ErrVersionUnsupported) Error() string {
 	if len(e.RecommendedVersion) > 0 {
-		return fmt.Sprintf("%s v%s is not supported on your architecture and OS, latest suitable version is %s",
-			e.PluginID, e.RequestedVersion, e.RecommendedVersion)
+		return fmt.Sprintf("%s v%s is not supported on your system (%s). Please try version %s",
+			e.PluginID, e.RequestedVersion, fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH), e.RecommendedVersion)
 	}
-	return fmt.Sprintf("%s v%s is not supported on your architecture and OS", e.PluginID, e.RequestedVersion)
+	return fmt.Sprintf("%s v%s is not supported on your system (%s)", e.PluginID, e.RequestedVersion,
+		fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH))
 }
 
 type ErrVersionNotFound struct {
@@ -79,8 +80,8 @@ type ErrVersionNotFound struct {
 
 func (e ErrVersionNotFound) Error() string {
 	if len(e.RecommendedVersion) > 0 {
-		return fmt.Sprintf("%s v%s is not supported on your architecture and OS, latest suitable version is %s",
-			e.PluginID, e.RequestedVersion, e.RecommendedVersion)
+		return fmt.Sprintf("Could not find a version '%s' for plugin %s. The latest suitable version is %s",
+			e.RequestedVersion, e.PluginID, e.RecommendedVersion)
 	}
 	return fmt.Sprintf("could not find a version %s for %s. The latest suitable version is %s", e.RequestedVersion,
 		e.PluginID, e.RecommendedVersion)
