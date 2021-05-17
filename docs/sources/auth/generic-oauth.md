@@ -5,10 +5,10 @@ keywords = ["grafana", "configuration", "documentation", "oauth"]
 weight = 500
 +++
 
-# Generic OAuth Authentication
+# Generic OAuth authentication
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
-- [Generic OAuth Authentication](#generic-oauth-authentication)
+- [Generic OAuth authentication](#generic-oauth-authentication)
   - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
@@ -63,13 +63,9 @@ Grafana will attempt to determine the user's e-mail address by querying the OAut
 
 Grafana will also attempt to do role mapping through OAuth as described below.
 
-> Only available in Grafana v6.5+.
-
 Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 See [JMESPath examples](#jmespath-examples) for more information.
-
-> Only available in Grafana v7.2+.
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
 
