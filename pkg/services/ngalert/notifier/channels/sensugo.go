@@ -37,7 +37,7 @@ type SensuGoNotifier struct {
 	Message   string
 }
 
-// NewSlackNotifier is the constructor for the Slack notifier
+// NewSensuGoNotifier is the constructor for the SensuGo notifier
 func NewSensuGoNotifier(model *models.AlertNotification, t *template.Template) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No settings supplied"}
@@ -62,7 +62,7 @@ func NewSensuGoNotifier(model *models.AlertNotification, t *template.Template) (
 		Handler:      model.Settings.Get("handler").MustString(),
 		APIKey:       apikey,
 		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-		log:          log.New("alerting.notifier.slack"),
+		log:          log.New("alerting.notifier.sensugo"),
 		tmpl:         t,
 	}, nil
 }
