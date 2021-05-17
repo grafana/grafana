@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -21,13 +22,33 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 	ac := OSSAccessControlService{
-		Cfg: cfg,
-		Log: log.New("accesscontrol-test"),
+		Cfg:        cfg,
+		UsageStats: &usageStatsMock{metricFuncs: make(map[string]usagestats.MetricFunc)},
+		Log:        log.New("accesscontrol-test"),
 	}
 
 	err := ac.Init()
 	require.NoError(t, err)
 	return &ac
+}
+
+type usageStatsMock struct {
+	t           *testing.T
+	metricFuncs map[string]usagestats.MetricFunc
+}
+
+func (usm *usageStatsMock) RegisterMetric(name string, fn usagestats.MetricFunc) {
+	usm.metricFuncs[name] = fn
+}
+
+func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.UsageReport, error) {
+	metrics := make(map[string]interface{})
+	for name, fn := range usm.metricFuncs {
+		v, err := fn()
+		metrics[name] = v
+		require.NoError(usm.t, err)
+	}
+	return usagestats.UsageReport{Metrics: metrics}, nil
 }
 
 type evaluatingPermissionsTestCase struct {
@@ -94,6 +115,48 @@ func TestEvaluatingPermissions(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.evalResult, result)
 			}
+		})
+	}
+}
+
+func TestUsageMetrics(t *testing.T) {
+	tests := []struct {
+		name          string
+		enabled       bool
+		expectedValue int
+	}{
+		{
+			name:          "Expecting metric with value 0",
+			enabled:       false,
+			expectedValue: 0,
+		},
+		{
+			name:          "Expecting metric with value 1",
+			enabled:       true,
+			expectedValue: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			if tt.enabled {
+				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			}
+
+			s := &OSSAccessControlService{
+				Cfg:        cfg,
+				UsageStats: &usageStatsMock{t: t, metricFuncs: make(map[string]usagestats.MetricFunc)},
+				Log:        log.New("accesscontrol-test"),
+			}
+
+			err := s.Init()
+			assert.Nil(t, err)
+
+			report, err := s.UsageStats.GetUsageReport(context.Background())
+			assert.Nil(t, err)
+
+			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
 }
