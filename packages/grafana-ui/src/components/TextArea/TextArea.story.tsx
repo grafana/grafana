@@ -9,6 +9,9 @@ export default {
   component: TextArea,
   decorators: [withCenteredStory],
   parameters: {
+    controls: {
+      exclude: ['cols'],
+    },
     docs: {
       page: mdx,
     },
@@ -17,19 +20,18 @@ export default {
     },
   },
   argTypes: {
-    cols: { control: { type: 'range', min: 5, max: 50, step: 5 } },
     containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
   },
 } as Meta;
 
-export const Simple: Story = (args) => {
+export const Basic: Story = (args) => {
   return (
     <div style={{ width: args.containerWidth }}>
       <TextArea invalid={args.invalid} placeholder={args.placeholder} cols={args.cols} disabled={args.disabled} />
     </div>
   );
 };
-Simple.args = {
+Basic.args = {
   invalid: false,
   disabled: false,
   placeholder: 'This is just a placeholder',
