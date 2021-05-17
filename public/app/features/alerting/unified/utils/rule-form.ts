@@ -1,5 +1,6 @@
 import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
@@ -22,28 +23,30 @@ import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
 import { parseInterval } from './time';
 
-export const defaultFormValues: RuleFormValues = Object.freeze({
-  name: '',
-  labels: [{ key: '', value: '' }],
-  annotations: [{ key: '', value: '' }],
-  dataSourceName: null,
+export const getDefaultFormValues = (): RuleFormValues =>
+  Object.freeze({
+    name: '',
+    labels: [{ key: '', value: '' }],
+    annotations: [{ key: '', value: '' }],
+    dataSourceName: null,
+    type: !contextSrv.isEditor ? RuleFormType.threshold : undefined, // viewers can't create prom alerts
 
-  // threshold
-  folder: null,
-  queries: [],
-  condition: '',
-  noDataState: GrafanaAlertStateDecision.NoData,
-  execErrState: GrafanaAlertStateDecision.Alerting,
-  evaluateEvery: '1m',
-  evaluateFor: '5m',
+    // threshold
+    folder: null,
+    queries: [],
+    condition: '',
+    noDataState: GrafanaAlertStateDecision.NoData,
+    execErrState: GrafanaAlertStateDecision.Alerting,
+    evaluateEvery: '1m',
+    evaluateFor: '5m',
 
-  // system
-  group: '',
-  namespace: '',
-  expression: '',
-  forTime: 1,
-  forTimeUnit: 'm',
-});
+    // system
+    group: '',
+    namespace: '',
+    expression: '',
+    forTime: 1,
+    forTimeUnit: 'm',
+  });
 
 export function formValuesToRulerAlertingRuleDTO(values: RuleFormValues): RulerAlertingRuleDTO {
   const { name, expression, forTime, forTimeUnit } = values;
@@ -81,6 +84,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
+
+  const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
     if (isGrafanaRulerRule(rule)) {
       const ga = rule.grafana_alert;

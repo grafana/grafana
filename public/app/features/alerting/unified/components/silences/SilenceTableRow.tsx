@@ -12,6 +12,7 @@ import { useDispatch } from 'react-redux';
 import { Matchers } from './Matchers';
 import { SilenceStateTag } from './SilenceStateTag';
 import { makeAMLink } from '../../utils/misc';
+import { contextSrv } from 'app/core/services/context_srv';
 interface Props {
   className?: string;
   silence: Silence;
@@ -35,6 +36,8 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
     dispatch(expireSilenceAction(alertManagerSourceName, silence.id));
   };
 
+  const detailsColspan = contextSrv.isEditor ? 4 : 3;
+
   return (
     <Fragment>
       <tr className={className}>
@@ -53,54 +56,56 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
           <br />
           {endsAtDate?.format(dateDisplayFormat)}
         </td>
-        <td className={styles.actionsCell}>
-          {status.state === 'expired' ? (
-            <Link href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}>
-              <ActionButton icon="sync">Recreate</ActionButton>
-            </Link>
-          ) : (
-            <ActionButton icon="bell" onClick={handleExpireSilenceClick}>
-              Unsilence
-            </ActionButton>
-          )}
-          {status.state !== 'expired' && (
-            <ActionIcon
-              to={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
-              icon="pen"
-              tooltip="edit"
-            />
-          )}
-        </td>
+        {contextSrv.isEditor && (
+          <td className={styles.actionsCell}>
+            {status.state === 'expired' ? (
+              <Link href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}>
+                <ActionButton icon="sync">Recreate</ActionButton>
+              </Link>
+            ) : (
+              <ActionButton icon="bell" onClick={handleExpireSilenceClick}>
+                Unsilence
+              </ActionButton>
+            )}
+            {status.state !== 'expired' && (
+              <ActionIcon
+                to={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
+                icon="pen"
+                tooltip="edit"
+              />
+            )}
+          </td>
+        )}
       </tr>
       {!isCollapsed && (
         <>
           <tr className={className}>
             <td />
             <td>Comment</td>
-            <td colSpan={4}>{comment}</td>
+            <td colSpan={detailsColspan}>{comment}</td>
           </tr>
           <tr className={className}>
             <td />
             <td>Schedule</td>
-            <td colSpan={4}>{`${startsAtDate?.format(dateDisplayFormat)} - ${endsAtDate?.format(
+            <td colSpan={detailsColspan}>{`${startsAtDate?.format(dateDisplayFormat)} - ${endsAtDate?.format(
               dateDisplayFormat
             )}`}</td>
           </tr>
           <tr className={className}>
             <td />
             <td>Duration</td>
-            <td colSpan={4}>{duration}</td>
+            <td colSpan={detailsColspan}>{duration}</td>
           </tr>
           <tr className={className}>
             <td />
             <td>Created by</td>
-            <td colSpan={4}>{createdBy}</td>
+            <td colSpan={detailsColspan}>{createdBy}</td>
           </tr>
           {!!silencedAlerts.length && (
             <tr className={cx(className, styles.alertRulesCell)}>
               <td />
               <td>Affected alerts</td>
-              <td colSpan={4}>
+              <td colSpan={detailsColspan}>
                 <SilencedAlertsTable silencedAlerts={silencedAlerts} />
               </td>
             </tr>
