@@ -411,6 +411,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/notifications/global-config',
+      roles: () => ['Admin', 'Editor'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
       path: '/alerting/notification/new',
       component: SafeDynamicImport(
         () =>

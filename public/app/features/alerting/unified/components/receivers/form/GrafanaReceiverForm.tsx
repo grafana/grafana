@@ -26,7 +26,6 @@ interface Props {
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   __id: '',
-  sendReminder: true,
   secureSettings: {},
   settings: {},
   secureFields: {},

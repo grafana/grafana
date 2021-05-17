@@ -6,6 +6,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
+import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';
 import { NewReceiverView } from './components/receivers/NewReceiverView';
 import { NewTemplateView } from './components/receivers/NewTemplateView';
 import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTemplatesView';
@@ -93,6 +94,9 @@ const Receivers: FC = () => {
                 />
               )
             }
+          </Route>
+          <Route exact={true} path="/alerting/notifications/global-config">
+            <GlobalConfigForm config={config} alertManagerSourceName={alertManagerSourceName} />
           </Route>
         </Switch>
       )}

@@ -39,8 +39,6 @@ const mockGrafanaReceiver = (type: string): GrafanaManagedReceiverConfig => ({
   disableResolveMessage: false,
   secureFields: {},
   settings: {},
-  sendReminder: false,
-  uid: '2',
   name: type,
 });
 
