@@ -1,11 +1,11 @@
 +++
-title = "Runtime settings"
-description = "Grafana settings updates on runtime"
+title = "Settings updates at runtime"
+description = "Settings updates at runtime"
 keywords = ["grafana", "runtime", "settings"]
 weight = 500
 +++
 
-# Runtime settings
+# Settings updates at runtime
 
 > Only available in Grafana Enterprise v8.0+.
 

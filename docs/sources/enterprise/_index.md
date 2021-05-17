@@ -51,7 +51,7 @@ With Grafana Enterprise, you get access to new features, including:
 - [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "request-security.md" >}}) makes it possible to restrict outgoing requests from the Grafana server.
-- [Runtime settings]({{< relref "runtime-settings.md" >}}) makes it possible to update Grafana settings on runtime with no need to restart it.
+- [Settings updates at runtime]({{< relref "settings-updates.md" >}}) allows you to update Grafana settings at runtime with no need of restarts.
 
 ## Enterprise data sources
 

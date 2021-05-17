@@ -78,6 +78,6 @@ The concurrent session limit remains active for seven days after the expiration 
 
 The active users limit is turned off immediately.
 
-### Runtime settings
+### Settings updates at runtime
 
-Runtime settings are not affected by an expired license.
+Settings updates at runtime are not affected by an expired license.
