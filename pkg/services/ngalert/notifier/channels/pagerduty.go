@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 const (
@@ -25,7 +26,7 @@ const (
 )
 
 var (
-	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
+	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
 // PagerdutyNotifier is responsible for sending
@@ -93,7 +94,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
-		Url:        pagerdutyEventAPIURL,
+		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -118,7 +119,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(pn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
@@ -141,7 +142,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
+		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
 		Payload: &pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),

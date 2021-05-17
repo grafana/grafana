@@ -8,6 +8,8 @@ import (
 	"time"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -24,8 +26,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// setupTestEnv initializes a store to used by the tests.
-func setupTestEnv(t *testing.T, baseIntervalSeconds int64) *store.DBstore {
+// SetupTestEnv initializes a store to used by the tests.
+func SetupTestEnv(t *testing.T, baseIntervalSeconds int64) *store.DBstore {
 	cfg := setting.NewCfg()
 	// AlertNG is disabled by default and only if it's enabled
 	// its database migrations run and the relative database tables are created
@@ -44,6 +46,7 @@ func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
 		Log:           log.New("ngalert-test"),
+		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
 
 	// hook for initialising the service after the Cfg is populated
@@ -65,7 +68,7 @@ func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
-func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
+func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
 	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
@@ -118,7 +121,7 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 }
 
 // updateTestAlertRule update a dummy alert definition to be used by the tests.
-func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
+func UpdateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
 	cmd := store.UpdateRuleGroupCmd{
 		OrgID:        1,
 		NamespaceUID: "namespace",

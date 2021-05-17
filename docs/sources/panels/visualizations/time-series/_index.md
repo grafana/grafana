@@ -26,6 +26,7 @@ You can also use field options to create different types of graphs or adjust you
 - [Graph time series as bars]({{< relref "graph-time-series-as-bars.md" >}})
 - [Graph time series as points]({{< relref "graph-time-series-as-points.md" >}})
 - [Change axis display]({{< relref "change-axis-display.md" >}})
+- [Graph stacked time series]({{< relref "graph-time-series-stacking.md" >}})
 
 ## Display options
 

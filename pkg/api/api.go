@@ -101,8 +101,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
-	r.Get("/alerting/", reqEditorRole, hs.Index)
-	r.Get("/alerting/*", reqEditorRole, hs.Index)
+	r.Get("/alerting/", reqSignedIn, hs.Index)
+	r.Get("/alerting/*", reqSignedIn, hs.Index)
 
 	// sign up
 	r.Get("/verify", hs.Index)
@@ -284,7 +284,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
-		if hs.Cfg.MarketplaceAppEnabled {
+		if hs.Cfg.CatalogAppEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 				pluginRoute.Post("/:pluginId/install", bind(dtos.InstallPluginCommand{}), routing.Wrap(hs.InstallPlugin))
 				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
@@ -387,7 +387,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
-			GetAlertNotifiers(hs.Alertmanager != nil && !hs.Alertmanager.IsDisabled())),
+			GetAlertNotifiers(hs.Alertmanager != nil && hs.Cfg.IsNgAlertEnabled())),
 		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {

@@ -68,12 +68,30 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       id: `datasource-cache-${dataSource.id}`,
       text: 'Cache',
       url: `datasources/edit/${dataSource.id}/cache`,
+      hideFromTabs: !pluginMeta.isBackend,
     });
   }
 
   return navModel;
 }
 
+export function getDataSourceNav(main: NavModelItem, pageName: string): NavModel {
+  let node: NavModelItem;
+
+  // find active page
+  for (const child of main.children!) {
+    if (child.id!.indexOf(pageName) > 0) {
+      child.active = true;
+      node = child;
+      break;
+    }
+  }
+
+  return {
+    main: main,
+    node: node!,
+  };
+}
 export function getDataSourceLoadingNav(pageName: string): NavModel {
   const main = buildNavModel(
     {
@@ -125,21 +143,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
     } as any
   );
 
-  let node: NavModelItem;
-
-  // find active page
-  for (const child of main.children!) {
-    if (child.id!.indexOf(pageName) > 0) {
-      child.active = true;
-      node = child;
-      break;
-    }
-  }
-
-  return {
-    main: main,
-    node: node!,
-  };
+  return getDataSourceNav(main, pageName);
 }
 
 function hasDashboards(includes: PluginInclude[]): boolean {

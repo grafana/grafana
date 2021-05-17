@@ -1,6 +1,9 @@
 export const Components = {
   TimePicker: {
     openButton: 'TimePicker Open Button',
+    fromField: 'TimePicker from field',
+    toField: 'TimePicker to field',
+    applyTimeRange: 'TimePicker submit button',
   },
   DataSource: {
     TestData: {
@@ -17,6 +20,13 @@ export const Components = {
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
+    },
+    Prometheus: {
+      configPage: {
+        exemplarsAddButton: 'Add exemplar config button',
+        internalLinkSwitch: 'Internal link switch',
+      },
+      exemplarMarker: 'Exemplar marker',
     },
   },
   Menu: {

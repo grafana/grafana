@@ -55,7 +55,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "spans",
+        "mode": "changes",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -187,8 +187,8 @@
           "scenarioId": "manual_entry"
         }
       ],
-      "title": "Spans Mode",
-      "type": "timeline"
+      "title": "\"State changes\" Mode",
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -228,7 +228,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "spans",
+        "mode": "changes",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -252,8 +252,8 @@
           "stringInput": "true,null,false,null,true,false"
         }
       ],
-      "title": "Spans Mode (strings & booleans)",
-      "type": "timeline"
+      "title": "\"State changes\" Mode (strings & booleans)",
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -296,7 +296,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "grid",
+        "mode": "samples",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -331,14 +331,14 @@
           "stringInput": ""
         }
       ],
-      "title": "Grid Mode",
-      "type": "timeline"
+      "title": "Status map view",
+      "type": "status-grid"
     }
   ],
   "refresh": false,
   "schemaVersion": 29,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },
