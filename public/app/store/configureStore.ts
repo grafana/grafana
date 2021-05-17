@@ -1,7 +1,5 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
-import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { StoreState } from 'app/types/store';
-import { createLogger } from 'redux-logger';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { setStore } from './store';
@@ -14,20 +12,13 @@ export function addRootReducer(reducers: any) {
 }
 
 export function configureStore(initialState?: Partial<StoreState>) {
-  const logger = createLogger({
-    predicate: (getState) => {
-      return getState().application.logActions;
-    },
-  });
-
-  const loggerMiddleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, logger] : [];
   const store = reduxConfigureStore({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: false,
         immutableCheck: { ignoredPaths: getPathsToIgnoreMutationAndSerializableCheckOn() },
-      }).concat(loggerMiddleware),
+      }),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
