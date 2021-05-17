@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { Checkbox, HorizontalGroup, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import getStyles from './styles';
 import { EntryType, Row, RowGroup } from './types';
 
@@ -8,11 +8,17 @@ interface NestedRowsProps {
   rows: RowGroup;
   level: number;
   selectedRows: RowGroup;
-  fetchNested: (row: Row) => Promise<void>;
+  requestNestedRows: (row: Row) => Promise<void>;
   onRowSelectedChange: (row: Row, selected: boolean) => void;
 }
 
-const NestedRows: React.FC<NestedRowsProps> = ({ rows, selectedRows, level, fetchNested, onRowSelectedChange }) => (
+const NestedRows: React.FC<NestedRowsProps> = ({
+  rows,
+  selectedRows,
+  level,
+  requestNestedRows,
+  onRowSelectedChange,
+}) => (
   <>
     {Object.keys(rows).map((rowId) => (
       <NestedRow
@@ -20,7 +26,7 @@ const NestedRows: React.FC<NestedRowsProps> = ({ rows, selectedRows, level, fetc
         row={rows[rowId]}
         selectedRows={selectedRows}
         level={level}
-        fetchNested={fetchNested}
+        requestNestedRows={requestNestedRows}
         onRowSelectedChange={onRowSelectedChange}
       />
     ))}
@@ -31,11 +37,11 @@ interface NestedRowProps {
   row: Row;
   level: number;
   selectedRows: RowGroup;
-  fetchNested: (row: Row) => Promise<void>;
+  requestNestedRows: (row: Row) => Promise<void>;
   onRowSelectedChange: (row: Row, selected: boolean) => void;
 }
 
-const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, fetchNested, onRowSelectedChange }) => {
+const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, requestNestedRows, onRowSelectedChange }) => {
   const styles = useStyles2(getStyles);
 
   const isSelected = !!selectedRows[row.id];
@@ -50,9 +56,19 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, fetchNe
       return;
     }
     setOpenStatus('loading');
-    await fetchNested(row);
+    await requestNestedRows(row);
     setOpenStatus('open');
   };
+
+  // opens the resource group on load of component if there was a previously saved selection
+  useEffect(() => {
+    const selectedRow = Object.keys(selectedRows).map((rowId) => selectedRows[rowId])[0];
+    const isSelectedResourceGroup =
+      selectedRow && selectedRow.resourceGroupName && row.name === selectedRow.resourceGroupName;
+    if (isSelectedResourceGroup) {
+      setOpenStatus('open');
+    }
+  }, [selectedRows, row]);
 
   return (
     <>
@@ -79,7 +95,7 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, fetchNe
           rows={row.children}
           selectedRows={selectedRows}
           level={level + 1}
-          fetchNested={fetchNested}
+          requestNestedRows={requestNestedRows}
           onRowSelectedChange={onRowSelectedChange}
         />
       )}

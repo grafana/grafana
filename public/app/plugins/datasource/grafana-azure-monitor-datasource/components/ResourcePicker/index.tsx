@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NestedResourceTable from './NestedResourceTable';
 import { Row, RowGroup } from './types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data'; // TODO: this is not loading for me
 import { useStyles2 } from '@grafana/ui';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
-
+import { produce } from 'immer';
 interface ResourcePickerProps {
-  resourcePickerData: Pick<ResourcePickerData, 'getResourcePickerData' | 'getResourcePickerDataWithNestedResourceData'>;
-  selectedResource: RowGroup;
+  resourcePickerData: Pick<ResourcePickerData, 'getResourcePickerData' | 'getResourcesForResourceGroup'>;
+  resourceUri: string;
   handleSelectResource: (row: Row, isSelected: boolean) => void;
 }
 
@@ -26,22 +26,58 @@ const ResourcePicker = (props: ResourcePickerProps) => {
     handleFetchInitialResources();
   }, [handleFetchInitialResources]);
 
-  const fetchNested = async (resourceGroup: Row) => {
-    const rowsWithNestedData = await props.resourcePickerData.getResourcePickerDataWithNestedResourceData(
-      resourceGroup
-    );
-    setRows(rowsWithNestedData);
-  };
+  const requestNestedRows = useCallback(
+    async (resourceGroup: Row) => {
+      // if we've already fetched resources for a resource group we don't need to re-fetch them
+      if (resourceGroup.children && Object.keys(resourceGroup.children).length > 0) {
+        return;
+      }
 
-  const hasSelection = Object.keys(props.selectedResource).length > 0;
+      // fetch and set nested resources for the resourcegroup into the bigger state object
+      const resources = await props.resourcePickerData.getResourcesForResourceGroup(resourceGroup);
+      setRows(
+        produce(rows, (draftState) => {
+          (draftState[resourceGroup.subscriptionId].children as RowGroup)[resourceGroup.name].children = resources;
+        })
+      );
+    },
+    [props.resourcePickerData, rows]
+  );
+
+  const selectedResource = useMemo(() => {
+    if (props.resourceUri && Object.keys(rows).length) {
+      const matches = /\/subscriptions\/(?<subscriptionId>.+)\/resourceGroups\/(?<selectedResourceGroupName>.+)\/providers\/(?<cloud>.+)/.exec(
+        props.resourceUri
+      );
+      if (matches && matches.groups) {
+        const { subscriptionId, selectedResourceGroupName } = matches.groups;
+        const allResourceGroups = rows[subscriptionId].children || {};
+        const selectedResourceGroup = allResourceGroups[selectedResourceGroupName.toLowerCase()];
+        const allResourcesInResourceGroup = selectedResourceGroup.children;
+
+        if (!allResourcesInResourceGroup || Object.keys(allResourcesInResourceGroup).length === 0) {
+          requestNestedRows(selectedResourceGroup);
+          return {};
+        }
+
+        const matchingResource = allResourcesInResourceGroup[props.resourceUri];
+        return {
+          [props.resourceUri]: matchingResource,
+        };
+      }
+    }
+    return {};
+  }, [props.resourceUri, rows, requestNestedRows]);
+
+  const hasSelection = Object.keys(selectedResource).length > 0;
 
   return (
     <div>
       <NestedResourceTable
         rows={rows}
-        fetchNested={fetchNested}
+        requestNestedRows={requestNestedRows}
         onRowSelectedChange={props.handleSelectResource}
-        selectedRows={props.selectedResource}
+        selectedRows={selectedResource}
       />
 
       {hasSelection && (
@@ -49,10 +85,10 @@ const ResourcePicker = (props: ResourcePickerProps) => {
           <h5>Selection</h5>
           <NestedResourceTable
             noHeader={true}
-            rows={props.selectedResource}
-            fetchNested={fetchNested}
+            rows={selectedResource}
+            requestNestedRows={requestNestedRows}
             onRowSelectedChange={props.handleSelectResource}
-            selectedRows={props.selectedResource}
+            selectedRows={selectedResource}
           />
         </div>
       )}

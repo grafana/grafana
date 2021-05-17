@@ -38,7 +38,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
-    this.resourcePickerData = new ResourcePickerData(instanceSettings.url);
+    this.resourcePickerData = new ResourcePickerData(instanceSettings.url!, instanceSettings.jsonData.cloudName);
 
     const pseudoDatasource: any = {};
     pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;

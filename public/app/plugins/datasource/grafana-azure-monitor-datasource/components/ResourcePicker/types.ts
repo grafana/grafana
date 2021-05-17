@@ -9,9 +9,9 @@ export interface Row {
   type: EntryType;
   typeLabel: string;
   subscriptionId: string;
-  resourceGroup: string;
   location?: string;
   children?: RowGroup;
+  resourceGroupName?: string;
 }
 
 export interface RowGroup {
