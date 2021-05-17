@@ -1,9 +1,15 @@
 import React, { FC, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
-import { GrafanaTheme, PanelData, VizOrientation } from '@grafana/data';
+import { GrafanaTheme2, PanelData, VizOrientation } from '@grafana/data';
 import { config, PanelRenderer } from '@grafana/runtime';
-import { LegendDisplayMode, SingleStatBaseOptions, TooltipDisplayMode, RadioButtonGroup, useStyles } from '@grafana/ui';
+import {
+  LegendDisplayMode,
+  SingleStatBaseOptions,
+  TooltipDisplayMode,
+  RadioButtonGroup,
+  useStyles2,
+} from '@grafana/ui';
 
 interface Props {
   data: PanelData;
@@ -13,7 +19,7 @@ interface Props {
 export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
   const [pluginId, changePluginId] = useState<string>(defaultPanel ?? 'timeseries');
   const options = { ...getOptionsForPanelPlugin(pluginId) };
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const panels = Object.values(config.panels)
     .filter((p) => p.id === 'timeseries' || p.id === 'table' || p.id === 'stat')
     .map((panel) => ({ value: panel.id, label: panel.name, imgUrl: panel.info.logos.small }));
@@ -87,11 +93,11 @@ const singleStatOptions: SingleStatBaseOptions = {
   text: undefined,
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    margin-left: ${theme.spacing.lg};
+    padding: 0 ${theme.spacing(2)};
   `,
   buttonGroup: css`
-    margin-bottom: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing(1)};
   `,
 });

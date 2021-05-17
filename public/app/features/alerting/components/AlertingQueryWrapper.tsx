@@ -84,6 +84,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: ${theme.shape.borderRadius(1)};
-    padding: ${theme.spacing(1)};
+    padding-bottom: ${theme.spacing(1)};
   `,
 });
