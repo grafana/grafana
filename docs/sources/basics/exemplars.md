@@ -13,7 +13,7 @@ Suppose your company website is experiencing a surge in traffic volumes. While m
 
 To identify the factors that are contributing to the latency, you must compare a trace for a fast response against a trace for a slow response. Given the vast amount of data in a typical production environment, it will be extremely laborious and time-consuming effort. 
 
-Use exemplars to help isolate problems within your data distribution by pin-pointing query traces exhibiting high latency within a time interval. Once you localize the latency problem to a few exemplar traces, you can combine it with additional system based information or location properties to perform a root cause analysis faster, leading to quick resolutions to performance issues.
+Use exemplars to help isolate problems within your data distribution by pinpointing query traces exhibiting high latency within a time interval. Once you localize the latency problem to a few exemplar traces, you can combine it with additional system based information or location properties to perform a root cause analysis faster, leading to quick resolutions to performance issues.
 
 Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplars data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in Prometheus data source]({{< relref "../datasources/prometheus.md" >}}).
 
