@@ -813,5 +813,8 @@ func isDuplicate(nameList []string, target string) bool {
 }
 
 func isCustomMetrics(namespace string) bool {
-	return strings.Index(namespace, "AWS/") != 0
+	if _, ok := metricsMap[namespace]; ok {
+		return false
+	}
+	return true
 }
