@@ -3,6 +3,9 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/url"
+	"path"
 	"strconv"
 	"strings"
 
@@ -28,7 +31,7 @@ type DiscordNotifier struct {
 	log         log.Logger
 	tmpl        *template.Template
 	Description string
-	Message     string
+	Content     string
 	WebhookURL  string
 }
 
@@ -42,11 +45,11 @@ func NewDiscordNotifier(model *models.AlertNotification, t *template.Template) (
 		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
 	}
 
-	message := model.Settings.Get("message").MustString()
+	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
 	return &DiscordNotifier{
 		NotifierBase: old_notifiers.NewNotifierBase(model),
-		Message:      message,
+		Content:      content,
 		WebhookURL:   discordURL,
 		log:          log.New("alerting.notifier.discord"),
 		tmpl:         t,
@@ -62,20 +65,11 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	var tmplErr error
 	tmpl := notify.TmplText(d.tmpl, data, &tmplErr)
-	if d.Message != "" {
-		bodyJSON.Set("content", tmpl(d.Message))
+	if d.Content != "" {
+		bodyJSON.Set("content", tmpl(d.Content))
 	}
 	if tmplErr != nil {
 		return false, errors.Wrap(tmplErr, "failed to template discord message")
-	}
-
-	fields := make([]map[string]interface{}, 0)
-	for _, a := range as {
-		fields = append(fields, map[string]interface{}{
-			"name":   a.Labels.String(),
-			"value":  a.Annotations.String(),
-			"inline": true,
-		})
 	}
 
 	footer := map[string]interface{}{
@@ -84,9 +78,8 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	embed := simplejson.New()
-	embed.Set("title", getTitleFromTemplateData(data))
+	embed.Set("title", tmpl(`{{ template "default.title" . }}`))
 	embed.Set("footer", footer)
-	embed.Set("fields", fields)
 
 	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
 	embed.Set("color", color)
@@ -95,7 +88,12 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		embed.Set("description", d.Description)
 	}
 
-	ruleURL := d.tmpl.ExternalURL.String() + "alerting/list"
+	u, err := url.Parse(d.tmpl.ExternalURL.String())
+	if err != nil {
+		return false, fmt.Errorf("failed to parse external URL: %w", err)
+	}
+	u.Path = path.Join(u.Path, "/alerting/list")
+	ruleURL := u.String()
 	embed.Set("url", ruleURL)
 
 	bodyJSON.Set("embeds", []interface{}{embed})

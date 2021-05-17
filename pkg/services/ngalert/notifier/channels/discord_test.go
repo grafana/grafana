@@ -14,15 +14,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDiscordNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -48,18 +46,15 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
+				"content": "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
-					"fields": []interface{}{map[string]interface{}{
-						"inline": true,
-						"name":   "{alertname=\"alert1\", lbl1=\"val1\"}",
-						"value":  "{ann1=\"annv1\"}"}},
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
 						"text":     "Grafana v",
 					},
-					"title": "[firing:1]  (val1)",
-					"url":   "http://localhostalerting/list"},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list"},
 				},
 				"username": "Grafana",
 			},
@@ -89,23 +84,13 @@ func TestDiscordNotifier(t *testing.T) {
 				"content": "2 alerts are firing, 0 are resolved",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
-					"fields": []interface{}{
-						map[string]interface{}{
-							"inline": true,
-							"name":   "{alertname=\"alert1\", lbl1=\"val1\"}", "value": "{ann1=\"annv1\"}",
-						},
-						map[string]interface{}{
-							"inline": true,
-							"name":   "{alertname=\"alert1\", lbl1=\"val2\"}",
-							"value":  "{ann1=\"annv2\"}",
-						},
-					},
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/assets/img/fav32.png",
 						"text":     "Grafana v",
 					},
-					"title": "[firing:2]  ",
-					"url":   "http://localhostalerting/list"}},
+					"title": "[FIRING:2]  ",
+					"url":   "http://localhost/alerting/list"},
+				},
 				"username": "Grafana",
 			},
 			expInitError: nil,
