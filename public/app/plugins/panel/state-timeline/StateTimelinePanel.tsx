@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PanelProps } from '@grafana/data';
 import { useTheme2, ZoomPlugin } from '@grafana/ui';
-import { TimelineOptions } from './types';
+import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
+import { prepareTimelineFields } from './utils';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
 /**
  * @alpha
  */
-export const TimelinePanel: React.FC<TimelinePanelProps> = ({
+export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   data,
   timeRange,
   timeZone,
@@ -20,10 +21,15 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
 }) => {
   const theme = useTheme2();
 
-  if (!data || !data.series?.length) {
+  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, options.mergeValues ?? true), [
+    data,
+    options.mergeValues,
+  ]);
+
+  if (!frames || warn) {
     return (
       <div className="panel-empty">
-        <p>No data found in response</p>
+        <p>{warn ?? 'No data found in response'}</p>
       </div>
     );
   }
@@ -31,13 +37,15 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   return (
     <TimelineChart
       theme={theme}
-      frames={data.series}
+      frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
       height={height}
       {...options}
+      // hardcoded
+      mode={TimelineMode.Changes}
     >
       {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
     </TimelineChart>

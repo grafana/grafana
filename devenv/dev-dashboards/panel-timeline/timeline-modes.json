@@ -188,7 +188,7 @@
         }
       ],
       "title": "\"State changes\" Mode",
-      "type": "timeline"
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -253,7 +253,7 @@
         }
       ],
       "title": "\"State changes\" Mode (strings & booleans)",
-      "type": "timeline"
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -331,8 +331,8 @@
           "stringInput": ""
         }
       ],
-      "title": "\"Periodic samples\" Mode",
-      "type": "timeline"
+      "title": "Status map view",
+      "type": "status-grid"
     }
   ],
   "refresh": false,

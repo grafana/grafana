@@ -110,7 +110,7 @@
         }
       ],
       "title": "State changes strings",
-      "type": "timeline"
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -204,7 +204,7 @@
         }
       ],
       "title": "State changes with boolean values",
-      "type": "timeline"
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -298,7 +298,7 @@
         }
       ],
       "title": "State changes with nulls",
-      "type": "timeline"
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -388,8 +388,8 @@
           "stringInput": ""
         }
       ],
-      "title": "\"Periodic samples\" Mode",
-      "type": "timeline"
+      "title": "Status map",
+      "type": "status-grid"
     }
   ],
   "refresh": false,
