@@ -1,4 +1,4 @@
-import uPlot, { Scale, Range } from 'uplot';
+import uPlot, { Scale, Range, Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { ScaleOrientation, ScaleDirection } from '../config';
 import { ScaleDistribution } from '../models.gen';
@@ -24,18 +24,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     this.props.max = optMinMax('max', this.props.max, props.max);
   }
 
-  getConfig() {
-    const {
-      isTime,
-      scaleKey,
-      min: hardMin,
-      max: hardMax,
-      softMin,
-      softMax,
-      range,
-      direction,
-      orientation,
-    } = this.props;
+  getConfig(): Scale {
+    let { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range, direction, orientation } = this.props;
     const distribution = !isTime
       ? {
           distr:
@@ -95,14 +85,16 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       return minMax;
     };
 
+    let auto = !isTime && !(hardMinOnly && hardMaxOnly);
     if (isBooleanUnit(scaleKey)) {
-      console.log('only set ticks for true/false?  force range 0/1?');
+      auto = false;
+      range = [0, 1];
     }
 
     return {
       [scaleKey]: {
         time: isTime,
-        auto: !isTime && !(hardMinOnly && hardMaxOnly),
+        auto,
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,
