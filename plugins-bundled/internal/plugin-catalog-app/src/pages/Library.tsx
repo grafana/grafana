@@ -27,7 +27,7 @@ export const Library = () => {
         <p>
           You haven&#39;t installed any plugins. Browse the{' '}
           <a className={styles.link} href={`${PLUGIN_ROOT}/?tab=browse&sortBy=popularity`}>
-            marketplace
+            catalog
           </a>{' '}
           for plugins to install.
         </p>

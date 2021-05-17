@@ -1,8 +1,8 @@
 {
   "$schema": "https://github.com/grafana/grafana/raw/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "app",
-  "name": "Marketplace",
-  "id": "grafana-marketplace-app",
+  "name": "Plugin Catalog",
+  "id": "grafana-plugin-catalog-app",
   "backend": false,
   "info": {
     "author": {
@@ -14,16 +14,7 @@
       "small": "img/logo.svg",
       "large": "img/logo.svg"
     },
-    "links": [
-      {
-        "name": "Website",
-        "url": "https://github.com/grafana/marketplace-app"
-      },
-      {
-        "name": "License",
-        "url": "https://github.com/grafana/marketplace-app/blob/master/LICENSE"
-      }
-    ],
+    "links": [],
     "screenshots": [
       {
         "name": "Discover",
@@ -45,7 +36,7 @@
     {
       "type": "page",
       "name": "Discover",
-      "path": "/a/grafana-marketplace-app?tab=discover",
+      "path": "/a/grafana-plugin-catalog-app?tab=discover",
       "role": "Admin",
       "addToNav": true,
       "defaultNav": true
@@ -53,27 +44,27 @@
     {
       "type": "page",
       "name": "Browse",
-      "path": "/a/grafana-marketplace-app/?tab=browse",
+      "path": "/a/grafana-plugin-catalog-app/?tab=browse",
       "role": "Admin",
       "addToNav": true
     },
     {
       "type": "page",
       "name": "Library",
-      "path": "/a/grafana-marketplace-app/?tab=library",
+      "path": "/a/grafana-plugin-catalog-app/?tab=library",
       "role": "Admin",
       "addToNav": true
     },
     {
       "type": "page",
       "name": "View plugin",
-      "path": "/a/grafana-marketplace-app?tab=plugin",
+      "path": "/a/grafana-plugin-catalog-app?tab=plugin",
       "role": "Admin"
     }
   ],
   "dependencies": {
-    "grafanaDependency": ">=7.3.0",
-    "grafanaVersion": "7.3.x",
+    "grafanaDependency": ">=8.0.0",
+    "grafanaVersion": "8.0.x",
     "plugins": []
   }
 }

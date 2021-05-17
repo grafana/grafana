@@ -8,12 +8,12 @@ import { SearchField } from '../components/SearchField';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
-import { MarketplaceAppSettings, Plugin } from '../types';
+import { CatalogAppSettings, Plugin } from '../types';
 import { Page } from 'components/Page';
 
 export const Browse = ({ query, meta }: AppRootProps) => {
   const { q, filterBy, sortBy } = query;
-  const { includeEnterprise } = meta.jsonData as MarketplaceAppSettings;
+  const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
 
   const plugins = usePlugins(includeEnterprise);
   const history = useHistory();

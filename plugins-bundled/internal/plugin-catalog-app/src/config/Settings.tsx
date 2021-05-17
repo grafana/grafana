@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { PluginConfigPageProps, AppPluginMeta, PluginMeta } from '@grafana/data';
-import { MarketplaceAppSettings } from 'types';
+import { CatalogAppSettings } from 'types';
 import { Button, Field, Legend, Switch } from '@grafana/ui';
 import { api } from '../api';
+import { PLUGIN_ID } from '../constants';
 
-interface Props extends PluginConfigPageProps<AppPluginMeta<MarketplaceAppSettings>> {}
+interface Props extends PluginConfigPageProps<AppPluginMeta<CatalogAppSettings>> {}
 
 export const Settings = ({ plugin }: Props) => {
   const [meta, setMeta] = useState(plugin.meta);
-  const [state, setState] = useState<MarketplaceAppSettings>(meta.jsonData ?? {});
+  const [state, setState] = useState<CatalogAppSettings>(meta.jsonData ?? {});
 
   const { pinned, enabled } = meta;
   const { includeEnterprise } = state;
 
   const onSave = () => {
-    updateAndReload('grafana-marketplace-app', {
+    updateAndReload(PLUGIN_ID, {
       pinned,
       enabled,
       jsonData: state,

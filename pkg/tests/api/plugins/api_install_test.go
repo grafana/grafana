@@ -26,7 +26,7 @@ const (
 
 func TestPluginInstallAccess(t *testing.T) {
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		MarketplaceAppEnabled: true,
+		CatalogAppEnabled: true,
 	})
 	store := testinfra.SetUpDatabase(t, dir)
 	store.Bus = bus.GetBus() // in order to allow successful user auth
