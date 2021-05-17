@@ -38,7 +38,7 @@ import (
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
-var version = "5.0.0"
+var version = "7.5.0"
 var commit = "NA"
 var buildBranch = "main"
 var buildstamp string

@@ -346,7 +346,8 @@ export class ElasticQueryBuilder {
         Object.entries(metric.settings || {})
           .filter(([_, v]) => v !== null)
           .forEach(([k, v]) => {
-            metricAgg[k] = k === 'script' ? getScriptValue(metric as MetricAggregationWithInlineScript) : v;
+            metricAgg[k] =
+              k === 'script' ? this.buildScript(getScriptValue(metric as MetricAggregationWithInlineScript)) : v;
           });
 
         // Elasticsearch isn't generally too picky about the data types in the request body,
@@ -386,6 +387,16 @@ export class ElasticQueryBuilder {
     }
 
     return query;
+  }
+
+  private buildScript(script: string) {
+    if (gte(this.esVersion, '5.6.0')) {
+      return script;
+    }
+
+    return {
+      inline: script,
+    };
   }
 
   private toNumber(stringValue: unknown): unknown | number {
