@@ -29,7 +29,7 @@ By default, data source queries are not cached. To enable query caching for a si
 1. In the Cache tab, click Enable.
 1. Open the Cache tab.
 1. Press the Enable button. 
-1. Once enabled, you can choose a custom TTL for that data source or keep the default TTL.
+1. (Optional) Choose a custom TTL for that data source. If you skip this step, then Grafana uses the default TTL.
 
 > **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
