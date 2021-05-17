@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 // WebhookNotifier is responsible for sending
@@ -74,7 +75,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
-	data := notify.GetTemplateData(ctx, wn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, wn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(wn.log)))
 
 	var tmplErr error
 	tmpl := notify.TmplText(wn.tmpl, data, &tmplErr)
