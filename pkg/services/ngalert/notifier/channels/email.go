@@ -66,9 +66,9 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(en.log)))
+	data := ExtendData(notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(en.log))))
 	var tmplErr error
-	tmpl := notify.TmplText(en.tmpl, data, &tmplErr)
+	tmpl := TmplText(en.tmpl, data, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 
