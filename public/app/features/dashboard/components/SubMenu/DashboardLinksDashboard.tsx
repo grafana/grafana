@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
+import { config } from '@grafana/runtime';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
@@ -7,6 +8,7 @@ import { DashboardLink } from '../../state/DashboardModel';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
+import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 
 interface Props {
   link: DashboardLink;
@@ -21,13 +23,17 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
   let resolvedLinks = useResolvedLinks(props, opened);
 
   // TODO: PMM-7736 remove it ASAP after migration transition period is finished
-  if (props.link.title === 'PMM') {
-    resolvedLinks = [
-      { id: 'pmm-add-instance', url: '/graph/add-instance', title: 'PMM Add Instance' },
-      { id: 'pmm-database-checks', url: '/graph/pmm-database-checks', title: 'PMM Database Checks' },
-      { id: 'pmm-inventory', url: '/graph/inventory', title: 'PMM Inventory' },
-      { id: 'pmm-settings', url: '/graph/settings', title: 'PMM Settings' },
-    ];
+  if (link.title === 'PMM') {
+    if (isPmmAdmin(config.bootData.user)) {
+      resolvedLinks = [
+        { id: 'pmm-add-instance', url: '/graph/add-instance', title: 'PMM Add Instance' },
+        { id: 'pmm-database-checks', url: '/graph/pmm-database-checks', title: 'PMM Database Checks' },
+        { id: 'pmm-inventory', url: '/graph/inventory', title: 'PMM Inventory' },
+        { id: 'pmm-settings', url: '/graph/settings', title: 'PMM Settings' },
+      ];
+    } else {
+      return <></>;
+    }
   }
 
   if (link.asDropdown) {
