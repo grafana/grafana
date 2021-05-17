@@ -821,12 +821,14 @@ describe('exitPanelEditor', () => {
     const panel: any = { destroy: jest.fn() };
     const dashboard = new DashboardModel({});
     const timeSrvMock = ({
+      pauseAutoRefresh: jest.fn(),
+      resumeAutoRefresh: jest.fn(),
       setAutoRefresh: jest.fn(),
     } as unknown) as TimeSrv;
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
     if (setPreviousAutoRefresh) {
-      dashboard.previousAutoRefresh = '5s';
+      timeSrvMock.previousAutoRefresh = '5s';
     }
     setTimeSrv(timeSrvMock);
     return { dashboard, panel, timeSrvMock };
@@ -857,11 +859,10 @@ describe('exitPanelEditor', () => {
       expect(dashboard.startRefresh).not.toHaveBeenCalled();
     });
 
-    it('then refresh property is set to previousAutoRefresh property', () => {
+    it('then auto refresh property is resumed', () => {
       const { dashboard, timeSrvMock } = getTestContext(true);
       dashboard.exitPanelEditor();
-
-      expect(timeSrvMock.setAutoRefresh).toHaveBeenCalledWith('5s');
+      expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
     });
 
     describe('and there is a change that affects all panels', () => {
@@ -905,7 +906,8 @@ describe('initEditPanel', () => {
   function getTestContext() {
     const dashboard = new DashboardModel({});
     const timeSrvMock = ({
-      setAutoRefresh: jest.fn(),
+      pauseAutoRefresh: jest.fn(),
+      resumeAutoRefresh: jest.fn(),
     } as unknown) as TimeSrv;
     setTimeSrv(timeSrvMock);
     return { dashboard, timeSrvMock };
@@ -919,19 +921,11 @@ describe('initEditPanel', () => {
       expect(dashboard.panelInEdit).not.toBeUndefined();
     });
 
-    it('then previousAutoRefresh persist old refresh property', () => {
-      const { dashboard } = getTestContext();
-      dashboard.addPanel({ type: 'timeseries' });
-      dashboard.refresh = '5s';
-      dashboard.initEditPanel(dashboard.panels[0]);
-      expect(dashboard.previousAutoRefresh).toBe('5s');
-    });
-
-    it('then refresh property is set to empty string', () => {
+    it('then auto-refresh is paused', () => {
       const { dashboard, timeSrvMock } = getTestContext();
       dashboard.addPanel({ type: 'timeseries' });
       dashboard.initEditPanel(dashboard.panels[0]);
-      expect(timeSrvMock.setAutoRefresh).toHaveBeenCalledWith('');
+      expect(timeSrvMock.pauseAutoRefresh).toHaveBeenCalled();
     });
   });
 });

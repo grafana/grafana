@@ -84,7 +84,6 @@ export class DashboardModel {
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
   refresh: any;
-  previousAutoRefresh: any;
   snapshot: any;
   schemaVersion: number;
   version: number;
@@ -118,7 +117,6 @@ export class DashboardModel {
     getVariablesFromState: true,
     formatDate: true,
     hasChangesThatAffectsAllPanels: true,
-    previousAutoRefresh: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -359,8 +357,7 @@ export class DashboardModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
-    this.previousAutoRefresh = this.refresh;
-    getTimeSrv().setAutoRefresh('');
+    getTimeSrv().pauseAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
     return this.panelInEdit;
   }
@@ -377,7 +374,7 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
-    getTimeSrv().setAutoRefresh(this.previousAutoRefresh);
+    getTimeSrv().resumeAutoRefresh();
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
     this.refreshIfChangeAffectsAllPanels();
