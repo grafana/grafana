@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/common/model"
 )
 
 type ExtendedAlert struct {
@@ -104,4 +105,26 @@ func TmplText(tmpl *template.Template, data *ExtendedData, err *error) func(stri
 		s, *err = tmpl.ExecuteTextString(name, data)
 		return s
 	}
+}
+
+// Firing returns the subset of alerts that are firing.
+func (as ExtendedAlerts) Firing() []ExtendedAlert {
+	res := []ExtendedAlert{}
+	for _, a := range as {
+		if a.Status == string(model.AlertFiring) {
+			res = append(res, a)
+		}
+	}
+	return res
+}
+
+// Resolved returns the subset of alerts that are resolved.
+func (as ExtendedAlerts) Resolved() []ExtendedAlert {
+	res := []ExtendedAlert{}
+	for _, a := range as {
+		if a.Status == string(model.AlertResolved) {
+			res = append(res, a)
+		}
+	}
+	return res
 }

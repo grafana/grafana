@@ -228,8 +228,8 @@ text-decoration: underline;
   </tr>
   <tr style="vertical-align: top; padding: 0;" align="left">
     <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
-      {{ if .silenceURL }}
-        <a href="{{ .silenceURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+      {{ if .SilenceURL }}
+        <a href="{{ .SilenceURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
           <img alt="" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAF1SURBVHgBrZLNTsJAEMf/2wYTPfEI9Q1qvBgjsEl5gB498gj1SDHpEKUckaMn4eiNFyAp4cJN30CPHrn5BV1noTWlFD3oJNuZ3Z39zUcH+A9pUffJpzAoOO/xuvvprZHooYCgLISoa7FyFSCbdOXuApj6M43GUVXWhYZUpKP3k1NZ14+kAOYChleVjnssK/ezKHrLAkQuZWIVKCgKyW+n55cUciZClzLoUPOiqISVlPB+s6ZulnNN/ihG3GfT84jKOwGvMO0krVEewoBoHeTA2glIhRuno7WzkH0Yc633sCz/CoiVshdYRGxGKYSo9ahgHnEPoqzvdxP1b/sEHtgsF2e12ditDD6gPE59XgIO8ytfTlbM1DiTzjk7WQvEYgllZ5fSXeE7vnfTOdkC1GqOBSFO2Mk22JG1TB4l+1VzX/IQgQJpBaHHsB6bA47+rNOHUI1O4A/zw2YWAaaT8UyPNkdcZ6JUs0P+7eouGXuO3WC7j7/KF29iokiLUdaFAAAAAElFTkSuQmCC" class="button-img" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
           Silence
         </a>
@@ -240,14 +240,14 @@ text-decoration: underline;
           View Runbook
         </a>
       {{ end }}
-      {{ if .dashboardURL}}
-        <a href="{{ .dashboardURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+      {{ if .DashboardURL}}
+        <a href="{{ .DashboardURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
           <img alt="" height="14" class="button-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAE9SURBVHgBrVLNWcMwDH220/bjhEdIR2AC6ASMQEeAU6G9+FLycQojdAUmgE7ACGSEcEybRkj5cUKbnFp9X2JZ8nuypQecaUp+Kxf98BIeJ3cwNxqZDRB89mCTtXuZBvVGwBsCtiUrkYVS8RgHmzeVFB4Lwm9d9Y6XB/EbAhCK7atbbcRfuCjkRNwtt6fs4825RPyli4SkJNA40/wNFCm7cC6sdnnYSdVmQs6Xnla4JjoikDcHmMQYrCSNrI434C7BrA/EXf6Slad0kieY1BPsUKQahcWA5cj7otYTjKG/+/oplQU8oAMx1aKInkbAVL6BJ818ns82wVYHilLnlon4rIOTGeTIWHleB6mq4xfUAfTts1tXPh1YyubfwZGa3HO+K+WWgMeacHBuoOc1m7cr6HSPcvbvpnNhweAS9gdSqGSnoVA2cQAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
           Go to Dashboard
         </a>
       {{ end }}
-      {{ if .panelURL}}
-        <a href="{{ .panelURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+      {{ if .PanelURL}}
+        <a href="{{ .PanelURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
           <img alt="" class="button-img" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAE9SURBVHgBrVLNWcMwDH220/bjhEdIR2AC6ASMQEeAU6G9+FLycQojdAUmgE7ACGSEcEybRkj5cUKbnFp9X2JZ8nuypQecaUp+Kxf98BIeJ3cwNxqZDRB89mCTtXuZBvVGwBsCtiUrkYVS8RgHmzeVFB4Lwm9d9Y6XB/EbAhCK7atbbcRfuCjkRNwtt6fs4825RPyli4SkJNA40/wNFCm7cC6sdnnYSdVmQs6Xnla4JjoikDcHmMQYrCSNrI434C7BrA/EXf6Slad0kieY1BPsUKQahcWA5cj7otYTjKG/+/oplQU8oAMx1aKInkbAVL6BJ818ns82wVYHilLnlon4rIOTGeTIWHleB6mq4xfUAfTts1tXPh1YyubfwZGa3HO+K+WWgMeacHBuoOc1m7cr6HSPcvbvpnNhweAS9gdSqGSnoVA2cQAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
             Go to Panel
           </a>
