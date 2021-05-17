@@ -145,15 +145,36 @@ This way, values can contain not only the last matching node from the metric que
 
 Graphite queries are now automatically transformed to Loki queries according to user-defined rules when the data source changes in Explore.
 
+#### Jaeger data source
+
+You can now use more parameters to find traces.
+
+[Jaeger data source]({{< relref "../datasources/jaeger.md" >}}) was updated as a result of this change.
+
+
 ### Authentication updates
 
 This Grafana release includes the following authentication updates.
 
-#### Added OAuth support for empty scopes
+#### JWT
+
+#### Added JWT authentication support
+
+You can now configure Grafana to accept a JWT token provided in the HTTP header.
+
+[JWT authentication]({{< relref "../auth/jwt.md" >}}) was added and [Configuration]({{< relref "../administration/configuration.md#auth.jwt" >}}) was updated as a result of this feature.
+
+#### OAuth
+
+[Generic OAuth authentication]({{< relref "../auth/generic-oauth.md" >}}) has been updated as a result of these changes.
+
+##### Added OAuth support for empty scopes
 
 You can now configure generic OAuth with empty scopes. This allows OAuth Identity Providers that don't use or support scopes to work with Grafana authentication.
 
-[Generic OAuth authentication]({{< relref "../auth/generic-oauth.md" >}}) has been updated as a result of this change.
+##### Added OAuth support for strict parsing of role_attribute_path
+
+You can now configure generic OAuth with strict parsing of the `role_attribute_path`. By default, if  th `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
 ## Enterprise features
 
