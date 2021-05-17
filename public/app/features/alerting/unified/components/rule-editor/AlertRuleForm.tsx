@@ -18,6 +18,7 @@ import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { rulerRuleToFormValues, defaultFormValues, getDefaultQueries } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -26,6 +27,9 @@ type Props = {
 export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
+  const [queryParams] = useQueryParams();
+
+  const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
@@ -34,8 +38,9 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     return {
       ...defaultFormValues,
       queries: getDefaultQueries(),
+      ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
     };
-  }, [existing]);
+  }, [existing, queryParams]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -68,7 +73,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           labels: values.labels?.filter(({ key }) => !!key) ?? [],
         },
         existing,
-        exitOnSave,
+        redirectOnSave: exitOnSave ? returnTo : undefined,
       })
     );
   };
@@ -77,7 +82,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell">
-          <Link to="/alerting/list">
+          <Link to={returnTo}>
             <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
               Cancel
             </Button>
