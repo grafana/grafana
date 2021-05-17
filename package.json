@@ -260,7 +260,6 @@
     "jsurl": "^0.1.5",
     "lodash": "4.17.21",
     "lru-cache": "^5.1.1",
-    "md5": "^2.2.1",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
     "moment-timezone": "0.5.28",
