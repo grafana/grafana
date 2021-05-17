@@ -840,22 +840,6 @@ var expAvailableChannelJsonOutput = `
 		"required": true,
 		"validationRule": "",
 		"secure": false
-	  },
-	  {
-		"label": "Message Description",
-		"description": "A description added to the notification",
-		"element": "input",
-		"inputType": "text",
-		"placeholder": "",
-		"propertyName": "description",
-		"selectOptions": null,
-		"showWhen": {
-		  "field": "",
-		  "is": ""
-		},
-		"required": false,
-		"validationRule": "",
-		"secure": false
 	  }
 	]
   }

@@ -426,13 +426,6 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "url",
 					Required:     true,
 				},
-				{ // New in 8.0.
-					Label:        "Message Description",
-					Description:  "A description added to the notification",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
-					PropertyName: "description",
-				},
 			},
 		},
 	}
