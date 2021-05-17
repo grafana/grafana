@@ -78,6 +78,23 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 You can now use the Plugin catalog app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
 
+### Performance improvements
+
+Grafana 8.0 includes many performance enhancements.
+
+#### Initial startup and load performance
+
+We reduced the Grafana initial download size massively, approximately 40%. This means that on slower or mobile connections, the initial login page or home dashboard will load much faster. 
+
+All panels that have migrated from Flot to uPlot will also render two to three times faster because the library is much more efficient. Right now, this includes the Time series, Stat, Timeline, Histogram, and Barchart panel visualizations.
+
+#### Operational and runtime performance
+
+These improvements affect any subsequent data updates or interactions, including:
+
+- Streaming performance
+- General speed of interaction, such as zooming, tooltips, synchronized cursors, panel updates when editing, and toggling various options
+
 ### Data source updates
 
 The following data source updates are included with this Grafana release.
