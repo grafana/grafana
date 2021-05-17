@@ -54,9 +54,9 @@ Logs navigation next to the log lines can be used to request more logs. You can 
 - Better Jaeger search in Explore
 - Show trace graph for Jaeger, Zipkin, and Tempo
 
-### Plugin marketplace
+### Plugin catalog
 
-You can now use the Plugin Marketplace app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
+You can now use the Plugin catalog app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
 
 ## Enterprise features
 
