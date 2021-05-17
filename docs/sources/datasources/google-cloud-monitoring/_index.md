@@ -81,7 +81,7 @@ The Google Cloud Monitoring query editor allows you to build two types of querie
 
 ### Metric Queries
 
-{{< docs-imagebox img="/img/docs/v80/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -208,7 +208,7 @@ Grafana issues one query to the Cloud Monitoring API per query editor row, and e
 
 > **Note:** Available in Grafana v7.0 and later versions.
 
-{{< docs-imagebox img="/img/docs/v80/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Google Cloud Monitoring data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Cloud Monitoring's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
@@ -303,7 +303,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/v80/annotations.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
