@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Button, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -46,7 +47,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   };
 
   // explore does not support grafana rule queries atm
-  if (isCloudRulesSource(rulesSource)) {
+  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor) {
     leftButtons.push(
       <LinkButton
         className={style.button}
