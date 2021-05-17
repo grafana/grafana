@@ -242,7 +242,7 @@ describe('sharedSingleStatMigrationHandler', () => {
       title: 'Usage',
       type: 'bargauge',
     } as unknown) as PanelModel;
-    sharedSingleStatPanelChangedHandler(panel, 'singlestat', panel);
+    sharedSingleStatMigrationHandler(panel as any);
     expect(panel.fieldConfig.defaults.unit).toBe('percentunit');
     expect(panel.fieldConfig.defaults.min).toBe(0);
     expect(panel.fieldConfig.defaults.max).toBe(1);
