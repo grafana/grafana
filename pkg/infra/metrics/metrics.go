@@ -12,6 +12,7 @@ import (
 const ExporterName = "grafana"
 
 var (
+
 	// MInstanceStart is a metric counter for started instances
 	MInstanceStart prometheus.Counter
 
@@ -104,6 +105,9 @@ var (
 
 	// MRenderingQueue is a metric gauge for image rendering queue size
 	MRenderingQueue prometheus.Gauge
+
+	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
+	MAccessEvaluationCount prometheus.Counter
 )
 
 // Timers
@@ -116,6 +120,12 @@ var (
 
 	// MRenderingSummary is a metric summary for image rendering request duration
 	MRenderingSummary *prometheus.SummaryVec
+
+	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
+	MAccessPermissionsSummary prometheus.Histogram
+
+	// MAccessEvaluationsSummary is a metric summary for loading permissions request duration when evaluating access
+	MAccessEvaluationsSummary prometheus.Histogram
 )
 
 // StatTotals
@@ -510,6 +520,24 @@ func init() {
 		Help:      "total amount of annotations in the database",
 		Namespace: ExporterName,
 	})
+
+	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_permissions_duration",
+		Help:    "Histogram for the runtime of permissions check function.",
+		Buckets: prometheus.ExponentialBuckets(0.00001, 4, 10),
+	})
+
+	MAccessEvaluationsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_evaluation_duration",
+		Help:    "Histogram for the runtime of evaluation function.",
+		Buckets: prometheus.ExponentialBuckets(0.00001, 4, 10),
+	})
+
+	MAccessEvaluationCount = prometheus.NewCounter(prometheus.CounterOpts{
+		Name:      "access_evaluation_count",
+		Help:      "number of evaluation calls",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -582,6 +610,8 @@ func initMetricVars() {
 		MRenderingRequestTotal,
 		MRenderingSummary,
 		MRenderingQueue,
+		MAccessPermissionsSummary,
+		MAccessEvaluationsSummary,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,
@@ -600,6 +630,7 @@ func initMetricVars() {
 		grafanaPluginBuildInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
+		MAccessEvaluationCount,
 	)
 }
 
@@ -616,6 +647,5 @@ func newCounterVecStartingAtZero(opts prometheus.CounterOpts, labels []string, l
 func newCounterStartingAtZero(opts prometheus.CounterOpts, labelValues ...string) prometheus.Counter {
 	counter := prometheus.NewCounter(opts)
 	counter.Add(0)
-
 	return counter
 }
