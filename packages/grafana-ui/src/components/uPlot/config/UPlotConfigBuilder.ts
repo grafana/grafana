@@ -221,6 +221,7 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   theme: GrafanaTheme2;
   timeZone: TimeZone;
   getTimeRange: () => TimeRange;
+  getConfig: () => any;
   eventBus: EventBus;
 } & T;
 

@@ -4,17 +4,12 @@ import { VizLegendOptions, HideableFieldConfig, BarValueVisibility } from '@graf
  * @alpha
  */
 export interface TimelineOptions {
-  mode: TimelineMode; // not in the saved model!
-
   legend: VizLegendOptions;
   showValue: BarValueVisibility;
   rowHeight: number;
   colWidth?: number;
-  alignValue: TimelineValueAlignment;
   mergeValues?: boolean;
 }
-
-export type TimelineValueAlignment = 'center' | 'left' | 'right';
 
 /**
  * @alpha
@@ -28,9 +23,8 @@ export interface TimelineFieldConfig extends HideableFieldConfig {
  * @alpha
  */
 export const defaultPanelOptions: Partial<TimelineOptions> = {
-  showValue: BarValueVisibility.Always,
+  showValue: BarValueVisibility.Auto,
   mergeValues: true,
-  alignValue: 'left',
   rowHeight: 0.9,
 };
 
@@ -41,11 +35,3 @@ export const defaultTimelineFieldConfig: TimelineFieldConfig = {
   lineWidth: 1,
   fillOpacity: 70,
 };
-
-/**
- * @alpha
- */
-export enum TimelineMode {
-  Changes = 'changes',
-  Samples = 'samples',
-}

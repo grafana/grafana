@@ -46,24 +46,12 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         name: 'Show values',
         settings: {
           options: [
-            //{ value: BarValueVisibility.Auto, label: 'Auto' },
+            { value: BarValueVisibility.Auto, label: 'Auto' },
             { value: BarValueVisibility.Always, label: 'Always' },
             { value: BarValueVisibility.Never, label: 'Never' },
           ],
         },
         defaultValue: defaultPanelOptions.showValue,
-      })
-      .addRadio({
-        path: 'alignValue',
-        name: 'Align value',
-        settings: {
-          options: [
-            { value: 'left', label: 'Left' },
-            { value: 'center', label: 'Center' },
-            { value: 'right', label: 'Right' },
-          ],
-        },
-        defaultValue: defaultPanelOptions.alignValue,
       })
       .addBooleanSwitch({
         path: 'mergeValues',

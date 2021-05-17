@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { PanelProps } from '@grafana/data';
 import { useTheme2, ZoomPlugin } from '@grafana/ui';
-import { TimelineMode, TimelineOptions } from './types';
+import { TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields } from './utils';
 
@@ -44,8 +44,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       width={width}
       height={height}
       {...options}
-      // hardcoded
-      mode={TimelineMode.Changes}
     >
       {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
     </TimelineChart>

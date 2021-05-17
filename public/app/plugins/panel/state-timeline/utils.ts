@@ -12,7 +12,7 @@ import {
   ArrayVector,
 } from '@grafana/data';
 import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode, UPlotConfigPrepFn } from '@grafana/ui';
-import { TimelineCoreOptions, getConfig } from './timeline';
+import { TimelineCoreOptions } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { measureText } from '@grafana/ui/src/utils/measureText';
 import { TimelineFieldConfig, TimelineOptions } from './types';
@@ -39,15 +39,14 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
 }
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
+  getConfig,
   frame,
   theme,
   timeZone,
   getTimeRange,
-  mode,
   rowHeight,
   colWidth,
   showValue,
-  alignValue,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -78,14 +77,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     }, 0) + 24;
 
   const opts: TimelineCoreOptions = {
-    // should expose in panel config
-    mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
-    alignValue,
     theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,

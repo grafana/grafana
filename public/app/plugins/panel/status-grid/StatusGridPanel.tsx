@@ -2,8 +2,7 @@ import React from 'react';
 import { PanelProps } from '@grafana/data';
 import { useTheme2, ZoomPlugin } from '@grafana/ui';
 import { StatusPanelOptions } from './types';
-import { TimelineChart } from '../state-timeline/TimelineChart';
-import { TimelineMode } from '../state-timeline/types';
+import { StatusGridChart } from './StatusGridChart';
 
 interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
 
@@ -30,7 +29,7 @@ export const StatusGridPanel: React.FC<TimelinePanelProps> = ({
   }
 
   return (
-    <TimelineChart
+    <StatusGridChart
       theme={theme}
       frames={data.series}
       structureRev={data.structureRev}
@@ -39,11 +38,8 @@ export const StatusGridPanel: React.FC<TimelinePanelProps> = ({
       width={width}
       height={height}
       {...options}
-      // hardcoded
-      mode={TimelineMode.Samples}
-      alignValue="center"
     >
       {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
-    </TimelineChart>
+    </StatusGridChart>
   );
 };

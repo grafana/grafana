@@ -2,14 +2,12 @@ import uPlot, { Series, Cursor } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { TimelineFieldConfig } from './types';
+import { StatusFieldConfig } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
 
-const { round } = Math;
-
-const textPadding = 2;
+const { round, min, ceil } = Math;
 
 const pxRatio = devicePixelRatio;
 
@@ -44,7 +42,7 @@ export interface TimelineCoreOptions {
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
-  getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
+  getFieldConfig: (seriesIdx: number) => StatusFieldConfig;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
 }
@@ -57,6 +55,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     numSeries,
     isDiscrete,
     rowHeight = 0,
+    colWidth = 0,
     showValue,
     theme,
     label,
@@ -70,15 +69,13 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   let qt: Quadtree;
 
-  const hoverMarks = Array(numSeries)
-    .fill(null)
-    .map(() => {
-      let mark = document.createElement('div');
-      mark.classList.add('bar-mark');
-      mark.style.position = 'absolute';
-      mark.style.background = 'rgba(255,255,255,0.2)';
-      return mark;
-    });
+  let hovered: Rect | null;
+
+  const hoverMark = document.createElement('div');
+
+  hoverMark.classList.add('bar-mark');
+  hoverMark.style.position = 'absolute';
+  hoverMark.style.background = 'rgba(255,255,255,0.2)';
 
   // Needed for to calculate text positions
   let boxRectsBySeries: TimelineBoxRect[][];
@@ -90,7 +87,10 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
-  const hovered: Array<Rect | null> = Array(numSeries).fill(null);
+
+  const size = [colWidth, Infinity];
+  const gapFactor = 1 - size[0];
+  const maxWidth = (size[1] ?? Infinity) * pxRatio;
 
   const fillPaths: Map<CanvasRenderingContext2D['fillStyle'], Path2D> = new Map();
   const strokePaths: Map<CanvasRenderingContext2D['strokeStyle'], Path2D> = new Map();
@@ -203,27 +203,25 @@ export function getConfig(opts: TimelineCoreOptions) {
         u.ctx.clip();
 
         walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
-          for (let ix = 0; ix < dataY.length; ix++) {
+          let colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
+          let gapWid = colWid * gapFactor;
+          let barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
+          let xShift = barWid / 2;
+          //let xShift = align === 1 ? 0 : align === -1 ? barWid : barWid / 2;
+
+          for (let ix = idx0; ix <= idx1; ix++) {
             if (dataY[ix] != null) {
-              let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
-
-              let nextIx = ix;
-              while (dataY[++nextIx] === undefined && nextIx < dataY.length) {}
-
-              // to now (not to end of chart)
-              let right =
-                nextIx === dataY.length
-                  ? xOff + xDim + strokeWidth
-                  : Math.round(valToPosX(dataX[nextIx], scaleX, xDim, xOff));
+              // TODO: all xPos can be pre-computed once for all series in aligned set
+              let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
               putBox(
                 u.ctx,
                 rect,
                 xOff,
                 yOff,
-                left,
+                round(left - xShift),
                 round(yOff + y0),
-                right - left,
+                barWid,
                 round(height),
                 strokeWidth,
                 iy,
@@ -231,8 +229,6 @@ export function getConfig(opts: TimelineCoreOptions) {
                 dataY[ix],
                 discrete
               );
-
-              ix = nextIx - 1;
             }
           }
         });
@@ -255,32 +251,33 @@ export function getConfig(opts: TimelineCoreOptions) {
           u.ctx.clip();
 
           u.ctx.font = font;
-          u.ctx.textAlign = 'left';
+          u.ctx.textAlign = 'center';
           u.ctx.textBaseline = 'middle';
 
-          uPlot.orient(u, sidx, (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff) => {
-            let strokeWidth = round((series.width || 0) * pxRatio);
+          uPlot.orient(
+            u,
+            sidx,
+            (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+              let y = round(yOff + yMids[sidx - 1]);
 
-            let y = round(yOff + yMids[sidx - 1]);
+              for (let ix = 0; ix < dataY.length; ix++) {
+                if (dataY[ix] != null) {
+                  const boxRect = boxRectsBySeries[sidx - 1][ix];
 
-            for (let ix = 0; ix < dataY.length; ix++) {
-              if (dataY[ix] != null) {
-                const boxRect = boxRectsBySeries[sidx - 1][ix];
+                  // Todo refine this to better know when to not render text (when values do not fit)
+                  if (!boxRect || (showValue === BarValueVisibility.Auto && boxRect.w < 20)) {
+                    continue;
+                  }
 
-                // Todo refine this to better know when to not render text (when values do not fit)
-                if (!boxRect || (showValue === BarValueVisibility.Auto && boxRect.w < 20)) {
-                  continue;
+                  // text position
+                  const x = round(boxRect.x + xOff + boxRect.w / 2);
+
+                  u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
+                  u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
                 }
-
-                // text position w/padding
-                const x = round(boxRect.x + xOff + strokeWidth / 2 + textPadding);
-
-                // TODO: cache by fillColor to avoid setting ctx for label
-                u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
-                u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
               }
             }
-          });
+          );
 
           u.ctx.restore();
 
@@ -290,9 +287,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   const init = (u: uPlot) => {
     let over = u.root.querySelector('.u-over')! as HTMLElement;
     over.style.overflow = 'hidden';
-    hoverMarks.forEach((m) => {
-      over.appendChild(m);
-    });
+    over.appendChild(hoverMark);
   };
 
   const drawClear = (u: uPlot) => {
@@ -310,41 +305,37 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const setCursor = (u: uPlot) => {
     let cx = round(u.cursor!.left! * pxRatio);
+    let found: Rect | null = null;
 
-    for (let i = 0; i < numSeries; i++) {
-      let found: Rect | null = null;
+    if (cx >= 0) {
+      let cy = round(u.cursor!.top! * pxRatio);
 
-      if (cx >= 0) {
-        let cy = yMids[i];
-
-        qt.get(cx, cy, 1, 1, (o) => {
-          if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            found = o;
-          }
-        });
-      }
-
-      let h = hoverMarks[i];
-
-      if (found) {
-        if (found !== hovered[i]) {
-          hovered[i] = found;
-
-          h.style.display = '';
-          h.style.left = round(found!.x / pxRatio) + 'px';
-          h.style.top = round(found!.y / pxRatio) + 'px';
-          h.style.width = round(found!.w / pxRatio) + 'px';
-          h.style.height = round(found!.h / pxRatio) + 'px';
+      qt.get(cx, cy, 1, 1, (o) => {
+        if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+          found = o;
         }
-      } else if (hovered[i] != null) {
-        h.style.display = 'none';
-        hovered[i] = null;
+      });
+    }
+
+    if (found) {
+      if (found !== hovered) {
+        hovered = found;
+
+        hoverMark.style.display = '';
+        hoverMark.style.left = round(found!.x / pxRatio) + 'px';
+        hoverMark.style.top = round(found!.y / pxRatio) + 'px';
+        hoverMark.style.width = round(found!.w / pxRatio) + 'px';
+        hoverMark.style.height = round(found!.h / pxRatio) + 'px';
       }
+    } else if (hovered != null) {
+      hoverMark.style.display = 'none';
+      hovered = null;
     }
   };
 
-  // hide y crosshair & hover points
+  // hide crosshair & hover points
   const cursor: Partial<Cursor> = {
+    x: false,
     y: false,
     points: { show: false },
   };
@@ -355,11 +346,43 @@ export function getConfig(opts: TimelineCoreOptions) {
   return {
     cursor,
 
-    xSplits: null,
+    xSplits: (u: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, foundIncr: number, foundSpace: number) => {
+      let splits = [];
+
+      let dataIncr = u.data[0][1] - u.data[0][0];
+      let skipFactor = ceil(foundIncr / dataIncr);
+
+      for (let i = 0; i < u.data[0].length; i += skipFactor) {
+        let v = u.data[0][i];
+
+        if (v >= scaleMin && v <= scaleMax) {
+          splits.push(v);
+        }
+      }
+
+      return splits;
+    },
 
     xRange: (u: uPlot) => {
       const r = getTimeRange();
-      return [r.from.valueOf(), r.to.valueOf()] as uPlot.Range.MinMax;
+
+      let min = r.from.valueOf();
+      let max = r.to.valueOf();
+
+      let colWid = u.data[0][1] - u.data[0][0];
+      let scalePad = colWid / 2;
+
+      if (min <= u.data[0][0]) {
+        min = u.data[0][0] - scalePad;
+      }
+
+      let lastIdx = u.data[0].length - 1;
+
+      if (max >= u.data[0][lastIdx]) {
+        max = u.data[0][lastIdx] + scalePad;
+      }
+
+      return [min, max] as uPlot.Range.MinMax;
     },
 
     ySplits: (u: uPlot) => {
@@ -386,7 +409,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 }
 
-function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
+function getFillColor(fieldConfig: StatusFieldConfig, color: string) {
   const opacityPercent = (fieldConfig.fillOpacity ?? 100) / 100;
   return tinycolor(color).setAlpha(opacityPercent).toString();
 }

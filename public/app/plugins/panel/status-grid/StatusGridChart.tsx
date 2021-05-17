@@ -1,13 +1,13 @@
 import React from 'react';
 import { PanelContext, PanelContextRoot, GraphNG, GraphNGProps, BarValueVisibility } from '@grafana/ui';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
-import { preparePlotConfigBuilder } from './utils';
-import { getConfig } from './timeline';
+import { preparePlotConfigBuilder } from '../state-timeline/utils';
+import { getConfig } from './status';
 
 /**
  * @alpha
  */
-export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
+export interface StatusProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   rowHeight: number;
   showValue: BarValueVisibility;
   colWidth?: number;
@@ -15,7 +15,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
 
 const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue', 'alignValue'];
 
-export class TimelineChart extends React.Component<TimelineProps> {
+export class StatusGridChart extends React.Component<StatusProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
