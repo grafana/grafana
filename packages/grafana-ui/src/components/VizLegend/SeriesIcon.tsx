@@ -15,11 +15,7 @@ export const SeriesIcon = React.forwardRef<HTMLDivElement, Props>(
     if (gradient) {
       const colors = fieldColorModeRegistry.get(gradient).getColors?.(theme);
       if (colors?.length) {
-        const finalColors = colors.map((color) => {
-          return theme.visualization.getColorByName(color);
-        });
-
-        cssColor = `linear-gradient(90deg, ${finalColors.join(', ')})`;
+        cssColor = `linear-gradient(90deg, ${colors.join(', ')})`;
       } else {
         // Not sure what to default to, this will return gray, this should not happen though.
         cssColor = theme.visualization.getColorByName('');
