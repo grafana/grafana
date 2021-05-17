@@ -1,4 +1,4 @@
-import { cloneDeep, omit } from 'lodash';
+import { cloneDeep, isNumber, omit } from 'lodash';
 
 import {
   fieldReducers,
@@ -213,6 +213,27 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     if (oldTitle !== undefined && oldTitle !== null) {
       panel.fieldConfig.defaults.displayName = oldTitle;
       delete (panel.fieldConfig.defaults as any).title;
+    }
+  }
+
+  if (previousVersion < 8.0) {
+    // Explicit min/max was removed for percent/percentunit in 8.0
+    const config = panel.fieldConfig?.defaults;
+    let unit = config?.unit;
+    if (unit === 'percent') {
+      if (!isNumber(config.min)) {
+        config.min = 0;
+      }
+      if (!isNumber(config.max)) {
+        config.max = 100;
+      }
+    } else if (unit === 'percentunit') {
+      if (!isNumber(config.min)) {
+        config.min = 0;
+      }
+      if (!isNumber(config.max)) {
+        config.max = 1;
+      }
     }
   }
 
