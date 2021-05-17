@@ -17,11 +17,6 @@
       "small": "img/input.svg",
       "large": "img/input.svg"
     },
-    "links": [
-      {
-        "name": "License",
-        "url": "https://github.com/grafana/grafana/blob/main/LICENSE"
-      }
-    ]
+    "links": []
   }
 }
