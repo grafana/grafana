@@ -35,7 +35,7 @@ steps:
     template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: @{{slack.name}}"
     webhook:
       from_secret: slack_webhook_test
-    secrets:
+    token:
       from_secret: slack_token
 
 - name: codespell
