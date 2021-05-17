@@ -229,7 +229,12 @@ text-decoration: underline;
   <tr style="vertical-align: top; padding: 0;" align="left">
     <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
       {{ if gt (len .GeneratorURL) 0 }}<a href="{{ .GeneratorURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">Source</a>{{ end }}
-
+      {{ if .Annotations.runbook_url }}
+        <a href="{{ .Annotations.runbook_url }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+          <img alt="" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADaSURBVHgBrVNLDoIwFJwq0bjTG+ARvIGeQI/ADdSVARY8oki8jZxEbyDewLUfahttAoEWDM7m9bVvJtN0CrQEyzdENLyjt2RgtoFzjcgl1XTyJw/0T4K8ghmBH8Zz1VhqsaHtVBT7CYwP5KY6tk+xw3k2Kgl0YdmyKrIYvEjB73EqbI+rBC1owMDXGdjws0aqm9MK7Mg7ogE6aInWAqUreLQPanJgdtAgB2YHIgeTuhxUOlBPNcBvKPwFT4RHbnDgLOpNw3EEaxEFblJwIPECZhw8MZAlQkX+C95zCzqWDYrK2AAAAABJRU5ErkJggg==" style="height: 14px; vertical-align: sub; width: 14px; outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; clear: both; display: block; margin: 0 5px 0 0; border: 0 none;" width="14" align="left" />
+          View Runbook
+        </a>
+      {{ end }}
       
     </td>
   </tr>
@@ -288,6 +293,11 @@ text-decoration: underline;
           {{ template "alert" . }}
         {{ end }}
       {{ end }}
+      <tr style="vertical-align: top; padding: 0;" align="left">
+        <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+          <a href="{{ .AlertPageUrl }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">View firing rules</a>
+        </td>
+      </tr>
       </table>
       </td></tr></table>
     
