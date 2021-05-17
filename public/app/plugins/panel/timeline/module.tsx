@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TimelinePanel } from './TimelinePanel';
-import { TimelineOptions, TimelineFieldConfig, defaultTimelineFieldConfig } from './types';
+import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
@@ -51,7 +51,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
             { value: BarValueVisibility.Never, label: 'Never' },
           ],
         },
-        defaultValue: BarValueVisibility.Always,
+        defaultValue: defaultPanelOptions.showValue,
       })
       .addRadio({
         path: 'alignValue',
@@ -63,17 +63,22 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
             { value: 'right', label: 'Right' },
           ],
         },
-        defaultValue: 'center',
+        defaultValue: defaultPanelOptions.alignValue,
+      })
+      .addBooleanSwitch({
+        path: 'mergeValues',
+        name: 'Merge equal consecutive values',
+        defaultValue: defaultPanelOptions.mergeValues,
       })
       .addSliderInput({
         path: 'rowHeight',
         name: 'Row height',
-        defaultValue: 0.9,
         settings: {
           min: 0,
           max: 1,
           step: 0.01,
         },
+        defaultValue: defaultPanelOptions.rowHeight,
       });
 
     //addLegendOptions(builder);
