@@ -146,6 +146,22 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false
+      },
+      {
+        "element": "textarea",
+        "inputType": "",
+        "label": "Message",
+        "description": "Optional message to include with the email. You can use template variables",
+        "placeholder": "",
+        "propertyName": "message",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
       }
     ]
   },

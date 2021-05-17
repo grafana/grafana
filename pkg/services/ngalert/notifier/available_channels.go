@@ -60,6 +60,12 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "addresses",
 					Required:     true,
 				},
+				{ // New in 8.0.
+					Label:        "Message",
+					Description:  "Optional message to include with the email. You can use template variables",
+					Element:      alerting.ElementTypeTextArea,
+					PropertyName: "message",
+				},
 			},
 		},
 		{

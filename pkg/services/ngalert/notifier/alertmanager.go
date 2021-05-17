@@ -407,7 +407,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 		)
 		switch r.Type {
 		case "email":
-			n, err = channels.NewEmailNotifier(cfg, tmpl.ExternalURL) // Email notifier already has a default template.
+			n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
 		case "pagerduty":
 			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
 		case "slack":
