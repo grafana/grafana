@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import React, { FC, useState } from 'react';
@@ -16,7 +16,7 @@ interface Props {
 
 export const RuleListStateSection: FC<Props> = ({ rules, state, defaultCollapsed = false }) => {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   return (
     <>
       <h4 className={styles.header}>
@@ -28,16 +28,19 @@ export const RuleListStateSection: FC<Props> = ({ rules, state, defaultCollapsed
         />
         {alertStateToReadable(state)} ({rules.length})
       </h4>
-      {!collapsed && <RulesTable rules={rules} showGroupColumn={true} />}
+      {!collapsed && <RulesTable className={styles.rulesTable} rules={rules} showGroupColumn={true} />}
     </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   collapseToggle: css`
     vertical-align: middle;
   `,
   header: css`
-    margin-top: ${theme.spacing.md};
+    margin-top: ${theme.spacing(2)};
+  `,
+  rulesTable: css`
+    margin-top: ${theme.spacing(3)};
   `,
 });
