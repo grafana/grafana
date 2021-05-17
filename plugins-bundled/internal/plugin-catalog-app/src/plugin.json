@@ -2,7 +2,7 @@
   "$schema": "https://github.com/grafana/grafana/raw/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "app",
   "name": "Plugin Catalog",
-  "id": "grafana-catalog-app",
+  "id": "grafana-plugin-catalog-app",
   "backend": false,
   "info": {
     "author": {
@@ -36,7 +36,7 @@
     {
       "type": "page",
       "name": "Discover",
-      "path": "/a/grafana-catalog-app?tab=discover",
+      "path": "/a/grafana-plugin-catalog-app?tab=discover",
       "role": "Admin",
       "addToNav": true,
       "defaultNav": true
@@ -44,21 +44,21 @@
     {
       "type": "page",
       "name": "Browse",
-      "path": "/a/grafana-catalog-app/?tab=browse",
+      "path": "/a/grafana-plugin-catalog-app/?tab=browse",
       "role": "Admin",
       "addToNav": true
     },
     {
       "type": "page",
       "name": "Library",
-      "path": "/a/grafana-catalog-app/?tab=library",
+      "path": "/a/grafana-plugin-catalog-app/?tab=library",
       "role": "Admin",
       "addToNav": true
     },
     {
       "type": "page",
       "name": "View plugin",
-      "path": "/a/grafana-catalog-app?tab=plugin",
+      "path": "/a/grafana-plugin-catalog-app?tab=plugin",
       "role": "Admin"
     }
   ],
