@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -52,9 +53,10 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	SQLStore             *sqlstore.SQLStore    `inject:""`
+	BackendPluginManager backendplugin.Manager             `inject:""`
+	Cfg                  *setting.Cfg                      `inject:""`
+	SQLStore             *sqlstore.SQLStore                `inject:""`
+	schemaLoader         *schemaloader.SchemaLoaderService `inject:""`
 	pluginInstaller      plugins.PluginInstaller
 	log                  log.Logger
 	scanningErrors       []error
@@ -156,6 +158,10 @@ func (pm *PluginManager) initExternalPlugins() error {
 	for _, panel := range pm.Panels() {
 		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
 		staticRoutesList = append(staticRoutesList, staticRoutes...)
+		Scue, err := pm.GetPluginSchema(panel.Id)
+		if err == nil && len(Scue) > 0 {
+			pm.schemaLoader.LoadNewPanelPluginSchema(panel.Id, string(Scue))
+		}
 	}
 
 	for _, ds := range pm.DataSources() {
@@ -824,6 +830,12 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 		return err
 	}
 
+	// best effort mode for getting the cue schema
+	Scue, err := pm.GetPluginSchema(pluginID)
+	if err == nil && len(Scue) > 0 {
+		pm.schemaLoader.LoadNewPanelPluginSchema(pluginID, string(Scue))
+	}
+
 	return nil
 }
 
@@ -876,6 +888,9 @@ func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
 	delete(pm.plugins, plugin.Id)
 
 	pm.removeStaticRoute(plugin.Id)
+
+	// remove plugin schema, best effort mode since plugin may don't have one
+	_ = pm.schemaLoader.RemovePanelPluginSchema(plugin.Id)
 
 	return nil
 }
