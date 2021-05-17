@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Status grid",
+  "id": "status-grid",
+
+  "state": "alpha",
+
+  "info": {
+    "description": "System status map",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/status.svg",
+      "large": "img/status.svg"
+    }
+  }
+}
