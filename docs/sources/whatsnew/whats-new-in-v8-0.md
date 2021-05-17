@@ -46,7 +46,9 @@ The Time series is out of beta!  We are removing the `Beta`tag and graduating th
 
 ### Look and feel update
 
-Grafana 8 comes with a refreshed look and feel, including themes changed to be more accessible. The improved Grafana UI brings a number of adjustments and tweaks that make the application even more fun to use. Under the hood, the new theme architecture enables us to bring more sophisticated themes control in the future.
+Grafana 8 comes with a refreshed look and feel, including themes changed to be more accessible. The improved Grafana UI brings a number of adjustments and tweaks that make the application even more fun to use. Enjoy the new home dashboard design!
+
+Under the hood, the new theme architecture enables us to bring more sophisticated themes control in the future.
 
 ### Download logs
 
@@ -77,6 +79,23 @@ Log navigation in Explore has been significantly improved. We added pagination t
 ### Plugin catalog
 
 You can now use the Plugin catalog app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
+
+### Performance improvements
+
+Grafana 8.0 includes many performance enhancements.
+
+#### Initial startup and load performance
+
+We reduced the Grafana initial download size massively, approximately 40%. This means that on slower or mobile connections, the initial login page or home dashboard will load much faster. 
+
+All panels that have migrated from Flot to uPlot will also render two to three times faster because the library is much more efficient. Right now, this includes the Time series, Stat, Timeline, Histogram, and Barchart panel visualizations.
+
+#### Operational and runtime performance
+
+These improvements affect any subsequent data updates or interactions, including:
+
+- Streaming performance
+- General speed of interaction, such as zooming, tooltips, synchronized cursors, and panel updates while editing
 
 ### Data source updates
 
@@ -128,15 +147,37 @@ This way, values can contain not only the last matching node from the metric que
 
 Graphite queries are now automatically transformed to Loki queries according to user-defined rules when the data source changes in Explore.
 
+#### Jaeger data source
+
+You can now use more parameters to find traces.
+
+[Jaeger data source]({{< relref "../datasources/jaeger.md" >}}) was updated as a result of this change.
+
 ### Authentication updates
 
 This Grafana release includes the following authentication updates.
 
-#### Added OAuth support for empty scopes
+#### JWT
+
+JWT is a new authentication option in Grafana.
+
+#### Added JWT authentication support
+
+You can now configure Grafana to accept a JWT token provided in the HTTP header.
+
+[JWT authentication]({{< relref "../auth/jwt.md" >}}) was added and [Configuration]({{< relref "../administration/configuration.md#auth.jwt" >}}) was updated as a result of this feature.
+
+#### OAuth
+
+[Generic OAuth authentication]({{< relref "../auth/generic-oauth.md" >}}) has been updated as a result of these changes.
+
+##### Added OAuth support for empty scopes
 
 You can now configure generic OAuth with empty scopes. This allows OAuth Identity Providers that don't use or support scopes to work with Grafana authentication.
 
-[Generic OAuth authentication]({{< relref "../auth/generic-oauth.md" >}}) has been updated as a result of this change.
+##### Added OAuth support for strict parsing of role_attribute_path
+
+You can now configure generic OAuth with strict parsing of the `role_attribute_path`. By default, if  th `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
 ## Enterprise features
 
