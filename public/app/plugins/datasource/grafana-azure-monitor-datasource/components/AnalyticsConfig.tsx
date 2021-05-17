@@ -127,11 +127,13 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     }),
   };
 
-  const showSameAsHelpMsg = sameAsSwitched && !primaryCredentials.clientSecret;
+  const showSameAsHelpMsg =
+    sameAsSwitched && primaryCredentials.authType === 'clientsecret' && !primaryCredentials.clientSecret;
 
+  // TODO: Hide "Same As" if managed identity
   return (
     <>
-      <h3 className="page-heading">Azure Monitor Logs Details</h3>
+      <h3 className="page-heading">Azure Monitor Logs</h3>
       <Switch
         label="Same details as Azure Monitor API"
         checked={!logAnalyticsCredentials}

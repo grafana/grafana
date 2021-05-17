@@ -50,7 +50,7 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      <h3 className="page-heading">Azure Monitor Metrics Details</h3>
+      <h3 className="page-heading">Authentication</h3>
       <AzureCredentialsForm
         credentials={credentials}
         defaultSubscription={subscriptionId}

@@ -30,9 +30,18 @@ export interface AzureMonitorQuery extends DataQuery {
   insightsAnalytics: InsightsAnalyticsQuery;
 }
 
+export type AzureAuthType = 'msi' | 'clientsecret';
+
 export type ConcealedSecret = symbol;
 
-export interface AzureCredentials {
+export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
+
+export interface AzureManagedIdentityCredentials {
+  authType: 'msi';
+}
+
+export interface AzureClientSecretCredentials {
+  authType: 'clientsecret';
   azureCloud?: string;
   tenantId?: string;
   clientId?: string;
@@ -41,6 +50,7 @@ export interface AzureCredentials {
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   cloudName: string;
+  azureAuthType?: AzureAuthType;
 
   // monitor
   tenantId?: string;
