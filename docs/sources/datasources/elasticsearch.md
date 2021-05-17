@@ -243,7 +243,7 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: "7.0.0"
       logMessageField: message
       logLevelField: fields.level
 ```
