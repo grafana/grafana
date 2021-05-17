@@ -5612,9 +5612,9 @@
   integrity sha512-3c+yGKvVP5Y9TYBEibGNR+kLtijnj7mYrXRg+WpFb2X9xm04g/DXYkfg4hmzJQosc9snFNUPkbYIhu+KAm6jJw==
 
 "@types/jsurl@^1.2.28":
-  version "1.2.28"
-  resolved "https://registry.yarnpkg.com/@types/jsurl/-/jsurl-1.2.28.tgz#03430a7cc878d1415c5b3cb03547ff238bc7a75c"
-  integrity sha1-A0MKfMh40UFcWzywNUf/I4vHp1w=
+  version "1.2.29"
+  resolved "https://registry.yarnpkg.com/@types/jsurl/-/jsurl-1.2.29.tgz#c98ddbdf6ac6fac118f906df47f4e611ef041be1"
+  integrity sha512-Ouqj33ip9IpLxyy91R7RP9HOaUvbdDPWqXGrPpE3ifl1RYoUu2N7B/AjrKPLxRN7ye1w8ox+feqkW/P3Rl9CBA==
 
 "@types/lodash@4.14.123":
   version "4.14.123"
@@ -5661,9 +5661,9 @@
   integrity sha512-j8XXj6/l9kFvCwMyVqozznqpd/nk80krrW+QiIJN60Uu9gX5Pvn4/qPJ2YngQrR3QREPwmrE1f9/EWKVTFzoEw==
 
 "@types/md5@^2.1.33":
-  version "2.1.33"
-  resolved "https://registry.yarnpkg.com/@types/md5/-/md5-2.1.33.tgz#8c8dba30df4ad0e92296424f08c4898dd808e8df"
-  integrity sha512-8+X960EtKLoSblhauxLKy3zzotagjoj3Jt1Tx9oaxUdZEPIBl+mkrUz6PNKpzJgkrKSN9YgkWTA29c0KnLshmA==
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@types/md5/-/md5-2.3.0.tgz#3b6a623091160f4dc75be3173e25f2110dc3fa1f"
+  integrity sha512-556YJ7ejzxIqSSxzyGGpctuZOarNZJt/zlEkhmmDc1f/slOEANHuwu2ZX7YaZ40rMiWoxt8GvAhoDpW1cmSy6A==
   dependencies:
     "@types/node" "*"
 
