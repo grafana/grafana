@@ -13,6 +13,7 @@ import { ActionIcon } from './ActionIcon';
 import pluralize from 'pluralize';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import kbn from 'app/core/utils/kbn';
+import { useFolder } from '../../hooks/useFolder';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -26,6 +27,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const hasRuler = useHasRuler();
+  const rulerRule = group.rules[0]?.rulerRule;
+  const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
+  const { folder } = useFolder(folderUID);
 
   const stats = useMemo(
     (): Record<PromAlertingRuleState, number> =>
@@ -65,20 +69,24 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
 
   // for grafana, link to folder views
   if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
-    const rulerRule = group.rules[0]?.rulerRule;
-    const folderUID = rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid;
     if (folderUID) {
       const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
-      actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" to={baseUrl + '/settings'} target="__blank" />);
-      actionIcons.push(
-        <ActionIcon
-          key="manage-perms"
-          icon="lock"
-          tooltip="manage permissions"
-          to={baseUrl + '/permissions'}
-          target="__blank"
-        />
-      );
+      if (folder?.canSave) {
+        actionIcons.push(
+          <ActionIcon key="edit" icon="pen" tooltip="edit" to={baseUrl + '/settings'} target="__blank" />
+        );
+      }
+      if (folder?.canAdmin) {
+        actionIcons.push(
+          <ActionIcon
+            key="manage-perms"
+            icon="lock"
+            tooltip="manage permissions"
+            to={baseUrl + '/permissions'}
+            target="__blank"
+          />
+        );
+      }
     } else if (hasRuler(rulesSource)) {
       actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" />); // @TODO
     }
