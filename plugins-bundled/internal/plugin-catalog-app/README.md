@@ -1,4 +1,4 @@
-# Marketplace for Grafana
+# Grafana plugin catalog
 
 Browse and manage plugins from within Grafana.
 
@@ -8,7 +8,7 @@ Browse and manage plugins from within Grafana.
 
 ## Installation
 
-1. Navigate to **Configuration** -> **Plugins** and click on the Marketplace plugin in the list
+1. Navigate to **Configuration** -> **Plugins** and click on the Catalog plugin in the list
 1. Click the **Enable app** to enable the plugin
 1. Click the **Pin app** to add it to the side menu
 
@@ -18,4 +18,4 @@ Browse and manage plugins from within Grafana.
 | ------------------------- | ------------------------------------------------ |
 | _Enable app_              | Must be done before being able to use the plugin |
 | _Pin app_                 | Add the app to the side menu                     |
-| _Show Enterprise plugins_ | Show Enterprise plugins in the marketplace       |
+| _Show Enterprise plugins_ | Show Enterprise plugins in the catalog           |
