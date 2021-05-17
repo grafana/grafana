@@ -9,7 +9,12 @@ import {
 } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { useMemo, useRef } from 'react';
-import { getAllRulesSources, isCloudRulesSource, isGrafanaRulesSource } from '../utils/datasource';
+import {
+  getAllRulesSources,
+  getRulesSourceByName,
+  isCloudRulesSource,
+  isGrafanaRulesSource,
+} from '../utils/datasource';
 import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -20,16 +25,28 @@ interface CacheValue {
 }
 
 // this little monster combines prometheus rules and ruler rules to produce a unfied data structure
-export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
+// can limit to a single rules source
+export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRuleNamespace[] {
   const promRulesResponses = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesResponses = useUnifiedAlertingSelector((state) => state.rulerRules);
 
   // cache results per rules source, so we only recalculate those for which results have actually changed
   const cache = useRef<Record<string, CacheValue>>({});
 
+  const rulesSources = useMemo((): RulesSource[] => {
+    if (rulesSourceName) {
+      const rulesSource = getRulesSourceByName(rulesSourceName);
+      if (!rulesSource) {
+        throw new Error(`Unknown rules source: ${rulesSourceName}`);
+      }
+      return [rulesSource];
+    }
+    return getAllRulesSources();
+  }, [rulesSourceName]);
+
   return useMemo(
     () =>
-      getAllRulesSources()
+      rulesSources
         .map((rulesSource): CombinedRuleNamespace[] => {
           const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
           const promRules = promRulesResponses[rulesSourceName]?.result;
@@ -79,7 +96,7 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
           return result;
         })
         .flat(),
-    [promRulesResponses, rulerRulesResponses]
+    [promRulesResponses, rulerRulesResponses, rulesSources]
   );
 }
 
