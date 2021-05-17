@@ -26,7 +26,8 @@ export let getFooterLinks = (): FooterLink[] => {
     {
       text: 'Community',
       icon: 'comments-alt',
-      url: 'https://forums.percona.com/categories/pmm-v2?utm_source=pmm_footer',
+      url:
+        'https://forums.percona.com/c/percona-monitoring-and-management-pmm/percona-monitoring-and-management-pmm-v2?utm_source=pmm_footer',
       target: '_blank',
     },
   ];
