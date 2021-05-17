@@ -63,13 +63,13 @@ interface EntryIconProps {
 const EntryIcon: React.FC<EntryIconProps> = ({ entry: { type, isOpen } }) => {
   switch (type) {
     case EntryType.Collection:
-      return <Icon name="database" />;
+      return <Icon name="layer-group" />;
 
     case EntryType.SubCollection:
       return <Icon name={isOpen ? 'folder-open' : 'folder'} />;
 
     case EntryType.Resource:
-      return <Icon name="book-open" />;
+      return <Icon name="cube" />;
 
     default:
       return null;
