@@ -229,7 +229,7 @@
     {
       "path": "loganalyticsazure",
       "method": "GET",
-      "url": "https://api.loganalytics.io/v1/workspaces",
+      "url": "https://api.loganalytics.io/",
       "authType": "azure",
       "tokenAuth": {
         "scopes": ["https://api.loganalytics.io/.default"],
@@ -249,7 +249,7 @@
     {
       "path": "chinaloganalyticsazure",
       "method": "GET",
-      "url": "https://api.loganalytics.azure.cn/v1/workspaces",
+      "url": "https://api.loganalytics.azure.cn/",
       "authType": "azure",
       "tokenAuth": {
         "scopes": ["https://api.loganalytics.azure.cn/.default"],
@@ -269,7 +269,7 @@
     {
       "path": "govloganalyticsazure",
       "method": "GET",
-      "url": "https://api.loganalytics.us/v1/workspaces",
+      "url": "https://api.loganalytics.us/",
       "authType": "azure",
       "tokenAuth": {
         "scopes": ["https://api.loganalytics.us/.default"],

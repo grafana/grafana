@@ -36,7 +36,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     const cloud = getAzureCloud(instanceSettings);
     const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
-    this.baseUrl = `/${logAnalyticsRoute}`;
+    this.baseUrl = `/${logAnalyticsRoute}/v1/workspaces`;
 
     const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
@@ -98,6 +98,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
+    const resource = templateSrv.replace(item.resource, scopedVars);
+
     return {
       refId: target.refId,
       format: target.format,
@@ -106,6 +108,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       azureLogAnalytics: {
         resultFormat: item.resultFormat,
         query: query,
+        resource,
+
+        // TODO: Workspace is deprecated and should be migrated to Resources
         workspace: workspace,
       },
     };
@@ -340,6 +345,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
   }
 
+  // TODO: update to be resource-centric
   testDatasource(): Promise<any> {
     const validationError = this.isValidConfig();
     if (validationError) {
