@@ -863,7 +863,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"model":{
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
-								   "maxDataPoints":100,
+								   "maxDataPoints":43200,
 								   "type":"math"
 								}
 							 }
@@ -898,7 +898,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"model":{
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
-								   "maxDataPoints":100,
+								   "maxDataPoints":43200,
 								   "type":"math"
 								}
 							 }
@@ -1122,7 +1122,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"model":{
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
-		                           "maxDataPoints":100,
+		                           "maxDataPoints":43200,
 		                           "type":"math"
 		                        }
 		                     }
