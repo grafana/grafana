@@ -254,10 +254,10 @@ text-decoration: underline;
       {{ if gt (len .Alerts.Firing) 0 }}
         <tr style="vertical-align: top; padding: 0;" align="left">
           <td colspan="2" class="section-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #2c3235; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0 32px;" align="left" valign="top">
-            Firing: {{ .Alerts.Firing | len }} alert{{ if gt (len .Alerts.Firing) 1 }}s{{ end }} for
+            Firing: {{ .Alerts.Firing | len }} alert{{ if gt (len .Alerts.Firing) 1 }}s{{ end }}{{ if gt (len .GroupLabels.SortedPairs) 1 }} for
             {{ range .GroupLabels.SortedPairs }}
             {{ .Name }}={{ .Value }}
-            {{ end }}
+            {{ end }}{{ end }}
           </td>
         </tr>
         {{ range .Alerts.Firing }}
@@ -275,10 +275,10 @@ text-decoration: underline;
       {{ if gt (len .Alerts.Resolved) 0 }}
         <tr style="vertical-align: top; padding: 0;" align="left">
           <td colspan="2" class="section-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #2c3235; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0 32px;" align="left" valign="top">
-            Resolved: {{ .Alerts.Resolved | len }} alert{{ if gt (len .Alerts.Resolved) 1 }}s{{ end }} for
+            Resolved: {{ .Alerts.Resolved | len }} alert{{ if gt (len .Alerts.Resolved) 1 }}s{{ end }}{{ if gt (len .GroupLabels.SortedPairs) 1 }} for
             {{ range .GroupLabels.SortedPairs }}
             {{ .Name }}={{ .Value }}
-            {{ end }}
+            {{ end }}{{ end }}
           </td>
         </tr>
         {{ range .Alerts.Resolved }}
@@ -295,7 +295,7 @@ text-decoration: underline;
       {{ end }}
       <tr style="vertical-align: top; padding: 0;" align="left">
         <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
-          <a href="{{ .AlertPageUrl }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">View firing rules</a>
+          <a href="{{ .AlertPageUrl }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">Go to alerts page</a>
         </td>
       </tr>
       </table>
@@ -303,7 +303,6 @@ text-decoration: underline;
     
    
 </table>
-
 
 								
 							</center></td>
