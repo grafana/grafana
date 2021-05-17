@@ -12,6 +12,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     value: {
       text: '25',
       numeric: 25,
+      color: 'red',
     },
     theme: createTheme(),
   };

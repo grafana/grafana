@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
+	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
 // PagerdutyNotifier is responsible for sending
@@ -93,7 +93,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
-		Url:        pagerdutyEventAPIURL,
+		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{

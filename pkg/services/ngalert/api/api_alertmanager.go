@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -11,6 +13,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -177,13 +180,68 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return response.Error(http.StatusForbidden, "Permission denied", nil)
 	}
-	err := body.EncryptSecureSettings()
+
+	// Get the last known working configuration
+	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
+	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
+		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
+		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return response.Error(http.StatusInternalServerError, "failed to get latest configuration", err)
+		}
+	}
+
+	currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
 	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to load lastest configuration", err)
+	}
+
+	// Copy the previously known secure settings
+	for i, r := range body.AlertmanagerConfig.Receivers {
+		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			if len(currentConfig.AlertmanagerConfig.Receivers) <= i { // this is a receiver we don't have any stored for - skip it.
+				continue
+			}
+			cr := currentConfig.AlertmanagerConfig.Receivers[i]
+
+			if len(cr.PostableGrafanaReceivers.GrafanaManagedReceivers) <= j { //  this is a receiver we don't have anything stored for - skip it.
+				continue
+			}
+			cgmr := cr.PostableGrafanaReceivers.GrafanaManagedReceivers[j]
+
+			//TODO: We use the name and type to match current stored receivers againt sent ones, but we should ideally use something unique e.g. UUID
+			if cgmr.Name == gr.Name && cgmr.Type == gr.Type {
+				// frontend sends only the secure settings that have to be updated
+				// therefore we have to copy from the last configuration only those secure settings not included in the request
+				for key, storedValue := range cgmr.SecureSettings {
+					_, ok := body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key]
+					if !ok {
+						decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
+						if err != nil {
+							return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to decode stored secure setting: %s", key), err)
+						}
+						decryptedValue, err := util.Decrypt(decodeValue, setting.SecretKey)
+						if err != nil {
+							return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to decrypt stored secure setting: %s", key), err)
+						}
+
+						if body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings == nil {
+							body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = make(map[string]string, len(cgmr.SecureSettings))
+						}
+
+						body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key] = string(decryptedValue)
+					}
+				}
+			}
+		}
+	}
+
+	if err := body.EncryptSecureSettings(); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to encrypt receiver secrets", err)
 	}
 
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to save and apply Alertmanager configuration", err)
+		srv.log.Error("unable to save and apply alertmanager configuration", "err", err)
+		return response.Error(http.StatusBadRequest, "failed to save and apply Alertmanager configuration", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})

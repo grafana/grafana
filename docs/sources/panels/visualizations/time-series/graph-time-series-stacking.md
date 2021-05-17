@@ -49,10 +49,9 @@ Stack series in the same group. In the Overrides section:
 
 1. Create a field override for **Stack series** option.
 
-![Stack series override](/img/docs/time-series-panel/stacking-override-default-8-0.png)
+   ![Stack series override](/img/docs/time-series-panel/stacking-override-default-8-0.png)
 
-1. Click on **Normal** stacking mode.
-   
+1. Click on **Normal** stacking mode.  
 1. Name the stacking group you want the series to appear in. The stacking group name option is only available when creating an override.
 
 ![Stack series override](/img/docs/time-series-panel/stack-series-override-editor-8-0)

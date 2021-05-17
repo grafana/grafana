@@ -1,6 +1,6 @@
 import React from 'react';
 import { PanelProps } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2, ZoomPlugin } from '@grafana/ui';
 import { TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 
@@ -9,7 +9,15 @@ interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 /**
  * @alpha
  */
-export const TimelinePanel: React.FC<TimelinePanelProps> = ({ data, timeRange, timeZone, options, width, height }) => {
+export const TimelinePanel: React.FC<TimelinePanelProps> = ({
+  data,
+  timeRange,
+  timeZone,
+  options,
+  width,
+  height,
+  onChangeTimeRange,
+}) => {
   const theme = useTheme2();
 
   if (!data || !data.series?.length) {
@@ -30,6 +38,8 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({ data, timeRange, t
       width={width}
       height={height}
       {...options}
-    />
+    >
+      {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
+    </TimelineChart>
   );
 };
