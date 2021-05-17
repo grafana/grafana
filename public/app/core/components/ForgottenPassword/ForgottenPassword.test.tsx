@@ -21,24 +21,47 @@ function getTestContext() {
   return { fetchMock, rerender };
 }
 
+function getInputField() {
+  return screen.getByRole('textbox', { name: /user enter your information to get a reset link sent to you/i });
+}
+
+function getSubmitButton() {
+  return screen.getByRole('button', { name: /send reset email/i });
+}
+
+async function enterUserNameAndSubmitForm(fetchMock: jest.SpyInstance) {
+  await userEvent.type(getInputField(), 'JaneDoe');
+  userEvent.click(getSubmitButton());
+
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+  expect(fetchMock).toHaveBeenCalledWith({
+    url: '/api/user/password/send-reset-email',
+    method: 'POST',
+    data: { userOrEmail: 'JaneDoe' },
+    showSuccessAlert: false,
+    showErrorAlert: false,
+  });
+}
+
 describe('ForgottenPassword', () => {
   describe('when mounted', () => {
     it('then it should show input field', () => {
       getTestContext();
 
-      expect(screen.getByRole('textbox')).toBeInTheDocument();
+      expect(getInputField()).toBeInTheDocument();
     });
 
     it('then it should show send button', () => {
       getTestContext();
 
-      expect(screen.getByText(/send reset email/i)).toBeInTheDocument();
+      expect(getSubmitButton()).toBeInTheDocument();
     });
 
     it('then it should show back to login link', () => {
       getTestContext();
 
-      expect(screen.getByText(/back to login/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /back to login/i })).toBeInTheDocument();
     });
   });
 
@@ -52,18 +75,8 @@ describe('ForgottenPassword', () => {
           )
         );
 
-        await userEvent.type(screen.getByRole('textbox'), 'JaneDoe');
-        userEvent.click(screen.getByText(/send reset email/i));
+        await enterUserNameAndSubmitForm(fetchMock);
 
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-
-        expect(fetchMock).toHaveBeenCalledWith({
-          url: '/api/user/password/send-reset-email',
-          method: 'POST',
-          data: { userOrEmail: 'JaneDoe' },
-          showSuccessAlert: false,
-          showErrorAlert: false,
-        });
         expect(
           screen.getByText(
             /an email with a reset link has been sent to the email address\. you should receive it shortly\./i
@@ -81,18 +94,8 @@ describe('ForgottenPassword', () => {
           )
         );
 
-        await userEvent.type(screen.getByRole('textbox'), 'JaneDoe');
-        userEvent.click(screen.getByText(/send reset email/i));
+        await enterUserNameAndSubmitForm(fetchMock);
 
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-
-        expect(fetchMock).toHaveBeenCalledWith({
-          url: '/api/user/password/send-reset-email',
-          method: 'POST',
-          data: { userOrEmail: 'JaneDoe' },
-          showSuccessAlert: false,
-          showErrorAlert: false,
-        });
         expect(screen.getByLabelText(/alert error/i)).toBeInTheDocument();
         expect(screen.getByText(/couldn't send reset link to the email address/i)).toBeInTheDocument();
         expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
@@ -104,18 +107,8 @@ describe('ForgottenPassword', () => {
         const { fetchMock } = getTestContext();
         fetchMock.mockImplementation(() => scheduled(throwError('Server error'), asyncScheduler));
 
-        await userEvent.type(screen.getByRole('textbox'), 'JaneDoe');
-        userEvent.click(screen.getByText(/send reset email/i));
+        await enterUserNameAndSubmitForm(fetchMock);
 
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-
-        expect(fetchMock).toHaveBeenCalledWith({
-          url: '/api/user/password/send-reset-email',
-          method: 'POST',
-          data: { userOrEmail: 'JaneDoe' },
-          showSuccessAlert: false,
-          showErrorAlert: false,
-        });
         expect(screen.getByLabelText(/alert error/i)).toBeInTheDocument();
         expect(screen.getByText(/couldn't send reset link to the email address/i)).toBeInTheDocument();
         expect(screen.getByText(/server error/i)).toBeInTheDocument();
