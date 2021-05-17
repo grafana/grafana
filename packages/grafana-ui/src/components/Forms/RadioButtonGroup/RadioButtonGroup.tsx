@@ -87,8 +87,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-right: 6px;
     `,
     img: css`
-      width: 16px;
-      height: 16px;
+      width: ${theme.spacing(2)};
+      height: ${theme.spacing(2)};
       margin-right: ${theme.spacing(1)};
     `,
   };
