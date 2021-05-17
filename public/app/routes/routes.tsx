@@ -350,7 +350,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerting/routes',
-      roles: () => ['Admin'],
+      roles: () => ['Admin', 'Editor'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
       ),
@@ -363,42 +363,56 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerting/silence/new',
+      roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
       ),
     },
     {
       path: '/alerting/silence/:id/edit',
+      roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
       ),
     },
     {
       path: '/alerting/notifications',
+      roles: config.featureToggles.ngalert ? () => ['Editor', 'Admin'] : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {
       path: '/alerting/notifications/templates/new',
+      roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {
       path: '/alerting/notifications/templates/:id/edit',
+      roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {
       path: '/alerting/notifications/receivers/new',
+      roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {
       path: '/alerting/notifications/receivers/:id/edit',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
+      ),
+    },
+    {
+      path: '/alerting/notifications/global-config',
+      roles: () => ['Admin', 'Editor'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
