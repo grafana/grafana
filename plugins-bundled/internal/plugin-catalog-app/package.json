@@ -1,7 +1,7 @@
 {
-  "name": "@grafana-plugins/marketplace-app",
-  "version": "8.0.0-beta.1",
-  "description": "Marketplace",
+  "name": "@grafana-plugins/catalog-app",
+  "version": "8.1.0-pre",
+  "description": "Plugins catalog",
   "private": true,
   "repository": {
     "type": "git",
