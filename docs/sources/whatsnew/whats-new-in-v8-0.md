@@ -78,6 +78,66 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 You can now use the Plugin Marketplace app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
 
+### Data source updates
+
+The following data source updates are included with this Grafana release.
+
+#### Elasticsearch data source
+
+[Elasticsearch data source]({{< relref "../datasources/elasticsearch.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of these changes.
+
+##### Use semver strings to identify Elasticsearch version
+
+We changed how the configured Elasticsearch version is handled. You can now specify via provisioning the full semver string version of your instance (such as “7.12.1”) instead of the old version format based on numbers. There’s no manual intervention needed, the old options will be correctly recognized.
+
+##### Generic support for template variables
+
+You can now use a different interpolation method to use template variables in a more extensive way. You can now use template variables in every query editor field that allows free input.
+
+![Elasticsearch template variables](/img/docs/elasticsearch/input-templates-8-0.png)
+
+##### Allow omitting field for metrics that support inline scripts
+
+Metric aggregations can be specified without a field if a script is provided. You can now deselect fields for metrics aggregation when they support scripting.
+
+Previously this was only possible when adding a new metric without selecting a field, because once selected, the field could not have been removed.
+
+![Elasticsearch omit fields](/img/docs/elasticsearch/omit-fields-8-0.png)
+
+##### Allow setting a custom limit for log queries
+
+You can now set a custom line limit for logs queries instead of accepting the previously hard-coded 500. We also simplified the query editor to only show relevant fields when issuing logs queries.
+
+![Elasticsearch custom log limit](/img/docs/elasticsearch/custom-log-limit-8-0.png)
+
+##### Guess field type from first non-empty value
+
+Response values were always interpreted as strings in Elasticsearch responses, which caused issues with some visualization types that applied logic based on numeric values. We now apply some heuristics to detect value types from the first non-empty value in each response.
+
+#### Graphite data source
+
+[Graphite data source]({{< relref "../datasources/graphite.md" >}}) was updated as a result of these changes.
+
+##### Variable metric names expand
+
+Values for dashboard variables can be now populated using the [Graphite expand API](https://graphite-api.readthedocs.io/en/latest/api.html#metrics-expand). Expand API is used when the metric query is wrapped in expand() function.
+
+This way, values can contain not only the last matching node from the metric query, but also the full path of the metric. It can also be narrowed down to a specific node with a regular expression.
+
+##### Map Graphite queries to Loki
+
+Graphite queries are now automatically transformed to Loki queries according to user-defined rules when the data source changes in Explore.
+
+### Authentication updates
+
+This Grafana release includes the following authentication updates.
+
+#### Added OAuth support for empty scopes
+
+You can now configure generic OAuth with empty scopes. This allows OAuth Identity Providers that don't use or support scopes to work with Grafana authentication.
+
+[Generic OAuth authentication]({{< relref "../auth/generic-oauth.md" >}}) has been updated as a result of this change.
+
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
@@ -104,3 +164,7 @@ The following breaking changes are included in this release.
 - Removed the `never` refresh option for query variables. Existing variables will be migrated and any stored options will be removed.
 
 Documentation was updated to reflect these changes.
+
+### Elasticsearch: Use application/x-ndjson content type for multi-search requests
+
+For multi-search requests, we now use the correct application/x-ndjson content type instead of the incorrect application/json. Although this should be transparent to most of the users, if you are running Elasticsearch behind a proxy, then be sure that your proxy correctly handles requests with this content type.
