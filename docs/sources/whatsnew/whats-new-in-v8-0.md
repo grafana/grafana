@@ -95,7 +95,7 @@ All panels that have migrated from Flot to uPlot will also render two to three t
 These improvements affect any subsequent data updates or interactions, including:
 
 - Streaming performance
-- General speed of interaction, such as zooming, tooltips, synchronized cursors, panel updates when editing, and toggling various options
+- General speed of interaction, such as zooming, tooltips, synchronized cursors, and panel updates while editing
 
 ### Data source updates
 
