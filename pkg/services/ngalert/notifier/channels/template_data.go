@@ -53,24 +53,32 @@ func extendAlert(alert template.Alert, externalURL string) ExtendedAlert {
 		dashboardUid := alert.Annotations["__dashboardUid__"]
 		if len(dashboardUid) > 0 {
 			extended.DashboardURL = path.Join(externalURL, "/d/", dashboardUid)
-		}
-		panelId := alert.Annotations["__panelId__"]
-		if len(panelId) > 0 {
-			extended.PanelURL = path.Join(externalURL, "/d/", dashboardUid) + "?viewPanel=" + panelId
+			panelId := alert.Annotations["__panelId__"]
+			if len(panelId) > 0 {
+				extended.PanelURL = path.Join(externalURL, "/d/", dashboardUid) + "?viewPanel=" + panelId
+			}
 		}
 
 		matchers := make([]string, len(alert.Labels))
 		for key, value := range alert.Labels {
-			matchers = append(matchers, key+"="+value)
+			if !(strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__")) {
+				matchers = append(matchers, key+"="+value)
+			}
 		}
 		extended.SilenceURL = path.Join(externalURL, "/alerting/silence/new?alertmanager=grafana&matchers="+url.QueryEscape(strings.Join(matchers, ",")))
 
 	}
 
-	// remove "private" annotations so they don't show up in the template
-	for _, key := range alert.Annotations {
+	// remove "private" annotations & labels so they don't show up in the template
+	for key := range alert.Annotations {
 		if strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__") {
 			extended.Annotations = extended.Annotations.Remove([]string{key})
+		}
+	}
+
+	for key := range alert.Labels {
+		if strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__") {
+			extended.Labels = extended.Labels.Remove([]string{key})
 		}
 	}
 
