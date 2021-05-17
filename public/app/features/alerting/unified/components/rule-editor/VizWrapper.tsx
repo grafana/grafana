@@ -11,18 +11,20 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+const TIMESERIES = 'timeseries';
+const TABLE = 'table';
+const STAT = 'stat';
+
 interface Props {
   data: PanelData;
   defaultPanel?: 'timeseries' | 'table' | 'stat';
 }
 
 export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
-  const [pluginId, changePluginId] = useState<string>(defaultPanel ?? 'timeseries');
+  const [pluginId, changePluginId] = useState<string>(defaultPanel ?? TIMESERIES);
   const options = { ...getOptionsForPanelPlugin(pluginId) };
   const styles = useStyles2(getStyles);
-  const panels = Object.values(config.panels)
-    .filter((p) => p.id === 'timeseries' || p.id === 'table' || p.id === 'stat')
-    .map((panel) => ({ value: panel.id, label: panel.name, imgUrl: panel.info.logos.small }));
+  const panels = getSupportedPanels();
 
   if (!options || !data) {
     return null;
@@ -30,7 +32,7 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
 
   return (
     <div className={styles.wrapper}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div className={styles.buttonGroup}>
         <RadioButtonGroup options={panels} value={pluginId} onChange={changePluginId} />
       </div>
       <div style={{ height: '200px', width: '100%' }}>
@@ -57,13 +59,19 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
   );
 };
 
+const getSupportedPanels = () => {
+  return Object.values(config.panels)
+    .filter((p) => p.id === TIMESERIES || p.id === TABLE || p.id === STAT)
+    .map((panel) => ({ value: panel.id, label: panel.name, imgUrl: panel.info.logos.small }));
+};
+
 const getOptionsForPanelPlugin = (panelPlugin: string) => {
   switch (panelPlugin) {
-    case 'stat':
+    case STAT:
       return singleStatOptions;
-    case 'table':
+    case TABLE:
       return tableOptions;
-    case 'timeseries':
+    case TIMESERIES:
       return timeSeriesOptions;
     default:
       return undefined;
@@ -98,6 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0 ${theme.spacing(2)};
   `,
   buttonGroup: css`
-    margin-bottom: ${theme.spacing(1)};
+    display: flex;
+    justify-content: flex-end;
   `,
 });
