@@ -1,5 +1,5 @@
 import React, { FC, Fragment, useState } from 'react';
-import { dateMath, GrafanaTheme, toDuration } from '@grafana/data';
+import { dateMath, GrafanaTheme, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { Silence, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { CollapseToggle } from '../CollapseToggle';
@@ -29,7 +29,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
   const dateDisplayFormat = 'YYYY-MM-DD HH:mm';
   const startsAtDate = dateMath.parse(startsAt);
   const endsAtDate = dateMath.parse(endsAt);
-  const duration = toDuration(endsAtDate?.diff(startsAtDate || '')).asSeconds();
+  const duration = intervalToAbbreviatedDurationString({ start: new Date(startsAt), end: new Date(endsAt) });
 
   const handleExpireSilenceClick = () => {
     dispatch(expireSilenceAction(alertManagerSourceName, silence.id));
@@ -89,7 +89,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className, silencedAlerts, alertM
           <tr className={className}>
             <td />
             <td>Duration</td>
-            <td colSpan={4}>{duration} seconds</td>
+            <td colSpan={4}>{duration}</td>
           </tr>
           <tr className={className}>
             <td />
