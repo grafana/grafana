@@ -3,13 +3,13 @@ import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
 
 import { Histogram } from './Histogram';
 import { PanelOptions } from './models.gen';
-import { useTheme2 } from '@grafana/ui';
+import { TooltipPlugin, useTheme2 } from '@grafana/ui';
 
 type Props = PanelProps<PanelOptions>;
 
 import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
 
-export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
+export const HistogramPanel: React.FC<Props> = ({ data, options, width, height, timeZone }) => {
   const theme = useTheme2();
 
   const histogram = useMemo(() => {
@@ -46,6 +46,10 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
       width={width}
       height={height}
       alignedFrame={histogram}
-    />
+    >
+      {(config, alignedFrame) => {
+        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+      }}
+    </Histogram>
   );
 };
