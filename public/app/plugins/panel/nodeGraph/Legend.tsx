@@ -62,6 +62,9 @@ interface ItemData {
 }
 
 function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme): Array<VizLegendItem<ItemData>> {
+  if (!nodes.length) {
+    return [];
+  }
   const fields = [nodes[0].mainStat, nodes[0].secondaryStat].filter(identity) as Field[];
 
   const node = nodes.find((n) => n.arcSections.length > 0);
@@ -84,11 +87,9 @@ function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme): Array<Viz
       yAxis: 0,
       data: { field: f },
     };
-    if (f.config.color?.fixedColor) {
+    if (f.config.color?.mode === FieldColorModeId.Fixed && f.config.color?.fixedColor) {
       item.color = getColorForTheme(f.config.color?.fixedColor || '', theme);
-    }
-
-    if (f.config.color?.mode) {
+    } else if (f.config.color?.mode) {
       item.gradient = f.config.color?.mode;
     }
 
