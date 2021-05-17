@@ -10,6 +10,7 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { RuleFolderPicker } from './RuleFolderPicker';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const alertTypeOptions: SelectableValue[] = [
   {
@@ -17,12 +18,15 @@ const alertTypeOptions: SelectableValue[] = [
     value: RuleFormType.threshold,
     description: 'Metric alert based on a defined threshold',
   },
-  {
+];
+
+if (contextSrv.isEditor) {
+  alertTypeOptions.push({
     label: 'System or application',
     value: RuleFormType.system,
     description: 'Alert based on a system or application behavior. Based on Prometheus.',
-  },
-];
+  });
+}
 
 interface Props {
   editingExistingRule: boolean;

@@ -11,20 +11,13 @@ import {
 } from '@grafana/data';
 import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode, UPlotConfigPrepFn } from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
-import {
-  AxisPlacement,
-  GraphGradientMode,
-  ScaleDirection,
-  ScaleOrientation,
-} from '@grafana/ui/src/components/uPlot/config';
+import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { measureText } from '@grafana/ui/src/utils/measureText';
-
 import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
   fillOpacity: 80,
-  gradientMode: GraphGradientMode.None,
 };
 
 export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityChangeMode {
@@ -61,7 +54,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const colorLookup = (seriesIdx: number, value: any) => {
+  const getValueColor = (seriesIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
 
     if (field.display) {
@@ -93,9 +86,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     alignValue,
     theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
-    fill: colorLookup,
-    stroke: colorLookup,
-    colorLookup,
+    getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,
+    getValueColor,
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
@@ -170,17 +162,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
     field.state!.seriesIndex = seriesIndex++;
 
-    //const scaleKey = config.unit || FIXED_UNIT;
-    //const colorMode = getFieldColorModeForField(field);
-
-    let { fillOpacity } = customConfig;
+    // const scaleKey = config.unit || FIXED_UNIT;
+    // const colorMode = getFieldColorModeForField(field);
 
     builder.addSeries({
       scaleKey: FIXED_UNIT,
       pathBuilder: coreConfig.drawPaths,
       pointsBuilder: coreConfig.drawPoints,
       //colorMode,
-      fillOpacity,
+      lineWidth: customConfig.lineWidth,
+      fillOpacity: customConfig.fillOpacity,
       theme,
       show: !customConfig.hideFrom?.viz,
       thresholds: config.thresholds,

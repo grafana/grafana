@@ -1,7 +1,11 @@
-import { getDefaultTimeRange, rangeUtil } from '@grafana/data';
+import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getNextRefIdChar } from 'app/core/utils/query';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
@@ -13,33 +17,36 @@ import {
 } from 'app/types/unified-alerting-dto';
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { Annotation } from './constants';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
 import { parseInterval } from './time';
 
-export const defaultFormValues: RuleFormValues = Object.freeze({
-  name: '',
-  labels: [{ key: '', value: '' }],
-  annotations: [{ key: '', value: '' }],
-  dataSourceName: null,
+export const getDefaultFormValues = (): RuleFormValues =>
+  Object.freeze({
+    name: '',
+    labels: [{ key: '', value: '' }],
+    annotations: [{ key: '', value: '' }],
+    dataSourceName: null,
+    type: !contextSrv.isEditor ? RuleFormType.threshold : undefined, // viewers can't create prom alerts
 
-  // threshold
-  folder: null,
-  queries: [],
-  condition: '',
-  noDataState: GrafanaAlertStateDecision.NoData,
-  execErrState: GrafanaAlertStateDecision.Alerting,
-  evaluateEvery: '1m',
-  evaluateFor: '5m',
+    // threshold
+    folder: null,
+    queries: [],
+    condition: '',
+    noDataState: GrafanaAlertStateDecision.NoData,
+    execErrState: GrafanaAlertStateDecision.Alerting,
+    evaluateEvery: '1m',
+    evaluateFor: '5m',
 
-  // system
-  group: '',
-  namespace: '',
-  expression: '',
-  forTime: 1,
-  forTimeUnit: 'm',
-});
+    // system
+    group: '',
+    namespace: '',
+    expression: '',
+    forTime: 1,
+    forTimeUnit: 'm',
+  });
 
 export function formValuesToRulerAlertingRuleDTO(values: RuleFormValues): RulerAlertingRuleDTO {
   const { name, expression, forTime, forTimeUnit } = values;
@@ -77,6 +84,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
+
+  const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
     if (isGrafanaRulerRule(rule)) {
       const ga = rule.grafana_alert;
@@ -179,4 +188,94 @@ const getDefaultExpression = (refId: string): GrafanaQuery => {
     queryType: '',
     model,
   };
+};
+
+const dataQueriesToGrafanaQueries = (
+  queries: DataQuery[],
+  relativeTimeRange: RelativeTimeRange,
+  datasourceName?: string
+): GrafanaQuery[] => {
+  return queries.reduce<GrafanaQuery[]>((queries, target) => {
+    const dsName = target.datasource || datasourceName;
+    if (dsName) {
+      // expressions
+      if (dsName === ExpressionDatasourceID) {
+        const newQuery: GrafanaQuery = {
+          refId: target.refId,
+          queryType: '',
+          relativeTimeRange,
+          datasourceUid: ExpressionDatasourceUID,
+          model: target,
+        };
+        return [...queries, newQuery];
+        // queries
+      } else {
+        const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
+        if (datasource && datasource.meta.alerting) {
+          const newQuery: GrafanaQuery = {
+            refId: target.refId,
+            queryType: target.queryType ?? '',
+            relativeTimeRange,
+            datasourceUid: datasource.uid,
+            model: target,
+          };
+          return [...queries, newQuery];
+        }
+      }
+    }
+    return queries;
+  }, []);
+};
+
+export const panelToRuleFormValues = (
+  panel: PanelModel,
+  dashboard: DashboardModel
+): Partial<RuleFormValues> | undefined => {
+  const { targets } = panel;
+
+  // it seems if default datasource is selected, datasource=null, hah
+  const datasourceName =
+    panel.datasource === null ? getDatasourceSrv().getInstanceSettings('default')?.name : panel.datasource;
+
+  if (!panel.editSourceId || !dashboard.uid) {
+    return undefined;
+  }
+
+  const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
+  const queries = dataQueriesToGrafanaQueries(targets, relativeTimeRange, datasourceName);
+
+  // if no alerting capable queries are found, can't create a rule
+  if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
+    return undefined;
+  }
+
+  if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
+    queries.push(getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model))));
+  }
+
+  const { folderId, folderTitle } = dashboard.meta;
+
+  const formValues = {
+    type: RuleFormType.threshold,
+    folder:
+      folderId && folderTitle
+        ? {
+            id: folderId,
+            title: folderTitle,
+          }
+        : undefined,
+    queries,
+    name: panel.title,
+    annotations: [
+      {
+        key: Annotation.dashboardUID,
+        value: dashboard.uid,
+      },
+      {
+        key: Annotation.panelID,
+        value: String(panel.editSourceId),
+      },
+    ],
+  };
+  return formValues;
 };

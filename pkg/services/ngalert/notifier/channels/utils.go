@@ -1,10 +1,6 @@
 package channels
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 )
 
@@ -19,16 +15,4 @@ func getAlertStatusColor(status model.AlertStatus) string {
 		return ColorAlertFiring
 	}
 	return ColorAlertResolved
-}
-
-func getTitleFromTemplateData(data *template.Data) string {
-	title := "[" + data.Status
-	if data.Status == string(model.AlertFiring) {
-		title += fmt.Sprintf(":%d", len(data.Alerts.Firing()))
-	}
-	title += "] " + strings.Join(data.GroupLabels.SortedPairs().Values(), " ") + " "
-	if len(data.CommonLabels) > len(data.GroupLabels) {
-		title += "(" + strings.Join(data.CommonLabels.Remove(data.GroupLabels.Names()).Values(), " ") + ")"
-	}
-	return title
 }

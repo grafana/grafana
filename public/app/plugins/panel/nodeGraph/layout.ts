@@ -137,16 +137,21 @@ function defaultLayout(
     for (let i = 0; i < nodes.length; i++) {
       // These stats needs to be Field class but the data is stringified over the worker boundary
       event.data.nodes[i] = {
+        ...nodes[i],
         ...event.data.nodes[i],
-        mainStat: nodes[i].mainStat,
-        secondaryStat: nodes[i].secondaryStat,
-        arcSections: nodes[i].arcSections,
       };
     }
     done(event.data);
   };
 
-  worker.postMessage({ nodes, edges, config: defaultConfig });
+  worker.postMessage({
+    nodes: nodes.map((n) => ({
+      id: n.id,
+      incoming: n.incoming,
+    })),
+    edges,
+    config: defaultConfig,
+  });
 }
 
 /**
