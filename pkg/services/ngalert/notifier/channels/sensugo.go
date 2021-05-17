@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -134,7 +135,12 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		handlers = []string{sn.Handler}
 	}
 
-	ruleURL := path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list")
+	u, err := url.Parse(sn.tmpl.ExternalURL.String())
+	if err != nil {
+		return false, fmt.Errorf("failed to parse external URL: %w", err)
+	}
+	u.Path = path.Join(u.Path, "/alerting/list")
+	ruleURL := u.String()
 	bodyMsgType := map[string]interface{}{
 		"entity": map[string]interface{}{
 			"metadata": map[string]interface{}{
