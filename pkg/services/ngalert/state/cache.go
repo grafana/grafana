@@ -135,7 +135,7 @@ func (c *cache) reset() {
 	c.states = make(map[int64]map[string]map[string]*State)
 }
 
-func (c *cache) trim() {
+func (c *cache) recordMetrics() {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
@@ -153,13 +153,6 @@ func (c *cache) trim() {
 		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
 		for _, rule := range orgMap {
 			for _, state := range rule {
-				if len(state.Results) > 100 {
-					newResults := make([]Evaluation, 100)
-					// Keep last 100 results
-					copy(newResults, state.Results[len(state.Results)-100:])
-					state.Results = newResults
-				}
-
 				n := ct[state.State]
 				ct[state.State] = n + 1
 			}
