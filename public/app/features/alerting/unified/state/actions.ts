@@ -8,7 +8,7 @@ import {
   Silence,
   SilenceCreatePayload,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, ThunkResult } from 'app/types';
+import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
@@ -48,6 +48,7 @@ import {
   stringifyRuleIdentifier,
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager-config';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -291,11 +292,11 @@ export const saveRuleFormAction = createAsyncThunk(
   ({
     values,
     existing,
-    exitOnSave,
+    redirectOnSave,
   }: {
     values: RuleFormValues;
     existing?: RuleWithLocation;
-    exitOnSave: boolean;
+    redirectOnSave?: string;
   }): Promise<void> =>
     withSerializedError(
       (async () => {
@@ -310,8 +311,8 @@ export const saveRuleFormAction = createAsyncThunk(
         } else {
           throw new Error('Unexpected rule form type');
         }
-        if (exitOnSave) {
-          locationService.push('/alerting/list');
+        if (redirectOnSave) {
+          locationService.push(redirectOnSave);
         } else {
           // redirect to edit page
           const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
@@ -458,5 +459,18 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
         refetch: true,
       })
     );
+  };
+};
+
+export const fetchFolderAction = createAsyncThunk(
+  'unifiedalerting/fetchFolder',
+  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid))
+);
+
+export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    if (!getState().unifiedAlerting.folders[uid]?.dispatched) {
+      dispatch(fetchFolderAction(uid));
+    }
   };
 };
