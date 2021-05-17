@@ -41,10 +41,21 @@ describe('prepare timeseries graph', () => {
     ];
     const info = prepareGraphableFields(frames, createTheme());
     expect(info.warn).toBeUndefined();
-    expect(info.frames![0].fields.map((f) => f.name)).toEqual(['a', 'c', 'd']);
 
-    const field = frames[0].fields.find((f) => f.name === 'c');
+    const out = info.frames![0];
+    expect(out.fields.map((f) => f.name)).toEqual(['a', 'c', 'd']);
+
+    const field = out.fields.find((f) => f.name === 'c');
     expect(field?.display).toBeDefined();
-    expect(field!.display!(1)).toMatchInlineSnapshot();
+    expect(field!.display!(1)).toMatchInlineSnapshot(`
+      Object {
+        "color": "#808080",
+        "numeric": 1,
+        "percent": 1,
+        "prefix": undefined,
+        "suffix": undefined,
+        "text": "True",
+      }
+    `);
   });
 });
