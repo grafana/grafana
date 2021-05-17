@@ -8,7 +8,7 @@ import {
   Silence,
   SilenceCreatePayload,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, ThunkResult } from 'app/types';
+import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
@@ -48,6 +48,7 @@ import {
   stringifyRuleIdentifier,
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager-config';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -458,5 +459,18 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
         refetch: true,
       })
     );
+  };
+};
+
+export const fetchFolderAction = createAsyncThunk(
+  'unifiedalerting/fetchFolder',
+  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid))
+);
+
+export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    if (!getState().unifiedAlerting.folders[uid]?.dispatched) {
+      dispatch(fetchFolderAction(uid));
+    }
   };
 };

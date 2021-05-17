@@ -16,7 +16,7 @@ import { saveRuleFormAction } from '../../state/actions';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { rulerRuleToFormValues, defaultFormValues, getDefaultQueries } from '../../utils/rule-form';
+import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -36,7 +36,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       return rulerRuleToFormValues(existing);
     }
     return {
-      ...defaultFormValues,
+      ...getDefaultFormValues(),
       queries: getDefaultQueries(),
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
     };
