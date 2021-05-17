@@ -156,7 +156,7 @@ func TestUsageMetrics(t *testing.T) {
 			report, err := s.UsageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
-			assert.Equal(t, tt.expectedValue, report.Metrics["stats.fine_grained_ac_enabled.oss.count"])
+			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
 }

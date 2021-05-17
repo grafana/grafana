@@ -37,7 +37,7 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
-	ac.UsageStats.RegisterMetric("stats.fine_grained_ac_enabled.oss.count", ac.getUsageMetrics)
+	ac.UsageStats.RegisterMetric("stats.oss.accesscontrol.enabled.count", ac.getUsageMetrics)
 }
 
 func (ac *OSSAccessControlService) getUsageMetrics() (interface{}, error) {
