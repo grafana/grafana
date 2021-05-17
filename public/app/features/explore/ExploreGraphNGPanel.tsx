@@ -143,26 +143,15 @@ export function ExploreGraphNGPanel({
           timeRange={timeRange}
           onLegendClick={onLegendClick}
           legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
-          timeZone={timeZone}
         >
           {(config, alignedDataFrame) => {
             return (
               <>
                 <ZoomPlugin config={config} onZoom={onUpdateTimeRange} />
-                <TooltipPlugin
-                  config={config}
-                  data={alignedDataFrame}
-                  mode={TooltipDisplayMode.Single}
-                  timeZone={timeZone}
-                />
-                <ContextMenuPlugin config={config} data={alignedDataFrame} timeZone={timeZone} />
+                <TooltipPlugin config={config} data={alignedDataFrame} mode={TooltipDisplayMode.Single} />
+                <ContextMenuPlugin config={config} data={alignedDataFrame} />
                 {annotations && (
-                  <ExemplarsPlugin
-                    config={config}
-                    exemplars={annotations}
-                    timeZone={timeZone}
-                    getFieldLinks={getFieldLinks}
-                  />
+                  <ExemplarsPlugin config={config} exemplars={annotations} getFieldLinks={getFieldLinks} />
                 )}
               </>
             );

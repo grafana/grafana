@@ -1,28 +1,19 @@
 import { css, cx } from '@emotion/css';
-import {
-  DataFrame,
-  dateTimeFormat,
-  Field,
-  FieldType,
-  GrafanaTheme,
-  LinkModel,
-  systemDateFormats,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, dateTimeFormat, Field, FieldType, GrafanaTheme, LinkModel, systemDateFormats } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FieldLinkList, Portal, useStyles } from '@grafana/ui';
+import { FieldLinkList, Portal, usePanelContext, useStyles } from '@grafana/ui';
 import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 interface ExemplarMarkerProps {
-  timeZone: TimeZone;
   dataFrame: DataFrame;
   index: number;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFrame, index, getFieldLinks }) => {
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ dataFrame, index, getFieldLinks }) => {
   const styles = useStyles(getExemplarMarkerStyles);
+  const panelCtx = usePanelContext();
   const [isOpen, setIsOpen] = useState(false);
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
@@ -46,7 +37,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
     const timeFormatter = (value: number) => {
       return dateTimeFormat(value, {
         format: systemDateFormats.fullDate,
-        timeZone,
+        timeZone: panelCtx.timeZone,
       });
     };
 
@@ -98,7 +89,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
     onMouseLeave,
     popperStyles.popper,
     styles,
-    timeZone,
+    panelCtx.timeZone,
   ]);
 
   return (
