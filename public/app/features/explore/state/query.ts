@@ -663,7 +663,6 @@ export const processQueryResponse = (
 
     // Send error to Angular editors
     if (state.datasourceInstance?.components?.QueryCtrl) {
-      console.log('error angular', error);
       state.eventBridge.emit(PanelEvents.dataError, error);
     }
   }
