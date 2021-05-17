@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,12 +54,12 @@ func TestValidateScuemataBasics(t *testing.T) {
 		assert.EqualError(t, err, "all schema should be valid with respect to basic CUE rules, Family.lineages.0.0: field #Panel not allowed")
 	})
 
-	t.Run("Testing scuemata validity against JSON files", func(t *testing.T) {
+	t.Run("Testing validateResources against scuemata and resource inputs", func(t *testing.T) {
 		tempDir := os.DirFS(filepath.Join("testdata", "valid_scuemata"))
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       tempDir,
-			DistPluginCueFS: pluginSchema,
+			DistPluginCueFS: load.GetDefaultLoadPaths().DistPluginCueFS,
 		}
 
 		require.NoError(t, fs.WalkDir(tempDir, ".", func(path string, d fs.DirEntry, err error) error {
@@ -86,7 +87,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 					require.NoError(t, err, "failed to open dashboard file")
 
 					err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
-					assert.EqualError(t, err, "invalid resource with respect to the schema, err: Family.lineages.0.0.panels.0.fieldConfig.defaults: field mappings not allowed")
+					assert.EqualError(t, err, "failed validation: Family.lineages.0.0.panels.0.fieldConfig.defaults: field mappings not allowed")
 				})
 			}
 

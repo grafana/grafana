@@ -52,7 +52,7 @@ func validateResources(resource interface{}, p load.BaseLoadPaths, loader func(p
 	if resource != nil {
 		err = dash.Validate(schema.Resource{Value: resource})
 		if err != nil {
-			return fmt.Errorf("invalid resource with respect to the schema, err: %w", err)
+			return fmt.Errorf("failed validation: %w", err)
 		}
 	}
 
