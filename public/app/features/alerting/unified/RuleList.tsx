@@ -18,6 +18,7 @@ import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useLocation } from 'react-router-dom';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -128,12 +129,14 @@ export const RuleList: FC = () => {
               </a>
             </ButtonGroup>
             <div />
-            <LinkButton
-              href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
-              icon="plus"
-            >
-              New alert rule
-            </LinkButton>
+            {(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor) && (
+              <LinkButton
+                href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
+                icon="plus"
+              >
+                New alert rule
+              </LinkButton>
+            )}
           </div>
         </>
       )}

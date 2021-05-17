@@ -14,13 +14,6 @@ export const GrafanaCommonChannelSettings: FC<CommonSettingsComponentProps> = ({
           description="Disable the resolve message [OK] that is sent when alerting state returns to false"
         />
       </Field>
-      <Field>
-        <Checkbox
-          {...register(`${pathPrefix}sendReminder`)}
-          label="Send reminders"
-          description="Send additional notifications for triggered alerts"
-        />
-      </Field>
     </div>
   );
 };
