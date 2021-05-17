@@ -72,7 +72,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	tmpl := notify.TmplText(dd.tmpl, data, &tmplErr)
 
 	message := tmpl(dd.Message)
-	title := getTitleFromTemplateData(data)
+	title := tmpl(`{{ template "default.title" . }}`)
 
 	var bodyMsg map[string]interface{}
 	if dd.MsgType == "actionCard" {
