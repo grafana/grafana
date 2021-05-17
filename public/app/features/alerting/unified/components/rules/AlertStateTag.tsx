@@ -1,5 +1,6 @@
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import React, { FC } from 'react';
+import { alertStateToReadable } from '../../utils/rules';
 import { State, StateTag } from '../StateTag';
 
 const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState, State> = {
@@ -17,4 +18,6 @@ interface Props {
   state: PromAlertingRuleState | GrafanaAlertState;
 }
 
-export const AlertStateTag: FC<Props> = ({ state }) => <StateTag state={alertStateToState[state]}>{state}</StateTag>;
+export const AlertStateTag: FC<Props> = ({ state }) => (
+  <StateTag state={alertStateToState[state]}>{alertStateToReadable(state)}</StateTag>
+);

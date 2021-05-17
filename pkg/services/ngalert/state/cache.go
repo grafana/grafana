@@ -149,8 +149,9 @@ func (c *cache) trim() {
 		eval.Error:    0,
 	}
 
-	for _, org := range c.states {
-		for _, rule := range org {
+	for org, orgMap := range c.states {
+		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
+		for _, rule := range orgMap {
 			for _, state := range rule {
 				if len(state.Results) > 100 {
 					newResults := make([]Evaluation, 100)

@@ -18,6 +18,7 @@ const AlertDefinitionMaxTitleLength = 190
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
 	SaveAlertmanagerConfiguration(*models.SaveAlertmanagerConfigurationCmd) error
+	SaveAlertmanagerConfigurationWithCallback(*models.SaveAlertmanagerConfigurationCmd, SaveCallback) error
 }
 
 // DBstore stores the alert definitions and instances in the database.
@@ -26,5 +27,5 @@ type DBstore struct {
 	BaseInterval time.Duration
 	// default alert definiiton interval
 	DefaultIntervalSeconds int64
-	SQLStore               *sqlstore.SQLStore `inject:""`
+	SQLStore               *sqlstore.SQLStore
 }
