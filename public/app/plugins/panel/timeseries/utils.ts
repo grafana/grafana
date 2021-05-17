@@ -60,7 +60,7 @@ export function prepareGraphableFields(
             ),
           };
           if (!isBooleanUnit(config.unit)) {
-            config.unit = 'bool'; // mutates
+            config.unit = 'bool';
             copy.display = getDisplayProcessor({ field: copy, theme });
           }
           fields.push(copy);
