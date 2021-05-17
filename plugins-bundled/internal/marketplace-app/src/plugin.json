@@ -16,12 +16,8 @@
     },
     "links": [
       {
-        "name": "Website",
-        "url": "https://github.com/grafana/marketplace-app"
-      },
-      {
         "name": "License",
-        "url": "https://github.com/grafana/marketplace-app/blob/master/LICENSE"
+        "url": "https://github.com/grafana/grafana/blob/main/LICENSE"
       }
     ],
     "screenshots": [
