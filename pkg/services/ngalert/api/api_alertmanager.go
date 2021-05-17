@@ -88,7 +88,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 				if err != nil {
 					return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to decrypt stored secure setting: %s", k), err)
 				}
-				if string(decryptedValue) == "" {
+				if decryptedValue == "" {
 					continue
 				}
 				secureFields[k] = true
