@@ -11,12 +11,6 @@ import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
-const timeSrvMock = ({
-  setAutoRefresh: jest.fn(),
-} as unknown) as TimeSrv;
-
-setTimeSrv(timeSrvMock);
-
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
   createAdHocVariableAdapter(),
@@ -826,12 +820,16 @@ describe('exitPanelEditor', () => {
   function getTestContext(setPreviousAutoRefresh = false) {
     const panel: any = { destroy: jest.fn() };
     const dashboard = new DashboardModel({});
+    const timeSrvMock = ({
+      setAutoRefresh: jest.fn(),
+    } as unknown) as TimeSrv;
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
     if (setPreviousAutoRefresh) {
       dashboard.previousAutoRefresh = '5s';
     }
-    return { dashboard, panel };
+    setTimeSrv(timeSrvMock);
+    return { dashboard, panel, timeSrvMock };
   }
 
   describe('when called', () => {
@@ -860,7 +858,7 @@ describe('exitPanelEditor', () => {
     });
 
     it('then refresh property is set to previousAutoRefresh property', () => {
-      const { dashboard } = getTestContext(true);
+      const { dashboard, timeSrvMock } = getTestContext(true);
       dashboard.exitPanelEditor();
 
       expect(timeSrvMock.setAutoRefresh).toHaveBeenCalledWith('5s');
@@ -906,7 +904,11 @@ describe('setChangeAffectsAllPanels', () => {
 describe('initEditPanel', () => {
   function getTestContext() {
     const dashboard = new DashboardModel({});
-    return { dashboard };
+    const timeSrvMock = ({
+      setAutoRefresh: jest.fn(),
+    } as unknown) as TimeSrv;
+    setTimeSrv(timeSrvMock);
+    return { dashboard, timeSrvMock };
   }
 
   describe('when called', () => {
@@ -926,7 +928,7 @@ describe('initEditPanel', () => {
     });
 
     it('then refresh property is set to empty string', () => {
-      const { dashboard } = getTestContext();
+      const { dashboard, timeSrvMock } = getTestContext();
       dashboard.addPanel({ type: 'timeseries' });
       dashboard.initEditPanel(dashboard.panels[0]);
       expect(timeSrvMock.setAutoRefresh).toHaveBeenCalledWith('');

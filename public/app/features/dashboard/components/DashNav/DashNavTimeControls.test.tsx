@@ -30,20 +30,37 @@ describe('DashNavTimeControls', () => {
     dashboardModel = getDashboardModel(json);
   });
 
-  it('renders RefreshPicker in panel view', () => {
+  it('renders RefreshPicker with run button in panel view', () => {
     const container = render(
       <DashNavTimeControls dashboard={dashboardModel} onChangeTimeZone={jest.fn()} key="time-controls" />
     );
     expect(container.queryByLabelText(/RefreshPicker run button/i)).toBeInTheDocument();
   });
 
-  it('should not render RefreshPicker in panel edit', () => {
+  it('renders RefreshPicker with interval button in panel view', () => {
+    const container = render(
+      <DashNavTimeControls dashboard={dashboardModel} onChangeTimeZone={jest.fn()} key="time-controls" />
+    );
+    expect(container.queryByLabelText(/RefreshPicker interval button/i)).toBeInTheDocument();
+  });
+
+  it('should not render RefreshPicker interval button in panel edit', () => {
     const panel: any = { destroy: jest.fn(), isEditing: true };
     dashboardModel.startRefresh = jest.fn();
     dashboardModel.panelInEdit = panel;
     const container = render(
       <DashNavTimeControls dashboard={dashboardModel} onChangeTimeZone={jest.fn()} key="time-controls" />
     );
-    expect(container.queryByLabelText(/RefreshPicker run button/i)).not.toBeInTheDocument();
+    expect(container.queryByLabelText(/RefreshPicker interval button/i)).not.toBeInTheDocument();
+  });
+
+  it('should render RefreshPicker run button in panel edit', () => {
+    const panel: any = { destroy: jest.fn(), isEditing: true };
+    dashboardModel.startRefresh = jest.fn();
+    dashboardModel.panelInEdit = panel;
+    const container = render(
+      <DashNavTimeControls dashboard={dashboardModel} onChangeTimeZone={jest.fn()} key="time-controls" />
+    );
+    expect(container.queryByLabelText(/RefreshPicker run button/i)).toBeInTheDocument();
   });
 });
