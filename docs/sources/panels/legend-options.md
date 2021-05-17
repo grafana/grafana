@@ -1,7 +1,7 @@
 +++
 title = "Legend options"
 aliases = ["/docs/grafana/latest/panels/visualizations/panel-legend/"]
-weight = 50
+weight = 500
 +++
 
 # Legend options
