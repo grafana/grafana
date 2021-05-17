@@ -1,9 +1,10 @@
 +++
-title = "Panel legend options"
+title = "Legend options"
+aliases = ["/docs/grafana/latest/panels/visualizations/panel-legend/"]
 weight = 50
 +++
 
-# Legend
+# Legend options
 
 Use the legend to adjust how a visualization displays series. This legend functionality only applies to a few panels now, but it will eventually be common to all visualizations.
 
