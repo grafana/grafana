@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 const (
@@ -118,7 +119,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(pn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 

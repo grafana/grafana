@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 const defaultDingdingMsgType = "link"
@@ -67,7 +68,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
 	messageURL := "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
-	data := notify.GetTemplateData(ctx, dd.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, dd.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(dd.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(dd.tmpl, data, &tmplErr)
 

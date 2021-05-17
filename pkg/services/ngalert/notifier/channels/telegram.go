@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 var (
@@ -111,7 +112,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	msg["chat_id"] = tn.ChatID
 	msg["parse_mode"] = "html"
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(tn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 
