@@ -4,7 +4,7 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { getValueFormat } from '../valueFormats/valueFormats';
+import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
@@ -49,6 +49,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
+  } else if (field.type === FieldType.boolean) {
+    if (!isBooleanUnit(unit)) {
+      unit = 'bool';
+    }
   }
 
   const formatFunc = getValueFormat(unit || 'none');
