@@ -417,7 +417,7 @@ To prepare for this upcoming change, Application Insights queries can now be mad
 
 ## Query Azure Resource Graph service
 
-{{< docs-imagebox img="/img/docs/v80/azuremonitor-azure-resource-graph.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
+![Azure Resource Graph Editor](/img/docs/azure-monitor/azure-resource-graph-8-0.png)
 
 Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). A Azure Resource Graph (ARG) query is formatted as table data.
 
