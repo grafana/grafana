@@ -99,11 +99,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     current: css`
       label: currentVisualizationItem;
-<<<<<<< HEAD
       border: 1px solid ${theme.colors.primary.border};
-=======
       background: ${theme.colors.action.selected};
->>>>>>> main
     `,
     disabled: css`
       opacity: 0.2;
