@@ -28,7 +28,7 @@ export const QueryStep: FC = () => {
           />
         </Field>
       )}
-      {true && (
+      {type === RuleFormType.threshold && (
         <Field
           invalid={!!errors.queries}
           error={(!!errors.queries && 'Must provide at least one valid query.') || undefined}
