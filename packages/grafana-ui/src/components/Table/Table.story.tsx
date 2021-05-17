@@ -35,8 +35,6 @@ export default {
     width: 700,
     height: 500,
     columnMinWidth: 150,
-    sortByDisplayName: '',
-    descending: false,
   },
 } as Meta;
 
@@ -112,19 +110,13 @@ const defaultThresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
 };
 
-export const Simple: Story = (args) => {
+export const Basic: Story = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table
-        data={data}
-        height={args.height}
-        width={args.width}
-        initialSortBy={[args.sortByDisplayName, args.descending]}
-        {...args}
-      />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };
@@ -143,13 +135,7 @@ export const BarGaugeCell: Story = (args) => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table
-        data={data}
-        height={args.height}
-        width={args.width}
-        initialSortBy={[args.sortByDisplayName, args.descending]}
-        {...args}
-      />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };
@@ -168,13 +154,7 @@ export const ColoredCells: Story = (args) => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table
-        data={data}
-        height={args.height}
-        width={args.width}
-        initialSortBy={[args.sortByDisplayName, args.descending]}
-        {...args}
-      />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };
