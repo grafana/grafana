@@ -1,40 +1,21 @@
 import uPlot, { Axis, Series } from 'uplot';
-import { Quadtree, Rect, pointWithin } from './quadtree';
+import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { TooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
-import { ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
+import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
+import { GrafanaTheme2 } from '@grafana/data';
+import { calculateFontSize, measureText } from '@grafana/ui';
+import { VizValueFormattingMode, VizValueFormattingOptions } from '@grafana/ui/src/options/builder';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
-const font = Math.round(10 * devicePixelRatio) + 'px Arial';
 
-type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
-
-function walkTwo(
-  groupWidth: number,
-  barWidth: number,
-  yIdx: number,
-  xCount: number,
-  yCount: number,
-  xDim: number,
-  xDraw?: WalkTwoCb,
-  yDraw?: WalkTwoCb
-) {
-  distribute(xCount, groupWidth, groupDistr, null, (ix, offPct, dimPct) => {
-    let groupOffPx = xDim * offPct;
-    let groupWidPx = xDim * dimPct;
-
-    xDraw && xDraw(ix, groupOffPx, groupWidPx);
-
-    yDraw &&
-      distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
-        let barOffPx = groupWidPx * offPct;
-        let barWidPx = groupWidPx * dimPct;
-
-        yDraw(ix, groupOffPx + barOffPx, barWidPx);
-      });
-  });
-}
+// Minimum font size for value label
+const VALUE_MIN_FONT_SIZE = 10;
+// % of width/height of the bar that value should fit in when measuring size
+const BAR_FONT_SIZE_RATIO = 0.75;
+// distance between label and a bar
+const BAR_LABEL_OFFSET = 10;
 
 /**
  * @internal
@@ -44,6 +25,8 @@ export interface BarsOptions {
   xDir: ScaleDirection;
   groupWidth: number;
   barWidth: number;
+  valueFormatting: VizValueFormattingOptions;
+  showValue: BarValueVisibility;
   formatValue?: (seriesIdx: number, value: any) => string;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
@@ -52,7 +35,7 @@ export interface BarsOptions {
 /**
  * @internal
  */
-export function getConfig(opts: BarsOptions) {
+export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue } = opts;
 
   let qt: Quadtree;
@@ -112,33 +95,87 @@ export function getConfig(opts: BarsOptions) {
     formatValue == null
       ? false
       : (u, sidx) => {
-          u.ctx.font = font;
-          u.ctx.fillStyle = 'white';
+          u.ctx.fillStyle = theme.colors.text.primary;
 
           uPlot.orient(
             u,
             sidx,
             (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+              const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
+              const bbox = canvas?.getBoundingClientRect();
               let numGroups = dataX.length;
               let barsPerGroup = u.series.length - 1;
-
               const _dir = dir * (ori === 0 ? 1 : -1);
 
               walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
+                const value = formatValue(sidx, dataY[ix]);
+
                 let lft = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
                 let barWid = Math.round(wid);
 
-                // prettier-ignore
                 if (dataY[ix] != null) {
                   let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
                   let x = ori === 0 ? Math.round(lft + barWid / 2) : Math.round(yPos);
-                  let y = ori === 0 ? Math.round(yPos)             : Math.round(lft + barWid / 2);
+                  let y = ori === 0 ? Math.round(yPos) : Math.round(lft + barWid / 2);
 
-                  u.ctx.textAlign    = ori === 0 ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
-                  u.ctx.textBaseline = ori === 1 ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
+                  let availableSpaceForText;
 
-                  u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
+                  if (ori === ScaleOrientation.Horizontal) {
+                    availableSpaceForText =
+                      dataY[ix]! >= 0 ? y / devicePixelRatio : bbox!.height - y / devicePixelRatio;
+                  } else {
+                    availableSpaceForText =
+                      dataY[ix]! >= 0
+                        ? bbox!.width - x / devicePixelRatio
+                        : x / devicePixelRatio - (u.width - bbox!.width);
+                  }
+
+                  let fontSize = opts.valueFormatting?.size ?? VALUE_MIN_FONT_SIZE;
+                  let xOffset = 0;
+                  let yOffset = 0;
+
+                  if (ori === ScaleOrientation.Horizontal) {
+                    yOffset = dataY[ix]! >= 0 ? -BAR_LABEL_OFFSET : BAR_LABEL_OFFSET;
+                  } else {
+                    xOffset = dataY[ix]! < 0 ? -BAR_LABEL_OFFSET : BAR_LABEL_OFFSET;
+                  }
+
+                  if (opts.valueFormatting?.mode === VizValueFormattingMode.Auto) {
+                    const size =
+                      ori === ScaleOrientation.Horizontal
+                        ? calculateFontSize(
+                            value,
+                            (barWid / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
+                            availableSpaceForText * BAR_FONT_SIZE_RATIO - BAR_LABEL_OFFSET / devicePixelRatio,
+                            1
+                          )
+                        : calculateFontSize(
+                            value,
+                            availableSpaceForText - (BAR_LABEL_OFFSET / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
+                            (barWid * BAR_FONT_SIZE_RATIO) / devicePixelRatio,
+                            1
+                          );
+                    fontSize = Math.round(size);
+                  }
+                  const textWidth = measureText(value, fontSize).width;
+
+                  // show label when it is forced or when it makes sense (fits into bar width or is readable)
+                  if (
+                    opts.showValue === BarValueVisibility.Always ||
+                    fontSize >= VALUE_MIN_FONT_SIZE ||
+                    textWidth < barWidth
+                  ) {
+                    const textAlign =
+                      ori === ScaleOrientation.Horizontal ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
+                    const textBaseline =
+                      ori === ScaleOrientation.Vertical ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
+
+                    u.ctx.font = `${fontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
+                    u.ctx.textAlign = textAlign;
+                    u.ctx.textBaseline = textBaseline;
+                    u.ctx.fillText(value, x + xOffset, y + yOffset);
+                  }
                 }
               });
             }
@@ -248,4 +285,32 @@ export function getConfig(opts: BarsOptions) {
     drawClear,
     interpolateBarChartTooltip,
   };
+}
+
+type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
+
+function walkTwo(
+  groupWidth: number,
+  barWidth: number,
+  yIdx: number,
+  xCount: number,
+  yCount: number,
+  xDim: number,
+  xDraw?: WalkTwoCb,
+  yDraw?: WalkTwoCb
+) {
+  distribute(xCount, groupWidth, groupDistr, null, (ix, offPct, dimPct) => {
+    let groupOffPx = xDim * offPct;
+    let groupWidPx = xDim * dimPct;
+
+    xDraw && xDraw(ix, groupOffPx, groupWidPx);
+
+    yDraw &&
+      distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
+        let barOffPx = groupWidPx * offPct;
+        let barWidPx = groupWidPx * dimPct;
+
+        yDraw(ix, groupOffPx + barOffPx, barWidPx);
+      });
+  });
 }

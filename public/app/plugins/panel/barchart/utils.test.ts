@@ -17,6 +17,7 @@ import {
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/ui';
+import { VizValueFormattingMode } from '@grafana/ui/src/options/builder';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -90,6 +91,9 @@ describe('BarChart utils', () => {
       stacking: StackingMode.None,
       tooltip: {
         mode: TooltipDisplayMode.None,
+      },
+      valueFormatting: {
+        mode: VizValueFormattingMode.Fixed,
       },
     };
 
