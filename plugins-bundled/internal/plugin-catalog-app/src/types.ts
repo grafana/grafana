@@ -1,4 +1,4 @@
-export interface MarketplaceAppSettings {
+export interface CatalogAppSettings {
   includeEnterprise?: boolean;
 }
 
