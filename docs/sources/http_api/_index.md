@@ -40,5 +40,6 @@ dashboards, creating users and updating data sources.
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
 - [License API]({{< relref "licensing.md" >}})
 - [Reporting API]({{< relref "reporting.md" >}})
+- [Settings API]({{< relref "settings.md" >}})
 
 
