@@ -161,7 +161,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       index={index}
                       key={query.refId}
                       data={data}
-                      query={query.model}
+                      query={{ ...query.model }}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       renderHeaderExtras={() => this.renderTimePicker(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
