@@ -158,6 +158,8 @@ This Grafana release includes the following authentication updates.
 
 #### JWT
 
+JWT is a new authentication option in Grafana.
+
 #### Added JWT authentication support
 
 You can now configure Grafana to accept a JWT token provided in the HTTP header.
