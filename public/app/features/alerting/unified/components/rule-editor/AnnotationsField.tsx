@@ -29,7 +29,7 @@ const AnnotationsField: FC = () => {
           return (
             <div className={styles.flexColumn}>
               {fields.map((field, index) => (
-                <div key={`${field.annotationKey}-${index}`} className={styles.flexRow}>
+                <div key={field.id} className={styles.flexRow}>
                   <Field
                     className={styles.field}
                     invalid={!!errors.annotations?.[index]?.key?.message}
@@ -38,7 +38,7 @@ const AnnotationsField: FC = () => {
                     <InputControl
                       name={`annotations[${index}].key`}
                       render={({ field: { ref, ...field } }) => (
-                        <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={15} />
+                        <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={18} />
                       )}
                       control={control}
                       rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
@@ -89,7 +89,7 @@ const AnnotationsField: FC = () => {
 
 const getStyles = (theme: GrafanaTheme) => ({
   annotationTextArea: css`
-    width: 450px;
+    width: 426px;
     height: 76px;
   `,
   addAnnotationsButton: css`

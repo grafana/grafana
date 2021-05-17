@@ -48,14 +48,17 @@ func TestManager(t *testing.T) {
 			ctx.cfg.BuildVersion = "7.0.0"
 
 			t.Run("Should be able to register plugin", func(t *testing.T) {
-				err := ctx.manager.Register(testPluginID, ctx.factory)
+				err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
 				require.NoError(t, err)
 				require.NotNil(t, ctx.plugin)
 				require.Equal(t, testPluginID, ctx.plugin.pluginID)
 				require.NotNil(t, ctx.plugin.logger)
+				require.Equal(t, 1, ctx.plugin.startCount)
+				require.True(t, ctx.manager.IsRegistered(testPluginID))
 
 				t.Run("Should not be able to register an already registered plugin", func(t *testing.T) {
-					err := ctx.manager.Register(testPluginID, ctx.factory)
+					err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
+					require.Equal(t, 1, ctx.plugin.startCount)
 					require.Error(t, err)
 				})
 
@@ -113,7 +116,7 @@ func TestManager(t *testing.T) {
 					wgRun.Wait()
 					require.Equal(t, context.Canceled, runErr)
 					require.Equal(t, 1, ctx.plugin.stopCount)
-					require.Equal(t, 2, ctx.plugin.startCount)
+					require.Equal(t, 1, ctx.plugin.startCount)
 				})
 
 				t.Run("Shouldn't be able to start managed plugin", func(t *testing.T) {
@@ -191,6 +194,21 @@ func TestManager(t *testing.T) {
 						require.Equal(t, http.StatusOK, w.Code)
 					})
 				})
+
+				t.Run("Should be able to decommission a running plugin", func(t *testing.T) {
+					require.True(t, ctx.manager.IsRegistered(testPluginID))
+
+					err := ctx.manager.UnregisterAndStop(context.Background(), testPluginID)
+					require.NoError(t, err)
+
+					require.Equal(t, 2, ctx.plugin.stopCount)
+					require.False(t, ctx.manager.IsRegistered(testPluginID))
+					p := ctx.manager.plugins[testPluginID]
+					require.Nil(t, p)
+
+					err = ctx.manager.StartPlugin(context.Background(), testPluginID)
+					require.Equal(t, backendplugin.ErrPluginNotRegistered, err)
+				})
 			})
 		})
 	})
@@ -202,8 +220,9 @@ func TestManager(t *testing.T) {
 			ctx.cfg.BuildVersion = "7.0.0"
 
 			t.Run("Should be able to register plugin", func(t *testing.T) {
-				err := ctx.manager.Register(testPluginID, ctx.factory)
+				err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
 				require.NoError(t, err)
+				require.True(t, ctx.manager.IsRegistered(testPluginID))
 				require.False(t, ctx.plugin.managed)
 
 				t.Run("When manager runs should not start plugin", func(t *testing.T) {
@@ -259,7 +278,7 @@ func TestManager(t *testing.T) {
 			ctx.cfg.BuildVersion = "7.0.0"
 			ctx.cfg.EnterpriseLicensePath = "/license.txt"
 
-			err := ctx.manager.Register(testPluginID, ctx.factory)
+			err := ctx.manager.RegisterAndStart(context.Background(), testPluginID, ctx.factory)
 			require.NoError(t, err)
 
 			t.Run("Should provide expected host environment variables", func(t *testing.T) {
@@ -317,12 +336,13 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 }
 
 type testPlugin struct {
-	pluginID   string
-	logger     log.Logger
-	startCount int
-	stopCount  int
-	managed    bool
-	exited     bool
+	pluginID       string
+	logger         log.Logger
+	startCount     int
+	stopCount      int
+	managed        bool
+	exited         bool
+	decommissioned bool
 	backend.CollectMetricsHandlerFunc
 	backend.CheckHealthHandlerFunc
 	backend.CallResourceHandlerFunc
@@ -360,6 +380,21 @@ func (tp *testPlugin) Exited() bool {
 	tp.mutex.RLock()
 	defer tp.mutex.RUnlock()
 	return tp.exited
+}
+
+func (tp *testPlugin) Decommission() error {
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
+
+	tp.decommissioned = true
+
+	return nil
+}
+
+func (tp *testPlugin) IsDecommissioned() bool {
+	tp.mutex.RLock()
+	defer tp.mutex.RUnlock()
+	return tp.decommissioned
 }
 
 func (tp *testPlugin) kill() {

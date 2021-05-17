@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -22,8 +21,7 @@ import (
 )
 
 func TestSlackNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -60,7 +58,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "[FIRING:1]  (val1)",
 						TitleLink:  "http:/localhost/alerting/list",
-						Text:       "",
+						Text:       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v",
@@ -96,7 +94,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "[FIRING:1]  (val1)",
 						TitleLink:  "http:/localhost/alerting/list",
-						Text:       "",
+						Text:       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v",
@@ -139,7 +137,7 @@ func TestSlackNotifier(t *testing.T) {
 					{
 						Title:      "2 firing, 0 resolved",
 						TitleLink:  "http:/localhost/alerting/list",
-						Text:       "",
+						Text:       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSource: \n\n\n\n\n",
 						Fallback:   "2 firing, 0 resolved",
 						Fields:     nil,
 						Footer:     "Grafana v",

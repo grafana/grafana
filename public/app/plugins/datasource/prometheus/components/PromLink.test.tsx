@@ -64,4 +64,16 @@ describe('PromLink', () => {
       'prom2/graph?g0.expr=up&g0.range_input=0s&g0.end_input=undefined&g0.step_input=15&g0.tab=0'
     );
   });
+  it('should create sanitized link', async () => {
+    render(
+      <div>
+        <PromLink
+          datasource={getDataSource({ directUrl: "javascript:300?1:2;alert('Hello');//" })}
+          panelData={getPanelData()}
+          query={{} as PromQuery}
+        />
+      </div>
+    );
+    expect(screen.getByText('Prometheus')).toHaveAttribute('href', 'about:blank');
+  });
 });

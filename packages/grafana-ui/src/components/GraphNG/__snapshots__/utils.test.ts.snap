@@ -79,6 +79,20 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "sync": Object {
+      "filters": Object {
+        "pub": [Function],
+      },
+      "key": "__global_",
+      "match": Array [
+        [Function],
+        [Function],
+      ],
+      "scales": Array [
+        "x",
+        "__fixed",
+      ],
+    },
   },
   "hooks": Object {},
   "scales": Object {
