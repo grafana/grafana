@@ -465,6 +465,49 @@ func TestQuery_ResourceARNs(t *testing.T) {
 	})
 }
 
+func Test_isCustomMetrics(t *testing.T) {
+	metricsMap = map[string][]string{
+		"AWS/EC2": {"ExampleMetric"},
+	}
+
+	type args struct {
+		namespace string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{name: "A custom metric should return true",
+			want: true,
+			args: args{
+				namespace: "Custom/MyApp",
+			},
+		},
+		{name: "An AWS metric not included in this package should return true",
+			want: true,
+			args: args{
+				namespace: "AWS/MyApp",
+			},
+		},
+		{name: "An AWS metric included in this package should return false",
+			want: false,
+			args: args{
+				namespace: "AWS/EC2",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isCustomMetrics(tt.args.namespace); got != tt.want {
+				t.Errorf("isCustomMetrics() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestQuery_ListMetricsPagination(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {

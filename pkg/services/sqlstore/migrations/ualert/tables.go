@@ -251,4 +251,7 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create_alert_configuration_table", migrator.NewAddTableMigration(alertConfiguration))
+	mg.AddMigration("Add column default in alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
+		Name: "default", Type: migrator.DB_Bool, Nullable: false, Default: "0",
+	}))
 }
