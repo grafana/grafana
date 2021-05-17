@@ -5,7 +5,7 @@ keywords = ["grafana", "concepts", "exemplars", "prometheus"]
 weight = 400
 +++
 
-# Exemplars
+# Introduction to exemplars
 
 An exemplar is a specific trace representative of a repeated pattern of data in a given time interval. It helps you identify higher cardinality metadata from specific events within time series data.
 
