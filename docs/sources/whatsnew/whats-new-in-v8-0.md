@@ -82,7 +82,7 @@ You can now use the Plugin Marketplace app to easily manage your plugins from wi
 
 The following data source updates are included with this Grafana release.
 
-#### Elastic data source
+#### Elasticsearch data source
 
 [Elasticsearch data source]({{< relref "../datasources/elasticsearch.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of these changes.
 
