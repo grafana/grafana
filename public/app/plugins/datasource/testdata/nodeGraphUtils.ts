@@ -1,4 +1,11 @@
-import { ArrayVector, FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import {
+  ArrayVector,
+  FieldColorModeId,
+  FieldDTO,
+  FieldType,
+  MutableDataFrame,
+  NodeGraphDataFrameFieldNames,
+} from '@grafana/data';
 import { nodes, edges } from './testData/serviceMapResponse';
 
 export function generateRandomNodes(count = 10) {
@@ -43,7 +50,7 @@ export function generateRandomNodes(count = 10) {
     nodes[sourceIndex].edges.push(nodes[sourceIndex].id);
   }
 
-  const nodeFields: any = {
+  const nodeFields: Record<string, Omit<FieldDTO, 'name'> & { values: ArrayVector }> = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: new ArrayVector(),
       type: FieldType.string,
@@ -59,20 +66,22 @@ export function generateRandomNodes(count = 10) {
     [NodeGraphDataFrameFieldNames.mainStat]: {
       values: new ArrayVector(),
       type: FieldType.number,
+      config: { displayName: 'Transactions per second' },
     },
     [NodeGraphDataFrameFieldNames.secondaryStat]: {
       values: new ArrayVector(),
       type: FieldType.number,
+      config: { displayName: 'Average duration' },
     },
     [NodeGraphDataFrameFieldNames.arc + 'success']: {
       values: new ArrayVector(),
       type: FieldType.number,
-      config: { color: { fixedColor: 'green' } },
+      config: { color: { fixedColor: 'green', mode: FieldColorModeId.Fixed }, displayName: 'Success' },
     },
     [NodeGraphDataFrameFieldNames.arc + 'errors']: {
       values: new ArrayVector(),
       type: FieldType.number,
-      config: { color: { fixedColor: 'red' } },
+      config: { color: { fixedColor: 'red', mode: FieldColorModeId.Fixed }, displayName: 'Errors' },
     },
   };
 
