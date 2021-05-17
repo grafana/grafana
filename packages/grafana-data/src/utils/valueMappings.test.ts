@@ -1,121 +1,134 @@
-import { getMappedValue, isNumeric } from './valueMappings';
-import { ValueMapping, MappingType } from '../types';
+import { getValueMappingResult, isNumeric } from './valueMappings';
+import { ValueMapping, MappingType, SpecialValueMatch } from '../types';
+
+const testSet1: ValueMapping[] = [
+  {
+    type: MappingType.ValueToText,
+    options: { '11': { text: 'elva' } },
+  },
+  {
+    type: MappingType.RangeToText,
+    options: {
+      from: 1,
+      to: 9,
+      result: { text: '1-9' },
+    },
+  },
+  {
+    type: MappingType.RangeToText,
+    options: {
+      from: 8,
+      to: 12,
+      result: { text: '8-12' },
+    },
+  },
+  {
+    type: MappingType.SpecialValue,
+    options: {
+      match: SpecialValueMatch.Null,
+      result: { text: 'it is null' },
+    },
+  },
+  {
+    type: MappingType.SpecialValue,
+    options: {
+      match: SpecialValueMatch.NaN,
+      result: { text: 'it is nan' },
+    },
+  },
+  {
+    type: MappingType.SpecialValue,
+    options: {
+      match: SpecialValueMatch.True,
+      result: { text: 'it is true' },
+    },
+  },
+  {
+    type: MappingType.SpecialValue,
+    options: {
+      match: SpecialValueMatch.False,
+      result: { text: 'it is false' },
+    },
+  },
+];
 
 describe('Format value with value mappings', () => {
-  it('should return undefined with no valuemappings', () => {
+  it('should return null with no valuemappings', () => {
     const valueMappings: ValueMapping[] = [];
     const value = '10';
 
-    expect(getMappedValue(valueMappings, value)).toBeUndefined();
+    expect(getValueMappingResult(valueMappings, value)).toBeNull();
   });
 
-  it('should return undefined with no matching valuemappings', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 0, text: 'elva', type: MappingType.ValueToText, value: '11' },
-      { id: 1, text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
-    ];
-    const value = '10';
-
-    expect(getMappedValue(valueMappings, value)).toBeUndefined();
+  it('should return null with no matching valuemappings', () => {
+    const value = '100';
+    expect(getValueMappingResult(testSet1, value)).toBeNull();
   });
 
-  it('should return first matching mapping with lowest id', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-      { id: 1, text: 'tio', type: MappingType.ValueToText, value: '10' },
-    ];
-    const value = '10';
-
-    expect(getMappedValue(valueMappings, value).text).toEqual('1-20');
+  it('should return match result with string value match', () => {
+    const value = '11';
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'elva' });
   });
 
-  it('should return if value is null and value to text mapping value is null', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-      { id: 1, text: '<NULL>', type: MappingType.ValueToText, value: 'null' },
-    ];
+  it('should return match result with number value', () => {
+    const value = 11;
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'elva' });
+  });
+
+  it('should return match result for null value', () => {
     const value = null;
-
-    expect(getMappedValue(valueMappings, value).text).toEqual('<NULL>');
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: 'it is null' });
   });
 
-  it('should return if value is null and range to text mapping from and to is null', () => {
+  it('should return match result for undefined value', () => {
+    const value = undefined;
+    expect(getValueMappingResult(testSet1, value as any)).toEqual({ text: 'it is null' });
+  });
+
+  it('should return match result for nan value', () => {
+    const value = Number.NaN;
+    expect(getValueMappingResult(testSet1, value as any)).toEqual({ text: 'it is nan' });
+  });
+
+  it('should return range mapping that matches first', () => {
+    const value = '9';
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: '1-9' });
+  });
+
+  it('should return correct range mapping result', () => {
+    const value = '12';
+    expect(getValueMappingResult(testSet1, value)).toEqual({ text: '8-12' });
+  });
+
+  it.each`
+    value            | expected
+    ${'2/0/12'}      | ${{ text: 'mapped value 1' }}
+    ${'2/1/12'}      | ${null}
+    ${'2:0'}         | ${{ text: 'mapped value 3' }}
+    ${'2:1'}         | ${null}
+    ${'20whatever'}  | ${{ text: 'mapped value 2' }}
+    ${'20whateve'}   | ${null}
+    ${'20'}          | ${null}
+    ${'00020.4'}     | ${null}
+    ${'192.168.1.1'} | ${{ text: 'mapped value ip' }}
+    ${'192'}         | ${null}
+    ${'192.168'}     | ${null}
+    ${'192.168.1'}   | ${null}
+    ${9.9}           | ${{ text: 'OK' }}
+  `('numeric-like text mapping, value:${value', ({ value, expected }) => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, text: '<NULL>', type: MappingType.RangeToText, from: 'null', to: 'null' },
-      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
+      {
+        type: MappingType.ValueToText,
+        options: {
+          '2/0/12': { text: 'mapped value 1' },
+          '20whatever': { text: 'mapped value 2' },
+          '2:0': { text: 'mapped value 3' },
+          '192.168.1.1': { text: 'mapped value ip' },
+          '9.9': { text: 'OK' },
+        },
+      },
     ];
-    const value = null;
-
-    expect(getMappedValue(valueMappings, value).text).toEqual('<NULL>');
-  });
-
-  it('should return rangeToText mapping where value equals to', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 0, text: '1-10', type: MappingType.RangeToText, from: '1', to: '10' },
-      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
-    ];
-    const value = '10';
-
-    expect(getMappedValue(valueMappings, value).text).toEqual('1-10');
-  });
-
-  it('should return rangeToText mapping where value equals from', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 0, text: '10-20', type: MappingType.RangeToText, from: '10', to: '20' },
-      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
-    ];
-    const value = '10';
-
-    expect(getMappedValue(valueMappings, value).text).toEqual('10-20');
-  });
-
-  it('should return rangeToText mapping where value is between from and to', () => {
-    const valueMappings: ValueMapping[] = [
-      { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
-    ];
-    const value = '10';
-
-    expect(getMappedValue(valueMappings, value).text).toEqual('1-20');
-  });
-
-  describe('text mapping', () => {
-    it('should map value text to mapping', () => {
-      const valueMappings: ValueMapping[] = [
-        { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-        { id: 1, text: 'ELVA', type: MappingType.ValueToText, value: 'elva' },
-      ];
-
-      const value = 'elva';
-
-      expect(getMappedValue(valueMappings, value).text).toEqual('ELVA');
-    });
-
-    it.each`
-      value            | expected
-      ${'2/0/12'}      | ${{ id: 1, text: 'mapped value 1', type: MappingType.ValueToText, value: '2/0/12' }}
-      ${'2/1/12'}      | ${undefined}
-      ${'2:0'}         | ${{ id: 3, text: 'mapped value 3', type: MappingType.ValueToText, value: '2:0' }}
-      ${'2:1'}         | ${undefined}
-      ${'20whatever'}  | ${{ id: 2, text: 'mapped value 2', type: MappingType.ValueToText, value: '20whatever' }}
-      ${'20whateve'}   | ${undefined}
-      ${'20'}          | ${undefined}
-      ${'00020.4'}     | ${undefined}
-      ${'192.168.1.1'} | ${{ id: 4, text: 'mapped value ip', type: MappingType.ValueToText, value: '192.168.1.1' }}
-      ${'192'}         | ${undefined}
-      ${'192.168'}     | ${undefined}
-      ${'192.168.1'}   | ${undefined}
-      ${'9.90'}        | ${{ id: 5, text: 'OK', type: MappingType.ValueToText, value: '9.9' }}
-    `('numeric-like text mapping, value:${value', ({ value, expected }) => {
-      const valueMappings: ValueMapping[] = [
-        { id: 1, text: 'mapped value 1', type: MappingType.ValueToText, value: '2/0/12' },
-        { id: 2, text: 'mapped value 2', type: MappingType.ValueToText, value: '20whatever' },
-        { id: 3, text: 'mapped value 3', type: MappingType.ValueToText, value: '2:0' },
-        { id: 4, text: 'mapped value ip', type: MappingType.ValueToText, value: '192.168.1.1' },
-        { id: 5, text: 'OK', type: MappingType.ValueToText, value: '9.9' },
-      ];
-      expect(getMappedValue(valueMappings, value)).toEqual(expected);
-    });
+    expect(getValueMappingResult(valueMappings, value)).toEqual(expected);
   });
 });
 
