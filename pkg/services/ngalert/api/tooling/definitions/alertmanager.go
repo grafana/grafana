@@ -246,7 +246,24 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
-func (c *PostableUserConfig) EncryptSecureSettings() error {
+// GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
+func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
+	UIDs := make(map[string]*PostableGrafanaReceiver)
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				UIDs[gr.Uid] = gr
+			}
+		default:
+		}
+	}
+	return UIDs
+}
+
+// ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
+func (c *PostableUserConfig) ProcessConfig() error {
+	seenUIDs := make(map[string]struct{})
 	// encrypt secure settings for storing them in DB
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
@@ -259,6 +276,17 @@ func (c *PostableUserConfig) EncryptSecureSettings() error {
 					}
 					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
+				if gr.Uid == "" {
+					for {
+						gen := util.GenerateShortUID()
+						_, ok := seenUIDs[gen]
+						if !ok {
+							gr.Uid = gen
+							break
+						}
+					}
+				}
+				seenUIDs[gr.Uid] = struct{}{}
 			}
 		default:
 		}
@@ -352,6 +380,21 @@ func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(tmp)
+}
+
+// GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
+func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafanaReceiver {
+	UIDs := make(map[string]*GettableGrafanaReceiver)
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.GettableGrafanaReceivers.GrafanaManagedReceivers {
+				UIDs[gr.Uid] = gr
+			}
+		default:
+		}
+	}
+	return UIDs
 }
 
 type GettableApiAlertingConfig struct {
@@ -506,6 +549,22 @@ func AllReceivers(route *config.Route) (res []string) {
 
 type GettableGrafanaReceiver dtos.AlertNotification
 type PostableGrafanaReceiver models.CreateAlertNotificationCommand
+
+func (r *PostableGrafanaReceiver) GetDecryptedSecret(key string) (string, error) {
+	storedValue, ok := r.SecureSettings[key]
+	if !ok {
+		return "", nil
+	}
+	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
+	if err != nil {
+		return "", err
+	}
+	decryptedValue, err := util.Decrypt(decodeValue, setting.SecretKey)
+	if err != nil {
+		return "", err
+	}
+	return string(decryptedValue), nil
+}
 
 type ReceiverType int
 

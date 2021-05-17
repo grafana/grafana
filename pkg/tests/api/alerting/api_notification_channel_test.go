@@ -67,7 +67,8 @@ func TestNotificationChannels(t *testing.T) {
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b := getBody(t, resp.Body)
-		require.JSONEq(t, getExpAlertmanagerConfigFromAPI(mockChannel.server.Addr), b)
+		re := regexp.MustCompile(`"uid":"(\w+)"`)
+		require.JSONEq(t, getExpAlertmanagerConfigFromAPI(mockChannel.server.Addr), string(re.ReplaceAll([]byte(b), []byte(`"uid":""`))))
 	}
 
 	{
