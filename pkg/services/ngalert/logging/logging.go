@@ -21,5 +21,4 @@ func (w *GoKitWrapper) Write(p []byte) (n int, err error) {
 	withoutNewline := strings.TrimSuffix(string(p), "\n")
 	w.logger.Info(withoutNewline)
 	return len(p), nil
-
 }
