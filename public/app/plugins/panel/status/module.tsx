@@ -1,9 +1,9 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { TimelinePanel } from './TimelinePanel';
-import { TimelineOptions, TimelineFieldConfig, defaultTimelineFieldConfig } from './types';
+import { StatusPanel } from './StatusPanel';
+import { StatusPanelOptions, StatusFieldConfig, defaultStatusFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
 
-export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
+export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(StatusPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -20,7 +20,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          defaultValue: defaultTimelineFieldConfig.lineWidth,
+          defaultValue: defaultStatusFieldConfig.lineWidth,
           settings: {
             min: 0,
             max: 10,
@@ -30,7 +30,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
-          defaultValue: defaultTimelineFieldConfig.fillOpacity,
+          defaultValue: defaultStatusFieldConfig.fillOpacity,
           settings: {
             min: 0,
             max: 100,
@@ -53,21 +53,19 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         },
         defaultValue: BarValueVisibility.Always,
       })
-      .addRadio({
-        path: 'alignValue',
-        name: 'Align value',
-        settings: {
-          options: [
-            { value: 'left', label: 'Left' },
-            { value: 'center', label: 'Center' },
-            { value: 'right', label: 'Right' },
-          ],
-        },
-        defaultValue: 'center',
-      })
       .addSliderInput({
         path: 'rowHeight',
         name: 'Row height',
+        defaultValue: 0.9,
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
+      })
+      .addSliderInput({
+        path: 'colWidth',
+        name: 'Column width',
         defaultValue: 0.9,
         settings: {
           min: 0,

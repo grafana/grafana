@@ -43,6 +43,7 @@ const alertmanagerPlugin = async () =>
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as timelinePanel from 'app/plugins/panel/timeline/module';
+import * as statusPanel from 'app/plugins/panel/status/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -91,6 +92,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,
   'app/plugins/panel/timeline/module': timelinePanel,
+  'app/plugins/panel/status/module': statusPanel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/xychart/module': xyChartPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,

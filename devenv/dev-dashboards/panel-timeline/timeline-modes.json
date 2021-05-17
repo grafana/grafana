@@ -331,8 +331,8 @@
           "stringInput": ""
         }
       ],
-      "title": "\"Periodic samples\" Mode",
-      "type": "timeline"
+      "title": "Status map view",
+      "type": "status"
     }
   ],
   "refresh": false,

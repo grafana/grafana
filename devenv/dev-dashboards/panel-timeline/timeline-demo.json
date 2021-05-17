@@ -388,8 +388,8 @@
           "stringInput": ""
         }
       ],
-      "title": "\"Periodic samples\" Mode",
-      "type": "timeline"
+      "title": "Status map",
+      "type": "status"
     }
   ],
   "refresh": false,

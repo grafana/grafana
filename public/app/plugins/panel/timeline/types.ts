@@ -4,7 +4,8 @@ import { VizLegendOptions, HideableFieldConfig, BarValueVisibility } from '@graf
  * @alpha
  */
 export interface TimelineOptions {
-  mode: TimelineMode;
+  mode: TimelineMode; // not in the saved model!
+
   legend: VizLegendOptions;
   showValue: BarValueVisibility;
   rowHeight: number;
