@@ -130,8 +130,16 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 		return scopes, nil
 	case "dashboard":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Dashboard},
-			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.Dashboard},
+			models.QuotaScope{
+				Name:         "global",
+				Target:       target,
+				DefaultLimit: qs.Cfg.Quota.Global.Dashboard,
+			},
+			models.QuotaScope{
+				Name:         "org",
+				Target:       target,
+				DefaultLimit: qs.Cfg.Quota.Org.Dashboard,
+			},
 		)
 		return scopes, nil
 	case "data_source":
