@@ -29,10 +29,10 @@ steps:
 
 
 - name: slack
-  image: plugins/slack
+  image: plugins/slack-blame
   settings:
     channel: slack-webhooks-test
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: @Dimitris"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: @{{slack.name}}"
     webhook:
       from_secret: slack_webhook_test
 
