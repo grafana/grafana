@@ -46,14 +46,19 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   }
 }
 
-export interface WithAlertBoxProps {
+export interface ErrorBoundaryProps {
+  /** Title for the error boundary alert */
   title?: string;
+
+  /** Component to be wrapped with an error boundary */
   children: ReactNode;
+
+  /** 'page' will render full page error with stacktrace. 'alertbox' will render an <Alert />. Default 'alertbox' */
   style?: 'page' | 'alertbox';
 }
 
-export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
-  static defaultProps: Partial<WithAlertBoxProps> = {
+export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryProps> {
+  static defaultProps: Partial<ErrorBoundaryProps> = {
     title: 'An unexpected error happened',
     style: 'alertbox',
   };
