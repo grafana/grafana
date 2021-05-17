@@ -121,11 +121,13 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
                 </Alert>
               )}
               <AlertTypeStep editingExistingRule={!!existing} />
-              <>
-                <QueryStep />
-                <ConditionsStep />
-                <DetailsStep />
-              </>
+              {showStep2 && (
+                <>
+                  <QueryStep />
+                  <ConditionsStep />
+                  <DetailsStep />
+                </>
+              )}
             </div>
           </CustomScrollbar>
         </div>
