@@ -7,6 +7,7 @@ import SilenceTableRow from './SilenceTableRow';
 import { getAlertTableStyles } from '../../styles/table';
 import { NoSilencesSplash } from './NoSilencesCTA';
 import { makeAMLink } from '../../utils/misc';
+import { contextSrv } from 'app/core/services/context_srv';
 interface Props {
   silences: Silence[];
   alertManagerAlerts: AlertmanagerAlert[];
@@ -25,13 +26,15 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
     <>
       {!!silences.length && (
         <>
-          <div className={styles.topButtonContainer}>
-            <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
-              <Button className={styles.addNewSilence} icon="plus">
-                New Silence
-              </Button>
-            </Link>
-          </div>
+          {contextSrv.isEditor && (
+            <div className={styles.topButtonContainer}>
+              <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
+                <Button className={styles.addNewSilence} icon="plus">
+                  New Silence
+                </Button>
+              </Link>
+            </div>
+          )}
           <table className={tableStyles.table}>
             <colgroup>
               <col className={tableStyles.colExpand} />
@@ -39,7 +42,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
               <col className={styles.colMatchers} />
               <col />
               <col />
-              <col />
+              {contextSrv.isEditor && <col />}
             </colgroup>
             <thead>
               <tr>
@@ -48,7 +51,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
                 <th>Matchers</th>
                 <th>Alerts</th>
                 <th>Schedule</th>
-                <th>Action</th>
+                {contextSrv.isEditor && <th>Action</th>}
               </tr>
             </thead>
             <tbody>

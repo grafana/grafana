@@ -1,7 +1,16 @@
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
-import { DefaultTimeZone, GrafanaTheme } from '@grafana/data';
+import {
+  DefaultTimeZone,
+  GrafanaTheme,
+  parseDuration,
+  intervalToAbbreviatedDurationString,
+  addDurationToDate,
+  dateTime,
+  isValidDate,
+} from '@grafana/data';
+import { useDebounce } from 'react-use';
 import { config } from '@grafana/runtime';
 import { pickBy } from 'lodash';
 import MatchersField from './MatchersField';
@@ -21,14 +30,22 @@ interface Props {
 }
 
 const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
+  const now = new Date();
   if (silence) {
+    const isExpired = Date.parse(silence.endsAt) < Date.now();
+    const interval = isExpired
+      ? {
+          start: now,
+          end: addDurationToDate(now, { hours: 2 }),
+        }
+      : { start: new Date(silence.startsAt), end: new Date(silence.endsAt) };
     return {
       id: silence.id,
-      startsAt: new Date().toISOString(),
-      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // Default time period is now + 2h
+      startsAt: interval.start.toISOString(),
+      endsAt: interval.end.toISOString(),
       comment: silence.comment,
       createdBy: silence.createdBy,
-      duration: `2h`,
+      duration: intervalToAbbreviatedDurationString(interval),
       isRegex: false,
       matchers: silence.matchers || [],
       matcherName: '',
@@ -36,10 +53,11 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       timeZone: DefaultTimeZone,
     };
   } else {
+    const endsAt = addDurationToDate(now, { hours: 2 }); // Default time period is now + 2h
     return {
       id: '',
-      startsAt: new Date().toISOString(),
-      endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // Default time period is now + 2h
+      startsAt: now.toISOString(),
+      endsAt: endsAt.toISOString(),
       comment: '',
       createdBy: config.bootData.user.name,
       duration: '2h',
@@ -61,7 +79,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
 
   useCleanup((state) => state.unifiedAlerting.updateSilence);
 
-  const { register, handleSubmit, formState } = formAPI;
+  const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
 
   const onSubmit = (data: SilenceFormFields) => {
     const { id, startsAt, endsAt, comment, createdBy, matchers } = data;
@@ -85,6 +103,37 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
       })
     );
   };
+
+  const duration = watch('duration');
+  const startsAt = watch('startsAt');
+  const endsAt = watch('endsAt');
+
+  // Keep duration and endsAt in sync
+  const [prevDuration, setPrevDuration] = useState(duration);
+  useDebounce(
+    () => {
+      if (isValidDate(startsAt) && isValidDate(endsAt)) {
+        if (duration !== prevDuration) {
+          setValue('endsAt', dateTime(addDurationToDate(new Date(startsAt), parseDuration(duration))).toISOString());
+          setPrevDuration(duration);
+        } else {
+          const startValue = new Date(startsAt).valueOf();
+          const endValue = new Date(endsAt).valueOf();
+          if (endValue > startValue) {
+            const nextDuration = intervalToAbbreviatedDurationString({
+              start: new Date(startsAt),
+              end: new Date(endsAt),
+            });
+            setValue('duration', nextDuration);
+            setPrevDuration(nextDuration);
+          }
+        }
+      }
+    },
+    700,
+    [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
+  );
+
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -94,7 +143,29 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
               {error.message || (error as any)?.data?.message || String(error)}
             </Alert>
           )}
-          <SilencePeriod />
+          <div className={styles.flexRow}>
+            <SilencePeriod />
+            <Field
+              label="Duration"
+              invalid={!!formState.errors.duration}
+              error={
+                formState.errors.duration &&
+                (formState.errors.duration.type === 'required' ? 'Required field' : formState.errors.duration.message)
+              }
+            >
+              <Input
+                className={styles.createdBy}
+                {...register('duration', {
+                  validate: (value) =>
+                    Object.keys(parseDuration(value)).length === 0
+                      ? 'Invalid duration. Valid example: 1d 4h (Available units: y, M, w, d, h, m, s)'
+                      : undefined,
+                })}
+                id="duration"
+              />
+            </Field>
+          </div>
+
           <MatchersField />
           <Field
             className={cx(styles.field, styles.textArea)}

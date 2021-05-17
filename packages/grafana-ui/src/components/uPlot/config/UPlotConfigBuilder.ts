@@ -107,6 +107,7 @@ export class UPlotConfigBuilder {
   setStacking(enabled = true) {
     this.isStacking = enabled;
   }
+
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }

@@ -196,6 +196,13 @@ export interface StackingConfig {
 /**
  * @alpha
  */
+export interface StackableFieldConfig {
+  stacking?: StackingConfig;
+}
+
+/**
+ * @alpha
+ */
 export enum GraphTresholdsStyleMode {
   Off = 'off',
   Line = 'line',
@@ -220,10 +227,10 @@ export interface GraphFieldConfig
     PointsConfig,
     AxisConfig,
     BarConfig,
+    StackableFieldConfig,
     HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
-  stacking?: StackingConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
 }
 

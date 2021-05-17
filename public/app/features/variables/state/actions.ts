@@ -111,7 +111,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 };
 
 export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     const dashboardModel: DashboardVariableModel = {
       ...initialVariableModelState,
       id: '__dashboard',
@@ -493,6 +493,7 @@ export const variableUpdated = (
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         const dashboard = getState().dashboard.getModel();
+        dashboard?.setChangeAffectsAllPanels();
         dashboard?.processRepeats();
         locationService.partial(getQueryWithVariables(getState));
         dashboard?.startRefresh();
@@ -526,6 +527,7 @@ export const onTimeRangeUpdated = (
   try {
     await Promise.all(promises);
     const dashboard = getState().dashboard.getModel();
+    dashboard?.setChangeAffectsAllPanels();
     dashboard?.startRefresh();
   } catch (error) {
     console.error(error);
