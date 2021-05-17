@@ -660,8 +660,10 @@ export const processQueryResponse = (
       return state;
     }
 
-    // For Angular editors
-    state.eventBridge.emit(PanelEvents.dataError, error);
+    // Send error to Angular editors
+    if (state.datasourceInstance?.components?.QueryCtrl) {
+      state.eventBridge.emit(PanelEvents.dataError, error);
+    }
   }
 
   if (!request) {
@@ -673,7 +675,6 @@ export const processQueryResponse = (
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
-
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
