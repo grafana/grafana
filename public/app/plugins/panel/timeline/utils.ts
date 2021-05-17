@@ -6,31 +6,18 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   outerJoinDataFrames,
-  classicColors,
   Field,
+  FALLBACK_COLOR,
 } from '@grafana/data';
-import {
-  UPlotConfigBuilder,
-  FIXED_UNIT,
-  SeriesVisibilityChangeMode,
-  BarValueVisibility,
-  UPlotConfigPrepFn,
-} from '@grafana/ui';
+import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode, UPlotConfigPrepFn } from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
-import {
-  AxisPlacement,
-  GraphGradientMode,
-  ScaleDirection,
-  ScaleOrientation,
-} from '@grafana/ui/src/components/uPlot/config';
+import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { measureText } from '@grafana/ui/src/utils/measureText';
-
-import { TimelineFieldConfig, TimelineMode } from './types';
+import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
   fillOpacity: 80,
-  gradientMode: GraphGradientMode.None,
 };
 
 export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityChangeMode {
@@ -49,21 +36,16 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
   });
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
-  mode: TimelineMode;
-  rowHeight: number;
-  colWidth?: number;
-  showValue: BarValueVisibility;
-}> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
   timeZone,
   getTimeRange,
-
   mode,
   rowHeight,
   colWidth,
   showValue,
+  alignValue,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -72,15 +54,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const colorLookup = (seriesIdx: number, valueIdx: number, value: any) => {
+  const getValueColor = (seriesIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
+
     if (field.display) {
       const disp = field.display(value); // will apply color modes
       if (disp.color) {
         return disp.color;
       }
     }
-    return classicColors[Math.floor(value % classicColors.length)];
+
+    return FALLBACK_COLOR;
   };
 
   const yAxisWidth =
@@ -99,9 +83,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
+    alignValue,
+    theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
-    fill: colorLookup,
-    stroke: colorLookup,
+    getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,
+    getValueColor,
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
@@ -176,17 +162,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     field.state!.seriesIndex = seriesIndex++;
 
-    //const scaleKey = config.unit || FIXED_UNIT;
-    //const colorMode = getFieldColorModeForField(field);
-
-    let { fillOpacity } = customConfig;
+    // const scaleKey = config.unit || FIXED_UNIT;
+    // const colorMode = getFieldColorModeForField(field);
 
     builder.addSeries({
       scaleKey: FIXED_UNIT,
       pathBuilder: coreConfig.drawPaths,
       pointsBuilder: coreConfig.drawPoints,
       //colorMode,
-      fillOpacity,
+      lineWidth: customConfig.lineWidth,
+      fillOpacity: customConfig.fillOpacity,
       theme,
       show: !customConfig.hideFrom?.viz,
       thresholds: config.thresholds,

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/quota"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -45,10 +46,10 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister                   `inject:""`
 	SQLStore        *sqlstore.SQLStore                      `inject:""`
 	DataService     *tsdb.Service                           `inject:""`
-	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	QuotaService    *quota.QuotaService                     `inject:""`
 	Metrics         *metrics.Metrics                        `inject:""`
+	Alertmanager    *notifier.Alertmanager
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
@@ -64,7 +65,17 @@ func (ng *AlertNG) Init() error {
 	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
-	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
+	store := &store.DBstore{
+		BaseInterval:           baseInterval,
+		DefaultIntervalSeconds: defaultIntervalSeconds,
+		SQLStore:               ng.SQLStore,
+	}
+
+	var err error
+	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
+	if err != nil {
+		return err
+	}
 
 	schedCfg := schedule.SchedulerCfg{
 		C:             clock.New(),
@@ -75,6 +86,7 @@ func (ng *AlertNG) Init() error {
 		InstanceStore: store,
 		RuleStore:     store,
 		Notifier:      ng.Alertmanager,
+		Metrics:       ng.Metrics,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
@@ -101,7 +113,15 @@ func (ng *AlertNG) Init() error {
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
 	ng.schedule.WarmStateCache(ng.stateManager)
-	return ng.schedule.Ticker(ctx, ng.stateManager)
+
+	children, subCtx := errgroup.WithContext(ctx)
+	children.Go(func() error {
+		return ng.schedule.Ticker(subCtx, ng.stateManager)
+	})
+	children.Go(func() error {
+		return ng.Alertmanager.Run(subCtx)
+	})
+	return children.Wait()
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.

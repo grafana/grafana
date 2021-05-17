@@ -54,7 +54,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 
-	title := getTitleFromTemplateData(data)
+	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",

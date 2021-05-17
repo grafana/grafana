@@ -76,7 +76,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   }
   const total = displayValues
     .filter((item) => {
-      return !item.field.custom.hideFrom.viz;
+      return !item.field.custom?.hideFrom?.viz;
     })
     .reduce((acc, item) => item.display.numeric + acc, 0);
 
