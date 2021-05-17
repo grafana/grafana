@@ -212,7 +212,7 @@ To connect the Prometheus data source to Amazon Managed Service for Prometheus u
 
 If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).
 
-## Exemplars
+## Configuring exemplars
 
 > **Note:** This feature is available in Prometheus 2.26+ and Grafana 7.4+.
 
