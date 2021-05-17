@@ -32,7 +32,7 @@ steps:
   image: plugins/slack
   settings:
     channel: slack-webhooks-test
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: @{{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: @Dimitris"
     webhook:
       from_secret: slack_webhook_test
 
