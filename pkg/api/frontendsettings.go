@@ -274,20 +274,22 @@ func getPanelSort(id string) int {
 		sort = 7
 	case "piechart":
 		sort = 8
-	case "timeline":
+	case "state-timeline":
 		sort = 9
 	case "heatmap":
 		sort = 10
-	case "graph":
+	case "status-grid":
 		sort = 11
-	case "text":
+	case "graph":
 		sort = 12
-	case "alertlist":
+	case "text":
 		sort = 13
-	case "dashlist":
+	case "alertlist":
 		sort = 14
-	case "news":
+	case "dashlist":
 		sort = 15
+	case "news":
+		sort = 16
 	}
 	return sort
 }
