@@ -291,11 +291,7 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
     },
   } as any);
 
-  const store = configureStore();
-  store.getState().user = {
-    orgId: 1,
-    timeZone: 'utc',
-  };
+  const store = configureStore({ user: { orgId: 1, timeZone: 'utc' } });
 
   locationService.push({ pathname: '/explore' });
 

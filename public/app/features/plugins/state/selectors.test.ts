@@ -3,7 +3,7 @@ import { initialState } from './reducers';
 import { getMockPlugins } from '../__mocks__/pluginMocks';
 
 describe('Selectors', () => {
-  const mockState = initialState;
+  const mockState = { ...initialState };
 
   it('should return search query', () => {
     mockState.searchQuery = 'test';
