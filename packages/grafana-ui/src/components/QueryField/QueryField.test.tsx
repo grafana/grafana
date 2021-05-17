@@ -30,6 +30,17 @@ describe('<QueryField />', () => {
     expect(onRun.mock.calls.length).toBe(1);
   });
 
+  it('should run onChange with clean text', () => {
+    const onChange = jest.fn();
+    const wrapper = shallow(
+      <QueryField query={`my\r clean query`} onTypeahead={jest.fn()} onChange={onChange} portalOrigin="mock-origin" />
+    );
+    const field = wrapper.instance() as QueryField;
+    field.runOnChange();
+    expect(onChange.mock.calls.length).toBe(1);
+    expect(onChange.mock.calls[0][0]).toBe('my clean query');
+  });
+
   it('should run custom on blur, but not necessarily execute query', () => {
     const onBlur = jest.fn();
     const onRun = jest.fn();
