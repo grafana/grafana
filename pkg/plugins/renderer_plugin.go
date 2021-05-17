@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
@@ -17,7 +16,6 @@ type RendererPlugin struct {
 	FrontendPluginBase
 
 	Executable           string `json:"executable,omitempty"`
-	GrpcPluginV1         pluginModel.RendererPlugin
 	GrpcPluginV2         pluginextensionv2.RendererPlugin
 	backendPluginManager backendplugin.Manager
 }

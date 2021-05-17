@@ -59,11 +59,9 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 		return err
 	}
 
-	if p.client.NegotiatedVersion() > 1 {
-		p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
-		if err != nil {
-			return err
-		}
+	p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
+	if err != nil {
+		return err
 	}
 
 	if p.pluginClient == nil {
