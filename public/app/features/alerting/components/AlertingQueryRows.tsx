@@ -31,7 +31,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange(timeRange: RelativeTimeRange, index: number) {
+  onChangeTimeRange = (timeRange: RelativeTimeRange, index: number) => {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -44,7 +44,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         };
       })
     );
-  }
+  };
 
   onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
@@ -156,6 +156,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       onChangeDataSource={this.onChangeDataSource}
                       onDuplicateQuery={onDuplicateQuery}
                       onRunQueries={onRunQueries}
+                      onChangeTimeRange={this.onChangeTimeRange}
                     />
                   );
                 })}
