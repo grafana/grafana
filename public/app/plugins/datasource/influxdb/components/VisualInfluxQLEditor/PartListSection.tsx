@@ -100,6 +100,9 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
               buttonClassName={noHorizMarginPaddingClass}
               loadOptions={loadOptions}
               onChange={(v) => {
+                if (v === null) {
+                  return; // we do not handle the clear-value case, it should not happen, we did not enable it
+                }
                 onParamChange(unwrap(v.value), i);
               }}
             />

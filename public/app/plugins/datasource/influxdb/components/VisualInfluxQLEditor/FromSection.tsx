@@ -52,6 +52,9 @@ export const FromSection = ({
         value={policy ?? 'using default policy'}
         loadOptions={handlePolicyLoadOptions}
         onChange={(v) => {
+          if (v === null) {
+            return; // we do not handle the clear-value case, it should not happen, we did not enable it
+          }
           onChange(v.value, measurement);
         }}
       />
@@ -61,6 +64,9 @@ export const FromSection = ({
         loadOptions={handleMeasurementLoadOptions}
         filterByLoadOptions
         onChange={(v) => {
+          if (v === null) {
+            return; // we do not handle the clear-value case, it should not happen, we did not enable it
+          }
           onChange(policy, v.value);
         }}
       />

@@ -35,8 +35,9 @@ type Props = {
   // as you write the loadOptions is executed again and again,
   // and it is relied on to filter the results.
   filterByLoadOptions?: boolean;
-  onChange: (v: SelVal) => void;
+  onChange: (v: SelVal | null) => void;
   allowCustomValue?: boolean;
+  isClearable?: boolean;
 };
 
 const selectClass = css({
@@ -44,17 +45,19 @@ const selectClass = css({
 });
 
 type SelProps = {
+  value: string;
   loadOptions: LoadOptions;
   filterByLoadOptions?: boolean;
   onClose: () => void;
-  onChange: (v: SelVal) => void;
+  onChange: (v: SelVal | null) => void;
   allowCustomValue?: boolean;
+  isClearable: boolean;
 };
 
 type SelReloadProps = {
   loadOptions: (filter: string) => Promise<SelVal[]>;
   onClose: () => void;
-  onChange: (v: SelVal) => void;
+  onChange: (v: SelVal | null) => void;
   allowCustomValue?: boolean;
 };
 
@@ -67,6 +70,9 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
   // we will have to put the debounced call into an useRef,
   // and probably have an useEffect
   const debouncedLoadOptions = debouncePromise(loadOptions, 1000, { leading: true });
+
+  // this component does not have a `value`. the way it works,
+  // when it opens up you always start "empty"
   return (
     <div className={selectClass}>
       <AsyncSelect
@@ -83,40 +89,69 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
 };
 
 type SelSingleLoadProps = {
+  value: string;
   loadOptions: (filter: string) => Promise<SelVal[]>;
   onClose: () => void;
-  onChange: (v: SelVal) => void;
+  onChange: (v: SelVal | null) => void;
   allowCustomValue?: boolean;
+  isClearable: boolean;
 };
 
-const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: SelSingleLoadProps): JSX.Element => {
+const SelSingleLoad = ({
+  value,
+  loadOptions,
+  allowCustomValue,
+  isClearable,
+  onChange,
+  onClose,
+}: SelSingleLoadProps): JSX.Element => {
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
 
   useEffect(() => {
     doLoad();
   }, [doLoad, loadOptions]);
 
+  const options = loadState.value ?? [];
+
+  // if the current-value is not in the list-of-options, and it is not empty, we have to add
+  // it to the options
+  const valueInOptions = options.some((x) => x.value === value);
+
+  const fullOptions = value === '' || valueInOptions ? options : [{ label: value, value }, ...options];
+
   return (
     <div className={selectClass}>
       <Select
-        autoFocus
         isOpen
+        value={value}
+        isClearable={isClearable}
+        autoFocus
         onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
-        options={loadState.value ?? []}
+        options={fullOptions}
         onChange={onChange}
       />
     </div>
   );
 };
 
-const Sel = ({ loadOptions, filterByLoadOptions, allowCustomValue, onChange, onClose }: SelProps): JSX.Element => {
+const Sel = ({
+  value,
+  isClearable,
+  loadOptions,
+  filterByLoadOptions,
+  allowCustomValue,
+  onChange,
+  onClose,
+}: SelProps): JSX.Element => {
   // unfortunately <Segment/> and <SegmentAsync/> have somewhat different behavior,
   // so the simplest approach was to just create two separate wrapper-components
   return filterByLoadOptions ? (
     <SelReload loadOptions={loadOptions} allowCustomValue={allowCustomValue} onChange={onChange} onClose={onClose} />
   ) : (
     <SelSingleLoad
+      isClearable={isClearable}
+      value={value}
       loadOptions={loadOptions}
       allowCustomValue={allowCustomValue}
       onChange={onChange}
@@ -163,6 +198,7 @@ export const Seg = ({
   loadOptions,
   filterByLoadOptions,
   allowCustomValue,
+  isClearable,
   onChange,
 }: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
@@ -185,6 +221,8 @@ export const Seg = ({
     if (loadOptions !== undefined) {
       return (
         <Sel
+          isClearable={isClearable ?? false}
+          value={value}
           loadOptions={loadOptions}
           filterByLoadOptions={filterByLoadOptions ?? false}
           allowCustomValue={allowCustomValue}

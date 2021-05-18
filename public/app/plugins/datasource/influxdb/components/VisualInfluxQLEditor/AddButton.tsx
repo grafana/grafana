@@ -16,6 +16,9 @@ export const AddButton = ({ loadOptions, allowCustomValue, onAdd }: Props): JSX.
       loadOptions={loadOptions}
       allowCustomValue={allowCustomValue}
       onChange={(v) => {
+        if (v === null) {
+          return; // we do not handle the clear-value case, it should not happen, we did not enable it
+        }
         onAdd(unwrap(v.value));
       }}
     />

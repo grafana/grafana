@@ -57,6 +57,9 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
           value={condition}
           loadOptions={loadConditionOptions}
           onChange={(v) => {
+            if (v === null) {
+              return; // we do not handle the clear-value case, it should not happen, we did not enable it
+            }
             onChange({ ...tag, condition: v.value });
           }}
         />
@@ -66,6 +69,9 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         value={tag.key}
         loadOptions={getTagKeySegmentOptions}
         onChange={(v) => {
+          if (v === null) {
+            return; // we do not handle the clear-value case, it should not happen, we did not enable it
+          }
           const { value } = v;
           if (value === undefined) {
             onRemove();
@@ -78,15 +84,20 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         value={operator}
         loadOptions={loadOperatorOptions}
         onChange={(op) => {
+          if (op === null) {
+            return; // we do not handle the clear-value case, it should not happen, we did not enable it
+          }
           onChange({ ...tag, operator: op.value });
         }}
       />
       <Seg
+        isClearable
         allowCustomValue
         value={tag.value}
         loadOptions={getTagValueSegmentOptions}
         onChange={(v) => {
-          const value = v.value ?? '';
+          // v can be `null` when the field is cleared
+          const value = v?.value ?? '';
           onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
         }}
       />
@@ -114,7 +125,7 @@ export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptio
   const addNewTag = (tagKey: string, isFirst: boolean) => {
     const minimalTag: InfluxQueryTag = {
       key: tagKey,
-      value: 'select tag value',
+      value: '',
     };
 
     const newTag: InfluxQueryTag = {
