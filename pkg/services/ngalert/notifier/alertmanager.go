@@ -27,8 +27,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
@@ -75,7 +75,9 @@ const (
 )
 
 type Alertmanager struct {
-	logger   log.Logger
+	logger      log.Logger
+	gokitLogger gokit_log.Logger
+
 	Settings *setting.Cfg       `inject:""`
 	SQLStore *sqlstore.SQLStore `inject:""`
 	Store    store.AlertingStore
@@ -116,6 +118,8 @@ func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Aler
 		Metrics:           m,
 	}
 
+	am.gokitLogger = gokit_log.NewLogfmtLogger(logging.NewWrapper(am.logger))
+
 	// Initialize the notification log
 	am.wg.Add(1)
 	var err error
@@ -144,7 +148,7 @@ func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Aler
 	}()
 
 	// Initialize in-memory alerts
-	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, gokit_log.NewNopLogger())
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, am.gokitLogger)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
@@ -324,8 +328,8 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		am.dispatcher.Stop()
 	}
 
-	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, gokit_log.NewNopLogger())
-	am.silencer = silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger())
+	am.inhibitor = inhibit.NewInhibitor(am.alerts, cfg.AlertmanagerConfig.InhibitRules, am.marker, am.gokitLogger)
+	am.silencer = silence.NewSilencer(am.silences, am.marker, am.gokitLogger)
 
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
 	silencingStage := notify.NewMuteStage(am.silencer)
@@ -335,7 +339,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, am.gokitLogger, am.dispatcherMetrics)
 
 	am.wg.Add(1)
 	go func() {
@@ -392,12 +396,10 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			secureSettings[k] = d
 		}
 		var (
-			cfg = &models.AlertNotification{
-				Uid:                   r.Uid,
+			cfg = &channels.NotificationChannelConfig{
+				UID:                   r.UID,
 				Name:                  r.Name,
 				Type:                  r.Type,
-				IsDefault:             r.IsDefault,
-				SendReminder:          r.SendReminder,
 				DisableResolveMessage: r.DisableResolveMessage,
 				Settings:              r.Settings,
 				SecureSettings:        secureSettings,
@@ -407,7 +409,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 		)
 		switch r.Type {
 		case "email":
-			n, err = channels.NewEmailNotifier(cfg, tmpl.ExternalURL) // Email notifier already has a default template.
+			n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
 		case "pagerduty":
 			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
 		case "slack":
