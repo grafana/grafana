@@ -35,10 +35,10 @@ type AzureResourceGraphDatasource struct {
 // AzureResourceGraphQuery is the query request that is built from the saved values for
 // from the UI
 type AzureResourceGraphQuery struct {
-	RefID        string
-	ResultFormat string
-	URL          string
-	Model        *simplejson.Json
+	RefID             string
+	ResultFormat      string
+	URL               string
+	Model             *simplejson.Json
 	InterpolatedQuery string
 }
 
@@ -98,9 +98,9 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 		}
 
 		azureResourceGraphQueries = append(azureResourceGraphQueries, &AzureResourceGraphQuery{
-			RefID:        query.RefID,
-			ResultFormat: resultFormat,
-			Model:        query.Model,
+			RefID:             query.RefID,
+			ResultFormat:      resultFormat,
+			Model:             query.Model,
 			InterpolatedQuery: interpolatedQuery,
 		})
 	}
@@ -131,7 +131,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	reqBody, err := json.Marshal(map[string]interface{}{
 		"subscriptions": query.Model.Get("subscriptions").MustStringArray(),
-		"query": query.InterpolatedQuery,
+		"query":         query.InterpolatedQuery,
 	})
 
 	if err != nil {
