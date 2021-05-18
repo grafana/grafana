@@ -98,3 +98,7 @@ drop-in alternative to the standard [encoding/json](https://golang.org/pkg/encod
 is a fine choice, profiling shows that json-iterator may be 3-4 times more efficient for encoding. We haven't profiled
 its parsing performance yet, but according to json-iterator's own benchmarks, it appears even more superior in this
 department.
+
+## HTTP
+
+For status codes prefer using http package constants rather than magic numbers, i.e. `http.StatusNotFound` instead of `404`. Constants are more descriptive, provide correct semantics and context of use.

@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
@@ -21,12 +22,12 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 
 	if path.IsAbs(cmd.Path) {
 		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return response.Error(400, "Path should be relative", nil)
+		return response.Error(http.StatusBadRequest, "Path should be relative", nil)
 	}
 
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
-		return response.Error(500, "Failed to create short URL", err)
+		return response.Error(http.StatusInternalServerError, "Failed to create short URL", err)
 	}
 
 	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid)
@@ -37,7 +38,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		URL: url,
 	}
 
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {

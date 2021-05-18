@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -17,5 +18,5 @@ func (hs *HTTPServer) PostFrontendMetrics(c *models.ReqContext, cmd metrics.Post
 			c.Logger.Debug("Received unknown frontend metric", "metric", name)
 		}
 	}
-	return response.Empty(200)
+	return response.Empty(http.StatusOK)
 }

@@ -35,7 +35,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 	pluginSettingsMap, err := hs.PluginManager.GetPluginSettings(c.OrgId)
 	if err != nil {
-		return response.Error(500, "Failed to get list of plugins", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get list of plugins", err)
 	}
 
 	result := make(dtos.PluginList, 0)
@@ -99,7 +99,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	}
 
 	sort.Sort(result)
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
@@ -107,7 +107,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 
 	def := hs.PluginManager.GetPlugin(pluginID)
 	if def == nil {
-		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
+		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
 	}
 
 	dto := &dtos.PluginSetting{
@@ -136,7 +136,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
-			return response.Error(500, "Failed to get login settings", nil)
+			return response.Error(http.StatusInternalServerError, "Failed to get login settings", nil)
 		}
 	} else {
 		dto.Enabled = query.Result.Enabled
@@ -144,20 +144,20 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.JsonData = query.Result.JsonData
 	}
 
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
 	pluginID := c.Params(":pluginId")
 
 	if app := hs.PluginManager.GetApp(pluginID); app == nil {
-		return response.Error(404, "Plugin not installed", nil)
+		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
 	}
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
 	if err := bus.Dispatch(&cmd); err != nil {
-		return response.Error(500, "Failed to update plugin setting", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update plugin setting", err)
 	}
 
 	return response.Success("Plugin settings updated")
@@ -170,13 +170,13 @@ func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Respons
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
-		return response.Error(500, "Failed to get plugin dashboards", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get plugin dashboards", err)
 	}
 
-	return response.JSON(200, list)
+	return response.JSON(http.StatusOK, list)
 }
 
 func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
@@ -187,21 +187,21 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	if err != nil {
 		var notFound plugins.PluginNotFoundError
 		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
-		return response.Error(500, "Could not get markdown file", err)
+		return response.Error(http.StatusInternalServerError, "Could not get markdown file", err)
 	}
 
 	// fallback try readme
 	if len(content) == 0 {
 		content, err = hs.PluginManager.GetPluginMarkdown(pluginID, "readme")
 		if err != nil {
-			return response.Error(501, "Could not get markdown file", err)
+			return response.Error(http.StatusNotImplemented, "Could not get markdown file", err)
 		}
 	}
 
-	resp := response.Respond(200, content)
+	resp := response.Respond(http.StatusOK, content)
 	resp.SetHeader("Content-Type", "text/plain; charset=utf-8")
 	return resp
 }
@@ -209,14 +209,14 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDashboardCommand) response.Response {
 	var err error
 	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
-		return response.Error(422, "Dashboard must be set", nil)
+		return response.Error(http.StatusUnprocessableEntity, "Dashboard must be set", nil)
 	}
 
 	trimDefaults := c.QueryBoolWithDefault("trimdefaults", true)
 	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
 		apiCmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(apiCmd.Dashboard)
 		if err != nil {
-			return response.Error(500, "Error while applying default value to the dashboard json", err)
+			return response.Error(http.StatusInternalServerError, "Error while applying default value to the dashboard json", err)
 		}
 	}
 
@@ -226,7 +226,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}
 
-	return response.JSON(200, dashInfo)
+	return response.JSON(http.StatusOK, dashInfo)
 }
 
 // CollectPluginMetrics collect metrics from a plugin.
@@ -236,7 +236,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
-		return response.Error(404, "Plugin not found", nil)
+		return response.Error(http.StatusNotFound, "Plugin not found", nil)
 	}
 
 	resp, err := hs.BackendPluginManager.CollectMetrics(c.Req.Context(), plugin.Id)
@@ -315,10 +315,10 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 
 	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser)
 	if err != nil {
-		return response.Error(500, "Failed to get plugin settings", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", err)
 	}
 	if !found {
-		return response.Error(404, "Plugin not found", nil)
+		return response.Error(http.StatusNotFound, "Plugin not found", nil)
 	}
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
@@ -336,17 +336,17 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(503, payload)
+		return response.JSON(http.StatusServiceUnavailable, payload)
 	}
 
-	return response.JSON(200, payload)
+	return response.JSON(http.StatusOK, payload)
 }
 
 // CallResource passes a resource call from a plugin to the backend plugin.
@@ -368,7 +368,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
-	return response.JSON(200, hs.PluginManager.ScanningErrors())
+	return response.JSON(http.StatusOK, hs.PluginManager.ScanningErrors())
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPluginCommand) response.Response {
@@ -423,22 +423,22 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(404, "Plugin not found", err)
+		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		return response.Error(404, "Not found", err)
+		return response.Error(http.StatusNotFound, "Not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
-		return response.Error(500, "Plugin health check failed", err)
+		return response.Error(http.StatusInternalServerError, "Plugin health check failed", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		return response.Error(503, "Plugin unavailable", err)
+		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
 	}
 
-	return response.Error(500, "Plugin request failed", err)
+	return response.Error(http.StatusInternalServerError, "Plugin request failed", err)
 }
 
 func shouldExclude(fi os.FileInfo) bool {

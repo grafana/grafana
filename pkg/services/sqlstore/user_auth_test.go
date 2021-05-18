@@ -5,9 +5,10 @@ package sqlstore
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"

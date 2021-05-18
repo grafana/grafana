@@ -36,7 +36,7 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimodels.PostableSilence) response.Response {
 	blob, err := json.Marshal(silenceBody)
 	if err != nil {
-		return response.Error(500, "Failed marshal silence", err)
+		return response.Error(http.StatusInternalServerError, "Failed marshal silence", err)
 	}
 	return am.withReq(
 		ctx,
@@ -149,7 +149,7 @@ func (am *LotexAM) RouteGetSilences(ctx *models.ReqContext) response.Response {
 func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimodels.PostableUserConfig) response.Response {
 	yml, err := yaml.Marshal(&config)
 	if err != nil {
-		return response.Error(500, "Failed marshal alert manager configuration ", err)
+		return response.Error(http.StatusInternalServerError, "Failed marshal alert manager configuration ", err)
 	}
 
 	return am.withReq(
@@ -165,7 +165,7 @@ func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimod
 func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.PostableAlerts) response.Response {
 	yml, err := yaml.Marshal(alerts)
 	if err != nil {
-		return response.Error(500, "Failed marshal postable alerts", err)
+		return response.Error(http.StatusInternalServerError, "Failed marshal postable alerts", err)
 	}
 
 	return am.withReq(

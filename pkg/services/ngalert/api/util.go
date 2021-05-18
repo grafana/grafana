@@ -93,7 +93,7 @@ func (p *AlertingProxy) withReq(
 ) response.Response {
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
-		return response.Error(400, err.Error(), nil)
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 	for h, v := range headers {
 		req.Header.Add(h, v)
@@ -121,12 +121,12 @@ func (p *AlertingProxy) withReq(
 
 	t, err := extractor(resp.Body())
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return response.Error(http.StatusInternalServerError, err.Error(), nil)
 	}
 
 	b, err := json.Marshal(t)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return response.Error(http.StatusInternalServerError, err.Error(), nil)
 	}
 
 	return response.JSON(status, b)
@@ -214,7 +214,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		Data:      cmd.Data,
 	}
 	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
-		return response.Error(400, "invalid condition", err)
+		return response.Error(http.StatusBadRequest, "invalid condition", err)
 	}
 
 	now := cmd.Now

@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -15,7 +16,7 @@ func GetAPIKeys(c *models.ReqContext) response.Response {
 	query := models.GetApiKeysQuery{OrgId: c.OrgId, IncludeExpired: c.QueryBool("includeExpired")}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return response.Error(500, "Failed to list api keys", err)
+		return response.Error(http.StatusInternalServerError, "Failed to list api keys", err)
 	}
 
 	result := make([]*models.ApiKeyDTO, len(query.Result))
@@ -33,7 +34,7 @@ func GetAPIKeys(c *models.ReqContext) response.Response {
 		}
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func DeleteAPIKey(c *models.ReqContext) response.Response {
@@ -57,34 +58,34 @@ func DeleteAPIKey(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) response.Response {
 	if !cmd.Role.IsValid() {
-		return response.Error(400, "Invalid role specified", nil)
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
 
 	if hs.Cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
-			return response.Error(400, "Number of seconds before expiration should be set", nil)
+			return response.Error(http.StatusBadRequest, "Number of seconds before expiration should be set", nil)
 		}
 		if cmd.SecondsToLive > hs.Cfg.ApiKeyMaxSecondsToLive {
-			return response.Error(400, "Number of seconds before expiration is greater than the global limit", nil)
+			return response.Error(http.StatusBadRequest, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
 	cmd.OrgId = c.OrgId
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {
-		return response.Error(500, "Generating API key failed", err)
+		return response.Error(http.StatusInternalServerError, "Generating API key failed", err)
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
-			return response.Error(400, err.Error(), nil)
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
 		if errors.Is(err, models.ErrDuplicateApiKey) {
-			return response.Error(409, err.Error(), nil)
+			return response.Error(http.StatusConflict, err.Error(), nil)
 		}
-		return response.Error(500, "Failed to add API Key", err)
+		return response.Error(http.StatusInternalServerError, "Failed to add API Key", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
@@ -93,5 +94,5 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 		Key:  newKeyInfo.ClientSecret,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
