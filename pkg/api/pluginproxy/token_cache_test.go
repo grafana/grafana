@@ -2,7 +2,9 @@ package pluginproxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -98,5 +100,187 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 
 		assert.Equal(t, 1, credential1.calledTimes)
 		assert.Equal(t, 1, credential2.calledTimes)
+	})
+}
+
+func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
+	ctx := context.Background()
+
+	scopes := []string{"Scope1"}
+
+	t.Run("when credential returns error", func(t *testing.T) {
+		credential := &fakeCredential{
+			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
+				invalidToken := &AccessToken{Token: "invalid_token", ExpiresOn: timeNow().Add(time.Hour)}
+				return invalidToken, errors.New("unable to get access token")
+			},
+		}
+
+		t.Run("should return error", func(t *testing.T) {
+			cacheEntry := &scopesCacheEntry{
+				credential: credential,
+				scopes:     scopes,
+				cond:       sync.NewCond(&sync.Mutex{}),
+			}
+
+			accessToken, err := cacheEntry.getAccessToken(ctx)
+
+			assert.Error(t, err)
+			assert.Equal(t, "", accessToken)
+		})
+
+		t.Run("should call credential again each time and return error", func(t *testing.T) {
+			credential.calledTimes = 0
+
+			cacheEntry := &scopesCacheEntry{
+				credential: credential,
+				scopes:     scopes,
+				cond:       sync.NewCond(&sync.Mutex{}),
+			}
+
+			var err error
+			_, err = cacheEntry.getAccessToken(ctx)
+			assert.Error(t, err)
+
+			_, err = cacheEntry.getAccessToken(ctx)
+			assert.Error(t, err)
+
+			_, err = cacheEntry.getAccessToken(ctx)
+			assert.Error(t, err)
+
+			assert.Equal(t, 3, credential.calledTimes)
+		})
+	})
+
+	t.Run("when credential returns error only once", func(t *testing.T) {
+		var times = 0
+		credential := &fakeCredential{
+			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
+				times = times + 1
+				if times == 1 {
+					invalidToken := &AccessToken{Token: "invalid_token", ExpiresOn: timeNow().Add(time.Hour)}
+					return invalidToken, errors.New("unable to get access token")
+				}
+				fakeAccessToken := &AccessToken{Token: fmt.Sprintf("token-%v", times), ExpiresOn: timeNow().Add(time.Hour)}
+				return fakeAccessToken, nil
+			},
+		}
+
+		t.Run("should call credential again only while it returns error", func(t *testing.T) {
+			cacheEntry := &scopesCacheEntry{
+				credential: credential,
+				scopes:     scopes,
+				cond:       sync.NewCond(&sync.Mutex{}),
+			}
+
+			var accessToken string
+			var err error
+
+			_, err = cacheEntry.getAccessToken(ctx)
+			assert.Error(t, err)
+
+			accessToken, err = cacheEntry.getAccessToken(ctx)
+			assert.NoError(t, err)
+			assert.Equal(t, "token-2", accessToken)
+
+			accessToken, err = cacheEntry.getAccessToken(ctx)
+			assert.NoError(t, err)
+			assert.Equal(t, "token-2", accessToken)
+
+			assert.Equal(t, 2, credential.calledTimes)
+		})
+	})
+
+	t.Run("when credential panics", func(t *testing.T) {
+		credential := &fakeCredential{
+			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
+				panic(errors.New("unable to get access token"))
+			},
+		}
+
+		t.Run("should call credential again each time", func(t *testing.T) {
+			credential.calledTimes = 0
+
+			cacheEntry := &scopesCacheEntry{
+				credential: credential,
+				scopes:     scopes,
+				cond:       sync.NewCond(&sync.Mutex{}),
+			}
+
+			func() {
+				defer func() {
+					assert.NotNil(t, recover(), "credential expected to panic")
+				}()
+				_, _ = cacheEntry.getAccessToken(ctx)
+			}()
+
+			func() {
+				defer func() {
+					assert.NotNil(t, recover(), "credential expected to panic")
+				}()
+				_, _ = cacheEntry.getAccessToken(ctx)
+			}()
+
+			func() {
+				defer func() {
+					assert.NotNil(t, recover(), "credential expected to panic")
+				}()
+				_, _ = cacheEntry.getAccessToken(ctx)
+			}()
+
+			assert.Equal(t, 3, credential.calledTimes)
+		})
+	})
+
+	t.Run("when credential panics only once", func(t *testing.T) {
+		var times = 0
+		credential := &fakeCredential{
+			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
+				times = times + 1
+				if times == 1 {
+					panic(errors.New("unable to get access token"))
+				}
+				fakeAccessToken := &AccessToken{Token: fmt.Sprintf("token-%v", times), ExpiresOn: timeNow().Add(time.Hour)}
+				return fakeAccessToken, nil
+			},
+		}
+
+		t.Run("should call credential again only while it panics", func(t *testing.T) {
+			cacheEntry := &scopesCacheEntry{
+				credential: credential,
+				scopes:     scopes,
+				cond:       sync.NewCond(&sync.Mutex{}),
+			}
+
+			var accessToken string
+			var err error
+
+			func() {
+				defer func() {
+					assert.NotNil(t, recover(), "credential expected to panic")
+				}()
+				_, _ = cacheEntry.getAccessToken(ctx)
+			}()
+
+			func() {
+				defer func() {
+					assert.Nil(t, recover(), "credential not expected to panic")
+				}()
+				accessToken, err = cacheEntry.getAccessToken(ctx)
+				assert.NoError(t, err)
+				assert.Equal(t, "token-2", accessToken)
+			}()
+
+			func() {
+				defer func() {
+					assert.Nil(t, recover(), "credential not expected to panic")
+				}()
+				accessToken, err = cacheEntry.getAccessToken(ctx)
+				assert.NoError(t, err)
+				assert.Equal(t, "token-2", accessToken)
+			}()
+
+			assert.Equal(t, 2, credential.calledTimes)
+		})
 	})
 }
