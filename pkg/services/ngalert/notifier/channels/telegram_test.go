@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -101,7 +100,7 @@ func TestTelegramNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "telegram_testing",
 				Type:     "telegram",
 				Settings: settingsJSON,

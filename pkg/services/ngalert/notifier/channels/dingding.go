@@ -23,7 +23,7 @@ import (
 const defaultDingdingMsgType = "link"
 
 // NewDingDingNotifier is the constructor for the Dingding notifier
-func NewDingDingNotifier(model *models.AlertNotification, t *template.Template) (*DingDingNotifier, error) {
+func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -36,12 +36,18 @@ func NewDingDingNotifier(model *models.AlertNotification, t *template.Template) 
 	msgType := model.Settings.Get("msgType").MustString(defaultDingdingMsgType)
 
 	return &DingDingNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		MsgType:      msgType,
-		URL:          url,
-		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-		log:          log.New("alerting.notifier.dingding"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		MsgType: msgType,
+		URL:     url,
+		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		log:     log.New("alerting.notifier.dingding"),
+		tmpl:    t,
 	}, nil
 }
 

@@ -67,7 +67,8 @@ func TestNotificationChannels(t *testing.T) {
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b := getBody(t, resp.Body)
-		require.JSONEq(t, getExpAlertmanagerConfigFromAPI(mockChannel.server.Addr), b)
+		e := getExpAlertmanagerConfigFromAPI(mockChannel.server.Addr)
+		require.JSONEq(t, e, b)
 	}
 
 	{
@@ -584,16 +585,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "email_recv",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "email_test",
             "type": "email",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "addresses": "test@email.com",
               "singleEmail": true
@@ -606,16 +601,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "dingding_recv",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "dingding_test",
             "type": "dingding",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "url": "http://CHANNEL_ADDR/dingding_recv/dingding_test"
             },
@@ -627,16 +616,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "teams_recv",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "teams_test",
             "type": "teams",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "url": "http://CHANNEL_ADDR/teams_recv/teams_test"
             },
@@ -648,16 +631,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "webhook_recv",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "webhook_test",
             "type": "webhook",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "url": "http://CHANNEL_ADDR/webhook_recv/webhook_test",
               "username": "my_username",
@@ -674,16 +651,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "telegram_recv",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "telegram_test",
             "type": "telegram",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "chatid": "telegram_chat_id"
             },
@@ -697,16 +668,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "slack_recv1",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "slack_test_without_token",
             "type": "slack",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "fallback": "Integration Test {{ template \"slack.default.title\" . }}",
               "icon_emoji": "🚀",
@@ -729,16 +694,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "slack_recv2",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "slack_test_with_token",
             "type": "slack",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "mentionUsers": "user1, user2",
               "recipient": "#test-channel",
@@ -754,16 +713,10 @@ var expAlertmanagerConfigFromAPI = `
         "name": "pagerduty_recv",
         "grafana_managed_receiver_configs": [
           {
-            "id": 0,
             "uid": "",
             "name": "pagerduty_test",
             "type": "pagerduty",
-            "isDefault": false,
-            "sendReminder": false,
             "disableResolveMessage": false,
-            "frequency": "",
-            "created": "0001-01-01T00:00:00Z",
-            "updated": "0001-01-01T00:00:00Z",
             "settings": {
               "class": "testclass",
               "component": "Integration Test",

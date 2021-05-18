@@ -30,7 +30,7 @@ type TeamsNotifier struct {
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*TeamsNotifier, error) {
+func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*TeamsNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -41,11 +41,17 @@ func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*T
 	}
 
 	return &TeamsNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		URL:          u,
-		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-		log:          log.New("alerting.notifier.teams"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		URL:     u,
+		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		log:     log.New("alerting.notifier.teams"),
+		tmpl:    t,
 	}, nil
 }
 

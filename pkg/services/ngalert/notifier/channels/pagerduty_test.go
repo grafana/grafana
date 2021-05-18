@@ -139,7 +139,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "pageduty_testing",
 				Type:     "pagerduty",
 				Settings: settingsJSON,

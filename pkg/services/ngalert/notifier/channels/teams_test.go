@@ -128,7 +128,7 @@ func TestTeamsNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "teams_testing",
 				Type:     "teams",
 				Settings: settingsJSON,

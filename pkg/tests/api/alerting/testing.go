@@ -21,16 +21,10 @@ const defaultAlertmanagerConfigJSON = `
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"id": 0,
 				"uid": "",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
-				"sendReminder": false,
 				"disableResolveMessage": false,
-				"frequency": "",
-				"created": "0001-01-01T00:00:00Z",
-				"updated": "0001-01-01T00:00:00Z",
 				"settings": {
 					"addresses": "\u003cexample@email.com\u003e"
 				},

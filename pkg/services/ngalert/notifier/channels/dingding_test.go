@@ -104,7 +104,7 @@ func TestDingdingNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "dingding_testing",
 				Type:     "dingding",
 				Settings: settingsJSON,

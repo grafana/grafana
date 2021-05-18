@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
 
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -504,8 +503,23 @@ func AllReceivers(route *config.Route) (res []string) {
 	return res
 }
 
-type GettableGrafanaReceiver dtos.AlertNotification
-type PostableGrafanaReceiver models.CreateAlertNotificationCommand
+type GettableGrafanaReceiver struct {
+	UID                   string           `json:"uid"`
+	Name                  string           `json:"name"`
+	Type                  string           `json:"type"`
+	DisableResolveMessage bool             `json:"disableResolveMessage"`
+	Settings              *simplejson.Json `json:"settings"`
+	SecureFields          map[string]bool  `json:"secureFields"`
+}
+
+type PostableGrafanaReceiver struct {
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string]string `json:"secureSettings"`
+}
 
 type ReceiverType int
 
