@@ -22,7 +22,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const mapExemplarToXYCoords = useCallback(
     (dataFrame: DataFrame, index: number) => {
-      const plotInstance = plotCtx.getPlot();
+      const plotInstance = plotCtx.plot;
       const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
       const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 

@@ -17,7 +17,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     text-overflow: ellipsis;
     box-sizing: border-box;
     max-width: 100%;
-    /* padding-right: 40px; */
   `;
   const container = css`
     width: 16px;
@@ -35,7 +34,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     position: absolute;
   `;
 
-  return { singleValue, container, item };
+  const disabled = css`
+    color: ${theme.colors.action.disabledText};
+  `;
+
+  return { singleValue, container, item, disabled };
 };
 
 type StylesType = ReturnType<typeof getStyles>;
@@ -45,17 +48,18 @@ interface Props
     imgUrl?: string;
     loading?: boolean;
     hideText?: boolean;
-  }> {}
+  }> {
+  disabled?: boolean;
+}
 
 export const SingleValue = (props: Props) => {
-  const { children, data } = props;
+  const { children, data, disabled } = props;
   const styles = useStyles2(getStyles);
-
   const loading = useDelayedSwitch(data.loading || false, { delay: 250, duration: 750 });
 
   return (
     <components.SingleValue {...props}>
-      <div className={cx(styles.singleValue)}>
+      <div className={cx(styles.singleValue, disabled && styles.disabled)}>
         {data.imgUrl ? (
           <FadeWithImage loading={loading} imgUrl={data.imgUrl} styles={styles} />
         ) : (

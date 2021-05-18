@@ -31,7 +31,7 @@ func (fp *FrontendPluginBase) InitFrontendPlugin(cfg *setting.Cfg) []*PluginStat
 	fp.Info.Logos.Large = getPluginLogoUrl(fp.Type, fp.Info.Logos.Large, fp.BaseUrl)
 
 	for i := 0; i < len(fp.Info.Screenshots); i++ {
-		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl)
+		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl, fp.Type)
 	}
 
 	return staticRoutes
@@ -39,10 +39,14 @@ func (fp *FrontendPluginBase) InitFrontendPlugin(cfg *setting.Cfg) []*PluginStat
 
 func getPluginLogoUrl(pluginType, path, baseUrl string) string {
 	if path == "" {
-		return "public/img/icn-" + pluginType + ".svg"
+		return defaultLogoPath(pluginType)
 	}
 
-	return evalRelativePluginUrlPath(path, baseUrl)
+	return evalRelativePluginUrlPath(path, baseUrl, pluginType)
+}
+
+func defaultLogoPath(pluginType string) string {
+	return "public/img/icn-" + pluginType + ".svg"
 }
 
 func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin, cfg *setting.Cfg) {
@@ -79,7 +83,7 @@ func isExternalPlugin(pluginDir string, cfg *setting.Cfg) bool {
 	return !strings.Contains(pluginDir, cfg.StaticRootPath)
 }
 
-func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
+func evalRelativePluginUrlPath(pathStr, baseUrl, pluginType string) string {
 	if pathStr == "" {
 		return ""
 	}
@@ -88,5 +92,11 @@ func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
 	if u.IsAbs() {
 		return pathStr
 	}
+
+	// is set as default or has already been prefixed with base path
+	if pathStr == defaultLogoPath(pluginType) || strings.HasPrefix(pathStr, baseUrl) {
+		return pathStr
+	}
+
 	return path.Join(baseUrl, pathStr)
 }

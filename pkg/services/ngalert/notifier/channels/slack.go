@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +43,6 @@ type SlackNotifier struct {
 	Recipient      string
 	Text           string
 	Title          string
-	Fallback       string
 	MentionUsers   []string
 	MentionGroups  []string
 	MentionChannel string
@@ -50,17 +51,17 @@ type SlackNotifier struct {
 
 var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
 
-const slackAPIEndpoint = "https://slack.com/api/chat.postMessage"
+var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*SlackNotifier, error) {
+func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*SlackNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
 
 	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if slackURL == "" {
-		slackURL = slackAPIEndpoint
+		slackURL = SlackAPIEndpoint
 	}
 	apiURL, err := url.Parse(slackURL)
 	if err != nil {
@@ -72,7 +73,7 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 		if !reRecipient.MatchString(recipient) {
 			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
 		}
-	} else if apiURL.String() == slackAPIEndpoint {
+	} else if apiURL.String() == SlackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
@@ -104,14 +105,20 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 	}
 
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
-	if token == "" && apiURL.String() == slackAPIEndpoint {
+	if token == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, alerting.ValidationError{
 			Reason: "token must be specified when using the Slack chat API",
 		}
 	}
 
 	return &SlackNotifier{
-		NotifierBase:   old_notifiers.NewNotifierBase(model),
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
 		URL:            apiURL,
 		Recipient:      recipient,
 		MentionUsers:   mentionUsers,
@@ -121,9 +128,8 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 		IconEmoji:      model.Settings.Get("icon_emoji").MustString(),
 		IconURL:        model.Settings.Get("icon_url").MustString(),
 		Token:          token,
-		Text:           model.Settings.Get("text").MustString(`{{ template "slack.default.text" . }}`),
-		Title:          model.Settings.Get("title").MustString(`{{ template "slack.default.title" . }}`),
-		Fallback:       model.Settings.Get("fallback").MustString(`{{ template "slack.default.title" . }}`),
+		Text:           model.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
+		Title:          model.Settings.Get("title").MustString(`{{ template "default.title" . }}`),
 		log:            log.New("alerting.notifier.slack"),
 		tmpl:           t,
 	}, nil
@@ -173,7 +179,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("User-Agent", "Grafana")
 	if sn.Token == "" {
-		if sn.URL.String() == slackAPIEndpoint {
+		if sn.URL.String() == SlackAPIEndpoint {
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
@@ -240,7 +246,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 }
 
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(sn.log)))
 	alerts := types.Alerts(as...)
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
@@ -254,11 +260,11 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			{
 				Color:      getAlertStatusColor(alerts.Status()),
 				Title:      tmpl(sn.Title),
-				Fallback:   tmpl(sn.Fallback),
+				Fallback:   tmpl(sn.Title),
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  "TODO: rule URL",
+				TitleLink:  path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list"),
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},

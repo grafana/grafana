@@ -32,6 +32,7 @@ class OptionsPaneOptionsTestScenario {
     state: LoadingState.Done,
     timeRange: {} as any,
   };
+
   plugin = getPanelPlugin({
     id: 'TestPanel',
   }).useFieldConfig({
@@ -56,6 +57,7 @@ class OptionsPaneOptionsTestScenario {
         });
     },
   });
+
   panel = new PanelModel({
     title: 'Test title',
     type: this.plugin.meta.id,
@@ -195,5 +197,18 @@ describe('OptionsPaneOptions', () => {
 
     expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).not.toBeInTheDocument();
     expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Axis TextPropWithCategory'))).toBeInTheDocument();
+  });
+
+  it('should not render field override options non data panel', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.plugin = getPanelPlugin({
+      id: 'TestPanel',
+    });
+
+    scenario.render();
+
+    expect(
+      screen.queryByLabelText(selectors.components.ValuePicker.button('Add field override'))
+    ).not.toBeInTheDocument();
   });
 });

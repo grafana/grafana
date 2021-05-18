@@ -16,10 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
-const (
-	telegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
+var (
+	TelegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
 )
 
 // TelegramNotifier is responsible for sending
@@ -34,7 +35,7 @@ type TelegramNotifier struct {
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -52,12 +53,18 @@ func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) 
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		BotToken:     botToken,
-		ChatID:       chatID,
-		Message:      message,
-		tmpl:         t,
-		log:          log.New("alerting.notifier.telegram"),
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		BotToken: botToken,
+		ChatID:   chatID,
+		Message:  message,
+		tmpl:     t,
+		log:      log.New("alerting.notifier.telegram"),
 	}, nil
 }
 
@@ -90,7 +97,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 	tn.log.Info("sending telegram notification", "chat_id", tn.ChatID)
 	cmd := &models.SendWebhookSync{
-		Url:        fmt.Sprintf(telegramAPIURL, tn.BotToken),
+		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken),
 		Body:       body.String(),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -111,7 +118,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	msg["chat_id"] = tn.ChatID
 	msg["parse_mode"] = "html"
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(tn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 

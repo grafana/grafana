@@ -7,8 +7,8 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	RuleOrgID         int64  `xorm:"def_org_id"`
-	RuleUID           string `xorm:"def_uid"`
+	RuleOrgID         int64  `xorm:"rule_org_id"`
+	RuleUID           string `xorm:"rule_uid"`
 	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType
@@ -39,6 +39,7 @@ func (i InstanceStateType) IsValid() bool {
 	return i == InstanceStateFiring ||
 		i == InstanceStateNormal ||
 		i == InstanceStateNoData ||
+		i == InstanceStatePending ||
 		i == InstanceStateError
 }
 
@@ -72,14 +73,10 @@ type ListAlertInstancesQuery struct {
 	Result []*ListAlertInstancesQueryResult
 }
 
-type FetchUniqueOrgIdsQuery struct {
-	Result []*FetchUniqueOrgIdsQueryResult
-}
-
 // ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
 type ListAlertInstancesQueryResult struct {
-	RuleOrgID         int64             `xorm:"def_org_id" json:"definitionOrgId"`
-	RuleDefinitionUID string            `xorm:"def_uid" json:"definitionUid"`
+	RuleOrgID         int64             `xorm:"rule_org_id" json:"ruleOrgId"`
+	RuleUID           string            `xorm:"rule_uid" json:"ruleUid"`
 	Labels            InstanceLabels    `json:"labels"`
 	LabelsHash        string            `json:"labeHash"`
 	CurrentState      InstanceStateType `json:"currentState"`
@@ -88,11 +85,7 @@ type ListAlertInstancesQueryResult struct {
 	LastEvalTime      time.Time         `json:"lastEvalTime"`
 }
 
-type FetchUniqueOrgIdsQueryResult struct {
-	DefinitionOrgID int64 `xorm:"def_org_id" json:"definitionOrgId"`
-}
-
-// ValidateAlertInstance validates that the alert instance contains an alert definition id,
+// ValidateAlertInstance validates that the alert instance contains an alert rule id,
 // and state.
 func ValidateAlertInstance(alertInstance *AlertInstance) error {
 	if alertInstance == nil {
@@ -100,11 +93,11 @@ func ValidateAlertInstance(alertInstance *AlertInstance) error {
 	}
 
 	if alertInstance.RuleOrgID == 0 {
-		return fmt.Errorf("alert instance is invalid due to missing alert definition organisation")
+		return fmt.Errorf("alert instance is invalid due to missing alert rule organisation")
 	}
 
 	if alertInstance.RuleUID == "" {
-		return fmt.Errorf("alert instance is invalid due to missing alert definition uid")
+		return fmt.Errorf("alert instance is invalid due to missing alert rule uid")
 	}
 
 	if !alertInstance.CurrentState.IsValid() {

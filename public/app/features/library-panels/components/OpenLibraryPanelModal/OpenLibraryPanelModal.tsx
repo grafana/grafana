@@ -4,14 +4,14 @@ import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { DashboardSearchHit } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
 import { debounce } from 'lodash';
 
 export interface OpenLibraryPanelModalProps {
   onDismiss: () => void;
-  libraryPanel: LibraryPanelDTO;
+  libraryPanel: LibraryElementDTO;
 }
 
 export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPanelModalProps): JSX.Element {
@@ -47,8 +47,11 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
         {connected > 0 ? (
           <>
             <p>
-              This panel is being used in <strong>{connected} dashboards</strong>.Please choose which dashboard to view
-              the panel in:
+              This panel is being used in{' '}
+              <strong>
+                {connected} {connected > 1 ? 'dashboards' : 'dashboard'}
+              </strong>
+              .Please choose which dashboard to view the panel in:
             </p>
             <AsyncSelect
               isClearable

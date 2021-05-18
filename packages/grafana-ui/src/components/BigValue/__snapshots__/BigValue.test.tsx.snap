@@ -5,7 +5,7 @@ exports[`BigValue Render with basic options should render 1`] = `
   style={
     Object {
       "alignItems": "center",
-      "background": "linear-gradient(120deg, rgb(66, 154, 67), rgb(111, 183, 87))",
+      "background": "linear-gradient(120deg, rgb(179, 24, 0), rgb(230, 0, 31))",
       "borderRadius": "3px",
       "display": "flex",
       "flexDirection": "row",
@@ -41,6 +41,7 @@ exports[`BigValue Render with basic options should render 1`] = `
       }
       value={
         Object {
+          "color": "red",
           "numeric": 25,
           "text": "25",
           "titleToAlignTo": undefined,

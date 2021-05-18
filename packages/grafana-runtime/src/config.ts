@@ -13,6 +13,11 @@ import {
   SystemDateFormatSettings,
 } from '@grafana/data';
 
+export interface AzureSettings {
+  cloud?: string;
+  managedIdentityEnabled: boolean;
+}
+
 export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -53,10 +58,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
-    live: false,
     meta: false,
     ngalert: false,
-    panelLibrary: false,
     reportVariables: false,
     accesscontrol: false,
     trimDefaults: false,
@@ -71,11 +74,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
     customEndpoint: '',
     sampleRate: 1,
   };
-  marketplaceUrl?: string;
+  catalogUrl?: string;
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
+  azure: AzureSettings = {
+    managedIdentityEnabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

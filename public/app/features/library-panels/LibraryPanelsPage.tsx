@@ -6,7 +6,7 @@ import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
 import Page from '../../core/components/Page/Page';
 import { LibraryPanelsSearch } from './components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { LibraryPanelDTO } from './types';
+import { LibraryElementDTO } from './types';
 import { OpenLibraryPanelModal } from './components/OpenLibraryPanelModal/OpenLibraryPanelModal';
 
 const mapStateToProps = (state: StoreState) => ({
@@ -20,12 +20,12 @@ interface OwnProps extends GrafanaRouteComponentProps {}
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const LibraryPanelsPage: FC<Props> = ({ navModel }) => {
-  const [selected, setSelected] = useState<LibraryPanelDTO | undefined>(undefined);
+  const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
 
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <LibraryPanelsSearch onClick={setSelected} showSecondaryActions showSort showFilter />
+        <LibraryPanelsSearch onClick={setSelected} showSecondaryActions showSort showPanelFilter showFolderFilter />
         {selected ? <OpenLibraryPanelModal onDismiss={() => setSelected(undefined)} libraryPanel={selected} /> : null}
       </Page.Contents>
     </Page>

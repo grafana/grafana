@@ -1,10 +1,17 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  getDefaultRelativeTimeRange,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { RelativeTimeRangePicker } from '@grafana/ui';
 
 interface Props {
   // The query configuration
@@ -30,7 +37,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange(timeRange: TimeRange, index: number) {
+  onChangeTimeRange(timeRange: RelativeTimeRange, index: number) {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -39,7 +46,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         }
         return {
           ...item,
-          relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange),
+          relativeTimeRange: timeRange,
         };
       })
     );
@@ -76,6 +83,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
@@ -83,6 +91,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         }
         return {
           ...item,
+          refId: query.refId,
           model: {
             ...item.model,
             ...query,
@@ -110,6 +119,13 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
+  };
+
+  onDuplicateQuery = (query: DataQuery, source: GrafanaQuery): void => {
+    this.props.onDuplicateQuery({
+      ...source,
+      model: query,
+    });
   };
 
   getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
@@ -147,18 +163,9 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       data={data}
                       query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
-                      timeRange={
-                        !isExpressionQuery(query.model)
-                          ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
-                          : undefined
-                      }
-                      onChangeTimeRange={
-                        !isExpressionQuery(query.model)
-                          ? (timeRange) => this.onChangeTimeRange(timeRange, index)
-                          : undefined
-                      }
+                      renderHeaderExtras={() => this.renderTimePicker(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onDuplicateQuery}
+                      onAddQuery={(duplicate) => this.onDuplicateQuery(duplicate, query)}
                       onRunQuery={this.props.onRunQueries}
                       queries={queries}
                     />
@@ -170,6 +177,19 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           }}
         </Droppable>
       </DragDropContext>
+    );
+  }
+
+  renderTimePicker(query: GrafanaQuery, index: number): ReactNode {
+    if (isExpressionQuery(query.model)) {
+      return null;
+    }
+
+    return (
+      <RelativeTimeRangePicker
+        timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+        onChange={(range) => this.onChangeTimeRange(range, index)}
+      />
     );
   }
 }

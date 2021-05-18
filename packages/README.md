@@ -8,7 +8,7 @@ We use [Lerna](https://github.com/lerna/lerna) for packages versioning and relea
 All packages are versioned according to the current Grafana version:
 - Grafana v6.3.0-alpha1 -> @grafana/* packages @ 6.3.0-alpha.1
 - Grafana v6.2.5 -> @grafana/* packages @ 6.2.5
-- Grafana - master branch version (based on package.json, i.e. 6.4.0-pre) -> @grafana/* packages @ 6.4.0-pre-<COMMIT-SHA> (see details below about packages publishing channels)
+- Grafana - main branch version (based on package.json, i.e. 6.4.0-pre) -> @grafana/* packages @ 6.4.0-pre-<COMMIT-SHA> (see details below about packages publishing channels)
 
 > Please note that @grafana/toolkit, @grafana/ui, @grafana/data, and @grafana/runtime packages are considered ALPHA even though they are not released as alpha versions.
 
@@ -21,7 +21,7 @@ Stable releases are published under the `latest` tag on npm. If there was alpha/
 Alpha and beta releases are published under the `next` tag on npm.
 
 ### Automatic prereleases
-Every commit to master that has changes within the `packages` directory is a subject of npm packages release. *ALL* packages must be released under version from lerna.json file with commit SHA added to it:
+Every commit to main that has changes within the `packages` directory is a subject of npm packages release. *ALL* packages must be released under version from lerna.json file with commit SHA added to it:
 
 ```
 <lerna.json version>-<COMMIT_SHA>
@@ -81,7 +81,7 @@ A known issue with @grafana/* packages is that a lot of times we discover proble
 
 We can easily avoid that by setting up a local packages registry and test the packages before actually publishing to npm.
 
-In this guide you will set up [Verdaccio](https://verdaccio.org/) registry locally to fake npm registry. This will enable testing @grafana/* packages without the need for pushing to master.
+In this guide you will set up [Verdaccio](https://verdaccio.org/) registry locally to fake npm registry. This will enable testing @grafana/* packages without the need for pushing to main.
 
 #### Setting up local npm registry
 

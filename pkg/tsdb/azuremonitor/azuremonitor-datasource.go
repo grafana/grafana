@@ -28,6 +28,7 @@ type AzureMonitorDatasource struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 var (
@@ -259,7 +260,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo, e.cfg)
 
 	return req, nil
 }
@@ -415,7 +416,7 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 // Map values from:
 //   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
 // to
-//   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
+//   https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
 	case "BitsPerSecond":
