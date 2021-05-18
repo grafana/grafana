@@ -12,6 +12,7 @@ import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 import { RelativeTimeRangePicker } from '@grafana/ui';
+import { cloneDeep } from 'lodash';
 
 interface Props {
   // The query configuration
@@ -34,7 +35,11 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
   }
 
   onRemoveQuery = (query: DataQuery) => {
-    this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
+    this.props.onQueriesChange(
+      this.props.queries.filter((item) => {
+        return item.model.refId !== query.refId;
+      })
+    );
   };
 
   onChangeTimeRange(timeRange: RelativeTimeRange, index: number) {
@@ -161,7 +166,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       index={index}
                       key={query.refId}
                       data={data}
-                      query={{ ...query.model }}
+                      query={cloneDeep(query.model)}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       renderHeaderExtras={() => this.renderTimePicker(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
