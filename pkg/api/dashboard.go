@@ -505,22 +505,25 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 
 // GetDashboardVersions returns all dashboard versions as JSON
 func GetDashboardVersions(c *models.ReqContext) response.Response {
-	dashID := c.ParamsInt64(":dashboardId")
+	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), c.Params(":dashboardUid"))
+	if rsp != nil {
+		return rsp
+	}
 
-	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	query := models.GetDashboardVersionsQuery{
 		OrgId:       c.OrgId,
-		DashboardId: dashID,
+		DashboardId: dash.Id,
 		Limit:       c.QueryInt("limit"),
 		Start:       c.QueryInt("start"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
+		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dash.Id), err)
 	}
 
 	for _, version := range query.Result {
@@ -544,21 +547,24 @@ func GetDashboardVersions(c *models.ReqContext) response.Response {
 
 // GetDashboardVersion returns the dashboard version with the given ID.
 func GetDashboardVersion(c *models.ReqContext) response.Response {
-	dashID := c.ParamsInt64(":dashboardId")
+	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), c.Params(":dashboardUid"))
+	if rsp != nil {
+		return rsp
+	}
 
-	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	query := models.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
-		DashboardId: dashID,
+		DashboardId: dash.Id,
 		Version:     c.ParamsInt(":id"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return response.Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
+		return response.Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dash.Id), err)
 	}
 
 	creator := anonString
@@ -627,7 +633,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
+	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), c.Params((":dashboardUid")))
 	if rsp != nil {
 		return rsp
 	}

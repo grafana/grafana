@@ -338,7 +338,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), routing.Wrap(hs.ImportDashboard))
 
-			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
+			group := func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", routing.Wrap(GetDashboardVersion))
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), routing.Wrap(hs.RestoreDashboardVersion))
@@ -347,7 +347,9 @@ func (hs *HTTPServer) registerRoutes() {
 					dashboardPermissionRoute.Get("/", routing.Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
-			})
+			}
+			dashboardRoute.Group("/id/:dashboardId", group)
+			dashboardRoute.Group("/uid/:dashboardUid", group)
 		})
 
 		// Dashboard snapshots
