@@ -30,6 +30,17 @@ export interface AzureMonitorQuery extends DataQuery {
   insightsAnalytics: InsightsAnalyticsQuery;
 }
 
+/**
+ * Azure clouds known to Azure Monitor.
+ */
+export enum AzureCloud {
+  Public = 'AzureCloud',
+  China = 'AzureChinaCloud',
+  USGovernment = 'AzureUSGovernment',
+  Germany = 'AzureGermanCloud',
+  None = '',
+}
+
 export type AzureAuthType = 'msi' | 'clientsecret';
 
 export type ConcealedSecret = symbol;

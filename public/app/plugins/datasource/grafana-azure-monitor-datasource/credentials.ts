@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import {
   AzureAuthType,
+  AzureCloud,
   AzureCredentials,
   AzureDataSourceInstanceSettings,
   AzureDataSourceSettings,
@@ -9,23 +10,47 @@ import {
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
-function getAuthType(options: AzureDataSourceSettings): AzureAuthType {
-  if (options.jsonData.azureAuthType) {
-    return options.jsonData.azureAuthType;
+function getAuthType(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): AzureAuthType {
+  if (!options.jsonData.azureAuthType) {
+    // If authentication type isn't explicitly specified and datasource has client credentials,
+    // then this is existing datasource which is configured for app registration (client secret)
+    if (options.jsonData.tenantId && options.jsonData.clientId) {
+      return 'clientsecret';
+    }
+
+    // For newly created datasource with no configuration, managed identity is the default authentication type
+    // if they are enabled in Grafana config
+    return config.azure.managedIdentityEnabled ? 'msi' : 'clientsecret';
   }
 
-  // TODO: Give explanation of the logic
-  if (options.jsonData.tenantId || options.jsonData.clientId) {
-    // Credentials are already configured but authentication type isn't selected
-    // It means existing data source which needs to default to App Registration
-    return 'clientsecret';
-  } else {
-    return config.azure.managedIdentityEnabled ? 'msi' : 'clientsecret';
+  return options.jsonData.azureAuthType;
+}
+
+function getDefaultAzureCloud(): string {
+  switch (config.azure.cloud) {
+    case AzureCloud.Public:
+    case AzureCloud.None:
+      return 'azuremonitor';
+    case AzureCloud.China:
+      return 'chinaazuremonitor';
+    case AzureCloud.USGovernment:
+      return 'govazuremonitor';
+    case AzureCloud.Germany:
+      return 'germanyazuremonitor';
+    default:
+      throw new Error(`The cloud '${config.azure.cloud}' not supported.`);
   }
 }
 
 export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): string {
-  return options.jsonData.cloudName || 'azuremonitor';
+  const authType = getAuthType(options);
+  switch (authType) {
+    case 'msi':
+      // In case of managed identity, the cloud is always same as where Grafana is hosted
+      return getDefaultAzureCloud();
+    case 'clientsecret':
+      return options.jsonData.cloudName || getDefaultAzureCloud();
+  }
 }
 
 function getSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
@@ -52,14 +77,13 @@ export function isLogAnalyticsSameAs(options: AzureDataSourceSettings): boolean 
   return typeof options.jsonData.azureLogAnalyticsSameAs !== 'boolean' || options.jsonData.azureLogAnalyticsSameAs;
 }
 
-export function isCredentialsComplete(credentials: AzureCredentials) {
+export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   switch (credentials.authType) {
     case 'msi':
       return true;
     case 'clientsecret':
       return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);
   }
-  // TODO: Fail if auth type not supported
 }
 
 export function getCredentials(options: AzureDataSourceSettings): AzureCredentials {
@@ -71,29 +95,30 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
           authType: 'msi',
         };
       } else {
-        // TODO: Explain why
+        // If authentication type is managed identity but managed identities were disabled in Grafana config,
+        // then we should fallback to an empty app registration (client secret) configuration
         return {
           authType: 'clientsecret',
-          azureCloud: 'azuremonitor', // TODO: Default cloud should be based on Grafana configuration
+          azureCloud: getDefaultAzureCloud(),
         };
       }
     case 'clientsecret':
       return {
         authType: 'clientsecret',
-        azureCloud: options.jsonData.cloudName || 'azuremonitor', // TODO: Default cloud should be based on Grafana configuration
+        azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
         tenantId: options.jsonData.tenantId,
         clientId: options.jsonData.clientId,
         clientSecret: getSecret(options),
       };
   }
-  // TODO: Fail if auth type not supported
 }
 
 export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): AzureCredentials | undefined {
   const authType = getAuthType(options);
 
   if (authType !== 'clientsecret') {
-    // TODO: Explain why
+    // Only app registration (client secret) authentication supports different credentials for Log Analytics
+    // for backward compatibility
     return undefined;
   }
 
@@ -103,7 +128,7 @@ export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): Az
 
   return {
     authType: 'clientsecret',
-    azureCloud: options.jsonData.cloudName || 'azuremonitor', // TODO: Default cloud should be based on Grafana configuration
+    azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
     tenantId: options.jsonData.logAnalyticsTenantId,
     clientId: options.jsonData.logAnalyticsClientId,
     clientSecret: getLogAnalyticsSecret(options),
@@ -119,21 +144,28 @@ export function updateCredentials(
       if (!config.azure.managedIdentityEnabled) {
         throw new Error('Managed Identity authentication is not enabled in Grafana config.');
       }
+
       options = {
         ...options,
         jsonData: {
           ...options.jsonData,
-          azureAuthType: credentials.authType,
+          azureAuthType: 'msi',
         },
       };
-      break;
+
+      if (isLogAnalyticsSameAs(options)) {
+        options = updateLogAnalyticsSameAs(options, true);
+      }
+
+      return options;
+
     case 'clientsecret':
       options = {
         ...options,
         jsonData: {
           ...options.jsonData,
-          azureAuthType: credentials.authType,
-          cloudName: credentials.azureCloud || 'azuremonitor', // TODO: Default cloud should be based on Grafana configuration
+          azureAuthType: 'clientsecret',
+          cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
         },
@@ -153,40 +185,37 @@ export function updateCredentials(
       if (isLogAnalyticsSameAs(options)) {
         options = updateLogAnalyticsCredentials(options, credentials);
       }
-      break;
-  }
-  // TODO: Fail if auth type not supported
 
-  return options;
+      return options;
+  }
 }
 
 export function updateLogAnalyticsCredentials(
   options: AzureDataSourceSettings,
   credentials: AzureCredentials
 ): AzureDataSourceSettings {
-  if (credentials.authType !== 'clientsecret') {
-    throw new Error('Log Analytics specific authentication can only be App Registration.');
+  // Log Analytics credentials only used if primary credentials are App Registration (client secret)
+  if (credentials.authType === 'clientsecret') {
+    options = {
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        logAnalyticsTenantId: credentials.tenantId,
+        logAnalyticsClientId: credentials.clientId,
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        logAnalyticsClientSecret:
+          typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
+            ? credentials.clientSecret
+            : undefined,
+      },
+      secureJsonFields: {
+        ...options.secureJsonFields,
+        logAnalyticsClientSecret: typeof credentials.clientSecret === 'symbol',
+      },
+    };
   }
-
-  options = {
-    ...options,
-    jsonData: {
-      ...options.jsonData,
-      logAnalyticsTenantId: credentials.tenantId,
-      logAnalyticsClientId: credentials.clientId,
-    },
-    secureJsonData: {
-      ...options.secureJsonData,
-      logAnalyticsClientSecret:
-        typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
-          ? credentials.clientSecret
-          : undefined,
-    },
-    secureJsonFields: {
-      ...options.secureJsonFields,
-      logAnalyticsClientSecret: typeof credentials.clientSecret === 'symbol',
-    },
-  };
 
   return options;
 }
@@ -206,19 +235,19 @@ export function updateLogAnalyticsSameAs(options: AzureDataSourceSettings, sameA
       // Get the primary credentials
       let credentials = getCredentials(options);
 
-      if (credentials.authType !== 'clientsecret') {
-        throw new Error('Log Analytics specific authentication can only be App Registration.');
-      }
-      // Check whether the client secret is concealed
-      if (typeof credentials.clientSecret === 'symbol') {
-        // Log Analytics credentials need to be synchronized but the client secret is concealed,
-        // so we have to reset the primary client secret to ensure that user enters a new secret
-        credentials.clientSecret = undefined;
-        options = updateCredentials(options, credentials);
-      }
+      // Log Analytics credentials only used if primary credentials are App Registration (client secret)
+      if (credentials.authType === 'clientsecret') {
+        // Check whether the client secret is concealed
+        if (typeof credentials.clientSecret === 'symbol') {
+          // Log Analytics credentials need to be synchronized but the client secret is concealed,
+          // so we have to reset the primary client secret to ensure that user enters a new secret
+          credentials.clientSecret = undefined;
+          options = updateCredentials(options, credentials);
+        }
 
-      // Synchronize the Log Analytics credentials with primary credentials
-      options = updateLogAnalyticsCredentials(options, credentials);
+        // Synchronize the Log Analytics credentials with primary credentials
+        options = updateLogAnalyticsCredentials(options, credentials);
+      }
 
       // Synchronize default subscription
       options = {
