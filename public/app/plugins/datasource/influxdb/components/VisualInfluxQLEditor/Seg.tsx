@@ -70,6 +70,7 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
   return (
     <div className={selectClass}>
       <AsyncSelect
+        formatCreateLabel={formatCreateLabel}
         defaultOptions
         autoFocus
         isOpen
