@@ -717,32 +717,12 @@ platform:
 
 steps:
   - name: slack
-    image: plugins/slack-blame
-    settings:
-      channel: slack-webhooks-test
-      success_template: |
-        {{#if ${DRONE_PULL_REQUEST} }}
-          ❌ <https://github.com/{{ repo.owner }}/{{ repo.name }}/pull/${DRONE_PULL_REQUEST}|Pull Request #${DRONE_PULL_REQUEST}>
-        {{else}}
-          ❌ {{ uppercasefirst build.status }}: Build #{{ build.number }} (type: `{{ build.event }}`)
-        {{/if}}
-        Commit: <${CI_REPO_LINK}/commit/{{ build.commit }}|{{ truncate build.commit 8 }}>
-        Branch: <${CI_REPO_LINK}/commits/${DRONE_SOURCE_BRANCH}|${DRONE_SOURCE_BRANCH}>
-        Author: ${DRONE_COMMIT_AUTHOR_EMAIL}
-        <${DRONE_BUILD_LINK}|Visit build page ↗>
-      failure_template: |
-        {{#if ${DRONE_PULL_REQUEST} }}
-          ❌ <https://github.com/{{ repo.owner }}/{{ repo.name }}/pull/${DRONE_PULL_REQUEST}|Pull Request #${DRONE_PULL_REQUEST}>
-        {{else}}
-          ❌ {{ uppercasefirst build.status }}: Build #{{ build.number }} (type: `{{ build.event }}`)
-        {{/if}}
-        Commit: <${CI_REPO_LINK}/commit/{{ build.commit }}|{{ truncate build.commit 8 }}>
-        Branch: <${CI_REPO_LINK}/commits/${DRONE_SOURCE_BRANCH}|${DRONE_SOURCE_BRANCH}>
-        Author: ${DRONE_COMMIT_AUTHOR_EMAIL}
-        <${DRONE_BUILD_LINK}|Visit build page ↗>
-      webhook:
-        from_secret: slack_webhook_test
-      token:
+    image: grafana/build-container:1.4.1
+    commands:
+      - >
+        curl --location --request POST 'https://slack.com/api/conversations.setTopic' --header 'Content-type: application/json' --header 'Authorization: Bearer $${TOKEN}' --data-raw '{"channel": "C01DGCDDLDP", "topic": "broken branch"}'
+    environment:
+      TOKEN:
         from_secret: slack_token
 
 trigger:
