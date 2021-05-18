@@ -19,7 +19,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, onQueryChange
   return (
     <CodeEditor
       value={query.azureResourceGraph.query}
-      language="kql"
+      language="kusto"
       height={200}
       width={1000}
       showMiniMap={false}
