@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect } from 'react';
-import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Field, Input, InputControl, Select, useStyles } from '@grafana/ui';
+import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { RuleEditorSection } from './RuleEditorSection';
@@ -33,7 +33,7 @@ interface Props {
 }
 
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const {
     register,
@@ -165,11 +165,11 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   formInput: css`
     width: 330px;
     & + & {
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(3)};
     }
   `,
   flexRow: css`

@@ -96,7 +96,7 @@ const getStyle = (theme: GrafanaTheme2) => ({
     justify-content: flex-start;
 
     & > * + * {
-      margin-left: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(3)};
     }
   `,
   input: css`
