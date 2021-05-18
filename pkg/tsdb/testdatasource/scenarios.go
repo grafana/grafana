@@ -334,14 +334,15 @@ func csvToFieldValues(stringInput string) (*data.Field, error) {
 		return nil, fmt.Errorf("csv must have at least one value")
 	}
 
-	first := parts[0]
-	if first == "T" || first == "F" {
+	first := strings.ToUpper(parts[0])
+	if first == "T" || first == "F" || first == "TRUE" || first == "FALSE" {
 		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
 		for idx, strVal := range parts {
-			if strVal == "null" || strVal == "" {
+			strVal = strings.ToUpper(strVal)
+			if strVal == "NULL" || strVal == "" {
 				continue
 			}
-			field.SetConcrete(idx, strVal == "T")
+			field.SetConcrete(idx, strVal == "T" || strVal == "TRUE")
 		}
 		return field, nil
 	}

@@ -54,11 +54,13 @@ const getTestContext = () => {
   const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
   const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock };
   const templateVariableValueUpdatedMock = jest.fn();
+  const setChangeAffectsAllPanelsMock = jest.fn();
   const dashboard = ({
     getModel: () =>
       (({
         templateVariableValueUpdated: templateVariableValueUpdatedMock,
         startRefresh: startRefreshMock,
+        setChangeAffectsAllPanels: setChangeAffectsAllPanelsMock,
       } as unknown) as DashboardModel),
   } as unknown) as DashboardState;
   const startRefreshMock = jest.fn();
@@ -82,6 +84,7 @@ const getTestContext = () => {
     updateTimeRangeMock,
     templateVariableValueUpdatedMock,
     startRefreshMock,
+    setChangeAffectsAllPanelsMock,
   };
 };
 
@@ -95,6 +98,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
+        setChangeAffectsAllPanelsMock,
       } = getTestContext();
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
@@ -117,6 +121,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
       expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(1);
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
+      expect(setChangeAffectsAllPanelsMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -130,6 +135,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
+        setChangeAffectsAllPanelsMock,
       } = getTestContext();
 
       const base = await reduxTester<RootReducerType>({ preloadedState })
@@ -154,6 +160,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
       expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
       expect(startRefreshMock).toHaveBeenCalledTimes(1);
+      expect(setChangeAffectsAllPanelsMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -168,6 +175,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
+        setChangeAffectsAllPanelsMock,
       } = getTestContext();
 
       adapter.updateOptions = jest.fn().mockRejectedValue(new Error('Something broke'));
@@ -196,6 +204,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
       expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(0);
       expect(startRefreshMock).toHaveBeenCalledTimes(0);
+      expect(setChangeAffectsAllPanelsMock).toHaveBeenCalledTimes(0);
     });
   });
 });

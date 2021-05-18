@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import coreModule from 'app/core/core_module';
 import { InfluxQuery } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { cx, css } from '@emotion/css';
@@ -213,10 +212,3 @@ export class FluxQueryEditor extends PureComponent<Props> {
     );
   }
 }
-
-coreModule.directive('fluxQueryEditor', [
-  'reactDirective',
-  (reactDirective: any) => {
-    return reactDirective(FluxQueryEditor, ['query', 'onChange', 'onRunQuery']);
-  },
-]);

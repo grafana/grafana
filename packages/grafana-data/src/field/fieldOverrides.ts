@@ -150,23 +150,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
-      // Some units have an implied range
-      if (config.unit === 'percent') {
-        if (!isNumber(config.min)) {
-          config.min = 0;
-        }
-        if (!isNumber(config.max)) {
-          config.max = 100;
-        }
-      } else if (config.unit === 'percentunit') {
-        if (!isNumber(config.min)) {
-          config.min = 0;
-        }
-        if (!isNumber(config.max)) {
-          config.max = 1;
-        }
-      }
-
       // Set the Min/Max value automatically
       let range: NumericRange | undefined = undefined;
       if (field.type === FieldType.number) {
