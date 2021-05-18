@@ -13,7 +13,7 @@ import { Page } from 'components/Page';
 
 export const Browse = ({ query, meta }: AppRootProps) => {
   const { q, filterBy, sortBy } = query;
-  const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
+  const { includeEnterprise = false } = (meta.jsonData as CatalogAppSettings) || {};
 
   const plugins = usePlugins(includeEnterprise);
   const history = useHistory();

@@ -17,8 +17,7 @@ import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Discover = ({ meta }: AppRootProps) => {
-  const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
-
+  const { includeEnterprise = false } = (meta.jsonData as CatalogAppSettings) || {};
   const { items, isLoading } = usePlugins(includeEnterprise);
   const history = useHistory();
   const styles = useStyles2(getStyles);
