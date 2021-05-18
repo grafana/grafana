@@ -88,7 +88,12 @@ export const ConditionsStep: FC = () => {
               <Field label="Alert state if no data or all values are null">
                 <InputControl
                   render={({ field: { onChange, ref, ...field } }) => (
-                    <GrafanaAlertStatePicker {...field} width={42} onChange={(value) => onChange(value?.value)} />
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      width={42}
+                      includeNoData={true}
+                      onChange={(value) => onChange(value?.value)}
+                    />
                   )}
                   name="noDataState"
                 />
@@ -96,7 +101,12 @@ export const ConditionsStep: FC = () => {
               <Field label="Alert state if execution error or timeout">
                 <InputControl
                   render={({ field: { onChange, ref, ...field } }) => (
-                    <GrafanaAlertStatePicker {...field} width={42} onChange={(value) => onChange(value?.value)} />
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      width={42}
+                      includeNoData={false}
+                      onChange={(value) => onChange(value?.value)}
+                    />
                   )}
                   name="execErrState"
                 />
