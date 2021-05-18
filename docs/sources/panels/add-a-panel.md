@@ -16,19 +16,9 @@ Panels allow you to show your data in visual form. This topic walks you through 
 
 1. Click **Add an empty panel**.
 
-Grafana creates an empty graph panel with your default data source selected.
+Grafana creates an empty time series panel with your default data source selected.
 
-## 2. Edit panel settings
-
-While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
-
-![](/img/docs/panels/panel-settings-7-0.png)
-
-**Panel title -** Text entered in this field is displayed at the top of your panel in the panel editor and in the dashboard.
-
-**Description -** Text entered in this field is displayed in a tooltip in the upper left corner of the panel. Write a description of the panel and the data you are displaying. Pretend you are explaining it to a new user six months from now, when it is no longer fresh in your mind. Future editors (possibly yourself) will thank you.
-
-## 3. Write a query
+## 2. Write a query
 
 Each panel needs at least one query to display a visualization. You write queries in the Query tab of the panel editor. For more information about the Query tab, refer to [Queries]({{< relref "queries.md" >}}).
 
@@ -40,6 +30,24 @@ Each panel needs at least one query to display a visualization. You write querie
 In the Visualization section of the Panel tab, click a visualization type. Grafana displays a preview of your query results with that visualization applied.
 
 For more information about individual visualizations, refer to [Visualizations]({{< relref "visualizations/_index.md" >}}).
+
+## 2. (Optional) Edit panel settings
+
+While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
+
+![](/img/docs/panels/panel-settings-7-0.png)
+
+**Panel title -** Text entered in this field is displayed at the top of your panel in the panel editor and in the dashboard.
+
+**Description -** Text entered in this field is displayed in a tooltip in the upper left corner of the panel. Write a description of the panel and the data you are displaying. Pretend you are explaining it to a new user six months from now, when it is no longer fresh in your mind. Future editors (possibly yourself) will thank you.
+
+- Panel options
+- Visualization-specific settings
+- Standard options
+- Thresholds
+- Value mappings
+- Data links
+- Override fields
 
 ## 5. Apply changes and save
 
