@@ -188,3 +188,10 @@ export interface AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
+
+export interface AzureResourceSummaryItem {
+  id: string;
+  name: string;
+  subscriptionName: string;
+  resourceGroupName: string;
+}

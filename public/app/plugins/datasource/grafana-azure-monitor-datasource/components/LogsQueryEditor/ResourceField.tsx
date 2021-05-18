@@ -1,56 +1,39 @@
 import { Button, Icon, Modal } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
-import { AzureQueryEditorFieldProps } from '../../types';
+import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
 import { Space } from '../Space';
 
-/*
-  resources
-  | join (
-      resourcecontainers
-        | where type == "microsoft.resources/subscriptions"
-        | project SubscriptionName=name, subscriptionId
-    ) on subscriptionId
-  | join (
-      resourcecontainers
-        | where type == "microsoft.resources/subscriptions/resourcegroups"
-        | project ResourceGroupName=name, resourceGroup
-    ) on resourceGroup
-  | where id == "/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM"
-  | project id, name, SubscriptionName, ResourceGroupName
-*/
+function parseResourceDetails(resourceURI: string) {
+  const re = /subscriptions\/([\w-]+)\/resourceGroups\/([\w-_]+)\/.+\/([\w-_]+)/;
+  const match = resourceURI.match(re);
 
-interface ResourceComponents {
-  subscriptionName: string;
-  resourceGroupName: string;
-  resourceName: string;
-}
+  if (!match) {
+    return undefined;
+  }
 
-// TODO: make this an actual API call with the above ARG query
-function getResourceComponents(resourceURI: string) {
-  const re = /resourceGroups\/([\w-_]+)\/.+\/([\w-_]+)/;
-  const match = resourceURI.match(re) || ['', 'fake-resource-group', 'fake-resource'];
-
-  return Promise.resolve({
-    subscriptionName: 'Fake subscription',
-    resourceGroupName: match[1],
-    resourceName: match[2],
-  });
+  return {
+    id: resourceURI,
+    subscriptionName: match[1],
+    resourceGroupName: match[2],
+    name: match[3],
+  };
 }
 
 const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
-  const [resourceComponents, setResourceComponents] = useState<ResourceComponents | undefined>(undefined);
-  const [pickerIsOpen, setPickerIsOpen] = useState(false);
   const { resource } = query.azureLogAnalytics;
+
+  const [resourceComponents, setResourceComponents] = useState(parseResourceDetails(resource ?? ''));
+  const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
   useEffect(() => {
     if (resource) {
-      getResourceComponents(resource).then(setResourceComponents);
+      datasource.resourcePickerData.getResource(resource).then(setResourceComponents);
     } else {
       setResourceComponents(undefined);
     }
-  }, [resource]);
+  }, [datasource.resourcePickerData, resource]);
 
   const handleOpenPicker = useCallback(() => {
     setPickerIsOpen(true);
@@ -103,7 +86,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
 };
 
 interface FormattedResourceProps {
-  resource: ResourceComponents;
+  resource: AzureResourceSummaryItem;
 }
 
 const FormattedResource: React.FC<FormattedResourceProps> = ({ resource }) => {
@@ -113,7 +96,7 @@ const FormattedResource: React.FC<FormattedResourceProps> = ({ resource }) => {
       <Separator />
       <Icon name="folder" /> {resource.resourceGroupName}
       <Separator />
-      <Icon name="cube" /> {resource.resourceName}
+      <Icon name="cube" /> {resource.name}
     </span>
   );
 };

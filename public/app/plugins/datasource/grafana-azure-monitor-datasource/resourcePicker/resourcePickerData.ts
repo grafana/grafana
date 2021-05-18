@@ -1,5 +1,6 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { EntryType, Row, RowGroup } from '../components/ResourcePicker/types';
+import { AzureResourceSummaryItem } from '../types';
 import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResources';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
@@ -17,23 +18,25 @@ const cloudToRoute = (cloud: string) => {
   }
 };
 
-type RawAzureResourceGroupItem = {
+interface RawAzureResourceGroupItem {
   subscriptionId: string;
   subscriptionName: string;
   resourceGroup: string;
   resourceGroupId: string;
-};
+}
 
-type RawAzureResourceItem = {
+interface RawAzureResourceItem {
   id: string;
   name: string;
   subscriptionId: string;
   resourceGroup: string;
   type: string;
   location: string;
-};
+}
 
-type AzureResponse = FetchResponse<{ data: RawAzureResourceItem[] | RawAzureResourceGroupItem[] }>;
+interface AzureGraphResponse<T = unknown> {
+  data: T;
+}
 
 export default class ResourcePickerData {
   private proxyUrl: string;
@@ -45,7 +48,7 @@ export default class ResourcePickerData {
   }
 
   async getResourcePickerData() {
-    const { ok, data: response } = await this.makeResourceGraphRequest(
+    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(
       `resources
       | join kind=leftouter (ResourceContainers | where type=='microsoft.resources/subscriptions' | project subscriptionName=name, subscriptionId, resourceGroupId=id) on subscriptionId
       | where type in (${SUPPORTED_RESOURCE_TYPES})
@@ -59,12 +62,12 @@ export default class ResourcePickerData {
       throw new Error('unable to fetch resource containers');
     }
 
-    return this.formatResourceGroupData(response.data as RawAzureResourceGroupItem[]);
+    return this.formatResourceGroupData(response.data);
   }
 
   async getResourcesForResourceGroup(resourceGroup: Row) {
-    const { ok, data: response } = await this.makeResourceGraphRequest(`
-      resources 
+    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
+      resources
       | where resourceGroup == "${resourceGroup.name.toLowerCase()}"
       | where type in (${SUPPORTED_RESOURCE_TYPES}) and location in (${SUPPORTED_LOCATIONS})
     `);
@@ -74,7 +77,33 @@ export default class ResourcePickerData {
       throw new Error('unable to fetch resource containers');
     }
 
-    return this.formatResourceGroupChildren(response.data as RawAzureResourceItem[]);
+    return this.formatResourceGroupChildren(response.data);
+  }
+
+  async getResource(resourceURI: string) {
+    const query = `
+      resources
+        | join (
+            resourcecontainers
+              | where type == "microsoft.resources/subscriptions"
+              | project subscriptionName=name, subscriptionId
+          ) on subscriptionId
+        | join (
+            resourcecontainers
+              | where type == "microsoft.resources/subscriptions/resourcegroups"
+              | project resourceGroupName=name, resourceGroup
+          ) on resourceGroup
+        | where id == "${resourceURI}"
+        | project id, name, subscriptionName, resourceGroupName
+    `;
+
+    const { ok, data: response } = await this.makeResourceGraphRequest<AzureResourceSummaryItem[]>(query);
+
+    if (!ok || !response.data[0]) {
+      throw new Error('unable to fetch resource details');
+    }
+
+    return response.data[0];
   }
 
   formatResourceGroupData(rawData: RawAzureResourceGroupItem[]) {
@@ -128,10 +157,13 @@ export default class ResourcePickerData {
     return children;
   }
 
-  async makeResourceGraphRequest(query: string, maxRetries = 1): Promise<AzureResponse> {
+  async makeResourceGraphRequest<T = unknown>(
+    query: string,
+    maxRetries = 1
+  ): Promise<FetchResponse<AzureGraphResponse<T>>> {
     try {
       return getBackendSrv()
-        .fetch({
+        .fetch<AzureGraphResponse<T>>({
           url: this.proxyUrl + cloudToRoute(this.cloud) + RESOURCE_GRAPH_URL,
           method: 'POST',
           data: {
@@ -141,7 +173,7 @@ export default class ResourcePickerData {
             },
           },
         })
-        .toPromise() as Promise<AzureResponse>;
+        .toPromise();
     } catch (error) {
       if (maxRetries > 0) {
         return this.makeResourceGraphRequest(query, maxRetries - 1);

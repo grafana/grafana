@@ -102,15 +102,22 @@ const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: 
       />
 
       <div className={styles.selectionFooter}>
-        <h5>Selection</h5>
-        <NestedResourceTable
-          noHeader={true}
-          rows={selectedResource}
-          requestNestedRows={requestNestedRows}
-          onRowSelectedChange={handleSelectionChanged}
-          selectedRows={selectedResource}
-        />
+        {hasSelection && (
+          <>
+            <Space v={2} />
+            <h5>Selection</h5>
+            <NestedResourceTable
+              noHeader={true}
+              rows={selectedResource}
+              requestNestedRows={requestNestedRows}
+              onRowSelectedChange={handleSelectionChanged}
+              selectedRows={selectedResource}
+            />
+          </>
+        )}
+
         <Space v={2} />
+
         <Button onClick={handleApply}>Apply</Button>
         <Space layout="inline" h={1} />
         <Button onClick={onCancel} variant="secondary">
