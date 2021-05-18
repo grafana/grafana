@@ -14,12 +14,16 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State) apimodels.Posta
 
 	for _, alertState := range firingStates {
 		if alertState.State == eval.Alerting {
+			nL := alertState.Labels.Copy()
+			if len(alertState.Results) > 0 {
+				nL["__value__"] = alertState.Results[0].EvaluationString
+			}
 			alerts.PostableAlerts = append(alerts.PostableAlerts, models.PostableAlert{
 				Annotations: alertState.Annotations,
 				StartsAt:    strfmt.DateTime(alertState.StartsAt),
 				EndsAt:      strfmt.DateTime(alertState.EndsAt),
 				Alert: models.Alert{
-					Labels: models.LabelSet(alertState.Labels),
+					Labels: models.LabelSet(nL),
 				},
 			})
 		}
