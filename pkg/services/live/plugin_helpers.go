@@ -52,6 +52,6 @@ func newPluginContextGetter(pluginContextProvider *plugincontext.Provider) *plug
 	}
 }
 
-func (g *pluginContextGetter) GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string) (backend.PluginContext, bool, error) {
-	return g.PluginContextProvider.Get(pluginID, datasourceUID, user)
+func (g *pluginContextGetter) GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+	return g.PluginContextProvider.Get(pluginID, datasourceUID, user, skipCache)
 }

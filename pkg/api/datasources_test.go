@@ -55,7 +55,13 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "Should be able to save a data source when calling DELETE on non-existing",
 		"/api/datasources/name/12345", func(sc *scenarioContext) {
-			sc.handlerFunc = DeleteDataSourceByName
+			// handler func being tested
+			hs := &HTTPServer{
+				Bus:           bus.GetBus(),
+				Cfg:           setting.NewCfg(),
+				PluginManager: &fakePluginManager{},
+			}
+			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
 		})
