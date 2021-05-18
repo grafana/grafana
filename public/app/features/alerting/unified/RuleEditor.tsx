@@ -22,7 +22,7 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   useCleanup((state) => state.unifiedAlerting.ruleForm.existingRule);
   const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
   const dispatch = useDispatch();
-  const { isEditable, loading: loadingEditableStatus } = useIsRuleEditable(result?.rule);
+  const { isEditable } = useIsRuleEditable(result?.rule);
 
   useEffect(() => {
     if (!dispatched) {
@@ -30,7 +30,7 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
     }
   }, [dispatched, dispatch, identifier]);
 
-  if (loading || loadingEditableStatus) {
+  if (loading || isEditable === undefined) {
     return (
       <Page.Contents>
         <LoadingPlaceholder text="Loading rule..." />
