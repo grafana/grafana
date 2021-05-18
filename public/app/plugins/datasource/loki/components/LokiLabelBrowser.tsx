@@ -161,7 +161,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
-  state = {
+  state: BrowserState = {
     labels: [] as SelectableLabel[],
     searchTerm: '',
     status: 'Ready',
@@ -328,7 +328,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
         this.setState({ error });
       }
       const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
-      this.updateLabelState(name, { values, loading: false }, '');
+      this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
     }
@@ -380,7 +380,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     const styles = getStyles(theme);
     let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
-      // TODO extract from render() and debounce
       selectedLabels = selectedLabels.map((label) => ({
         ...label,
         values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),

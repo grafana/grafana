@@ -176,7 +176,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
  *              to create a single, generic component.
  */
 export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserProps, BrowserState> {
-  state = {
+  state: BrowserState = {
     labels: [] as SelectableLabel[],
     labelSearchTerm: '',
     metricSearchTerm: '',
@@ -377,7 +377,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       let rawValues = await languageProvider.getLabelValues(name);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
-        this.updateLabelState(name, { loading: false }, '');
+        this.updateLabelState(name, { loading: false });
         return;
       }
       if (rawValues.length > MAX_VALUE_COUNT) {
@@ -386,7 +386,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         this.setState({ error });
       }
       const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
-      this.updateLabelState(name, { values, loading: false }, '');
+      this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
     }
@@ -444,7 +444,6 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     // Filter metrics
     let metrics = labels.find((label) => label.name === METRIC_LABEL);
     if (metrics && metricSearchTerm) {
-      // TODO extract from render() and debounce
       metrics = {
         ...metrics,
         values: metrics.values?.filter((value) => value.selected || value.name.includes(metricSearchTerm)),
@@ -454,14 +453,12 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     // Filter labels
     let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
     if (labelSearchTerm) {
-      // TODO extract from render() and debounce
       nonMetricLabels = nonMetricLabels.filter((label) => label.selected || label.name.includes(labelSearchTerm));
     }
 
     // Filter non-metric label values
     let selectedLabels = nonMetricLabels.filter((label) => label.selected && label.values);
     if (valueSearchTerm) {
-      // TODO extract from render() and debounce
       selectedLabels = selectedLabels.map((label) => ({
         ...label,
         values: label.values?.filter((value) => value.selected || value.name.includes(valueSearchTerm)),

@@ -9,7 +9,6 @@ import {
   SelectableLabel,
   UnthemedPrometheusMetricsBrowser,
   BrowserProps,
-  debouncable,
 } from './PrometheusMetricsBrowser';
 import PromQlLanguageProvider from '../language_provider';
 
@@ -133,7 +132,6 @@ describe('PrometheusMetricsBrowser', () => {
       theme: getTheme(),
       onChange: () => {},
       autoSelect: 0,
-      debounce: debouncable,
       languageProvider: (mockLanguageProvider as unknown) as PromQlLanguageProvider,
     };
 
