@@ -11,11 +11,11 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   mode: TimelineMode;
   rowHeight: number;
   showValue: BarValueVisibility;
-  alignValue: TimelineValueAlignment;
+  alignValue?: TimelineValueAlignment;
   colWidth?: number;
 }
 
-const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue', 'alignValue'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
   static contextType = PanelContextRoot;
