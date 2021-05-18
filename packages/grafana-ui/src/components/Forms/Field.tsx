@@ -25,7 +25,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   error?: string | null;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
-  /** maje validation message overflow horizontally. Prevents pushing out adjacent inline components */
+  /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
   validationMessageHorizontalOverflow?: boolean;
 
   className?: string;
