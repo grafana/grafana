@@ -28,16 +28,6 @@ interface LogsContainerProps extends PropsFromRedux {
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
-  addResultsToCache = () => {
-    const { addResultsToCache, exploreId } = this.props;
-    addResultsToCache(exploreId);
-  };
-
-  clearCache = () => {
-    const { clearCache, exploreId } = this.props;
-    clearCache(exploreId);
-  };
-
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -88,6 +78,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
+      addResultsToCache,
+      clearCache,
     } = this.props;
 
     if (!logRows) {
@@ -145,8 +137,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
-              addResultsToCache={this.addResultsToCache}
-              clearCache={this.clearCache}
+              addResultsToCache={() => addResultsToCache(exploreId)}
+              clearCache={() => clearCache(exploreId)}
             />
           </Collapse>
         </LogsCrossFadeTransition>

@@ -166,6 +166,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 
 /**
  * Adds query results to cache.
+ * This is currently used to cache last 5 query results for log queries run from logs navigation (pagination).
  */
 export interface AddResultsToCachePayload {
   exploreId: ExploreId;
@@ -330,11 +331,11 @@ export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolea
     } = exploreItemState;
     let newQuerySub;
 
-    const cacheValue = getResultsFromCache(cache, absoluteRange);
+    const cachedValue = getResultsFromCache(cache, absoluteRange);
 
-    // If we have results saved in cache, we are going to use those results
-    if (cacheValue) {
-      newQuerySub = of(cacheValue)
+    // If we have results saved in cache, we are going to use those results instead of running queries
+    if (cachedValue) {
+      newQuerySub = of(cachedValue)
         .pipe(
           map((data: PanelData) => preProcessPanelData(data, queryResponse)),
           map(decorateWithFrameTypeMetadata),
@@ -349,7 +350,8 @@ export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolea
 
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
         });
-      // Otherwise run new queries
+
+      // If we don't have resuls saved in cache, run new queries
     } else {
       if (!hasNonEmptyQuery(queries)) {
         dispatch(clearQueriesAction({ exploreId }));
@@ -485,6 +487,7 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
     const queryResponse = getState().explore[exploreId]!.queryResponse;
     const absoluteRange = getState().explore[exploreId]!.absoluteRange;
     const cacheKey = createCacheKey(absoluteRange);
+
     // Save results to cache only when all results recived and loading is done
     if (queryResponse.state === LoadingState.Done) {
       dispatch(addResultsToCacheAction({ exploreId, cacheKey, queryResponse }));
