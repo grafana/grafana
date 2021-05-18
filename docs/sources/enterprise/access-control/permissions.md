@@ -35,7 +35,7 @@ roles:delete | permissions:delegate | Allows to delete a custom role.
 roles.builtin:list | roles:* | Allows to list built-in role assignments.
 roles.builtin:add | permissions:delegate | Allows to create a built-in role assignment.
 roles.builtin:remove | permissions:delegate | Allows to delete a built-in role assignment.
-reports.admin:write | n/a | Allows to create or update reports.
+reports.admin:write | reports:* | Allows to create or update reports.
 reports:delete | reports:* | Allows to delete reports.
 reports:read | reports:* | Allows to list all available reports and to get a specific report. 
 reports:send | reports:* | Allows to send report email.

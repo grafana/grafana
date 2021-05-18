@@ -15,31 +15,6 @@ Fine-grained access control works alongside the current [Grafana permissions]({{
 To learn more about how fine-grained access control works, refer to [Roles]({{< relref "./roles.md" >}}) and [Permissions]({{< relref "./permissions.md" >}}).
 To use the fine-grained access control system, refer to [Fine-grained access control usage scenarios]({{< relref "./usage-scenarios.md" >}}).
 
-## Enable fine-grained access control
-
-Fine-grained access control is available behind the `accesscontrol` feature toggle in Grafana Enterprise 8.0+. 
-You can enable it either in a [config file](({{< relref "../../administration/configuration.md#fconfig-file-locations" >}})) or by [configuring an environment variable](http://localhost:3002/docs/grafana/next/administration/configuration/#configure-with-environment-variables).
-
-### Enable in config file
-
-In your [config file](({{< relref "../../administration/configuration.md#config-file-locations" >}})), add `accesscontrol` as a [feature_toggle](({{< relref "../../administration/configuration.md#feature_toggle" >}})).
-
-```
-[feature_toggles]
-# enable features, separated by spaces
-enable = accesscontrol
-```
-
-### Enable with an environment variable
-
-You can use `GF_FEATURE_TOGGLES_ENABLE = accesscontrol` environment variable to override the config file configuration and enable fine-grained access control. 
-
-Refer to [Configuring with environment variables]({{< relref "../../administration/configuration.md#configure-with-environment-variables" >}}) for more information.
-
-### Verify
-
-You can verify if fine-grained access control is enabled or not by sending an HTTP request to the [Check endpoint]({{< relref "../../http_api/access_control.md#check-if-enabled" >}}).
-
 ## Access management
 
 Fine-grained access control considers a) _who_ has an access (`identity`), and b) _what they can do_ and on which _Grafana resource_ (`role`).
@@ -58,3 +33,28 @@ To learn more about specific endpoints where you can use access control, refer t
 - [Organization API]({{< relref "../../http_api/org.md" >}})
 - [Reporting API]({{< relref "../../http_api/reporting.md" >}})
 - [User API]({{< relref "../../http_api/user.md" >}})
+
+## Enable fine-grained access control
+
+Fine-grained access control is available behind the `accesscontrol` feature toggle in Grafana Enterprise 8.0+.
+You can enable it either in a [config file](({{< relref "../../administration/configuration.md#fconfig-file-locations" >}})) or by [configuring an environment variable](http://localhost:3002/docs/grafana/next/administration/configuration/#configure-with-environment-variables).
+
+### Enable in config file
+
+In your [config file](({{< relref "../../administration/configuration.md#config-file-locations" >}})), add `accesscontrol` as a [feature_toggle](({{< relref "../../administration/configuration.md#feature_toggle" >}})).
+
+```
+[feature_toggles]
+# enable features, separated by spaces
+enable = accesscontrol
+```
+
+### Enable with an environment variable
+
+You can use `GF_FEATURE_TOGGLES_ENABLE = accesscontrol` environment variable to override the config file configuration and enable fine-grained access control.
+
+Refer to [Configuring with environment variables]({{< relref "../../administration/configuration.md#configure-with-environment-variables" >}}) for more information.
+
+### Verify if enabled
+
+You can verify if fine-grained access control is enabled or not by sending an HTTP request to the [Check endpoint]({{< relref "../../http_api/access_control.md#check-if-enabled" >}}).
