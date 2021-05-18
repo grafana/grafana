@@ -16,7 +16,7 @@ export const QueryStep: FC = () => {
   const dataSourceName = watch('dataSourceName');
   return (
     <RuleEditorSection stepNo={2} title="Create a query to be alerted on">
-      {type === RuleFormType.system && dataSourceName && (
+      {type === RuleFormType.cloud && dataSourceName && (
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <InputControl
             name="expression"
@@ -28,7 +28,7 @@ export const QueryStep: FC = () => {
           />
         </Field>
       )}
-      {type === RuleFormType.threshold && (
+      {type === RuleFormType.grafana && (
         <Field
           invalid={!!errors.queries}
           error={(!!errors.queries && 'Must provide at least one valid query.') || undefined}

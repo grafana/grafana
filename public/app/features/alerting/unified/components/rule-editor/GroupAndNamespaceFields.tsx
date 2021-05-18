@@ -4,9 +4,9 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { useFormContext } from 'react-hook-form';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SelectWithAdd } from './SelectWIthAdd';
-import { Field, InputControl } from '@grafana/ui';
+import { Field, InputControl, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 interface Props {
@@ -20,6 +20,8 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
     formState: { errors },
     setValue,
   } = useFormContext<RuleFormValues>();
+
+  const style = useStyles2(getStyle);
 
   const [customGroup, setCustomGroup] = useState(false);
 
@@ -46,13 +48,13 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
   );
 
   return (
-    <>
+    <div className={style.flexRow}>
       <Field label="Namespace" error={errors.namespace?.message} invalid={!!errors.namespace?.message}>
         <InputControl
           render={({ field: { onChange, ref, ...field } }) => (
             <SelectWithAdd
               {...field}
-              className={inputStyle}
+              className={style.input}
               onChange={(value) => {
                 setValue('group', ''); //reset if namespace changes
                 onChange(value);
@@ -74,7 +76,7 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
       <Field label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={inputStyle} />
+            <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={style.input} />
           )}
           name="group"
           control={control}
@@ -83,10 +85,21 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
           }}
         />
       </Field>
-    </>
+    </div>
   );
 };
 
-const inputStyle = css`
-  width: 330px;
-`;
+const getStyle = (theme: GrafanaTheme2) => ({
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+
+    & > * + * {
+      margin-left: ${theme.spacing(3)};
+    }
+  `,
+  input: css`
+    width: 330px !important;
+  `,
+});

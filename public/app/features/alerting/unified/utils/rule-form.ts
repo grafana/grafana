@@ -27,11 +27,15 @@ export const getDefaultFormValues = (): RuleFormValues =>
   Object.freeze({
     name: '',
     labels: [{ key: '', value: '' }],
-    annotations: [{ key: '', value: '' }],
+    annotations: [
+      { key: Annotation.summary, value: '' },
+      { key: Annotation.description, value: '' },
+      { key: Annotation.runbookURL, value: '' },
+    ],
     dataSourceName: null,
-    type: !contextSrv.isEditor ? RuleFormType.threshold : undefined, // viewers can't create prom alerts
+    type: !contextSrv.isEditor ? RuleFormType.grafana : undefined, // viewers can't create prom alerts
 
-    // threshold
+    // grafana
     folder: null,
     queries: [],
     condition: '',
@@ -40,7 +44,7 @@ export const getDefaultFormValues = (): RuleFormValues =>
     evaluateEvery: '1m',
     evaluateFor: '5m',
 
-    // system
+    // cortex / loki
     group: '',
     namespace: '',
     expression: '',
@@ -92,7 +96,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: ga.title,
-        type: RuleFormType.threshold,
+        type: RuleFormType.grafana,
         evaluateFor: rule.for,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,
@@ -114,7 +118,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: rule.alert,
-        type: RuleFormType.system,
+        type: RuleFormType.cloud,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
@@ -256,7 +260,7 @@ export const panelToRuleFormValues = (
   const { folderId, folderTitle } = dashboard.meta;
 
   const formValues = {
-    type: RuleFormType.threshold,
+    type: RuleFormType.grafana,
     folder:
       folderId && folderTitle
         ? {

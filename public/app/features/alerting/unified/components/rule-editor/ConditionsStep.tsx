@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, parseDuration, addDurationToDate } from '@grafana/data';
 import { Field, InlineLabel, Input, InputControl, Select, Switch, useStyles } from '@grafana/ui';
 import { useFormContext, RegisterOptions } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -9,12 +9,29 @@ import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
 
+const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+
 const timeRangeValidationOptions: RegisterOptions = {
   required: {
     value: true,
     message: 'Required.',
   },
   pattern: timeValidationPattern,
+  validate: (value: string) => {
+    const duration = parseDuration(value);
+    if (Object.keys(duration).length) {
+      const from = new Date();
+      const to = addDurationToDate(from, duration);
+      const diff = to.getTime() - from.getTime();
+      if (diff < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+      if (diff % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+    }
+    return true;
+  },
 };
 
 export const ConditionsStep: FC = () => {
@@ -31,7 +48,7 @@ export const ConditionsStep: FC = () => {
 
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
-      {type === RuleFormType.threshold && (
+      {type === RuleFormType.grafana && (
         <>
           <ConditionField />
           <Field label="Evaluate">
@@ -43,6 +60,7 @@ export const ConditionsStep: FC = () => {
                 className={styles.inlineField}
                 error={errors.evaluateEvery?.message}
                 invalid={!!errors.evaluateEvery?.message}
+                validationMessageHorizontalOverflow={true}
               >
                 <Input width={8} {...register('evaluateEvery', timeRangeValidationOptions)} />
               </Field>
@@ -56,6 +74,7 @@ export const ConditionsStep: FC = () => {
                 className={styles.inlineField}
                 error={errors.evaluateFor?.message}
                 invalid={!!errors.evaluateFor?.message}
+                validationMessageHorizontalOverflow={true}
               >
                 <Input width={8} {...register('evaluateFor', timeRangeValidationOptions)} />
               </Field>
@@ -69,7 +88,12 @@ export const ConditionsStep: FC = () => {
               <Field label="Alert state if no data or all values are null">
                 <InputControl
                   render={({ field: { onChange, ref, ...field } }) => (
-                    <GrafanaAlertStatePicker {...field} width={42} onChange={(value) => onChange(value?.value)} />
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      width={42}
+                      includeNoData={true}
+                      onChange={(value) => onChange(value?.value)}
+                    />
                   )}
                   name="noDataState"
                 />
@@ -77,7 +101,12 @@ export const ConditionsStep: FC = () => {
               <Field label="Alert state if execution error or timeout">
                 <InputControl
                   render={({ field: { onChange, ref, ...field } }) => (
-                    <GrafanaAlertStatePicker {...field} width={42} onChange={(value) => onChange(value?.value)} />
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      width={42}
+                      includeNoData={false}
+                      onChange={(value) => onChange(value?.value)}
+                    />
                   )}
                   name="execErrState"
                 />
@@ -86,7 +115,7 @@ export const ConditionsStep: FC = () => {
           )}
         </>
       )}
-      {type === RuleFormType.system && (
+      {type === RuleFormType.cloud && (
         <>
           <Field label="For" description="Expression has to be true for this long for the alert to be fired.">
             <div className={styles.flexRow}>

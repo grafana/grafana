@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { FieldSet, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { FieldSet, useStyles2 } from '@grafana/ui';
 import React, { FC } from 'react';
 
 export interface RuleEditorSectionProps {
@@ -10,7 +10,7 @@ export interface RuleEditorSectionProps {
 }
 
 export const RuleEditorSection: FC<RuleEditorSectionProps> = ({ title, stepNo, children, description }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.parent}>
@@ -18,7 +18,7 @@ export const RuleEditorSection: FC<RuleEditorSectionProps> = ({ title, stepNo, c
         <span className={styles.stepNo}>{stepNo}</span>
       </div>
       <div className={styles.content}>
-        <FieldSet label={title}>
+        <FieldSet label={title} className={styles.fieldset}>
           {description && <p className={styles.description}>{description}</p>}
           {children}
         </FieldSet>
@@ -27,26 +27,35 @@ export const RuleEditorSection: FC<RuleEditorSectionProps> = ({ title, stepNo, c
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
+  fieldset: css`
+    legend {
+      font-size: 16px;
+      padding-top: ${theme.spacing(0.5)};
+    }
+  `,
   parent: css`
     display: flex;
     flex-direction: row;
-    max-width: ${theme.breakpoints.xl};
+    max-width: ${theme.breakpoints.values.xl};
+    & + & {
+      margin-top: ${theme.spacing(4)};
+    }
   `,
   description: css`
-    margin-top: -${theme.spacing.md};
+    margin-top: -${theme.spacing(2)};
   `,
   stepNo: css`
     display: inline-block;
-    width: ${theme.spacing.xl};
-    height: ${theme.spacing.xl};
-    line-height: ${theme.spacing.xl};
-    border-radius: ${theme.spacing.md};
+    width: ${theme.spacing(4)};
+    height: ${theme.spacing(4)};
+    line-height: ${theme.spacing(4)};
+    border-radius: ${theme.spacing(4)};
     text-align: center;
-    color: ${theme.colors.textStrong};
-    background-color: ${theme.colors.bg3};
+    color: ${theme.colors.text.maxContrast};
+    background-color: ${theme.colors.background.canvas};
     font-size: ${theme.typography.size.lg};
-    margin-right: ${theme.spacing.md};
+    margin-right: ${theme.spacing(2)};
   `,
   content: css`
     flex: 1;
