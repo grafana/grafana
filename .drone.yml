@@ -730,6 +730,16 @@ steps:
         Branch: <${CI_REPO_LINK}/commits/${DRONE_SOURCE_BRANCH}|${DRONE_SOURCE_BRANCH}>
         Author: ${DRONE_COMMIT_AUTHOR_EMAIL}
         <${DRONE_BUILD_LINK}|Visit build page ↗>
+      failure_template: |
+        {{#if ${DRONE_PULL_REQUEST} }}
+          ❌ <https://github.com/{{ repo.owner }}/{{ repo.name }}/pull/${DRONE_PULL_REQUEST}|Pull Request #${DRONE_PULL_REQUEST}>
+        {{else}}
+          ❌ {{ uppercasefirst build.status }}: Build #{{ build.number }} (type: `{{ build.event }}`)
+        {{/if}}
+        Commit: <${CI_REPO_LINK}/commit/{{ build.commit }}|{{ truncate build.commit 8 }}>
+        Branch: <${CI_REPO_LINK}/commits/${DRONE_SOURCE_BRANCH}|${DRONE_SOURCE_BRANCH}>
+        Author: ${DRONE_COMMIT_AUTHOR_EMAIL}
+        <${DRONE_BUILD_LINK}|Visit build page ↗>
       webhook:
         from_secret: slack_webhook_test
       token:
@@ -737,7 +747,6 @@ steps:
 
 trigger:
   event:
-    - push
     - pull_request
   status:
     - failure
