@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 // WebhookNotifier is responsible for sending
@@ -33,20 +34,26 @@ type WebhookNotifier struct {
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *models.AlertNotification, t *template.Template) (*WebhookNotifier, error) {
+func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template) (*WebhookNotifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 	return &WebhookNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		URL:          url,
-		User:         model.Settings.Get("username").MustString(),
-		Password:     model.DecryptedValue("password", model.Settings.Get("password").MustString()),
-		HTTPMethod:   model.Settings.Get("httpMethod").MustString("POST"),
-		MaxAlerts:    model.Settings.Get("maxAlerts").MustInt(0),
-		log:          log.New("alerting.notifier.webhook"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		URL:        url,
+		User:       model.Settings.Get("username").MustString(),
+		Password:   model.DecryptedValue("password", model.Settings.Get("password").MustString()),
+		HTTPMethod: model.Settings.Get("httpMethod").MustString("POST"),
+		MaxAlerts:  model.Settings.Get("maxAlerts").MustInt(0),
+		log:        log.New("alerting.notifier.webhook"),
+		tmpl:       t,
 	}, nil
 }
 
@@ -74,7 +81,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
-	data := notify.GetTemplateData(ctx, wn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, wn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(wn.log)))
 
 	var tmplErr error
 	tmpl := notify.TmplText(wn.tmpl, data, &tmplErr)
