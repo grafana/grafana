@@ -17,9 +17,10 @@ import appEvents from 'grafana/app/core/app_events';
 interface Props {
   localPlugin?: Metadata;
   remotePlugin: Plugin;
+  slug: string;
 }
 
-export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
+export const InstallControls = ({ localPlugin, remotePlugin, slug }: Props) => {
   const [loading, setLoading] = useState(false);
   const [isInstalled, setIsInstalled] = useState(Boolean(localPlugin));
   const [shouldUpdate, setShouldUpdate] = useState(
@@ -31,7 +32,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const onInstall = async () => {
     setLoading(true);
     try {
-      await api.installPlugin(remotePlugin.slug, remotePlugin.version);
+      await api.installPlugin(slug, remotePlugin.version);
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${remotePlugin?.name}`]);
       setLoading(false);
       setIsInstalled(true);
@@ -43,7 +44,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const onUninstall = async () => {
     setLoading(true);
     try {
-      await api.uninstallPlugin(remotePlugin.slug);
+      await api.uninstallPlugin(slug);
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${remotePlugin?.name}`]);
       setLoading(false);
       setIsInstalled(false);
@@ -55,7 +56,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const onUpdate = async () => {
     setLoading(true);
     try {
-      await api.installPlugin(remotePlugin.slug, remotePlugin.version);
+      await api.installPlugin(slug, remotePlugin.version);
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${remotePlugin?.name}`]);
       setLoading(false);
       setShouldUpdate(false);

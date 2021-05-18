@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Icon, useParams } from '@grafana/ui';
+import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
@@ -11,15 +11,13 @@ import { usePlugin } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
-  onNavChanged(undefined as any);
-  const { pluginId } = useParams<{ pluginId: string }>();
-
+export const PluginDetails = ({ query }: AppRootProps) => {
+  const { slug } = query;
   const [tabs, setTabs] = useState([
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
-  const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
+  const { isLoading, local, remote, remoteVersions } = usePlugin(slug);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description;
@@ -36,7 +34,7 @@ export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
     <Page>
       <div className={styles.headerContainer}>
         <img
-          src={`${GRAFANA_API_ROOT}/plugins/${pluginId}/versions/${remote?.version}/logos/small`}
+          src={`${GRAFANA_API_ROOT}/plugins/${slug}/versions/${remote?.version}/logos/small`}
           className={css`
             object-fit: cover;
             width: 100%;
@@ -64,7 +62,7 @@ export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
             {version && <span>{version}</span>}
           </div>
           <p>{description}</p>
-          {remote && <InstallControls localPlugin={local} remotePlugin={remote} />}
+          {remote && <InstallControls localPlugin={local} remotePlugin={remote} slug={slug} />}
         </div>
       </div>
       <TabsBar>

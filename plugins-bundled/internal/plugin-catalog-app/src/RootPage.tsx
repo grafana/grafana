@@ -1,58 +1,15 @@
 import { AppRootProps } from '@grafana/data';
+import { pages } from 'pages';
 import React from 'react';
-import { Discover } from 'pages/Discover';
-import { Browse } from 'pages/Browse';
-import { PluginDetails } from 'pages/PluginDetails';
-import { Library } from 'pages/Library';
-import { Route } from '@grafana/ui';
-import { config } from '@grafana/runtime';
-import { NotEnabled } from 'pages/NotEnabed';
 
 export const MarketplaceRootPage = React.memo(function MarketplaceRootPage(props: AppRootProps) {
-  if (!config.pluginCatalogEnabled) {
-    return <NotEnabled {...props} />;
-  }
+  const {
+    path,
+    query: { tab },
+  } = props;
+  // Required to support grafana instances that use a custom `root_url`.
+  const pathWithoutLeadingSlash = path.replace(/^\//, '');
 
-  return (
-    <>
-      <Route
-        exact
-        path={`${props.basename}`}
-        render={() => {
-          return <Browse {...props} />; // or discover?
-        }}
-      />
-
-      <Route
-        exact
-        path={`${props.basename}/browse`}
-        render={() => {
-          return <Browse {...props} />;
-        }}
-      />
-
-      <Route
-        exact
-        path={`${props.basename}/discover`}
-        render={() => {
-          return <Discover {...props} />;
-        }}
-      />
-
-      <Route
-        path={`${props.basename}/plugin/:pluginId`}
-        render={() => {
-          return <PluginDetails {...props} />;
-        }}
-      />
-
-      <Route
-        exact
-        path={`${props.basename}/library`}
-        render={() => {
-          return <Library {...props} />;
-        }}
-      />
-    </>
-  );
+  const Page = pages.find(({ id }) => id === tab)?.component || pages[0].component;
+  return <Page {...props} path={pathWithoutLeadingSlash} />;
 });

@@ -1,8 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { AppRootProps, SelectableValue, dateTimeParse, NavModelItem } from '@grafana/data';
-import { Field, LoadingPlaceholder, Select, useLocation } from '@grafana/ui';
-import { locationSearchToObject } from '@grafana/runtime';
+import { AppRootProps, SelectableValue, dateTimeParse } from '@grafana/data';
+import { Field, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
@@ -11,18 +10,10 @@ import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
 import { CatalogAppSettings, Plugin } from '../types';
 import { Page } from 'components/Page';
-import { CatalogTab, getCatalogNavModel } from './nav';
 
-export const Browse = ({ meta, onNavChanged, basename }: AppRootProps) => {
-  onNavChanged(getCatalogNavModel(CatalogTab.Browse, basename));
-
-  const location = useLocation();
-  const query = locationSearchToObject(location.search);
+export const Browse = ({ query, meta }: AppRootProps) => {
+  const { q, filterBy, sortBy } = query;
   const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
-
-  const q = query.q as string;
-  const filterBy = query.filterBy as string;
-  const sortBy = query.sortBy as string;
 
   const plugins = usePlugins(includeEnterprise);
   const history = useHistory();

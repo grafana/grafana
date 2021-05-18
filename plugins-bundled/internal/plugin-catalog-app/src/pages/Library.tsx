@@ -1,16 +1,14 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { PLUGIN_ROOT } from '../constants';
 import { PluginList } from '../components/PluginList';
 import { usePlugins } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
-import { CatalogTab, getCatalogNavModel } from './nav';
 
-export const Library = ({ meta, onNavChanged, basename }: AppRootProps) => {
-  onNavChanged(getCatalogNavModel(CatalogTab.Library, basename));
+export const Library = () => {
   const { isLoading, items, installedPlugins } = usePlugins(true);
   const styles = useStyles2(getStyles);
 
