@@ -56,9 +56,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name": "default",
 						"labels": map[string]string{
-							"ruleName": "alert1",
-							"ruleUId":  "rule uid",
-							"ruleURL":  "http://localhost/alerting/list",
+							"ruleURL": "http://localhost/alerting/list",
 						},
 					},
 					"output":   "\n**Firing**\nLabels:\n - alertname = alert1\n - __alert_rule_uid__ = rule uid\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
@@ -106,9 +104,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name": "grafana_rule_0",
 						"labels": map[string]string{
-							"ruleName": "alert1",
-							"ruleUId":  "rule uid",
-							"ruleURL":  "http://localhost/alerting/list",
+							"ruleURL": "http://localhost/alerting/list",
 						},
 					},
 					"output":   "2 alerts are firing, 0 are resolved",

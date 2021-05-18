@@ -1,7 +1,6 @@
 package channels
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -75,37 +73,6 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
 
-	ruleUIDs := make(map[string]struct{})
-	ruleNames := make(map[string]struct{})
-	for _, a := range as {
-		v, ok := a.Labels[ngmodels.UIDLabel]
-		if ok {
-			_, exists := ruleUIDs[string(v)]
-			if !exists {
-				ruleUIDs[string(v)] = struct{}{}
-			}
-		}
-		v, ok = a.Labels[model.AlertNameLabel]
-		if ok {
-			_, exists := ruleNames[string(v)]
-			if !exists {
-				ruleNames[string(v)] = struct{}{}
-			}
-		}
-	}
-
-	var buffer bytes.Buffer
-	for k := range ruleUIDs {
-		buffer.WriteString(fmt.Sprintf("%s,", k))
-	}
-	strRuleUIDs := strings.TrimRight(buffer.String(), ",")
-
-	buffer.Reset()
-	for k := range ruleNames {
-		buffer.WriteString(fmt.Sprintf("%s,", k))
-	}
-	strRuleNames := strings.TrimRight(buffer.String(), ",")
-
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
 	entity := sn.Entity
@@ -152,9 +119,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"metadata": map[string]interface{}{
 				"name": check,
 				"labels": map[string]string{
-					"ruleName": strRuleNames,
-					"ruleUId":  strRuleUIDs,
-					"ruleURL":  ruleURL,
+					"ruleURL": ruleURL,
 				},
 			},
 			"output":   tmpl(sn.Message),
