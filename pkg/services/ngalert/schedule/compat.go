@@ -10,12 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-func FromAlertStateToPostableAlerts(firingStates []*state.State, resendDelay time.Duration, stateManager state.Manager) apimodels.PostableAlerts {
+func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *state.Manager) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	var sentAlerts []*state.State
 	ts := time.Now()
 	for _, alertState := range firingStates {
-		if alertState.NeedsSending(resendDelay) {
+		if alertState.NeedsSending(stateManager.ResendDelay) {
 			nL := alertState.Labels.Copy()
 			if len(alertState.Results) > 0 {
 				nL["__value__"] = alertState.Results[0].EvaluationString
