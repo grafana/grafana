@@ -30,6 +30,7 @@ function getDefaultAzureCloud(): string {
   switch (config.azure.cloud) {
     case AzureCloud.Public:
     case AzureCloud.None:
+    case undefined:
       return 'azuremonitor';
     case AzureCloud.China:
       return 'chinaazuremonitor';
