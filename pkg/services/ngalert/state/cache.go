@@ -92,8 +92,8 @@ func (c *cache) set(entry *State) {
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	if state, ok := c.states[orgID][alertRuleUID][stateId]; ok {
 		return state, nil
 	}
@@ -102,8 +102,8 @@ func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 
 func (c *cache) getAll(orgID int64) []*State {
 	var states []*State
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1 {
 			states = append(states, v2)
@@ -114,8 +114,8 @@ func (c *cache) getAll(orgID int64) []*State {
 
 func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	var ruleStates []*State
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	for _, state := range c.states[orgID][alertRuleUID] {
 		ruleStates = append(ruleStates, state)
 	}
@@ -135,9 +135,9 @@ func (c *cache) reset() {
 	c.states = make(map[int64]map[string]map[string]*State)
 }
 
-func (c *cache) trim() {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+func (c *cache) recordMetrics() {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 
 	// Set default values to zero such that gauges are reset
 	// after all values from a single state disappear.
@@ -153,13 +153,6 @@ func (c *cache) trim() {
 		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
 		for _, rule := range orgMap {
 			for _, state := range rule {
-				if len(state.Results) > 100 {
-					newResults := make([]Evaluation, 100)
-					// Keep last 100 results
-					copy(newResults, state.Results[len(state.Results)-100:])
-					state.Results = newResults
-				}
-
 				n := ct[state.State]
 				ct[state.State] = n + 1
 			}
