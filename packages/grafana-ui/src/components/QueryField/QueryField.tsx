@@ -146,11 +146,11 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     });
   };
 
-  runOnChange = () => {
+  runOnChange = (sanitize = false) => {
     const { onChange } = this.props;
     const value = Plain.serialize(this.state.value);
     if (onChange) {
-      onChange(this.cleanText(value));
+      onChange(sanitize ? this.cleanText(value) : value);
     }
   };
 
@@ -166,7 +166,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   runOnChangeAndRunQuery = () => {
     // onRunQuery executes query from Redux in Explore so it needs to be updated sync in case we want to run
     // the query.
-    this.runOnChange();
+    this.runOnChange(true);
     this.runOnRunQuery();
   };
 
@@ -177,6 +177,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     const { onBlur } = this.props;
 
     if (onBlur) {
+      this.runOnChange(true);
       onBlur();
     } else {
       // Run query by default on blur
