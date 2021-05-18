@@ -104,9 +104,7 @@ For details of what _metric names_, _label names_ and _label values_ are please 
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`, see [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}) for more information. These can be convenient to use in conjunction with the `query_result` function when you need to filter variable queries since
-
-`label_values` function doesn't support queries.
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`, see [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}) for more information. These can be convenient to use in conjunction with the `query_result` function when you need to filter variable queries since `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
 
@@ -130,7 +128,11 @@ Regex:
 
 > **Note:** Available in Grafana 7.2 and above
 
-The `$__rate_interval` variable is meant to be used in the rate function. It is defined as max( `$__interval` + _Scrape interval_, 4 \* _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query*interval, a setting per PromQL query), if any is set, and otherwise the \_Scrape interval* as set in the Prometheus data source (but ignoring any Min interval setting in the panel, because the latter is modified by the resolution setting).
+The `$__rate_interval` variable is meant to be a good interval for the `rate` and `increase` functions. It is designed to work well in most cases and avoid most of the pitfalls that can occur when using a fixed interval or `$__interval`.
+
+For example: `rate(http_requests_total[$__rate_interval])`
+
+It is defined as max( `$__interval` + _Scrape interval_, 4 \* _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query\*interval, a setting per PromQL query), if any is set, and otherwise the _Scrape interval_ as set in the Prometheus data source (but ignoring any Min interval setting in the panel, because the latter is modified by the resolution setting).
 
 ### Using variables in queries
 
