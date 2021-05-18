@@ -6,13 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-
-	"github.com/grafana/grafana/pkg/services/search"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
 
