@@ -27,6 +27,8 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     ? props.options.jsonData.logAnalyticsSubscriptionId
     : props.options.jsonData.subscriptionId;
 
+  const credentialsEnabled = primaryCredentials.authType === 'clientsecret';
+
   const hasRequiredFields =
     subscriptionId &&
     (logAnalyticsCredentials
@@ -128,34 +130,40 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   };
 
   const showSameAsHelpMsg =
-    sameAsSwitched && primaryCredentials.authType === 'clientsecret' && !primaryCredentials.clientSecret;
+    credentialsEnabled &&
+    sameAsSwitched &&
+    primaryCredentials.authType === 'clientsecret' &&
+    !primaryCredentials.clientSecret;
 
-  // TODO: Hide "Same As" if managed identity
   return (
     <>
       <h3 className="page-heading">Azure Monitor Logs</h3>
-      <Switch
-        label="Same details as Azure Monitor API"
-        checked={!logAnalyticsCredentials}
-        onChange={onLogAnalyticsSameAsChange}
-        {...tooltipAttribute}
-      />
-      {showSameAsHelpMsg && (
-        <div className="grafana-info-box m-t-2">
-          <div className="alert-body">
-            <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
-          </div>
-        </div>
-      )}
-      {logAnalyticsCredentials && (
-        <AzureCredentialsForm
-          managedIdentityEnabled={false}
-          credentials={logAnalyticsCredentials}
-          defaultSubscription={subscriptionId}
-          onCredentialsChange={onCredentialsChange}
-          onDefaultSubscriptionChange={onLogAnalyticsDefaultSubscriptionChange}
-          getSubscriptions={getSubscriptions}
-        />
+      {credentialsEnabled && (
+        <>
+          <Switch
+            label="Same details as Azure Monitor API"
+            checked={!logAnalyticsCredentials}
+            onChange={onLogAnalyticsSameAsChange}
+            {...tooltipAttribute}
+          />
+          {showSameAsHelpMsg && (
+            <div className="grafana-info-box m-t-2">
+              <div className="alert-body">
+                <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
+              </div>
+            </div>
+          )}
+          {logAnalyticsCredentials && (
+            <AzureCredentialsForm
+              managedIdentityEnabled={false}
+              credentials={logAnalyticsCredentials}
+              defaultSubscription={subscriptionId}
+              onCredentialsChange={onCredentialsChange}
+              onDefaultSubscriptionChange={onLogAnalyticsDefaultSubscriptionChange}
+              getSubscriptions={getSubscriptions}
+            />
+          )}
+        </>
       )}
       <div className="gf-form-group">
         <div className="gf-form-inline">
