@@ -36,7 +36,7 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
-import { withSerializedError } from '../utils/redux';
+import { withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   getRuleIdentifier,
@@ -298,32 +298,35 @@ export const saveRuleFormAction = createAsyncThunk(
     existing?: RuleWithLocation;
     redirectOnSave?: string;
   }): Promise<void> =>
-    withSerializedError(
-      (async () => {
-        const { type } = values;
-        // in case of cloud (cortex/loki)
-        let identifier: RuleIdentifier;
-        if (type === RuleFormType.cloud) {
-          identifier = await saveLotexRule(values, existing);
-          // in case of grafana managed
-        } else if (type === RuleFormType.grafana) {
-          identifier = await saveGrafanaRule(values, existing);
-        } else {
-          throw new Error('Unexpected rule form type');
-        }
-        if (redirectOnSave) {
-          locationService.push(redirectOnSave);
-        } else {
-          // redirect to edit page
-          const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
-          if (locationService.getLocation().pathname !== newLocation) {
-            locationService.replace(newLocation);
+    withAppEvents(
+      withSerializedError(
+        (async () => {
+          const { type } = values;
+          // in case of system (cortex/loki)
+          let identifier: RuleIdentifier;
+          if (type === RuleFormType.cloud) {
+            identifier = await saveLotexRule(values, existing);
+            // in case of grafana managed
+          } else if (type === RuleFormType.grafana) {
+            identifier = await saveGrafanaRule(values, existing);
+          } else {
+            throw new Error('Unexpected rule form type');
           }
-        }
-        appEvents.emit(AppEvents.alertSuccess, [
-          existing ? `Rule "${values.name}" updated.` : `Rule "${values.name}" saved.`,
-        ]);
-      })()
+          if (redirectOnSave) {
+            locationService.push(redirectOnSave);
+          } else {
+            // redirect to edit page
+            const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
+            if (locationService.getLocation().pathname !== newLocation) {
+              locationService.replace(newLocation);
+            }
+          }
+        })()
+      ),
+      {
+        successMessage: existing ? `Rule "${values.name}" updated.` : `Rule "${values.name}" saved.`,
+        errorMessage: 'Failed to save rule',
+      }
     )
 );
 
