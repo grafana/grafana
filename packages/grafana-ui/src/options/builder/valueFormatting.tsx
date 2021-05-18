@@ -7,7 +7,6 @@ export enum VizValueFormattingMode {
 }
 export type VizValueFormattingOptions = {
   size?: number;
-  sync?: boolean;
   mode: VizValueFormattingMode;
 };
 
@@ -43,13 +42,5 @@ export function addValueFormattingOptions<T extends OptionsWithValueFormatting>(
         step: 1,
       },
       showIf: (c) => c.valueFormatting.mode === VizValueFormattingMode.Fixed,
-    })
-    .addBooleanSwitch({
-      path: 'valueFormatting.sync',
-      name: 'Sync text size',
-      category: ['Value formatting'],
-      description: '',
-      defaultValue: false,
-      showIf: (c) => c.valueFormatting.mode === VizValueFormattingMode.Auto,
     });
 }
