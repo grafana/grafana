@@ -1,16 +1,17 @@
 +++
-title = "Panel legend options"
-weight = 50
+title = "Legend options"
+aliases = ["/docs/grafana/latest/panels/visualizations/panel-legend/"]
+weight = 500
 +++
 
-# Legend
+# Legend options
 
 Use the legend to adjust how a visualization displays series. This legend functionality only applies to a few panels now, but it will eventually be common to all visualizations.
 
 This topic currently applies to the following visualizations:
 
-- [Pie chart panel]({{< relref "pie-chart-panel.md">}})
-- [Time series panel]({{< relref "time-series/_index.md" >}})
+- [Pie chart panel]({{< relref "visualizations/pie-chart-panel.md">}})
+- [Time series panel]({{< relref "visualizations/time-series/_index.md" >}})
 
 ## Toggle series
 
