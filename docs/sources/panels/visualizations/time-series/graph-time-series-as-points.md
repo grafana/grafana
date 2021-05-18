@@ -42,3 +42,7 @@ Point size set to 20:
 Point size set to 35:
 
 ![Show points point size 35 example](/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
+
+{{< docs/shared "visualizations/stack-series-link.md" >}}
+
+{{< docs/shared "visualizations/change-axis-link.md" >}}

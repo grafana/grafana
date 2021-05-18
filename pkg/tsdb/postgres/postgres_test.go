@@ -254,7 +254,7 @@ func TestPostgres(t *testing.T) {
 			require.Len(t, frames, 1)
 			require.Len(t, frames[0].Fields, 17)
 
-			require.Equal(t, int16(1), *frames[0].Fields[0].At(0).(*int16))
+			require.Equal(t, int16(1), frames[0].Fields[0].At(0).(int16))
 			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
 			require.Equal(t, int64(3), *frames[0].Fields[2].At(0).(*int64))
 

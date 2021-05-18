@@ -13,16 +13,13 @@ import (
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
-	if !l.IsEnabled() {
-		return
-	}
-
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, binding.Bind(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
+		entities.Get("/name/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
 	})
 }
@@ -49,7 +46,7 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 
 // getHandler handles GET  /api/library-elements/:uid.
 func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Response {
-	element, err := l.getLibraryElement(c, c.Params(":uid"))
+	element, err := l.getLibraryElementByUid(c)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}
@@ -95,6 +92,16 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 	}
 
 	return response.JSON(200, util.DynMap{"result": connections})
+}
+
+// getByNameHandler handles GET /api/library-elements/name/:name/.
+func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.Response {
+	elements, err := l.getLibraryElementsByName(c)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to get library element")
+	}
+
+	return response.JSON(200, util.DynMap{"result": elements})
 }
 
 func toLibraryElementError(err error, message string) response.Response {
