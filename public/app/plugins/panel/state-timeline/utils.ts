@@ -250,6 +250,9 @@ export function prepareTimelineFields(
         case FieldType.number:
         case FieldType.boolean:
         case FieldType.string:
+          // magic value for join() to leave nulls alone
+          (field.config.custom = field.config.custom ?? {}).spanNulls = -1;
+
           if (mergeValues) {
             let merged = unsetSameFutureValues(field.values.toArray());
             if (merged) {

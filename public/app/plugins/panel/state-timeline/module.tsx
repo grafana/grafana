@@ -41,12 +41,17 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
   })
   .setPanelOptions((builder) => {
     builder
+      .addBooleanSwitch({
+        path: 'mergeValues',
+        name: 'Merge equal consecutive values',
+        defaultValue: defaultPanelOptions.mergeValues,
+      })
       .addRadio({
         path: 'showValue',
         name: 'Show values',
         settings: {
           options: [
-            //{ value: BarValueVisibility.Auto, label: 'Auto' },
+            { value: BarValueVisibility.Auto, label: 'Auto' },
             { value: BarValueVisibility.Always, label: 'Always' },
             { value: BarValueVisibility.Never, label: 'Never' },
           ],
@@ -55,7 +60,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
       })
       .addRadio({
         path: 'alignValue',
-        name: 'Align value',
+        name: 'Align values',
         settings: {
           options: [
             { value: 'left', label: 'Left' },
@@ -64,11 +69,6 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
           ],
         },
         defaultValue: defaultPanelOptions.alignValue,
-      })
-      .addBooleanSwitch({
-        path: 'mergeValues',
-        name: 'Merge equal consecutive values',
-        defaultValue: defaultPanelOptions.mergeValues,
       })
       .addSliderInput({
         path: 'rowHeight',

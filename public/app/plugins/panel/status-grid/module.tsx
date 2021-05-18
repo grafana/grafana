@@ -46,12 +46,12 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
         name: 'Show values',
         settings: {
           options: [
-            //{ value: BarValueVisibility.Auto, label: 'Auto' },
+            { value: BarValueVisibility.Auto, label: 'Auto' },
             { value: BarValueVisibility.Always, label: 'Always' },
             { value: BarValueVisibility.Never, label: 'Never' },
           ],
         },
-        defaultValue: BarValueVisibility.Always,
+        defaultValue: BarValueVisibility.Auto,
       })
       .addSliderInput({
         path: 'rowHeight',

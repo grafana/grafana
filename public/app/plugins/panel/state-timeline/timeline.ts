@@ -9,6 +9,8 @@ import tinycolor from 'tinycolor2';
 
 const { round, min, ceil } = Math;
 
+const textPadding = 2;
+
 const pxRatio = devicePixelRatio;
 
 const laneDistr = SPACE_BETWEEN;
@@ -25,8 +27,6 @@ function walk(rowHeight: number, yIdx: number | null, count: number, dim: number
 }
 
 interface TimelineBoxRect extends Rect {
-  left: number;
-  strokeWidth: number;
   fillColor: string;
 }
 
@@ -35,12 +35,12 @@ interface TimelineBoxRect extends Rect {
  */
 export interface TimelineCoreOptions {
   mode: TimelineMode;
+  alignValue?: TimelineValueAlignment;
   numSeries: number;
   rowHeight: number;
   colWidth?: number;
   theme: GrafanaTheme2;
   showValue: BarValueVisibility;
-  alignValue: TimelineValueAlignment;
   isDiscrete: (seriesIdx: number) => boolean;
   getValueColor: (seriesIdx: number, value: any) => string;
   label: (seriesIdx: number) => string;
@@ -62,10 +62,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     rowHeight = 0,
     colWidth = 0,
     showValue,
-    alignValue,
     theme,
     label,
     formatValue,
+    alignValue = 'left',
     getTimeRange,
     getValueColor,
     getFieldConfig,
@@ -150,9 +150,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       h: boxHeight,
       sidx: seriesIdx + 1,
       didx: valueIdx,
-      // These two are needed for later text positioning
-      left: left,
-      strokeWidth,
+      // for computing label contrast
       fillColor,
     });
 
@@ -235,7 +233,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   yOff,
                   left,
                   round(yOff + y0),
-                  right - left - 2,
+                  right - left,
                   round(height),
                   strokeWidth,
                   iy,
@@ -279,7 +277,10 @@ export function getConfig(opts: TimelineCoreOptions) {
           }
         });
 
-        discrete && drawBoxes(u.ctx);
+        if (discrete) {
+          u.ctx.lineWidth = strokeWidth;
+          drawBoxes(u.ctx);
+        }
 
         u.ctx.restore();
       }
@@ -297,28 +298,15 @@ export function getConfig(opts: TimelineCoreOptions) {
           u.ctx.clip();
 
           u.ctx.font = font;
-          u.ctx.textAlign = alignValue;
+          u.ctx.textAlign = mode === TimelineMode.Changes ? alignValue : 'center';
           u.ctx.textBaseline = 'middle';
 
           uPlot.orient(
             u,
             sidx,
-            (
-              series,
-              dataX,
-              dataY,
-              scaleX,
-              scaleY,
-              valToPosX,
-              valToPosY,
-              xOff,
-              yOff,
-              xDim,
-              yDim,
-              moveTo,
-              lineTo,
-              rect
-            ) => {
+            (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+              let strokeWidth = round((series.width || 0) * pxRatio);
+
               let y = round(yOff + yMids[sidx - 1]);
 
               for (let ix = 0; ix < dataY.length; ix++) {
@@ -326,14 +314,29 @@ export function getConfig(opts: TimelineCoreOptions) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   // Todo refine this to better know when to not render text (when values do not fit)
-                  if (!boxRect || boxRect.w < 20) {
+                  if (!boxRect || (showValue === BarValueVisibility.Auto && boxRect.w < 25)) {
                     continue;
                   }
 
-                  const x = getTextPositionOffet(boxRect, alignValue);
+                  if (boxRect.x >= xDim) {
+                    continue; // out of view
+                  }
 
+                  // center-aligned
+                  let x = round(boxRect.x + xOff + boxRect.w / 2);
+                  const txt = formatValue(sidx, dataY[ix]);
+
+                  if (mode === TimelineMode.Changes) {
+                    if (alignValue === 'left') {
+                      x = round(boxRect.x + xOff + strokeWidth + textPadding);
+                    } else if (alignValue === 'right') {
+                      x = round(boxRect.x + xOff + boxRect.w - strokeWidth - textPadding);
+                    }
+                  }
+
+                  // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
-                  u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
+                  u.ctx.fillText(txt, x, y);
                 }
               }
             }
@@ -365,14 +368,28 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
   };
 
-  const setCursor = (u: uPlot) => {
-    let cx = round(u.cursor!.left! * pxRatio);
+  function setHoverMark(i: number, o: Rect | null) {
+    let h = hoverMarks[i];
 
+    if (o) {
+      h.style.display = '';
+      h.style.left = round(o!.x / pxRatio) + 'px';
+      h.style.top = round(o!.y / pxRatio) + 'px';
+      h.style.width = round(o!.w / pxRatio) + 'px';
+      h.style.height = round(o!.h / pxRatio) + 'px';
+    } else {
+      h.style.display = 'none';
+    }
+
+    hovered[i] = o;
+  }
+
+  function hoverMulti(cx: number, cy: number) {
     for (let i = 0; i < numSeries; i++) {
       let found: Rect | null = null;
 
       if (cx >= 0) {
-        let cy = yMids[i];
+        cy = yMids[i];
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
@@ -381,28 +398,44 @@ export function getConfig(opts: TimelineCoreOptions) {
         });
       }
 
-      let h = hoverMarks[i];
-
       if (found) {
         if (found !== hovered[i]) {
-          hovered[i] = found;
-
-          h.style.display = '';
-          h.style.left = round(found!.x / pxRatio) + 'px';
-          h.style.top = round(found!.y / pxRatio) + 'px';
-          h.style.width = round(found!.w / pxRatio) + 'px';
-          h.style.height = round(found!.h / pxRatio) + 'px';
+          setHoverMark(i, found);
         }
       } else if (hovered[i] != null) {
-        h.style.display = 'none';
-        hovered[i] = null;
+        setHoverMark(i, null);
       }
     }
+  }
+
+  function hoverOne(cx: number, cy: number) {
+    let found: Rect | null = null;
+
+    qt.get(cx, cy, 1, 1, (o) => {
+      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        found = o;
+      }
+    });
+
+    if (found) {
+      setHoverMark(0, found);
+    } else if (hovered[0] != null) {
+      setHoverMark(0, null);
+    }
+  }
+
+  const doHover = mode === TimelineMode.Changes ? hoverMulti : hoverOne;
+
+  const setCursor = (u: uPlot) => {
+    let cx = round(u.cursor!.left! * pxRatio);
+    let cy = round(u.cursor!.top! * pxRatio);
+    doHover(cx, cy);
   };
 
   // hide y crosshair & hover points
   const cursor: Partial<Cursor> = {
     y: false,
+    x: mode === TimelineMode.Changes,
     points: { show: false },
   };
 
@@ -478,19 +511,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     drawClear,
     setCursor,
   };
-}
-
-function getTextPositionOffet(rect: TimelineBoxRect, alignValue: TimelineValueAlignment) {
-  // left or right aligned values shift 2 pixels inside edge
-  const textPadding = alignValue === 'left' ? 2 : alignValue === 'right' ? -2 : 0;
-  const { left, w, strokeWidth } = rect;
-
-  return (
-    left +
-    strokeWidth / 2 +
-    (alignValue === 'center' ? w / 2 - strokeWidth / 2 : alignValue === 'right' ? w - strokeWidth / 2 : 0) +
-    textPadding
-  );
 }
 
 function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {

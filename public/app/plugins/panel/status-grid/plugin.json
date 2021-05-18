@@ -6,7 +6,7 @@
   "state": "alpha",
 
   "info": {
-    "description": "System status map",
+    "description": "Periodic status history",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
