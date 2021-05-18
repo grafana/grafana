@@ -9,7 +9,7 @@ weight = 200
 To change how all fields display data, you can change an option in the Field tab. In the Overrides tab, you can then override the field options for [specific fields]({{< relref "configure-specific-fields.md" >}}).
 
 For example, you could change the number of decimal places shown in all fields by changing the **Decimals** option. For more information about options, refer to:
-   - [Standard field options]({{< relref "standard-field-options.md" >}}), apply to all visualizations that allow transformations.
+   - [Standard field options]({{< relref "../standard-options.md" >}}), apply to all visualizations that allow transformations.
    - [Table field options]({{< relref "../visualizations/table/table-field-options.md" >}}), which only apply to table panel visualizations.
 
 ## Change a field option
