@@ -24,8 +24,9 @@ type State struct {
 }
 
 type Evaluation struct {
-	EvaluationTime  time.Time
-	EvaluationState eval.State
+	EvaluationTime   time.Time
+	EvaluationState  eval.State
+	EvaluationString string
 }
 
 func resultNormal(alertState *State, result eval.Result) *State {

@@ -25,6 +25,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       ${color ? `color: ${color};` : ''};
       ${background ? `background: ${background};` : ''};
+      background-clip: padding-box;
 
       &:last-child:not(:only-child) {
         border-right: none;
