@@ -257,7 +257,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
 
   function getContrastText(background: string, threshold: number = contrastThreshold) {
     const contrastText =
-      getContrastRatio(dark.text.maxContrast, background) >= threshold ? dark.text.maxContrast : light.text.maxContrast;
+      getContrastRatio(dark.text.maxContrast, background, base.background.primary) >= threshold
+        ? dark.text.maxContrast
+        : light.text.maxContrast;
     // todo, need color framework
     return contrastText;
   }
