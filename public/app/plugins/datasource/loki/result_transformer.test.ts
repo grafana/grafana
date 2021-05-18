@@ -72,10 +72,10 @@ describe('loki result transformer', () => {
       expect(data[0].fields[1].labels!['foo']).toEqual('bar');
       expect(data[0].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.021Z');
       expect(data[0].fields[1].values.get(0)).toEqual(streamResult[0].values[0][1]);
-      expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb');
+      expect(data[0].fields[2].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc');
       expect(data[1].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.031Z');
       expect(data[1].fields[1].values.get(0)).toEqual(streamResult[1].values[0][1]);
-      expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0');
+      expect(data[1].fields[2].values.get(0)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1');
     });
 
     it('should always generate unique ids for logs', () => {
@@ -102,18 +102,18 @@ describe('loki result transformer', () => {
 
       const data = streamResultWithDuplicateLogs.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
-      expect(data[0].fields[2].values.get(0)).toEqual('65cee200875f58ee1430d8bd2e8b74e7');
-      expect(data[0].fields[2].values.get(1)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_1');
-      expect(data[0].fields[2].values.get(2)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
-      expect(data[0].fields[2].values.get(3)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
-      expect(data[1].fields[2].values.get(0)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_3');
+      expect(data[0].fields[2].values.get(0)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa');
+      expect(data[0].fields[2].values.get(1)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_1');
+      expect(data[0].fields[2].values.get(2)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
+      expect(data[0].fields[2].values.get(3)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
+      expect(data[1].fields[2].values.get(0)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_3');
     });
 
     it('should append refId to the unique ids if refId is provided', () => {
       const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream, false, 'B'));
       expect(data.length).toBe(2);
-      expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb_B');
-      expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0_B');
+      expect(data[0].fields[2].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc_B');
+      expect(data[1].fields[2].values.get(0)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1_B');
     });
   });
 
@@ -172,7 +172,7 @@ describe('loki result transformer', () => {
         line:
           't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
         labels: { filename: '/var/log/grafana/grafana.log' },
-        id: '19e8e093d70122b3b53cb6e24efd6e2d',
+        id: '07f0607c-04ee-51bd-8a0c-fc0f85d37489',
       });
     });
 
@@ -205,12 +205,12 @@ describe('loki result transformer', () => {
       data.refId = 'C';
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
-      expect(data.get(0).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_C');
-      expect(data.get(1).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_1_C');
-      expect(data.get(2).id).toEqual('707e4ec2b842f389dbb993438505856d_C');
-      expect(data.get(3).id).toEqual('78f044015a58fad3e257a855b167d85e_C');
-      expect(data.get(4).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_2_C');
-      expect(data.get(5).id).toEqual('707e4ec2b842f389dbb993438505856d_1_C');
+      expect(data.get(0).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_C');
+      expect(data.get(1).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_1_C');
+      expect(data.get(2).id).toEqual('3ca99d6b-3ab5-5970-93c0-eb3c9449088e_C');
+      expect(data.get(3).id).toEqual('ec9bea1d-70cb-556c-8519-d5d6ae18c004_C');
+      expect(data.get(4).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_2_C');
+      expect(data.get(5).id).toEqual('3ca99d6b-3ab5-5970-93c0-eb3c9449088e_1_C');
     });
   });
 
