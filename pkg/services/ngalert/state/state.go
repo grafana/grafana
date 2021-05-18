@@ -135,7 +135,6 @@ func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
 		return
 	}
 	newResults := make([]Evaluation, numBuckets)
-	// Keep last 100 results
 	copy(newResults, a.Results[len(a.Results)-int(numBuckets):])
 	a.Results = newResults
 }
