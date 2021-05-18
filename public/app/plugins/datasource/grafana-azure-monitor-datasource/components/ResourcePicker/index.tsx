@@ -114,7 +114,9 @@ const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: 
           <Space v={2} />
           <Button onClick={handleApply}>Apply</Button>
           <Space layout="inline" h={1} />
-          <Button onClick={onCancel}>Cancel</Button>
+          <Button onClick={onCancel} variant="secondary">
+            Cancel
+          </Button>
         </div>
       )}
     </div>
