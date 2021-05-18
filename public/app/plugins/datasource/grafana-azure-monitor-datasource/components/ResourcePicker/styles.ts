@@ -6,6 +6,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
   }),
 
+  tableScroller: css({
+    maxHeight: '50vh',
+    overflow: 'auto',
+  }),
+
   header: css({
     background: theme.colors.background.secondary,
   }),

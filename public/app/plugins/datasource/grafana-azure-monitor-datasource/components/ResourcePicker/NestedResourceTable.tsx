@@ -25,27 +25,33 @@ const NestedResourceTable: React.FC<NestedResourceTableProps> = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <table className={styles.table}>
-      {!noHeader && (
-        <thead>
-          <tr className={cx(styles.row, styles.header)}>
-            <td className={styles.cell}>Scope</td>
-            <td className={styles.cell}>Type</td>
-            <td className={styles.cell}>Location</td>
-          </tr>
-        </thead>
-      )}
+    <>
+      <table className={styles.table}>
+        {!noHeader && (
+          <thead>
+            <tr className={cx(styles.row, styles.header)}>
+              <td className={styles.cell}>Scope</td>
+              <td className={styles.cell}>Type</td>
+              <td className={styles.cell}>Location</td>
+            </tr>
+          </thead>
+        )}
+      </table>
 
-      <tbody>
-        <NestedRows
-          rows={rows}
-          selectedRows={selectedRows}
-          level={0}
-          requestNestedRows={requestNestedRows}
-          onRowSelectedChange={onRowSelectedChange}
-        />
-      </tbody>
-    </table>
+      <div className={styles.tableScroller}>
+        <table className={styles.table}>
+          <tbody>
+            <NestedRows
+              rows={rows}
+              selectedRows={selectedRows}
+              level={0}
+              requestNestedRows={requestNestedRows}
+              onRowSelectedChange={onRowSelectedChange}
+            />
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 };
 
