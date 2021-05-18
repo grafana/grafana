@@ -223,10 +223,14 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 		// Create receiver and route for this rule.
 		if allChannels != nil {
-			channelUids, err := getChannelUidsFromDashboard(oda, da.PanelId)
+			channelUids, ruleName, ruleMessage, err := extractChannelInfoFromDashboard(oda, da.PanelId)
 			if err != nil {
 				return err
 			}
+
+			rule.Labels["alertname"] = ruleName
+			rule.Annotations["message"] = ruleMessage
+
 			recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelUids, allChannels)
 			if err != nil {
 				return err

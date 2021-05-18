@@ -33,7 +33,7 @@ func (m *migration) getNotificationChannelMap() (map[string]*notificationChannel
 		settings,
 		secure_settings
 	FROM
-		dashboard
+		alert_notification
 	`
 	allChannels := []notificationChannel{}
 	err := m.sess.SQL(q).Find(&allChannels)
@@ -77,12 +77,17 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, a
 			// TODO: should we error out here?
 			continue
 		}
+		if m.Type == "hipchat" || m.Type == "sensu" {
+			return nil, nil, fmt.Errorf("discontinued notification channel found: %s", m.Type)
+		}
+
+		settings, secureSettings := migrateSettingsToSecureSettings(m.Type, m.Settings, m.SecureSettings)
 		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
 			Name:                  m.Name,
 			Type:                  m.Type,
 			DisableResolveMessage: m.DisableResolveMessage,
-			Settings:              m.Settings,
-			SecureSettings:        m.SecureSettings.Decrypt(),
+			Settings:              settings,
+			SecureSettings:        secureSettings,
 		})
 	}
 	receiver.GrafanaManagedReceivers = portedChannels
@@ -100,6 +105,48 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, a
 	return receiver, route, nil
 }
 
+// Some settings were migrated from settings to secure settings in between.
+// See https://grafana.com/docs/grafana/latest/installation/upgrading/#ensure-encryption-of-existing-alert-notification-channel-secrets.
+// migrateSettingsToSecureSettings takes care of that.
+func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings securejsondata.SecureJsonData) (*simplejson.Json, map[string]string) {
+	keys := []string{}
+	switch chanType {
+	case "slack":
+		keys = []string{"url", "token"}
+	case "pagerduty":
+		keys = []string{"integrationKey"}
+	case "webhook":
+		keys = []string{"password"}
+	case "prometheus-alertmanager":
+		keys = []string{"basicAuthPassword"}
+	case "opsgenie":
+		keys = []string{"apiKey"}
+	case "telegram":
+		keys = []string{"bottoken"}
+	case "line":
+		keys = []string{"token"}
+	case "pushover":
+		keys = []string{"apiToken", "userKey"}
+	case "threema":
+		keys = []string{"api_secret"}
+	}
+
+	ss := secureSettings.Decrypt()
+	for _, k := range keys {
+		if v, ok := ss[k]; ok && v != "" {
+			continue
+		}
+
+		sv := settings.Get(k).MustString()
+		if sv != "" {
+			ss[k] = sv
+			settings.Del(k)
+		}
+	}
+
+	return settings, ss
+}
+
 func getMigratedReceiverNameFromRuleUID(ruleUID string) string {
 	return fmt.Sprintf("autogen-panel-recv-%s", ruleUID)
 }
@@ -108,35 +155,39 @@ func getLabelForRouteMatching(ruleUID string) (string, string) {
 	return "rule_uid", ruleUID
 }
 
-func getChannelUidsFromDashboard(d oldDash, panelId int64) ([]string, error) {
-	channelUids := []string{}
-
+func extractChannelInfoFromDashboard(d oldDash, panelId int64) (channelUids []string, ruleName string, ruleMessage string, _ error) {
 	panels, err := d.Data.Get("panels").Array()
 	if err != nil {
-		return nil, err
+		return nil, "", "", err
 	}
 
 	for _, pi := range panels {
 		p := simplejson.NewFromAny(pi)
 		pid, err := p.Get("id").Int64()
 		if err != nil {
-			return nil, err
+			return nil, "", "", err
 		}
 
 		if pid != panelId {
 			continue
 		}
 
-		uids, err := p.Get("notifications").Array()
+		a := p.Get("alert")
+
+		ruleMessage = a.Get("message").MustString()
+		ruleName = a.Get("name").MustString()
+
+		// Extracting channel UIDs.
+		uids, err := a.Get("notifications").Array()
 		if err != nil {
-			return nil, err
+			return nil, "", "", err
 		}
 
 		for _, ui := range uids {
 			u := simplejson.NewFromAny(ui)
 			channelUid, err := u.Get("uid").String()
 			if err != nil {
-				return nil, err
+				return nil, "", "", err
 			}
 
 			channelUids = append(channelUids, channelUid)
@@ -145,7 +196,7 @@ func getChannelUidsFromDashboard(d oldDash, panelId int64) ([]string, error) {
 		break
 	}
 
-	return channelUids, nil
+	return channelUids, ruleName, ruleMessage, nil
 }
 
 // Below is a snapshot of all the config and supporting functions imported
