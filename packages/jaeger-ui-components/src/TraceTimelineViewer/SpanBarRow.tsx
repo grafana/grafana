@@ -42,7 +42,6 @@ const getStyles = createStyle((theme: Theme) => {
   return {
     nameWrapper: css`
       label: nameWrapper;
-      background: ${autoColor(theme, '#f8f8f8')};
       line-height: 27px;
       overflow: hidden;
       display: flex;
