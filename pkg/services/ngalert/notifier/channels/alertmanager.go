@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"path"
 	"strings"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -89,7 +90,7 @@ type alertmanagerMessage struct {
 	Labels       map[string]string       `json:"labels"`
 }
 
-func (n *AlertmanagerNotifier) createAlert(al *types.Alert, message string) alertmanagerMessage {
+func (n *AlertmanagerNotifier) createAlert(al *types.Alert, message string, ruleURL *url.URL) alertmanagerMessage {
 	description := message
 
 	/*
@@ -137,6 +138,7 @@ func (n *AlertmanagerNotifier) createAlert(al *types.Alert, message string) aler
 		alertJSON.Set("labels", tags)
 	*/
 	return alertmanagerMessage{
+		GeneratorURL: ruleURL,
 		Annotations: alertmanagerAnnotations{
 			Description: description,
 		},
@@ -146,6 +148,13 @@ func (n *AlertmanagerNotifier) createAlert(al *types.Alert, message string) aler
 // Notify sends alert notifications to Alertmanager.
 func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	n.logger.Info("Sending Alertmanager alert", "alertmanager", n.Name)
+
+	ruleURL, err := url.Parse(n.tmpl.ExternalURL.String())
+	if err != nil {
+		return false, fmt.Errorf("failed to parse external URL %q: %w", n.tmpl.ExternalURL.String(), err)
+	}
+
+	ruleURL.Path = path.Join(ruleURL.Path, "/alerting/list")
 
 	data := notify.GetTemplateData(ctx, n.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(n.logger)))
 	var tmplErr error
@@ -160,13 +169,13 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	// Send one alert per matching series
 	alerts := make([]alertmanagerMessage, 0, len(as))
 	for _, al := range as {
-		alert := n.createAlert(al, message)
+		alert := n.createAlert(al, message, ruleURL)
 		alerts = append(alerts, alert)
 	}
 
 	// This happens on ExecutionError or NoData
 	if len(alerts) == 0 {
-		alert := n.createAlert(nil, message)
+		alert := n.createAlert(nil, message, ruleURL)
 		alerts = append(alerts, alert)
 	}
 
