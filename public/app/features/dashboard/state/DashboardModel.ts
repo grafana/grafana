@@ -25,6 +25,7 @@ import { DashboardMigrator } from './DashboardMigrator';
 import {
   AnnotationQuery,
   AppEvent,
+  DashboardCursorSync,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
@@ -74,7 +75,7 @@ export class DashboardModel {
   style: any;
   timezone: any;
   editable: any;
-  graphTooltip: any;
+  graphTooltip: DashboardCursorSync;
   time: any;
   private originalTime: any;
   timepicker: any;
@@ -91,6 +92,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
   // not persisted
@@ -113,6 +115,7 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
+    hasChangesThatAffectsAllPanels: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -153,6 +156,7 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
+    this.hasChangesThatAffectsAllPanels = false;
   }
 
   addBuiltInAnnotationQuery() {
@@ -364,11 +368,28 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
+    this.refreshIfChangeAffectsAllPanels();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
+    this.refreshIfChangeAffectsAllPanels();
+  }
+
+  setChangeAffectsAllPanels() {
+    if (this.panelInEdit || this.panelInView) {
+      this.hasChangesThatAffectsAllPanels = true;
+    }
+  }
+
+  private refreshIfChangeAffectsAllPanels() {
+    if (!this.hasChangesThatAffectsAllPanels) {
+      return;
+    }
+
+    this.hasChangesThatAffectsAllPanels = false;
+    this.startRefresh();
   }
 
   private ensureListExist(data: any) {

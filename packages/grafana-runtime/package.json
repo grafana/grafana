@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "7.5.0-pre.0",
+  "version": "8.1.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -22,21 +22,21 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@grafana/data": "7.5.0-pre.0",
-    "@grafana/ui": "7.5.0-pre.0",
-    "@grafana/e2e-selectors": "7.5.0-pre.0",
+    "@grafana/data": "8.1.0-pre",
+    "@grafana/e2e-selectors": "8.1.0-pre",
+    "@grafana/ui": "8.1.0-pre",
+    "history": "4.10.1",
     "systemjs": "0.20.19",
-    "systemjs-plugin-css": "0.1.37",
-    "history": "4.10.1"
+    "systemjs-plugin-css": "0.1.37"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-node-resolve": "10.0.0",
+    "@types/history": "^4.7.8",
     "@types/jest": "26.0.15",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/systemjs": "^0.20.6",
-    "@types/history": "^4.7.8",
     "lodash": "4.17.21",
     "pretty-format": "25.1.0",
     "rollup": "2.33.3",

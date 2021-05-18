@@ -13,12 +13,14 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery, DataSourceApi } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import { Grammar } from 'prismjs';
+import fromGraphite from './importing/fromGraphite';
+import { GraphiteDatasource } from '../graphite/datasource';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -68,7 +70,7 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
-  logLabelFetchTs: number;
+  labelFetchTs: number;
   started = false;
   datasource: LokiDatasource;
   lookupsDisabled = false; // Dynamically set to true for big/slow instances
@@ -86,7 +88,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.labelKeys = [];
-    this.logLabelFetchTs = 0;
+    this.labelFetchTs = 0;
 
     Object.assign(this, initialValues);
   }
@@ -114,7 +116,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = () => {
     if (!this.startTask) {
-      this.startTask = this.fetchLogLabels().then(() => {
+      this.startTask = this.fetchLabels().then(() => {
         this.started = true;
         return [];
       });
@@ -331,11 +333,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(queries: LokiQuery[], datasourceType: string): Promise<LokiQuery[]> {
+  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
+    const datasourceType = originDataSource.meta.id;
     if (datasourceType === 'prometheus') {
       return Promise.all(
         queries.map(async (query) => {
-          const expr = await this.importPrometheusQuery(query.expr);
+          const expr = await this.importPrometheusQuery((query as PromQuery).expr);
           const { ...rest } = query as PromQuery;
           return {
             ...rest,
@@ -343,6 +346,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
           };
         })
       );
+    }
+    if (datasourceType === 'graphite') {
+      return fromGraphite(queries, originDataSource as GraphiteDatasource);
     }
     // Return a cleaned LokiQuery
     return queries.map((query) => ({
@@ -409,12 +415,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   /**
    * Fetches all label keys
-   * @param absoluteRange Fetches
    */
-  async fetchLogLabels(): Promise<any> {
+  async fetchLabels(): Promise<string[]> {
     const url = '/loki/api/v1/label';
     const timeRange = this.datasource.getTimeRangeParams();
-    this.logLabelFetchTs = Date.now().valueOf();
+    this.labelFetchTs = Date.now().valueOf();
 
     const res = await this.request(url, timeRange);
     if (Array.isArray(res)) {
@@ -425,8 +430,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async refreshLogLabels(forceRefresh?: boolean) {
-    if ((this.labelKeys && Date.now().valueOf() - this.logLabelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
-      await this.fetchLogLabels();
+    if ((this.labelKeys && Date.now().valueOf() - this.labelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
+      await this.fetchLabels();
     }
   }
 
@@ -489,17 +494,17 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };
 
-    let labelValue = this.labelsCache.get(cacheKey);
-    if (!labelValue) {
+    let labelValues = this.labelsCache.get(cacheKey);
+    if (!labelValues) {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.labelsCache.set(cacheKey, []);
       const res = await this.request(url, params);
       if (Array.isArray(res)) {
-        labelValue = res.slice().sort();
-        this.labelsCache.set(cacheKey, labelValue);
+        labelValues = res.slice().sort();
+        this.labelsCache.set(cacheKey, labelValues);
       }
     }
 
-    return labelValue ?? [];
+    return labelValues ?? [];
   }
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 // TeamsNotifier is responsible for sending
@@ -50,11 +51,11 @@ func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*T
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	data := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(tn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 
-	title := getTitleFromTemplateData(data)
+	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",

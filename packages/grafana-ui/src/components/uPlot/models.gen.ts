@@ -27,9 +27,13 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
   StepBefore = 'stepBefore',
 }
+/**
+ * @alpha
+ */
 export enum ScaleDistribution {
   Linear = 'linear',
   Log = 'log',
+  Ordinal = 'ordinal',
 }
 export enum GraphGradientMode {
   Hue = 'hue',

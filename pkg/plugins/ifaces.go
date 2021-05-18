@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"context"
-	"os"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -57,6 +56,10 @@ type Manager interface {
 	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
 	// IsAppInstalled returns whether an app is installed.
 	IsAppInstalled(id string) bool
+	// Install installs a plugin.
+	Install(ctx context.Context, pluginID, version string) error
+	// Uninstall uninstalls a plugin.
+	Uninstall(ctx context.Context, pluginID string) error
 }
 
 type ImportDashboardInput struct {
@@ -75,10 +78,9 @@ type DataRequestHandler interface {
 type PluginInstaller interface {
 	// Install finds the plugin given the provided information
 	// and installs in the provided plugins directory.
-	Install(pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
+	Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
-	Uninstall(pluginID, pluginPath string) error
-	DownloadFile(pluginID string, tmpFile *os.File, url string, checksum string) error
+	Uninstall(ctx context.Context, pluginID, pluginPath string) error
 }
 
 type PluginInstallerLogger interface {
