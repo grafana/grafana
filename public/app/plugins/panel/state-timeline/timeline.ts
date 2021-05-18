@@ -314,12 +314,17 @@ export function getConfig(opts: TimelineCoreOptions) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   // Todo refine this to better know when to not render text (when values do not fit)
-                  if (!boxRect || (showValue === BarValueVisibility.Auto && boxRect.w < 20)) {
+                  if (!boxRect || (showValue === BarValueVisibility.Auto && boxRect.w < 25)) {
                     continue;
+                  }
+
+                  if (boxRect.x >= xDim) {
+                    continue; // out of view
                   }
 
                   // center-aligned
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
+                  const txt = formatValue(sidx, dataY[ix]);
 
                   if (mode === TimelineMode.Changes) {
                     if (alignValue === 'left') {
@@ -331,7 +336,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
                   // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
-                  u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
+                  u.ctx.fillText(txt, x, y);
                 }
               }
             }
