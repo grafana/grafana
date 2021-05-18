@@ -34,6 +34,10 @@ export default function createMockDatasource() {
     azureLogAnalyticsDatasource: {
       getKustoSchema: () => Promise.resolve(),
     },
+    resourcePickerData: {
+      getResourcePickerData: () => ({}),
+      getResourcesForResourceGroup: () => ({}),
+    },
   };
 
   const mockDatasource = _mockDatasource as Datasource;

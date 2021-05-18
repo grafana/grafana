@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
+import { Row } from '../ResourcePicker/types';
 import { Space } from '../Space';
 
 /*
@@ -39,7 +40,7 @@ function getResourceComponents(resourceUri: string) {
   });
 }
 
-const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query }) => {
+const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
   const [resourceComponents, setResourceComponents] = useState<ResourceComponents | undefined>(undefined);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
   const { resource } = query.azureLogAnalytics;
@@ -60,10 +61,39 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query }) => {
     setPickerIsOpen(false);
   }, []);
 
+  const handleSelectResource = useCallback(
+    (row: Row, isSelected: boolean) => {
+      if (isSelected) {
+        onQueryChange({
+          ...query,
+          subscription: row.subscriptionId,
+          azureLogAnalytics: {
+            ...query.azureLogAnalytics,
+            resource: row.id,
+          },
+        });
+      } else {
+        onQueryChange({
+          ...query,
+          subscription: row.subscriptionId,
+          azureLogAnalytics: {
+            ...query.azureLogAnalytics,
+            resource: undefined,
+          },
+        });
+      }
+    },
+    [onQueryChange, query]
+  );
+
   return (
     <>
       <Modal title="Select a resource" isOpen={pickerIsOpen} onDismiss={handleClosePicker}>
-        <ResourcePicker />
+        <ResourcePicker
+          resourcePickerData={datasource.resourcePickerData}
+          resourceUri={query.azureLogAnalytics.resource!}
+          handleSelectResource={handleSelectResource}
+        />
       </Modal>
 
       <Field label="Resource">

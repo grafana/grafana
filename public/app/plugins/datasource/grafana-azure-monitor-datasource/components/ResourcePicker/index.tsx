@@ -1,206 +1,94 @@
-import React, { useCallback, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NestedResourceTable from './NestedResourceTable';
-import { Row, EntryType } from './types';
-import immer from 'immer';
+import { Row, RowGroup } from './types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-
-interface ResourcePickerProps {}
-
-const INITIAL: Row[] = [
-  {
-    name: 'raintank-dev',
-    id: '1',
-    typeLabel: 'Subscription',
-    type: EntryType.Collection,
-    hasChildren: true,
-    isOpen: true,
-    children: [
-      { name: 'awoods-test', id: '2', type: EntryType.SubCollection, typeLabel: 'Resource Group', hasChildren: true },
-      {
-        name: 'azuremarketplacegrafana',
-        id: '3',
-        type: EntryType.SubCollection,
-        typeLabel: 'Resource Group',
-        hasChildren: true,
-      },
-      { name: 'azure-stack', id: '4', type: EntryType.SubCollection, typeLabel: 'Resource Group', hasChildren: true },
-      {
-        name: 'cloud-datasources',
-        id: '5',
-        type: EntryType.SubCollection,
-        typeLabel: 'Resource Group',
-        hasChildren: true,
-        isOpen: true,
-        children: [
-          {
-            name: 'AppInsightsTestData',
-            id: '62',
-            type: EntryType.Resource,
-            typeLabel: 'Application Insights',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'AppInsightsTestDataWorkspace',
-            id: '72',
-            type: EntryType.Resource,
-            typeLabel: 'Log Analytics Workspace',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'GitHubTestDataVM',
-            id: '82',
-            type: EntryType.Resource,
-            typeLabel: 'Virtual Machine',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'AppInsightsTestData',
-            id: '61',
-            type: EntryType.Resource,
-            typeLabel: 'Application Insights',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'AppInsightsTestDataWorkspace',
-            id: '71',
-            type: EntryType.Resource,
-            typeLabel: 'Log Analytics Workspace',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'GitHubTestDataVM',
-            id: '81',
-            type: EntryType.Resource,
-            typeLabel: 'Virtual Machine',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'AppInsightsTestData',
-            id: '60',
-            type: EntryType.Resource,
-            typeLabel: 'Application Insights',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'AppInsightsTestDataWorkspace',
-            id: '70',
-            type: EntryType.Resource,
-            typeLabel: 'Log Analytics Workspace',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-          {
-            name: 'GitHubTestDataVM',
-            id: '80',
-            type: EntryType.Resource,
-            typeLabel: 'Virtual Machine',
-            location: 'North Europe',
-            isSelectable: true,
-          },
-        ],
-      },
-      {
-        name: 'grafana-test',
-        id: '9',
-        type: EntryType.SubCollection,
-        typeLabel: 'Resource Group',
-        hasChildren: true,
-      },
-    ],
-  },
-];
-
-interface ToggleCollapseAction {
-  type: 'toggle row collapse';
-  row: Row;
-}
-
-type Action = ToggleCollapseAction;
-
-function findRow(rows: Row[], targetId: string): Row | undefined {
-  for (const row of rows) {
-    const found = row.id === targetId;
-
-    if (!found && row.children) {
-      const foundChild = findRow(row.children, targetId);
-
-      if (foundChild) {
-        return foundChild;
-      }
-    }
-
-    if (found) {
-      return row;
-    }
-  }
-
-  return undefined;
-}
-
-function reducer(state: Row[], action: Action): Row[] {
-  return immer(state, (draftState) => {
-    switch (action.type) {
-      case 'toggle row collapse': {
-        const foundRow = findRow(draftState, action.row.id);
-        if (foundRow) {
-          foundRow.isOpen = !foundRow.isOpen;
-        }
-
-        return draftState;
-      }
-
-      default:
-        return draftState;
-    }
-  });
+import ResourcePickerData from '../../resourcePicker/resourcePickerData';
+import { produce } from 'immer';
+interface ResourcePickerProps {
+  resourcePickerData: Pick<ResourcePickerData, 'getResourcePickerData' | 'getResourcesForResourceGroup'>;
+  resourceUri: string;
+  handleSelectResource: (row: Row, isSelected: boolean) => void;
 }
 
 const ResourcePicker = (props: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
-  const [rows, dispatch] = useReducer(reducer, INITIAL);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const selectedRows = useMemo(() => selectedIds.map((id) => findRow(rows, id)), [rows, selectedIds]);
 
-  // TODO: should this be entirely encapsulated within the table component?
-  const handleRowToggleCollapse = useCallback(
-    (row: Row) => {
-      dispatch({ type: 'toggle row collapse', row: row });
-      // makeApiCall()
+  const [rows, setRows] = useState<RowGroup>({});
+
+  const handleFetchInitialResources = useCallback(async () => {
+    const initalRows = await props.resourcePickerData.getResourcePickerData();
+    setRows(initalRows);
+  }, [props.resourcePickerData]);
+
+  useEffect(() => {
+    handleFetchInitialResources();
+  }, [handleFetchInitialResources]);
+
+  const requestNestedRows = useCallback(
+    async (resourceGroup: Row) => {
+      // if we've already fetched resources for a resource group we don't need to re-fetch them
+      if (resourceGroup.children && Object.keys(resourceGroup.children).length > 0) {
+        return;
+      }
+
+      // fetch and set nested resources for the resourcegroup into the bigger state object
+      const resources = await props.resourcePickerData.getResourcesForResourceGroup(resourceGroup);
+      setRows(
+        produce(rows, (draftState) => {
+          (draftState[resourceGroup.subscriptionId].children as RowGroup)[resourceGroup.name].children = resources;
+        })
+      );
     },
-    [dispatch]
+    [props.resourcePickerData, rows]
   );
 
-  const handleRowSelectedChange = useCallback((row: Row, isSelected: boolean) => {
-    setSelectedIds(isSelected ? [row.id] : []);
-  }, []);
+  const selectedResource = useMemo(() => {
+    if (props.resourceUri && Object.keys(rows).length) {
+      const matches = /\/subscriptions\/(?<subscriptionId>.+)\/resourceGroups\/(?<selectedResourceGroupName>.+)\/providers\/(?<cloud>.+)/.exec(
+        props.resourceUri
+      );
+      if (matches && matches.groups) {
+        const { subscriptionId, selectedResourceGroupName } = matches.groups;
+        const allResourceGroups = rows[subscriptionId].children || {};
+        const selectedResourceGroup = allResourceGroups[selectedResourceGroupName.toLowerCase()];
+        const allResourcesInResourceGroup = selectedResourceGroup.children;
+
+        if (!allResourcesInResourceGroup || Object.keys(allResourcesInResourceGroup).length === 0) {
+          requestNestedRows(selectedResourceGroup);
+          return {};
+        }
+
+        const matchingResource = allResourcesInResourceGroup[props.resourceUri];
+        return {
+          [props.resourceUri]: matchingResource,
+        };
+      }
+    }
+    return {};
+  }, [props.resourceUri, rows, requestNestedRows]);
+
+  const hasSelection = Object.keys(selectedResource).length > 0;
 
   return (
     <div>
       <NestedResourceTable
         rows={rows}
-        onRowToggleCollapse={handleRowToggleCollapse}
-        onRowSelectedChange={handleRowSelectedChange}
-        selected={selectedIds}
+        requestNestedRows={requestNestedRows}
+        onRowSelectedChange={props.handleSelectResource}
+        selectedRows={selectedResource}
       />
 
-      {selectedIds.length > 0 && (
+      {hasSelection && (
         <div className={styles.selectionFooter}>
           <h5>Selection</h5>
           <NestedResourceTable
             noHeader={true}
-            rows={selectedRows as Row[]}
-            onRowToggleCollapse={handleRowToggleCollapse}
-            onRowSelectedChange={handleRowSelectedChange}
-            selected={selectedIds}
+            rows={selectedResource}
+            requestNestedRows={requestNestedRows}
+            onRowSelectedChange={props.handleSelectResource}
+            selectedRows={selectedResource}
           />
         </div>
       )}
