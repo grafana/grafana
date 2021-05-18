@@ -926,8 +926,8 @@ github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SP
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4/go.mod h1:nc0XxBzjeGcrMltCDw269LoWF9S8ibhgxolCdA1R8To=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
 github.com/grafana/grafana-plugin-sdk-go v0.91.0/go.mod h1:Ot3k7nY7P6DXmUsDgKvNB7oG1v7PRyTdmnYVoS554bU=
-github.com/grafana/grafana-plugin-sdk-go v0.97.0 h1:V9307Grs2QLvzcldC4hwe3Q1jh6vEMIwONq+l0iy+mk=
-github.com/grafana/grafana-plugin-sdk-go v0.97.0/go.mod h1:kgJSx8txPM+3lxLdSp+E9mdnB0xbXkM7VWr7FSHJY0k=
+github.com/grafana/grafana-plugin-sdk-go v0.98.0 h1:LW69nbYfteelPcyogFNozAbJyaLksKdPtO3t4i3shMQ=
+github.com/grafana/grafana-plugin-sdk-go v0.98.0/go.mod h1:kgJSx8txPM+3lxLdSp+E9mdnB0xbXkM7VWr7FSHJY0k=
 github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426 h1:fVUMdXAjiHsx71Twl/oie1OLDH+dxL7+mBdQK/H2Wgs=
 github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426/go.mod h1:IfQ9BWq2sVAk3iKB4Pahz6QNTs5D4WpfJj/AY8xzmNw=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
