@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Badge, Collapse, ControlledCollapse } from '@grafana/ui';
+import { Badge, Collapse } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
@@ -29,7 +29,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
         </span>
       }
       collapsible={short}
-      isOpen={short ? true : open}
+      isOpen={short ? open : true}
       onToggle={short ? () => setOpen(!open) : undefined}
     >
       <div style={{ height: short ? 300 : 600 }}>
