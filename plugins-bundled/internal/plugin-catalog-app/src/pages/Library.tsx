@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { PLUGIN_ROOT } from '../constants';
 import { PluginList } from '../components/PluginList';
@@ -8,7 +8,7 @@ import { usePlugins } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const Library = () => {
+export const Library = ({}: AppRootProps) => {
   const { isLoading, items, installedPlugins } = usePlugins(true);
   const styles = useStyles2(getStyles);
 

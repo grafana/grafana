@@ -35,31 +35,25 @@
   "includes": [
     {
       "type": "page",
+      "name": "Browse",
+      "path": "/a/grafana-plugin-catalog-app/",
+      "role": "Admin",
+      "addToNav": true
+    },
+    {
+      "type": "page",
       "name": "Discover",
-      "path": "/a/grafana-plugin-catalog-app?tab=discover",
+      "path": "/a/grafana-plugin-catalog-app/discover",
       "role": "Admin",
       "addToNav": true,
       "defaultNav": true
     },
     {
       "type": "page",
-      "name": "Browse",
-      "path": "/a/grafana-plugin-catalog-app/?tab=browse",
-      "role": "Admin",
-      "addToNav": true
-    },
-    {
-      "type": "page",
       "name": "Library",
-      "path": "/a/grafana-plugin-catalog-app/?tab=library",
+      "path": "/a/grafana-plugin-catalog-app/library",
       "role": "Admin",
       "addToNav": true
-    },
-    {
-      "type": "page",
-      "name": "View plugin",
-      "path": "/a/grafana-plugin-catalog-app?tab=plugin",
-      "role": "Admin"
     }
   ],
   "dependencies": {

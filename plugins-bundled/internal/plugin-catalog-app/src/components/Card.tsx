@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2, stylesFactory } from '@grafana/ui';
+import { useTheme2, stylesFactory, Link } from '@grafana/ui';
 
 interface Props {
   href: string;
@@ -15,12 +15,12 @@ export const Card = ({ href, text, image, layout = 'vertical' }: Props) => {
   const styles = getCardStyles(theme, layout);
 
   return (
-    <a href={href} className={styles.root}>
+    <Link href={href} className={styles.root}>
       <div className={styles.container}>
         <div className={styles.imgContainer}>{image}</div>
         {text}
       </div>
-    </a>
+    </Link>
   );
 };
 

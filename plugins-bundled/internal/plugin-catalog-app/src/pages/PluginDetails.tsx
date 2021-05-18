@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
+import { useParams } from 'react-router-dom';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
@@ -11,13 +12,14 @@ import { usePlugin } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const PluginDetails = ({ query }: AppRootProps) => {
-  const { slug } = query;
+export const PluginDetails = ({}: AppRootProps) => {
+  const { pluginId } = useParams<{ pluginId: string }>();
+
   const [tabs, setTabs] = useState([
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
-  const { isLoading, local, remote, remoteVersions } = usePlugin(slug);
+  const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description;
@@ -34,7 +36,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
     <Page>
       <div className={styles.headerContainer}>
         <img
-          src={`${GRAFANA_API_ROOT}/plugins/${slug}/versions/${remote?.version}/logos/small`}
+          src={`${GRAFANA_API_ROOT}/plugins/${pluginId}/versions/${remote?.version}/logos/small`}
           className={css`
             object-fit: cover;
             width: 100%;
@@ -62,7 +64,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
             {version && <span>{version}</span>}
           </div>
           <p>{description}</p>
-          {remote && <InstallControls localPlugin={local} remotePlugin={remote} slug={slug} />}
+          {remote && <InstallControls localPlugin={local} remotePlugin={remote} slug={pluginId} />}
         </div>
       </div>
       <TabsBar>
