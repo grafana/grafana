@@ -86,8 +86,6 @@ const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: 
     return {};
   }, [internalSelected, rows, requestNestedRows]);
 
-  const hasSelection = Object.keys(selectedResource).length > 0;
-
   const handleApply = useCallback(() => {
     onApply(internalSelected);
   }, [internalSelected, onApply]);

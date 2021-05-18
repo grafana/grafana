@@ -37,6 +37,7 @@ export default function createMockDatasource() {
     resourcePickerData: {
       getResourcePickerData: () => ({}),
       getResourcesForResourceGroup: () => ({}),
+      getResourceURIFromWorkspace: () => '',
     },
   };
 

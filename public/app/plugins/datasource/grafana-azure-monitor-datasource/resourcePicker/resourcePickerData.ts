@@ -77,6 +77,20 @@ export default class ResourcePickerData {
     return this.formatResourceGroupChildren(response.data as RawAzureResourceItem[]);
   }
 
+  async getResourceURIFromWorkspace(workspace: string) {
+    const { ok, data: response } = await this.makeResourceGraphRequest(`
+      resources
+      | where properties['customerId'] == "${workspace}"
+    `);
+
+    // TODO: figure out desired error handling strategy
+    if (!ok) {
+      throw new Error('unable to fetch resource containers');
+    }
+
+    return (response.data[0] as RawAzureResourceItem).id;
+  }
+
   formatResourceGroupData(rawData: RawAzureResourceGroupItem[]) {
     const formatedSubscriptionsAndResourceGroups: RowGroup = {};
 
