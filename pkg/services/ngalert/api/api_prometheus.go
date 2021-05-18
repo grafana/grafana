@@ -36,12 +36,16 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	}
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
+		valString := ""
+		if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
+			valString = alertState.Results[0].EvaluationString
+		}
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
 			Annotations: map[string]string{}, //TODO: Once annotations are added to the evaluation result, set them here
 			State:       alertState.State.String(),
 			ActiveAt:    &startsAt,
-			Value:       "", //TODO: once the result of the evaluation is added to the evaluation result, set it here
+			Value:       valString,
 		})
 	}
 	return response.JSON(http.StatusOK, alertResponse)
@@ -115,12 +119,16 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 			for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 				activeAt := alertState.StartsAt
+				valString := ""
+				if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
+					valString = alertState.Results[0].EvaluationString
+				}
 				alert := &apimodels.Alert{
 					Labels:      map[string]string(alertState.Labels),
 					Annotations: alertState.Annotations,
 					State:       alertState.State.String(),
 					ActiveAt:    &activeAt,
-					Value:       "", // TODO: set this once it is added to the evaluation results
+					Value:       valString, // TODO: set this once it is added to the evaluation results
 				}
 
 				if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
