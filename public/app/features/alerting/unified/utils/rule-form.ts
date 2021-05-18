@@ -22,6 +22,7 @@ import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
 import { parseInterval } from './time';
+import { getDefaultRelativeTimeRange } from '../../../../../../packages/grafana-data';
 
 export const getDefaultFormValues = (): RuleFormValues =>
   Object.freeze({
@@ -136,7 +137,7 @@ export const getDefaultQueries = (): GrafanaQuery[] => {
   if (!dataSource) {
     return [getDefaultExpression('A')];
   }
-  const relativeTimeRange = { from: 600, to: 0 };
+  const relativeTimeRange = getDefaultRelativeTimeRange();
 
   return [
     {
