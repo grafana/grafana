@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/authtoken"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,6 +39,7 @@ type manager struct {
 	Cfg                    *setting.Cfg                  `inject:""`
 	License                models.Licensing              `inject:""`
 	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	JWTService             *authtoken.JWT                `inject:""`
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
@@ -65,6 +68,24 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", m.Cfg.BuildVersion),
 		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
+	}
+
+	if m.Cfg.IsPluginAPIServerEnabled() {
+		grpcAddress := m.Cfg.PluginGRPCAddress
+		if m.Cfg.PluginGRPCNetwork == "unix" {
+			grpcAddress = fmt.Sprintf("unix://%s", m.Cfg.PluginGRPCAddress)
+		}
+		hostEnv = append(hostEnv, fmt.Sprintf("GF_GRPC_API_ADDRESS=%s", grpcAddress))
+
+		token, err := m.JWTService.IssuePluginToken(pluginID, 0)
+		if err != nil {
+			return err
+		}
+		m.logger.Warn("plugin token", "token", token)
+		hostEnv = append(hostEnv, fmt.Sprintf("GF_GRPC_API_TOKEN=%s", token))
+		if !m.Cfg.PluginGRPCUseTLS {
+			hostEnv = append(hostEnv, "GF_GRPC_API_INSECURE=1")
+		}
 	}
 
 	if m.License.HasLicense() {
