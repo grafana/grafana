@@ -2,7 +2,6 @@ package azuremonitor
 
 import (
 	"fmt"
-	"net/url"
 	"testing"
 	"time"
 
@@ -39,8 +38,8 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"queryType": "Azure Resource Graph",
 						"azureResourceGraph": map[string]interface{}{
-							"query":        "Resources | project name, properties, '$workspace' | order by name asc",
-							"resultFormat": timeSeries,
+							"query":        "resources | where $__contains(name,'res1','res2')",
+							"resultFormat": "table",
 						},
 					}),
 					RefID: "A",
@@ -53,12 +52,11 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 					URL:          "",
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"azureResourceGraph": map[string]interface{}{
-							"query":        "Resources | project name, properties, '$workspace' | order by name asc",
-							"resultFormat": timeSeries,
+							"query":        "resources | where $__contains(name,'res1','res2')",
+							"resultFormat": "table",
 						},
 					}),
-					Params: url.Values{"query": {""}},
-					Target: "query=",
+					InterpolatedQuery: "resources | where ['name'] in ('res1','res2')",
 				},
 			},
 			Err: require.NoError,
