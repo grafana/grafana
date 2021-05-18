@@ -689,11 +689,17 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   }
 
   if (addResultsToCacheAction.match(action)) {
-    const LIMIT = 5;
+    const CACHE_LIMIT = 5;
     const { cache } = state;
     const { queryResponse, cacheKey } = action.payload;
-    const newCacheItem = { key: cacheKey, value: queryResponse };
-    const newCache = [newCacheItem, ...cache].slice(0, LIMIT);
+
+    let newCache = [...cache];
+    const isDuplicateKey = newCache.some((c) => c.key === cacheKey);
+
+    if (!isDuplicateKey) {
+      const newCacheItem = { key: cacheKey, value: queryResponse };
+      newCache = [newCacheItem, ...newCache].slice(0, CACHE_LIMIT);
+    }
 
     return {
       ...state,
