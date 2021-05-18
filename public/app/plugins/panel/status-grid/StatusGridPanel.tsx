@@ -41,7 +41,6 @@ export const StatusGridPanel: React.FC<TimelinePanelProps> = ({
       {...options}
       // hardcoded
       mode={TimelineMode.Samples}
-      alignValue="center"
     >
       {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
     </TimelineChart>
