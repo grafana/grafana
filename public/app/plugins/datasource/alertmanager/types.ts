@@ -73,7 +73,6 @@ export type GrafanaManagedReceiverConfig = {
   secureFields?: Record<string, boolean>;
   secureSettings?: Record<string, unknown>;
   settings: Record<string, unknown>;
-  sendReminder: boolean;
   type: string;
   name: string;
   updated?: string;

@@ -97,22 +97,38 @@ func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
 	c.cond.L.Unlock()
 
 	if shouldRefresh {
-		accessToken, err = c.credential.GetAccessToken(ctx, c.scopes)
-
-		c.cond.L.Lock()
-
-		c.refreshing = false
-		c.accessToken = accessToken
-
-		c.cond.Broadcast()
-		c.cond.L.Unlock()
-
+		accessToken, err = c.refreshAccessToken(ctx)
 		if err != nil {
 			return "", err
 		}
 	}
 
 	return accessToken.Token, nil
+}
+
+func (c *scopesCacheEntry) refreshAccessToken(ctx context.Context) (*AccessToken, error) {
+	var accessToken *AccessToken
+
+	// Safeguarding from panic caused by credential implementation
+	defer func() {
+		c.cond.L.Lock()
+
+		c.refreshing = false
+
+		if accessToken != nil {
+			c.accessToken = accessToken
+		}
+
+		c.cond.Broadcast()
+		c.cond.L.Unlock()
+	}()
+
+	token, err := c.credential.GetAccessToken(ctx, c.scopes)
+	if err != nil {
+		return nil, err
+	}
+	accessToken = token
+	return accessToken, nil
 }
 
 func getKeyForScopes(scopes []string) string {

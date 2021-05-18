@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
 
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -246,7 +245,24 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
-func (c *PostableUserConfig) EncryptSecureSettings() error {
+// GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
+func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
+	UIDs := make(map[string]*PostableGrafanaReceiver)
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				UIDs[gr.UID] = gr
+			}
+		default:
+		}
+	}
+	return UIDs
+}
+
+// ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
+func (c *PostableUserConfig) ProcessConfig() error {
+	seenUIDs := make(map[string]struct{})
 	// encrypt secure settings for storing them in DB
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
@@ -259,6 +275,21 @@ func (c *PostableUserConfig) EncryptSecureSettings() error {
 					}
 					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
+				if gr.UID == "" {
+					retries := 5
+					for i := 0; i < retries; i++ {
+						gen := util.GenerateShortUID()
+						_, ok := seenUIDs[gen]
+						if !ok {
+							gr.UID = gen
+							break
+						}
+					}
+					if gr.UID == "" {
+						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
+					}
+				}
+				seenUIDs[gr.UID] = struct{}{}
 			}
 		default:
 		}
@@ -352,6 +383,21 @@ func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(tmp)
+}
+
+// GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
+func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafanaReceiver {
+	UIDs := make(map[string]*GettableGrafanaReceiver)
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.GettableGrafanaReceivers.GrafanaManagedReceivers {
+				UIDs[gr.UID] = gr
+			}
+		default:
+		}
+	}
+	return UIDs
 }
 
 type GettableApiAlertingConfig struct {
@@ -504,8 +550,39 @@ func AllReceivers(route *config.Route) (res []string) {
 	return res
 }
 
-type GettableGrafanaReceiver dtos.AlertNotification
-type PostableGrafanaReceiver models.CreateAlertNotificationCommand
+type GettableGrafanaReceiver struct {
+	UID                   string           `json:"uid"`
+	Name                  string           `json:"name"`
+	Type                  string           `json:"type"`
+	DisableResolveMessage bool             `json:"disableResolveMessage"`
+	Settings              *simplejson.Json `json:"settings"`
+	SecureFields          map[string]bool  `json:"secureFields"`
+}
+
+type PostableGrafanaReceiver struct {
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string]string `json:"secureSettings"`
+}
+
+func (r *PostableGrafanaReceiver) GetDecryptedSecret(key string) (string, error) {
+	storedValue, ok := r.SecureSettings[key]
+	if !ok {
+		return "", nil
+	}
+	decodeValue, err := base64.StdEncoding.DecodeString(storedValue)
+	if err != nil {
+		return "", err
+	}
+	decryptedValue, err := util.Decrypt(decodeValue, setting.SecretKey)
+	if err != nil {
+		return "", err
+	}
+	return string(decryptedValue), nil
+}
 
 type ReceiverType int
 

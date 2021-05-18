@@ -4,7 +4,6 @@ import {
   Field,
   FieldCache,
   FieldType,
-  getFieldColorModeForField,
   GrafanaTheme2,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
@@ -100,7 +99,7 @@ export function processNodes(
         mainStat: nodeFields.mainStat,
         secondaryStat: nodeFields.secondaryStat,
         arcSections: nodeFields.arc,
-        color: nodeFields.color ? getColor(nodeFields.color, index, theme) : '',
+        color: nodeFields.color,
       };
       return acc;
     }, {}) || {};
@@ -269,14 +268,6 @@ function edgesFrame() {
     })),
     meta: { preferredVisualisationType: 'nodeGraph' },
   });
-}
-
-function getColor(field: Field, index: number, theme: GrafanaTheme2): string {
-  if (!field.config.color) {
-    return field.values.get(index);
-  }
-
-  return getFieldColorModeForField(field).getCalculator(field, theme)(0, field.values.get(index));
 }
 
 export interface Bounds {
