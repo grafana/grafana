@@ -2,7 +2,6 @@ package azuremonitor
 
 import (
 	"bytes"
-	"strings"
 
 	"context"
 	"encoding/json"
@@ -133,9 +132,16 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return queryResult
 	}
 
-	reqBody := fmt.Sprintf("{'subscriptions':['%s'], 'query':'%s'}",
-		strings.Join(query.Model.Get("subscriptions").MustStringArray(), "','"),
-		query.Model.Get("azureResourceGraph").Get("query").MustString())
+	arg := query.Model.Get("azureResourceGraph")
+	reqBody, err := json.Marshal(map[string]interface{}{
+		"subscriptions": query.Model.Get("subscriptions").MustStringArray(),
+		"query": arg.Get("query").MustString(),
+	})
+
+	if err != nil {
+		queryResult.Error = err
+		return queryResult
+	}
 
 	req, err := e.createRequest(ctx, e.dsInfo, reqBody)
 
@@ -187,13 +193,13 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	return queryResult
 }
 
-func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource, reqBody string) (*http.Request, error) {
+func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource, reqBody []byte) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "render")
-	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer([]byte(reqBody)))
+	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
