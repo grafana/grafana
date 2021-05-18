@@ -7,10 +7,13 @@ import (
 	"net/url"
 	"strings"
 
+	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -54,7 +57,9 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, t *template.Templ
 		urls:              urls,
 		basicAuthUser:     basicAuthUser,
 		basicAuthPassword: basicAuthPassword,
+		message:           model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
+		tmpl:              t,
 	}, nil
 }
 
@@ -65,7 +70,9 @@ type AlertmanagerNotifier struct {
 	urls              []*url.URL
 	basicAuthUser     string
 	basicAuthPassword string
+	message           string
 	logger            log.Logger
+	tmpl              *template.Template
 }
 
 type alertmanagerAnnotations struct {
@@ -81,7 +88,9 @@ type alertmanagerMessage struct {
 	Labels       map[string]string       `json:"labels"`
 }
 
-func (n *AlertmanagerNotifier) createAlert(al *types.Alert) alertmanagerMessage {
+func (n *AlertmanagerNotifier) createAlert(al *types.Alert, message string) alertmanagerMessage {
+	description := message
+
 	/*
 			alertJSON := simplejson.New()
 			alertJSON.Set("startsAt", evalContext.StartTime.UTC().Format(time.RFC3339))
@@ -126,23 +135,37 @@ func (n *AlertmanagerNotifier) createAlert(al *types.Alert) alertmanagerMessage 
 		tags["alertname"] = evalContext.Rule.Name
 		alertJSON.Set("labels", tags)
 	*/
-	return alertmanagerMessage{}
+	return alertmanagerMessage{
+		Annotations: alertmanagerAnnotations{
+			description: description,
+		},
+	}
 }
 
 // Notify sends alert notifications to Alertmanager.
 func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	n.logger.Info("Sending Alertmanager alert", "alertmanager", n.Name)
 
+	data := notify.GetTemplateData(ctx, n.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(n.logger)))
+	var tmplErr error
+	tmpl := notify.TmplText(n.tmpl, data, &tmplErr)
+
+	message := tmpl(n.message)
+
+	if tmplErr != nil {
+		return false, fmt.Errorf("templating failed: %w", tmplErr)
+	}
+
 	// Send one alert per matching series
 	alerts := make([]alertmanagerMessage, 0, len(as))
 	for _, al := range as {
-		alert := n.createAlert(al)
+		alert := n.createAlert(al, message)
 		alerts = append(alerts, alert)
 	}
 
 	// This happens on ExecutionError or NoData
 	if len(alerts) == 0 {
-		alert := n.createAlert(nil)
+		alert := n.createAlert(nil, message)
 		alerts = append(alerts, alert)
 	}
 
