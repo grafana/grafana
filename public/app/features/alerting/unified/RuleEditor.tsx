@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -82,4 +82,4 @@ const warningStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default RuleEditor;
+export default withErrorBoundary(RuleEditor, { style: 'page' });

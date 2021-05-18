@@ -17,6 +17,7 @@ describe('LogRows', () => {
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
+        enableLogDetails={true}
       />
     );
 
@@ -39,6 +40,7 @@ describe('LogRows', () => {
         wrapLogMessage={true}
         timeZone={'utc'}
         previewLimit={1}
+        enableLogDetails={true}
       />
     );
 
@@ -68,6 +70,7 @@ describe('LogRows', () => {
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
+        enableLogDetails={true}
       />
     );
 
@@ -88,6 +91,7 @@ describe('LogRows', () => {
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
+        enableLogDetails={true}
       />
     );
 
@@ -110,6 +114,7 @@ describe('LogRows', () => {
         wrapLogMessage={true}
         timeZone={'utc'}
         logsSortOrder={LogsSortOrder.Ascending}
+        enableLogDetails={true}
       />
     );
 
@@ -133,6 +138,7 @@ describe('LogRows', () => {
         wrapLogMessage={true}
         timeZone={'utc'}
         logsSortOrder={LogsSortOrder.Descending}
+        enableLogDetails={true}
       />
     );
 
