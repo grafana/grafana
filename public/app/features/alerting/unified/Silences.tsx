@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useCallback } from 'react';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
@@ -93,4 +93,4 @@ const Silences: FC = () => {
   );
 };
 
-export default Silences;
+export default withErrorBoundary(Silences, { style: 'page' });
