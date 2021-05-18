@@ -40,7 +40,7 @@ steps:
       {{/if}}
       Commit: <${CI_REPO_LINK}/commit/{{ build.commit }}|{{ truncate build.commit 8 }}>
       Branch: <${CI_REPO_LINK}/commits/${DRONE_SOURCE_BRANCH}|${DRONE_SOURCE_BRANCH}>
-      Author: @{{user.name}}
+      Author: ${DRONE_COMMIT_AUTHOR_EMAIL}
       <${DRONE_BUILD_LINK}|Visit build page ↗>
     webhook:
       from_secret: slack_webhook_test
