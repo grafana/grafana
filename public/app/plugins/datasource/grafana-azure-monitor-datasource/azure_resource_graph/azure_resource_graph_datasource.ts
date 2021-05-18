@@ -8,6 +8,10 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
   AzureDataSourceJsonData
 > {
+  filterQuery(item: AzureMonitorQuery): boolean {
+    return !!item.azureResourceGraph?.query;
+  }
+
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
     const item = target.azureResourceGraph;
 
