@@ -5,11 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"time"
 
-	"github.com/grafana/grafana/pkg/events"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -18,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 var datasourcesLogger = log.New("datasources")
@@ -86,7 +84,7 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 	return response.JSON(200, &dtos)
 }
 
-func DeleteDataSourceById(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
@@ -112,6 +110,8 @@ func DeleteDataSourceById(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
 
+	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
+
 	return response.Success("Data source deleted")
 }
 
@@ -131,7 +131,7 @@ func GetDataSourceByUID(c *models.ReqContext) response.Response {
 }
 
 // DELETE /api/datasources/uid/:uid
-func DeleteDataSourceByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Response {
 	uid := c.Params(":uid")
 
 	if uid == "" {
@@ -157,10 +157,12 @@ func DeleteDataSourceByUID(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
 
+	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
+
 	return response.Success("Data source deleted")
 }
 
-func DeleteDataSourceByName(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
 	name := c.Params(":name")
 
 	if name == "" {
@@ -184,6 +186,8 @@ func DeleteDataSourceByName(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
+
+	hs.Live.HandleDatasourceDelete(c.OrgId, getCmd.Result.Uid)
 
 	return response.JSON(200, util.DynMap{
 		"message": "Data source deleted",
@@ -227,7 +231,7 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) respon
 	})
 }
 
-func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
+func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
@@ -262,13 +266,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 
 	datasourceDTO := convertModelToDtos(query.Result)
 
-	if err = bus.Publish(&events.DatasourceUpdated{
-		Timestamp: time.Now(),
-		Id:        datasourceDTO.Id,
-		Uid:       datasourceDTO.UID,
-	}); err != nil {
-		return response.Error(500, "Failed to dispatch datasource updated event", err)
-	}
+	hs.Live.HandleDatasourceUpdate(c.OrgId, datasourceDTO.UID)
 
 	return response.JSON(200, util.DynMap{
 		"message":    "Datasource updated",

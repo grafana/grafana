@@ -46,9 +46,3 @@ type UserUpdated struct {
 	Login     string    `json:"login"`
 	Email     string    `json:"email"`
 }
-
-type DatasourceUpdated struct {
-	Timestamp time.Time `json:"timestamp"`
-	Id        int64     `json:"id"`
-	Uid       string    `json:"uid"`
-}

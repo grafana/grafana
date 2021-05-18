@@ -3,11 +3,11 @@ package runstream
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
@@ -54,17 +54,18 @@ func (p *streamSender) Send(packet *backend.StreamPacket) error {
 
 // Manager manages streams from Grafana to plugins (i.e. RunStream method).
 type Manager struct {
-	mu                  sync.RWMutex
-	baseCtx             context.Context
-	streams             map[string]streamContext
-	datasourceStreams   map[string]map[string]struct{}
-	presenceGetter      PresenceGetter
-	pluginContextGetter PluginContextGetter
-	packetSender        StreamPacketSender
-	registerCh          chan submitRequest
-	closedCh            chan struct{}
-	checkInterval       time.Duration
-	maxChecks           int
+	mu                      sync.RWMutex
+	baseCtx                 context.Context
+	streams                 map[string]streamContext
+	datasourceStreams       map[string]map[string]struct{}
+	presenceGetter          PresenceGetter
+	pluginContextGetter     PluginContextGetter
+	packetSender            StreamPacketSender
+	registerCh              chan submitRequest
+	closedCh                chan struct{}
+	checkInterval           time.Duration
+	maxChecks               int
+	datasourceCheckInterval time.Duration
 }
 
 // ManagerOption modifies Manager behavior (used for tests for example).
@@ -79,22 +80,24 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 }
 
 const (
-	defaultCheckInterval = 5 * time.Second
-	defaultMaxChecks     = 3
+	defaultCheckInterval           = 5 * time.Second
+	defaultDatasourceCheckInterval = 60 * time.Second
+	defaultMaxChecks               = 3
 )
 
 // NewManager creates new Manager.
 func NewManager(packetSender StreamPacketSender, presenceGetter PresenceGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
 	sm := &Manager{
-		streams:             make(map[string]streamContext),
-		datasourceStreams:   map[string]map[string]struct{}{},
-		packetSender:        packetSender,
-		presenceGetter:      presenceGetter,
-		pluginContextGetter: pluginContextGetter,
-		registerCh:          make(chan submitRequest),
-		closedCh:            make(chan struct{}),
-		checkInterval:       defaultCheckInterval,
-		maxChecks:           defaultMaxChecks,
+		streams:                 make(map[string]streamContext),
+		datasourceStreams:       map[string]map[string]struct{}{},
+		packetSender:            packetSender,
+		presenceGetter:          presenceGetter,
+		pluginContextGetter:     pluginContextGetter,
+		registerCh:              make(chan submitRequest),
+		closedCh:                make(chan struct{}),
+		checkInterval:           defaultCheckInterval,
+		maxChecks:               defaultMaxChecks,
+		datasourceCheckInterval: defaultDatasourceCheckInterval,
 	}
 	for _, opt := range opts {
 		opt(sm)
@@ -102,9 +105,18 @@ func NewManager(packetSender StreamPacketSender, presenceGetter PresenceGetter, 
 	return sm
 }
 
-func (s *Manager) HandleDatasourceUpdate(e *events.DatasourceUpdated) error {
+func (s *Manager) HandleDatasourceDelete(orgID int64, dsUID string) error {
+	return s.handleDatasourceEvent(orgID, dsUID, false)
+}
+
+func (s *Manager) HandleDatasourceUpdate(orgID int64, dsUID string) error {
+	return s.handleDatasourceEvent(orgID, dsUID, true)
+}
+
+func (s *Manager) handleDatasourceEvent(orgID int64, dsUID string, resubmit bool) error {
+	dsKey := datasourceKey(orgID, dsUID)
 	s.mu.RLock()
-	dsStreams, ok := s.datasourceStreams[e.Uid]
+	dsStreams, ok := s.datasourceStreams[dsKey]
 	if !ok {
 		s.mu.RUnlock()
 		return nil
@@ -127,12 +139,22 @@ func (s *Manager) HandleDatasourceUpdate(e *events.DatasourceUpdated) error {
 		<-ch
 	}
 
-	// Re-submit streams.
-	for _, sr := range resubmitRequests {
-		_, _ = s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.PluginContext, sr.StreamRunner)
+	if resubmit {
+		// Re-submit streams.
+		for _, sr := range resubmitRequests {
+			_, err := s.SubmitStream(s.baseCtx, sr.user, sr.Channel, sr.Path, sr.PluginContext, sr.StreamRunner, true)
+			if err != nil {
+				// Log error but do not prevent execution of caller routine.
+				logger.Error("Error re-submitting stream", "path", sr.Path, "error", err)
+			}
+		}
 	}
 
 	return nil
+}
+
+func datasourceKey(orgID int64, dsUID string) string {
+	return fmt.Sprintf("%d_%s", orgID, dsUID)
 }
 
 func (s *Manager) stopStream(sr streamRequest, cancelFn func()) {
@@ -145,7 +167,9 @@ func (s *Manager) stopStream(sr streamRequest, cancelFn func()) {
 	closeCh := streamCtx.CloseCh
 	delete(s.streams, sr.Channel)
 	if sr.PluginContext.DataSourceInstanceSettings != nil {
-		delete(s.datasourceStreams[sr.PluginContext.DataSourceInstanceSettings.UID], sr.Channel)
+		dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
+		dsKey := datasourceKey(sr.PluginContext.OrgID, dsUID)
+		delete(s.datasourceStreams[dsKey], sr.Channel)
 	}
 	cancelFn()
 	close(closeCh)
@@ -153,11 +177,37 @@ func (s *Manager) stopStream(sr streamRequest, cancelFn func()) {
 
 func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamRequest) {
 	numNoSubscribersChecks := 0
+	presenceTicker := time.NewTicker(s.checkInterval)
+	defer presenceTicker.Stop()
+	datasourceTicker := time.NewTicker(s.datasourceCheckInterval)
+	defer datasourceTicker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(s.checkInterval):
+		case <-datasourceTicker.C:
+			if sr.PluginContext.DataSourceInstanceSettings != nil {
+				dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
+				pCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, sr.PluginContext.PluginID, dsUID, false)
+				if err != nil {
+					logger.Error("Error getting datasource context", "channel", sr.Channel, "path", sr.Path, "error", err)
+					continue
+				}
+				if !ok {
+					logger.Debug("Datasource not found, stop stream", "channel", sr.Channel, "path", sr.Path)
+					return
+				}
+				if pCtx.DataSourceInstanceSettings.Updated != sr.PluginContext.DataSourceInstanceSettings.Updated {
+					logger.Debug("Datasource changed, re-establish stream", "channel", sr.Channel, "path", sr.Path)
+					err := s.HandleDatasourceUpdate(pCtx.OrgID, dsUID)
+					if err != nil {
+						logger.Error("Error re-establishing stream", "channel", sr.Channel, "path", sr.Path, "error", err)
+						continue
+					}
+					return
+				}
+			}
+		case <-presenceTicker.C:
 			numSubscribers, err := s.presenceGetter.GetNumSubscribers(sr.Channel)
 			if err != nil {
 				logger.Error("Error checking num subscribers", "channel", sr.Channel, "path", sr.Path)
@@ -207,6 +257,8 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 		default:
 		}
 
+		pluginCtx := sr.PluginContext
+
 		if isReconnect {
 			// Best effort to cool down re-establishment process. We don't have a
 			// nice way to understand whether we really need to wait here - so relying
@@ -230,28 +282,27 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 			case <-time.After(delay):
 			}
 			startTime = time.Now()
+
+			// Resolve new plugin context as it could be modified since last call.
+			// We are using the same user here which initiated stream originally.
+			var datasourceUID string
+			if pluginCtx.DataSourceInstanceSettings != nil {
+				datasourceUID = pluginCtx.DataSourceInstanceSettings.UID
+			}
+			newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, pluginCtx.PluginID, datasourceUID, false)
+			if err != nil {
+				logger.Error("Error getting plugin context", "path", sr.Path, "error", err)
+				isReconnect = true
+				continue
+			}
+			if !ok {
+				logger.Info("No plugin context found, stopping stream", "path", sr.Path)
+				return
+			}
+			pluginCtx = newPluginCtx
 		}
 
-		pluginCtx := sr.PluginContext
-		// Resolve new plugin context as it could be modified since last call.
-		// We are using the same user here which initiated stream originally.
-		var datasourceUID string
-		if pluginCtx.DataSourceInstanceSettings != nil {
-			datasourceUID = pluginCtx.DataSourceInstanceSettings.UID
-		}
-		newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(sr.user, pluginCtx.PluginID, datasourceUID, false)
-		if err != nil {
-			logger.Error("Error getting plugin context", "path", sr.Path, "error", err)
-			isReconnect = true
-			continue
-		}
-		if !ok {
-			logger.Info("No plugin context found, stopping stream", "path", sr.Path)
-			return
-		}
-		pluginCtx = newPluginCtx
-
-		err = sr.StreamRunner.RunStream(
+		err := sr.StreamRunner.RunStream(
 			ctx,
 			&backend.RunStreamRequest{
 				PluginContext: pluginCtx,
@@ -298,10 +349,11 @@ func (s *Manager) registerStream(ctx context.Context, sr submitRequest) {
 	}
 	if sr.streamRequest.PluginContext.DataSourceInstanceSettings != nil {
 		dsUID := sr.streamRequest.PluginContext.DataSourceInstanceSettings.UID
-		if _, ok := s.datasourceStreams[dsUID]; !ok {
-			s.datasourceStreams[dsUID] = map[string]struct{}{}
+		dsKey := datasourceKey(sr.streamRequest.PluginContext.OrgID, dsUID)
+		if _, ok := s.datasourceStreams[dsKey]; !ok {
+			s.datasourceStreams[dsKey] = map[string]struct{}{}
 		}
-		s.datasourceStreams[dsUID][sr.streamRequest.Channel] = struct{}{}
+		s.datasourceStreams[dsKey][sr.streamRequest.Channel] = struct{}{}
 	}
 	s.mu.Unlock()
 	sr.responseCh <- submitResponse{Result: submitResult{StreamExists: false, CloseNotify: closeCh}}
@@ -348,9 +400,27 @@ type submitResponse struct {
 	Result submitResult
 }
 
+var errDatasourceNotFound = errors.New("datasource not found")
+
 // SubmitStream submits stream handler in Manager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, pCtx backend.PluginContext, streamRunner StreamRunner) (*submitResult, error) {
+func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
+	if isResubmit {
+		// Resolve new plugin context as it could be modified since last call.
+		var datasourceUID string
+		if pCtx.DataSourceInstanceSettings != nil {
+			datasourceUID = pCtx.DataSourceInstanceSettings.UID
+		}
+		newPluginCtx, ok, err := s.pluginContextGetter.GetPluginContext(user, pCtx.PluginID, datasourceUID, false)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, errDatasourceNotFound
+		}
+		pCtx = newPluginCtx
+	}
+
 	req := submitRequest{
 		responseCh: make(chan submitResponse, 1),
 		streamRequest: streamRequest{
