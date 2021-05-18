@@ -74,7 +74,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <td className={style.logsStats}>
+      <td className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsHeader}>
           <div className={style.logsStatsTitle}>
             {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
