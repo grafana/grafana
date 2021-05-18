@@ -1,5 +1,10 @@
-import { DataFrame, DataFrameView, FieldType, MutableDataFrame } from '@grafana/data';
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
+import {
+  DataFrame,
+  DataFrameView,
+  FieldType,
+  MutableDataFrame,
+  NodeGraphDataFrameFieldNames as Fields,
+} from '@grafana/data';
 
 interface Row {
   traceID: string;
@@ -37,9 +42,13 @@ export function createGraphFrames(data: DataFrame): DataFrame[] {
       { name: Fields.id, type: FieldType.string },
       { name: Fields.title, type: FieldType.string },
       { name: Fields.subTitle, type: FieldType.string },
-      { name: Fields.mainStat, type: FieldType.string },
-      { name: Fields.secondaryStat, type: FieldType.string },
-      { name: Fields.color, type: FieldType.number, config: { color: { mode: 'continuous-GrYlRd' } } },
+      { name: Fields.mainStat, type: FieldType.string, config: { displayName: 'Total time (% of trace)' } },
+      { name: Fields.secondaryStat, type: FieldType.string, config: { displayName: 'Self time (% of total)' } },
+      {
+        name: Fields.color,
+        type: FieldType.number,
+        config: { color: { mode: 'continuous-GrYlRd' }, displayName: 'Self time / Trace duration' },
+      },
     ],
     meta: {
       preferredVisualisationType: 'nodeGraph',
@@ -96,7 +105,8 @@ function convertTraceToGraph(data: DataFrame): { nodes: Node[]; edges: Edge[] } 
       [Fields.color]: selfDuration / traceDuration,
     });
 
-    if (row.parentSpanID) {
+    // Sometimes some span can be missing. Don't add edges for those.
+    if (row.parentSpanID && spanMap[row.parentSpanID].span) {
       edges.push({
         [Fields.id]: row.parentSpanID + '--' + row.spanID,
         [Fields.target]: row.spanID,
@@ -136,7 +146,8 @@ function findTraceDuration(view: DataFrameView<Row>): number {
 }
 
 /**
- * Returns a map of the spans with children array for easier processing.
+ * Returns a map of the spans with children array for easier processing. It will also contain empty spans in case
+ * span is missing but other spans are it's children.
  */
 function makeSpanMap(view: DataFrameView<Row>): { [id: string]: { span: Row; children: string[] } } {
   const spanMap: { [id: string]: { span?: Row; children: string[] } } = {};

@@ -13,7 +13,6 @@ import {
   getDefaultTimeRange,
   LogRowModel,
   MetricFindValue,
-  PluginMeta,
   ScopedVars,
   TimeRange,
   toUtc,
@@ -40,7 +39,8 @@ import {
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
-import { getScriptValue } from './utils';
+import { coerceESVersion, getScriptValue } from './utils';
+import { gte, lt, satisfies } from 'semver';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -63,7 +63,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   name: string;
   index: string;
   timeField: string;
-  esVersion: number;
+  esVersion: string;
   xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
@@ -87,7 +87,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
     this.timeField = settingsData.timeField;
-    this.esVersion = settingsData.esVersion;
+    this.esVersion = coerceESVersion(settingsData.esVersion);
     this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
@@ -154,8 +154,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       );
   }
 
-  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
-    return this.languageProvider.importQueries(queries, originMeta.id);
+  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<ElasticsearchQuery[]> {
+    return this.languageProvider.importQueries(queries, originDataSource.meta.id);
   }
 
   /**
@@ -259,7 +259,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     };
 
     // fields field not supported on ES 5.x
-    if (this.esVersion < 5) {
+    if (lt(this.esVersion, '5.0.0')) {
       data['fields'] = [timeField, '_source'];
     }
 
@@ -423,7 +423,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
 
-    if (this.esVersion >= 56 && this.esVersion < 70) {
+    if (satisfies(this.esVersion, '>=5.6.0 <7.0.0')) {
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
 
@@ -487,7 +487,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
    * search_after feature.
    */
   showContextToggle(): boolean {
-    return this.esVersion > 5;
+    return gte(this.esVersion, '5.0.0');
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
@@ -591,7 +591,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
       const esQuery = JSON.stringify(queryObj);
 
-      const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
+      const searchType = queryObj.size === 0 && lt(this.esVersion, '5.0.0') ? 'count' : 'query_then_fetch';
       const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
       payload += header + '\n';
 
@@ -639,7 +639,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
   // FIXME: This doesn't seem to return actual MetricFindValues, we should either change the return type
   // or fix the implementation.
-  getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
+  getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
     const typeMap: Record<string, string> = {
       float: 'number',
       double: 'number',
@@ -653,7 +653,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       nested: 'nested',
       histogram: 'number',
     };
-
     return this.get('/_mapping', range).pipe(
       map((result) => {
         const shouldAddField = (obj: any, key: string) => {
@@ -708,7 +707,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           if (index && index.mappings) {
             const mappings = index.mappings;
 
-            if (this.esVersion < 70) {
+            if (lt(this.esVersion, '7.0.0')) {
               for (const typeName in mappings) {
                 const properties = mappings[typeName].properties;
                 getFieldsRecursively(properties);
@@ -729,7 +728,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getTerms(queryDef: any, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
-    const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
+    const searchType = gte(this.esVersion, '5.0.0') ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
 
@@ -757,7 +756,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getMultiSearchUrl() {
-    if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
+    if (gte(this.esVersion, '7.0.0') && this.maxConcurrentShardRequests) {
       return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
     }
 

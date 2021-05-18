@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -15,13 +16,17 @@ import (
 func TestAvailableChannels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
-		AnonymousUserRole:    models.ROLE_EDITOR,
+		DisableAnonymous:     true,
 	})
 
 	store := testinfra.SetUpDatabase(t, dir)
+	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
-	alertsURL := fmt.Sprintf("http://%s/api/alert-notifiers", grafanaListedAddr)
+	// Create a user to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+
+	alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers", grafanaListedAddr)
 	// nolint:gosec
 	resp, err := http.Get(alertsURL)
 	require.NoError(t, err)
@@ -139,6 +144,22 @@ var expAvailableChannelJsonOutput = `
           "is": ""
         },
         "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "textarea",
+        "inputType": "",
+        "label": "Message",
+        "description": "Optional message to include with the email. You can use template variables",
+        "placeholder": "",
+        "propertyName": "message",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
         "validationRule": "",
         "secure": false
       }
@@ -453,6 +474,127 @@ var expAvailableChannelJsonOutput = `
         "description": "Body of the slack message",
         "placeholder": "{{ template \"slack.default.text\" . }}",
         "propertyName": "text",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
+    "type": "sensugo",
+    "name": "Sensu Go",
+    "description": "Sends HTTP POST request to a Sensu Go API",
+		"heading":     "Sensu Go Settings",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Backend URL",
+        "description": "",
+        "placeholder": "http://sensu-api.local:8080",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "password",
+        "label": "API Key",
+        "description": "API key to auth to Sensu Go backend",
+        "placeholder": "",
+        "propertyName": "apikey",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Proxy entity name",
+        "description": "",
+        "placeholder": "default",
+        "propertyName": "entity",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Check name",
+        "description": "",
+        "placeholder": "default",
+        "propertyName": "check",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Handler",
+        "description": "",
+        "placeholder": "",
+        "propertyName": "handler",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Namespace",
+        "description": "",
+        "placeholder": "default",
+        "propertyName": "namespace",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "textarea",
+        "inputType": "",
+        "label": "Message",
+        "description": "",
+        "placeholder": "{{ template \"default.message\" . }}",
+        "propertyName": "message",
         "selectOptions": null,
         "showWhen": {
           "field": "",

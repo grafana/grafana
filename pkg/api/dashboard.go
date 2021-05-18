@@ -170,13 +170,12 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// load library panels JSON for this dashboard
-		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
-		if err != nil {
-			return response.Error(500, "Error while loading library panels", err)
-		}
+	// load library panels JSON for this dashboard
+	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
+	if err != nil {
+		return response.Error(500, "Error while loading library panels", err)
 	}
+
 	var trimedJson simplejson.Json
 	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
 		trimedJson, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
@@ -249,16 +248,14 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// disconnect all library panels for this dashboard
-		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(c, dash)
-		if err != nil {
-			hs.log.Error("Failed to disconnect library panels", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
-		}
+	// disconnect all library elements for this dashboard
+	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c, dash.Id)
+	if err != nil {
+		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
 
 	svc := dashboards.NewService(hs.SQLStore)
-	err := svc.DeleteDashboard(dash.Id, c.OrgId)
+	err = svc.DeleteDashboard(dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -271,7 +268,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	}
 
 	if hs.Live != nil {
-		err = hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.ToUserDisplayDTO(), dash.Uid)
+		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.OrgId, c.ToUserDisplayDTO(), dash.Uid)
 		if err != nil {
 			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
 		}
@@ -318,12 +315,10 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// clean up all unnecessary library panels JSON properties so we store a minimum JSON
-		err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
-		if err != nil {
-			return response.Error(500, "Error while cleaning library panels", err)
-		}
+	// clean up all unnecessary library panels JSON properties so we store a minimum JSON
+	err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
+	if err != nil {
+		return response.Error(500, "Error while cleaning library panels", err)
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{
@@ -346,10 +341,10 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		// This will broadcast all save requets only if a `gitops` observer exists.
 		// gitops is useful when trying to save dashboards in an environment where the user can not save
 		channel := hs.Live.GrafanaScope.Dashboards
-		liveerr := channel.DashboardSaved(c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
+		liveerr := channel.DashboardSaved(c.SignedInUser.OrgId, c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
 
 		// When an error exists, but the value broadcast to a gitops listener return 202
-		if liveerr == nil && err != nil && channel.HasGitOpsObserver() {
+		if liveerr == nil && err != nil && channel.HasGitOpsObserver(c.SignedInUser.OrgId) {
 			return response.JSON(202, util.DynMap{
 				"status":  "pending",
 				"message": "changes were broadcast to the gitops listener",
@@ -373,12 +368,10 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// connect library panels for this dashboard after the dashboard is stored and has an ID
-		err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
-		if err != nil {
-			return response.Error(500, "Error while connecting library panels", err)
-		}
+	// connect library panels for this dashboard after the dashboard is stored and has an ID
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
+	if err != nil {
+		return response.Error(500, "Error while connecting library panels", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)

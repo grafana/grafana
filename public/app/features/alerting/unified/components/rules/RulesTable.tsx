@@ -1,35 +1,31 @@
 import { GrafanaTheme2 } from '@grafana/data';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
-import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
+import { isAlertingRule, isRecordingRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
-import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
-import { ActionIcon } from './ActionIcon';
-import { createExploreLink } from '../../utils/misc';
-import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { useDispatch } from 'react-redux';
-import { deleteRuleAction } from '../../state/actions';
+import { isCloudRulesSource } from '../../utils/datasource';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
+import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   rules: CombinedRule[];
   showGuidelines?: boolean;
   showGroupColumn?: boolean;
   emptyMessage?: string;
+  className?: string;
 }
 
 export const RulesTable: FC<Props> = ({
   rules,
+  className,
   showGuidelines = false,
   emptyMessage = 'No rules found.',
   showGroupColumn = false,
 }) => {
-  const dispatch = useDispatch();
-
   const hasRuler = useHasRuler();
 
   const styles = useStyles2(getStyles);
@@ -37,33 +33,15 @@ export const RulesTable: FC<Props> = ({
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-  const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
-
   const toggleExpandedState = (ruleKey: string) =>
     setExpandedKeys(
       expandedKeys.includes(ruleKey) ? expandedKeys.filter((key) => key !== ruleKey) : [...expandedKeys, ruleKey]
     );
 
-  const deleteRule = () => {
-    if (ruleToDelete && ruleToDelete.rulerRule) {
-      dispatch(
-        deleteRuleAction(
-          getRuleIdentifier(
-            getRulesSourceName(ruleToDelete.namespace.rulesSource),
-            ruleToDelete.namespace.name,
-            ruleToDelete.group.name,
-            ruleToDelete.rulerRule
-          )
-        )
-      );
-      setRuleToDelete(undefined);
-    }
-  };
-
-  const wrapperClass = cx(styles.wrapper, { [styles.wrapperMargin]: showGuidelines });
+  const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
   if (!rules.length) {
-    return <div className={wrapperClass}>{emptyMessage}</div>;
+    return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
   return (
@@ -72,7 +50,6 @@ export const RulesTable: FC<Props> = ({
         <colgroup>
           <col className={tableStyles.colExpand} />
           <col className={styles.colState} />
-          <col />
           <col />
           <col />
           <col />
@@ -87,7 +64,6 @@ export const RulesTable: FC<Props> = ({
             <th>Name</th>
             {showGroupColumn && <th>Group</th>}
             <th>Status</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -126,36 +102,20 @@ export const RulesTable: FC<Props> = ({
                         data-testid="rule-collapse-toggle"
                       />
                     </td>
-                    <td>{promRule && isAlertingRule(promRule) ? <StateTag status={promRule.state} /> : 'n/a'}</td>
+                    <td>
+                      {promRule && isAlertingRule(promRule) ? (
+                        <AlertStateTag state={promRule.state} />
+                      ) : promRule && isRecordingRule(promRule) ? (
+                        'Recording rule'
+                      ) : (
+                        'n/a'
+                      )}
+                    </td>
                     <td>{rule.name}</td>
                     {showGroupColumn && (
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
                     )}
                     <td>{statuses.join(', ') || 'n/a'}</td>
-                    <td className={tableStyles.actionsCell}>
-                      {isCloudRulesSource(rulesSource) && (
-                        <ActionIcon
-                          icon="chart-line"
-                          tooltip="view in explore"
-                          target="__blank"
-                          href={createExploreLink(rulesSource.name, rule.query)}
-                        />
-                      )}
-                      {!!rulerRule && (
-                        <ActionIcon
-                          icon="pen"
-                          tooltip="edit rule"
-                          href={`alerting/${encodeURIComponent(
-                            stringifyRuleIdentifier(
-                              getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
-                            )
-                          )}/edit`}
-                        />
-                      )}
-                      {!!rulerRule && (
-                        <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => setRuleToDelete(rule)} />
-                      )}
-                    </td>
                   </tr>
                   {isExpanded && (
                     <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -164,7 +124,7 @@ export const RulesTable: FC<Props> = ({
                           <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
                         )}
                       </td>
-                      <td colSpan={showGroupColumn ? 5 : 4}>
+                      <td colSpan={showGroupColumn ? 4 : 3}>
                         <RuleDetails rulesSource={rulesSource} rule={rule} />
                       </td>
                     </tr>
@@ -175,17 +135,6 @@ export const RulesTable: FC<Props> = ({
           })()}
         </tbody>
       </table>
-      {!!ruleToDelete && (
-        <ConfirmModal
-          isOpen={true}
-          title="Delete rule"
-          body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
-          confirmText="Yes, delete"
-          icon="exclamation-triangle"
-          onConfirm={deleteRule}
-          onDismiss={() => setRuleToDelete(undefined)}
-        />
-      )}
     </div>
   );
 };
@@ -194,8 +143,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css`
     margin-left: 36px;
   `,
+  emptyMessage: css`
+    padding: ${theme.spacing(1)};
+  `,
   wrapper: css`
-    margin-top: ${theme.spacing(3)};
     width: auto;
     background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
