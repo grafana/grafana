@@ -419,7 +419,7 @@ To prepare for this upcoming change, Application Insights queries can now be mad
 
 Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
 
-{{< docs-imagebox img="/img/docs/v80/azuremonitor-azure-resource-graph.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
+{{< docs-imagebox img="/img/docs/azure-monitor/azure-resource-graph-8-0.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
 
 ### Table queries
 
