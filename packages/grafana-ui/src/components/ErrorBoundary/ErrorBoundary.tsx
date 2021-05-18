@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactNode } from 'react';
+import React, { PureComponent, ReactNode, ComponentType } from 'react';
 import { captureException } from '@sentry/browser';
 import { Alert } from '../Alert/Alert';
 import { ErrorWithStack } from './ErrorWithStack';
@@ -90,4 +90,26 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryProps> {
       </ErrorBoundary>
     );
   }
+}
+
+/**
+ * HOC for wrapping a component in an error boundary.
+ *
+ * @param Component - the react component to wrap in error boundary
+ * @param errorBoundaryProps - error boundary options
+ *
+ * @public
+ */
+export function withErrorBoundary<P = {}>(
+  Component: ComponentType<P>,
+  errorBoundaryProps: Omit<ErrorBoundaryProps, 'children'> = {}
+): ComponentType<P> {
+  const comp = (props: P) => (
+    <ErrorBoundaryAlert {...errorBoundaryProps}>
+      <Component {...props} />
+    </ErrorBoundaryAlert>
+  );
+  comp.displayName = 'WithErrorBoundary';
+
+  return comp;
 }

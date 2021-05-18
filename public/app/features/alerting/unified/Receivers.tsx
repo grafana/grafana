@@ -1,5 +1,4 @@
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { withErrorBoundary } from 'app/core/hoc/withErrorBoundary';
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
@@ -101,4 +100,4 @@ const Receivers: FC = () => {
   );
 };
 
-export default withErrorBoundary('page', Receivers);
+export default withErrorBoundary(Receivers, { style: 'page' });

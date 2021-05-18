@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -16,7 +16,6 @@ import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from '.
 import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
 import { initialAsyncRequestState } from './utils/redux';
-import { withErrorBoundary } from 'app/core/hoc/withErrorBoundary';
 
 const AmRoutes: FC = () => {
   const dispatch = useDispatch();
@@ -133,7 +132,7 @@ const AmRoutes: FC = () => {
   );
 };
 
-export default withErrorBoundary('page', AmRoutes);
+export default withErrorBoundary(AmRoutes, { style: 'page' });
 
 const getStyles = (theme: GrafanaTheme2) => ({
   break: css`
