@@ -16,38 +16,40 @@ export interface PanelInspectActionSupplier {
   getActions: (panel: PanelModel) => PanelInspectAction[] | null;
 }
 
-const dummySupplier: PanelInspectActionSupplier = {
-  getActions: (panel: PanelModel) => {
-    return [
-      {
-        title: 'Do something',
-        description: 'that thingy',
-        // eslint-disable-next-line react/display-name
-        component: ({ panel }) => {
-          return (
-            <div>
-              DO THING ONE. Panel: <pre>{JSON.stringify(panel.targets)}</pre>
-            </div>
-          );
-        },
-      },
-      {
-        title: 'Do something else',
-        description: 'another thing',
-        // eslint-disable-next-line react/display-name
-        component: ({ panel }) => {
-          return (
-            <div>
-              DO THING TWO. Panel: <pre>{JSON.stringify(panel.targets)}</pre>
-            </div>
-          );
-        },
-      },
-    ];
-  },
-};
+// const dummySupplier: PanelInspectActionSupplier = {
+//   getActions: (panel: PanelModel) => {
+//     return [
+//       {
+//         title: 'Do something',
+//         description: 'that thingy',
+//         // eslint-disable-next-line react/display-name
+//         component: ({ panel }) => {
+//           return (
+//             <div>
+//               DO THING ONE. Panel: <pre>{JSON.stringify(panel.targets)}</pre>
+//             </div>
+//           );
+//         },
+//       },
+//       {
+//         title: 'Do something else',
+//         description: 'another thing',
+//         // eslint-disable-next-line react/display-name
+//         component: ({ panel }) => {
+//           return (
+//             <div>
+//               DO THING TWO. Panel: <pre>{JSON.stringify(panel.targets)}</pre>
+//             </div>
+//           );
+//         },
+//       },
+//     ];
+//   },
+// };
 
-(window as any).grafanaPanelInspectActionSupplier = dummySupplier;
+// In Grafana 8.1, this can be improved and moved to `@grafana/runtime`
+// NOTE: This is an internal/experimental API/hack and will change!
+// (window as any).grafanaPanelInspectActionSupplier = dummySupplier;
 
 import React, { ComponentType } from 'react';
 import { PanelData } from '@grafana/data';
