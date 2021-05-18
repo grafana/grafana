@@ -256,8 +256,8 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS bool
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
-	MarketplaceURL           string
-	MarketplaceAppEnabled    bool
+	CatalogURL               string
+	CatalogAppEnabled        bool
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -399,9 +399,11 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 	return cfg.FeatureToggles["database_metrics"]
 }
 
-// IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
-func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
-	return cfg.FeatureToggles["http_request_histogram"]
+// IsHTTPRequestHistogramDisabled returns whether the request historgrams is disabled.
+// This feature toggle will be removed in Grafana 8.x but gives the operator
+// some graceperiod to update all the monitoring tools.
+func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
+	return cfg.FeatureToggles["disable_http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -888,8 +890,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
-	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
-	cfg.MarketplaceAppEnabled = pluginsSection.Key("marketplace_app_enabled").MustBool(false)
+	cfg.CatalogURL = pluginsSection.Key("catalog_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.CatalogAppEnabled = pluginsSection.Key("catalog_app_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

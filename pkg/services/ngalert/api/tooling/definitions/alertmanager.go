@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
 
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -447,6 +446,21 @@ func (c *PostableApiAlertingConfig) validate() error {
 		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
 	}
 
+	if hasGrafReceivers {
+		// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
+		// Check if we have a root route. We cannot check for it in the
+		// UnmarshalYAML method because it won't be called if the input is empty
+		// (e.g. the config file is empty or only contains whitespace).
+		if c.Route == nil {
+			return fmt.Errorf("no route provided in config")
+		}
+
+		// Check if continue in root route.
+		if c.Route.Continue {
+			return fmt.Errorf("cannot have continue in root route")
+		}
+	}
+
 	for _, receiver := range AllReceivers(c.Route) {
 		_, ok := receivers[receiver]
 		if !ok {
@@ -475,17 +489,37 @@ func (c *PostableApiAlertingConfig) ReceiverType() ReceiverType {
 // AllReceivers will recursively walk a routing tree and return a list of all the
 // referenced receiver names.
 func AllReceivers(route *config.Route) (res []string) {
+	if route == nil {
+		return res
+	}
+
 	if route.Receiver != "" {
 		res = append(res, route.Receiver)
 	}
+
 	for _, subRoute := range route.Routes {
 		res = append(res, AllReceivers(subRoute)...)
 	}
 	return res
 }
 
-type GettableGrafanaReceiver dtos.AlertNotification
-type PostableGrafanaReceiver models.CreateAlertNotificationCommand
+type GettableGrafanaReceiver struct {
+	UID                   string           `json:"uid"`
+	Name                  string           `json:"name"`
+	Type                  string           `json:"type"`
+	DisableResolveMessage bool             `json:"disableResolveMessage"`
+	Settings              *simplejson.Json `json:"settings"`
+	SecureFields          map[string]bool  `json:"secureFields"`
+}
+
+type PostableGrafanaReceiver struct {
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string]string `json:"secureSettings"`
+}
 
 type ReceiverType int
 

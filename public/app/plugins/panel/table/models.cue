@@ -29,7 +29,7 @@ Family: {
                 }
                 PanelFieldConfig: {
                     width?: int 
-                    align?: *null | string
+                    align?: string | *"auto"
                     displayMode?: string | *"auto" // TODO? TableCellDisplayMode
                     filterable?: bool
                 }
