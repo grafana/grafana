@@ -112,10 +112,26 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields, wrapLogMessage } = this.props;
+    const {
+      theme,
+      parsedKey,
+      parsedValue,
+      isLabel,
+      links,
+      showDetectedFields,
+      wrapLogMessage,
+      onClickShowDetectedField,
+      onClickHideDetectedField,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
+    } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
+
+    const hasDetectedFieldsFunctionality = onClickShowDetectedField && onClickHideDetectedField;
+    const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
+
     const toggleFieldButton =
       !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
         <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
@@ -130,7 +146,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
         </td>
 
-        {isLabel && (
+        {hasFilteringFunctionality && isLabel && (
           <>
             <td className={style.logsDetailsIcon}>
               <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
@@ -141,12 +157,10 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </>
         )}
 
-        {!isLabel && (
-          <>
-            <td className={style.logsDetailsIcon} colSpan={2}>
-              {toggleFieldButton}
-            </td>
-          </>
+        {hasDetectedFieldsFunctionality && !isLabel && (
+          <td className={style.logsDetailsIcon} colSpan={2}>
+            {toggleFieldButton}
+          </td>
         )}
 
         {/* Key - value columns */}

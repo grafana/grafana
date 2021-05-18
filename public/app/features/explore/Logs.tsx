@@ -341,6 +341,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               showContextToggle={showContextToggle}
               showLabels={showLabels}
               showTime={showTime}
+              enableLogDetails={true}
               forceEscape={forceEscape}
               wrapLogMessage={wrapLogMessage}
               timeZone={timeZone}
