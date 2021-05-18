@@ -2,21 +2,21 @@ package commands
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
+	"testing/fstest"
 
 	"github.com/grafana/grafana/pkg/schema/load"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var defaultBaseLoadPaths = load.GetDefaultLoadPaths()
+
 func TestValidateScuemataBasics(t *testing.T) {
 	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
-		tempDir := os.DirFS(filepath.Join("testdata", "valid_scuemata"))
-
 		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       tempDir,
-			DistPluginCueFS: load.GetDefaultLoadPaths().DistPluginCueFS,
+			BaseCueFS:       defaultBaseLoadPaths.BaseCueFS,
+			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
 		err := validate(baseLoadPaths, load.BaseDashboardFamily)
@@ -27,26 +27,38 @@ func TestValidateScuemataBasics(t *testing.T) {
 	})
 
 	t.Run("Testing scuemata validity with invalid cue schemas - family missing", func(t *testing.T) {
-		tempDir := os.DirFS(filepath.Join("testdata", "invalid_scuemata_missing_family"))
+		genCue, err := os.ReadFile("testdata/missing_family_gen.cue")
+		require.NoError(t, err)
+
+		fs := fstest.MapFS{
+			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
+		}
+		mergedFS := Merge(fs, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       tempDir,
-			DistPluginCueFS: load.GetDefaultLoadPaths().DistPluginCueFS,
+			BaseCueFS:       mergedFS,
+			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
-		err := validate(baseLoadPaths, load.BaseDashboardFamily)
+		err = validate(baseLoadPaths, load.BaseDashboardFamily)
 		assert.EqualError(t, err, "error while loading dashboard scuemata, err: dashboard schema family did not exist at expected path in expected file")
 	})
 
-	t.Run("Testing scuemata validity with invalid cue schemas - panel missing", func(t *testing.T) {
-		tempDir := os.DirFS(filepath.Join("testdata", "invalid_scuemata_missing_panel"))
+	t.Run("Testing scuemata validity with invalid cue schemas - panel missing ", func(t *testing.T) {
+		genCue, err := os.ReadFile("testdata/missing_panel_gen.cue")
+		require.NoError(t, err)
+
+		fs := fstest.MapFS{
+			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
+		}
+		mergedFS := Merge(fs, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       tempDir,
-			DistPluginCueFS: load.GetDefaultLoadPaths().DistPluginCueFS,
+			BaseCueFS:       mergedFS,
+			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 		}
 
-		err := validate(baseLoadPaths, load.BaseDashboardFamily)
+		err = validate(baseLoadPaths, load.BaseDashboardFamily)
 		require.NoError(t, err, "error while loading base dashboard scuemata")
 
 		err = validate(baseLoadPaths, load.DistDashboardFamily)
