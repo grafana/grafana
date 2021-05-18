@@ -74,8 +74,9 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
-		EvaluationTime:  result.EvaluatedAt,
-		EvaluationState: result.State,
+		EvaluationTime:   result.EvaluatedAt,
+		EvaluationState:  result.State,
+		EvaluationString: result.EvaluationString,
 	})
 
 	st.Log.Debug("setting alert state", "uid", alertRule.UID)

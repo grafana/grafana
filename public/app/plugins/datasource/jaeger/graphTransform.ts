@@ -26,7 +26,11 @@ export function createGraphFrames(data: TraceResponse): DataFrame[] {
       { name: Fields.subTitle, type: FieldType.string },
       { name: Fields.mainStat, type: FieldType.string, config: { displayName: 'Total time (% of trace)' } },
       { name: Fields.secondaryStat, type: FieldType.string, config: { displayName: 'Self time (% of total)' } },
-      { name: Fields.color, type: FieldType.number, config: { color: { mode: 'continuous-GrYlRd' } } },
+      {
+        name: Fields.color,
+        type: FieldType.number,
+        config: { color: { mode: 'continuous-GrYlRd' }, displayName: 'Self time / Trace duration' },
+      },
     ],
     meta: {
       preferredVisualisationType: 'nodeGraph',

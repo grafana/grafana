@@ -14,7 +14,16 @@ import (
 
 // interpolateString accepts template data and return a string with substitutions
 func interpolateString(text string, data templateData) (string, error) {
-	t, err := template.New("content").Parse(text)
+	extraFuncs := map[string]interface{}{
+		"orEmpty": func(v interface{}) interface{} {
+			if v == nil {
+				return ""
+			}
+			return v
+		},
+	}
+
+	t, err := template.New("content").Funcs(extraFuncs).Parse(text)
 	if err != nil {
 		return "", fmt.Errorf("could not parse template %s", text)
 	}

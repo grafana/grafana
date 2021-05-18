@@ -19,6 +19,18 @@ describe('processNodes', () => {
       theme
     );
 
+    const colorField = {
+      config: {
+        color: {
+          mode: 'continuous-GrYlRd',
+        },
+      },
+      index: 7,
+      name: 'color',
+      type: 'number',
+      values: new ArrayVector([0.5, 0.5, 0.5]),
+    };
+
     expect(nodes).toEqual([
       {
         arcSections: [
@@ -43,7 +55,7 @@ describe('processNodes', () => {
             values: new ArrayVector([0.5, 0.5, 0.5]),
           },
         ],
-        color: 'rgb(226, 192, 61)',
+        color: colorField,
         dataFrameRowIndex: 0,
         id: '0',
         incoming: 0,
@@ -87,7 +99,7 @@ describe('processNodes', () => {
             values: new ArrayVector([0.5, 0.5, 0.5]),
           },
         ],
-        color: 'rgb(226, 192, 61)',
+        color: colorField,
         dataFrameRowIndex: 1,
         id: '1',
         incoming: 1,
@@ -131,7 +143,7 @@ describe('processNodes', () => {
             values: new ArrayVector([0.5, 0.5, 0.5]),
           },
         ],
-        color: 'rgb(226, 192, 61)',
+        color: colorField,
         dataFrameRowIndex: 2,
         id: '2',
         incoming: 2,
