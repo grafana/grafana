@@ -18,7 +18,7 @@ import { Plugin, Node } from 'slate';
 import { LokiLabelBrowser } from './LokiLabelBrowser';
 
 // Types
-import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
