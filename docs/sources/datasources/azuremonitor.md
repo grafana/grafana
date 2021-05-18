@@ -417,11 +417,17 @@ To prepare for this upcoming change, Application Insights queries can now be mad
 
 ## Query Azure Resource Graph service
 
+Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
+
 {{< docs-imagebox img="/img/docs/v80/azuremonitor-azure-resource-graph.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
 
-Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). A Azure Resource Graph (ARG) query is formatted as table data.
+### Table queries
 
-If your credentials give you access to multiple subscriptions, you can choose multiple subscriptions before entering queries.
+Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). An Azure Resource Graph query is formatted as table data.
+
+If your credentials give you access to multiple subscriptions, then you can choose multiple subscriptions before entering queries.
+
+### Sort results by resource properties
 
 Here is an example query that returns any type of resource, but only the name, type, and location properties:
 
@@ -433,7 +439,11 @@ Resources
 
 The query uses `order by` to sort the properties by the `name` property in ascending (asc) order. You can change what property to sort by and the order (`asc` or `desc`). The query uses `project` to show the listed properties in the results. You can add or remove properties.
 
-Filtering for Azure resources with a tag name of `Environment` that have a value of `Internal`. You can change these to any desired tag key and value. The `=~` in the `type` match tells Resource Graph to be case insensitive. You can project by other properties or add/ remove more. The tag key is case sensitive. `Environment` and `environment` will give different results. For example, a query that returns a list of resources with a specified tag value:
+### Query resources with complex filtering
+
+Filtering for Azure resources with a tag name of `Environment` that have a value of `Internal`. You can change these to any desired tag key and value. The `=~` in the `type` match tells Resource Graph to be case insensitive. You can project by other properties or add/ remove more.
+
+The tag key is case sensitive. `Environment` and `environment` will give different results. For example, a query that returns a list of resources with a specified tag value:
 
 ```kusto
 Resources
@@ -441,7 +451,9 @@ Resources
 | project name
 ```
 
-You can also use `summarize` and `count` to define how to group and aggregate the values by property. For example, returning count of healthy, unhealthy and not applicable resources per recommendation.:
+### Group and aggregate the values by property
+
+You can also use `summarize` and `count` to define how to group and aggregate the values by property. For example, returning count of healthy, unhealthy, and not applicable resources per recommendation.:
 
 ```kusto
 securityresources

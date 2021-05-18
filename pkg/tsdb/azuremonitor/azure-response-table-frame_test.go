@@ -143,7 +143,7 @@ func TestLogTableToFrame(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadLogAnalyticsTestFileWithNumber(t, tt.testFile)
-			frame, err := LogTableToFrame(&res.Tables[0])
+			frame, err := ResponseTableToFrame(&res.Tables[0])
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {

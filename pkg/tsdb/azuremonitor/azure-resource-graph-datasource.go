@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"strings"
 
-	// "compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -31,6 +30,7 @@ type AzureResourceGraphDatasource struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // AzureResourceGraphQuery is the query request that is built from the saved values for
@@ -136,6 +136,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	reqBody := fmt.Sprintf("{'subscriptions':['%s'], 'query':'%s'}",
 		strings.Join(query.Model.Get("subscriptions").MustStringArray(), "','"),
 		query.Model.Get("azureResourceGraph").Get("query").MustString())
+
 	req, err := e.createRequest(ctx, e.dsInfo, reqBody)
 
 	if err != nil {
@@ -173,10 +174,14 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return queryResultErrorWithExecuted(err)
 	}
 
-	frame, err := LogTableToFrame(&argResponse.Data)
+	frame, err := ResponseTableToFrame(&argResponse.Data)
 	if err != nil {
 		return queryResultErrorWithExecuted(err)
 	}
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.ExecutedQueryString = req.URL.RawQuery
 
 	queryResult.Frames = data.Frames{frame}
 	return queryResult
@@ -208,7 +213,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	if err != nil {
 		return nil, err
 	}
-	pluginproxy.ApplyRoute(ctx, req, proxypass, argRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxypass, argRoute, dsInfo, e.cfg)
 
 	return req, nil
 }
@@ -216,6 +221,13 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
 	*plugins.AppPluginRoute, string, error) {
 	pluginRouteName := "azureresourcegraph"
+
+	switch cloudName {
+	case "chinaazuremonitor":
+		pluginRouteName = "chinaazureresourcegraph"
+	case "govazuremonitor":
+		pluginRouteName = "govazureresourcegraph"
+	}
 
 	var argRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {

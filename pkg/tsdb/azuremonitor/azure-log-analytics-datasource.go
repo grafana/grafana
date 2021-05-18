@@ -173,7 +173,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResultErrorWithExecuted(err)
 	}
 
-	frame, err := LogTableToFrame(t)
+	frame, err := ResponseTableToFrame(t)
 	if err != nil {
 		return queryResultErrorWithExecuted(err)
 	}

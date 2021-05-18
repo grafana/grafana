@@ -59,7 +59,12 @@ type AzureLogAnalyticsResponse struct {
 	Tables []AzureResponseTable `json:"tables"`
 }
 
-// AzureResponseTable is the table format for Log Analytics responses
+// AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
+type AzureResourceGraphResponse struct {
+	Data AzureResponseTable `json:"data"`
+}
+
+// AzureResponseTable is the table format for Azure responses
 type AzureResponseTable struct {
 	Name    string `json:"name"`
 	Columns []struct {
@@ -67,10 +72,6 @@ type AzureResponseTable struct {
 		Type string `json:"type"`
 	} `json:"columns"`
 	Rows [][]interface{} `json:"rows"`
-}
-
-type AzureResourceGraphResponse struct {
-	Data AzureResponseTable `json:"data"`
 }
 
 // azureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.

@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// LogTableToFrame converts an AzureResponseTable to a data.Frame.
-func LogTableToFrame(table *AzureResponseTable) (*data.Frame, error) {
+// ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
+func ResponseTableToFrame(table *AzureResponseTable) (*data.Frame, error) {
 	converterFrame, err := converterFrameForTable(table)
 	if err != nil {
 		return nil, err

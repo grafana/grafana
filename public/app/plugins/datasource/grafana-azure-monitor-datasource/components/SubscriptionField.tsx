@@ -18,7 +18,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   variableOptionGroup,
   onQueryChange,
   setError,
-  multiSelect,
+  multiSelect = false,
 }) => {
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
