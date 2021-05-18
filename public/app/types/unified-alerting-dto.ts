@@ -100,6 +100,7 @@ export enum GrafanaAlertStateDecision {
   KeepLastState = 'KeepLastState',
   OK = 'OK',
 }
+
 export interface GrafanaQuery {
   refId: string;
   queryType: string;

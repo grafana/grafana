@@ -57,6 +57,7 @@ export class AlertingQueryRunner {
         this.lastResult = nextResult;
         this.subject.next(this.lastResult);
       },
+
       error: (error: Error) => {
         this.lastResult = mapErrorToPanelData(this.lastResult, error);
         this.subject.next(this.lastResult);
@@ -92,6 +93,7 @@ export class AlertingQueryRunner {
     if (this.subject) {
       this.subject.complete();
     }
+
     this.cancel();
   }
 }
