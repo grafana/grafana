@@ -177,6 +177,10 @@ describe('utils/colorManipulator', () => {
       expect(getContrastRatio('#FFF', '#FFF')).toEqual(1);
     });
 
+    it('Can also take into account opacity for background', () => {
+      expect(getContrastRatio('#FFF', 'rgba(255,255,255,0.1)', '#000')).toEqual(17.5);
+    });
+
     it('returns a ratio for dark-grey : light-grey', () => {
       //expect(getContrastRatio('#707070', '#E5E5E5'))to.be.approximately(3.93, 0.01);
     });
