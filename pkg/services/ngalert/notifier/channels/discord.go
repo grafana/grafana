@@ -35,7 +35,7 @@ type DiscordNotifier struct {
 	WebhookURL  string
 }
 
-func NewDiscordNotifier(model *models.AlertNotification, t *template.Template) (*DiscordNotifier, error) {
+func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -48,11 +48,18 @@ func NewDiscordNotifier(model *models.AlertNotification, t *template.Template) (
 	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
 	return &DiscordNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		Content:      content,
-		WebhookURL:   discordURL,
-		log:          log.New("alerting.notifier.discord"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+			SecureSettings:        model.SecureSettings,
+		}),
+		Content:    content,
+		WebhookURL: discordURL,
+		log:        log.New("alerting.notifier.discord"),
+		tmpl:       t,
 	}, nil
 }
 

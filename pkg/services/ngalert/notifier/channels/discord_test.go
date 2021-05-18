@@ -116,7 +116,7 @@ func TestDiscordNotifier(t *testing.T) {
 			settingsJson, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "discord_testing",
 				Type:     "discord",
 				Settings: settingsJson,
