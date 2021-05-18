@@ -58,6 +58,12 @@ type SelReloadProps = {
   allowCustomValue?: boolean;
 };
 
+// when a custom value is written into a select-box,
+// by default the new value is prefixed with "Create:",
+// and that sounds confusing because here we do not create
+// anything. we change this to just be the entered string.
+const formatCreateLabel = (v: string) => v;
+
 const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelReloadProps): JSX.Element => {
   // here we rely on the fact that writing text into the <AsyncSelect/>
   // does not cause a re-render of the current react component.
@@ -89,12 +95,6 @@ type SelSingleLoadProps = {
   onChange: (v: SelVal) => void;
   allowCustomValue?: boolean;
 };
-
-// when a custom value is written into a select-box,
-// by default the new value is prefixed with "Create:",
-// and that sounds confusing because here we do not create
-// anything. we change this to just be the entered string.
-const formatCreateLabel = (v: string) => v;
 
 const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: SelSingleLoadProps): JSX.Element => {
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
