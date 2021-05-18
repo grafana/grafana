@@ -25,7 +25,7 @@ import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getAzureCloud } from '../credentials';
+import { getAuthType, getAzureCloud } from '../credentials';
 import { getManagementApiRoute } from '../api/routes';
 
 const defaultDropdownValue = 'select';
@@ -459,18 +459,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   testDatasource(): Promise<any> {
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
-      return Promise.resolve({
-        status: 'error',
-        message: 'The Tenant Id field is required.',
-      });
-    }
-
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
-      return Promise.resolve({
-        status: 'error',
-        message: 'The Client Id field is required.',
-      });
+    const validationError = this.isValidConfig();
+    if (validationError) {
+      return Promise.resolve(validationError);
     }
 
     const url = `${this.baseUrl}?api-version=2019-03-01`;
@@ -507,6 +498,35 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           message: message,
         };
       });
+  }
+
+  isValidConfig() {
+    const authType = getAuthType(this.instanceSettings);
+
+    if (authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+        return {
+          status: 'error',
+          message: 'The Tenant Id field is required.',
+        };
+      }
+
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+        return {
+          status: 'error',
+          message: 'The Client Id field is required.',
+        };
+      }
+    }
+
+    if (!this.isValidConfigField(this.subscriptionId)) {
+      return {
+        status: 'error',
+        message: 'The Subscription Id field is required.',
+      };
+    }
+
+    return undefined;
   }
 
   isValidConfigField(field?: string) {

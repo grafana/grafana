@@ -10,7 +10,7 @@ import {
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
-function getAuthType(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): AzureAuthType {
+export function getAuthType(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): AzureAuthType {
   if (!options.jsonData.azureAuthType) {
     // If authentication type isn't explicitly specified and datasource has client credentials,
     // then this is existing datasource which is configured for app registration (client secret)
@@ -73,7 +73,7 @@ function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | st
   }
 }
 
-export function isLogAnalyticsSameAs(options: AzureDataSourceSettings): boolean {
+export function isLogAnalyticsSameAs(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): boolean {
   return typeof options.jsonData.azureLogAnalyticsSameAs !== 'boolean' || options.jsonData.azureLogAnalyticsSameAs;
 }
 

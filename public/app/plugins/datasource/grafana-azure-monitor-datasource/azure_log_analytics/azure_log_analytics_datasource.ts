@@ -12,7 +12,7 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAzureCloud } from '../credentials';
+import { getAuthType, getAzureCloud, isLogAnalyticsSameAs } from '../credentials';
 import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
@@ -396,28 +396,28 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   isValidConfig() {
-    if (this.instanceSettings.jsonData.azureLogAnalyticsSameAs) {
-      return undefined;
+    const authType = getAuthType(this.instanceSettings);
+
+    if (authType === 'clientsecret' && !isLogAnalyticsSameAs(this.instanceSettings)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
+        return {
+          status: 'error',
+          message: 'The Tenant Id field is required.',
+        };
+      }
+
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
+        return {
+          status: 'error',
+          message: 'The Client Id field is required.',
+        };
+      }
     }
 
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsSubscriptionId)) {
+    if (!this.isValidConfigField(this.subscriptionId)) {
       return {
         status: 'error',
         message: 'The Subscription Id field is required.',
-      };
-    }
-
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
-      return {
-        status: 'error',
-        message: 'The Tenant Id field is required.',
-      };
-    }
-
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
-      return {
-        status: 'error',
-        message: 'The Client Id field is required.',
       };
     }
 
