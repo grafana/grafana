@@ -77,7 +77,6 @@ func extendAlert(alert template.Alert, externalURL string) ExtendedAlert {
 		}
 		sort.Strings(matchers)
 		extended.SilenceURL = path.Join(externalURL, "/alerting/silence/new?alertmanager=grafana&matchers="+url.QueryEscape(strings.Join(matchers, ",")))
-
 	}
 
 	// remove "private" annotations & labels so they don't show up in the template
