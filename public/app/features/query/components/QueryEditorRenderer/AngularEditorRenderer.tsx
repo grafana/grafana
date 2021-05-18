@@ -11,27 +11,22 @@ export function AngularEditorRenderer(props: EditorRendererProps): JSX.Element |
   const elementRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<AngularComponent>();
   const scopeRef = useComponentScope(props);
-  const dataSourceIdentifier = useDataSourceIdentifier(props);
 
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.destroy();
-      editorRef.current = undefined;
-    }
-
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl" />';
     const ctrl = scopeRef.current;
-    const editor = loader.load(elementRef, { ctrl }, template);
+    const editor = loader.load(elementRef.current, { ctrl }, template);
 
     editorRef.current = editor;
 
     return () => {
       if (editor) {
+        console.log('destroying');
         editor.destroy();
       }
     };
-  }, [dataSourceIdentifier, scopeRef]);
+  }, [scopeRef]);
 
   return <div ref={elementRef} />;
 }
@@ -41,33 +36,37 @@ export function hasAngularQueryEditor(dataSource: DataSourceApi): boolean {
 }
 
 function useComponentScope(props: EditorRendererProps): MutableRefObject<AngularQueryComponentScope | undefined> {
-  const { query, queries, dataSource, timeRange, onChange, onRunQuery, app } = props;
+  const { query, queries, dataSource, timeRange, onChange, onRunQuery } = props;
   const scopeRef = useRef<AngularQueryComponentScope>();
 
   scopeRef.current = useMemo(() => {
-    const panel = new PanelModel({ targets: queries });
-    const dashboard = {} as DashboardModel;
+    const scope = getOrCreateScope(scopeRef);
 
-    return {
-      datasource: dataSource,
-      target: query,
-      panel: panel,
-      dashboard: dashboard,
-      refresh: () => {
-        onChange(query);
-        onRunQuery();
-      },
-      render: () => () => console.log('legacy render function called, it does nothing'),
-      events: new EventBusSrv(),
-      range: timeRange || getTimeSrv().timeRange(),
-      app: app,
+    scope.panel = new PanelModel({ targets: queries });
+    scope.datasource = dataSource;
+    scope.target = query;
+    scope.refresh = () => {
+      onChange(query);
+      onRunQuery();
     };
-  }, [app, queries, dataSource, timeRange, query, onChange, onRunQuery]);
+    scope.range = timeRange || getTimeSrv().timeRange();
+
+    return scope;
+  }, [queries, dataSource, timeRange, query, onChange, onRunQuery]);
 
   return scopeRef;
 }
 
-function useDataSourceIdentifier(props: EditorRendererProps): string {
-  const { query, dataSource } = props;
-  return query.datasource || dataSource.name;
+function getOrCreateScope(
+  scopeRef: MutableRefObject<AngularQueryComponentScope | undefined>
+): AngularQueryComponentScope {
+  if (scopeRef.current) {
+    return scopeRef.current;
+  }
+
+  return ({
+    dashboard: {} as DashboardModel,
+    render: () => () => console.log('legacy render function called, it does nothing'),
+    events: new EventBusSrv(),
+  } as unknown) as AngularQueryComponentScope;
 }

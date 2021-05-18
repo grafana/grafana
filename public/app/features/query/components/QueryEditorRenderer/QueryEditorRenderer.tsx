@@ -7,8 +7,8 @@ import { hasReactQueryEditor, ReactEditorRenderer } from './ReactEditorRenderer'
 import { AngularEditorRenderer, hasAngularQueryEditor } from './AngularEditorRenderer';
 
 interface Props {
-  name?: string;
-  onChange: (q: DataQuery) => void;
+  nameOrUid: string;
+  onChange: (query: DataQuery) => void;
   onRunQuery: () => void;
   query: DataQuery;
   queries: DataQuery[];
@@ -18,16 +18,12 @@ interface Props {
 }
 
 export function QueryEditorRenderer(props: Props) {
-  const { app, name, timeRange, query, queries, onChange, data, onRunQuery } = props;
+  const { app, nameOrUid, timeRange, query, queries, onChange, data, onRunQuery } = props;
+  const state = useAsync(() => getDataSourceSrv().get(nameOrUid), [nameOrUid]);
 
-  const state = useAsync(() => {
-    if (!name) {
-      return Promise.resolve(undefined);
-    }
-    return getDataSourceSrv().get(name);
-  }, [name]);
+  console.log('state', state);
 
-  if (!name || state.loading) {
+  if (state.loading) {
     return null;
   }
 

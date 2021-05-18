@@ -501,6 +501,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),
     },
+    {
+      path: '/sandbox/test',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "TestStuffPage"*/ 'app/features/sandbox/TestStuffPage')
+      ),
+    },
     ...extraRoutes,
     {
       path: '/*',

@@ -31,7 +31,7 @@ export const ExpressionEditor: FC<Props> = ({ value, onChange, dataSourceName })
       query={query}
       queries={[query]}
       app={CoreApp.CloudAlerting}
-      name={dataSourceName}
+      nameOrUid={dataSourceName}
       onChange={onChangeQuery}
       onRunQuery={noop}
     />
