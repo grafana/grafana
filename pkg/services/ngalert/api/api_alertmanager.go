@@ -208,7 +208,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 			cgmr, ok := currentReceiverMap[gr.UID]
 			if !ok {
 				// it tries to update a receiver that didn't previously exist
-				return response.Error(http.StatusBadRequest, fmt.Sprintf("unknown receiver %s", gr.UID), nil)
+				return response.Error(http.StatusBadRequest, fmt.Sprintf("unknown receiver: %s", gr.UID), nil)
 			}
 
 			// frontend sends only the secure settings that have to be updated

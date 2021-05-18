@@ -110,6 +110,40 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		require.JSONEq(t, `{"message":"configuration created"}`, getBody(t, resp.Body))
 	}
 
+	// Try to update a receiver with unknown UID
+	{
+		// Then, update the recipient
+		payload := `
+	{
+		"template_files": {},
+		"alertmanager_config": {
+			"route": {
+				"receiver": "slack.receiver"
+			},
+			"templates": null,
+			"receivers": [{
+				"name": "slack.receiver",
+				"grafana_managed_receiver_configs": [{
+					"settings": {
+						"recipient": "#unified-alerting-test-but-updated"
+					},
+					"secureFields": {
+						"url": true
+					},
+					"type": "slack",
+					"name": "slack.receiver",
+					"disableResolveMessage": false,
+					"uid": "invalid"
+				}]
+			}]
+		}
+	}
+	`
+
+		resp := postRequest(t, alertConfigURL, payload, http.StatusBadRequest) // nolint
+		require.JSONEq(t, `{"message": "unknown receiver: invalid"}`, getBody(t, resp.Body))
+	}
+
 	// The secure settings must be present
 	{
 		resp := getRequest(t, alertConfigURL, http.StatusOK) // nolint
