@@ -14,7 +14,6 @@
     "watch": "grafana-toolkit plugin:dev --watch"
   },
   "author": "Grafana Labs",
-  "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/data": "8.1.0-pre",
     "@grafana/runtime": "8.1.0-pre",

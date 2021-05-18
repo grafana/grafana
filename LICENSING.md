@@ -16,7 +16,6 @@ packages/grafana-runtime/
 packages/grafana-toolkit/
 packages/grafana-ui/
 packages/jaeger-ui-components/
-plugins-bundled/internal/input-datasource/
 packaging/
 grafana-mixin/
 cue/
