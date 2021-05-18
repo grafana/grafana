@@ -76,7 +76,7 @@ type alertmanagerAnnotations struct {
 type alertmanagerMessage struct {
 	StartsAt     string                  `json:"startsAt"`
 	EndsAt       string                  `json:"endsAt"`
-	GeneratorURL *url.URL                `json:"generatorURL"`
+	GeneratorURL *url.URL                `json:"generatorUrl"`
 	Annotations  alertmanagerAnnotations `json:"annotations"`
 	Labels       map[string]string       `json:"labels"`
 }
