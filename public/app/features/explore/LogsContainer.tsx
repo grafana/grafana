@@ -29,23 +29,37 @@ interface LogsContainerProps extends PropsFromRedux {
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
-  componentDidMount() {
-    const { addResultsToCache, exploreId } = this.props;
-    addResultsToCache(exploreId);
+  // componentDidMount() {
+  //   const { addResultsToCache, exploreId } = this.props;
+  //   addResultsToCache(exploreId);
+  // }
+
+  // componentDidUpdate(prevProps: LogsContainerProps) {
+  //   const { logRows, absoluteRange, logsQueries, clearCache, exploreId, addResultsToCache, loading } = this.props;
+  //   // If new results, update cache
+  //   if (!isEqual(logRows, prevProps.logRows) || (!isEqual(absoluteRange, prevProps.absoluteRange) && !loading)) {
+  //     // If queries were changed, reset cache and start fresh
+  //     if (!isEqual(logsQueries, prevProps.logsQueries)) {
+  //       clearCache(exploreId);
+  //     }
+  //     // Otherwise add response to cache
+  //     addResultsToCache(exploreId);
+  //   }
+  // }
+
+  componentWillUnmount() {
+    this.clearCache();
   }
 
-  componentDidUpdate(prevProps: LogsContainerProps) {
-    const { logRows, absoluteRange, logsQueries, clearCache, exploreId, addResultsToCache, loading } = this.props;
-    // If new results, update cache
-    if (!isEqual(logRows, prevProps.logRows) || (!isEqual(absoluteRange, prevProps.absoluteRange) && !loading)) {
-      // If queries were changed, reset cache and start fresh
-      if (!isEqual(logsQueries, prevProps.logsQueries)) {
-        clearCache(exploreId);
-      }
-      // Otherwise add response to cache
-      addResultsToCache(exploreId);
-    }
-  }
+  addResultsToCache = () => {
+    const { addResultsToCache, exploreId } = this.props;
+    addResultsToCache(exploreId);
+  };
+
+  clearCache = () => {
+    const { clearCache, exploreId } = this.props;
+    clearCache(exploreId);
+  };
 
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
@@ -114,6 +128,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       }
     `;
 
+    console.log('cache', cache);
+
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
@@ -155,6 +171,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              addResultsToCache={this.addResultsToCache}
+              clearCache={this.clearCache}
             />
           </Collapse>
         </LogsCrossFadeTransition>

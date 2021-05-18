@@ -110,3 +110,13 @@ export function createCacheKey(absRange: AbsoluteTimeRange) {
     .join('&');
   return cacheKey;
 }
+
+export function getResultsFromCache(
+  cache: Array<{ key: string; value: PanelData }>,
+  absoluteRange: AbsoluteTimeRange
+): PanelData | undefined {
+  const cacheKey = createCacheKey(absoluteRange);
+  const cacheIdx = cache.findIndex((c) => c.key === cacheKey);
+  const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
+  return cacheValue;
+}
