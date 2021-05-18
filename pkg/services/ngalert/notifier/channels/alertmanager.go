@@ -76,7 +76,8 @@ type AlertmanagerNotifier struct {
 }
 
 type alertmanagerAnnotations struct {
-	description string   `json:"descriptions"`
+	Summary     string   `json:"summary"`
+	Description string   `json:"description"`
 	Image       *url.URL `json:"image"`
 }
 
@@ -137,7 +138,7 @@ func (n *AlertmanagerNotifier) createAlert(al *types.Alert, message string) aler
 	*/
 	return alertmanagerMessage{
 		Annotations: alertmanagerAnnotations{
-			description: description,
+			Description: description,
 		},
 	}
 }
