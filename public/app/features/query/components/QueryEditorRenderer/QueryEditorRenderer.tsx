@@ -41,9 +41,9 @@ export function QueryEditorRenderer(props: Props) {
     return null;
   }
 
-  if (hasReactQueryEditor(dataSource)) {
+  if (hasAngularQueryEditor(dataSource)) {
     return (
-      <ReactEditorRenderer
+      <AngularEditorRenderer
         key={dataSource.name}
         timeRange={timeRange}
         query={query}
@@ -57,9 +57,9 @@ export function QueryEditorRenderer(props: Props) {
     );
   }
 
-  if (hasAngularQueryEditor(dataSource)) {
+  if (hasReactQueryEditor(dataSource)) {
     return (
-      <AngularEditorRenderer
+      <ReactEditorRenderer
         key={dataSource.name}
         timeRange={timeRange}
         query={query}
