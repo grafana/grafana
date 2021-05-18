@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -239,7 +240,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 }
 
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(sn.log)))
 	alerts := types.Alerts(as...)
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
