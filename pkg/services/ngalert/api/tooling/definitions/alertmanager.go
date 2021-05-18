@@ -276,13 +276,17 @@ func (c *PostableUserConfig) ProcessConfig() error {
 					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
 				if gr.UID == "" {
-					for {
+					retries := 5
+					for i := 0; i < retries; i++ {
 						gen := util.GenerateShortUID()
 						_, ok := seenUIDs[gen]
 						if !ok {
 							gr.UID = gen
 							break
 						}
+					}
+					if gr.UID == "" {
+						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
 					}
 				}
 				seenUIDs[gr.UID] = struct{}{}
