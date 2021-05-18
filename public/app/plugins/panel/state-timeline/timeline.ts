@@ -275,7 +275,10 @@ export function getConfig(opts: TimelineCoreOptions) {
           }
         });
 
-        discrete && drawBoxes(u.ctx);
+        if (discrete) {
+          u.ctx.lineWidth = strokeWidth;
+          drawBoxes(u.ctx);
+        }
 
         u.ctx.restore();
       }
@@ -315,7 +318,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
                   const x =
                     mode === TimelineMode.Changes
-                      ? round(boxRect.x + xOff + strokeWidth / 2 + textPadding)
+                      ? round(boxRect.x + xOff + strokeWidth + textPadding)
                       : round(boxRect.x + xOff + boxRect.w / 2);
 
                   // TODO: cache by fillColor to avoid setting ctx for label
