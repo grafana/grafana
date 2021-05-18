@@ -313,7 +313,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
 
-	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser)
+	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -355,7 +355,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 
-	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser)
+	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
