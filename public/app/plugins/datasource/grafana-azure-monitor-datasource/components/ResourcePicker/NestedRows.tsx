@@ -99,6 +99,14 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
           onRowSelectedChange={onRowSelectedChange}
         />
       )}
+
+      {openStatus === 'loading' && (
+        <tr>
+          <td className={cx(styles.cell, styles.loadingCell)} colSpan={3}>
+            Loading...
+          </td>
+        </tr>
+      )}
     </>
   );
 };

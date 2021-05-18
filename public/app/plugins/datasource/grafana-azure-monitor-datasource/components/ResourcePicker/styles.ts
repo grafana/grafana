@@ -39,6 +39,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   collapseButton: css({ margin: 0 }),
+
+  loadingCell: css({
+    textAlign: 'center',
+  }),
 });
 
 export default getStyles;
