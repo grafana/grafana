@@ -15,7 +15,7 @@ export function getCatalogNavModel(tab: CatalogTab, baseURL: string): NavModel {
 
   pages.push({
     text: 'Browse',
-    icon: 'file-alt',
+    icon: 'icon-gf icon-gf-apps',
     url: `${baseURL}`,
     id: CatalogTab.Browse,
   });
@@ -29,7 +29,7 @@ export function getCatalogNavModel(tab: CatalogTab, baseURL: string): NavModel {
 
   pages.push({
     text: 'Library',
-    icon: 'file-alt',
+    icon: 'icon-gf icon-gf-apps',
     url: `${baseURL}${CatalogTab.Library}`,
     id: CatalogTab.Library,
   });
@@ -64,23 +64,6 @@ function setActivePage(pageId: CatalogTab, pages: NavModelItem[], defaultPageId:
   }
 
   return changed;
-}
-
-function getPluginIcon(type: string) {
-  switch (type) {
-    case 'datasource':
-      return 'gicon gicon-datasources';
-    case 'panel':
-      return 'icon-gf icon-gf-panel';
-    case 'app':
-      return 'icon-gf icon-gf-apps';
-    case 'page':
-      return 'icon-gf icon-gf-endpoint-tiny';
-    case 'dashboard':
-      return 'gicon gicon-dashboard';
-    default:
-      return 'icon-gf icon-gf-apps';
-  }
 }
 
 export function getLoadingNav(): NavModel {
