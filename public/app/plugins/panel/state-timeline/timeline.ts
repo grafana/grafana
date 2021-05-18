@@ -2,12 +2,14 @@ import uPlot, { Series, Cursor } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
+import { TimelineFieldConfig, TimelineMode } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
 
 const { round, min, ceil } = Math;
+
+const textPadding = 2;
 
 const pxRatio = devicePixelRatio;
 
@@ -25,8 +27,6 @@ function walk(rowHeight: number, yIdx: number | null, count: number, dim: number
 }
 
 interface TimelineBoxRect extends Rect {
-  left: number;
-  strokeWidth: number;
   fillColor: string;
 }
 
@@ -40,7 +40,6 @@ export interface TimelineCoreOptions {
   colWidth?: number;
   theme: GrafanaTheme2;
   showValue: BarValueVisibility;
-  alignValue: TimelineValueAlignment;
   isDiscrete: (seriesIdx: number) => boolean;
   getValueColor: (seriesIdx: number, value: any) => string;
   label: (seriesIdx: number) => string;
@@ -62,7 +61,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     rowHeight = 0,
     colWidth = 0,
     showValue,
-    alignValue,
     theme,
     label,
     formatValue,
@@ -150,9 +148,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       h: boxHeight,
       sidx: seriesIdx + 1,
       didx: valueIdx,
-      // These two are needed for later text positioning
-      left: left,
-      strokeWidth,
+      // for computing label contrast
       fillColor,
     });
 
@@ -235,7 +231,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   yOff,
                   left,
                   round(yOff + y0),
-                  right - left - 2,
+                  right - left,
                   round(height),
                   strokeWidth,
                   iy,
@@ -297,28 +293,15 @@ export function getConfig(opts: TimelineCoreOptions) {
           u.ctx.clip();
 
           u.ctx.font = font;
-          u.ctx.textAlign = alignValue;
+          u.ctx.textAlign = mode === TimelineMode.Changes ? 'left' : 'center';
           u.ctx.textBaseline = 'middle';
 
           uPlot.orient(
             u,
             sidx,
-            (
-              series,
-              dataX,
-              dataY,
-              scaleX,
-              scaleY,
-              valToPosX,
-              valToPosY,
-              xOff,
-              yOff,
-              xDim,
-              yDim,
-              moveTo,
-              lineTo,
-              rect
-            ) => {
+            (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+              let strokeWidth = round((series.width || 0) * pxRatio);
+
               let y = round(yOff + yMids[sidx - 1]);
 
               for (let ix = 0; ix < dataY.length; ix++) {
@@ -326,12 +309,16 @@ export function getConfig(opts: TimelineCoreOptions) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   // Todo refine this to better know when to not render text (when values do not fit)
-                  if (!boxRect || boxRect.w < 20) {
+                  if (!boxRect || (showValue === BarValueVisibility.Auto && boxRect.w < 20)) {
                     continue;
                   }
 
-                  const x = getTextPositionOffet(boxRect, alignValue);
+                  const x =
+                    mode === TimelineMode.Changes
+                      ? round(boxRect.x + xOff + strokeWidth / 2 + textPadding)
+                      : round(boxRect.x + xOff + boxRect.w / 2);
 
+                  // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
                   u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
                 }
@@ -365,6 +352,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
   };
 
+  const multiHover = mode === TimelineMode.Changes;
+
   const setCursor = (u: uPlot) => {
     let cx = round(u.cursor!.left! * pxRatio);
 
@@ -372,7 +361,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       let found: Rect | null = null;
 
       if (cx >= 0) {
-        let cy = yMids[i];
+        let cy = multiHover ? yMids[i] : round(u.cursor!.top! * pxRatio);
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
@@ -403,6 +392,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   // hide y crosshair & hover points
   const cursor: Partial<Cursor> = {
     y: false,
+    x: mode === TimelineMode.Changes,
     points: { show: false },
   };
 
@@ -478,19 +468,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     drawClear,
     setCursor,
   };
-}
-
-function getTextPositionOffet(rect: TimelineBoxRect, alignValue: TimelineValueAlignment) {
-  // left or right aligned values shift 2 pixels inside edge
-  const textPadding = alignValue === 'left' ? 2 : alignValue === 'right' ? -2 : 0;
-  const { left, w, strokeWidth } = rect;
-
-  return (
-    left +
-    strokeWidth / 2 +
-    (alignValue === 'center' ? w / 2 - strokeWidth / 2 : alignValue === 'right' ? w - strokeWidth / 2 : 0) +
-    textPadding
-  );
 }
 
 function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {

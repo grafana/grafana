@@ -9,8 +9,10 @@ export interface TimelineOptions {
   legend: VizLegendOptions;
   showValue: BarValueVisibility;
   rowHeight: number;
+
+  // only used for "samples" mode (status-grid)
   colWidth?: number;
-  alignValue: TimelineValueAlignment;
+  // only used in "changes" mode (state-timeline)
   mergeValues?: boolean;
 }
 
@@ -28,9 +30,8 @@ export interface TimelineFieldConfig extends HideableFieldConfig {
  * @alpha
  */
 export const defaultPanelOptions: Partial<TimelineOptions> = {
-  showValue: BarValueVisibility.Always,
+  showValue: BarValueVisibility.Auto,
   mergeValues: true,
-  alignValue: 'left',
   rowHeight: 0.9,
 };
 
@@ -46,6 +47,8 @@ export const defaultTimelineFieldConfig: TimelineFieldConfig = {
  * @alpha
  */
 export enum TimelineMode {
+  // state-timeline
   Changes = 'changes',
+  // status-grid
   Samples = 'samples',
 }
