@@ -10,7 +10,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { LokiLabel } from './LokiLabel';
 
 // Hard limit on labels to render
-const MAX_LABEL_COUNT = 100;
+const MAX_LABEL_COUNT = 1000;
 const MAX_VALUE_COUNT = 10000;
 const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
@@ -161,7 +161,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
-  state = {
+  state: BrowserState = {
     labels: [] as SelectableLabel[],
     searchTerm: '',
     status: 'Ready',
@@ -269,7 +269,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
         this.setState({ labels }, () => {
           this.state.labels.forEach((label) => {
             if (label.selected) {
-              this.fetchValues(label.name);
+              this.fetchValues(label.name, EMPTY_SELECTOR);
             }
           });
         });
@@ -287,7 +287,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {
-        this.fetchValues(name);
+        this.fetchValues(name, buildSelector(this.state.labels));
       }
     } else {
       // Only need to facet when deselecting labels
@@ -304,7 +304,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       });
       this.setState({ labels }, () => {
         // Get fresh set of values
-        this.state.labels.forEach((label) => label.selected && this.fetchValues(label.name));
+        this.state.labels.forEach((label) => label.selected && this.fetchValues(label.name, selector));
       });
     } else {
       // Do facetting
@@ -312,18 +312,23 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     }
   };
 
-  async fetchValues(name: string) {
+  async fetchValues(name: string, selector: string) {
     const { languageProvider } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
       let rawValues = await languageProvider.getLabelValues(name);
+      // If selector changed, clear loading state and discard result by returning early
+      if (selector !== buildSelector(this.state.labels)) {
+        this.updateLabelState(name, { loading: false }, '');
+        return;
+      }
       if (rawValues.length > MAX_VALUE_COUNT) {
         const error = `Too many values for ${name} (showing only ${MAX_VALUE_COUNT} of ${rawValues.length})`;
         rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
         this.setState({ error });
       }
       const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
-      this.updateLabelState(name, { values, loading: false }, '');
+      this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
     }
@@ -336,6 +341,13 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     }
     try {
       const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      // If selector changed, clear loading state and discard result by returning early
+      if (selector !== buildSelector(this.state.labels)) {
+        if (lastFacetted) {
+          this.updateLabelState(lastFacetted, { loading: false });
+        }
+        return;
+      }
       if (Object.keys(possibleLabels).length === 0) {
         // Sometimes the backend does not return a valid set
         console.error('No results for label combination, but should not occur.');
@@ -368,7 +380,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     const styles = getStyles(theme);
     let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
-      // TODO extract from render() and debounce
       selectedLabels = selectedLabels.map((label) => ({
         ...label,
         values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),

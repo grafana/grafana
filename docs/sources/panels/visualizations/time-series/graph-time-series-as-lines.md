@@ -89,7 +89,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../field-options/standard-field-options.md#color-scheme" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -113,7 +113,7 @@ Gradient color is generated based on the hue of the line color.
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../field-options/standard-field-options.md#color-scheme" >}}) field option.
+Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
 
 Line style appearance is influenced by the **Line width** and **Fill opacity** settings. In the screenshots below, **Line width** is set to 3 and **Fill opacity** is set to 20.
 

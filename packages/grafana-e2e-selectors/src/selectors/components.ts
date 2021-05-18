@@ -120,6 +120,7 @@ export const Components = {
   },
   RefreshPicker: {
     runButton: 'RefreshPicker run button',
+    intervalButton: 'RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',

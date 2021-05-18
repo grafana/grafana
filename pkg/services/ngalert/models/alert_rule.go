@@ -26,10 +26,9 @@ func (noDataState NoDataState) String() string {
 }
 
 const (
-	Alerting      NoDataState = "Alerting"
-	NoData        NoDataState = "NoData"
-	KeepLastState NoDataState = "KeepLastState"
-	OK            NoDataState = "OK"
+	Alerting NoDataState = "Alerting"
+	NoData   NoDataState = "NoData"
+	OK       NoDataState = "OK"
 )
 
 type ExecutionErrorState string
@@ -39,8 +38,7 @@ func (executionErrorState ExecutionErrorState) String() string {
 }
 
 const (
-	AlertingErrState      ExecutionErrorState = "Alerting"
-	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
+	AlertingErrState ExecutionErrorState = "Alerting"
 )
 
 const (
