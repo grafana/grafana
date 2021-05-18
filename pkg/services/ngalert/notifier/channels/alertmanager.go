@@ -75,6 +75,9 @@ type AlertmanagerNotifier struct {
 // Notify sends alert notifications to Alertmanager.
 func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	n.logger.Info("Sending Alertmanager alert", "alertmanager", n.Name)
+	if len(as) == 0 {
+		return true, nil
+	}
 
 	body, err := json.Marshal(as)
 	if err != nil {
@@ -101,13 +104,3 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	return true, nil
 }
-
-/*
-// regexp that matches all invalid label name characters
-// https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-var reAlertManagerLabel = regexp.MustCompile(`[^a-zA-Z0-9_]`)
-
-func replaceIllegalCharsInLabelname(input string) string {
-	return reAlertManagerLabel.ReplaceAllString(input, "_")
-}
-*/
