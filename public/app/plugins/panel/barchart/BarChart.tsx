@@ -46,6 +46,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       tooltip,
       valueFormatting,
     } = props;
+
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,

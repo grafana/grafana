@@ -12,7 +12,6 @@ import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from
 import { BarsOptions, getConfig } from './bars';
 import {
   AxisPlacement,
-  BarValueVisibility,
   FIXED_UNIT,
   ScaleDirection,
   ScaleDistribution,
@@ -56,7 +55,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
 
-  const formatValue = showValue !== BarValueVisibility.Never ? defaultValueFormatter : undefined;
+  const formatValue = defaultValueFormatter;
 
   // Use bar width when only one field
   if (frame.fields.length === 2) {
@@ -78,6 +77,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
+  builder.addHook('draw', config.draw);
+
   builder.setTooltipInterpolator(config.interpolateBarChartTooltip);
 
   builder.addScale({
@@ -120,12 +121,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       pxAlign: false,
       lineWidth: customConfig.lineWidth,
       lineColor: seriesColor,
-      //lineStyle: customConfig.lineStyle,
       fillOpacity: customConfig.fillOpacity,
       theme,
       colorMode,
       pathBuilder: config.drawBars,
-      pointsBuilder: config.drawPoints,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
