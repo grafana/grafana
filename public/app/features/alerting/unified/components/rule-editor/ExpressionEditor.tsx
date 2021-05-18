@@ -1,4 +1,5 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
+import { noop } from 'lodash';
 import { CoreApp, DataQuery } from '@grafana/data';
 import { QueryEditorRenderer } from 'app/features/query/components/QueryEditorRenderer/QueryEditorRenderer';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -11,19 +12,16 @@ interface Props {
   dataSourceName: string; // will be a prometheus or loki datasource
 }
 
-const noop = () => {};
-
-// @TODO implement proper prom/loki query editor here
 export const ExpressionEditor: FC<Props> = ({ value, onChange, dataSourceName }) => {
-  const [query, setQuery] = useState<DataQuery>({ refId: 'A', hide: false });
-  const mapper = useExpressionMapper(dataSourceName);
+  const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
+  const [query, setQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
       setQuery(query);
-      onChange(mapper(query));
+      onChange(mapToValue(query));
     },
-    [onChange, mapper]
+    [onChange, mapToValue]
   );
 
   return (
@@ -38,20 +36,24 @@ export const ExpressionEditor: FC<Props> = ({ value, onChange, dataSourceName })
   );
 };
 
-type ExpressionMapper<T extends DataQuery = DataQuery> = (query: T) => string;
+type QueryMappers<T extends DataQuery = DataQuery> = {
+  mapToValue: (query: T) => string;
+  mapToQuery: (existing: T, value: string | undefined) => T;
+};
 
-function useExpressionMapper(dataSourceName: string): ExpressionMapper {
+function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
 
     switch (settings?.type) {
       case 'loki':
       case 'prometheus':
-        return (query: PromQuery | LokiQuery) => query.expr;
-      default:
-        return () => {
-          throw new Error(`${dataSourceName} is not supported as an expression editor`);
+        return {
+          mapToValue: (query: PromQuery | LokiQuery) => query.expr,
+          mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
         };
+      default:
+        throw new Error(`${dataSourceName} is not supported as an expression editor`);
     }
   }, [dataSourceName]);
 }
