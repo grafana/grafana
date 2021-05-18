@@ -153,7 +153,7 @@ export function updateCredentials(
         },
       };
 
-      if (isLogAnalyticsSameAs(options)) {
+      if (!isLogAnalyticsSameAs(options)) {
         options = updateLogAnalyticsSameAs(options, true);
       }
 

@@ -12,7 +12,7 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud, isLogAnalyticsSameAs } from '../credentials';
+import { getAuthType, getAzureCloud } from '../credentials';
 import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
@@ -398,7 +398,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   isValidConfig() {
     const authType = getAuthType(this.instanceSettings);
 
-    if (authType === 'clientsecret' && !isLogAnalyticsSameAs(this.instanceSettings)) {
+    if (authType === 'clientsecret') {
       if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
         return {
           status: 'error',
