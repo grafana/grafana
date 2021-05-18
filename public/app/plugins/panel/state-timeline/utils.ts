@@ -8,6 +8,8 @@ import {
   outerJoinDataFrames,
   Field,
   FALLBACK_COLOR,
+  FieldType,
+  ArrayVector,
 } from '@grafana/data';
 import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode, UPlotConfigPrepFn } from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
@@ -192,4 +194,97 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
     names.set(getFieldDisplayName(frame.fields[i], frame), i);
   }
   return names;
+}
+
+/**
+ * If any sequential duplicate values exist, this will return a new array
+ * with the future values set to undefined.
+ *
+ * in:  1,        1,undefined,        1,2,        2,null,2,3
+ * out: 1,undefined,undefined,undefined,2,undefined,null,2,3
+ */
+export function unsetSameFutureValues(values: any[]): any[] | undefined {
+  let prevVal = values[0];
+  let clone: any[] | undefined = undefined;
+
+  for (let i = 1; i < values.length; i++) {
+    let value = values[i];
+
+    if (value === null) {
+      prevVal = null;
+    } else {
+      if (value === prevVal) {
+        if (!clone) {
+          clone = [...values];
+        }
+        clone[i] = undefined;
+      } else if (value != null) {
+        prevVal = value;
+      }
+    }
+  }
+  return clone;
+}
+
+// This will return a set of frames with only graphable values included
+export function prepareTimelineFields(
+  series: DataFrame[] | undefined,
+  mergeValues: boolean
+): { frames?: DataFrame[]; warn?: string } {
+  if (!series?.length) {
+    return { warn: 'No data in response' };
+  }
+  let hasTimeseries = false;
+  const frames: DataFrame[] = [];
+  for (let frame of series) {
+    let isTimeseries = false;
+    let changed = false;
+    const fields: Field[] = [];
+    for (const field of frame.fields) {
+      switch (field.type) {
+        case FieldType.time:
+          isTimeseries = true;
+          hasTimeseries = true;
+          fields.push(field);
+          break;
+        case FieldType.number:
+        case FieldType.boolean:
+        case FieldType.string:
+          if (mergeValues) {
+            let merged = unsetSameFutureValues(field.values.toArray());
+            if (merged) {
+              fields.push({
+                ...field,
+                values: new ArrayVector(merged),
+              });
+              changed = true;
+              continue;
+            }
+          }
+          fields.push(field);
+          break;
+        default:
+          changed = true;
+      }
+    }
+    if (isTimeseries && fields.length > 1) {
+      hasTimeseries = true;
+      if (changed) {
+        frames.push({
+          ...frame,
+          fields,
+        });
+      } else {
+        frames.push(frame);
+      }
+    }
+  }
+
+  if (!hasTimeseries) {
+    return { warn: 'Data does not have a time field' };
+  }
+  if (!frames.length) {
+    return { warn: 'No graphable fields' };
+  }
+  return { frames };
 }

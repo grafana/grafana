@@ -35,7 +35,7 @@ type TelegramNotifier struct {
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -53,12 +53,18 @@ func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) 
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		BotToken:     botToken,
-		ChatID:       chatID,
-		Message:      message,
-		tmpl:         t,
-		log:          log.New("alerting.notifier.telegram"),
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		BotToken: botToken,
+		ChatID:   chatID,
+		Message:  message,
+		tmpl:     t,
+		log:      log.New("alerting.notifier.telegram"),
 	}, nil
 }
 

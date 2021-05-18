@@ -94,13 +94,10 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 				secureFields[k] = true
 			}
 			gr := apimodels.GettableGrafanaReceiver{
-				Uid:                   pr.Uid,
+				UID:                   pr.UID,
 				Name:                  pr.Name,
 				Type:                  pr.Type,
-				IsDefault:             pr.IsDefault,
-				SendReminder:          pr.SendReminder,
 				DisableResolveMessage: pr.DisableResolveMessage,
-				Frequency:             pr.Frequency,
 				Settings:              pr.Settings,
 				SecureFields:          secureFields,
 			}
@@ -204,14 +201,14 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	// Copy the previously known secure settings
 	for i, r := range body.AlertmanagerConfig.Receivers {
 		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			if gr.Uid == "" { // new receiver
+			if gr.UID == "" { // new receiver
 				continue
 			}
 
-			cgmr, ok := currentReceiverMap[gr.Uid]
+			cgmr, ok := currentReceiverMap[gr.UID]
 			if !ok {
 				// it tries to update a receiver that didn't previously exist
-				return response.Error(http.StatusBadRequest, fmt.Sprintf("unknown receiver %s", gr.Uid), nil)
+				return response.Error(http.StatusBadRequest, fmt.Sprintf("unknown receiver %s", gr.UID), nil)
 			}
 
 			// frontend sends only the secure settings that have to be updated

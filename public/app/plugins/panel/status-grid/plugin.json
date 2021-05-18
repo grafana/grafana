@@ -1,19 +1,19 @@
 {
   "type": "panel",
-  "name": "Timeline",
-  "id": "timeline",
+  "name": "Status grid",
+  "id": "status-grid",
 
   "state": "alpha",
 
   "info": {
-    "description": "State over time",
+    "description": "System status map",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/timeline.svg",
-      "large": "img/timeline.svg"
+      "small": "img/status.svg",
+      "large": "img/status.svg"
     }
   }
 }

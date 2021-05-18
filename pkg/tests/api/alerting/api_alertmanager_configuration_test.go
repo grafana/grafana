@@ -52,7 +52,6 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 				},
 				"secureSettings": {},
 				"type": "slack",
-				"sendReminder": true,
 				"name": "slack.receiver",
 				"disableResolveMessage": false,
 				"uid": ""
@@ -100,7 +99,6 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 					"url": "http://averysecureurl.com/webhook"
 				},
 				"type": "slack",
-				"sendReminder": true,
 				"name": "slack.receiver",
 				"disableResolveMessage": false
 			}]
@@ -122,7 +120,7 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		m := c.GetGrafanaReceiverMap()
 		assert.Len(t, m, 1)
 		for k := range m {
-			generatedUID = m[k].Uid
+			generatedUID = m[k].UID
 		}
 
 		// Then, update the recipient
@@ -144,7 +142,6 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 					"url": true
 				},
 				"type": "slack",
-				"sendReminder": true,
 				"name": "slack.receiver",
 				"disableResolveMessage": false,
 				"uid": %q
@@ -172,16 +169,10 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
-				"id": 0,
 				"uid": %q,
 				"name": "slack.receiver",
 				"type": "slack",
-				"isDefault": false,
-				"sendReminder": true,
 				"disableResolveMessage": false,
-				"frequency": "",
-				"created": "0001-01-01T00:00:00Z",
-				"updated": "0001-01-01T00:00:00Z",
 				"settings": {
 					"recipient": "#unified-alerting-test-but-updated"
 				},

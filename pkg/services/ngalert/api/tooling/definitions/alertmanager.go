@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
 
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -253,7 +252,7 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 		switch r.Type() {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				UIDs[gr.Uid] = gr
+				UIDs[gr.UID] = gr
 			}
 		default:
 		}
@@ -276,17 +275,17 @@ func (c *PostableUserConfig) ProcessConfig() error {
 					}
 					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
-				if gr.Uid == "" {
+				if gr.UID == "" {
 					for {
 						gen := util.GenerateShortUID()
 						_, ok := seenUIDs[gen]
 						if !ok {
-							gr.Uid = gen
+							gr.UID = gen
 							break
 						}
 					}
 				}
-				seenUIDs[gr.Uid] = struct{}{}
+				seenUIDs[gr.UID] = struct{}{}
 			}
 		default:
 		}
@@ -389,7 +388,7 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 		switch r.Type() {
 		case GrafanaReceiverType:
 			for _, gr := range r.GettableGrafanaReceivers.GrafanaManagedReceivers {
-				UIDs[gr.Uid] = gr
+				UIDs[gr.UID] = gr
 			}
 		default:
 		}
@@ -547,8 +546,23 @@ func AllReceivers(route *config.Route) (res []string) {
 	return res
 }
 
-type GettableGrafanaReceiver dtos.AlertNotification
-type PostableGrafanaReceiver models.CreateAlertNotificationCommand
+type GettableGrafanaReceiver struct {
+	UID                   string           `json:"uid"`
+	Name                  string           `json:"name"`
+	Type                  string           `json:"type"`
+	DisableResolveMessage bool             `json:"disableResolveMessage"`
+	Settings              *simplejson.Json `json:"settings"`
+	SecureFields          map[string]bool  `json:"secureFields"`
+}
+
+type PostableGrafanaReceiver struct {
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureSettings        map[string]string `json:"secureSettings"`
+}
 
 func (r *PostableGrafanaReceiver) GetDecryptedSecret(key string) (string, error) {
 	storedValue, ok := r.SecureSettings[key]

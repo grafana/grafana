@@ -175,7 +175,7 @@ func TestWebhookNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "webhook_testing",
 				Type:     "webhook",
 				Settings: settingsJSON,
