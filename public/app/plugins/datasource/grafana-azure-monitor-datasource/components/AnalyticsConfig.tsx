@@ -149,6 +149,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
       )}
       {logAnalyticsCredentials && (
         <AzureCredentialsForm
+          managedIdentityEnabled={false}
           credentials={logAnalyticsCredentials}
           defaultSubscription={subscriptionId}
           onCredentialsChange={onCredentialsChange}

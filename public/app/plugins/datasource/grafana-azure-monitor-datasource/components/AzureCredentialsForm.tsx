@@ -1,12 +1,12 @@
 import React, { ChangeEvent, FunctionComponent, useEffect, useReducer, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 import { AzureAuthType, AzureCredentials } from '../types';
 import { isCredentialsComplete } from '../credentials';
 const { Select, Input } = LegacyForms;
 
 export interface Props {
+  managedIdentityEnabled: boolean;
   credentials: AzureCredentials;
   defaultSubscription?: string;
   azureCloudOptions?: SelectableValue[];
@@ -141,7 +141,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   return (
     <div className="gf-form-group">
-      {config.azure.managedIdentityEnabled && (
+      {props.managedIdentityEnabled && (
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel className="width-12" tooltip="Choose the type of authentication to Azure services">

@@ -4,6 +4,7 @@ import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
+    managedIdentityEnabled: false,
     credentials: {
       authType: 'clientsecret',
       azureCloud: 'azuremonitor',
