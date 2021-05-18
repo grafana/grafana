@@ -47,6 +47,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   rowHeight,
   colWidth,
   showValue,
+  alignValue,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -84,6 +85,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
+    alignValue,
     theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,

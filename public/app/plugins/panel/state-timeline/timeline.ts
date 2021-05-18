@@ -2,7 +2,7 @@ import uPlot, { Series, Cursor } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { TimelineFieldConfig, TimelineMode } from './types';
+import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
@@ -35,6 +35,7 @@ interface TimelineBoxRect extends Rect {
  */
 export interface TimelineCoreOptions {
   mode: TimelineMode;
+  alignValue?: TimelineValueAlignment;
   numSeries: number;
   rowHeight: number;
   colWidth?: number;
@@ -64,6 +65,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     theme,
     label,
     formatValue,
+    alignValue = 'left',
     getTimeRange,
     getValueColor,
     getFieldConfig,
@@ -296,7 +298,7 @@ export function getConfig(opts: TimelineCoreOptions) {
           u.ctx.clip();
 
           u.ctx.font = font;
-          u.ctx.textAlign = mode === TimelineMode.Changes ? 'left' : 'center';
+          u.ctx.textAlign = mode === TimelineMode.Changes ? alignValue : 'center';
           u.ctx.textBaseline = 'middle';
 
           uPlot.orient(
@@ -316,10 +318,16 @@ export function getConfig(opts: TimelineCoreOptions) {
                     continue;
                   }
 
-                  const x =
-                    mode === TimelineMode.Changes
-                      ? round(boxRect.x + xOff + strokeWidth + textPadding)
-                      : round(boxRect.x + xOff + boxRect.w / 2);
+                  // center-aligned
+                  let x = round(boxRect.x + xOff + boxRect.w / 2);
+
+                  if (mode === TimelineMode.Changes) {
+                    if (alignValue === 'left') {
+                      x = round(boxRect.x + xOff + strokeWidth + textPadding);
+                    } else if (alignValue === 'right') {
+                      x = round(boxRect.x + xOff + boxRect.w - strokeWidth - textPadding);
+                    }
+                  }
 
                   // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);

@@ -14,6 +14,8 @@ export interface TimelineOptions {
   colWidth?: number;
   // only used in "changes" mode (state-timeline)
   mergeValues?: boolean;
+  // only used in "changes" mode (state-timeline)
+  alignValue?: TimelineValueAlignment;
 }
 
 export type TimelineValueAlignment = 'center' | 'left' | 'right';
@@ -31,6 +33,7 @@ export interface TimelineFieldConfig extends HideableFieldConfig {
  */
 export const defaultPanelOptions: Partial<TimelineOptions> = {
   showValue: BarValueVisibility.Auto,
+  alignValue: 'left',
   mergeValues: true,
   rowHeight: 0.9,
 };
