@@ -14,16 +14,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 const alertTypeOptions: SelectableValue[] = [
   {
-    label: 'Threshold',
-    value: RuleFormType.threshold,
-    description: 'Metric alert based on a defined threshold',
+    label: 'Grafana managed alert',
+    value: RuleFormType.grafana,
+    description: 'Classic Grafana alerts based on thresholds.',
   },
 ];
 
 if (contextSrv.isEditor) {
   alertTypeOptions.push({
-    label: 'System or application',
-    value: RuleFormType.system,
+    label: 'Cortex/Loki managed alert',
+    value: RuleFormType.cloud,
     description: 'Alert based on a system or application behavior. Based on Prometheus.',
   });
 }
@@ -52,7 +52,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
 
   const dataSourceFilter = useCallback(
     (ds: DataSourceInstanceSettings): boolean => {
-      if (ruleFormType === RuleFormType.threshold) {
+      if (ruleFormType === RuleFormType.grafana) {
         return !!ds.meta.alerting;
       } else {
         // filter out only rules sources that support ruler and thus can have alerts edited
@@ -92,7 +92,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
                   const value = v?.value;
                   // when switching to system alerts, null out data source selection if it's not a rules source with ruler
                   if (
-                    value === RuleFormType.system &&
+                    value === RuleFormType.cloud &&
                     dataSourceName &&
                     !rulesSourcesWithRuler.find(({ name }) => name === dataSourceName)
                   ) {
@@ -109,7 +109,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             }}
           />
         </Field>
-        {ruleFormType === RuleFormType.system && (
+        {ruleFormType === RuleFormType.cloud && (
           <Field
             className={styles.formInput}
             label="Select data source"
@@ -140,10 +140,10 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           </Field>
         )}
       </div>
-      {ruleFormType === RuleFormType.system && dataSourceName && (
+      {ruleFormType === RuleFormType.cloud && dataSourceName && (
         <GroupAndNamespaceFields dataSourceName={dataSourceName} />
       )}
-      {ruleFormType === RuleFormType.threshold && (
+      {ruleFormType === RuleFormType.grafana && (
         <Field
           label="Folder"
           className={styles.formInput}

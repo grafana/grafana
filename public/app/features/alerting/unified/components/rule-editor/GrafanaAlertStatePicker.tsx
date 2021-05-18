@@ -9,7 +9,6 @@ type Props = Omit<SelectBaseProps<GrafanaAlertStateDecision>, 'options'>;
 const options: SelectableValue[] = [
   { value: GrafanaAlertStateDecision.Alerting, label: 'Alerting' },
   { value: GrafanaAlertStateDecision.NoData, label: 'No Data' },
-  { value: GrafanaAlertStateDecision.KeepLastState, label: 'Keep Last State' },
   { value: GrafanaAlertStateDecision.OK, label: 'OK' },
 ];
 
