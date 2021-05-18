@@ -63,6 +63,11 @@ type Result struct {
 	Error              error
 	EvaluatedAt        time.Time
 	EvaluationDuration time.Duration
+
+	// EvaluationSring is a string representation of evaluation data such
+	// as EvalMatches (from "classic condition"), and in the future from operations
+	// like SSE "math".
+	EvaluationString string
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -265,6 +270,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 			Instance:           f.Fields[0].Labels,
 			EvaluatedAt:        ts,
 			EvaluationDuration: time.Since(ts),
+			EvaluationString:   extractEvalString(f),
 		}
 
 		switch {
