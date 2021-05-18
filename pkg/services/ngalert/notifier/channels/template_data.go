@@ -3,6 +3,7 @@ package channels
 import (
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -37,6 +38,15 @@ type ExtendedData struct {
 	ExternalURL string `json:"externalURL"`
 }
 
+func removePrivateItems(kv template.KV) template.KV {
+	for key := range kv {
+		if strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__") {
+			kv = kv.Remove([]string{key})
+		}
+	}
+	return kv
+}
+
 func extendAlert(alert template.Alert, externalURL string) ExtendedAlert {
 	extended := ExtendedAlert{
 		Status:       alert.Status,
@@ -65,22 +75,14 @@ func extendAlert(alert template.Alert, externalURL string) ExtendedAlert {
 				matchers = append(matchers, key+"="+value)
 			}
 		}
+		sort.Strings(matchers)
 		extended.SilenceURL = path.Join(externalURL, "/alerting/silence/new?alertmanager=grafana&matchers="+url.QueryEscape(strings.Join(matchers, ",")))
 
 	}
 
 	// remove "private" annotations & labels so they don't show up in the template
-	for key := range alert.Annotations {
-		if strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__") {
-			extended.Annotations = extended.Annotations.Remove([]string{key})
-		}
-	}
-
-	for key := range alert.Labels {
-		if strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__") {
-			extended.Labels = extended.Labels.Remove([]string{key})
-		}
-	}
+	extended.Annotations = removePrivateItems(extended.Annotations)
+	extended.Labels = removePrivateItems(extended.Labels)
 
 	return extended
 }
@@ -97,8 +99,8 @@ func ExtendData(data *template.Data) *ExtendedData {
 		Status:            data.Status,
 		Alerts:            alerts,
 		GroupLabels:       data.GroupLabels,
-		CommonLabels:      data.CommonLabels,
-		CommonAnnotations: data.CommonAnnotations,
+		CommonLabels:      removePrivateItems(data.CommonLabels),
+		CommonAnnotations: removePrivateItems(data.CommonAnnotations),
 
 		ExternalURL: data.ExternalURL,
 	}

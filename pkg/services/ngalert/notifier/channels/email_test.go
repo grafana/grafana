@@ -67,7 +67,7 @@ func TestEmailNotifier(t *testing.T) {
 			{
 				Alert: model.Alert{
 					Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-					Annotations: model.LabelSet{"runbook_url": "http://fix.me"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 			},
 		}
@@ -85,12 +85,15 @@ func TestEmailNotifier(t *testing.T) {
 				"Title":   "[FIRING:1]  (AlwaysFiring warning)",
 				"Message": "[FIRING:1]  (AlwaysFiring warning)",
 				"Status":  "firing",
-				"Alerts": template.Alerts{
-					template.Alert{
-						Status:      "firing",
-						Labels:      template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations: template.KV{"runbook_url": "http://fix.me"},
-						Fingerprint: "15a37193dce72bab",
+				"Alerts": ExtendedAlerts{
+					ExtendedAlert{
+						Status:       "firing",
+						Labels:       template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
+						Annotations:  template.KV{"runbook_url": "http://fix.me"},
+						Fingerprint:  "15a37193dce72bab",
+						SilenceURL:   "http:/localhost/alerting/silence/new?alertmanager=grafana&matchers=%2C%2Calertname%3DAlwaysFiring%2Cseverity%3Dwarning",
+						DashboardURL: "http:/localhost/d/abc",
+						PanelURL:     "http:/localhost/d/abc?viewPanel=5",
 					},
 				},
 				"GroupLabels":       template.KV{},
