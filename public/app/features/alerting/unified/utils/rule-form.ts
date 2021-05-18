@@ -1,4 +1,4 @@
-import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import { DataQuery, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -136,9 +136,7 @@ export const getDefaultQueries = (): GrafanaQuery[] => {
   if (!dataSource) {
     return [getDefaultExpression('A')];
   }
-
-  const timeRange = getDefaultTimeRange();
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(timeRange);
+  const relativeTimeRange = { from: 600, to: 0 };
 
   return [
     {
