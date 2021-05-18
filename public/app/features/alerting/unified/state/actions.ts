@@ -301,12 +301,12 @@ export const saveRuleFormAction = createAsyncThunk(
     withSerializedError(
       (async () => {
         const { type } = values;
-        // in case of system (cortex/loki)
+        // in case of cloud (cortex/loki)
         let identifier: RuleIdentifier;
-        if (type === RuleFormType.system) {
+        if (type === RuleFormType.cloud) {
           identifier = await saveLotexRule(values, existing);
           // in case of grafana managed
-        } else if (type === RuleFormType.threshold) {
+        } else if (type === RuleFormType.grafana) {
           identifier = await saveGrafanaRule(values, existing);
         } else {
           throw new Error('Unexpected rule form type');

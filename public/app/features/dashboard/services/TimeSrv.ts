@@ -22,6 +22,7 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
+  previousAutoRefresh: any;
   oldRefresh: string | null | undefined;
   dashboard?: DashboardModel;
   timeAtLoad: any;
@@ -231,6 +232,18 @@ export class TimeSrv {
 
   stopAutoRefresh() {
     clearTimeout(this.refreshTimer);
+  }
+
+  // store dashboard refresh value and pause auto-refresh in some places
+  // i.e panel edit
+  pauseAutoRefresh() {
+    this.previousAutoRefresh = this.dashboard?.refresh;
+    this.setAutoRefresh('');
+  }
+
+  // resume auto-refresh based on old dashboard refresh property
+  resumeAutoRefresh() {
+    this.setAutoRefresh(this.previousAutoRefresh);
   }
 
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {

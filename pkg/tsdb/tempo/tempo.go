@@ -64,7 +64,7 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		queryResult.ErrorString = fmt.Sprintf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
+		queryResult.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
 		return plugins.DataResponse{
 			Results: map[string]plugins.DataQueryResult{
 				refID: queryResult,

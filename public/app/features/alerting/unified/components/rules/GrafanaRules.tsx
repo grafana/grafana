@@ -12,7 +12,7 @@ interface Props {
   namespaces: CombinedRuleNamespace[];
 }
 
-export const ThresholdRules: FC<Props> = ({ namespaces }) => {
+export const GrafanaRules: FC<Props> = ({ namespaces }) => {
   const styles = useStyles(getStyles);
   const { loading } = useUnifiedAlertingSelector(
     (state) => state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
@@ -21,7 +21,7 @@ export const ThresholdRules: FC<Props> = ({ namespaces }) => {
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
-        <h5>Threshold</h5>
+        <h5>Grafana</h5>
         {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
       </div>
 
