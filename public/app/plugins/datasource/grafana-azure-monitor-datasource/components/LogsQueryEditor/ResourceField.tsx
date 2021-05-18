@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
-import { Row } from '../ResourcePicker/types';
 import { Space } from '../Space';
 
 /*
@@ -29,9 +28,9 @@ interface ResourceComponents {
 }
 
 // TODO: make this an actual API call with the above ARG query
-function getResourceComponents(resourceUri: string) {
+function getResourceComponents(resourceURI: string) {
   const re = /resourceGroups\/([\w-_]+)\/.+\/([\w-_]+)/;
-  const match = resourceUri.match(re) || ['', 'fake-resource-group', 'fake-resource'];
+  const match = resourceURI.match(re) || ['', 'fake-resource-group', 'fake-resource'];
 
   return Promise.resolve({
     subscriptionName: 'Fake subscription',
@@ -57,42 +56,32 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
     setPickerIsOpen(true);
   }, []);
 
-  const handleClosePicker = useCallback(() => {
+  const closePicker = useCallback(() => {
     setPickerIsOpen(false);
   }, []);
 
-  const handleSelectResource = useCallback(
-    (row: Row, isSelected: boolean) => {
-      if (isSelected) {
-        onQueryChange({
-          ...query,
-          subscription: row.subscriptionId,
-          azureLogAnalytics: {
-            ...query.azureLogAnalytics,
-            resource: row.id,
-          },
-        });
-      } else {
-        onQueryChange({
-          ...query,
-          subscription: row.subscriptionId,
-          azureLogAnalytics: {
-            ...query.azureLogAnalytics,
-            resource: undefined,
-          },
-        });
-      }
+  const handleApply = useCallback(
+    (resourceURI: string | undefined) => {
+      onQueryChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          resource: resourceURI,
+        },
+      });
+      closePicker();
     },
-    [onQueryChange, query]
+    [closePicker, onQueryChange, query]
   );
 
   return (
     <>
-      <Modal title="Select a resource" isOpen={pickerIsOpen} onDismiss={handleClosePicker}>
+      <Modal title="Select a resource" isOpen={pickerIsOpen} onDismiss={closePicker}>
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
-          resourceUri={query.azureLogAnalytics.resource!}
-          handleSelectResource={handleSelectResource}
+          resourceURI={query.azureLogAnalytics.resource!}
+          onApply={handleApply}
+          onCancel={closePicker}
         />
       </Modal>
 
