@@ -2,6 +2,7 @@ import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
 import {
   DataFrame,
+  formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
   getFieldSeriesColor,
@@ -81,12 +82,18 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     direction: ScaleDirection.Up,
   });
 
+  const fmt = frame.fields[0].display!;
+  const xAxisFormatter = (v: number) => {
+    return formattedValueToString(fmt(v));
+  };
+
   builder.addAxis({
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
     incrs: histogramBucketSizes,
     splits: xSplits,
+    values: (u: uPlot, vals: any[]) => vals.map((v) => xAxisFormatter(v)),
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,
