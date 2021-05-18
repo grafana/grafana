@@ -15,6 +15,12 @@ The following cache backends are available: in-memory, Redis, and Memcached.
 
 > **Note:** Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 
+When a panel queries a cached data source, the time until this query fetches "fresh" data is determined by the panel's interval. Interval is visible in a panel's [query options]({{< relref "../panels/queries.md#query-options" >}}).
+
+For example, a full width panel on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes.
+
+Because the "interval" is the result of `(max data points) / time range`, you can control this value by increasing the **Max data points** setting in the [query options]({{< relref "../panels/queries.md#query-options" >}}).
+
 ## Query caching benefits
 
 - Faster dashboard load times, especially for popular dashboards.
