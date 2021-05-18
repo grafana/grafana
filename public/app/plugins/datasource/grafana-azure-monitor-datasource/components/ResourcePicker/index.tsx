@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NestedResourceTable from './NestedResourceTable';
 import { Row, RowGroup } from './types';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data'; // TODO: this is not loading for me
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import { produce } from 'immer';
