@@ -86,7 +86,6 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) *
 	switch alertRule.ExecErrState {
 	case ngModels.AlertingErrState:
 		a.State = eval.Alerting
-	case ngModels.KeepLastStateErrState:
 	}
 	return a
 }
@@ -106,7 +105,6 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 		a.State = eval.Alerting
 	case ngModels.NoData:
 		a.State = eval.NoData
-	case ngModels.KeepLastState:
 	case ngModels.OK:
 		a.State = eval.Normal
 	}
