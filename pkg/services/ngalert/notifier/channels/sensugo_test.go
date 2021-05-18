@@ -145,7 +145,7 @@ func TestSensuGoNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "Sensu Go",
 				Type:     "sensugo",
 				Settings: settingsJSON,

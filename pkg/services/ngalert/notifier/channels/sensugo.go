@@ -36,7 +36,7 @@ type SensuGoNotifier struct {
 }
 
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
-func NewSensuGoNotifier(model *models.AlertNotification, t *template.Template) (*SensuGoNotifier, error) {
+func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No settings supplied"}
 	}
@@ -52,16 +52,23 @@ func NewSensuGoNotifier(model *models.AlertNotification, t *template.Template) (
 	}
 
 	return &SensuGoNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		URL:          url,
-		Entity:       model.Settings.Get("entity").MustString(),
-		Check:        model.Settings.Get("check").MustString(),
-		Namespace:    model.Settings.Get("namespace").MustString(),
-		Handler:      model.Settings.Get("handler").MustString(),
-		APIKey:       apikey,
-		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-		log:          log.New("alerting.notifier.sensugo"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+			SecureSettings:        model.SecureSettings,
+		}),
+		URL:       url,
+		Entity:    model.Settings.Get("entity").MustString(),
+		Check:     model.Settings.Get("check").MustString(),
+		Namespace: model.Settings.Get("namespace").MustString(),
+		Handler:   model.Settings.Get("handler").MustString(),
+		APIKey:    apikey,
+		Message:   model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		log:       log.New("alerting.notifier.sensugo"),
+		tmpl:      t,
 	}, nil
 }
 
