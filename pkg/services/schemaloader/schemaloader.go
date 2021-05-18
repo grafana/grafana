@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/grafana/grafana"
@@ -78,14 +77,10 @@ func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*
 
 func (rs *SchemaLoaderService) GetJsonSchema(fn string) (*simplejson.Json, error) {
 	requestedFilePath := filepath.Join(rs.Cfg.StaticRootPath, "jsonschemas", fn)
-	jsonFile, err := os.Open(filepath.Clean(requestedFilePath))
+	byteValue, err := ioutil.ReadFile(filepath.Clean(requestedFilePath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load file %q, file doesn't exist", fn)
 	}
-	defer func() {
-		_ = jsonFile.Close()
-	}()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
 	reJSchema, err := simplejson.NewJson(byteValue)
 	if err != nil {
 		return nil, err
