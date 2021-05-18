@@ -1,6 +1,6 @@
 +++
 title = "Visualizations"
-weight = 600
+weight = 300
 +++
 
 # Visualizations

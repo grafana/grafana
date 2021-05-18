@@ -1,21 +1,14 @@
-import React, { PureComponent, ReactNode } from 'react';
+import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import {
-  DataQuery,
-  DataSourceInstanceSettings,
-  getDefaultRelativeTimeRange,
-  PanelData,
-  RelativeTimeRange,
-} from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, PanelData, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { AlertingQueryWrapper } from './AlertingQueryWrapper';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
-import { RelativeTimeRangePicker } from '@grafana/ui';
 
 interface Props {
   // The query configuration
   queries: GrafanaQuery[];
+  data: Record<string, PanelData>;
 
   // Query editing
   onQueriesChange: (queries: GrafanaQuery[]) => void;
@@ -30,6 +23,7 @@ interface State {
 export class AlertingQueryRows extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+
     this.state = { dataPerQuery: {} };
   }
 
@@ -37,7 +31,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange(timeRange: RelativeTimeRange, index: number) {
+  onChangeTimeRange = (timeRange: RelativeTimeRange, index: number) => {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -50,9 +44,9 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         };
       })
     );
-  }
+  };
 
-  onChangeDataSource(settings: DataSourceInstanceSettings, index: number) {
+  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
     onQueriesChange(
@@ -79,9 +73,9 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         };
       })
     );
-  }
+  };
 
-  onChangeQuery(query: DataQuery, index: number) {
+  onChangeQuery = (query: DataQuery, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
     onQueriesChange(
@@ -100,7 +94,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
         };
       })
     );
-  }
+  };
 
   onDragEnd = (result: DropResult) => {
     const { queries, onQueriesChange } = this.props;
@@ -133,7 +127,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
   };
 
   render() {
-    const { queries } = this.props;
+    const { onDuplicateQuery, onRunQueries, queries } = this.props;
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -141,8 +135,8 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query: GrafanaQuery, index) => {
-                  const data = this.state.dataPerQuery[query.refId];
+                {queries.map((query, index) => {
+                  const data = this.props.data ? this.props.data[query.refId] : ({} as PanelData);
                   const dsSettings = this.getDataSourceSettings(query);
 
                   if (!dsSettings) {
@@ -150,24 +144,19 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                   }
 
                   return (
-                    <QueryEditorRow
-                      dataSource={dsSettings}
-                      onChangeDataSource={
-                        !isExpressionQuery(query.model)
-                          ? (settings) => this.onChangeDataSource(settings, index)
-                          : undefined
-                      }
-                      id={query.refId}
+                    <AlertingQueryWrapper
                       index={index}
-                      key={query.refId}
+                      key={`${query.refId}-${index}`}
+                      dsSettings={dsSettings}
                       data={data}
-                      query={query.model}
-                      onChange={(query) => this.onChangeQuery(query, index)}
-                      renderHeaderExtras={() => this.renderTimePicker(query, index)}
+                      query={query}
+                      onChangeQuery={this.onChangeQuery}
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={(duplicate) => this.onDuplicateQuery(duplicate, query)}
-                      onRunQuery={this.props.onRunQueries}
                       queries={queries}
+                      onChangeDataSource={this.onChangeDataSource}
+                      onDuplicateQuery={onDuplicateQuery}
+                      onRunQueries={onRunQueries}
+                      onChangeTimeRange={this.onChangeTimeRange}
                     />
                   );
                 })}
@@ -177,19 +166,6 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           }}
         </Droppable>
       </DragDropContext>
-    );
-  }
-
-  renderTimePicker(query: GrafanaQuery, index: number): ReactNode {
-    if (isExpressionQuery(query.model)) {
-      return null;
-    }
-
-    return (
-      <RelativeTimeRangePicker
-        timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-        onChange={(range) => this.onChangeTimeRange(range, index)}
-      />
     );
   }
 }
