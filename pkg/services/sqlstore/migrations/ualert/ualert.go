@@ -223,22 +223,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		n, v := getLabelForRouteMatching(rule.Uid)
 		rule.Labels[n] = v
 
-		// Create receiver and route for this rule.
-		if allChannels != nil {
-			channelUids, ruleName, ruleMessage, err := extractChannelInfoFromDashboard(oda, da.PanelId)
-			if err != nil {
-				return err
-			}
-
-			rule.Labels["alertname"] = ruleName
-			rule.Annotations["message"] = ruleMessage
-
-			recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelUids, allChannels)
-			if err != nil {
-				return err
-			}
-			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
-			amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
+		if err := m.updateReceiverAndRoute(allChannels, oda, da, rule, &amConfig); err != nil {
+			return err
 		}
 
 		_, err = m.sess.Insert(rule)
@@ -277,6 +263,29 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	})
 
 	return err
+}
+
+func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, oda oldDash, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
+	// Create receiver and route for this rule.
+	if allChannels == nil {
+		return nil
+	}
+	channelUids, ruleName, ruleMessage, err := extractChannelInfoFromDashboard(oda, da.PanelId)
+	if err != nil {
+		return err
+	}
+
+	rule.Labels["alertname"] = ruleName
+	rule.Annotations["message"] = ruleMessage
+
+	recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelUids, allChannels)
+	if err != nil {
+		return err
+	}
+	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
+
+	return nil
 }
 
 type AlertConfiguration struct {
