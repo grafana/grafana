@@ -33,9 +33,8 @@ type DataSourcePlugin struct {
 	Executable string `json:"executable,omitempty"`
 	SDK        bool   `json:"sdk,omitempty"`
 
-	client       *grpcplugin.Client
-	legacyClient *grpcplugin.LegacyClient
-	logger       log.Logger
+	client *grpcplugin.Client
+	logger log.Logger
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
@@ -63,17 +62,12 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return DataResponse{}, fmt.Errorf("plugin %q can't handle data queries", p.Id)
 	}
 
-	if p.client != nil {
-		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
-		return endpoint.Query(ctx, dsInfo, query)
-	}
-
-	endpoint := newDataSourcePluginWrapper(p.logger, p.legacyClient.DatasourcePlugin)
+	endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
 	return endpoint.Query(ctx, dsInfo, query)
 }
 
 func (p *DataSourcePlugin) CanHandleDataQueries() bool {
-	return p.client != nil || p.legacyClient != nil
+	return p.client != nil
 }
 
 func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {

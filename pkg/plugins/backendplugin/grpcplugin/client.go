@@ -47,9 +47,6 @@ func newClientConfig(executablePath string, env []string, logger log.Logger,
 	}
 }
 
-// LegacyStartFunc callback function called when a plugin with old plugin protocol is started.
-type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
-
 // StartFunc callback function called when a plugin with current plugin protocol version is started.
 type StartFunc func(pluginID string, client *Client, logger log.Logger) error
 
@@ -108,12 +105,6 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 		},
 		startFns: startFns,
 	})
-}
-
-// LegacyClient client for communicating with a plugin using the v1 plugin protocol.
-type LegacyClient struct {
-	DatasourcePlugin datasourceV1.DatasourcePlugin
-	RendererPlugin   rendererV1.RendererPlugin
 }
 
 // Client client for communicating with a plugin using the current (v2) plugin protocol.
