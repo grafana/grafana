@@ -1,4 +1,4 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin, ReducerID, standardEditorsRegistry } from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLabels, PieChartLegendValues } from './types';
 import { LegendDisplayMode, commonOptionsBuilder } from '@grafana/ui';
@@ -32,9 +32,6 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         name: 'Calculation',
         description: 'Choose a reducer function / calculation',
         editor: standardEditorsRegistry.get('stats-picker').editor as any,
-        defaultValue: [ReducerID.lastNotNull],
-        // Hides it when all values mode is on
-        showIf: (currentConfig) => currentConfig.reduceOptions.values === false,
       })
       .addRadio({
         name: 'Piechart type',
