@@ -68,6 +68,7 @@ export type WebhookConfig = {
 };
 
 export type GrafanaManagedReceiverConfig = {
+  uid?: string;
   disableResolveMessage: boolean;
   secureFields?: Record<string, boolean>;
   secureSettings?: Record<string, unknown>;
