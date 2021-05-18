@@ -46,7 +46,12 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   }
 }
 
-export interface ErrorBoundaryProps {
+/**
+ * Props for the ErrorBoundaryAlert component
+ *
+ * @public
+ */
+export interface ErrorBoundaryAlertProps {
   /** Title for the error boundary alert */
   title?: string;
 
@@ -57,8 +62,8 @@ export interface ErrorBoundaryProps {
   style?: 'page' | 'alertbox';
 }
 
-export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryProps> {
-  static defaultProps: Partial<ErrorBoundaryProps> = {
+export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
+  static defaultProps: Partial<ErrorBoundaryAlertProps> = {
     title: 'An unexpected error happened',
     style: 'alertbox',
   };
@@ -102,7 +107,7 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryProps> {
  */
 export function withErrorBoundary<P = {}>(
   Component: ComponentType<P>,
-  errorBoundaryProps: Omit<ErrorBoundaryProps, 'children'> = {}
+  errorBoundaryProps: Omit<ErrorBoundaryAlertProps, 'children'> = {}
 ): ComponentType<P> {
   const comp = (props: P) => (
     <ErrorBoundaryAlert {...errorBoundaryProps}>

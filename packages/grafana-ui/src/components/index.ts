@@ -135,7 +135,7 @@ export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export {
   ErrorBoundary,
   ErrorBoundaryAlert,
-  ErrorBoundaryProps,
+  ErrorBoundaryAlertProps,
   withErrorBoundary,
 } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
