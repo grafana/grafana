@@ -70,18 +70,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: collapse__header--collapsed;
     padding: ${theme.spacing(1, 2, 0.5, 2)};
   `,
-  headerButtons: css`
-    label: collapse__header-buttons;
-    margin-right: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(0.25)};
-    font-size: ${theme.typography.size.lg};
-    line-height: ${theme.typography.h6.lineHeight};
-    display: inherit;
-  `,
-  headerButtonsCollapsed: css`
-    label: collapse__header-buttons--collapsed;
-    display: none;
-  `,
   headerLabel: css`
     label: collapse__header-label;
     font-weight: ${theme.typography.fontWeightMedium};
