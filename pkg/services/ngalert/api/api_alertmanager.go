@@ -232,7 +232,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	}
 
 	if err := body.ProcessConfig(); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to post process alert manager confiiguration", err)
+		return response.Error(http.StatusInternalServerError, "failed to post process Alertmanager configuration", err)
 	}
 
 	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
