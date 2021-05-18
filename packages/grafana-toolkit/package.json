@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "7.5.0-pre.0",
+  "version": "8.1.0-pre",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
@@ -28,10 +28,10 @@
   "dependencies": {
     "@babel/core": "7.13.14",
     "@babel/preset-env": "7.13.12",
-    "@grafana/data": "7.5.0-pre.0",
+    "@grafana/data": "8.1.0-pre",
     "@grafana/eslint-config": "2.4.0",
     "@grafana/tsconfig": "^1.0.0-rc1",
-    "@grafana/ui": "7.5.0-pre.0",
+    "@grafana/ui": "8.1.0-pre",
     "@types/command-exists": "^1.2.0",
     "@types/expect-puppeteer": "3.3.1",
     "@types/fs-extra": "^8.1.0",
@@ -103,7 +103,7 @@
     "ts-jest": "26.4.4",
     "ts-loader": "6.2.1",
     "ts-node": "9.0.0",
-    "tslib": "2.1.0",
+    "tslib": "2.2.0",
     "typescript": "4.2.4",
     "url-loader": "^2.0.1",
     "webpack": "4.41.5"

@@ -71,7 +71,7 @@ func (pm *PluginManager) checkForUpdates() {
 		return
 	}
 
-	for _, plug := range pm.plugins {
+	for _, plug := range pm.Plugins() {
 		for _, gplug := range gNetPlugins {
 			if gplug.Slug == plug.Id {
 				plug.GrafanaNetVersion = gplug.Version
