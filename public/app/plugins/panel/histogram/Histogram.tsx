@@ -93,7 +93,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     placement: AxisPlacement.Bottom,
     incrs: histogramBucketSizes,
     splits: xSplits,
-    values: (u: uPlot, vals: any[]) => vals.map((v) => xAxisFormatter(v)),
+    values: (u: uPlot, vals: any[]) => vals.map(xAxisFormatter),
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,
