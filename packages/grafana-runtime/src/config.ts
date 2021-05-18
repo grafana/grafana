@@ -74,7 +74,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     customEndpoint: '',
     sampleRate: 1,
   };
-  pluginCatalogEnabled = false;
+  catalogUrl?: string;
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
