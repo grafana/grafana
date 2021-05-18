@@ -28,7 +28,11 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
   }
 
   onRemoveQuery = (query: DataQuery) => {
-    this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
+    this.props.onQueriesChange(
+      this.props.queries.filter((item) => {
+        return item.model.refId !== query.refId;
+      })
+    );
   };
 
   onChangeTimeRange = (timeRange: RelativeTimeRange, index: number) => {
