@@ -3,3 +3,4 @@ export * from './hideSeries';
 export * from './legend';
 export * from './tooltip';
 export * from './valueFormatting';
+export * from './stacking';

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 const (
@@ -44,7 +45,7 @@ type PagerdutyNotifier struct {
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -55,8 +56,14 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		Key:          key,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		Key: key,
 		CustomDetails: map[string]string{
 			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
@@ -118,7 +125,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(pn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
@@ -141,7 +148,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
+		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
 		Payload: &pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),

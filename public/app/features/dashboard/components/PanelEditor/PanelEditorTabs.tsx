@@ -1,7 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
-import { AlertTab } from 'app/features/alerting/AlertTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelEditorTab, PanelEditorTabId } from './types';
@@ -9,6 +8,9 @@ import { Subscription } from 'rxjs';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 import { PanelEditorQueries } from './PanelEditorQueries';
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
+import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -38,6 +40,19 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
         {tabs.map((tab) => {
+          if (config.featureToggles.ngalert && tab.id === PanelEditorTabId.Alert) {
+            return (
+              <PanelAlertTab
+                key={tab.id}
+                label={tab.text}
+                active={tab.active}
+                onChangeTab={() => onChangeTab(tab)}
+                icon={tab.icon as IconName}
+                panel={panel}
+                dashboard={dashboard}
+              />
+            );
+          }
           return (
             <Tab
               key={tab.id}
@@ -52,7 +67,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
-        {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Alert && <AlertTabIndex panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
       </TabContent>
     </div>
