@@ -22,7 +22,6 @@ import {
   PanelData,
   DataFrame,
   LoadingState,
-  toDataFrame,
 } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
