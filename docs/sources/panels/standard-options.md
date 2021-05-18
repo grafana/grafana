@@ -1,21 +1,17 @@
 +++
 title = "Standard field options"
 keywords = ["grafana", "table options", "documentation", "format tables"]
+aliases = ["/docs/grafana/latest/panels/field-options/standard-field-options/"]
 weight = 400
 +++
 
 # Standard field options
 
-This section explains all available field options. They are listed in alphabetical order.
+This section explains all available standard options. They are listed in alphabetical order.
 
-You can apply standard field options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
+You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
-
-For more information about applying these options, refer to:
-
-- [Configure all fields]({{< relref "configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "configure-specific-fields.md" >}})
 
 > **Note:** We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
 
@@ -29,11 +25,11 @@ To change this setting, type a number in the field and then click outside the fi
 
 Lets you control the URL to which a value or visualization link.
 
-For more information and instructions, refer to [Data links]({{< relref "../../linking/data-links.md" >}}).
+For more information and instructions, refer to [Data links]({{< relref "../linking/data-links.md" >}}).
 
 ## Display name
 
-Lets you set the display title of all fields. You can use [variables]({{< relref "../../variables/_index.md" >}}) in the field title.
+Lets you set the display title of all fields. You can use [variables]({{< relref "../variables/_index.md" >}}) in the field title.
 
 When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
 
@@ -59,7 +55,7 @@ Lets you set the minimum value used in percentage threshold calculations. Leave 
 
 ## No value
 
-Enter what Grafana should display if the field value is empty or null.
+Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
 
 ## Unit
 
@@ -90,16 +86,23 @@ Grafana can sometime be too aggressive in parsing strings and displaying them as
 
 ## Color scheme
 
-> **Note:** Only available in Grafana 7.3+.
-
 {{< figure src="/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}
 
 The color scheme option defines how Grafana colors series or fields. There are multiple modes here that work very differently and their utility depends largely on what visualization you currently have selected.
 
-**Color by value**
-In addition to deriving color from thresholds there are also continuous (gradient) color schemes. Useful for visualizations that color individual values. For example stat panels and the table panel. Continuous color modes use the percentage of a value relative to min and max to interpolate a color.
+Some visualizations have different color options.
+
+### Color by value
+
+In addition to deriving color from thresholds there are also continuous (gradient) color schemes. These are useful for visualizations that color individual values. For example, stat panels and the table panel.
+
+Continuous color modes use the percentage of a value relative to min and max to interpolate a color.
 
 <div class="clearfix"></div>
+
+### Palettes
+
+Select a palette from the **Color scheme** list.
 
 | Color mode  | Description                    |
 | ------------------ | ----------------------- |
@@ -112,21 +115,3 @@ In addition to deriving color from thresholds there are also continuous (gradien
 | **Reds (by value)**   |  Continuous color scheme (panel background color to blue) |
 | **Greens (by value)** | Continuous color scheme (panel background color to blue) |
 | **Purple (by value)** |  Continuous color scheme (panel background color to blue) |
-
-## Thresholds
-
-Thresholds allow you to change the color of a field based on the value.
-
-For more information and instructions, refer to [Thresholds]({{< relref "../thresholds.md" >}}).
-
-## Value mapping
-
-Value mappings come in different types. 
-
-* **Range** maps numerical ranges to a display text and color. 
-* **Value** maps text values to a color or different display text.
-* **Special** maps special values like `Null`, `NaN` and boolean values like `true` and `false` to a display text and color.
-
-The display text and color are both optional. If you only want to assign colors to text values you can leave the display text empty and the original value will be used for display. 
-
-Values mapped via value mappings will skip the unit formatting. This means that a text value mapped to a numerical value will not be formatted using the configured unit. 
