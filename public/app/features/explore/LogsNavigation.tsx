@@ -57,9 +57,9 @@ function LogsNavigation({
     let newPages: LogsPage[] = [];
     // We want to start new pagination if queries change or if absolute range is different than expected
     if (!isEqual(expectedRangeRef.current, absoluteRange) || !isEqual(expectedQueriesRef.current, queries)) {
+      clearCache();
       setPages([newPage]);
       setCurrentPageIndex(0);
-      clearCache();
       expectedQueriesRef.current = queries;
       rangeSpanRef.current = absoluteRange.to - absoluteRange.from;
     } else {
@@ -79,6 +79,12 @@ function LogsNavigation({
     }
     addResultsToCache();
   }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
+
+  useEffect(() => {
+    return () => clearCache();
+    // We can't enforce the eslint rule here because we only want to run when component unmounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
     expectedRangeRef.current = { from, to };

@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
-import { isEqual } from 'lodash';
 import { Collapse } from '@grafana/ui';
 import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -29,28 +28,6 @@ interface LogsContainerProps extends PropsFromRedux {
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
-  // componentDidMount() {
-  //   const { addResultsToCache, exploreId } = this.props;
-  //   addResultsToCache(exploreId);
-  // }
-
-  // componentDidUpdate(prevProps: LogsContainerProps) {
-  //   const { logRows, absoluteRange, logsQueries, clearCache, exploreId, addResultsToCache, loading } = this.props;
-  //   // If new results, update cache
-  //   if (!isEqual(logRows, prevProps.logRows) || (!isEqual(absoluteRange, prevProps.absoluteRange) && !loading)) {
-  //     // If queries were changed, reset cache and start fresh
-  //     if (!isEqual(logsQueries, prevProps.logsQueries)) {
-  //       clearCache(exploreId);
-  //     }
-  //     // Otherwise add response to cache
-  //     addResultsToCache(exploreId);
-  //   }
-  // }
-
-  componentWillUnmount() {
-    this.clearCache();
-  }
-
   addResultsToCache = () => {
     const { addResultsToCache, exploreId } = this.props;
     addResultsToCache(exploreId);
@@ -111,7 +88,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
-      cache,
     } = this.props;
 
     if (!logRows) {
@@ -127,8 +103,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         }
       }
     `;
-
-    console.log('cache', cache);
 
     return (
       <>
@@ -195,7 +169,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    cache,
   } = item;
   const timeZone = getTimeZone(state.user);
 
@@ -214,7 +187,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    cache,
   };
 }
 
