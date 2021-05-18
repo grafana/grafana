@@ -17,7 +17,7 @@ func TestChannelInfoExtractionFromDashboard(t *testing.T) {
 	channelUids, ruleName, ruleMessage, err := extractChannelInfoFromDashboard(d, 2)
 	require.NoError(t, err)
 
-	require.Equal(t, []string{"WbP9r0jMk", "TYHj90CMk"}, channelUids)
+	require.Equal(t, []interface{}{"WbP9r0jMk", "TYHj90CMk", 3, 9}, channelUids)
 	require.Equal(t, "Panel Title alert", ruleName)
 	require.Equal(t, "This is the message", ruleMessage)
 }
@@ -86,6 +86,12 @@ var exampleDashboardWithAlert = `{
                     },
                     {
                         "uid": "TYHj90CMk"
+                    },
+                    {
+                        "id": 3
+                    },
+                    {
+                        "id": 9
                     }
                 ]
             },

@@ -3,6 +3,7 @@ package ualert
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -14,6 +15,7 @@ import (
 )
 
 type notificationChannel struct {
+	ID                    int                           `xorm:"id"`
 	Uid                   string                        `xorm:"uid"`
 	Name                  string                        `xorm:"name"`
 	Type                  string                        `xorm:"type"`
@@ -23,9 +25,10 @@ type notificationChannel struct {
 	SecureSettings        securejsondata.SecureJsonData `xorm:"secure_settings"`
 }
 
-func (m *migration) getNotificationChannelMap() (map[string]*notificationChannel, *notificationChannel, error) {
+func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationChannel, *notificationChannel, error) {
 	q := `
-	SELECT uid,
+	SELECT id,
+		uid,
 		name,
 		type,
 		disable_resolve_message,
@@ -45,10 +48,15 @@ func (m *migration) getNotificationChannelMap() (map[string]*notificationChannel
 		return nil, nil, nil
 	}
 
-	allChannelsMap := make(map[string]*notificationChannel)
+	allChannelsMap := make(map[interface{}]*notificationChannel)
 	var defaultChannel *notificationChannel
 	for i, c := range allChannels {
-		allChannelsMap[c.Uid] = &allChannels[i]
+		if c.Uid != "" {
+			allChannelsMap[c.Uid] = &allChannels[i]
+		}
+		if c.ID != 0 {
+			allChannelsMap[c.ID] = &allChannels[i]
+		}
 		if c.IsDefault {
 			// TODO: verify that there will be only 1 default channel.
 			defaultChannel = &allChannels[i]
@@ -63,7 +71,7 @@ func (m *migration) getNotificationChannelMap() (map[string]*notificationChannel
 	return allChannelsMap, defaultChannel, nil
 }
 
-func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, allChannels map[string]*notificationChannel) (*PostableApiReceiver, *Route, error) {
+func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface{}, allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, *Route, error) {
 	receiverName := getMigratedReceiverNameFromRuleUID(ruleUid)
 
 	portedChannels := []*PostableGrafanaReceiver{}
@@ -72,20 +80,25 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, a
 	}
 
 	for _, n := range channelUids {
-		m, ok := allChannels[n]
+		c, ok := allChannels[n]
 		if !ok {
-			// TODO: should we error out here?
 			continue
 		}
-		if m.Type == "hipchat" || m.Type == "sensu" {
-			return nil, nil, fmt.Errorf("discontinued notification channel found: %s", m.Type)
+		if c.Type == "hipchat" || c.Type == "sensu" {
+			return nil, nil, fmt.Errorf("discontinued notification channel found: %s", c.Type)
 		}
 
-		settings, secureSettings := migrateSettingsToSecureSettings(m.Type, m.Settings, m.SecureSettings)
+		uid, ok := m.generateChannelUID()
+		if !ok {
+			return nil, nil, errors.New("failed to generate UID for notification channel")
+		}
+
+		settings, secureSettings := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
 		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
-			Name:                  m.Name,
-			Type:                  m.Type,
-			DisableResolveMessage: m.DisableResolveMessage,
+			UID:                   uid,
+			Name:                  c.Name,
+			Type:                  c.Type,
+			DisableResolveMessage: c.DisableResolveMessage,
 			Settings:              settings,
 			SecureSettings:        secureSettings,
 		})
@@ -103,6 +116,18 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []string, a
 	}
 
 	return receiver, route, nil
+}
+
+func (m *migration) generateChannelUID() (string, bool) {
+	for i := 0; i < 5; i++ {
+		gen := util.GenerateShortUID()
+		if _, ok := m.seenChannelUIDs[gen]; !ok {
+			m.seenChannelUIDs[gen] = struct{}{}
+			return gen, true
+		}
+	}
+
+	return "", false
 }
 
 // Some settings were migrated from settings to secure settings in between.
@@ -155,7 +180,7 @@ func getLabelForRouteMatching(ruleUID string) (string, string) {
 	return "rule_uid", ruleUID
 }
 
-func extractChannelInfoFromDashboard(d oldDash, panelId int64) (channelUids []string, ruleName string, ruleMessage string, _ error) {
+func extractChannelInfoFromDashboard(d oldDash, panelId int64) (channelUids []interface{}, ruleName string, ruleMessage string, _ error) {
 	panels, err := d.Data.Get("panels").Array()
 	if err != nil {
 		return nil, "", "", err
@@ -185,12 +210,19 @@ func extractChannelInfoFromDashboard(d oldDash, panelId int64) (channelUids []st
 
 		for _, ui := range uids {
 			u := simplejson.NewFromAny(ui)
+
 			channelUid, err := u.Get("uid").String()
-			if err != nil {
-				return nil, "", "", err
+			if err == nil && channelUid != "" {
+				channelUids = append(channelUids, channelUid)
+				continue
 			}
 
-			channelUids = append(channelUids, channelUid)
+			// In certain circumstances, id is used instead of uid.
+			// We add this if there was no uid.
+			channelId, err := u.Get("id").Int()
+			if err == nil && channelId > 0 {
+				channelUids = append(channelUids, channelId)
+			}
 		}
 
 		break
@@ -255,8 +287,9 @@ type PostableApiReceiver struct {
 type PostableGrafanaReceiver CreateAlertNotificationCommand
 
 type CreateAlertNotificationCommand struct {
-	Name                  string            `json:"name"  binding:"Required"`
-	Type                  string            `json:"type"  binding:"Required"`
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
 	Settings              *simplejson.Json  `json:"settings"`
 	SecureSettings        map[string]string `json:"secureSettings"`

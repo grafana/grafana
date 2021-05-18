@@ -69,6 +69,8 @@ type migration struct {
 	// session and mg are attached for convenience.
 	sess *xorm.Session
 	mg   *migrator.Migrator
+
+	seenChannelUIDs map[string]struct{}
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -106,7 +108,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	if defaultChannel != nil {
 		// Migration for the default route.
-		recv, route, err := m.makeReceiverAndRoute("default_route", []string{defaultChannel.Name}, allChannels)
+		recv, route, err := m.makeReceiverAndRoute("default_route", []interface{}{defaultChannel.Name}, allChannels)
 		if err != nil {
 			return err
 		}
