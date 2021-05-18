@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -319,7 +320,7 @@ func (auth *AuthProxy) GetSignedInUser(userID int64) (*models.SignedInUser, erro
 		UserId: userID,
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(context.Background(), query); err != nil {
 		return nil, err
 	}
 

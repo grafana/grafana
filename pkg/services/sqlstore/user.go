@@ -16,7 +16,7 @@ import (
 )
 
 func (ss *SQLStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandler(ss.GetSignedInUserWithCache)
+	ss.Bus.AddHandlerCtx(ss.GetSignedInUserWithCacheCtx)
 
 	bus.AddHandler("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
@@ -490,14 +490,14 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
-func (ss *SQLStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
+func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		query.Result = cached.(*models.SignedInUser)
 		return nil
 	}
 
-	err := GetSignedInUser(query)
+	err := GetSignedInUser(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -507,7 +507,7 @@ func (ss *SQLStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery)
 	return nil
 }
 
-func GetSignedInUser(query *models.GetSignedInUserQuery) error {
+func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	orgId := "u.org_id"
 	if query.OrgId > 0 {
 		orgId = strconv.FormatInt(query.OrgId, 10)
