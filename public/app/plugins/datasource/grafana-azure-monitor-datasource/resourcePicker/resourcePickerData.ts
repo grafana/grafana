@@ -1,22 +1,10 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
 import { EntryType, Row, RowGroup } from '../components/ResourcePicker/types';
 import { AzureResourceSummaryItem } from '../types';
 import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResources';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
-
-const cloudToRoute = (cloud: string) => {
-  switch (cloud) {
-    case 'govazuremonitor': // Azure US Government
-      return '/loganalytics-resourcepickerdata-gov';
-
-    case 'chinaazuremonitor': // Azure China
-      return '/loganalytics-resourcepickerdata-china';
-
-    default:
-      return '/loganalytics-resourcepickerdata';
-  }
-};
 
 interface RawAzureResourceGroupItem {
   subscriptionId: string;
@@ -162,9 +150,9 @@ export default class ResourcePickerData {
     maxRetries = 1
   ): Promise<FetchResponse<AzureGraphResponse<T>>> {
     try {
-      return getBackendSrv()
+      return await getBackendSrv()
         .fetch<AzureGraphResponse<T>>({
-          url: this.proxyUrl + cloudToRoute(this.cloud) + RESOURCE_GRAPH_URL,
+          url: this.proxyUrl + '/' + getLogAnalyticsResourcePickerApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
           method: 'POST',
           data: {
             query: query,
