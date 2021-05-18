@@ -846,7 +846,7 @@ var expNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "718643b9694d44f7f2b21458afd1b079cb403cf264e51894ff3c9745238bcced",
-		  "description": "[firing:1]  (PagerdutyAlert UID_PagerdutyAlert)",
+		  "description": "[FIRING:1]  (PagerdutyAlert UID_PagerdutyAlert)",
 		  "event_action": "trigger",
 		  "payload": {
 			"summary": "Integration Test [FIRING:1]  (PagerdutyAlert UID_PagerdutyAlert)",
@@ -877,7 +877,7 @@ var expNotifications = map[string][]string{
 		  "link": {
 			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%3A3000%2Falerting%2Flist",
 			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\n - __alert_rule_uid__ = UID_DingDingAlert\nAnnotations:\nSource: \n\n\n\n\n",
-			"title": "[firing:1]  (DingDingAlert UID_DingDingAlert)"
+			"title": "[FIRING:1]  (DingDingAlert UID_DingDingAlert)"
 		  },
 		  "msgtype": "link"
 		}`,
@@ -905,9 +905,9 @@ var expNotifications = map[string][]string{
 			  "title": "Details"
 			}
 		  ],
-		  "summary": "[firing:1]  (TeamsAlert UID_TeamsAlert)",
+		  "summary": "[FIRING:1]  (TeamsAlert UID_TeamsAlert)",
 		  "themeColor": "#D63232",
-		  "title": "[firing:1]  (TeamsAlert UID_TeamsAlert)"
+		  "title": "[FIRING:1]  (TeamsAlert UID_TeamsAlert)"
 		}`,
 	},
 	"webhook_recv/webhook_test": {
