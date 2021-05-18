@@ -35,11 +35,10 @@ dashboards, creating users and updating data sources.
 
 ## Grafana Enterprise HTTP APIs
 
-Grafana Enterprise includes all API's from above, with an addition:  
+Grafana Enterprise includes all of the Grafana OSS APIs as well as those that follow:
 
 - [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
 - [License API]({{< relref "licensing.md" >}})
 - [Reporting API]({{< relref "reporting.md" >}})
-
 
