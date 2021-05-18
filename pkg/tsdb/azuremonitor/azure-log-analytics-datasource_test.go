@@ -85,7 +85,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "loganalyticsazure",
 				Method: "GET",
-				URL:    "https://api.loganalytics.io/v1/workspaces",
+				URL:    "https://api.loganalytics.io/",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -93,7 +93,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "chinaloganalyticsazure",
 				Method: "GET",
-				URL:    "https://api.loganalytics.azure.cn/v1/workspaces",
+				URL:    "https://api.loganalytics.azure.cn/",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -101,7 +101,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "govloganalyticsazure",
 				Method: "GET",
-				URL:    "https://api.loganalytics.us/v1/workspaces",
+				URL:    "https://api.loganalytics.us/",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},

@@ -258,6 +258,8 @@ func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourceP
 		}
 	}
 
+	println("plugin route url " + logAnalyticsRoute.URL)
+
 	return logAnalyticsRoute, pluginRouteName, nil
 }
 
