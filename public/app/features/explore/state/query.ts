@@ -39,7 +39,7 @@ import { richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createEmptyQueryResponse } from './utils';
+import { createEmptyQueryResponse, createCacheKey } from './utils';
 
 //
 // Actions and Payloads
@@ -164,6 +164,23 @@ export interface ScanStopPayload {
 }
 export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 
+/**
+ * Adds query results to cache.
+ */
+export interface AddResultsToCachePayload {
+  exploreId: ExploreId;
+  cacheKey: string;
+  queryResponse: PanelData;
+}
+export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
+
+/**
+ *  Clears cache.
+ */
+export interface ClearCachePayload {
+  exploreId: ExploreId;
+}
+export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 //
 // Action creators
 //
@@ -439,6 +456,21 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const queryResponse = getState().explore[exploreId]!.queryResponse;
+    const absoluteRange = getState().explore[exploreId]!.absoluteRange;
+    const cacheKey = createCacheKey(absoluteRange);
+    dispatch(addResultsToCacheAction({ exploreId, cacheKey, queryResponse }));
+  };
+}
+
+export function clearCache(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(clearCacheAction({ exploreId }));
+  };
+}
+
 //
 // Reducer
 //
@@ -626,6 +658,26 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       ...state,
       scanning: false,
       scanRange: undefined,
+    };
+  }
+
+  if (addResultsToCacheAction.match(action)) {
+    const LIMIT = 5;
+    const { cache } = state;
+    const { queryResponse, cacheKey } = action.payload;
+    const newCacheItem = { key: cacheKey, value: queryResponse };
+    const newCache = [newCacheItem, ...cache].slice(0, LIMIT);
+
+    return {
+      ...state,
+      cache: newCache,
+    };
+  }
+
+  if (clearCacheAction.match(action)) {
+    return {
+      ...state,
+      cache: [],
     };
   }
 

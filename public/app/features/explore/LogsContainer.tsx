@@ -2,11 +2,13 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
+import { isEqual } from 'lodash';
 import { Collapse } from '@grafana/ui';
 import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
+import { addResultsToCache, clearCache } from './state/query';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -15,7 +17,7 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
 
-interface LogsContainerProps {
+interface LogsContainerProps extends PropsFromRedux {
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
   width: number;
@@ -26,7 +28,25 @@ interface LogsContainerProps {
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerProps> {
+export class LogsContainer extends PureComponent<LogsContainerProps> {
+  componentDidMount() {
+    const { addResultsToCache, exploreId } = this.props;
+    addResultsToCache(exploreId);
+  }
+
+  componentDidUpdate(prevProps: LogsContainerProps) {
+    const { logRows, absoluteRange, logsQueries, clearCache, exploreId, addResultsToCache, loading } = this.props;
+    // If new results, update cache
+    if (!isEqual(logRows, prevProps.logRows) || (!isEqual(absoluteRange, prevProps.absoluteRange) && !loading)) {
+      // If queries were changed, reset cache and start fresh
+      if (!isEqual(logsQueries, prevProps.logsQueries)) {
+        clearCache(exploreId);
+      }
+      // Otherwise add response to cache
+      addResultsToCache(exploreId);
+    }
+  }
+
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -77,6 +97,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       width,
       isLive,
       exploreId,
+      cache,
     } = this.props;
 
     if (!logRows) {
@@ -156,6 +177,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    cache,
   } = item;
   const timeZone = getTimeZone(state.user);
 
@@ -174,12 +196,15 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    cache,
   };
 }
 
 const mapDispatchToProps = {
   updateTimeRange,
   splitOpen,
+  addResultsToCache,
+  clearCache,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

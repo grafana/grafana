@@ -149,6 +149,7 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+  cache: Array<{ key: string; value: PanelData }>;
 }
 
 export interface ExploreUpdateState {
