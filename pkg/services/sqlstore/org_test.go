@@ -186,7 +186,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Can get logged in user projection", func() {
 					query := models.GetSignedInUserQuery{UserId: ac2.Id}
-					err := GetSignedInUser(&query)
+					err := GetSignedInUser(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(query.Result.Email, ShouldEqual, "ac2@test.com")
@@ -247,7 +247,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 					Convey("SignedInUserQuery with a different org", func() {
 						query := models.GetSignedInUserQuery{UserId: ac2.Id}
-						err := GetSignedInUser(&query)
+						err := GetSignedInUser(context.Background(), &query)
 
 						So(err, ShouldBeNil)
 						So(query.Result.OrgId, ShouldEqual, ac1.OrgId)
@@ -264,7 +264,7 @@ func TestAccountDataAccess(t *testing.T) {
 						So(err, ShouldBeNil)
 
 						query := models.GetSignedInUserQuery{UserId: ac2.Id}
-						err = GetSignedInUser(&query)
+						err = GetSignedInUser(context.Background(), &query)
 
 						So(err, ShouldBeNil)
 						So(query.Result.OrgId, ShouldEqual, ac2.OrgId)
@@ -282,7 +282,7 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(remCmd.UserWasDeleted, ShouldBeTrue)
 
-					err = GetSignedInUser(&models.GetSignedInUserQuery{UserId: ac2.Id})
+					err = GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.Id})
 					So(err, ShouldEqual, models.ErrUserNotFound)
 				})
 
