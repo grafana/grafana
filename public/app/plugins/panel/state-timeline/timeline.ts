@@ -355,16 +355,28 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
   };
 
-  const multiHover = mode === TimelineMode.Changes;
+  function setHoverMark(i: number, o: Rect | null) {
+    let h = hoverMarks[i];
 
-  const setCursor = (u: uPlot) => {
-    let cx = round(u.cursor!.left! * pxRatio);
+    if (o) {
+      h.style.display = '';
+      h.style.left = round(o!.x / pxRatio) + 'px';
+      h.style.top = round(o!.y / pxRatio) + 'px';
+      h.style.width = round(o!.w / pxRatio) + 'px';
+      h.style.height = round(o!.h / pxRatio) + 'px';
+    } else {
+      h.style.display = 'none';
+    }
 
+    hovered[i] = o;
+  }
+
+  function hoverMulti(cx: number, cy: number) {
     for (let i = 0; i < numSeries; i++) {
       let found: Rect | null = null;
 
       if (cx >= 0) {
-        let cy = multiHover ? yMids[i] : round(u.cursor!.top! * pxRatio);
+        cy = yMids[i];
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
@@ -373,23 +385,38 @@ export function getConfig(opts: TimelineCoreOptions) {
         });
       }
 
-      let h = hoverMarks[i];
-
       if (found) {
         if (found !== hovered[i]) {
-          hovered[i] = found;
-
-          h.style.display = '';
-          h.style.left = round(found!.x / pxRatio) + 'px';
-          h.style.top = round(found!.y / pxRatio) + 'px';
-          h.style.width = round(found!.w / pxRatio) + 'px';
-          h.style.height = round(found!.h / pxRatio) + 'px';
+          setHoverMark(i, found);
         }
       } else if (hovered[i] != null) {
-        h.style.display = 'none';
-        hovered[i] = null;
+        setHoverMark(i, null);
       }
     }
+  }
+
+  function hoverOne(cx: number, cy: number) {
+    let found: Rect | null = null;
+
+    qt.get(cx, cy, 1, 1, (o) => {
+      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        found = o;
+      }
+    });
+
+    if (found) {
+      setHoverMark(0, found);
+    } else if (hovered[0] != null) {
+      setHoverMark(0, null);
+    }
+  }
+
+  const doHover = mode === TimelineMode.Changes ? hoverMulti : hoverOne;
+
+  const setCursor = (u: uPlot) => {
+    let cx = round(u.cursor!.left! * pxRatio);
+    let cy = round(u.cursor!.top! * pxRatio);
+    doHover(cx, cy);
   };
 
   // hide y crosshair & hover points
