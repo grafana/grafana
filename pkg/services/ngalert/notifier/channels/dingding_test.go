@@ -49,7 +49,7 @@ func TestDingdingNotifier(t *testing.T) {
 				"link": map[string]interface{}{
 					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
 					"text":       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
-					"title":      "[firing:1]  (val1)",
+					"title":      "[FIRING:1]  (val1)",
 				},
 			},
 			expInitError: nil,
@@ -79,7 +79,7 @@ func TestDingdingNotifier(t *testing.T) {
 					"singleTitle": "More",
 					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
 					"text":        "2 alerts are firing, 0 are resolved",
-					"title":       "[firing:2]  ",
+					"title":       "[FIRING:2]  ",
 				},
 				"msgtype": "actionCard",
 			},
@@ -104,7 +104,7 @@ func TestDingdingNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "dingding_testing",
 				Type:     "dingding",
 				Settings: settingsJSON,

@@ -155,7 +155,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }
 
         // Support the standard graph span nulls field config
-        nullModesFrame.push(field.config.custom?.spanNulls === true ? NULL_REMOVE : NULL_EXPAND);
+        let spanNulls = field.config.custom?.spanNulls;
+        nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
@@ -285,7 +286,7 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
         let yVal = ys[i];
         let alignedIdx = xIdxs.get(xs[i]);
 
-        if (yVal == null) {
+        if (yVal === null) {
           if (nullMode !== NULL_REMOVE) {
             yVals[alignedIdx] = yVal;
 
