@@ -103,13 +103,15 @@ export const CustomScrollbar: FC<Props> = ({
     return <div {...passedProps} className="scrollbar-view" />;
   }, []);
 
+  const onScrollStop = useCallback(() => {
+    ref.current && setScrollTop && setScrollTop(ref.current.getValues());
+  }, [setScrollTop]);
+
   return (
     <Scrollbars
       ref={ref}
       className={classNames(styles.customScrollbar, className)}
-      onScrollStop={() => {
-        ref.current && setScrollTop && setScrollTop(ref.current.getValues());
-      }}
+      onScrollStop={onScrollStop}
       autoHeight={true}
       autoHide={autoHide}
       autoHideTimeout={autoHideTimeout}
