@@ -4,8 +4,6 @@ import { ElasticDatasource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { TemplateSrv } from '../../../features/templating/template_srv';
-import { defaultBucketAgg } from './query_def';
-import { DateHistogram } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as any[]),
@@ -27,7 +25,6 @@ const dataSource = new ElasticDatasource(
 
 const baseLogsQuery: Partial<ElasticsearchQuery> = {
   metrics: [{ type: 'logs', id: '1' }],
-  bucketAggs: [{ ...defaultBucketAgg('2'), field: dataSource.timeField } as DateHistogram],
 };
 
 describe('transform prometheus query to elasticsearch query', () => {
