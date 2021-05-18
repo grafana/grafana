@@ -9,7 +9,7 @@ weight = 200
 To change how all fields display data, you can change an option in the Field tab. In the Overrides tab, you can then override the field options for [specific fields]({{< relref "configure-specific-fields.md" >}}).
 
 For example, you could change the number of decimal places shown in all fields by changing the **Decimals** option. For more information about options, refer to:
-   - [Standard field options]({{< relref "standard-field-options.md" >}}), apply to all visualizations that allow transformations.
+   - [Standard options]({{< relref "../standard-options.md" >}}), apply to all visualizations that allow transformations.
    - [Table field options]({{< relref "../visualizations/table/table-field-options.md" >}}), which only apply to table panel visualizations.
 
 ## Change a field option
@@ -19,7 +19,7 @@ You can change as many options as you want to.
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Field** tab.
 1. Find the option you want to change. You can define:
-   - [Standard field options]({{< relref "standard-field-options.md" >}}), which apply to all panel visualizations that allow transformations.
+   - [Standard options]({{< relref "../standard-options.md" >}}), which apply to all panel visualizations that allow transformations.
    - [Table field options]({{< relref "../visualizations/table/table-field-options.md" >}}), which only apply to table panel visualizations.
 1. Add options by adding values in the fields. To return options to default values, delete the white text in the fields.
 1. When finished, click **Save** to save all panel edits to the dashboard.
