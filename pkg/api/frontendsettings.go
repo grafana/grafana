@@ -242,7 +242,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"rendererAvailable":       hs.RenderService.IsAvailable(),
 		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                  hs.Cfg.Sentry,
-		"catalogUrl":              hs.Cfg.CatalogURL,
+		"pluginCatalogEnabled":    c.HasUserRole(models.ROLE_ADMIN) && hs.Cfg.PluginCatalogEnabled,
 		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
 		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,

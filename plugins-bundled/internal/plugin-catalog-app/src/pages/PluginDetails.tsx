@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
-import { useParams } from 'react-router-dom';
+import { useStyles2, TabsBar, TabContent, Tab, Icon, useParams } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
@@ -12,7 +11,8 @@ import { usePlugin } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const PluginDetails = ({}: AppRootProps) => {
+export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
+  onNavChanged(undefined as any);
   const { pluginId } = useParams<{ pluginId: string }>();
 
   const [tabs, setTabs] = useState([
@@ -64,7 +64,7 @@ export const PluginDetails = ({}: AppRootProps) => {
             {version && <span>{version}</span>}
           </div>
           <p>{description}</p>
-          {remote && <InstallControls localPlugin={local} remotePlugin={remote} slug={pluginId} />}
+          {remote && <InstallControls localPlugin={local} remotePlugin={remote} />}
         </div>
       </div>
       <TabsBar>
