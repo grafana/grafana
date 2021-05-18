@@ -92,7 +92,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 		// Handle old queries without a Workspace
 		var apiURL string
 		if azureLogAnalyticsTarget.Resource != "" {
-			apiURL = fmt.Sprintf("v1/%s/query", azureLogAnalyticsTarget.Resource)
+			apiURL = fmt.Sprintf("v1%s/query", azureLogAnalyticsTarget.Resource)
 		} else {
 			apiURL = fmt.Sprintf("v1/workspaces/%s/query", azureLogAnalyticsTarget.Workspace)
 		}

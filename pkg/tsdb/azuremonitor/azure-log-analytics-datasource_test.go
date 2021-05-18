@@ -39,6 +39,45 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"queryType": "Azure Log Analytics",
 						"azureLogAnalytics": map[string]interface{}{
+							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
+							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": "time_series",
+						},
+					}),
+					RefID: "A",
+				},
+			},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
+				{
+					RefID:        "A",
+					ResultFormat: "time_series",
+					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"azureLogAnalytics": map[string]interface{}{
+							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": "time_series",
+							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+						},
+					}),
+					Params: url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
+					Target: "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
+				},
+			},
+			Err: require.NoError,
+		}, {
+			name: "Legacy workspace queries should use workspace query endpoint",
+			timeRange: plugins.DataTimeRange{
+				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+			},
+			queryModel: []plugins.DataSubQuery{
+				{
+					DataSource: &models.DataSource{
+						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+					},
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": map[string]interface{}{
 							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
 							"resultFormat": "time_series",
@@ -51,7 +90,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: "time_series",
-					URL:          "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
+					URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"azureLogAnalytics": map[string]interface{}{
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
