@@ -41,7 +41,7 @@ interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
-  allowDetails?: boolean;
+  enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
   showDetectedFields?: string[];
@@ -102,7 +102,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleDetails = () => {
-    if (this.props.allowDetails) {
+    if (!this.props.enableLogDetails) {
       return;
     }
     this.setState((state) => {
@@ -131,7 +131,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickShowDetectedField,
       onClickHideDetectedField,
       highlighterExpressions,
-      allowDetails,
+      enableLogDetails,
       row,
       showDuplicates,
       showContextToggle,
@@ -171,7 +171,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               </Tooltip>
             )}
           </td>
-          {!allowDetails && (
+          {enableLogDetails && (
             <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
