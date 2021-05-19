@@ -62,7 +62,7 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       createdBy: config.bootData.user.name,
       duration: '2h',
       isRegex: false,
-      matchers: [{ name: '', value: '', isRegex: false }],
+      matchers: [{ name: '', value: '', isRegex: false, isEqual: true }],
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
