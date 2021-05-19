@@ -748,10 +748,10 @@ var expNotifications = map[string][]string{
 		  "icon_url": "https://awesomeemoji.com/rocket",
 		  "attachments": [
 			{
-			  "title": "Integration Test [FIRING:1]  (SlackAlert1 UID_SlackAlert1)",
+			  "title": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
 			  "title_link": "http:/localhost:3000/alerting/list",
 			  "text": "Integration Test ",
-			  "fallback": "Integration Test [FIRING:1]  (SlackAlert1 UID_SlackAlert1)",
+			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -775,10 +775,10 @@ var expNotifications = map[string][]string{
 		  "username": "Integration Test",
 		  "attachments": [
 			{
-			  "title": "[FIRING:1]  (SlackAlert2 UID_SlackAlert2)",
+			  "title": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
 			  "title_link": "http:/localhost:3000/alerting/list",
 			  "text": "\n**Firing**\nLabels:\n - alertname = SlackAlert2\n - __alert_rule_uid__ = UID_SlackAlert2\nAnnotations:\nSource: \n\n\n\n\n",
-			  "fallback": "[FIRING:1]  (SlackAlert2 UID_SlackAlert2)",
+			  "fallback": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -799,11 +799,11 @@ var expNotifications = map[string][]string{
 	"pagerduty_recvX/pagerduty_testX": {
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
-		  "dedup_key": "718643b9694d44f7f2b21458afd1b079cb403cf264e51894ff3c9745238bcced",
-		  "description": "[FIRING:1]  (PagerdutyAlert UID_PagerdutyAlert)",
+		  "dedup_key": "234edb34441f942f713f3c2ccf58b1d719d921b4cbe34e57a1630f1dee847e3b",
+		  "description": "[FIRING:1] PagerdutyAlert (UID_PagerdutyAlert)",
 		  "event_action": "trigger",
 		  "payload": {
-			"summary": "Integration Test [FIRING:1]  (PagerdutyAlert UID_PagerdutyAlert)",
+			"summary": "Integration Test [FIRING:1] PagerdutyAlert (UID_PagerdutyAlert)",
 			"source": "%s",
 			"severity": "warning",
 			"class": "testclass",
@@ -831,7 +831,7 @@ var expNotifications = map[string][]string{
 		  "link": {
 			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%3A3000%2Falerting%2Flist",
 			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\n - __alert_rule_uid__ = UID_DingDingAlert\nAnnotations:\nSource: \n\n\n\n\n",
-			"title": "[FIRING:1]  (DingDingAlert UID_DingDingAlert)"
+			"title": "[FIRING:1] DingDingAlert (UID_DingDingAlert)"
 		  },
 		  "msgtype": "link"
 		}`,
@@ -859,9 +859,9 @@ var expNotifications = map[string][]string{
 			  "title": "Details"
 			}
 		  ],
-		  "summary": "[FIRING:1]  (TeamsAlert UID_TeamsAlert)",
+		  "summary": "[FIRING:1] TeamsAlert (UID_TeamsAlert)",
 		  "themeColor": "#D63232",
-		  "title": "[FIRING:1]  (TeamsAlert UID_TeamsAlert)"
+		  "title": "[FIRING:1] TeamsAlert (UID_TeamsAlert)"
 		}`,
 	},
 	"webhook_recv/webhook_test": {
@@ -882,7 +882,7 @@ var expNotifications = map[string][]string{
 			  "fingerprint": "929467973978d053"
 			}
 		  ],
-		  "groupLabels": {},
+		  "groupLabels": {"alertname": "WebhookAlert"},
 		  "commonLabels": {
 			"__alert_rule_uid__": "UID_WebhookAlert",
 			"alertname": "WebhookAlert"
@@ -890,9 +890,9 @@ var expNotifications = map[string][]string{
 		  "commonAnnotations": {},
 		  "externalURL": "http://localhost:3000/",
 		  "version": "1",
-		  "groupKey": "{}/{alertname=\"WebhookAlert\"}:{}",
+		  "groupKey": "{}/{alertname=\"WebhookAlert\"}:{alertname=\"WebhookAlert\"}",
 		  "truncatedAlerts": 0,
-		  "title": "[FIRING:1]  (WebhookAlert UID_WebhookAlert)",
+		  "title": "[FIRING:1] WebhookAlert (UID_WebhookAlert)",
 		  "state": "alerting",
 		  "message": "\n**Firing**\nLabels:\n - alertname = WebhookAlert\n - __alert_rule_uid__ = UID_WebhookAlert\nAnnotations:\nSource: \n\n\n\n\n"
 		}`,

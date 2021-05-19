@@ -413,6 +413,17 @@ func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	// Since Config implements json.Unmarshaler, we must handle _all_ other fields independently.
+	// Otherwise, the json decoder will detect this and only use the embedded type.
+	// Additionally, we'll use pointers to slices in order to reference the intended target.
+	type overrides struct {
+		Receivers *[]*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	}
+
+	if err := json.Unmarshal(b, &overrides{Receivers: &c.Receivers}); err != nil {
+		return err
+	}
+
 	return c.validate()
 }
 
@@ -452,8 +463,40 @@ type Config struct {
 	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
 	Route        *config.Route         `yaml:"route,omitempty" json:"route,omitempty"`
 	InhibitRules []*config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
-	Receivers    []*config.Receiver    `yaml:"-" json:"receivers,omitempty"`
 	Templates    []string              `yaml:"templates" json:"templates"`
+}
+
+// Config is the entrypoint for the embedded Alertmanager config with the exception of receivers.
+// Prometheus historically uses yaml files as the method of configuration and thus some
+// post-validation is included in the UnmarshalYAML method. Here we simply run this with
+// a noop unmarshaling function in order to benefit from said validation.
+func (c *Config) UnmarshalJSON(b []byte) error {
+	type plain Config
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	noopUnmarshal := func(_ interface{}) error { return nil }
+
+	if c.Global != nil {
+		if err := c.Global.UnmarshalYAML(noopUnmarshal); err != nil {
+			return err
+		}
+	}
+
+	if c.Route != nil {
+		if err := c.Route.UnmarshalYAML(noopUnmarshal); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range c.InhibitRules {
+		if err := r.UnmarshalYAML(noopUnmarshal); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type PostableApiAlertingConfig struct {
@@ -466,6 +509,17 @@ type PostableApiAlertingConfig struct {
 func (c *PostableApiAlertingConfig) UnmarshalJSON(b []byte) error {
 	type plain PostableApiAlertingConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	// Since Config implements json.Unmarshaler, we must handle _all_ other fields independently.
+	// Otherwise, the json decoder will detect this and only use the embedded type.
+	// Additionally, we'll use pointers to slices in order to reference the intended target.
+	type overrides struct {
+		Receivers *[]*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	}
+
+	if err := json.Unmarshal(b, &overrides{Receivers: &c.Receivers}); err != nil {
 		return err
 	}
 

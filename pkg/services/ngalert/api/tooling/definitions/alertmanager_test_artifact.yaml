@@ -14,6 +14,8 @@ alertmanager_config: |
           name: am
     route:
         continue: false
+        group_by:
+            - alertname
         receiver: am
         routes:
             - continue: false
