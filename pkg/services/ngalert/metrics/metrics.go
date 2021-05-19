@@ -105,6 +105,7 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			prometheus.SummaryOpts{
 				Namespace:  "grafana",
 				Subsystem:  "alerting",
+				Name:       "rule_evaluation_duration_seconds",
 				Help:       "The duration for a rule to execute.",
 				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 			},

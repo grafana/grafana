@@ -58,7 +58,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showStep2 = Boolean(type && (type === RuleFormType.threshold || !!dataSourceName));
+  const showStep2 = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
@@ -69,7 +69,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         values: {
           ...defaultValues,
           ...values,
-          annotations: values.annotations?.filter(({ key }) => !!key) ?? [],
+          annotations: values.annotations?.filter(({ key, value }) => !!key && !!value) ?? [],
           labels: values.labels?.filter(({ key }) => !!key) ?? [],
         },
         existing,
@@ -80,7 +80,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
 
   return (
     <FormProvider {...formAPI}>
-      <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
+      <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell">
           <Link to={returnTo}>
             <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">

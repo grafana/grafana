@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,7 +27,7 @@ func TestSearch_SortedResults(t *testing.T) {
 		return nil
 	})
 
-	bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 		query.Result = &models.SignedInUser{IsGrafanaAdmin: true}
 		return nil
 	})

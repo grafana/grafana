@@ -270,10 +270,10 @@ describe('PrometheusMetricsBrowser', () => {
     await screen.findByLabelText('Values for label2');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(4);
     // Typing '1' to filter for values
-    userEvent.type(screen.getByLabelText('Filter expression for label values'), '1');
+    await userEvent.type(screen.getByLabelText('Filter expression for label values'), '1');
     expect(screen.getByLabelText('Filter expression for label values')).toHaveValue('1');
-    expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument();
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(3);
+    expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument();
   });
 
   it('facets labels', async () => {
@@ -299,6 +299,7 @@ describe('PrometheusMetricsBrowser', () => {
     const value12 = await screen.findByRole('option', { name: 'value1-2', selected: false });
     userEvent.click(value12);
     await screen.findByRole('option', { name: 'value1-2', selected: true });
+    await screen.findByRole('option', { name: /label3/, selected: false });
     userEvent.click(screen.getByRole('option', { name: /label3/ }));
     await screen.findByLabelText('Values for label3');
     expect(screen.queryByRole('option', { name: 'value1-1', selected: true })).toBeInTheDocument();
