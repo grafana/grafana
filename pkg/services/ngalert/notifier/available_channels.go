@@ -4,6 +4,103 @@ import "github.com/grafana/grafana/pkg/services/alerting"
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*alerting.NotifierPlugin {
+	pushoverSoundOptions := []alerting.SelectOption{
+		{
+			Value: "default",
+			Label: "Default",
+		},
+		{
+			Value: "pushover",
+			Label: "Pushover",
+		}, {
+			Value: "bike",
+			Label: "Bike",
+		}, {
+			Value: "bugle",
+			Label: "Bugle",
+		}, {
+			Value: "cashregister",
+			Label: "Cashregister",
+		}, {
+			Value: "classical",
+			Label: "Classical",
+		}, {
+			Value: "cosmic",
+			Label: "Cosmic",
+		}, {
+			Value: "falling",
+			Label: "Falling",
+		}, {
+			Value: "gamelan",
+			Label: "Gamelan",
+		}, {
+			Value: "incoming",
+			Label: "Incoming",
+		}, {
+			Value: "intermission",
+			Label: "Intermission",
+		}, {
+			Value: "magic",
+			Label: "Magic",
+		}, {
+			Value: "mechanical",
+			Label: "Mechanical",
+		}, {
+			Value: "pianobar",
+			Label: "Pianobar",
+		}, {
+			Value: "siren",
+			Label: "Siren",
+		}, {
+			Value: "spacealarm",
+			Label: "Spacealarm",
+		}, {
+			Value: "tugboat",
+			Label: "Tugboat",
+		}, {
+			Value: "alien",
+			Label: "Alien",
+		}, {
+			Value: "climb",
+			Label: "Climb",
+		}, {
+			Value: "persistent",
+			Label: "Persistent",
+		}, {
+			Value: "echo",
+			Label: "Echo",
+		}, {
+			Value: "updown",
+			Label: "Updown",
+		}, {
+			Value: "none",
+			Label: "None",
+		},
+	}
+
+	pushoverPriorityOptions := []alerting.SelectOption{
+		{
+			Value: "2",
+			Label: "Emergency",
+		},
+		{
+			Value: "1",
+			Label: "High",
+		},
+		{
+			Value: "0",
+			Label: "Normal",
+		},
+		{
+			Value: "-1",
+			Label: "Low",
+		},
+		{
+			Value: "-2",
+			Label: "Lowest",
+		},
+	}
+
 	return []*alerting.NotifierPlugin{
 		{
 			Type:        "dingding",
@@ -134,6 +231,85 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "summary",
+				},
+			},
+		},
+		{
+			Type:        "pushover",
+			Name:        "Pushover",
+			Description: "Sends HTTP POST request to the Pushover API",
+			Heading:     "Pushover settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "API Token",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "Application token",
+					PropertyName: "apiToken",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "User key(s)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "comma-separated list",
+					PropertyName: "userKey",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Device(s) (optional)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "comma-separated list; leave empty to send to all devices",
+					PropertyName: "device",
+				},
+				{
+					Label:         "Alerting priority",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverPriorityOptions,
+					PropertyName:  "priority",
+				},
+				{
+					Label:         "OK priority",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverPriorityOptions,
+					PropertyName:  "okPriority",
+				},
+				{
+					Description:  "How often (in seconds) the Pushover servers will send the same alerting or OK notification to the user.",
+					Label:        "Retry (Only used for Emergency Priority)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "minimum 30 seconds",
+					PropertyName: "retry",
+				},
+				{
+					Description:  "How many seconds the alerting or OK notification will continue to be retried.",
+					Label:        "Expire (Only used for Emergency Priority)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "maximum 86400 seconds",
+					PropertyName: "expire",
+				},
+				{
+					Label:         "Alerting sound",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverSoundOptions,
+					PropertyName:  "sound",
+				},
+				{
+					Label:         "OK sound",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverSoundOptions,
+					PropertyName:  "okSound",
+				},
+				{ // New in 8.0.
+					Label:        "Message",
+					Element:      alerting.ElementTypeTextArea,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
 				},
 			},
 		},
