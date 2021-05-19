@@ -103,7 +103,7 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 	} else if ds.User != "" {
 		opts.BasicAuth = &sdkhttpclient.BasicAuthOptions{
 			User:     ds.User,
-			Password: ds.DecryptedBasicAuthPassword(),
+			Password: ds.DecryptedPassword(),
 		}
 	}
 
