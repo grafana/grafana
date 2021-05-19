@@ -418,6 +418,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewSlackNotifier(cfg, tmpl)
 		case "telegram":
 			n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		case "victorops":
+			n, err = channels.NewVictoropsNotifier(cfg, tmpl)
 		case "teams":
 			n, err = channels.NewTeamsNotifier(cfg, tmpl)
 		case "dingding":

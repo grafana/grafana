@@ -235,6 +235,36 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
+			Type:        "victorops",
+			Name:        "VictorOps",
+			Description: "Sends notifications to VictorOps",
+			Heading:     "VictorOps settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "VictorOps url",
+					PropertyName: "url",
+					Required:     true,
+				},
+				{ // New in 8.0.
+					Label:        "Message Type",
+					Element:      alerting.ElementTypeSelect,
+					PropertyName: "messageType",
+					SelectOptions: []alerting.SelectOption{
+						{
+							Value: "CRITICAL",
+							Label: "CRITICAL"},
+						{
+							Value: "WARNING",
+							Label: "WARNING",
+						},
+					},
+				},
+			},
+		},
+		{
 			Type:        "pushover",
 			Name:        "Pushover",
 			Description: "Sends HTTP POST request to the Pushover API",

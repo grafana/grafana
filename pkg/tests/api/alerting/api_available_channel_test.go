@@ -288,6 +288,56 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
+    "type": "victorops",
+    "name": "VictorOps",
+    "heading": "VictorOps settings",
+    "description": "Sends notifications to VictorOps",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Url",
+        "description": "",
+        "placeholder": "VictorOps url",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "select",
+        "inputType": "",
+        "label": "Message Type",
+        "description": "",
+        "placeholder": "",
+        "propertyName": "messageType",
+        "selectOptions": [
+          {
+            "value": "CRITICAL",
+            "label": "CRITICAL"
+          },
+          {
+            "value": "WARNING",
+            "label": "WARNING"
+          }
+        ],
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
     "type": "pushover",
     "name": "Pushover",
     "description": "Sends HTTP POST request to the Pushover API",
