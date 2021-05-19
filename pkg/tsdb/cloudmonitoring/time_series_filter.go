@@ -95,6 +95,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		frame.RefID = timeSeriesFilter.RefID
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
+			Custom: map[string]interface{}{
+				"alignmentPeriod":  timeSeriesFilter.Params.Get("aggregation.alignmentPeriod"),
+				"perSeriesAligner": timeSeriesFilter.Params.Get("aggregation.perSeriesAligner"),
+			},
 		}
 
 		for key, value := range series.Metric.Labels {

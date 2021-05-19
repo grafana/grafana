@@ -1,21 +1,16 @@
-export enum MetricKind {
-  METRIC_KIND_UNSPECIFIED = 'METRIC_KIND_UNSPECIFIED',
-  GAUGE = 'GAUGE',
-  DELTA = 'DELTA',
-  CUMULATIVE = 'CUMULATIVE',
-}
+import { AuthType, MetricKind, QueryType, ValueTypes } from './types';
 
-export enum ValueTypes {
-  VALUE_TYPE_UNSPECIFIED = 'VALUE_TYPE_UNSPECIFIED',
-  BOOL = 'BOOL',
-  INT64 = 'INT64',
-  DOUBLE = 'DOUBLE',
-  STRING = 'STRING',
-  DISTRIBUTION = 'DISTRIBUTION',
-  MONEY = 'MONEY',
-}
+// not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
+export const INPUT_WIDTH = 71;
+export const LABEL_WIDTH = 19;
+export const INNER_LABEL_WIDTH = 14;
+export const SELECT_WIDTH = 28;
+export const AUTH_TYPES = [
+  { value: 'Google JWT File', key: AuthType.JWT },
+  { value: 'GCE Default Service Account', key: AuthType.GCE },
+];
 
-export const alignOptions = [
+export const ALIGNMENTS = [
   {
     text: 'delta',
     value: 'ALIGN_DELTA',
@@ -134,7 +129,7 @@ export const alignOptions = [
   },
 ];
 
-export const aggOptions = [
+export const AGGREGATIONS = [
   {
     text: 'none',
     value: 'REDUCE_NONE',
@@ -229,7 +224,7 @@ export const aggOptions = [
   },
 ];
 
-export const alignmentPeriods = [
+export const ALIGNMENT_PERIODS = [
   { text: 'grafana auto', value: 'grafana-auto' },
   { text: 'stackdriver auto', value: 'stackdriver-auto', hidden: true },
   { text: 'cloud monitoring auto', value: 'cloud-monitoring-auto' },
@@ -246,7 +241,7 @@ export const alignmentPeriods = [
   { text: '1w', value: '+604800s' },
 ];
 
-export const systemLabels = [
+export const SYSTEM_LABELS = [
   'metadata.system_labels.cloud_account',
   'metadata.system_labels.name',
   'metadata.system_labels.region',
@@ -259,8 +254,13 @@ export const systemLabels = [
   'metadata.system_labels.container_image',
 ];
 
-export const selectors = [
+export const SELECTORS = [
   { label: 'SLI Value', value: 'select_slo_health' },
   { label: 'SLO Compliance', value: 'select_slo_compliance' },
   { label: 'SLO Error Budget Remaining', value: 'select_slo_budget_fraction' },
+];
+
+export const QUERY_TYPES = [
+  { label: 'Metrics', value: QueryType.METRICS },
+  { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];
