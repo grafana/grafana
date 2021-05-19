@@ -5,17 +5,9 @@ import (
 	"fmt"
 
 	"cuelang.org/go/cue"
-	errs "cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
 )
-
-// cueError wraps errors caused by malformed cue files.
-type cueError struct {
-	errors   []errs.Error
-	filename string
-	line     int
-}
 
 var panelSubpath = cue.MakePath(cue.Def("#Panel"))
 
@@ -47,9 +39,9 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	cfg := &load.Config{Overlay: overlay}
 	inst, err := rt.Build(load.Instances([]string{"/cue/data/gen.cue"}, cfg)[0])
 	if err != nil {
-		cueErrors := wrapCUEError(err)
+		cueError := schema.WrapCUEError(err)
 		if err != nil {
-			return nil, fmt.Errorf("errors: %q, in file: %s, on line: %d", cueErrors.errors, cueErrors.filename, cueErrors.line)
+			return nil, cueError
 		}
 	}
 
@@ -195,16 +187,4 @@ func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.Ver
 type CompositeDashboardSchema interface {
 	schema.VersionedCueSchema
 	LatestPanelSchemaFor(id string) (schema.VersionedCueSchema, error)
-}
-
-func wrapCUEError(err error) cueError {
-	var cErr errs.Error
-	if ok := errors.As(err, &cErr); ok {
-		return cueError{
-			errors:   errs.Errors(err),
-			filename: errs.Errors(err)[0].Position().File().Name(),
-			line:     errs.Errors(err)[0].Position().Line(),
-		}
-	}
-	return cueError{}
 }

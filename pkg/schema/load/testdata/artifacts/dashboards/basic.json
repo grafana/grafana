@@ -58,7 +58,6 @@
             "filterable": false
           },
           "decimals": 3,
-          "mappings": [],
           "unit": "watt"
         },
         "overrides": [

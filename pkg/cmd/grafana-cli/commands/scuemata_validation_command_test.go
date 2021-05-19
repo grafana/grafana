@@ -35,7 +35,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		filesystem := fstest.MapFS{
 			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
 		}
-		mergedFS := Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := load.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
@@ -53,7 +53,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		filesystem := fstest.MapFS{
 			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
 		}
-		mergedFS := Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := load.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
@@ -78,7 +78,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 			"valid.json":   &fstest.MapFile{Data: validPanel},
 			"invalid.json": &fstest.MapFile{Data: invalidPanel},
 		}
-		mergedFS := Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := load.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
