@@ -7,11 +7,11 @@ import { Button, useStyles2 } from '@grafana/ui';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import { produce } from 'immer';
 import { Space } from '../Space';
+import { parseResourceURI } from './utils';
 
 interface ResourcePickerProps {
   resourcePickerData: Pick<ResourcePickerData, 'getResourcePickerData' | 'getResourcesForResourceGroup'>;
   resourceURI: string | undefined;
-  // handleSelectResource: (row: Row, isSelected: boolean) => void;
 
   onApply: (resourceURI: string | undefined) => void;
   onCancel: () => void;
@@ -47,8 +47,11 @@ const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: 
       const resources = await resourcePickerData.getResourcesForResourceGroup(resourceGroup);
       setRows(
         produce(rows, (draftState: RowGroup) => {
-          // TODO: fix wonky types
-          (draftState[resourceGroup.subscriptionId].children as RowGroup)[resourceGroup.name].children = resources;
+          const subscriptionChildren = draftState[resourceGroup.subscriptionId].children;
+
+          if (subscriptionChildren) {
+            subscriptionChildren[resourceGroup.name].children = resources;
+          }
         })
       );
     },
@@ -61,14 +64,12 @@ const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: 
 
   const selectedResource = useMemo(() => {
     if (internalSelected && Object.keys(rows).length) {
-      const matches = /\/subscriptions\/(?<subscriptionId>.+)\/resourceGroups\/(?<selectedResourceGroupName>.+)\/providers\/(?<cloud>.+)/.exec(
-        internalSelected
-      );
+      const parsed = parseResourceURI(internalSelected);
 
-      if (matches && matches.groups) {
-        const { subscriptionId, selectedResourceGroupName } = matches.groups;
-        const allResourceGroups = rows[subscriptionId].children || {};
-        const selectedResourceGroup = allResourceGroups[selectedResourceGroupName.toLowerCase()];
+      if (parsed) {
+        const { subscriptionID, resourceGroup } = parsed;
+        const allResourceGroups = rows[subscriptionID].children || {};
+        const selectedResourceGroup = allResourceGroups[resourceGroup.toLowerCase()];
         const allResourcesInResourceGroup = selectedResourceGroup.children;
 
         if (!allResourcesInResourceGroup || Object.keys(allResourcesInResourceGroup).length === 0) {

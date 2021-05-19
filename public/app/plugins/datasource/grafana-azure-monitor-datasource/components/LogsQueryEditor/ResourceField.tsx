@@ -3,21 +3,21 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
+import { parseResourceURI } from '../ResourcePicker/utils';
 import { Space } from '../Space';
 
 function parseResourceDetails(resourceURI: string) {
-  const re = /subscriptions\/([\w-]+)\/resourceGroups\/([\w-_]+)\/.+\/([\w-_]+)/;
-  const match = resourceURI.match(re);
+  const parsed = parseResourceURI(resourceURI);
 
-  if (!match) {
+  if (!parsed) {
     return undefined;
   }
 
   return {
     id: resourceURI,
-    subscriptionName: match[1],
-    resourceGroupName: match[2],
-    name: match[3],
+    subscriptionName: parsed.subscriptionID,
+    resourceGroupName: parsed.resourceGroup,
+    name: parsed.resource,
   };
 }
 
@@ -70,15 +70,10 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
 
       <Field label="Resource">
         <Button variant="secondary" onClick={handleOpenPicker}>
-          {resource ? (
-            resourceComponents ? (
-              <FormattedResource resource={resourceComponents} />
-            ) : (
-              resource
-            )
-          ) : (
-            'Select a resource'
-          )}
+          {/* Three mutually exclusive states */}
+          {!resource && 'Select a resource'}
+          {resource && resourceComponents && <FormattedResource resource={resourceComponents} />}
+          {resource && !resourceComponents && resource}
         </Button>
       </Field>
     </>
