@@ -19,9 +19,9 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
     frameIndex: 0,
     showHeader: true,
   });
-  const styles = useStyles2(getStyles);
   const panels = getSupportedPanels();
   const vizHeight = useVizHeight(data, pluginId, options.frameIndex);
+  const styles = useStyles2(getStyles);
 
   if (!options || !data) {
     return null;
