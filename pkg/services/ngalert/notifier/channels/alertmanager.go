@@ -70,7 +70,7 @@ type AlertmanagerNotifier struct {
 
 // Notify sends alert notifications to Alertmanager.
 func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	n.logger.Info("Sending Alertmanager alert", "alertmanager", n.Name)
+	n.logger.Debug("Sending Alertmanager alert", "alertmanager", n.Name)
 	if len(as) == 0 {
 		return true, nil
 	}
