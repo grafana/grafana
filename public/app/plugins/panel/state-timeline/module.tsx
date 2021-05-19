@@ -2,6 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
+import { addLegendOptions } from '@grafana/ui/src/options/builder';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
   .useFieldConfig({
@@ -81,5 +82,5 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         defaultValue: defaultPanelOptions.rowHeight,
       });
 
-    //addLegendOptions(builder);
+    addLegendOptions(builder);
   });

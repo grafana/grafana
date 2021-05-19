@@ -83,8 +83,8 @@ export class TimelineChart extends React.Component<TimelineProps> {
     });
 
     return (
-      <VizLayout.Legend placement="bottom">
-        <VizLegend placement="bottom" items={items} displayMode={LegendDisplayMode.List} />
+      <VizLayout.Legend placement={legend.placement}>
+        <VizLegend placement={legend.placement} items={items} displayMode={legend.displayMode} />
       </VizLayout.Legend>
     );
   };
