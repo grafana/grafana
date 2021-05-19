@@ -1289,6 +1289,31 @@ var expAvailableChannelJsonOutput = `
         "secure": false
       }
     ]
+  },
+  {
+    "type": "LINE",
+    "name": "LINE",
+    "heading": "LINE notify settings",
+    "description": "Send notifications to LINE notify",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Token",
+        "description": "",
+        "placeholder": "LINE notify token key",
+        "propertyName": "token",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      }
+    ]
   }
 ]
 `
