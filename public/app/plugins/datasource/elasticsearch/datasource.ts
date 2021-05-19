@@ -559,6 +559,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
+    const logLimits: Array<number | undefined> = [];
+
     for (const target of targets) {
       if (target.hide) {
         continue;
@@ -575,11 +577,13 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
         const log = target.metrics?.find((m) => m.type === 'logs') as Logs;
         const limit = log.settings?.limit ? parseInt(log.settings?.limit, 10) : 500;
+        logLimits.push(limit);
 
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
         queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters, target.query);
       } else {
+        logLimits.push();
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
         }
@@ -619,9 +623,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         // TODO: This needs to be revisited, it seems wrong to process ALL the sent queries as logs if only one of them was a log query
         if (targetsContainsLogsQuery) {
           const response = er.getLogs(this.logMessageField, this.logLevelField);
-          for (const dataFrame of response.data) {
-            enhanceDataFrame(dataFrame, this.dataLinks);
-          }
+
+          response.data.forEach((dataFrame, index) => {
+            enhanceDataFrame(dataFrame, this.dataLinks, logLimits[index]);
+          });
           return response;
         }
 
@@ -855,8 +860,15 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
  * Modifies dataframe and adds dataLinks from the config.
  * Exported for tests.
  */
-export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[]) {
+export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[], limit?: number) {
   const dataSourceSrv = getDataSourceSrv();
+
+  if (limit) {
+    dataFrame.meta = {
+      ...dataFrame.meta,
+      limit,
+    };
+  }
 
   if (!dataLinks.length) {
     return;

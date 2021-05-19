@@ -1,4 +1,4 @@
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
+import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';
 import { NewReceiverView } from './components/receivers/NewReceiverView';
 import { NewTemplateView } from './components/receivers/NewTemplateView';
 import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTemplatesView';
@@ -94,10 +95,13 @@ const Receivers: FC = () => {
               )
             }
           </Route>
+          <Route exact={true} path="/alerting/notifications/global-config">
+            <GlobalConfigForm config={config} alertManagerSourceName={alertManagerSourceName} />
+          </Route>
         </Switch>
       )}
     </AlertingPageWrapper>
   );
 };
 
-export default Receivers;
+export default withErrorBoundary(Receivers, { style: 'page' });

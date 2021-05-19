@@ -187,4 +187,26 @@ describe('timeSrv', () => {
       expect(_dashboard.refresh).toBe('10s');
     });
   });
+
+  describe('pauseAutoRefresh', () => {
+    it('should set refresh to empty value', () => {
+      _dashboard.refresh = '10s';
+      timeSrv.pauseAutoRefresh();
+      expect(_dashboard.refresh).toBe('');
+    });
+
+    it('should set previousAutoRefresh value', () => {
+      _dashboard.refresh = '10s';
+      timeSrv.pauseAutoRefresh();
+      expect(timeSrv.previousAutoRefresh).toBe('10s');
+    });
+  });
+
+  describe('resumeAutoRefresh', () => {
+    it('should set refresh to empty value', () => {
+      timeSrv.previousAutoRefresh = '10s';
+      timeSrv.resumeAutoRefresh();
+      expect(_dashboard.refresh).toBe('10s');
+    });
+  });
 });

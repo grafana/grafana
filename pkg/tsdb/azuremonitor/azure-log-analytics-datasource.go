@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
@@ -27,6 +28,7 @@ type AzureLogAnalyticsDatasource struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
@@ -227,7 +229,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	if err != nil {
 		return nil, err
 	}
-	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo, e.cfg)
 
 	return req, nil
 }

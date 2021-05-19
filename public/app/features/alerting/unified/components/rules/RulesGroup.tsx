@@ -1,7 +1,7 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React, { FC, useMemo, useState, Fragment } from 'react';
-import { Icon, Tooltip, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -13,6 +13,7 @@ import { ActionIcon } from './ActionIcon';
 import pluralize from 'pluralize';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import kbn from 'app/core/utils/kbn';
+import { useFolder } from '../../hooks/useFolder';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -21,11 +22,14 @@ interface Props {
 
 export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
   const { rulesSource } = namespace;
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const hasRuler = useHasRuler();
+  const rulerRule = group.rules[0]?.rulerRule;
+  const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
+  const { folder } = useFolder(folderUID);
 
   const stats = useMemo(
     (): Record<PromAlertingRuleState, number> =>
@@ -65,20 +69,24 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
 
   // for grafana, link to folder views
   if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
-    const rulerRule = group.rules[0]?.rulerRule;
-    const folderUID = rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid;
     if (folderUID) {
       const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
-      actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" to={baseUrl + '/settings'} target="__blank" />);
-      actionIcons.push(
-        <ActionIcon
-          key="manage-perms"
-          icon="lock"
-          tooltip="manage permissions"
-          to={baseUrl + '/permissions'}
-          target="__blank"
-        />
-      );
+      if (folder?.canSave) {
+        actionIcons.push(
+          <ActionIcon key="edit" icon="pen" tooltip="edit" to={baseUrl + '/settings'} target="__blank" />
+        );
+      }
+      if (folder?.canAdmin) {
+        actionIcons.push(
+          <ActionIcon
+            key="manage-perms"
+            icon="lock"
+            tooltip="manage permissions"
+            to={baseUrl + '/permissions'}
+            target="__blank"
+          />
+        );
+      }
     } else if (hasRuler(rulesSource)) {
       actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" />); // @TODO
     }
@@ -122,25 +130,25 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
           </>
         )}
       </div>
-      {!isCollapsed && <RulesTable showGuidelines={true} rules={group.rules} />}
+      {!isCollapsed && <RulesTable className={styles.rulesTable} showGuidelines={true} rules={group.rules} />}
     </div>
   );
 });
 
 RulesGroup.displayName = 'RulesGroup';
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     & + & {
-      margin-top: ${theme.spacing.md};
+      margin-top: ${theme.spacing(2)};
     }
   `,
   header: css`
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} 0;
-    background-color: ${theme.colors.bg2};
+    padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
+    background-color: ${theme.colors.background.secondary};
   `,
   headerStats: css`
     span {
@@ -148,7 +156,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
     }
   `,
   heading: css`
-    margin-left: ${theme.spacing.sm};
+    margin-left: ${theme.spacing(1)};
     margin-bottom: 0;
   `,
   spacer: css`
@@ -157,28 +165,31 @@ export const getStyles = (theme: GrafanaTheme) => ({
   collapseToggle: css`
     background: none;
     border: none;
-    margin-top: -${theme.spacing.sm};
-    margin-bottom: -${theme.spacing.sm};
+    margin-top: -${theme.spacing(1)};
+    margin-bottom: -${theme.spacing(1)};
 
     svg {
       margin-bottom: 0;
     }
   `,
   dataSourceIcon: css`
-    width: ${theme.spacing.md};
-    height: ${theme.spacing.md};
-    margin-left: ${theme.spacing.md};
+    width: ${theme.spacing(2)};
+    height: ${theme.spacing(2)};
+    margin-left: ${theme.spacing(2)};
   `,
   dataSourceOrigin: css`
     margin-right: 1em;
-    color: ${theme.colors.textFaint};
+    color: ${theme.colors.text.disabled};
   `,
   actionsSeparator: css`
-    margin: 0 ${theme.spacing.sm};
+    margin: 0 ${theme.spacing(2)};
   `,
   actionIcons: css`
     & > * + * {
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(1)};
     }
+  `,
+  rulesTable: css`
+    margin-top: ${theme.spacing(3)};
   `,
 });

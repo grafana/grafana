@@ -16,34 +16,39 @@ import (
 )
 
 func TestEmailNotifier(t *testing.T) {
+	tmpl := templateForTests(t)
+
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
+	tmpl.ExternalURL = externalURL
 
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`
 
 		settingsJSON, _ := simplejson.NewJson([]byte(json))
-		model := &models.AlertNotification{
+		model := &NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
 		}
 
-		_, err := NewEmailNotifier(model, externalURL)
+		_, err := NewEmailNotifier(model, tmpl)
 		require.Error(t, err)
 	})
 
 	t.Run("with the correct settings it should not fail and produce the expected command", func(t *testing.T) {
-		json := `{"addresses": "someops@example.com;somedev@example.com"}`
+		json := `{
+			"addresses": "someops@example.com;somedev@example.com",
+			"message": "{{ template \"default.title\" . }}"
+		}`
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 
-		emailNotifier, err := NewEmailNotifier(&models.AlertNotification{
-			Name: "ops",
-			Type: "email",
-
+		emailNotifier, err := NewEmailNotifier(&NotificationChannelConfig{
+			Name:     "ops",
+			Type:     "email",
 			Settings: settingsJSON,
-		}, externalURL)
+		}, tmpl)
 
 		require.NoError(t, err)
 
@@ -72,13 +77,14 @@ func TestEmailNotifier(t *testing.T) {
 		require.True(t, ok)
 
 		require.Equal(t, map[string]interface{}{
-			"subject":      "[firing:1]  (AlwaysFiring warning)",
+			"subject":      "[FIRING:1]  (AlwaysFiring warning)",
 			"to":           []string{"someops@example.com", "somedev@example.com"},
 			"single_email": false,
 			"template":     "ng_alert_notification.html",
 			"data": map[string]interface{}{
-				"Title":  "[firing:1]  (AlwaysFiring warning)",
-				"Status": "firing",
+				"Title":   "[FIRING:1]  (AlwaysFiring warning)",
+				"Message": "[FIRING:1]  (AlwaysFiring warning)",
+				"Status":  "firing",
 				"Alerts": template.Alerts{
 					template.Alert{
 						Status:      "firing",

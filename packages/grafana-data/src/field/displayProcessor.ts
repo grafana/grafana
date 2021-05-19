@@ -4,14 +4,13 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { getValueFormat } from '../valueFormats/valueFormats';
+import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator, ScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
-import { classicColors, getColorForTheme } from '../utils/namedColorsPalette';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -50,6 +49,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
+  } else if (field.type === FieldType.boolean) {
+    if (!isBooleanUnit(unit)) {
+      unit = 'bool';
+    }
   }
 
   const formatFunc = getValueFormat(unit || 'none');
@@ -82,7 +85,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         }
 
         if (mappingResult.color != null) {
-          color = getColorForTheme(mappingResult.color, options.theme.v1);
+          color = options.theme.visualization.getColorByName(mappingResult.color);
         }
 
         shouldFormat = false;
@@ -137,9 +140,17 @@ export function getRawDisplayProcessor(): DisplayProcessor {
 function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: GrafanaTheme2) {
   if (field.type === FieldType.string) {
     return (value: any) => {
+      if (!value) {
+        return { color: theme.colors.background.primary, percent: 0 };
+      }
+
       const hc = strHashCode(value as string);
+      const color = theme.visualization.getColorByName(
+        theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)]
+      );
+
       return {
-        color: classicColors[Math.floor(hc % classicColors.length)],
+        color: color,
         percent: 0,
       };
     };

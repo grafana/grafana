@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -97,11 +97,6 @@ const AmRoutes: FC = () => {
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      {savingError && !saving && (
-        <Alert severity="error" title="Error saving alert manager config">
-          {savingError.message || 'Unknown error.'}
-        </Alert>
-      )}
       {resultError && !resultLoading && (
         <Alert severity="error" title="Error loading alert manager config">
           {resultError.message || 'Unknown error.'}
@@ -132,7 +127,7 @@ const AmRoutes: FC = () => {
   );
 };
 
-export default AmRoutes;
+export default withErrorBoundary(AmRoutes, { style: 'page' });
 
 const getStyles = (theme: GrafanaTheme2) => ({
   break: css`
