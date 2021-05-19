@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -226,7 +227,7 @@ func TestRealQuery(t *testing.T) {
 			}),
 		}
 
-		runner, err := runnerFromDataSource(dsInfo)
+		runner, err := runnerFromDataSource(httpclient.NewProvider(), dsInfo)
 		require.NoError(t, err)
 
 		dr := executeQuery(context.Background(), queryModel{

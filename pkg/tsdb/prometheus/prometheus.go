@@ -14,6 +14,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -65,13 +66,20 @@ func (transport *prometheusTransport) RoundTrip(req *http.Request) (*http.Respon
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	return &PrometheusExecutor{
-		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
-		baseRoundTripperFactory: func(ds *models.DataSource) (http.RoundTripper, error) {
-			return ds.GetHttpTransport()
-		},
-	}, nil
+func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		transport, err := dsInfo.GetHTTPTransport(provider)
+		if err != nil {
+			return nil, err
+		}
+
+		return &PrometheusExecutor{
+			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+			baseRoundTripperFactory: func(ds *models.DataSource) (http.RoundTripper, error) {
+				return transport, nil
+			},
+		}, nil
+	}
 }
 
 var (

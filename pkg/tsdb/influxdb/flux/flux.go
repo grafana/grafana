@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,13 +23,13 @@ func init() {
 
 // Query builds flux queries, executes them, and returns the results.
 //nolint: staticcheck // plugins.DataQuery deprecated
-func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
+func Query(ctx context.Context, httpClientProvider httpclient.Provider, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	glog.Debug("Received a query", "query", tsdbQuery)
 	tRes := plugins.DataResponse{
 		Results: make(map[string]plugins.DataQueryResult),
 	}
-	r, err := runnerFromDataSource(dsInfo)
+	r, err := runnerFromDataSource(httpClientProvider, dsInfo)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
@@ -69,7 +70,7 @@ func (r *runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTabl
 }
 
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
-func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
+func runnerFromDataSource(httpClientProvider httpclient.Provider, dsInfo *models.DataSource) (*runner, error) {
 	org := dsInfo.JsonData.Get("organization").MustString("")
 	if org == "" {
 		return nil, fmt.Errorf("missing organization in datasource configuration")
@@ -85,7 +86,7 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 	}
 
 	opts := influxdb2.DefaultOptions()
-	hc, err := dsInfo.GetHttpClient()
+	hc, err := dsInfo.GetHTTPClient(httpClientProvider)
 	if err != nil {
 		return nil, err
 	}

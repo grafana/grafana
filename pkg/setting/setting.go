@@ -81,6 +81,7 @@ var (
 	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
 	DataProxyMaxIdleConns          int
+	DataProxyMaxIdleConnsPerHost   int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
 	StaticRootPath                 string
@@ -827,6 +828,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
+	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 

@@ -221,7 +221,6 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
 	plugin := e.pluginManager.GetDataSource(dsInfo.Type)

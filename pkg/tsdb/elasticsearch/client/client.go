@@ -15,6 +15,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 
@@ -29,8 +30,8 @@ var (
 	clientLog = log.New(loggerName)
 )
 
-var newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
-	return ds.GetHttpClient()
+var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *models.DataSource) (*http.Client, error) {
+	return ds.GetHTTPClient(httpClientProvider)
 }
 
 // Client represents a client which can interact with elasticsearch api
@@ -72,7 +73,7 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange plugins.DataTimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *models.DataSource, timeRange plugins.DataTimeRange) (Client, error) {
 	version, err := coerceVersion(ds.JsonData.Get("esVersion"))
 
 	if err != nil {
@@ -108,13 +109,14 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange plugi
 }
 
 type baseClientImpl struct {
-	ctx          context.Context
-	ds           *models.DataSource
-	version      *semver.Version
-	timeField    string
-	indices      []string
-	timeRange    plugins.DataTimeRange
-	debugEnabled bool
+	ctx                context.Context
+	httpClientProvider httpclient.Provider
+	ds                 *models.DataSource
+	version            *semver.Version
+	timeField          string
+	indices            []string
+	timeRange          plugins.DataTimeRange
+	debugEnabled       bool
 }
 
 func (c *baseClientImpl) GetVersion() *semver.Version {
@@ -208,20 +210,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		}
 	}
 
-	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	if c.ds.BasicAuth {
-		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.BasicAuthUser, c.ds.DecryptedBasicAuthPassword())
-	}
-
-	if !c.ds.BasicAuth && c.ds.User != "" {
-		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.User, c.ds.DecryptedPassword())
-	}
-
-	httpClient, err := newDatasourceHttpClient(c.ds)
+	httpClient, err := newDatasourceHttpClient(c.httpClientProvider, c.ds)
 	if err != nil {
 		return nil, err
 	}

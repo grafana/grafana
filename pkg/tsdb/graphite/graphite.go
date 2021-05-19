@@ -15,6 +15,7 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -23,12 +24,17 @@ import (
 )
 
 type GraphiteExecutor struct {
-	HttpClient *http.Client
+	httpClientProvider httpclient.Provider
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
-	return &GraphiteExecutor{}, nil
+// nolint:staticcheck // plugins.DataPlugin deprecated
+func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	// nolint:staticcheck // plugins.DataPlugin deprecated
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		return &GraphiteExecutor{
+			httpClientProvider: httpClientProvider,
+		}, nil
+	}
 }
 
 var glog = log.New("tsdb.graphite")
@@ -91,7 +97,7 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return plugins.DataResponse{}, err
 	}
 
-	httpClient, err := dsInfo.GetHttpClient()
+	httpClient, err := dsInfo.GetHTTPClient(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}

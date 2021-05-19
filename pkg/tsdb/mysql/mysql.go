@@ -12,6 +12,7 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
@@ -32,52 +33,55 @@ func characterEscape(s string, escapeChar string) string {
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
-	logger := log.New("tsdb.mysql")
+func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSource) (plugins.DataPlugin, error) {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
+	return func(datasource *models.DataSource) (plugins.DataPlugin, error) {
+		logger := log.New("tsdb.mysql")
 
-	protocol := "tcp"
-	if strings.HasPrefix(datasource.Url, "/") {
-		protocol = "unix"
-	}
+		protocol := "tcp"
+		if strings.HasPrefix(datasource.Url, "/") {
+			protocol = "unix"
+		}
 
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
-		characterEscape(datasource.User, ":"),
-		datasource.DecryptedPassword(),
-		protocol,
-		characterEscape(datasource.Url, ")"),
-		characterEscape(datasource.Database, "?"),
-	)
+		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
+			characterEscape(datasource.User, ":"),
+			datasource.DecryptedPassword(),
+			protocol,
+			characterEscape(datasource.Url, ")"),
+			characterEscape(datasource.Database, "?"),
+		)
 
-	tlsConfig, err := datasource.GetTLSConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
-		tlsConfigString := fmt.Sprintf("ds%d", datasource.Id)
-		if err := mysql.RegisterTLSConfig(tlsConfigString, tlsConfig); err != nil {
+		tlsConfig, err := datasource.GetTLSConfig(httpClientProvider)
+		if err != nil {
 			return nil, err
 		}
-		cnnstr += "&tls=" + tlsConfigString
-	}
 
-	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
-	}
+		if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
+			tlsConfigString := fmt.Sprintf("ds%d", datasource.Id)
+			if err := mysql.RegisterTLSConfig(tlsConfigString, tlsConfig); err != nil {
+				return nil, err
+			}
+			cnnstr += "&tls=" + tlsConfigString
+		}
 
-	config := sqleng.DataPluginConfiguration{
-		DriverName:        "mysql",
-		ConnectionString:  cnnstr,
-		Datasource:        datasource,
-		TimeColumnNames:   []string{"time", "time_sec"},
-		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
-	}
+		if setting.Env == setting.Dev {
+			logger.Debug("getEngine", "connection", cnnstr)
+		}
 
-	rowTransformer := mysqlQueryResultTransformer{
-		log: logger,
-	}
+		config := sqleng.DataPluginConfiguration{
+			DriverName:        "mysql",
+			ConnectionString:  cnnstr,
+			Datasource:        datasource,
+			TimeColumnNames:   []string{"time", "time_sec"},
+			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
+		}
 
-	return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+		rowTransformer := mysqlQueryResultTransformer{
+			log: logger,
+		}
+
+		return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	}
 }
 
 type mysqlQueryResultTransformer struct {

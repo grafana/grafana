@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -17,17 +18,21 @@ import (
 )
 
 type Executor struct {
-	// *models.DataSource
-	QueryParser    *InfluxdbQueryParser
-	ResponseParser *ResponseParser
+	httpClientProvider httpclient.Provider
+	QueryParser        *InfluxdbQueryParser
+	ResponseParser     *ResponseParser
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
-	return &Executor{
-		QueryParser:    &InfluxdbQueryParser{},
-		ResponseParser: &ResponseParser{},
-	}, nil
+// nolint:staticcheck // plugins.DataPlugin deprecated
+func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	// nolint:staticcheck // plugins.DataPlugin deprecated
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		return &Executor{
+			httpClientProvider: httpClientProvider,
+			QueryParser:        &InfluxdbQueryParser{},
+			ResponseParser:     &ResponseParser{},
+		}, nil
+	}
 }
 
 var (
@@ -47,7 +52,7 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 
 	version := dsInfo.JsonData.Get("version").MustString("")
 	if version == "Flux" {
-		return flux.Query(ctx, dsInfo, tsdbQuery)
+		return flux.Query(ctx, e.httpClientProvider, dsInfo, tsdbQuery)
 	}
 
 	glog.Debug("Making a non-Flux type query")
@@ -74,7 +79,7 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 		return plugins.DataResponse{}, err
 	}
 
-	httpClient, err := dsInfo.GetHttpClient()
+	httpClient, err := dsInfo.GetHTTPClient(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}

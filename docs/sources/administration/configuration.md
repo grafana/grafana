@@ -418,6 +418,10 @@ The length of time that Grafana will wait for a datasource’s first response he
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
+### max_idle_connections_per_host
+
+The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
+
 ### idle_conn_timeout_seconds
 
 The length of time that Grafana maintains idle connections before closing them. Default is `90` seconds. For more details check the [Transport.IdleConnTimeout](https://golang.org/pkg/net/http/#Transport.IdleConnTimeout) documentation.
