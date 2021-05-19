@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { AppRootProps, SelectableValue, dateTimeParse } from '@grafana/data';
 import { Field, LoadingPlaceholder, Select } from '@grafana/ui';
-export { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
 
 import { PluginList } from '../components/PluginList';

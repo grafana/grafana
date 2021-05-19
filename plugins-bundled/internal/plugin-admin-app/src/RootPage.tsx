@@ -4,7 +4,7 @@ import { Discover } from 'pages/Discover';
 import { Browse } from 'pages/Browse';
 import { PluginDetails } from 'pages/PluginDetails';
 import { Library } from 'pages/Library';
-export { Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import { config } from '@grafana/runtime';
 import { NotEnabled } from 'pages/NotEnabed';
 
