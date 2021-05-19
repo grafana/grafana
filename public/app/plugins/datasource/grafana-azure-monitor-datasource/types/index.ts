@@ -91,7 +91,7 @@ export interface AzureLogsQuery {
   resource?: string;
 
   /** @deprecated Queries should be migrated to use Resource instead */
-  workspace: string;
+  workspace?: string;
 }
 
 export interface ApplicationInsightsQuery {

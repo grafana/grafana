@@ -69,10 +69,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return this.doRequest(workspaceListUrl, true);
   }
 
-  async getMetadata(workspace: string) {
-    const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
-    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
+  async getMetadata(resourceUri: string) {
+    const url = `${this.baseUrl.replace('/workspaces', '')}${resourceUri}/metadata`;
 
+    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
     if (!resp.ok) {
       throw new Error('Unable to get metadata for workspace');
     }
@@ -80,9 +80,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return resp.data;
   }
 
-  async getKustoSchema(workspace: string) {
-    const metadata = await this.getMetadata(workspace);
-    return transformMetadataToKustoSchema(metadata, workspace);
+  async getKustoSchema(resourceUri: string) {
+    const metadata = await this.getMetadata(resourceUri);
+    return transformMetadataToKustoSchema(metadata, resourceUri);
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
@@ -170,6 +170,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getWorkspaceDetails(workspaceId: string) {
+    if (!this.subscriptionId) {
+      return {};
+    }
     const response = await this.getWorkspaceList(this.subscriptionId);
 
     const details = response.data.value.find((o: any) => {
