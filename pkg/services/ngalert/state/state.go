@@ -12,14 +12,15 @@ type State struct {
 	AlertRuleUID       string
 	OrgID              int64
 	CacheId            string
-	Labels             data.Labels
 	State              eval.State
 	Results            []Evaluation
 	StartsAt           time.Time
 	EndsAt             time.Time
 	LastEvaluationTime time.Time
 	EvaluationDuration time.Duration
+	LastSentAt         time.Time
 	Annotations        map[string]string
+	Labels             data.Labels
 	Error              error
 }
 
@@ -110,6 +111,16 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 		a.State = eval.Normal
 	}
 	return a
+}
+
+func (a *State) NeedsSending(resendDelay time.Duration) bool {
+	if a.State != eval.Alerting {
+		return false
+	}
+
+	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
+	return a.LastSentAt.Add(resendDelay).Before(a.LastEvaluationTime) ||
+		a.LastSentAt.Add(resendDelay).Equal(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {
