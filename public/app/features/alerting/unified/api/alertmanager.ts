@@ -6,7 +6,7 @@ import {
   AlertmanagerGroup,
   Silence,
   SilenceCreatePayload,
-  SilenceMatcher,
+  Matcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -91,7 +91,7 @@ export async function expireSilence(alertmanagerSourceName: string, silenceID: s
 
 export async function fetchAlerts(
   alertmanagerSourceName: string,
-  matchers?: SilenceMatcher[],
+  matchers?: Matcher[],
   silenced = true,
   active = true,
   inhibited = true

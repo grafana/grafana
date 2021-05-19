@@ -182,7 +182,6 @@ export class DashboardSettings extends PureComponent<Props> {
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   scrollInner: css`
     min-width: 100%;
-    min-height: 100%;
     display: flex;
   `,
   settingsWrapper: css`
