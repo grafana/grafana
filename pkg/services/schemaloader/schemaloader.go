@@ -36,53 +36,56 @@ type SchemaLoaderService struct {
 	DashFamily   schema.VersionedCueSchema
 	Cfg          *setting.Cfg `inject:""`
 	pluginFolder string
-	baseLoadPath ScueVFS
+	baseLoadPath load.BaseLoadPaths
 }
 
 type ScueVFS struct {
 	sync.Mutex
-	p load.BaseLoadPaths
+	fstest.MapFS
 }
 
 func (r *ScueVFS) SetInstanceFile(key, content string) {
 	r.Lock()
 	defer r.Unlock()
-	r.p.InstanceCueFS.(fstest.MapFS)[key] = &fstest.MapFile{Data: []byte(content)}
+	r.MapFS[key] = &fstest.MapFile{Data: []byte(content)}
 }
 
 func (r *ScueVFS) RemoveInstanceFile(key string) {
 	r.Lock()
 	defer r.Unlock()
-	delete(r.p.InstanceCueFS.(fstest.MapFS), key)
+	delete(r.MapFS, key)
 }
 
 func (rs *SchemaLoaderService) LoadNewPanelPluginSchema(name, content string) error {
 	cueFile := filepath.Join(rs.pluginFolder, name+".cue")
 	rs.log.Info("Write file into virtual file system", "file", cueFile)
-	rs.baseLoadPath.SetInstanceFile(cueFile, content)
+	rs.baseLoadPath.InstanceCueFS.(*ScueVFS).SetInstanceFile(cueFile, content)
 	return nil
 }
 
 func (rs *SchemaLoaderService) RemovePanelPluginSchema(name string) error {
 	cueFile := filepath.Join(rs.pluginFolder, name+".cue")
 	rs.log.Info("Delete file from virtual file system", "file", cueFile)
-	rs.baseLoadPath.RemoveInstanceFile(cueFile)
+	rs.baseLoadPath.InstanceCueFS.(*ScueVFS).RemoveInstanceFile(cueFile)
 	return nil
 }
 
 func (rs *SchemaLoaderService) Init() error {
-	rs.baseLoadPath.p = load.GetDefaultLoadPaths()
+	defaultLoadPaths := load.GetDefaultLoadPaths()
 	rs.pluginFolder = filepath.Join("public", "app", "plugins")
-	rs.baseLoadPath.p.InstanceCueFS = fstest.MapFS{
-		rs.pluginFolder: &fstest.MapFile{Mode: fs.ModeDir},
+	rs.baseLoadPath = load.BaseLoadPaths{
+		BaseCueFS:       defaultLoadPaths.BaseCueFS,
+		DistPluginCueFS: defaultLoadPaths.DistPluginCueFS,
+		InstanceCueFS:   ScueVFS{},
 	}
+	rs.baseLoadPath.InstanceCueFS.(ScueVFS).MapFS[rs.pluginFolder] = &fstest.MapFile{Mode: fs.ModeDir}
 
 	rs.log = log.New("schemaloader")
 	var err error
-	rs.DashFamily, err = load.BaseDashboardFamily(rs.baseLoadPath.p)
+	rs.DashFamily, err = load.BaseDashboardFamily(rs.baseLoadPath)
 
 	if err != nil {
-		return fmt.Errorf("failed to load dashboard cue schema from path %q: %w", rs.baseLoadPath.p, err)
+		return fmt.Errorf("failed to load dashboard cue schema from path %q: %w", rs.baseLoadPath, err)
 	}
 	return nil
 }

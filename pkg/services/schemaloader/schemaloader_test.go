@@ -22,10 +22,14 @@ func TestSchemaLoader(t *testing.T) {
 		DashFamily:   dashFamily,
 		Cfg:          setting.NewCfg(),
 		pluginFolder: filepath.Join("public", "app", "plugins"),
-		baseLoadPath: ScueVFS{p: Lpath},
+		baseLoadPath: load.BaseLoadPaths{
+			BaseCueFS:       Lpath.BaseCueFS,
+			DistPluginCueFS: Lpath.DistPluginCueFS,
+			InstanceCueFS:   ScueVFS{},
+		},
 	}
 
-	rs.baseLoadPath.p.InstanceCueFS = fstest.MapFS{
+	rs.baseLoadPath.InstanceCueFS = fstest.MapFS{
 		rs.pluginFolder: &fstest.MapFile{Mode: fs.ModeDir},
 		filepath.Join(rs.pluginFolder, "22222.cue"): &fstest.MapFile{Data: []byte("Test data")},
 	}
@@ -38,7 +42,7 @@ func TestSchemaLoader(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		f, err := rs.baseLoadPath.p.InstanceCueFS.Open(fileFullPath)
+		f, err := rs.baseLoadPath.InstanceCueFS.Open(fileFullPath)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -69,49 +73,45 @@ func TestSchemaLoader(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		_, ok := rs.baseLoadPath.p.InstanceCueFS.(fstest.MapFS)[fileFullPath]
+		_, ok := rs.baseLoadPath.InstanceCueFS.(fstest.MapFS)[fileFullPath]
 		require.False(t, ok)
 	})
 
 	t.Run("Concurrency test on virtual file system", func(t *testing.T) {
-		t.Run("Write to virtual file system", func(t *testing.T) {
-			content := "This is a test file for the virtual file system"
-			var wg sync.WaitGroup
-			wg.Add(10)
+		content := "This is a test file for the virtual file system"
+		var wg sync.WaitGroup
+		wg.Add(10)
+		for i := 1; i <= 10; i++ {
+			go func(name string) {
+				rs.LoadNewPanelPluginSchema(name, content)
+				wg.Done()
+			}(strconv.Itoa(i))
+		}
+		wg.Wait()
+
+		t.Run("check files are created successfully", func(t *testing.T) {
 			for i := 1; i <= 10; i++ {
-				go func(name string) {
-					rs.LoadNewPanelPluginSchema(name, content)
-					wg.Done()
-				}(strconv.Itoa(i))
-			}
-			wg.Wait()
-
-			t.Run("check files are created successfully", func(t *testing.T) {
-				for i := 1; i <= 10; i++ {
-					f, err := rs.baseLoadPath.p.InstanceCueFS.Open(filepath.Join(rs.pluginFolder, strconv.Itoa(i)+".cue"))
-					if err != nil {
-						t.Fatal(err)
-					}
-					defer func() {
-						_ = f.Close()
-					}()
-					fi, err := f.Stat()
-					if err != nil {
-						t.Fatal(err)
-					}
-					t.Log(fi.Name(), fi.Size(), fi.ModTime())
-					var result = make([]byte, int(fi.Size()))
-					n, err := f.Read(result)
-					if err != nil {
-						t.Fatal(err)
-					}
-
-					if string(result[:n]) != content {
-						t.Errorf("expect: %s, actual: %s", content, result[:n])
-					}
+				f, err := rs.baseLoadPath.InstanceCueFS.Open(filepath.Join(rs.pluginFolder, strconv.Itoa(i)+".cue"))
+				if err != nil {
+					t.Fatal(err)
 				}
-			})
+				defer func() {
+					_ = f.Close()
+				}()
+				fi, err := f.Stat()
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Log(fi.Name(), fi.Size(), fi.ModTime())
+				var result = make([]byte, int(fi.Size()))
+				n, err := f.Read(result)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if string(result[:n]) != content {
+					t.Errorf("expect: %s, actual: %s", content, result[:n])
+				}
+			}
 		})
 	})
-
 }
