@@ -484,10 +484,18 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		}
 	}
 
-	if c.Route != nil {
-		if err := c.Route.UnmarshalYAML(noopUnmarshal); err != nil {
-			return err
-		}
+	if c.Route == nil {
+		return fmt.Errorf("no routes provided")
+	}
+	if len(c.Route.Receiver) == 0 {
+		return fmt.Errorf("root route must specify a default receiver")
+	}
+	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
+		return fmt.Errorf("root route must not have any matchers")
+	}
+
+	if err := c.Route.UnmarshalYAML(noopUnmarshal); err != nil {
+		return err
 	}
 
 	for _, r := range c.InhibitRules {
