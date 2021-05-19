@@ -74,6 +74,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     customEndpoint: '',
     sampleRate: 1,
   };
+  pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = false;
   expressionsEnabled = false;
   customTheme?: any;
