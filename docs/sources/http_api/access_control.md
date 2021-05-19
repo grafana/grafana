@@ -558,7 +558,7 @@ Accept: application/json
 
 #### Query parameters
 
-Field Name | Type | Required | Description
+Param | Type | Required | Description
 --- | --- | --- | ---
 global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. Refer to the [Built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.
 
