@@ -11,7 +11,7 @@ import { CatalogTab, getCatalogNavModel } from './nav';
 
 export const Library = ({ meta, onNavChanged, basename }: AppRootProps) => {
   onNavChanged(getCatalogNavModel(CatalogTab.Library, basename));
-  const { isLoading, items, installedPlugins } = usePlugins(true);
+  const { isLoading, items, installedPlugins } = usePlugins();
   const styles = useStyles2(getStyles);
 
   const filteredPlugins = items.filter((plugin) => !!installedPlugins.find((_) => _.id === plugin.slug));

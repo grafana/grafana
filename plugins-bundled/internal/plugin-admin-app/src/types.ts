@@ -1,5 +1,3 @@
-export interface CatalogAppSettings {}
-
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export interface Plugin {

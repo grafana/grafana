@@ -17,7 +17,7 @@ import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Discover = ({ meta }: AppRootProps) => {
-  const { items, isLoading } = usePlugins(false);
+  const { items, isLoading } = usePlugins();
   const styles = useStyles2(getStyles);
 
   const onSearch = (q: string) => {

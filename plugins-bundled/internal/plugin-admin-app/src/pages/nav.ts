@@ -65,14 +65,3 @@ function setActivePage(pageId: CatalogTab, pages: NavModelItem[], defaultPageId:
 
   return changed;
 }
-
-export function getLoadingNav(): NavModel {
-  const node = {
-    text: 'Loading...',
-    icon: 'icon-gf icon-gf-panel',
-  };
-  return {
-    node: node,
-    main: node,
-  };
-}

@@ -1,11 +1,10 @@
 import React from 'react';
 import { PluginConfigPageProps, AppPluginMeta } from '@grafana/data';
-import { CatalogAppSettings } from 'types';
 import { LinkButton } from '@grafana/ui';
 import { PLUGIN_ROOT } from '../constants';
 import { config } from '@grafana/runtime';
 
-interface Props extends PluginConfigPageProps<AppPluginMeta<CatalogAppSettings>> {}
+interface Props extends PluginConfigPageProps<AppPluginMeta> {}
 
 export const Settings = ({ plugin }: Props) => {
   if (!config.pluginAdminEnabled) {
