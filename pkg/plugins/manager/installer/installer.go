@@ -106,11 +106,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 		}
 
 		v, err := i.selectVersion(&plugin, version)
-		var e ErrVersionNotFound
 		if err != nil {
-			if errors.As(err, &e) {
-
-			}
 			return err
 		}
 
