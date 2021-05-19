@@ -130,7 +130,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
           </>
         )}
       </div>
-      {!isCollapsed && <RulesTable className={styles.rulesTable} showGuidelines={true} rules={group.rules} />}
+      {!isCollapsed && (
+        <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
+      )}
     </div>
   );
 });
