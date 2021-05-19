@@ -41,7 +41,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"azureLogAnalytics": map[string]interface{}{
 							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": "time_series",
+							"resultFormat": timeSeries,
 						},
 					}),
 					RefID: "A",
@@ -50,12 +50,12 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: "time_series",
+					ResultFormat: timeSeries,
 					URL:          "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"azureLogAnalytics": map[string]interface{}{
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": "time_series",
+							"resultFormat": timeSeries,
 							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
 						},
 					}),
