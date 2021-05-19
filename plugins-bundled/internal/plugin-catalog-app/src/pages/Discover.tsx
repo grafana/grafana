@@ -1,7 +1,7 @@
 import React from 'react';
 import { cx, css } from '@emotion/css';
 
-import { dateTimeParse, AppRootProps, GrafanaTheme2 } from '@grafana/data';
+import { dateTimeParse, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Legend, LinkButton } from '@grafana/ui';
 
 import { PLUGIN_ROOT } from '../constants';
@@ -12,14 +12,12 @@ import { SearchField } from '../components/SearchField';
 import { PluginTypeIcon } from '../components/PluginTypeIcon';
 import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
-import { CatalogAppSettings, Plugin } from '../types';
+import { Plugin } from '../types';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const Discover = ({ meta }: AppRootProps) => {
-  const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
-
-  const { items, isLoading } = usePlugins(includeEnterprise);
+export const Discover = () => {
+  const { items, isLoading } = usePlugins();
   const history = useHistory();
   const styles = useStyles2(getStyles);
 
