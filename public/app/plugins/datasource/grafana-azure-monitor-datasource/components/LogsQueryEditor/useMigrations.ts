@@ -12,14 +12,18 @@ async function migrateWorkspaceQueryToResourceQuery(
       query.azureLogAnalytics.workspace
     );
 
-    onChange({
+    const newQuery = {
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
         resource: resourceURI,
         workspace: undefined,
       },
-    });
+    };
+
+    delete newQuery.azureLogAnalytics.workspace;
+
+    onChange(newQuery);
   }
 }
 

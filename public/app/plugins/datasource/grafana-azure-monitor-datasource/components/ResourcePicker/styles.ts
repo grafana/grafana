@@ -25,7 +25,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   disabledRow: css({
     opacity: 0.5,
-    // "pointer-events": "none"
   }),
 
   cell: css({
