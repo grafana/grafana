@@ -31,3 +31,25 @@ export const WithManyTags = () => {
     </VerticalGroup>
   );
 };
+
+export const WithAddOnBlur = () => {
+  const [tags, setTags] = useState<string[]>([]);
+  return (
+    <VerticalGroup>
+      <StoryExample name="Tags are added when input loses focus">
+        <TagsInput tags={tags} onChange={setTags} addOnBlur />
+      </StoryExample>
+    </VerticalGroup>
+  );
+};
+
+export const WithInvalidState = () => {
+  const [tags, setTags] = useState<string[]>([]);
+  return (
+    <VerticalGroup>
+      <StoryExample name="Invalid state">
+        <TagsInput tags={tags} onChange={setTags} invalid />
+      </StoryExample>
+    </VerticalGroup>
+  );
+};

@@ -14,6 +14,7 @@ export interface Props {
   className?: string;
   disabled?: boolean;
   addOnBlur?: boolean;
+  invalid?: boolean;
 }
 
 export const TagsInput: FC<Props> = ({
@@ -24,6 +25,7 @@ export const TagsInput: FC<Props> = ({
   className,
   disabled,
   addOnBlur,
+  invalid,
 }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
@@ -77,6 +79,7 @@ export const TagsInput: FC<Props> = ({
           value={newTagName}
           onKeyUp={onKeyboardAdd}
           onBlur={onBlur}
+          invalid={invalid}
           suffix={
             newTagName.length > 0 && (
               <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
