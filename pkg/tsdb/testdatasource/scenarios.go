@@ -711,11 +711,9 @@ func (p *testDataPlugin) handleCategoricalDataScenario(ctx context.Context, req 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
-
 	}
 
 	return resp, nil
-
 }
 
 func randomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
