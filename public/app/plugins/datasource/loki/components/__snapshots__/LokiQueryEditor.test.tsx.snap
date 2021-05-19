@@ -43,6 +43,7 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
       </div>
     </React.Fragment>
   }
+  data-testid="loki-editor"
   datasource={Object {}}
   history={Array []}
   onBlur={[MockFunction]}
@@ -101,6 +102,7 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
       </div>
     </React.Fragment>
   }
+  data-testid="loki-editor"
   datasource={Object {}}
   history={Array []}
   onBlur={[MockFunction]}
