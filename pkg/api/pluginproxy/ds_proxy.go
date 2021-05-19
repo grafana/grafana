@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -30,13 +31,14 @@ var (
 )
 
 type DataSourceProxy struct {
-	ds        *models.DataSource
-	ctx       *models.ReqContext
-	targetUrl *url.URL
-	proxyPath string
-	route     *plugins.AppPluginRoute
-	plugin    *plugins.DataSourcePlugin
-	cfg       *setting.Cfg
+	ds             *models.DataSource
+	ctx            *models.ReqContext
+	targetUrl      *url.URL
+	proxyPath      string
+	route          *plugins.AppPluginRoute
+	plugin         *plugins.DataSourcePlugin
+	cfg            *setting.Cfg
+	clientProvider httpclient.Provider
 }
 
 type handleResponseTransport struct {
@@ -69,19 +71,20 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
-	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DataSourceProxy{
-		ds:        ds,
-		plugin:    plugin,
-		ctx:       ctx,
-		proxyPath: proxyPath,
-		targetUrl: targetURL,
-		cfg:       cfg,
+		ds:             ds,
+		plugin:         plugin,
+		ctx:            ctx,
+		proxyPath:      proxyPath,
+		targetUrl:      targetURL,
+		cfg:            cfg,
+		clientProvider: clientProvider,
 	}, nil
 }
 
@@ -101,7 +104,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
 
-	transport, err := proxy.ds.GetHttpTransport()
+	transport, err := proxy.ds.GetHTTPTransport(proxy.clientProvider)
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
