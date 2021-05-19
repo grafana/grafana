@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -164,7 +165,13 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 }
 
 func TestAppInsightsPluginRoutes(t *testing.T) {
-	datasource := &ApplicationInsightsDatasource{}
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			Cloud:                  setting.AzurePublic,
+			ManagedIdentityEnabled: true,
+		},
+	}
+
 	plugin := &plugins.DataSourcePlugin{
 		Routes: []*plugins.AppPluginRoute{
 			{
@@ -190,21 +197,37 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		cloudName         string
+		datasource        *ApplicationInsightsDatasource
 		expectedRouteName string
 		expectedRouteURL  string
 		Err               require.ErrorAssertionFunc
 	}{
 		{
-			name:              "plugin proxy route for the Azure public cloud",
-			cloudName:         "azuremonitor",
+			name: "plugin proxy route for the Azure public cloud",
+			datasource: &ApplicationInsightsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "azuremonitor",
+					}),
+				},
+			},
 			expectedRouteName: "appinsights",
 			expectedRouteURL:  "https://api.applicationinsights.io",
 			Err:               require.NoError,
 		},
 		{
-			name:              "plugin proxy route for the Azure China cloud",
-			cloudName:         "chinaazuremonitor",
+			name: "plugin proxy route for the Azure China cloud",
+			datasource: &ApplicationInsightsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "chinaazuremonitor",
+					}),
+				},
+			},
 			expectedRouteName: "chinaappinsights",
 			expectedRouteURL:  "https://api.applicationinsights.azure.cn",
 			Err:               require.NoError,
@@ -213,7 +236,7 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			route, routeName, err := datasource.getPluginRoute(plugin, tt.cloudName)
+			route, routeName, err := tt.datasource.getPluginRoute(plugin)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {
