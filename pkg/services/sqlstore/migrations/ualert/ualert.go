@@ -52,7 +52,10 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
-		mg.AddMigration(migTitle, &migration{})
+		mg.AddMigration(migTitle, &migration{
+			seenChannelUIDs:  make(map[string]struct{}),
+			migratedChannels: make(map[*notificationChannel]struct{}),
+		})
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
@@ -100,28 +103,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	// allChannels: channelUID -> channelConfig
-	allChannels, defaultChannel, err := m.getNotificationChannelMap()
+	allChannels, defaultChannels, err := m.getNotificationChannelMap()
 	if err != nil {
 		return err
 	}
 
 	amConfig := PostableUserConfig{}
-
-	if defaultChannel != nil {
-		// Migration for the default route.
-		channelUids := []interface{}{defaultChannel.Uid}
-		if defaultChannel.Uid == "" {
-			channelUids = []interface{}{defaultChannel.ID}
-		}
-		recv, route, err := m.makeReceiverAndRoute("default_route", channelUids, allChannels)
-		if err != nil {
-			return err
-		}
-
-		route.Matchers = nil // Don't need matchers for root route.
-		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
-		amConfig.AlertmanagerConfig.Route = route
-	}
+	amConfig.AlertmanagerConfig.Route = &Route{}
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -248,11 +236,10 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	// Create a separate receiver for all the unmigrated channels.
-	recv, err := m.makeReceiverForUnmigratedChannels(allChannels)
+	err = m.updateDefaultAndUnmigratedChannels(&amConfig, allChannels, defaultChannels)
 	if err != nil {
 		return err
 	}
-	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
 
 	if err := amConfig.EncryptSecureSettings(); err != nil {
 		return err

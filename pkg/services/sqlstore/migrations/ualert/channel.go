@@ -25,7 +25,7 @@ type notificationChannel struct {
 	SecureSettings        securejsondata.SecureJsonData `xorm:"secure_settings"`
 }
 
-func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationChannel, *notificationChannel, error) {
+func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationChannel, []*notificationChannel, error) {
 	q := `
 	SELECT id,
 		uid,
@@ -49,7 +49,7 @@ func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationCh
 	}
 
 	allChannelsMap := make(map[interface{}]*notificationChannel)
-	var defaultChannel *notificationChannel
+	var defaultChannels []*notificationChannel
 	for i, c := range allChannels {
 		if c.Uid != "" {
 			allChannelsMap[c.Uid] = &allChannels[i]
@@ -59,26 +59,11 @@ func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationCh
 		}
 		if c.IsDefault {
 			// TODO: verify that there will be only 1 default channel.
-			defaultChannel = &allChannels[i]
+			defaultChannels = append(defaultChannels, &allChannels[i])
 		}
 	}
 
-	if defaultChannel == nil {
-		// Select the first one in the slice or any random
-		// email channel if it exists as the default.
-		defaultChannel = &allChannels[0]
-		if defaultChannel.Type != "email" {
-			// Give preference to email channel for default if any exists.
-			for _, c := range allChannelsMap {
-				if c.Type == "email" {
-					defaultChannel = c
-					break
-				}
-			}
-		}
-	}
-
-	return allChannelsMap, defaultChannel, nil
+	return allChannelsMap, defaultChannels, nil
 }
 
 func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
@@ -161,7 +146,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 	return receiver, route, nil
 }
 
-func (m *migration) makeReceiverForUnmigratedChannels(allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, error) {
+func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
 	portedChannels := []*PostableGrafanaReceiver{}
 	receiver := &PostableApiReceiver{
 		Name: "autogen-unlinked-channel-recv",
@@ -173,12 +158,12 @@ func (m *migration) makeReceiverForUnmigratedChannels(allChannels map[interface{
 			continue
 		}
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			return nil, fmt.Errorf("discontinued notification channel found: %s", c.Type)
+			return fmt.Errorf("discontinued notification channel found: %s", c.Type)
 		}
 
 		uid, ok := m.generateChannelUID()
 		if !ok {
-			return nil, errors.New("failed to generate UID for notification channel")
+			return errors.New("failed to generate UID for notification channel")
 		}
 
 		m.migratedChannels[c] = struct{}{}
@@ -194,7 +179,41 @@ func (m *migration) makeReceiverForUnmigratedChannels(allChannels map[interface{
 	}
 	receiver.GrafanaManagedReceivers = portedChannels
 
-	return receiver, nil
+	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, receiver)
+
+	if len(defaultChannels) == 0 {
+		// Pick one from the migrated channels. Preference to email channel.
+		for c := range m.migratedChannels {
+			if len(defaultChannels) == 0 {
+				defaultChannels = append(defaultChannels, c)
+			}
+			if c.Type == "email" {
+				defaultChannels[0] = c
+				break
+			}
+		}
+	}
+
+	var channelUids = []interface{}{}
+	for _, c := range defaultChannels {
+		if c.Uid == "" {
+			channelUids = append(channelUids, c.ID)
+		} else {
+			channelUids = append(channelUids, c.Uid)
+		}
+	}
+
+	recv, route, err := m.makeReceiverAndRoute("default_route", channelUids, allChannels)
+	if err != nil {
+		return err
+	}
+
+	route.Matchers = nil // Don't need matchers for root route.
+	route.Routes = amConfig.AlertmanagerConfig.Route.Routes
+	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	amConfig.AlertmanagerConfig.Route = route
+
+	return nil
 }
 
 func (m *migration) generateChannelUID() (string, bool) {
