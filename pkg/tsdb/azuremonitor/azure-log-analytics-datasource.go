@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -65,6 +66,29 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
+func getApiURL(queryJSONModel logJSONQuery) string {
+	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
+	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
+	// However, legacy workspace queries using a `workspaces()` template variable will be resolved
+	// to a resource URI, so they should use the new resource-centric.
+	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
+	var resourceOrWorkspace string
+
+	if azureLogAnalyticsTarget.Resource != "" {
+		resourceOrWorkspace = azureLogAnalyticsTarget.Resource
+	} else {
+		resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
+	}
+
+	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
+
+	if matchesResourceURI {
+		return fmt.Sprintf("v1%s/query", resourceOrWorkspace)
+	} else {
+		return fmt.Sprintf("v1/workspaces/%s/query", resourceOrWorkspace)
+	}
+}
+
 func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
@@ -89,13 +113,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			resultFormat = timeSeries
 		}
 
-		// Handle legacy queries without a Resource
-		var apiURL string
-		if azureLogAnalyticsTarget.Resource != "" {
-			apiURL = fmt.Sprintf("v1%s/query", azureLogAnalyticsTarget.Resource)
-		} else {
-			apiURL = fmt.Sprintf("v1/workspaces/%s/query", azureLogAnalyticsTarget.Workspace)
-		}
+		apiURL := getApiURL(queryJSONModel)
 
 		params := url.Values{}
 		rawQuery, err := KqlInterpolate(query, timeRange, azureLogAnalyticsTarget.Query, "TimeGenerated")
