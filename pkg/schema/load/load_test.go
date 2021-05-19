@@ -81,9 +81,6 @@ func TestDashboardValidity(t *testing.T) {
 func TestPanelValidity(t *testing.T) {
 	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "panels"))
 
-	//dash, err := BaseDashboardFamily(p)
-	//require.NoError(t, err, "error while loading base dashboard scuemata")
-
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
 
