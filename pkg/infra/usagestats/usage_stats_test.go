@@ -312,6 +312,7 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
 			assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())
+			assert.Equal(t, 18, metrics.Get("stats.alert_rules.count").MustInt())
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
