@@ -100,3 +100,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	return true, nil
 }
+
+func (n *AlertmanagerNotifier) SendResolved() bool {
+	return !n.GetDisableResolveMessage()
+}

@@ -424,6 +424,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		case "sensugo":
 			n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+		case "alertmanager":
+			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}
