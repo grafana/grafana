@@ -77,7 +77,7 @@ func extendAlert(alert template.Alert, externalURL string) (*ExtendedAlert, erro
 			}
 		}
 
-		matchers := make([]string, len(alert.Labels))
+		matchers := make([]string, 0)
 		for key, value := range alert.Labels {
 			if !(strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__")) {
 				matchers = append(matchers, key+"="+value)

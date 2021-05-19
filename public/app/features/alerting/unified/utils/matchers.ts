@@ -3,5 +3,8 @@ import { parseMatcher } from './alertmanager';
 
 // parses comma separated matchers like "foo=bar,baz=~bad*" into SilenceMatcher[]
 export function parseQueryParamMatchers(paramValue: string): Matcher[] {
-  return paramValue.split(',').map((x) => parseMatcher(x.trim()));
+  return paramValue
+    .split(',')
+    .filter((x) => !!x.trim())
+    .map((x) => parseMatcher(x.trim()));
 }
