@@ -23,7 +23,10 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-const pushoverEndpoint = "https://api.pushover.net/1/messages.json"
+const (
+	PUSHOVERENDPOINT = "https://api.pushover.net/1/messages.json"
+	BOUNDARY         = "abcd"
+)
 
 // PushoverNotifier is responsible for sending
 // alert notifications to Pushover
@@ -105,7 +108,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        pushoverEndpoint,
+		Url:        PUSHOVERENDPOINT,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
@@ -139,7 +142,11 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
 	w := multipart.NewWriter(&b)
-	w.SetBoundary("abcd")
+	// set a specific boundary to be used by the tests
+	err = w.SetBoundary(BOUNDARY)
+	if err != nil {
+		return nil, b, err
+	}
 
 	// Add the user token
 	err = w.WriteField("user", pn.UserKey)

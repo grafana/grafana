@@ -171,10 +171,10 @@ func TestPushoverNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			bodyReader := multipart.NewReader(strings.NewReader(body), "abcd")
+			bodyReader := multipart.NewReader(strings.NewReader(body), BOUNDARY)
 			for {
 				part, err := bodyReader.NextPart()
-				if part == nil || err == io.EOF {
+				if part == nil || errors.Is(err, io.EOF) {
 					assert.Empty(t, c.expMsg, fmt.Sprintf("expected fields %v", c.expMsg))
 					break
 				}
