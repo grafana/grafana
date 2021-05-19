@@ -91,6 +91,9 @@ describe('BarChart utils', () => {
       tooltip: {
         mode: TooltipDisplayMode.None,
       },
+      text: {
+        valueSize: 10,
+      },
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {

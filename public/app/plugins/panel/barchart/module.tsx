@@ -115,6 +115,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
 
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder, false);
   });
 
 function countNumberFields(data?: DataFrame[]): number {

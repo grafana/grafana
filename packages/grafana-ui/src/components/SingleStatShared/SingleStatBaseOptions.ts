@@ -15,13 +15,12 @@ import {
   ThresholdsConfig,
   validateFieldConfig,
   FieldColorModeId,
-  TextDisplayOptions,
 } from '@grafana/data';
+import { OptionsWithTextFormatting } from '../../options';
 
-export interface SingleStatBaseOptions {
+export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
-  text?: TextDisplayOptions;
 }
 
 const optionsToKeep = ['reduceOptions', 'orientation'];

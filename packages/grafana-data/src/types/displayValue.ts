@@ -20,14 +20,14 @@ export interface DisplayValue extends FormattedValue {
 
 /**
  * Explicit control for text settings
+ * @deprecated Use VizTextDisplayOptions from @grafana/ui instead
  */
-export interface TextDisplayOptions {
+export type TextDisplayOptions = {
   /* Explicit text size */
   titleSize?: number;
-
   /* Explicit text size */
   valueSize?: number;
-}
+};
 
 /**
  * These represents the display value with the longest title and text.
