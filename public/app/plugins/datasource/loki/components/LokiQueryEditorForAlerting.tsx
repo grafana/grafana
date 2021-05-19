@@ -14,6 +14,7 @@ export function LokiQueryEditorForAlerting(props: LokiQueryEditorProps) {
       onBlur={onRunQuery}
       history={[]}
       data={data}
+      placeholder="Enter a Loki query"
     />
   );
 }

@@ -64,6 +64,7 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 export interface LokiQueryFieldProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
   ExtraFieldElement?: ReactNode;
+  placeholder?: string;
 }
 
 interface LokiQueryFieldState {
@@ -137,7 +138,13 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource } = this.props;
+    const {
+      ExtraFieldElement,
+      query,
+      datasource,
+      placeholder = 'Enter a Loki query (run with Shift+Enter)',
+    } = this.props;
+
     const { labelsLoaded, labelBrowserVisible } = this.state;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
@@ -166,7 +173,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               onChange={this.onChangeQuery}
               onBlur={this.props.onBlur}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a Loki query (run with Shift+Enter)"
+              placeholder={placeholder}
               portalOrigin="loki"
             />
           </div>

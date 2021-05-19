@@ -14,6 +14,7 @@ export function PromQueryEditorForAlerting(props: PromQueryEditorProps) {
       history={[]}
       range={range}
       data={data}
+      placeholder="Enter a PromQL query"
     />
   );
 }

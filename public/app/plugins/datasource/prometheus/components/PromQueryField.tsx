@@ -77,6 +77,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: Array<HistoryItem<PromQuery>>;
   ExtraFieldElement?: ReactNode;
+  placeholder?: string;
 }
 
 interface PromQueryFieldState {
@@ -271,7 +272,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       datasource: { languageProvider },
       query,
       ExtraFieldElement,
+      placeholder = 'Enter a PromQL query (run with Shift+Enter)',
     } = this.props;
+
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
     const cleanText = languageProvider ? languageProvider.cleanText : undefined;
     const hasMetrics = languageProvider.metrics.length > 0;
@@ -300,7 +303,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               onBlur={this.props.onBlur}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a PromQL query (run with Shift+Enter)"
+              placeholder={placeholder}
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}
             />
