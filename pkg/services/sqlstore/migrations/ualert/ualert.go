@@ -31,34 +31,33 @@ func (e MigrationError) Error() string {
 func (e *MigrationError) Unwrap() error { return e.Err }
 
 func AddDashAlertMigration(mg *migrator.Migrator) {
-	if os.Getenv("UALERT_MIG") == "iDidBackup" {
-		// TODO: unified alerting DB needs to be extacted into ../migrations.go
-		// so it runs and creates the tables before this migration runs.
-		logs, err := mg.GetMigrationLog()
+	logs, err := mg.GetMigrationLog()
+	if err != nil {
+		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		os.Exit(1)
+	}
+
+	_, migrationRun := logs[migTitle]
+
+	ngEnabled := mg.Cfg.IsNgAlertEnabled()
+
+	switch {
+	case ngEnabled && !migrationRun:
+		// Remove the migration entry that removes all unified alerting data. This is so when the feature
+		// flag is removed in future the "remove unified alerting data" migration will be run again.
+		err = mg.ClearMigrationEntry(rmMigTitle)
 		if err != nil {
-			mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
-			os.Exit(1)
+			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
-
-		_, migrationRun := logs[migTitle]
-
-		ngEnabled := mg.Cfg.IsNgAlertEnabled()
-
-		switch {
-		case ngEnabled && !migrationRun:
-			// clear the entry of the migration that
-			err = mg.ClearMigrationEntry(rmMigTitle)
-			if err != nil {
-				mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
-			}
-			mg.AddMigration(migTitle, &migration{})
-		case !ngEnabled && migrationRun:
-			err = mg.ClearMigrationEntry(migTitle)
-			if err != nil {
-				mg.Logger.Error("alert migration error: could not clear alert migration", "error", err)
-			}
-			mg.AddMigration(rmMigTitle, &rmMigration{})
+		mg.AddMigration(migTitle, &migration{})
+	case !ngEnabled && migrationRun:
+		// Remove the migration entry that creates unified alerting data. This is so when the feature
+		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
+		err = mg.ClearMigrationEntry(migTitle)
+		if err != nil {
+			mg.Logger.Error("alert migration error: could not clear dashboard alert migration", "error", err)
 		}
+		mg.AddMigration(rmMigTitle, &rmMigration{})
 	}
 }
 

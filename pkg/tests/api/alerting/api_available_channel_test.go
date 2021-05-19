@@ -146,6 +146,22 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false
+      },
+      {
+        "element": "textarea",
+        "inputType": "",
+        "label": "Message",
+        "description": "Optional message to include with the email. You can use template variables",
+        "placeholder": "",
+        "propertyName": "message",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
       }
     ]
   },
@@ -269,6 +285,403 @@ var expAvailableChannelJsonOutput = `
         "validationRule": "",
         "secure": false
       }
+    ]
+  },
+  {
+    "type": "pushover",
+    "name": "Pushover",
+    "description": "Sends HTTP POST request to the Pushover API",
+    "heading": "Pushover settings",
+    "info": "",
+    "options": [
+        {
+            "element": "input",
+            "inputType": "text",
+            "label": "API Token",
+            "description": "",
+            "placeholder": "Application token",
+            "propertyName": "apiToken",
+            "selectOptions": null,
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": true,
+            "validationRule": "",
+            "secure": true
+        },
+        {
+            "element": "input",
+            "inputType": "text",
+            "label": "User key(s)",
+            "description": "",
+            "placeholder": "comma-separated list",
+            "propertyName": "userKey",
+            "selectOptions": null,
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": true,
+            "validationRule": "",
+            "secure": true
+        },
+        {
+            "element": "input",
+            "inputType": "text",
+            "label": "Device(s) (optional)",
+            "description": "",
+            "placeholder": "comma-separated list; leave empty to send to all devices",
+            "propertyName": "device",
+            "selectOptions": null,
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        },
+        {
+            "element": "select",
+            "inputType": "",
+            "label": "Alerting priority",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "priority",
+            "selectOptions": [
+                {
+                    "value": "2",
+                    "label": "Emergency"
+                },
+                {
+                    "value": "1",
+                    "label": "High"
+                },
+                {
+                    "value": "0",
+                    "label": "Normal"
+                },
+                {
+                    "value": "-1",
+                    "label": "Low"
+                },
+                {
+                    "value": "-2",
+                    "label": "Lowest"
+                }
+            ],
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        },
+        {
+            "element": "select",
+            "inputType": "",
+            "label": "OK priority",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "okPriority",
+            "selectOptions": [
+                {
+                    "value": "2",
+                    "label": "Emergency"
+                },
+                {
+                    "value": "1",
+                    "label": "High"
+                },
+                {
+                    "value": "0",
+                    "label": "Normal"
+                },
+                {
+                    "value": "-1",
+                    "label": "Low"
+                },
+                {
+                    "value": "-2",
+                    "label": "Lowest"
+                }
+            ],
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        },
+        {
+            "element": "input",
+            "inputType": "text",
+            "label": "Retry (Only used for Emergency Priority)",
+            "description": "How often (in seconds) the Pushover servers will send the same alerting or OK notification to the user.",
+            "placeholder": "minimum 30 seconds",
+            "propertyName": "retry",
+            "selectOptions": null,
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        },
+        {
+            "element": "input",
+            "inputType": "text",
+            "label": "Expire (Only used for Emergency Priority)",
+            "description": "How many seconds the alerting or OK notification will continue to be retried.",
+            "placeholder": "maximum 86400 seconds",
+            "propertyName": "expire",
+            "selectOptions": null,
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        },
+        {
+            "element": "select",
+            "inputType": "",
+            "label": "Alerting sound",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "sound",
+            "selectOptions": [
+                {
+                    "value": "default",
+                    "label": "Default"
+                },
+                {
+                    "value": "pushover",
+                    "label": "Pushover"
+                },
+                {
+                    "value": "bike",
+                    "label": "Bike"
+                },
+                {
+                    "value": "bugle",
+                    "label": "Bugle"
+                },
+                {
+                    "value": "cashregister",
+                    "label": "Cashregister"
+                },
+                {
+                    "value": "classical",
+                    "label": "Classical"
+                },
+                {
+                    "value": "cosmic",
+                    "label": "Cosmic"
+                },
+                {
+                    "value": "falling",
+                    "label": "Falling"
+                },
+                {
+                    "value": "gamelan",
+                    "label": "Gamelan"
+                },
+                {
+                    "value": "incoming",
+                    "label": "Incoming"
+                },
+                {
+                    "value": "intermission",
+                    "label": "Intermission"
+                },
+                {
+                    "value": "magic",
+                    "label": "Magic"
+                },
+                {
+                    "value": "mechanical",
+                    "label": "Mechanical"
+                },
+                {
+                    "value": "pianobar",
+                    "label": "Pianobar"
+                },
+                {
+                    "value": "siren",
+                    "label": "Siren"
+                },
+                {
+                    "value": "spacealarm",
+                    "label": "Spacealarm"
+                },
+                {
+                    "value": "tugboat",
+                    "label": "Tugboat"
+                },
+                {
+                    "value": "alien",
+                    "label": "Alien"
+                },
+                {
+                    "value": "climb",
+                    "label": "Climb"
+                },
+                {
+                    "value": "persistent",
+                    "label": "Persistent"
+                },
+                {
+                    "value": "echo",
+                    "label": "Echo"
+                },
+                {
+                    "value": "updown",
+                    "label": "Updown"
+                },
+                {
+                    "value": "none",
+                    "label": "None"
+                }
+            ],
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        },
+        {
+            "element": "select",
+            "inputType": "",
+            "label": "OK sound",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "okSound",
+            "selectOptions": [
+                {
+                    "value": "default",
+                    "label": "Default"
+                },
+                {
+                    "value": "pushover",
+                    "label": "Pushover"
+                },
+                {
+                    "value": "bike",
+                    "label": "Bike"
+                },
+                {
+                    "value": "bugle",
+                    "label": "Bugle"
+                },
+                {
+                    "value": "cashregister",
+                    "label": "Cashregister"
+                },
+                {
+                    "value": "classical",
+                    "label": "Classical"
+                },
+                {
+                    "value": "cosmic",
+                    "label": "Cosmic"
+                },
+                {
+                    "value": "falling",
+                    "label": "Falling"
+                },
+                {
+                    "value": "gamelan",
+                    "label": "Gamelan"
+                },
+                {
+                    "value": "incoming",
+                    "label": "Incoming"
+                },
+                {
+                    "value": "intermission",
+                    "label": "Intermission"
+                },
+                {
+                    "value": "magic",
+                    "label": "Magic"
+                },
+                {
+                    "value": "mechanical",
+                    "label": "Mechanical"
+                },
+                {
+                    "value": "pianobar",
+                    "label": "Pianobar"
+                },
+                {
+                    "value": "siren",
+                    "label": "Siren"
+                },
+                {
+                    "value": "spacealarm",
+                    "label": "Spacealarm"
+                },
+                {
+                    "value": "tugboat",
+                    "label": "Tugboat"
+                },
+                {
+                    "value": "alien",
+                    "label": "Alien"
+                },
+                {
+                    "value": "climb",
+                    "label": "Climb"
+                },
+                {
+                    "value": "persistent",
+                    "label": "Persistent"
+                },
+                {
+                    "value": "echo",
+                    "label": "Echo"
+                },
+                {
+                    "value": "updown",
+                    "label": "Updown"
+                },
+                {
+                    "value": "none",
+                    "label": "None"
+                }
+            ],
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        },
+        {
+            "element": "textarea",
+            "inputType": "",
+            "label": "Message",
+            "description": "",
+            "placeholder": "{{ template \"default.message\" . }}",
+            "propertyName": "message",
+            "selectOptions": null,
+            "showWhen": {
+                "field": "",
+                "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false
+        }
     ]
   },
   {
@@ -458,6 +871,127 @@ var expAvailableChannelJsonOutput = `
         "description": "Body of the slack message",
         "placeholder": "{{ template \"slack.default.text\" . }}",
         "propertyName": "text",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
+    "type": "sensugo",
+    "name": "Sensu Go",
+    "description": "Sends HTTP POST request to a Sensu Go API",
+		"heading":     "Sensu Go Settings",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Backend URL",
+        "description": "",
+        "placeholder": "http://sensu-api.local:8080",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "password",
+        "label": "API Key",
+        "description": "API key to auth to Sensu Go backend",
+        "placeholder": "",
+        "propertyName": "apikey",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Proxy entity name",
+        "description": "",
+        "placeholder": "default",
+        "propertyName": "entity",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Check name",
+        "description": "",
+        "placeholder": "default",
+        "propertyName": "check",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Handler",
+        "description": "",
+        "placeholder": "",
+        "propertyName": "handler",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Namespace",
+        "description": "",
+        "placeholder": "default",
+        "propertyName": "namespace",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "textarea",
+        "inputType": "",
+        "label": "Message",
+        "description": "",
+        "placeholder": "{{ template \"default.message\" . }}",
+        "propertyName": "message",
         "selectOptions": null,
         "showWhen": {
           "field": "",
@@ -660,6 +1194,97 @@ var expAvailableChannelJsonOutput = `
           "is": ""
         },
         "required": false,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
+    "type": "alertmanager",
+    "name": "Alertmanager",
+    "heading": "Alertmanager Settings",
+    "description": "Sends notifications to Alertmanager",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "URL",
+        "description": "",
+	"placeholder": "http://localhost:9093",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
+	"type": "discord",
+	"name": "Discord",
+	"heading": "Discord settings",
+	"description": "Sends notifications to Discord",
+	"info": "",
+	"options": [
+      {
+		"label": "Message Content",
+		"description": "Mention a group using @ or a user using <@ID> when notifying in a channel",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "{{ template \"default.message\" . }}",
+		"propertyName": "message",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": false,
+		"validationRule": "",
+		"secure": false
+	  },
+	  {
+		"label": "Webhook URL",
+		"description": "",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "Discord webhook URL",
+		"propertyName": "url",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": true,
+		"validationRule": "",
+		"secure": false
+	  }
+	]
+  },
+  {
+    "type": "googlechat",
+    "name": "Google Hangouts Chat",
+    "heading": "Google Hangouts Chat settings",
+    "description": "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Url",
+        "description": "",
+        "placeholder": "Google Hangouts Chat incoming webhook url",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
         "validationRule": "",
         "secure": false
       }
