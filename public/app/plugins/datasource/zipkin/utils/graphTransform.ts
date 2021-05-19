@@ -79,7 +79,7 @@ function convertTraceToGraph(spans: ZipkinSpan[]): { nodes: Node[]; edges: Edge[
       [Fields.color]: selfDuration / traceDuration,
     });
 
-    if (span.parentId) {
+    if (span.parentId && spanMap[span.parentId].span) {
       edges.push({
         [Fields.id]: span.parentId + '--' + span.id,
         [Fields.target]: span.id,
