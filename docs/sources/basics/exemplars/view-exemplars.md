@@ -11,34 +11,34 @@ When support for exemplar support is enabled for a Prometheus data source, you c
 
 ## In Explore
 
-Explore visualizes exemplar traces as highlighted stars alongside metrics data. For more information on how Explore visualizes trace data, refer to [tracing in Explore]({{< relref "../../explore/trace-integration.md" >}}).
+Explore visualizes exemplar traces as highlighted stars alongside metrics data. For more information on how Explore visualizes trace data, refer to [Tracing in Explore]({{< relref "../../explore/trace-integration.md" >}}).
 
 To examine the details of an exemplar trace:
 
 1. Place your cursor over an exemplar (highlighted star). Depending on your backend trace data source, you will see a blue button with the label `Query with <data source name>`. In the following example, the tracing data source is Tempo. 
 
-{{< docs-imagebox img="/img/docs/basics/exemplar-details.png" class="docs-image--no-shadow" max-width= "275px" caption="Screenshot showing Exemplar details" >}}
+    {{< docs-imagebox img="/img/docs/basics/exemplar-details.png" class="docs-image--no-shadow" max-width= "275px" caption="Screenshot showing Exemplar details" >}}
 
 1. Click the **Query with Tempo** option next to the `traceID` property. The trace details, including the spans within the trace are listed in a separate panel on the right.
 
-{{< docs-imagebox img="/img/docs/basics/exemplar-explore-view.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
+    {{< docs-imagebox img="/img/docs/basics/exemplar-explore-view.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
 
-For more information on how to drill down and analyse the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
+For more information on how to drill down and analyze the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
 
 
 ## In logs
 
-You can also view exemplar trace details from the Loki logs. Use regex within the Derived fields links for Loki to extract the `traceID` information. Now when you expand Loki logs, you can see a `traceID` property under the **Detected fields** section. To learn more about how to extract a part of a log message into an internal or external link, refer to [using derived fields in Loki]({{< relref "../../explore/logs-integration.md" >}}).
+You can also view exemplar trace details from the Loki logs in Explore. Use regex within the Derived fields links for Loki to extract the `traceID` information. Now when you expand Loki logs, you can see a `traceID` property under the **Detected fields** section. To learn more about how to extract a part of a log message into an internal or external link, refer to [using derived fields in Loki]({{< relref "../../explore/logs-integration.md" >}}).
 
 To view the details of an exemplar trace:
 
-1. Expand a log line and scroll down to the `Detected fields` section. Depending on your backend trace data source, you will see a blue button with the label `<data source name>`. In the following example, the tracing data source is Tempo.
+1. Expand a log line and scroll down to the `Detected fields` section. Depending on your backend trace data source, you will see a blue button with the label `<data source name>`. 
 
-{{< docs-imagebox img="/img/docs/basics/exemplar-loki-logs.png" class="docs-image--no-shadow" max-width= "750px" caption="Loki logs and trace details panel" >}}
+1. Click the blue button next to the `traceID` property. Typically, it will have the name of the backend data source. In the following example, the tracing data source is Tempo. The trace details, including the spans within the trace are listed in a separate panel on the right.
 
-1. Click the **Tempo** button next to the `traceID` property. The details, including the spans within the trace, are listed in a separate panel.
+{{< docs-imagebox img="/img/docs/basics/exemplar-loki-logs.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
 
-For more information on how to drill down and analyse the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
+For more information on how to drill down and analyze the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
  
  ## Analyze trace and spans
 
@@ -46,7 +46,7 @@ For more information on how to drill down and analyse the trace and span details
  
  - The top segment shows the Trace ID to indicate that the query results correspond to the specific trace. 
 
-    You can add more traces to the results using the `Add Query` button.
+    You can add more traces to the results using the `Add query` button.
     
 - The next segment shows the entire span for the specific trace as a narrow strip. All levels of the trace from the client all the way down to database query is displayed, which provides a bird's eye view of the time distribution across all layers over which the HTTP request was processed.
 
@@ -60,4 +60,4 @@ For more information on how to drill down and analyse the trace and span details
 
     This displays additional metadata associated with the span. The metadata itself is initially shown in a narrow strip but you can see more details by clicking the metadata strip.
 
-{{< docs-imagebox img="/img/docs/basics/exemplar-span-details.png" class="docs-image--no-shadow" max-width= "750px" caption="Span details" >}}
+    {{< docs-imagebox img="/img/docs/basics/exemplar-span-details.png" class="docs-image--no-shadow" max-width= "750px" caption="Span details" >}}
