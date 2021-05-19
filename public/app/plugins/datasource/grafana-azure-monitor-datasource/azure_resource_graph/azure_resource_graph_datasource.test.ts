@@ -2,6 +2,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
 import { CustomVariableModel, initialVariableModelState, VariableHide } from 'app/features/variables/types';
+import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 
 const templateSrv = new TemplateSrv();
 
@@ -102,14 +103,47 @@ describe('AzureResourceGraphDatasource', () => {
   });
 
   describe('When interpolating variables', () => {
-    const value = '4b439e23-e563-434c-9fab-e4e229ff0bc7';
-    const variable = {
-      multi: false,
-      includeAll: false,
-    };
+    beforeEach(() => {
+      ctx.variable = { ...initialCustomVariableModelState };
+    });
 
-    it('should return correct value', () => {
-      expect(ctx.ds.interpolateVariable(value, variable)).toEqual('4b439e23-e563-434c-9fab-e4e229ff0bc7');
+    describe('and value is a string', () => {
+      it('should return an unquoted value', () => {
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual('abc');
+      });
+    });
+
+    describe('and value is a number', () => {
+      it('should return an unquoted value', () => {
+        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).toEqual(1000);
+      });
+    });
+
+    describe('and value is an array of strings', () => {
+      it('should return comma separated quoted values', () => {
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).toEqual("'a','b','c'");
+      });
+    });
+
+    describe('and variable allows multi-value and value is a string', () => {
+      it('should return a quoted value', () => {
+        ctx.variable.multi = true;
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
+      });
+    });
+
+    describe('and variable contains single quote', () => {
+      it('should return a quoted value', () => {
+        ctx.variable.multi = true;
+        expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a'bc'");
+      });
+    });
+
+    describe('and variable allows all and value is a string', () => {
+      it('should return a quoted value', () => {
+        ctx.variable.includeAll = true;
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
+      });
     });
   });
 });
