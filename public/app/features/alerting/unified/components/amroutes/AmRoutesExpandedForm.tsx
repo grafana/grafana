@@ -49,6 +49,8 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
       {({ control, register, errors, setValue }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
+          <input type="hidden" {...register('id')} />
+          {/* @ts-ignore-check: react-hook-form made me do this */}
           <FieldArray name="matchers" control={control}>
             {({ fields, append, remove }) => (
               <>

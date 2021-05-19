@@ -1,6 +1,7 @@
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 export interface FormAmRoute {
+  id: string;
   matchers: Matcher[];
   continue: boolean;
   receiver: string;
