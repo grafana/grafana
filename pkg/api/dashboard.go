@@ -296,9 +296,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
 		cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
 		if err != nil {
-			if errors.Is(err, models.ErrFolderNotFound) {
-				return response.Error(400, "Folder not found", err)
-			}
 			return response.Error(500, "Error while applying default value to the dashboard json", err)
 		}
 	}
@@ -306,6 +303,9 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 		folder, err := folders.GetFolderByUID(cmd.FolderUid)
 		if err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(400, "Folder not found", err)
+			}
 			return response.Error(500, "Error while checking folder ID", err)
 		}
 		cmd.FolderId = folder.Id
