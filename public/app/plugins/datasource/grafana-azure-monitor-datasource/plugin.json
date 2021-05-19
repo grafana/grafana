@@ -105,11 +105,11 @@
       "tokenAuth": {
         "scopes": ["https://management.azure.com/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureCloud",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -122,11 +122,11 @@
       "tokenAuth": {
         "scopes": ["https://management.chinacloudapi.cn/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureChinaCloud",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -139,11 +139,11 @@
       "tokenAuth": {
         "scopes": ["https://management.usgovcloudapi.net/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureUSGovernment",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -156,11 +156,11 @@
       "tokenAuth": {
         "scopes": ["https://management.microsoftazure.de/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureGermanCloud",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
