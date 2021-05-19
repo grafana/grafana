@@ -6,6 +6,7 @@ import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 import useLastError from '../../utils/useLastError';
 import LogsQueryEditor from '../LogsQueryEditor';
+import ArgQueryEditor from '../ArgQueryEditor';
 import ApplicationInsightsEditor from '../ApplicationInsightsEditor';
 import InsightsAnalyticsEditor from '../InsightsAnalyticsEditor';
 import { Space } from '../Space';
@@ -93,6 +94,18 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
 
     case AzureQueryType.InsightsAnalytics:
       return <InsightsAnalyticsEditor query={query} />;
+
+    case AzureQueryType.AzureResourceGraph:
+      return (
+        <ArgQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
+      );
   }
 
   return null;
