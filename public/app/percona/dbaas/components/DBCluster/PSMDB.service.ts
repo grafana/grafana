@@ -39,7 +39,7 @@ const DBCLUSTER_STATUS_MAP = {
 
 export class PSMDBService extends DBClusterService {
   getDBClusters(kubernetes: Kubernetes): Promise<DBClusterPayload> {
-    return apiManagement.post<any, Kubernetes>('/DBaaS/PSMDBClusters/List', kubernetes);
+    return apiManagement.post<any, Kubernetes>('/DBaaS/PSMDBClusters/List', kubernetes, true);
   }
 
   addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
