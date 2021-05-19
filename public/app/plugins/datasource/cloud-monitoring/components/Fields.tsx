@@ -1,32 +1,8 @@
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { InlineFormLabel, Select, InlineField } from '@grafana/ui';
+import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-
-export interface Props extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  tooltip?: string;
-  children?: React.ReactNode;
-}
-
-export const QueryField: FunctionComponent<Partial<Props>> = ({ label, tooltip, children }) => (
-  <>
-    <InlineFormLabel width={9} className="query-keyword" tooltip={tooltip}>
-      {label}
-    </InlineFormLabel>
-    {children}
-  </>
-);
-
-export const QueryInlineField: FunctionComponent<Props> = ({ ...props }) => {
-  return (
-    <div className={'gf-form-inline'}>
-      <QueryField {...props} />
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label gf-form-label--grow" />
-      </div>
-    </div>
-  );
-};
+import { HorizontalGroup, InlineLabel, PopoverContent, Select, InlineField } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { INNER_LABEL_WIDTH, LABEL_WIDTH } from '../constants';
 
 interface VariableQueryFieldProps {
   onChange: (value: string) => void;
@@ -36,7 +12,7 @@ interface VariableQueryFieldProps {
   allowCustomValue?: boolean;
 }
 
-export const VariableQueryField: FunctionComponent<VariableQueryFieldProps> = ({
+export const VariableQueryField: FC<VariableQueryFieldProps> = ({
   label,
   onChange,
   value,
@@ -53,5 +29,60 @@ export const VariableQueryField: FunctionComponent<VariableQueryFieldProps> = ({
         options={options}
       />
     </InlineField>
+  );
+};
+
+export interface Props {
+  children: React.ReactNode;
+  tooltip?: PopoverContent;
+  label?: React.ReactNode;
+  className?: string;
+  noFillEnd?: boolean;
+  labelWidth?: number;
+  fillComponent?: React.ReactNode;
+}
+
+export const QueryEditorRow: FC<Props> = ({
+  children,
+  label,
+  tooltip,
+  fillComponent,
+  noFillEnd = false,
+  labelWidth = LABEL_WIDTH,
+  ...rest
+}) => {
+  return (
+    <div className="gf-form" {...rest}>
+      {label && (
+        <InlineLabel width={labelWidth} tooltip={tooltip}>
+          {label}
+        </InlineLabel>
+      )}
+      <div
+        className={css`
+          margin-right: 4px;
+        `}
+      >
+        <HorizontalGroup spacing="xs" width="auto">
+          {children}
+        </HorizontalGroup>
+      </div>
+      <div className={'gf-form--grow'}>
+        {noFillEnd || <div className={'gf-form-label gf-form-label--grow'}>{fillComponent}</div>}
+      </div>
+    </div>
+  );
+};
+
+export const QueryEditorField: FC<Props> = ({ children, label, tooltip, labelWidth = INNER_LABEL_WIDTH, ...rest }) => {
+  return (
+    <>
+      {label && (
+        <InlineLabel width={labelWidth} tooltip={tooltip} {...rest}>
+          {label}
+        </InlineLabel>
+      )}
+      {children}
+    </>
   );
 };
