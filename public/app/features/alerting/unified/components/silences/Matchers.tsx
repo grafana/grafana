@@ -2,11 +2,11 @@ import React, { useCallback } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { AlertLabel } from '../AlertLabel';
 import { matcherToOperator } from '../../utils/alertmanager';
 
-type MatchersProps = { matchers: SilenceMatcher[]; onRemoveLabel?(index: number): void };
+type MatchersProps = { matchers: Matcher[]; onRemoveLabel?(index: number): void };
 
 export const Matchers = ({ matchers, onRemoveLabel }: MatchersProps) => {
   const styles = useStyles(getStyles);

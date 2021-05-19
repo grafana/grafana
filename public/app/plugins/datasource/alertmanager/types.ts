@@ -143,7 +143,7 @@ export type AlertmanagerConfig = {
   receivers?: Receiver[];
 };
 
-export type SilenceMatcher = {
+export type Matcher = {
   name: string;
   value: string;
   isRegex: boolean;
@@ -171,7 +171,7 @@ export enum MatcherOperator {
 
 export type Silence = {
   id: string;
-  matchers?: SilenceMatcher[];
+  matchers?: Matcher[];
   startsAt: string;
   endsAt: string;
   updatedAt: string;
@@ -184,7 +184,7 @@ export type Silence = {
 
 export type SilenceCreatePayload = {
   id?: string;
-  matchers?: SilenceMatcher[];
+  matchers?: Matcher[];
   startsAt: string;
   endsAt: string;
   createdBy: string;

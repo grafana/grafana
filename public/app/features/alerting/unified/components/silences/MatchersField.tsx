@@ -1,17 +1,17 @@
 import React, { FC } from 'react';
-import { Button, Field, Input, useStyles, Checkbox, IconButton } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { Button, Field, Input, Checkbox, IconButton, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
-import { SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
   className?: string;
 }
 
 const MatchersField: FC<Props> = ({ className }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {
     register,
@@ -57,7 +57,7 @@ const MatchersField: FC<Props> = ({ className }) => {
                   <Field label="Regex">
                     <Checkbox {...register(`matchers.${index}.isRegex` as const)} defaultChecked={matcher.isRegex} />
                   </Field>
-                  <Field label="Is equal">
+                  <Field label="Equal">
                     <Checkbox {...register(`matchers.${index}.isEqual` as const)} defaultChecked={matcher.isEqual} />
                   </Field>
                   {matchers.length > 1 && (
@@ -79,7 +79,7 @@ const MatchersField: FC<Props> = ({ className }) => {
             icon="plus"
             variant="secondary"
             onClick={() => {
-              const newMatcher: SilenceMatcher = { name: '', value: '', isRegex: false, isEqual: true };
+              const newMatcher: Matcher = { name: '', value: '', isRegex: false, isEqual: true };
               append(newMatcher);
             }}
           >
@@ -91,28 +91,29 @@ const MatchersField: FC<Props> = ({ className }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-top: ${theme.spacing.md};
+      margin-top: ${theme.spacing(2)};
     `,
     row: css`
       display: flex;
       align-items: flex-start;
       flex-direction: row;
-      background-color: ${theme.colors.bg2};
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
+      background-color: ${theme.colors.background.secondary};
+      padding: ${theme.spacing(1)} ${theme.spacing(1)} 0 ${theme.spacing(1)};
       & > * + * {
-        margin-left: ${theme.spacing.md};
+        margin-left: ${theme.spacing(2)};
       }
     `,
     removeButton: css`
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(1)};
+      margin-top: ${theme.spacing(2.5)};
     `,
     matchers: css`
       max-width: 585px;
-      margin: ${theme.spacing.sm} 0;
-      padding-top: ${theme.spacing.xs};
+      margin: ${theme.spacing(1)} 0;
+      padding-top: ${theme.spacing(0.5)};
     `,
   };
 };

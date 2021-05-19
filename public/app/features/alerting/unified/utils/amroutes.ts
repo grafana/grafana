@@ -1,22 +1,21 @@
 import { SelectableValue } from '@grafana/data';
 import { Validate } from 'react-hook-form';
-import { Route } from 'app/plugins/datasource/alertmanager/types';
-import { FormAmRoute, ArrayFieldMatcher } from '../types/amroutes';
+import { Matcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
+import { parseMatcher, stringifyMatcher } from './alertmanager';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
-const matchersToArrayFieldMatchers = (
-  matchers: Record<string, string> | undefined,
-  isRegex: boolean
-): ArrayFieldMatcher[] =>
+const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean): Matcher[] =>
   Object.entries(matchers ?? {}).reduce(
-    (acc, [label, value]) => [
+    (acc, [name, value]) => [
       ...acc,
       {
-        label,
+        name,
         value,
         isRegex: isRegex,
+        isEqual: true,
       },
     ],
     []
@@ -43,10 +42,11 @@ const selectableValueToString = (selectableValue: SelectableValue<string>): stri
 const selectableValuesToStrings = (arr: Array<SelectableValue<string>> | undefined): string[] =>
   (arr ?? []).map(selectableValueToString);
 
-export const emptyArrayFieldMatcher: ArrayFieldMatcher = {
-  label: '',
+export const emptyArrayFieldMatcher: Matcher = {
+  name: '',
   value: '',
   isRegex: false,
+  isEqual: true,
 };
 
 export const emptyRoute: FormAmRoute = {
@@ -74,6 +74,7 @@ export const amRouteToFormAmRoute = (route: Route | undefined): FormAmRoute => {
 
   return {
     matchers: [
+      ...(route.matchers?.map(parseMatcher) ?? []),
       ...matchersToArrayFieldMatchers(route.match, false),
       ...matchersToArrayFieldMatchers(route.match_re, true),
     ],
@@ -94,19 +95,7 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute): Route => {
   const amRoute: Route = {
     continue: formAmRoute.continue,
     group_by: formAmRoute.groupBy,
-    ...Object.values(formAmRoute.matchers).reduce(
-      (acc, { label, value, isRegex }) => {
-        const target = acc[isRegex ? 'match_re' : 'match'];
-
-        target![label] = value;
-
-        return acc;
-      },
-      {
-        match: {},
-        match_re: {},
-      } as Pick<Route, 'match' | 'match_re'>
-    ),
+    matchers: formAmRoute.matchers.length ? formAmRoute.matchers.map(stringifyMatcher) : undefined,
     group_wait: formAmRoute.groupWaitValue
       ? `${formAmRoute.groupWaitValue}${formAmRoute.groupWaitValueType}`
       : undefined,

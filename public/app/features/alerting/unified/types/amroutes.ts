@@ -1,11 +1,7 @@
-export interface ArrayFieldMatcher {
-  label: string;
-  value: string;
-  isRegex: boolean;
-}
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 export interface FormAmRoute {
-  matchers: ArrayFieldMatcher[];
+  matchers: Matcher[];
   continue: boolean;
   receiver: string;
   groupBy: string[];

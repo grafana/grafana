@@ -1,9 +1,4 @@
-import {
-  AlertManagerCortexConfig,
-  MatcherOperator,
-  Route,
-  SilenceMatcher,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -34,7 +29,7 @@ export function isReceiverUsed(receiver: string, config: AlertManagerCortexConfi
   );
 }
 
-export function matcherToOperator(matcher: SilenceMatcher): MatcherOperator {
+export function matcherToOperator(matcher: Matcher): MatcherOperator {
   if (matcher.isEqual) {
     if (matcher.isRegex) {
       return MatcherOperator.regex;
@@ -46,4 +41,55 @@ export function matcherToOperator(matcher: SilenceMatcher): MatcherOperator {
   } else {
     return MatcherOperator.notEqual;
   }
+}
+
+const matcherOperators = [
+  MatcherOperator.regex,
+  MatcherOperator.notRegex,
+  MatcherOperator.notEqual,
+  MatcherOperator.equal,
+];
+
+function unescapeMatcherValue(value: string) {
+  let trimmed = value.trim().replace(/\\"/g, '"');
+  if (trimmed.startsWith('"') && trimmed.endsWith('"') && !trimmed.endsWith('\\"')) {
+    trimmed = trimmed.substr(1, trimmed.length - 2);
+  }
+  return trimmed.replace(/\\"/g, '"');
+}
+
+function escapeMatcherValue(value: string) {
+  return '"' + value.replace(/"/g, '\\"') + '"';
+}
+
+export function stringifyMatcher(matcher: Matcher): string {
+  return `${matcher.name}${matcherToOperator(matcher)}${escapeMatcherValue(matcher.value)}`;
+}
+
+export function parseMatcher(matcher: string): Matcher {
+  const trimmed = matcher.trim();
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    throw new Error(`PromQL matchers not supported yet, sorry! PromQL matcher found: ${trimmed}`);
+  }
+  const operatorsFound = matcherOperators
+    .map((op): [MatcherOperator, number] => [op, trimmed.indexOf(op)])
+    .filter(([_, idx]) => idx > -1)
+    .sort((a, b) => a[1] - b[1]);
+
+  if (!operatorsFound.length) {
+    throw new Error(`Invalid matcher: ${trimmed}`);
+  }
+  const [operator, idx] = operatorsFound[0];
+  const name = trimmed.substr(0, idx).trim();
+  const value = unescapeMatcherValue(trimmed.substr(idx + operator.length).trim());
+  if (!name) {
+    throw new Error(`Invalid matcher: ${trimmed}`);
+  }
+
+  return {
+    name,
+    value,
+    isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
+    isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
+  };
 }
