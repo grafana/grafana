@@ -169,7 +169,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   );
 
   return (
-    <div style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
+    <div className={styles.flexRowWithTruncatedText} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
       <HorizontalGroup align="center" spacing="sm">
         {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
             of the collapse button for leaf rows that have no children to get them to align */}
@@ -186,7 +186,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
 
         <EntryIcon entry={entry} isOpen={isOpen} />
 
-        {entry.name}
+        <div>{entry.name}</div>
       </HorizontalGroup>
     </div>
   );
