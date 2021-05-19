@@ -251,6 +251,12 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
 
+	u, err := url.Parse(sn.tmpl.ExternalURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse external URL: %w", err)
+	}
+	u.Path = path.Join(u.Path, "/alerting/list")
+
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
 		Username:  tmpl(sn.Username),
@@ -264,7 +270,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list"),
+				TitleLink:  u.String(),
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},

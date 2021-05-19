@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -121,13 +122,19 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	return true, nil
 }
 
-func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (payload *simplejson.Json, url string, err error) {
+func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (payload *simplejson.Json, apiURL string, err error) {
 	key, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
 		return nil, "", err
 	}
 
-	ruleURL := path.Join(on.tmpl.ExternalURL.String(), "/alerting/list")
+	u, err := url.Parse(on.tmpl.ExternalURL.String())
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to parse external URL: %w", err)
+	}
+
+	u.Path = path.Join(u.Path, "/alerting/list")
+	ruleURL := u.String()
 
 	data := notify.GetTemplateData(ctx, on.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(on.log)))
 	var tmplErr error
@@ -165,7 +172,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	case model.AlertResolved:
 		if on.AutoClose {
 			bodyJSON.Set("source", "Grafana")
-			url = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
+			apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
 		}
 	default:
 		bodyJSON.Set("message", title)
@@ -192,14 +199,14 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 		bodyJSON.Set("tags", tags)
 		bodyJSON.Set("details", details)
-		url = on.APIUrl
+		apiURL = on.APIUrl
 	}
 
 	if tmplErr != nil {
 		return nil, "", fmt.Errorf("failed to template Opsgenie message: %w", tmplErr)
 	}
 
-	return bodyJSON, url, err
+	return bodyJSON, apiURL, err
 }
 
 func (on *OpsgenieNotifier) SendResolved() bool {

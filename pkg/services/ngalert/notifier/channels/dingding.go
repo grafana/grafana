@@ -65,9 +65,15 @@ type DingDingNotifier struct {
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	dd.log.Info("Sending dingding")
 
+	u, err := url.Parse(dd.tmpl.ExternalURL.String())
+	if err != nil {
+		return false, fmt.Errorf("failed to parse external URL: %w", err)
+	}
+	u.Path = path.Join(u.Path, "/alerting/list")
+
 	q := url.Values{
 		"pc_slide": {"false"},
-		"url":      {path.Join(dd.tmpl.ExternalURL.String(), "/alerting/list")},
+		"url":      {u.String()},
 	}
 
 	// Use special link to auto open the message url outside of Dingding

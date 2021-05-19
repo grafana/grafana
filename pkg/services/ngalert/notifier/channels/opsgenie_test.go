@@ -44,9 +44,9 @@ func TestOpsgenieNotifier(t *testing.T) {
 			},
 			expMsg: `{
 				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				"description": "[FIRING:1]  (val1)\nhttp:/localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
+				"description": "[FIRING:1]  (val1)\nhttp://localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 				"details": {
-					"url": "http:/localhost/alerting/list"
+					"url": "http://localhost/alerting/list"
 				},
 				"message": "[FIRING:1]  (val1)",
 				"source": "Grafana",
@@ -69,9 +69,9 @@ func TestOpsgenieNotifier(t *testing.T) {
 			},
 			expMsg: `{
 				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				"description": "[FIRING:1]  (val1)\nhttp:/localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
+				"description": "[FIRING:1]  (val1)\nhttp://localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 				"details": {
-					"url": "http:/localhost/alerting/list"
+					"url": "http://localhost/alerting/list"
 				},
 				"message": "[FIRING:1]  (val1)",
 				"source": "Grafana",
@@ -94,10 +94,10 @@ func TestOpsgenieNotifier(t *testing.T) {
 			},
 			expMsg: `{
 				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				"description": "[FIRING:1]  (val1)\nhttp:/localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
+				"description": "[FIRING:1]  (val1)\nhttp://localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 				"details": {
 					"ann1": "annv1",
-					"url": "http:/localhost/alerting/list"
+					"url": "http://localhost/alerting/list"
 				},
 				"message": "[FIRING:1]  (val1)",
 				"source": "Grafana",
@@ -125,10 +125,10 @@ func TestOpsgenieNotifier(t *testing.T) {
 			},
 			expMsg: `{
 				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				"description": "[FIRING:2]  \nhttp:/localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
+				"description": "[FIRING:2]  \nhttp://localhost/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 				"details": {
 					"ann1": "annv1",
-					"url": "http:/localhost/alerting/list"
+					"url": "http://localhost/alerting/list"
 				},
 				"message": "[FIRING:2]  ",
 				"source": "Grafana",
