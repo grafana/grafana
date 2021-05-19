@@ -1,5 +1,7 @@
 import React from 'react';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 import { Seg } from './Seg';
 import { InfluxQueryTag } from '../../types';
 import { toSelectableValue } from './toSelectableValue';
@@ -35,7 +37,15 @@ const loadConditionOptions = () => Promise.resolve(condititonOptions);
 
 const loadOperatorOptions = () => Promise.resolve(operatorOptions);
 
+const getEmptyTagValueStyles = (theme: GrafanaTheme2) =>
+  css({
+    color: theme.colors.text.secondary,
+  });
+
+const EMPTY_TAG_VALUE_MARKER = '-- empty --';
+
 const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions }: TagProps): JSX.Element => {
+  const emptyTagClass = useStyles2(getEmptyTagValueStyles);
   const operator = getOperator(tag);
   const condition = getCondition(tag, isFirst);
 
@@ -47,7 +57,10 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
   };
 
   const getTagValueSegmentOptions = () => {
-    return getTagValueOptions(tag.key).then((tags) => tags.map(toSelectableValue));
+    return getTagValueOptions(tag.key).then((tags) => [
+      { label: EMPTY_TAG_VALUE_MARKER, value: undefined },
+      ...tags.map(toSelectableValue),
+    ]);
   };
 
   return (
@@ -57,7 +70,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
           value={condition}
           loadOptions={loadConditionOptions}
           onChange={(v) => {
-            onChange({ ...tag, condition: v.value });
+            onChange({ ...tag, condition: v });
           }}
         />
       )}
@@ -66,11 +79,10 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         value={tag.key}
         loadOptions={getTagKeySegmentOptions}
         onChange={(v) => {
-          const { value } = v;
-          if (value === undefined) {
+          if (v === undefined) {
             onRemove();
           } else {
-            onChange({ ...tag, key: value ?? '' });
+            onChange({ ...tag, key: v });
           }
         }}
       />
@@ -78,15 +90,16 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         value={operator}
         loadOptions={loadOperatorOptions}
         onChange={(op) => {
-          onChange({ ...tag, operator: op.value });
+          onChange({ ...tag, operator: op });
         }}
       />
       <Seg
         allowCustomValue
-        value={tag.value}
+        value={tag.value === '' ? EMPTY_TAG_VALUE_MARKER : tag.value}
+        buttonClassName={tag.value === '' ? emptyTagClass : undefined}
         loadOptions={getTagValueSegmentOptions}
         onChange={(v) => {
-          const value = v.value ?? '';
+          const value = v ?? '';
           onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
         }}
       />
@@ -114,7 +127,7 @@ export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptio
   const addNewTag = (tagKey: string, isFirst: boolean) => {
     const minimalTag: InfluxQueryTag = {
       key: tagKey,
-      value: 'select tag value',
+      value: '',
     };
 
     const newTag: InfluxQueryTag = {

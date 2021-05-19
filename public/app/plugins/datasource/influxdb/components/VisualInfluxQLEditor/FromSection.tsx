@@ -52,7 +52,7 @@ export const FromSection = ({
         value={policy ?? 'using default policy'}
         loadOptions={handlePolicyLoadOptions}
         onChange={(v) => {
-          onChange(v.value, measurement);
+          onChange(v, measurement);
         }}
       />
       <Seg
@@ -61,7 +61,7 @@ export const FromSection = ({
         loadOptions={handleMeasurementLoadOptions}
         filterByLoadOptions
         onChange={(v) => {
-          onChange(policy, v.value);
+          onChange(policy, v);
         }}
       />
     </>

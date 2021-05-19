@@ -15,12 +15,11 @@ import { useShadowedState } from '../useShadowedState';
 
 // NOTE: maybe these changes could be migrated into the SegmentAsync later
 
-type SelVal = SelectableValue<string>;
-
 // when allowCustomValue is true, there is no way to enforce the selectableValue
 // enum-type, so i just go with `string`
 
-type LoadOptions = (filter: string) => Promise<SelVal[]>;
+type LoadOptions = (filter: string) => Promise<Array<SelectableValue<string>>>;
+type Value = string | undefined;
 
 type Props = {
   value: string;
@@ -35,7 +34,7 @@ type Props = {
   // as you write the loadOptions is executed again and again,
   // and it is relied on to filter the results.
   filterByLoadOptions?: boolean;
-  onChange: (v: SelVal) => void;
+  onChange: (v: Value) => void;
   allowCustomValue?: boolean;
 };
 
@@ -47,14 +46,14 @@ type SelProps = {
   loadOptions: LoadOptions;
   filterByLoadOptions?: boolean;
   onClose: () => void;
-  onChange: (v: SelVal) => void;
+  onChange: (v: Value) => void;
   allowCustomValue?: boolean;
 };
 
 type SelReloadProps = {
-  loadOptions: (filter: string) => Promise<SelVal[]>;
+  loadOptions: LoadOptions;
   onClose: () => void;
-  onChange: (v: SelVal) => void;
+  onChange: (v: Value) => void;
   allowCustomValue?: boolean;
 };
 
@@ -83,16 +82,19 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
         onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         loadOptions={debouncedLoadOptions}
-        onChange={onChange}
+        onChange={(v) => {
+          onChange(v.value);
+        }}
+        onCreateOption={onChange}
       />
     </div>
   );
 };
 
 type SelSingleLoadProps = {
-  loadOptions: (filter: string) => Promise<SelVal[]>;
+  loadOptions: LoadOptions;
   onClose: () => void;
-  onChange: (v: SelVal) => void;
+  onChange: (v: Value) => void;
   allowCustomValue?: boolean;
 };
 
@@ -112,7 +114,10 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
         onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         options={loadState.value ?? []}
-        onChange={onChange}
+        onChange={(v) => {
+          onChange(v.value);
+        }}
+        onCreateOption={onChange}
       />
     </div>
   );
@@ -211,7 +216,7 @@ export const Seg = ({
           initialValue={value}
           onChange={(v) => {
             setOpen(false);
-            onChange({ value: v, label: v });
+            onChange(v);
           }}
         />
       );

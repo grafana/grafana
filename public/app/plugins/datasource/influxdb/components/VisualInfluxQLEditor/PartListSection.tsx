@@ -100,7 +100,7 @@ const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
               buttonClassName={noHorizMarginPaddingClass}
               loadOptions={loadOptions}
               onChange={(v) => {
-                onParamChange(unwrap(v.value), i);
+                onParamChange(unwrap(v), i);
               }}
             />
             {!isLast && ','}

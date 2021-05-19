@@ -129,7 +129,7 @@ describe('InfluxDB InfluxQL Editor tags section', () => {
       ...tags,
       {
         key: 't5',
-        value: 'select tag value',
+        value: '',
         operator: '=',
         condition: 'AND',
       },

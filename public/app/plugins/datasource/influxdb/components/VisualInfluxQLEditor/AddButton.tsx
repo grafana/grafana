@@ -16,7 +16,7 @@ export const AddButton = ({ loadOptions, allowCustomValue, onAdd }: Props): JSX.
       loadOptions={loadOptions}
       allowCustomValue={allowCustomValue}
       onChange={(v) => {
-        onAdd(unwrap(v.value));
+        onAdd(unwrap(v));
       }}
     />
   );
