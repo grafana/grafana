@@ -69,6 +69,7 @@ In the query editor for a panel, after choosing your Azure Monitor data source, 
 - `Application Insights`
 - `Logs`
 - `Insights Analytics`
+- `Azure Resource Graph`
 
 The query editor changes depending on which one you pick. Metrics is the default.
 
@@ -413,3 +414,65 @@ Application Insights and Insights Analytics are two ways to query the same Azure
 > **Note** In Grafana 8.0, Application Insights and Insights Analytics will be deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them.
 
 To prepare for this upcoming change, Application Insights queries can now be made in Metrics, under the "microsoft.insights/components" Namespace. Insights Analytics queries cannot be made within Logs with KQL at this time.
+
+## Query Azure Resource Graph service
+
+Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
+
+{{< docs-imagebox img="/img/docs/azure-monitor/azure-resource-graph-8-0.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
+
+### Table queries
+
+Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). An Azure Resource Graph query is formatted as table data.
+
+If your credentials give you access to multiple subscriptions, then you can choose multiple subscriptions before entering queries.
+
+### Sort results by resource properties
+
+Here is an example query that returns any type of resource, but only the name, type, and location properties:
+
+```kusto
+Resources
+| project name, type, location
+| order by name asc
+```
+
+The query uses `order by` to sort the properties by the `name` property in ascending (asc) order. You can change what property to sort by and the order (`asc` or `desc`). The query uses `project` to show the listed properties in the results. You can add or remove properties.
+
+### Query resources with complex filtering
+
+Filtering for Azure resources with a tag name of `Environment` that have a value of `Internal`. You can change these to any desired tag key and value. The `=~` in the `type` match tells Resource Graph to be case insensitive. You can project by other properties or add/ remove more.
+
+The tag key is case sensitive. `Environment` and `environment` will give different results. For example, a query that returns a list of resources with a specified tag value:
+
+```kusto
+Resources
+| where tags.environment=~'internal'
+| project name
+```
+
+### Group and aggregate the values by property
+
+You can also use `summarize` and `count` to define how to group and aggregate the values by property. For example, returning count of healthy, unhealthy, and not applicable resources per recommendation.:
+
+```kusto
+securityresources
+| where type == 'microsoft.security/assessments'
+| extend resourceId=id,
+    recommendationId=name,
+    resourceType=type,
+    recommendationName=properties.displayName,
+    source=properties.resourceDetails.Source,
+    recommendationState=properties.status.code,
+    description=properties.metadata.description,
+    assessmentType=properties.metadata.assessmentType,
+    remediationDescription=properties.metadata.remediationDescription,
+    policyDefinitionId=properties.metadata.policyDefinitionId,
+    implementationEffort=properties.metadata.implementationEffort,
+    recommendationSeverity=properties.metadata.severity,
+    category=properties.metadata.categories,
+    userImpact=properties.metadata.userImpact,
+    threats=properties.metadata.threats,
+    portalLink=properties.links.azurePortal
+| summarize numberOfResources=count(resourceId) by tostring(recommendationName), tostring(recommendationState)
+```

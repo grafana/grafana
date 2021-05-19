@@ -1,4 +1,4 @@
-import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import { DataQuery, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -22,16 +22,21 @@ import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
 import { parseInterval } from './time';
+import { getDefaultRelativeTimeRange } from '../../../../../../packages/grafana-data';
 
 export const getDefaultFormValues = (): RuleFormValues =>
   Object.freeze({
     name: '',
     labels: [{ key: '', value: '' }],
-    annotations: [{ key: '', value: '' }],
+    annotations: [
+      { key: Annotation.summary, value: '' },
+      { key: Annotation.description, value: '' },
+      { key: Annotation.runbookURL, value: '' },
+    ],
     dataSourceName: null,
-    type: !contextSrv.isEditor ? RuleFormType.threshold : undefined, // viewers can't create prom alerts
+    type: !contextSrv.isEditor ? RuleFormType.grafana : undefined, // viewers can't create prom alerts
 
-    // threshold
+    // grafana
     folder: null,
     queries: [],
     condition: '',
@@ -40,7 +45,7 @@ export const getDefaultFormValues = (): RuleFormValues =>
     evaluateEvery: '1m',
     evaluateFor: '5m',
 
-    // system
+    // cortex / loki
     group: '',
     namespace: '',
     expression: '',
@@ -92,7 +97,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: ga.title,
-        type: RuleFormType.threshold,
+        type: RuleFormType.grafana,
         evaluateFor: rule.for,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,
@@ -114,7 +119,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: rule.alert,
-        type: RuleFormType.system,
+        type: RuleFormType.cloud,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
@@ -136,9 +141,7 @@ export const getDefaultQueries = (): GrafanaQuery[] => {
   if (!dataSource) {
     return [getDefaultExpression('A')];
   }
-
-  const timeRange = getDefaultTimeRange();
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(timeRange);
+  const relativeTimeRange = getDefaultRelativeTimeRange();
 
   return [
     {
@@ -256,7 +259,7 @@ export const panelToRuleFormValues = (
   const { folderId, folderTitle } = dashboard.meta;
 
   const formValues = {
-    type: RuleFormType.threshold,
+    type: RuleFormType.grafana,
     folder:
       folderId && folderTitle
         ? {
