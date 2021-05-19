@@ -98,6 +98,74 @@
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
+      "path": "azureresourcegraph",
+      "method": "POST",
+      "url": "https://management.azure.com",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.tenantId}}",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "chinaazureresourcegraph",
+      "method": "POST",
+      "url": "https://management.azure.com",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.chinacloudapi.cn/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureChinaCloud",
+          "tenant_id": "{{.JsonData.tenantId}}",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "govazureresourcegraph",
+      "method": "POST",
+      "url": "https://management.usgovcloudapi.net",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.usgovcloudapi.net/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureUSGovernment",
+          "tenant_id": "{{.JsonData.tenantId}}",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "germanyazureresourcegraph",
+      "method": "POST",
+      "url": "https://management.microsoftazure.de",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.microsoftazure.de/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_cloud": "AzureGermanCloud",
+          "tenant_id": "{{.JsonData.tenantId}}",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
       "path": "appinsights",
       "method": "GET",
       "url": "https://api.applicationinsights.io",

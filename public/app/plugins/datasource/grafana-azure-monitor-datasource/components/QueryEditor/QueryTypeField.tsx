@@ -10,6 +10,7 @@ const QUERY_TYPES = [
   { value: AzureQueryType.LogAnalytics, label: 'Logs' },
   { value: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
   { value: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
+  { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
 ];
 
 interface QueryTypeFieldProps {

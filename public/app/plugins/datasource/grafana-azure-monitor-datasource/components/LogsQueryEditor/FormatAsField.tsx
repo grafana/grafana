@@ -1,6 +1,6 @@
+import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { useCallback, useMemo } from 'react';
 import { AzureMonitorOption, AzureQueryEditorFieldProps, AzureResultFormat } from '../../types';
 import { findOption } from '../../utils/common';
 import { Field } from '../Field';
