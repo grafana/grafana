@@ -34,9 +34,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   reactQueryEditors = [
     AzureQueryType.AzureMonitor,
     AzureQueryType.LogAnalytics,
+    AzureQueryType.ApplicationInsights,
+    AzureQueryType.InsightsAnalytics,
     AzureQueryType.AzureResourceGraph,
-    // AzureQueryType.ApplicationInsights,
-    // AzureQueryType.InsightsAnalytics,
   ];
 
   // target: AzureMonitorQuery;
