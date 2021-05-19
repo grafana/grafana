@@ -11,16 +11,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/alerting"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
