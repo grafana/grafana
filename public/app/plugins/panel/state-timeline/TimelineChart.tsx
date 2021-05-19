@@ -45,8 +45,6 @@ export class TimelineChart extends React.Component<TimelineProps> {
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {
-    //return <div>Legend</div>;
-
     const { legend, frames } = this.props;
 
     if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
@@ -60,7 +58,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
         if (field.type !== FieldType.time) {
           field.values.toArray().forEach((v) => {
             let state = field.display!(v);
-            stateColors.set(state.color!, state.text);
+            stateColors.set(state.text, state.color!);
           });
         }
       });
@@ -68,8 +66,8 @@ export class TimelineChart extends React.Component<TimelineProps> {
 
     let items: VizLegendItem[] = [];
 
-    stateColors.forEach((label, color) => {
-      if (label!.length > 0) {
+    stateColors.forEach((color, label) => {
+      if (label.length > 0) {
         items.push({
           //getItemKey?: () => string;
           label: label!,
