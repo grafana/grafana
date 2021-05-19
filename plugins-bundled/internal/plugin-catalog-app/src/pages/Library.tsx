@@ -9,7 +9,7 @@ import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Library = () => {
-  const { isLoading, items, installedPlugins } = usePlugins(true);
+  const { isLoading, items, installedPlugins } = usePlugins();
   const styles = useStyles2(getStyles);
 
   const filteredPlugins = items.filter((plugin) => !!installedPlugins.find((_) => _.id === plugin.slug));
