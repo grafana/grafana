@@ -140,6 +140,17 @@ var cueCommands = []*cli.Command{
 		Usage:  "validate *.cue files in the project",
 		Action: runPluginCommand(cmd.validateScuemataBasics),
 	},
+	{
+		Name:   "validate-resource",
+		Usage:  "validate *.cue files in the project",
+		Action: runPluginCommand(cmd.validateResources),
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "dashboard",
+				Usage: "dashboard JSON file to validate",
+			},
+		},
+	},
 }
 
 var Commands = []*cli.Command{
