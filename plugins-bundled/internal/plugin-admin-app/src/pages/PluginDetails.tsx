@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Icon, useParams } from '@grafana/ui';
+import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
+export { useParams } from 'react-router-dom';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
