@@ -18,7 +18,7 @@ import (
 func TestEmailNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
-	externalURL, err := url.Parse("http://localhost")
+	externalURL, err := url.Parse("http://localhost/base")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
@@ -91,17 +91,17 @@ func TestEmailNotifier(t *testing.T) {
 						Labels:       template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
 						Annotations:  template.KV{"runbook_url": "http://fix.me"},
 						Fingerprint:  "15a37193dce72bab",
-						SilenceURL:   "http:/localhost/alerting/silence/new?alertmanager=grafana&matchers=%2C%2Calertname%3DAlwaysFiring%2Cseverity%3Dwarning",
-						DashboardURL: "http:/localhost/d/abc",
-						PanelURL:     "http:/localhost/d/abc?viewPanel=5",
+						SilenceURL:   "http://localhost/base/alerting/silence/new?alertmanager=grafana&matchers=%2C%2Calertname%3DAlwaysFiring%2Cseverity%3Dwarning",
+						DashboardURL: "http://localhost/base/d/abc",
+						PanelURL:     "http://localhost/base/d/abc?viewPanel=5",
 					},
 				},
 				"GroupLabels":       template.KV{},
 				"CommonLabels":      template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
 				"CommonAnnotations": template.KV{"runbook_url": "http://fix.me"},
-				"ExternalURL":       "http://localhost",
-				"RuleUrl":           "http:/localhost/alerting/list",
-				"AlertPageUrl":      "http:/localhost/alerting/list?alertState=firing&view=state",
+				"ExternalURL":       "http://localhost/base",
+				"RuleUrl":           "http://localhost/base/alerting/list",
+				"AlertPageUrl":      "http://localhost/base/alerting/list?alertState=firing&view=state",
 			},
 		}, expected)
 	})

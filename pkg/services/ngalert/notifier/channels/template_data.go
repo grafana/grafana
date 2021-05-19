@@ -1,6 +1,7 @@
 package channels
 
 import (
+	"fmt"
 	"net/url"
 	"path"
 	"sort"
@@ -47,7 +48,7 @@ func removePrivateItems(kv template.KV) template.KV {
 	return kv
 }
 
-func extendAlert(alert template.Alert, externalURL string) ExtendedAlert {
+func extendAlert(alert template.Alert, externalURL string) (*ExtendedAlert, error) {
 	extended := ExtendedAlert{
 		Status:       alert.Status,
 		Labels:       alert.Labels,
@@ -60,12 +61,19 @@ func extendAlert(alert template.Alert, externalURL string) ExtendedAlert {
 
 	// fill in some grafana-specific urls
 	if len(externalURL) > 0 {
+		u, err := url.Parse(externalURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse external URL: %w", err)
+		}
+		externalPath := u.Path
 		dashboardUid := alert.Annotations["__dashboardUid__"]
 		if len(dashboardUid) > 0 {
-			extended.DashboardURL = path.Join(externalURL, "/d/", dashboardUid)
+			u.Path = path.Join(externalPath, "/d/", dashboardUid)
+			extended.DashboardURL = u.String()
 			panelId := alert.Annotations["__panelId__"]
 			if len(panelId) > 0 {
-				extended.PanelURL = path.Join(externalURL, "/d/", dashboardUid) + "?viewPanel=" + panelId
+				u.RawQuery = "viewPanel=" + panelId
+				extended.PanelURL = u.String()
 			}
 		}
 
@@ -76,21 +84,27 @@ func extendAlert(alert template.Alert, externalURL string) ExtendedAlert {
 			}
 		}
 		sort.Strings(matchers)
-		extended.SilenceURL = path.Join(externalURL, "/alerting/silence/new?alertmanager=grafana&matchers="+url.QueryEscape(strings.Join(matchers, ",")))
+		u.Path = path.Join(externalPath, "/alerting/silence/new")
+		u.RawQuery = "alertmanager=grafana&matchers=" + url.QueryEscape(strings.Join(matchers, ","))
+		extended.SilenceURL = u.String()
 	}
 
 	// remove "private" annotations & labels so they don't show up in the template
 	extended.Annotations = removePrivateItems(extended.Annotations)
 	extended.Labels = removePrivateItems(extended.Labels)
 
-	return extended
+	return &extended, nil
 }
 
-func ExtendData(data *template.Data) *ExtendedData {
+func ExtendData(data *template.Data) (*ExtendedData, error) {
 	alerts := []ExtendedAlert{}
 
 	for _, alert := range data.Alerts {
-		alerts = append(alerts, extendAlert(alert, data.ExternalURL))
+		extendedAlert, err := extendAlert(alert, data.ExternalURL)
+		if err != nil {
+			return nil, err
+		}
+		alerts = append(alerts, *extendedAlert)
 	}
 
 	extended := &ExtendedData{
@@ -103,7 +117,7 @@ func ExtendData(data *template.Data) *ExtendedData {
 
 		ExternalURL: data.ExternalURL,
 	}
-	return extended
+	return extended, nil
 }
 
 func TmplText(tmpl *template.Template, data *ExtendedData, err *error) func(string) string {
