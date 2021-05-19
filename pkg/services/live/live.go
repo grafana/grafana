@@ -442,7 +442,10 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 // GetChannelHandler gives thread-safe access to the channel.
 func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
-	addr := live.ParseChannel(channel)
+	addr, err := live.ParseChannel(channel)
+	if err != nil {
+		return nil, live.Channel{}, err
+	}
 	if !addr.IsValid() {
 		return nil, live.Channel{}, fmt.Errorf("invalid channel: %q", channel)
 	}
@@ -569,9 +572,13 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
-	addr := live.ParseChannel(cmd.Channel)
-	if !addr.IsValid() {
-		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
+	addr, err := live.ParseChannel(cmd.Channel)
+	if err != nil {
+		if err == live.ErrInvalidChannelID {
+			return response.Error(http.StatusBadRequest, "Bad channel address", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 
 	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)
