@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { AppRootProps, SelectableValue, dateTimeParse, NavModelItem } from '@grafana/data';
+import { AppRootProps, SelectableValue, dateTimeParse } from '@grafana/data';
 import { Field, LoadingPlaceholder, Select, useLocation } from '@grafana/ui';
 import { locationSearchToObject } from '@grafana/runtime';
 
