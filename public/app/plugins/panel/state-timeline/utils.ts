@@ -10,7 +10,6 @@ import {
   FALLBACK_COLOR,
   FieldType,
   ArrayVector,
-  FieldConfigSource,
   FieldColorModeId,
   getValueFormat,
   ThresholdsMode,
@@ -318,7 +317,10 @@ export function prepareTimelineLegendItems(
 
   const items: VizLegendItem[] = [];
   const first = fields[0].config;
-  if (first.color?.mode === FieldColorModeId.Thresholds && first.thresholds?.steps) {
+  const colorMode = first.color?.mode ?? FieldColorModeId.Fixed;
+
+  // If thresholds are enabled show each step in the legend
+  if (colorMode === FieldColorModeId.Thresholds && first.thresholds?.steps) {
     const steps = first.thresholds.steps;
     const disp = getValueFormat(
       first.thresholds.mode === ThresholdsMode.Percentage ? 'percent' : first.unit ?? 'fixed'
@@ -341,6 +343,11 @@ export function prepareTimelineLegendItems(
       });
     }
     return items;
+  }
+
+  // If thresholds are enabled show each step in the legend
+  if (colorMode.startsWith('continuous')) {
+    return undefined; // eventually a color bar
   }
 
   let stateColors: Map<string, string | undefined> = new Map();
