@@ -61,5 +61,3 @@ For more information on how to drill down and analyse the trace and span details
     This displays additional metadata associated with the span. The metadata itself is initially shown in a narrow strip but you can see more details by clicking the metadata strip.
 
 {{< docs-imagebox img="/img/docs/basics/exemplar-span-details.png" class="docs-image--no-shadow" max-width= "750px" caption="Span details" >}}
-
-
