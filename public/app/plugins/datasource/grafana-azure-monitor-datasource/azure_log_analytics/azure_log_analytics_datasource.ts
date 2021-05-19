@@ -69,10 +69,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return this.doRequest(workspaceListUrl, true);
   }
 
-  async getMetadata(workspace: string) {
-    const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
-    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
+  async getMetadata(resourceUri: string) {
+    const url = `${this.baseUrl}/v1${resourceUri}/metadata`;
 
+    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
     if (!resp.ok) {
       throw new Error('Unable to get metadata for workspace');
     }
@@ -80,9 +80,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return resp.data;
   }
 
-  async getKustoSchema(workspace: string) {
-    const metadata = await this.getMetadata(workspace);
-    return transformMetadataToKustoSchema(metadata, workspace);
+  async getKustoSchema(resourceUri: string) {
+    const metadata = await this.getMetadata(resourceUri);
+    return transformMetadataToKustoSchema(metadata, resourceUri);
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
@@ -98,6 +98,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
+    const resource = templateSrv.replace(item.resource, scopedVars);
+
     return {
       refId: target.refId,
       format: target.format,
@@ -106,6 +108,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       azureLogAnalytics: {
         resultFormat: item.resultFormat,
         query: query,
+        resource,
+
+        // TODO: Workspace is deprecated and should be migrated to Resources
         workspace: workspace,
       },
     };
@@ -165,6 +170,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getWorkspaceDetails(workspaceId: string) {
+    if (!this.subscriptionId) {
+      return {};
+    }
     const response = await this.getWorkspaceList(this.subscriptionId);
 
     const details = response.data.value.find((o: any) => {
@@ -236,7 +244,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       'TimeGenerated'
     );
     const querystring = querystringBuilder.generate().uriString;
-    const url = `${this.baseUrl}/${workspace}/query?${querystring}`;
+    const url = `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`;
     const queries: any[] = [];
     queries.push({
       datasourceId: this.id,
@@ -340,6 +348,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
   }
 
+  // TODO: update to be resource-centric
   testDatasource(): Promise<any> {
     const validationError = this.isValidConfig();
     if (validationError) {
@@ -348,7 +357,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     return this.getDefaultOrFirstWorkspace()
       .then((ws: any) => {
-        const url = `${this.baseUrl}/${ws}/metadata`;
+        const url = `${this.baseUrl}/v1/workspaces/${ws}/metadata`;
 
         return this.doRequest(url);
       })
