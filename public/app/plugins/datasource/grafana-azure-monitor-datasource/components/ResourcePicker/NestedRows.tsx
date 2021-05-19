@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { Checkbox, HorizontalGroup, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import getStyles from './styles';
 import { EntryType, Row, RowGroup } from './types';
@@ -169,10 +169,10 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   );
 
   return (
-    <div className={styles.flexRowWithTruncatedText} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
-      <HorizontalGroup align="center" spacing="sm">
-        {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
+    <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
+      {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
             of the collapse button for leaf rows that have no children to get them to align */}
+      <span className={styles.entryContentItem}>
         {hasChildren && (
           <IconButton
             className={styles.collapseButton}
@@ -183,11 +183,13 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
         )}
 
         {isSelectable && <Checkbox onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />}
+      </span>
 
+      <span className={styles.entryContentItem}>
         <EntryIcon entry={entry} isOpen={isOpen} />
+      </span>
 
-        <div>{entry.name}</div>
-      </HorizontalGroup>
+      <span className={styles.entryContentItem + ' ' + styles.truncated}>{entry.name}</span>
     </div>
   );
 };

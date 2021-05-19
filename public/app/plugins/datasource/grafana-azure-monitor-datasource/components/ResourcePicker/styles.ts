@@ -45,13 +45,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'center',
   }),
 
-  flexRowWithTruncatedText: css({
-    'div:last-child': {
-      minWidth: 0,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    },
+  nestedEntry: css({
+    display: 'flex',
+  }),
+
+  entryContentItem: css({
+    margin: theme.spacing(0, 1, 0, 0),
+  }),
+
+  truncated: css({
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }),
 });
 
