@@ -1,4 +1,4 @@
-import { SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { TimeZone } from '@grafana/data';
 
 export type SilenceFormFields = {
@@ -8,7 +8,7 @@ export type SilenceFormFields = {
   timeZone: TimeZone;
   duration: string;
   comment: string;
-  matchers: SilenceMatcher[];
+  matchers: Matcher[];
   createdBy: string;
   matcherName: string;
   matcherValue: string;

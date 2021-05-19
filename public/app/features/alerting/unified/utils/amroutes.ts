@@ -1,22 +1,21 @@
 import { SelectableValue } from '@grafana/data';
 import { Validate } from 'react-hook-form';
-import { Route } from 'app/plugins/datasource/alertmanager/types';
-import { FormAmRoute, ArrayFieldMatcher } from '../types/amroutes';
+import { Matcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
+import { parseMatcher, stringifyMatcher } from './alertmanager';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
-const matchersToArrayFieldMatchers = (
-  matchers: Record<string, string> | undefined,
-  isRegex: boolean
-): ArrayFieldMatcher[] =>
+const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean): Matcher[] =>
   Object.entries(matchers ?? {}).reduce(
-    (acc, [label, value]) => [
+    (acc, [name, value]) => [
       ...acc,
       {
-        label,
+        name,
         value,
         isRegex: isRegex,
+        isEqual: true,
       },
     ],
     []
@@ -43,13 +42,15 @@ const selectableValueToString = (selectableValue: SelectableValue<string>): stri
 const selectableValuesToStrings = (arr: Array<SelectableValue<string>> | undefined): string[] =>
   (arr ?? []).map(selectableValueToString);
 
-export const emptyArrayFieldMatcher: ArrayFieldMatcher = {
-  label: '',
+export const emptyArrayFieldMatcher: Matcher = {
+  name: '',
   value: '',
   isRegex: false,
+  isEqual: true,
 };
 
 export const emptyRoute: FormAmRoute = {
+  id: '',
   matchers: [emptyArrayFieldMatcher],
   groupBy: [],
   routes: [],
@@ -63,50 +64,59 @@ export const emptyRoute: FormAmRoute = {
   repeatIntervalValueType: timeOptions[0].value,
 };
 
-export const amRouteToFormAmRoute = (route: Route | undefined): FormAmRoute => {
+//returns route, and a record mapping id to existing route route
+export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Record<string, Route>] => {
   if (!route || Object.keys(route).length === 0) {
-    return emptyRoute;
+    return [emptyRoute, {}];
   }
 
   const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait);
   const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval);
   const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval);
 
-  return {
-    matchers: [
-      ...matchersToArrayFieldMatchers(route.match, false),
-      ...matchersToArrayFieldMatchers(route.match_re, true),
-    ],
-    continue: route.continue ?? false,
-    receiver: route.receiver ?? '',
-    groupBy: route.group_by ?? [],
-    groupWaitValue,
-    groupWaitValueType,
-    groupIntervalValue,
-    groupIntervalValueType,
-    repeatIntervalValue,
-    repeatIntervalValueType,
-    routes: (route.routes ?? []).map(amRouteToFormAmRoute),
+  const id = String(Math.random());
+  const id2route = {
+    [id]: route,
   };
+  const formRoutes: FormAmRoute[] = [];
+  route.routes?.forEach((subRoute) => {
+    const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute);
+    formRoutes.push(subFormRoute);
+    Object.assign(id2route, subId2Route);
+  });
+
+  return [
+    {
+      id,
+      matchers: [
+        ...(route.matchers?.map(parseMatcher) ?? []),
+        ...matchersToArrayFieldMatchers(route.match, false),
+        ...matchersToArrayFieldMatchers(route.match_re, true),
+      ],
+      continue: route.continue ?? false,
+      receiver: route.receiver ?? '',
+      groupBy: route.group_by ?? [],
+      groupWaitValue,
+      groupWaitValueType,
+      groupIntervalValue,
+      groupIntervalValueType,
+      repeatIntervalValue,
+      repeatIntervalValueType,
+      routes: formRoutes,
+    },
+    id2route,
+  ];
 };
 
-export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute): Route => {
+export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute: Record<string, Route>): Route => {
+  const existing: Route | undefined = id2ExistingRoute[formAmRoute.id];
   const amRoute: Route = {
+    ...(existing ?? {}),
     continue: formAmRoute.continue,
     group_by: formAmRoute.groupBy,
-    ...Object.values(formAmRoute.matchers).reduce(
-      (acc, { label, value, isRegex }) => {
-        const target = acc[isRegex ? 'match_re' : 'match'];
-
-        target![label] = value;
-
-        return acc;
-      },
-      {
-        match: {},
-        match_re: {},
-      } as Pick<Route, 'match' | 'match_re'>
-    ),
+    matchers: formAmRoute.matchers.length ? formAmRoute.matchers.map(stringifyMatcher) : undefined,
+    match: undefined,
+    match_re: undefined,
     group_wait: formAmRoute.groupWaitValue
       ? `${formAmRoute.groupWaitValue}${formAmRoute.groupWaitValueType}`
       : undefined,
@@ -116,7 +126,7 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute): Route => {
     repeat_interval: formAmRoute.repeatIntervalValue
       ? `${formAmRoute.repeatIntervalValue}${formAmRoute.repeatIntervalValueType}`
       : undefined,
-    routes: formAmRoute.routes.map(formAmRouteToAmRoute),
+    routes: formAmRoute.routes.map((subRoute) => formAmRouteToAmRoute(subRoute, id2ExistingRoute)),
   };
 
   if (formAmRoute.receiver) {
